@@ -13,6 +13,14 @@ Jede Angabe trägt ihre Herkunft:
 | 📘 | aus dem [Herstellerrepository](https://github.com/UlanziTechnology/Ulanzi-U-Clock-TC002), nicht gegengeprüft |
 | ❓ | offen — Vermutung, noch nicht belegt |
 
+**Alle Angaben beziehen sich auf die Firmware `mcuVer V1.0.17`, `appVer 1.1.1`**
+(Stand 11.09.2026, ablesbar über `/getBase`, siehe §5.1). Manches, was hier als
+❌ steht, ist womöglich schlicht ein Fehler und in einer späteren Fassung
+behoben — namentlich, dass der `text`-Befehl nicht scrollt (§4.3) und dass ein
+leerer HTTP-Rumpf nicht löscht (§5.6). Wer mit neuerer Firmware arbeitet und
+etwas anders vorfindet: Die Prüfungen dazu stehen jeweils dabei und sind in
+wenigen Minuten zu wiederholen.
+
 ---
 
 ## 1. Das Display
