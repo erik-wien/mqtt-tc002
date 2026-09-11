@@ -11,11 +11,17 @@ public enum Schluesselbund {
          kSecAttrAccount as String: konto]
     }
 
-    public static func setzen(_ wert: String, fuer konto: String) {
+    /// Gibt zurueck, ob der Eintrag wirklich im Schluesselbund steht. Ohne das
+    /// faellt ein gescheitertes Schreiben erst beim naechsten Start auf — dann ist
+    /// das Kennwort weg und niemand weiss, warum.
+    /// Ein leerer Wert loescht nur: SecItemAdd nimmt keine leere Nutzlast an.
+    @discardableResult
+    public static func setzen(_ wert: String, fuer konto: String) -> Bool {
         loeschen(konto)
+        guard !wert.isEmpty else { return true }
         var eintrag = basis(konto)
         eintrag[kSecValueData as String] = Data(wert.utf8)
-        SecItemAdd(eintrag as CFDictionary, nil)
+        return SecItemAdd(eintrag as CFDictionary, nil) == errSecSuccess
     }
 
     public static func lesen(_ konto: String) -> String? {
