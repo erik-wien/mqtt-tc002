@@ -234,4 +234,28 @@ final class TextrasterTests: XCTestCase {
         XCTAssertEqual(bilder[0].pixel[4 * breite + 0], "#FF0000")
         XCTAssertEqual(bilder[1].pixel[(4 + 7) * breite + 7], "#0000FF")
     }
+
+    /// Die senkrechte Ausrichtung setzt voraus, dass man weiss, wo die Tinte
+    /// wirklich liegt — die Grundlinie legt sie nicht an den oberen Rand.
+    func testTintenZeilenFindetObenUndUnten() {
+        var feld = Pixelfeld()
+        XCTAssertNil(Textraster.tintenZeilen(feld), "leeres Feld hat keine Tinte")
+
+        feld.setzen(x: 3, y: 4, farbe: "#FFFFFF")
+        feld.setzen(x: 9, y: 11, farbe: "#FFFFFF")
+        let tinte = Textraster.tintenZeilen(feld)
+        XCTAssertEqual(tinte?.erste, 4)
+        XCTAssertEqual(tinte?.letzte, 11)
+    }
+
+    /// Gerasterter Text beginnt nicht in Zeile 0 — genau deshalb muss vor dem
+    /// Ausrichten gemessen werden.
+    func testGerasterterTextBeginntNichtGanzOben() {
+        let puffer = Textraster.rasterPuffer("HALLO", schrift: "Menlo", groesse: 11,
+                                             fett: false, farbe: "#FFFFFF", luecke: 1)
+        let tinte = Textraster.tintenZeilen(puffer)
+        XCTAssertNotNil(tinte)
+        XCTAssertGreaterThan(tinte?.erste ?? 0, 0,
+                             "die Grundlinie legt die Tinte tiefer als an den oberen Rand")
+    }
 }

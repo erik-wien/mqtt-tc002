@@ -209,12 +209,29 @@ struct SendenView: View {
         }
     }
 
+    /// Wohin der gerasterte Text senkrecht geschoben wird.
+    ///
+    /// `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie der Schrift sie
+    /// hinlegt — nicht an den oberen Rand. Frueher wurde dieses Feld einfach
+    /// zusaetzlich nach unten geschoben; „oben" hiess damit „lass es, wo es ist",
+    /// und „unten" schob die Tinte unten hinaus. Deshalb wird hier erst gemessen,
+    /// wo sie liegt, und dann die Verschiebung dorthin gerechnet, wo sie hinsoll.
     private var textY: Int {
+        let puffer = textPuffer
+        guard let tinte = Textraster.tintenZeilen(puffer) else { return 0 }
+        let hoehe = tinte.letzte - tinte.erste + 1
         switch vertikal {
-        case .oben: return 0
-        case .mittig: return max(0, (Pixelfeld.hoeheStandard - textHoehe) / 2)
-        case .unten: return max(0, Pixelfeld.hoeheStandard - textHoehe)
+        case .oben:   return -tinte.erste
+        case .mittig: return (Pixelfeld.hoeheStandard - hoehe) / 2 - tinte.erste
+        case .unten:  return (Pixelfeld.hoeheStandard - hoehe) - tinte.erste
         }
+    }
+
+    /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage fuer `textY`
+    /// und fuer das fertige Feld darunter.
+    private var textPuffer: Pixelfeld {
+        Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
+                                fett: fett, farbe: farbeHex, luecke: luecke)
     }
 
     /// Vorschau und Sendung entstehen aus demselben Feld. Gerastert wird immer in
@@ -222,9 +239,7 @@ struct SendenView: View {
     /// Schrift stehend anders aus als laufend.
     private var feld: Pixelfeld {
         var f = Pixelfeld()
-        Textraster.einsetzen(Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
-                                                     fett: fett, farbe: farbeHex, luecke: luecke),
-                             x: textX, y: textY, in: &f)
+        Textraster.einsetzen(textPuffer, x: textX, y: textY, in: &f)
         return f
     }
 

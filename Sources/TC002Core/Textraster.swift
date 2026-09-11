@@ -93,6 +93,24 @@ public enum Textraster {
         }
     }
 
+    /// Erste und letzte **Zeile** mit mindestens einem gesetzten Pixel, oder `nil`
+    /// bei leerem Feld. Die Gegenstueck zu `tintenSpalten` — und die Grundlage
+    /// jeder senkrechten Ausrichtung: `rasterPuffer` legt die Tinte dorthin, wo
+    /// die Grundlinie der Schrift sie hinlegt, nicht an den oberen Rand. Wer sie
+    /// ausrichten will, muss erst wissen, wo sie liegt.
+    public static func tintenZeilen(_ feld: Pixelfeld) -> (erste: Int, letzte: Int)? {
+        var erste: Int?, letzte: Int?
+        for zeile in 0..<feld.hoehe {
+            let belegt = (0..<feld.breite).contains { feld.farbe(x: $0, y: zeile) != nil }
+            if belegt {
+                if erste == nil { erste = zeile }
+                letzte = zeile
+            }
+        }
+        guard let e = erste, let l = letzte else { return nil }
+        return (e, l)
+    }
+
     /// Erste und letzte Spalte mit mindestens einem gesetzten Pixel, oder `nil`,
     /// wenn das Feld ganz leer ist.
     private static func tintenSpalten(_ feld: Pixelfeld) -> (erste: Int, letzte: Int)? {
