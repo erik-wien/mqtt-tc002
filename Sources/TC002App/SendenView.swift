@@ -28,8 +28,10 @@ struct SendenView: View {
         return f
     }
 
+    /// Gerastert wird ohne Icon ab x: 1, mit Icon ab x: 10 — die Grenze ist also die
+    /// Displaybreite minus dem linken Rand, nicht die Displaybreite selbst.
     private var passt: Bool {
-        Textraster.breite(text, schrift: schrift, groesse: groesse) <= (gewaehltesIcon == nil ? 52 : 42)
+        Textraster.breite(text, schrift: schrift, groesse: groesse) <= (gewaehltesIcon == nil ? 51 : 42)
     }
 
     var body: some View {
