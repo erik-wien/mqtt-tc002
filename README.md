@@ -28,7 +28,10 @@ vorausgesetzt wird macOS 14 aufwärts.
 - **Icons** — eigene 8×8-Bildchen malen oder über eine LaMetric-Nummer
   nachladen.
 - **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
-  umschalten oder löschen, dazu der Seitenwechsel der Uhr.
+  umschalten oder löschen, dazu der Seitenwechsel der Uhr. Diese Liste führt
+  die App je Uhr getrennt: gelöscht wird immer nur bei der aktiven, und was
+  über „an alle“ auf andere Uhren ging, bleibt dort stehen, bis es dort
+  gelöscht wird.
 
 Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
 (⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
