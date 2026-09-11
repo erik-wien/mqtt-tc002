@@ -7,7 +7,9 @@ import SwiftUI
 /// Verweise sind Text und werden nur über `Link` im Browser geöffnet.
 struct UeberView: View {
     @State private var lizenztextSichtbar = false
+    @State private var micro5LizenztextSichtbar = false
     @State private var silkscreenLizenztextSichtbar = false
+    @State private var tiny5LizenztextSichtbar = false
 
     private var fassung: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
@@ -63,11 +65,20 @@ struct UeberView: View {
                     text: "Herkunft der Icons, die sich über ihre Nummer nachladen lassen."
                 )
                 VStack(alignment: .leading, spacing: 2) {
-                    Link("Silkscreen", destination: URL(string: "https://github.com/googlefonts/silkscreen")!)
-                        .fontWeight(.semibold)
-                    Text("Eigens aufs Pixelraster gezeichnete Schrift, die Umlaute und „ß“ kann — anders als die eingebaute Gerätschrift. SIL Open Font License 1.1.")
-                    Button("Lizenztext anzeigen…") { silkscreenLizenztextSichtbar = true }
-                        .buttonStyle(.link)
+                    Text("Pixelschriften").fontWeight(.semibold)
+                    Text("Drei mitgelieferte, eigens aufs Pixelraster gezeichnete Schriften, die Umlaute und „ß“ können — anders als die eingebaute Gerätschrift. Alle drei SIL Open Font License 1.1.")
+                    HStack(spacing: 4) {
+                        Link("Micro 5", destination: URL(string: "https://github.com/scfried/soft-type-micro")!)
+                        Button("Lizenztext…") { micro5LizenztextSichtbar = true }.buttonStyle(.link)
+                    }
+                    HStack(spacing: 4) {
+                        Link("Silkscreen", destination: URL(string: "https://github.com/googlefonts/silkscreen")!)
+                        Button("Lizenztext…") { silkscreenLizenztextSichtbar = true }.buttonStyle(.link)
+                    }
+                    HStack(spacing: 4) {
+                        Link("Tiny5", destination: URL(string: "https://github.com/Gissio/font_tiny5")!)
+                        Button("Lizenztext…") { tiny5LizenztextSichtbar = true }.buttonStyle(.link)
+                    }
                 }
             }
             .font(.footnote)
@@ -83,8 +94,14 @@ struct UeberView: View {
         .sheet(isPresented: $lizenztextSichtbar) {
             LizenztextView(dismiss: { lizenztextSichtbar = false })
         }
+        .sheet(isPresented: $micro5LizenztextSichtbar) {
+            LizenztextView(dismiss: { micro5LizenztextSichtbar = false }, pfad: "Schriften/OFL-Micro5.txt")
+        }
         .sheet(isPresented: $silkscreenLizenztextSichtbar) {
             LizenztextView(dismiss: { silkscreenLizenztextSichtbar = false }, pfad: "Schriften/OFL-Silkscreen.txt")
+        }
+        .sheet(isPresented: $tiny5LizenztextSichtbar) {
+            LizenztextView(dismiss: { tiny5LizenztextSichtbar = false }, pfad: "Schriften/OFL-Tiny5.txt")
         }
     }
 
@@ -98,8 +115,8 @@ struct UeberView: View {
 }
 
 /// Zeigt einen Lizenztext aus dem App-Paket an — Vorgabe die GPL-3.0 aus
-/// `LICENSE`, wahlweise auch die SIL Open Font License der Silkscreen-Schrift
-/// aus `Schriften/OFL-Silkscreen.txt`. Beide werden von `build.sh` ins
+/// `LICENSE`, wahlweise auch die SIL Open Font License einer der drei
+/// Pixelschriften aus `Schriften/OFL-*.txt`. Alle werden von `build.sh` ins
 /// App-Paket kopiert; beide Lizenzen verlangen, den Text mitzuliefern, nicht
 /// nur einen Verweis darauf.
 private struct LizenztextView: View {

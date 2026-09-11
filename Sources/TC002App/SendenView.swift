@@ -121,12 +121,16 @@ struct SendenView: View {
     }
 
     /// Geprueft bei 16 Pixeln Hoehe: Diese Schriften rastern mit gleichmaessigen
-    /// Strichstaerken. Silkscreen steht vorn und ist die Vorgabe — sie ist
-    /// eigens aufs 8-Pixel-Raster gezeichnet (mitgeliefert, siehe unten) und
-    /// kann, anders als die Geraetschrift, Umlaute und das scharfe S. Alle anderen
-    /// installierten Schriften sind bei dieser Groesse unbrauchbar — Courier,
-    /// SF Mono und Helvetica etwa bekommen Loecher in den Staemmen.
-    static let geeigneteSchriften = ["Silkscreen", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
+    /// Strichstaerken. Silkscreen ist die Vorgabe — sie ist eigens aufs
+    /// 8-Pixel-Raster gezeichnet (mitgeliefert, siehe unten) und kann, anders
+    /// als die Geraetschrift, Umlaute und das scharfe S. Micro 5 und Tiny5 sind
+    /// ebenfalls mitgelieferte Pixelschriften mit vollem Zeichenumfang (siehe
+    /// `sauberePixelgroessen` unten). Der registrierte Familienname von Micro5
+    /// traegt ein Leerzeichen ("Micro 5") — im Font-Editor gepruefte Tatsache,
+    /// nicht Tippfehler. Alle anderen installierten Schriften sind bei dieser
+    /// Groesse unbrauchbar — Courier, SF Mono und Helvetica etwa bekommen
+    /// Loecher in den Staemmen.
+    static let geeigneteSchriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
     /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
     /// Gefiltert auf das, was dieser Mac tatsaechlich installiert hat; nicht jede
@@ -158,11 +162,30 @@ struct SendenView: View {
     /// fehlen dort weiterhin.
     private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
 
-    /// Silkscreen ist aufs 8-Pixel-Raster gezeichnet — nur bei 8 und einem
-    /// Vielfachen davon (hier: 16) fallen ihre Striche sauber auf ganze Pixel.
-    /// Dazwischen entscheidet ohne Kantenglaettung ein Schwellwert willkuerlich,
-    /// welche Punkte gesetzt werden — das Ergebnis war beim Nutzer „hässlich".
-    private var schriftIstSilkscreen: Bool { schrift == "Silkscreen" }
+    /// Diese drei mitgelieferten Pixelschriften sind je aufs eigene Pixelraster
+    /// gezeichnet und tragen nur ihre eigene Entwurfsgroesse bzw. ein Vielfaches
+    /// davon sauber. Dazwischen entscheidet ohne Kantenglaettung ein Schwellwert
+    /// willkuerlich, welche Punkte gesetzt werden — das Ergebnis war beim
+    /// Nutzer „hässlich". Alle anderen Schriften bleiben im allgemeinen Bereich
+    /// 6...16 waehlbar.
+    static let sauberePixelgroessen: [String: [Double]] = [
+        "Micro 5": [12],
+        "Silkscreen": [8, 16],
+        "Tiny5": [8, 16],
+    ]
+
+    /// Die sauberen Groessen der aktuell gewaehlten Schrift, oder nil, wenn sie
+    /// keine Pixelschrift mit eigenem Raster ist.
+    private var zulaessigeGroessen: [Double]? { Self.sauberePixelgroessen[schrift] }
+
+    /// Deutscher Aufzaehlungstext der sauberen Groessen, etwa "8 und 16 Pixeln"
+    /// oder bei nur einem Wert "12 Pixeln" — fuer den erklaerenden Satz unten.
+    private func groessenText(_ werte: [Double]) -> String {
+        let zahlen = werte.map { String(Int($0)) }
+        guard let letzte = zahlen.last else { return "" }
+        guard zahlen.count > 1 else { return "\(letzte) Pixeln" }
+        return zahlen.dropLast().joined(separator: ", ") + " und \(letzte) Pixeln"
+    }
 
     private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, kern: zeichenabstand) }
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
@@ -299,8 +322,8 @@ struct SendenView: View {
                 Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
                     .font(.caption).foregroundStyle(.secondary)
             }
-            if schriftIstSilkscreen {
-                Text("Silkscreen ist aufs 8-Pixel-Raster gezeichnet — nur bei 8 und 16 Pixeln fallen ihre Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.")
+            if let zulaessig = zulaessigeGroessen {
+                Text("\(schrift) ist aufs Pixelraster gezeichnet — nur bei \(groessenText(zulaessig)) fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             HStack {
@@ -375,9 +398,11 @@ struct SendenView: View {
         .padding()
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
         .onChange(of: schrift) { _, neu in
-            // Wechsel weg von Silkscreen laesst die Groesse stehen — sie passt
-            // ja weiterhin in den allgemeinen Bereich 6...16.
-            if neu == "Silkscreen", groesse != 8, groesse != 16 { groesse = 8 }
+            // Wechsel weg von einer Pixelschrift laesst die Groesse stehen —
+            // sie passt ja weiterhin in den allgemeinen Bereich 6...16.
+            if let zulaessig = Self.sauberePixelgroessen[neu], !zulaessig.contains(groesse) {
+                groesse = zulaessig.min() ?? groesse
+            }
         }
         .task(id: laufschriftSchluessel) {
             guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
@@ -422,9 +447,10 @@ struct SendenView: View {
             .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
                                : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
 
-            if schriftIstSilkscreen {
-                Stepper("\(Int(groesse))", value: $groesse, in: 8...16, step: 8).frame(width: 80)
-                    .help("Schriftgröße — Silkscreen ist aufs 8-Pixel-Raster gezeichnet, dazwischen gibt es keine saubere Größe.")
+            if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
+                let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
+                Stepper("\(Int(groesse))", value: $groesse, in: erste...letzte, step: schritt).frame(width: 80)
+                    .help("Schriftgröße — \(schrift) ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.")
             } else {
                 Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
                     .help("Schriftgröße")
