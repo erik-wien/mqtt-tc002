@@ -4,6 +4,7 @@ import XCTest
 /// Faengt alle Anfragen ab und antwortet aus einer Tabelle. Kein Netz, kein Geraet.
 final class Doppelgaenger: URLProtocol {
     nonisolated(unsafe) static var antworten: [String: String] = [:]
+    nonisolated(unsafe) static var statusCodes: [String: Int] = [:]
     nonisolated(unsafe) static var gesendeteRuempfe: [String: String] = [:]
 
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -20,7 +21,8 @@ final class Doppelgaenger: URLProtocol {
             Self.gesendeteRuempfe[pfad] = String(data: koerper, encoding: .utf8) ?? ""
         }
         let text = Self.antworten[pfad] ?? "{}"
-        let antwort = HTTPURLResponse(url: request.url!, statusCode: 200,
+        let status = Self.statusCodes[pfad] ?? 200
+        let antwort = HTTPURLResponse(url: request.url!, statusCode: status,
                                       httpVersion: nil, headerFields: nil)!
         client?.urlProtocol(self, didReceive: antwort, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data(text.utf8))
@@ -44,6 +46,7 @@ final class GeraetTests: XCTestCase {
             "/getConfig": #"{"brightness":{"level":"high"},"volume":4,"carouselSpeed":0,"scrollSpeed":7}"#,
             "/setConfig": #"{"code":200,"message":"Settings saved successfully"}"#,
         ]
+        Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
     }
 
@@ -71,5 +74,30 @@ final class GeraetTests: XCTestCase {
         XCTAssertTrue(gesendet.contains("\"carouselSpeed\":10"))
         XCTAssertTrue(gesendet.contains("\"volume\""), "die übrigen Felder müssen mit")
         XCTAssertTrue(gesendet.contains("\"scrollSpeed\""))
+    }
+
+    /// Kein gueltiges JSON darf nicht als roher Systemfehler nach aussen dringen.
+    func testUngueltigesJsonErgibtGeraetFehler() {
+        Doppelgaenger.antworten["/getBase"] = "das ist kein JSON"
+        XCTAssertThrowsError(try geraet().basis()) { fehler in
+            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
+        }
+    }
+
+    /// Eine leere Antwort ist ebenfalls kein gueltiges JSON und muss genauso behandelt werden.
+    func testLeereAntwortErgibtGeraetFehler() {
+        Doppelgaenger.antworten["/getBase"] = ""
+        XCTAssertThrowsError(try geraet().basis()) { fehler in
+            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
+        }
+    }
+
+    /// Ein HTTP-Fehlerstatus muss erkannt werden, bevor irgendwelche (dann leeren)
+    /// Werte zurueckgegeben werden — sonst zeigt die Oberflaeche Unsinn als Wahrheit an.
+    func testHttpFehlerstatusErgibtGeraetFehlerVorLeerenWerten() {
+        Doppelgaenger.statusCodes["/getBase"] = 500
+        XCTAssertThrowsError(try geraet().basis()) { fehler in
+            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
+        }
     }
 }

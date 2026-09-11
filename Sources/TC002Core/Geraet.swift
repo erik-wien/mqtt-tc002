@@ -11,11 +11,13 @@ public struct MqttEinstellungen: Equatable, Sendable {
 public enum GeraetFehler: Error, LocalizedError {
     case nichtErreichbar(String)
     case unerwarteteAntwort(String)
+    case httpFehler(pfad: String, code: Int)
 
     public var errorDescription: String? {
         switch self {
         case .nichtErreichbar(let g): return "Die Uhr ist nicht erreichbar: \(g)"
         case .unerwarteteAntwort(let w): return "Die Uhr hat unerwartet geantwortet: \(w)"
+        case .httpFehler(let pfad, let code): return "Die Uhr hat einen Fehler gemeldet: \(pfad) (Status \(code))"
         }
     }
 }
@@ -52,7 +54,6 @@ public struct Geraet {
     public func themenPraefix() throws -> String {
         let eingestellt = try mqttEinstellungen().praefix
         let mac = try basis().mac
-        guard mac.count >= 4 else { return eingestellt }
         return eingestellt + "_" + String(mac.suffix(4))
     }
 
@@ -79,23 +80,34 @@ public struct Geraet {
 
     private func hole(_ pfad: String) throws -> [String: Any] {
         let daten = try fuehreAus(URLRequest(url: URL(string: "http://\(host)\(pfad)")!))
-        guard let objekt = try JSONSerialization.jsonObject(with: daten) as? [String: Any] else {
+        let objekt: Any
+        do {
+            objekt = try JSONSerialization.jsonObject(with: daten)
+        } catch {
             throw GeraetFehler.unerwarteteAntwort(pfad)
         }
-        return objekt
+        guard let woerterbuch = objekt as? [String: Any] else {
+            throw GeraetFehler.unerwarteteAntwort(pfad)
+        }
+        return woerterbuch
     }
 
     private func fuehreAus(_ anfrage: URLRequest) throws -> Data {
         var ergebnis: Data?
+        var antwort: URLResponse?
         var fehler: Error?
         let fertig = DispatchSemaphore(value: 0)
-        sitzung.dataTask(with: anfrage) { d, _, f in
-            ergebnis = d; fehler = f; fertig.signal()
+        sitzung.dataTask(with: anfrage) { d, r, f in
+            ergebnis = d; antwort = r; fehler = f; fertig.signal()
         }.resume()
         guard fertig.wait(timeout: .now() + 10) == .success else {
             throw GeraetFehler.nichtErreichbar("keine Antwort")
         }
         if let fehler { throw GeraetFehler.nichtErreichbar(fehler.localizedDescription) }
+        let pfad = anfrage.url?.path ?? ""
+        if let http = antwort as? HTTPURLResponse, http.statusCode >= 400 {
+            throw GeraetFehler.httpFehler(pfad: pfad, code: http.statusCode)
+        }
         guard let ergebnis else { throw GeraetFehler.nichtErreichbar("leere Antwort") }
         return ergebnis
     }
