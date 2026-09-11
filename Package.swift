@@ -10,5 +10,7 @@ let package = Package(
                           swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002CoreTests", dependencies: ["TC002Core"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
+        .testTarget(name: "TC002AppTests", dependencies: ["TC002App"],
+                    swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )
