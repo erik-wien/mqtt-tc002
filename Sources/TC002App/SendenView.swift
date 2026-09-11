@@ -59,7 +59,7 @@ struct SendenView: View {
     /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
-    @AppStorage("senden.schriftart") private var schrift = "Menlo"
+    @AppStorage("senden.schriftart") private var schrift = "Chicago"
     @AppStorage("senden.groesse") private var groesse = 11.0
     @AppStorage("senden.fett") private var fett = false
     /// Wandelt erst beim Rastern bzw. beim Bauen des `Textblock` um (siehe
@@ -115,8 +115,26 @@ struct SendenView: View {
         return n
     }
 
+    /// Geprueft bei 16 Pixeln Hoehe: Diese Schriften rastern mit gleichmaessigen
+    /// Strichstaerken. Chicago steht vorn, weil sie urspruenglich auf dem
+    /// Pixelraster entworfen wurde und dem Aussehen der Geraetschrift am
+    /// naechsten kommt. Alle anderen installierten Schriften sind bei dieser
+    /// Groesse unbrauchbar — Courier, SF Mono und Helvetica etwa bekommen
+    /// Loecher in den Stammen.
+    static let geeigneteSchriften = ["Chicago", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
+
     /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
-    private static let schriftarten = NSFontManager.shared.availableFontFamilies.sorted()
+    /// Gefiltert auf das, was dieser Mac tatsaechlich installiert hat; nicht jede
+    /// dieser sechs Schriften bringt jedes macOS mit. Bleibt danach nichts uebrig
+    /// (kaum vorstellbar, aber moeglich), faellt es auf die Systemschrift zurueck,
+    /// statt eine leere Auswahl zu zeigen.
+    private static let schriftarten: [String] = {
+        let installiert = Set(NSFontManager.shared.availableFontFamilies)
+        let gefiltert = geeigneteSchriften.filter(installiert.contains)
+        return gefiltert.isEmpty
+            ? [NSFont.systemFont(ofSize: NSFont.systemFontSize).familyName ?? "Helvetica"]
+            : gefiltert
+    }()
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
@@ -265,6 +283,10 @@ struct SendenView: View {
             }
 
             formatleiste
+            if weg == .pixel {
+                Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             HStack {
                 TextField("Text", text: $text)
                 IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
@@ -366,6 +388,13 @@ struct SendenView: View {
         HStack(spacing: 10) {
             Picker("Schriftart", selection: $schrift) {
                 ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+                // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
+                // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
+                // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
+                if !Self.schriftarten.contains(schrift) {
+                    Divider()
+                    Text(schrift).tag(schrift)
+                }
             }
             .labelsHidden().frame(width: 150)
             .disabled(weg == .text)
