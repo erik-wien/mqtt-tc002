@@ -30,7 +30,6 @@ struct SendenView: View {
     @State private var vertikal: SendenVAusrichtung = .oben
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
-    @State private var suche = ""
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
     /// mehreren Zieluhren zaehlt jede davon.
@@ -90,20 +89,20 @@ struct SendenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             formatleiste
-            TextField("Text", text: $text)
-
-            HStack(alignment: .top, spacing: 20) {
-                VStack(alignment: .leading) {
-                    VorschauView(feld: feld, icon: gewaehltesIcon?.datei)
-                    if !passt {
-                        Label("Der Text ist breiter als das Display und wird abgeschnitten.",
-                              systemImage: "exclamationmark.triangle")
-                            .font(.footnote).foregroundStyle(.orange)
-                    }
-                }
-                iconAuswahl
+            HStack {
+                TextField("Text", text: $text)
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
             }
-            .frame(maxHeight: .infinity)
+
+            VStack(alignment: .leading) {
+                VorschauView(feld: feld, kantenlaenge: 12, icon: gewaehltesIcon?.datei)
+                if !passt {
+                    Label("Der Text ist breiter als das Display und wird abgeschnitten.",
+                          systemImage: "exclamationmark.triangle")
+                        .font(.footnote).foregroundStyle(.orange)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             Divider()
 
@@ -182,38 +181,6 @@ struct SendenView: View {
         .background(aktiv ? Color.accentColor.opacity(0.3) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .help(hilfe)
-    }
-
-    private var gefilterte: [Icon] { sammlung.alle().gefiltert(nach: suche) }
-
-    private var iconAuswahl: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Icon").font(.headline)
-            TextField("Suchen", text: $suche)
-                .textFieldStyle(.roundedBorder)
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 6) {
-                    Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
-                        .buttonStyle(.bordered)
-                    ForEach(gefilterte, id: \.nummer) { icon in
-                        Button { gewaehltesIcon = icon } label: {
-                            VStack(spacing: 2) {
-                                if let bild = NSImage(contentsOf: icon.datei) {
-                                    Image(nsImage: bild).interpolation(.none)
-                                        .resizable().frame(width: 32, height: 32)
-                                }
-                                Text(icon.name).font(.system(size: 9)).lineLimit(1)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .padding(3)
-                        .background(gewaehltesIcon?.nummer == icon.nummer ? Color.accentColor.opacity(0.25) : .clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
-                }
-            }
-        }
-        .frame(minWidth: 220, maxWidth: 220, maxHeight: .infinity, alignment: .top)
     }
 
     private func senden() {
