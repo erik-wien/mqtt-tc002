@@ -1,9 +1,12 @@
+import AppKit
 import SwiftUI
 import TC002Core
 
 struct MalenView: View {
     @Bindable var zustand: AppZustand
 
+    /// Das zuletzt gemalte Feld ueberlebt den Neustart — nur das eine, keine
+    /// Sammlung mehrerer Bilder. `pixelfeldSichern()` schreibt es weg.
     @State private var feld = Pixelfeld()
     /// Als "#RRGGBB" gesichert wie in SendenView: @AppStorage kennt keine Color.
     @AppStorage("malen.farbe") private var farbeHex = "#00FF66"
@@ -11,6 +14,21 @@ struct MalenView: View {
     @AppStorage("malen.meldungsplatz") private var platz = 1
     @AppStorage("malen.dauer") private var dauerText = ""
     @State private var laeuft = false
+
+    init(zustand: AppZustand) {
+        self.zustand = zustand
+        let punkte = try? JSONDecoder().decode([String?].self,
+                        from: UserDefaults.standard.data(forKey: "malen.feld") ?? Data())
+        _feld = State(initialValue: punkte.flatMap { Pixelfeld(punkte: $0) } ?? Pixelfeld())
+    }
+
+    /// Nicht bei jedem einzelnen Pixel waehrend des Ziehens — das waeren hunderte
+    /// Schreibvorgaenge je Strich —, sondern beim Loslassen, beim Verlassen der
+    /// Ansicht und beim Beenden des Programms.
+    private func pixelfeldSichern() {
+        guard let daten = try? JSONEncoder().encode(feld.punkteRoh) else { return }
+        UserDefaults.standard.set(daten, forKey: "malen.feld")
+    }
 
     /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
     private var farbe: Binding<Color> {
@@ -49,7 +67,7 @@ struct MalenView: View {
             HStack {
                 ColorPicker("Farbe", selection: farbe)
                 Toggle("Radierer", isOn: $radierer).toggleStyle(.button)
-                Button("Leeren") { feld.alleLoeschen() }
+                Button("Leeren") { feld.alleLoeschen(); pixelfeldSichern() }
                 Menu("Icon einfügen") {
                     ForEach(sammlung.alle(), id: \.nummer) { icon in
                         Button(icon.name) { iconEinfuegen(icon) }
@@ -86,6 +104,13 @@ struct MalenView: View {
             Spacer()
         }
         .padding()
+        .onDisappear { pixelfeldSichern() }
+        // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben erst
+        // gemalter, noch ungesicherter Strich verloren, wenn beim Beenden gerade
+        // diese Ansicht offen ist. Denselben Kniff nutzt App.swift fuer das Kennwort.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            pixelfeldSichern()
+        }
     }
 
     private var malflaeche: some View {
@@ -101,10 +126,12 @@ struct MalenView: View {
         }
         .frame(width: Double(feld.breite) * kante, height: Double(feld.hoehe) * kante)
         .background(Color.black)
-        .gesture(DragGesture(minimumDistance: 0).onChanged { wert in
-            let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-            if radierer { feld.loeschen(x: x, y: y) } else { feld.setzen(x: x, y: y, farbe: farbeHex) }
-        })
+        .gesture(DragGesture(minimumDistance: 0)
+            .onChanged { wert in
+                let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
+                if radierer { feld.loeschen(x: x, y: y) } else { feld.setzen(x: x, y: y, farbe: farbeHex) }
+            }
+            .onEnded { _ in pixelfeldSichern() })
         .frame(maxWidth: .infinity, alignment: .center)
         .background(
             GeometryReader { geo in

@@ -14,6 +14,19 @@ public struct Pixelfeld: Equatable, Sendable {
         punkte = Array(repeating: nil, count: breite * hoehe)
     }
 
+    /// Alle Punkte zeilenweise von oben links. `nil` heisst aus. Fuer die
+    /// Sicherung ausserhalb dieses Typs (z. B. UserDefaults) — Zugriff sonst
+    /// nur ueber `farbe(x:y:)` und `setzen(x:y:farbe:)`.
+    public var punkteRoh: [String?] { punkte }
+
+    /// Baut ein Feld aus so einem Feld zurueck. Passt die Laenge nicht zu
+    /// breite × hoehe, kommt nil heraus statt eines halben Bildes.
+    public init?(breite: Int = breiteStandard, hoehe: Int = hoeheStandard, punkte: [String?]) {
+        guard punkte.count == breite * hoehe else { return nil }
+        self.breite = breite; self.hoehe = hoehe
+        self.punkte = punkte
+    }
+
     private func drin(_ x: Int, _ y: Int) -> Bool {
         x >= 0 && y >= 0 && x < breite && y < hoehe
     }

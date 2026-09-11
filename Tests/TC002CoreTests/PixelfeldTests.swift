@@ -47,4 +47,22 @@ final class PixelfeldTests: XCTestCase {
         feld.setzen(x: 0, y: 99, farbe: "#FFFFFF")
         XCTAssertTrue(feld.alsDrawBefehle().isEmpty)
     }
+
+    /// Grundlage der Sicherung ueber Neustarts: hinaus und wieder hinein muss
+    /// dasselbe Feld ergeben.
+    func testPunkteRohHinUndZurueckErgibtDasselbeFeld() throws {
+        var feld = Pixelfeld()
+        feld.setzen(x: 0, y: 0, farbe: "#FF0000")
+        feld.setzen(x: 51, y: 15, farbe: "#00FF00")
+
+        let zurueck = try XCTUnwrap(Pixelfeld(punkte: feld.punkteRoh))
+
+        XCTAssertEqual(zurueck, feld)
+    }
+
+    /// Eine falsche Laenge (z. B. ein veraltetes oder verbogenes Feld) darf kein
+    /// halbes Bild ergeben, sondern muss klar scheitern.
+    func testFalscheLaengeErgibtNil() {
+        XCTAssertNil(Pixelfeld(punkte: Array(repeating: nil, count: 10)))
+    }
 }
