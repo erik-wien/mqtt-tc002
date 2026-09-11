@@ -15,17 +15,12 @@ struct IconEditorView: View {
     @State private var meldung: String?
     @State private var lametricNummer = ""
     @State private var laedt = false
+    @State private var suche = ""
 
     private let kante: Double = 28
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
-    }
-
-    private var hexFarbe: String {
-        let f = NSColor(farbe).usingColorSpace(.sRGB) ?? .white
-        return String(format: "#%02X%02X%02X",
-                      Int(f.redComponent * 255), Int(f.greenComponent * 255), Int(f.blueComponent * 255))
     }
 
     var body: some View {
@@ -56,23 +51,29 @@ struct IconEditorView: View {
             .gesture(DragGesture(minimumDistance: 0).onChanged { wert in
                 let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
                 guard (0..<8).contains(x), (0..<8).contains(y) else { return }
-                pixel[y * 8 + x] = radiert ? nil : hexFarbe
+                pixel[y * 8 + x] = radiert ? nil : farbe.hexWert
             })
 
             HStack {
-                ColorPicker("Farbe", selection: $farbe).labelsHidden()
+                ColorPicker("Farbe", selection: $farbe)
                 Toggle("Radieren", isOn: $radiert).toggleStyle(.button)
                 Button("Alles löschen") { pixel = [String?](repeating: nil, count: 64) }
                 Spacer()
             }
 
-            HStack {
-                TextField("Nummer", text: $nummer).frame(width: 110)
-                TextField("Name", text: $name).frame(width: 180)
-                Button("Sichern") { sichern() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(nummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    nummerFeld
+                    nameFeld
+                    sichernKnopf
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack { nummerFeld; nameFeld }
+                    sichernKnopf
+                }
             }
+            Text("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
+                .font(.caption2).foregroundStyle(.secondary)
 
             if let meldung {
                 Text(meldung).font(.callout).foregroundStyle(.secondary)
@@ -82,9 +83,39 @@ struct IconEditorView: View {
         .padding()
     }
 
+    private var nummerFeld: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Nummer").font(.caption).foregroundStyle(.secondary)
+            TextField("Nummer", text: $nummer).frame(minWidth: 90)
+        }
+    }
+
+    private var nameFeld: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Name").font(.caption).foregroundStyle(.secondary)
+            TextField("Name", text: $name).frame(minWidth: 140)
+        }
+    }
+
+    private var sichernKnopf: some View {
+        Button("Sichern") { sichern() }
+            .keyboardShortcut(.defaultAction)
+            .disabled(nummer.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
+
+    private var gefilterte: [Icon] {
+        let s = suche.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return vorhandene }
+        return vorhandene.filter {
+            $0.name.localizedCaseInsensitiveContains(s) || $0.nummer.localizedCaseInsensitiveContains(s)
+        }
+    }
+
     private var seitenleiste: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Vorhandene Icons").font(.headline)
+            Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
+                .font(.caption)
             HStack {
                 TextField("LaMetric-Nummer", text: $lametricNummer)
                     .frame(width: 140)
@@ -94,7 +125,9 @@ struct IconEditorView: View {
             }
             Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
                 .font(.caption).foregroundStyle(.secondary)
-            List(vorhandene, id: \.nummer) { icon in
+            TextField("Suchen", text: $suche)
+                .textFieldStyle(.roundedBorder)
+            List(gefilterte, id: \.nummer) { icon in
                 HStack {
                     if let bild = NSImage(contentsOf: icon.datei) {
                         Image(nsImage: bild).interpolation(.none)
@@ -122,33 +155,16 @@ struct IconEditorView: View {
     /// Laedt ein Icon zurueck ins Raster. Groesseres wird auf 8×8 gerechnet — die
     /// Uhr zeigt ohnehin nur 8×8.
     private func oeffnen(_ icon: Icon) {
-        guard let bild = NSImage(contentsOf: icon.datei),
-              let cg = bild.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+        do {
+            // Schwarz bleibt Schwarz. Beim Sichern wird „aus“ zu Schwarz, weil GIF hier
+            // keine Durchsichtigkeit traegt und die Uhr ohnehin schwarzen Grund hat —
+            // nach einem Rundlauf sind „aus“ und „schwarz gemalt“ deshalb dasselbe und
+            // nicht mehr auseinanderzuhalten. Ein schwarzes Pixel hier zu leeren waere
+            // kein Rueckweg, sondern Verlust: was schwarz gemalt war, waere weg.
+            pixel = try sammlung.pixel(fuer: icon)
+        } catch {
             meldung = "Dieses Icon lässt sich nicht öffnen."
             return
-        }
-        var bytes = [UInt8](repeating: 0, count: 64 * 4)
-        guard let kontext = CGContext(data: &bytes, width: 8, height: 8, bitsPerComponent: 8,
-                                      bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
-            meldung = "Dieses Icon lässt sich nicht öffnen."
-            return
-        }
-        kontext.interpolationQuality = .none
-        kontext.draw(cg, in: CGRect(x: 0, y: 0, width: 8, height: 8))
-        // CGContext hat den Ursprung unten links, das Raster oben links.
-        for y in 0..<8 {
-            for x in 0..<8 {
-                let q = ((7 - y) * 8 + x) * 4
-                let hex = String(format: "#%02X%02X%02X", Int(bytes[q]), Int(bytes[q + 1]), Int(bytes[q + 2]))
-                // Schwarz bleibt Schwarz. Beim Sichern wird „aus“ zu Schwarz, weil GIF
-                // hier keine Durchsichtigkeit traegt und die Uhr ohnehin schwarzen
-                // Grund hat — nach einem Rundlauf sind „aus“ und „schwarz gemalt“
-                // deshalb dasselbe und nicht mehr auseinanderzuhalten. Ein schwarzes
-                // Pixel hier zu leeren waere kein Rueckweg, sondern Verlust: was schwarz
-                // gemalt war, waere weg.
-                pixel[y * 8 + x] = hex
-            }
         }
         nummer = icon.nummer
         name = icon.name
