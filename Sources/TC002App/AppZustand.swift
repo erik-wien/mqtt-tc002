@@ -20,13 +20,25 @@ final class AppZustand {
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     var verbunden: [UUID: Bool] = [:]
 
-    var brokerHost: String { didSet { merke(brokerHost, "brokerHost") } }
-    var brokerPort: String { didSet { merke(brokerPort, "brokerPort") } }
-    var benutzer: String { didSet { merke(benutzer, "benutzer") } }
-    /// Ohne didSet: jeder Schreibvorgang loescht den Schluesselbund-Eintrag und legt
-    /// ihn neu an — das gehoert nicht an jeden Tastendruck. `kennwortSichern()` ruft,
-    /// wer die Eingabe abschliesst.
-    var kennwort: String
+    var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
+    var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
+    var benutzer: String { didSet { merke(benutzer, "benutzer"); brokerStand = .unbekannt } }
+    /// Ohne Schluesselbund-Schreibvorgang im didSet: jeder Schreibvorgang loeschte den
+    /// Eintrag und legte ihn neu an — das gehoert nicht an jeden Tastendruck.
+    /// `kennwortSichern()` ruft, wer die Eingabe abschliesst.
+    var kennwort: String { didSet { brokerStand = .unbekannt } }
+
+    enum Brokerstand: Equatable {
+        case unbekannt
+        case laeuft
+        case angenommen
+        case abgelehnt(String)
+    }
+
+    /// Nicht gesichert: eine Momentaufnahme der letzten Pruefung, keine Einstellung.
+    /// Jede Aenderung an Adresse, Port, Konto oder Kennwort setzt sie zurueck, damit
+    /// kein veraltetes „angenommen“ stehenbleibt.
+    var brokerStand: Brokerstand = .unbekannt
 
     var fehler: String?
     var protokoll: [String] = []
@@ -50,6 +62,30 @@ final class AppZustand {
             return
         }
         kennwortGesichert = kennwort
+    }
+
+    /// Sichert die Broker-Angaben ausdruecklich und fragt den Broker, ob er sie
+    /// annimmt. Ohne das erfaehrt man einen Tippfehler im Kennwort erst dann,
+    /// wenn eine Sendung stillschweigend nicht ankommt.
+    func brokerSichernUndPruefen() {
+        kennwortSichern()
+        guard let zugang else {
+            brokerStand = .abgelehnt("Broker-Port muss eine Zahl über 0 sein.")
+            return
+        }
+        brokerStand = .laeuft
+        Task.detached { [weak self] in
+            // Blockiert bis zu acht Sekunden — nicht auf dem Hauptthread.
+            var pruefZugang = zugang
+            pruefZugang.clientID = "tc002-app-pruef"
+            do {
+                try MQTTSender().pruefen(zugang: pruefZugang)
+                await MainActor.run { [weak self] in self?.brokerStand = .angenommen }
+            } catch {
+                let meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                await MainActor.run { [weak self] in self?.brokerStand = .abgelehnt(meldung) }
+            }
+        }
     }
 
     private var initialisiert = false

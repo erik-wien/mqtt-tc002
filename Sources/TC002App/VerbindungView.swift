@@ -38,13 +38,10 @@ struct VerbindungView: View {
                 }
                 HStack {
                     TextField("Adresse einer weiteren Uhr", text: $neuerHost)
-                    Button("Hinzufügen") {
-                        let host = neuerHost.trimmingCharacters(in: .whitespaces)
-                        guard !host.isEmpty else { return }
-                        zustand.uhrHinzufuegen(host: host)
-                        neuerHost = ""
-                    }
-                    .disabled(neuerHost.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(minWidth: 220)
+                        .onSubmit { uhrHinzufuegen() }
+                    Button("Hinzufügen") { uhrHinzufuegen() }
                 }
                 Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -59,6 +56,11 @@ struct VerbindungView: View {
                     .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
                 Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
                     .font(.footnote).foregroundStyle(.secondary)
+                HStack {
+                    Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
+                        .disabled(zustand.brokerStand == .laeuft)
+                    brokerStandAnzeige
+                }
             }
         }
         .formStyle(.grouped)
@@ -67,5 +69,32 @@ struct VerbindungView: View {
         // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort dabei verloren.
         .onDisappear { zustand.kennwortSichern() }
+    }
+
+    private func uhrHinzufuegen() {
+        let host = neuerHost.trimmingCharacters(in: .whitespaces)
+        guard !host.isEmpty else { return }
+        zustand.uhrHinzufuegen(host: host)
+        neuerHost = ""
+    }
+
+    @ViewBuilder
+    private var brokerStandAnzeige: some View {
+        switch zustand.brokerStand {
+        case .unbekannt:
+            Text("noch nicht geprüft")
+                .font(.footnote).foregroundStyle(.secondary)
+        case .laeuft:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("prüfe…").font(.footnote).foregroundStyle(.secondary)
+            }
+        case .angenommen:
+            Text("Der Broker nimmt die Anmeldung an.")
+                .font(.footnote).foregroundStyle(.green)
+        case .abgelehnt(let text):
+            Text(text)
+                .font(.footnote).foregroundStyle(.red)
+        }
     }
 }
