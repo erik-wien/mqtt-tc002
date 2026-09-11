@@ -28,6 +28,7 @@ struct TC002App: App {
             } detail: {
                 switch bereich ?? .senden {
                 case .senden: SendenView(zustand: zustand)
+                case .malen: MalenView(zustand: zustand)
                 case .verbindung: VerbindungView(zustand: zustand)
                 default: Text("kommt in der nächsten Aufgabe").foregroundStyle(.secondary)
                 }
