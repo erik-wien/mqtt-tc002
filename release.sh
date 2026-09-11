@@ -24,7 +24,7 @@ fi
 
 PROFIL="${TC002_NOTAR_PROFIL:-MQTT-TC002}"
 APP="build/MQTT-TC002.app"
-ZIP="build/MQTT-TC002-$VERSION.zip"
+DMG="build/MQTT-TC002-$VERSION.dmg"
 
 IDENTITAET=$(security find-identity -v -p codesigning \
              | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' | head -1)
@@ -49,26 +49,31 @@ echo "== Signieren mit Developer ID =="
 codesign --force --options runtime --timestamp -s "$IDENTITAET" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
-echo "== Einpacken =="
-# ditto statt zip: erhaelt die Symbolverweise und erweiterten Attribute des Buendels.
-ditto -c -k --keepParent "$APP" "$ZIP"
+echo "== Installationsabbild schnueren =="
+# Erst jetzt, nach dem Signieren: die App im Abbild muss die fertige sein.
+scripts/dmg-bauen.sh "$VERSION"
+
+echo "== Abbild signieren =="
+codesign --force --timestamp -s "$IDENTITAET" "$DMG"
 
 echo "== Notarisieren (das dauert ein paar Minuten) =="
-xcrun notarytool submit "$ZIP" --keychain-profile "$PROFIL" --wait
+# Das Abbild wird eingereicht, nicht die App darin — Apple sieht hinein.
+xcrun notarytool submit "$DMG" --keychain-profile "$PROFIL" --wait
 
-echo "== Notarisierung ans Buendel heften =="
-# Damit laeuft die App auch, wenn der Rechner gerade kein Netz hat.
-xcrun stapler staple "$APP"
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
+echo "== Notarisierung ans Abbild heften =="
+# Damit laeuft es auch auf einem Rechner, der gerade kein Netz hat.
+xcrun stapler staple "$DMG"
 
 echo "== Gegenprobe =="
-# Das ist die Frage, die Gatekeeper beim Oeffnen stellt.
-spctl -a -vvv -t install "$APP"
-xcrun stapler validate "$APP"
+# Genau die Frage, die Gatekeeper stellt — einmal fuers Abbild, einmal fuer die
+# App darin. Beide muessen durchgehen, sonst sieht der Empfaenger eine Warnung.
+xcrun stapler validate "$DMG"
+hdiutil attach "$DMG" -noautoopen -readonly >/dev/null
+spctl -a -vvv -t install "/Volumes/MQTT-TC002/MQTT-TC002.app"
+hdiutil detach "/Volumes/MQTT-TC002" >/dev/null
 
 echo
-echo "fertig: $ZIP"
+echo "fertig: $DMG ($(du -h "$DMG" | cut -f1))"
 echo
 echo "Als Release veroeffentlichen:"
-echo "  gh release create v$VERSION \"$ZIP\" --title \"MQTT-TC002 $VERSION\" --notes-file <datei>"
+echo "  gh release create v$VERSION \"$DMG\" --title \"MQTT-TC002 $VERSION\" --notes-file <datei>"
