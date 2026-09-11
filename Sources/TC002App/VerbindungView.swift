@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 struct VerbindungView: View {
     @Bindable var zustand: AppZustand
@@ -6,6 +7,15 @@ struct VerbindungView: View {
     /// Das Kennwort wandert beim Verlassen des Feldes in den Schluesselbund, nicht
     /// bei jedem Tastendruck.
     @FocusState private var kennwortFokus: Bool
+
+    @State private var seitenwechsel = 0
+    @State private var geladen = false
+    /// Kennzeichen fuer den gelesenen Wert: das folgende .onChange stammt dann vom
+    /// Laden, nicht vom Nutzer, und darf nicht zurueckschreiben.
+    @State private var ladeLauf = false
+    /// Waehlt der Nutzer, waehrend die Abfrage noch unterwegs ist, darf der spaeter
+    /// eintreffende gelesene Wert seine Wahl nicht ueberschreiben.
+    @State private var nutzerHatGewaehlt = false
 
     var body: some View {
         Form {
@@ -46,6 +56,17 @@ struct VerbindungView: View {
                 Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
+            Section("Einstellungen der aktiven Uhr") {
+                Picker("Seitenwechsel", selection: $seitenwechsel) {
+                    Text("kein Wechsel").tag(0)
+                    ForEach([10, 20, 30, 60], id: \.self) { Text("alle \($0) Sekunden").tag($0) }
+                }
+                .onChange(of: seitenwechsel) { _, neu in
+                    guard !ladeLauf else { ladeLauf = false; return }
+                    nutzerHatGewaehlt = true
+                    setzen("carouselSpeed", neu)
+                }
+            }
             Section("Broker") {
                 TextField("Adresse", text: $zustand.brokerHost)
                 TextField("Port", text: $zustand.brokerPort)
@@ -69,6 +90,37 @@ struct VerbindungView: View {
         // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort dabei verloren.
         .onDisappear { zustand.kennwortSichern() }
+        .task {
+            guard !geladen else { return }
+            geladen = true
+            guard let host = zustand.aktiveUhr?.host else { return }
+            // .task laeuft auf dem Hauptthread, konfiguration() blockiert bis zur Antwort
+            // der Uhr. Ohne den losgeloesten Task steht das Fenster so lange still.
+            let ergebnis: (wert: Int?, fehler: String?) = await Task.detached {
+                do { return (try Geraet(host: host).konfiguration()["carouselSpeed"] as? Int, nil) }
+                catch { return (nil, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
+            }.value
+            // Ohne Meldung zeigte der Picker nach einem Fehlschlag faelschlich
+            // "kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
+            if let meldung = ergebnis.fehler {
+                zustand.fehler = "Die Einstellung „Seitenwechsel“ ließ sich nicht lesen: \(meldung)"
+            } else if let wert = ergebnis.wert {
+                // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
+                // seine Wahl — der spaet eintreffende gelesene Wert ueberschreibt sie nicht.
+                if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
+            } else {
+                zustand.fehler = "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet."
+            }
+        }
+    }
+
+    private func setzen(_ feld: String, _ wert: Int) {
+        guard let host = zustand.aktiveUhr?.host else { return }
+        Task.detached {
+            do { try Geraet(host: host).konfigurationSetzen(feld, wert)
+                 await MainActor.run { zustand.log("\(feld) auf \(wert) gesetzt") } }
+            catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
+        }
     }
 
     private func uhrHinzufuegen() {

@@ -40,8 +40,19 @@ final class AppZustand {
     /// kein veraltetes „angenommen“ stehenbleibt.
     var brokerStand: Brokerstand = .unbekannt
 
-    var fehler: String?
+    /// Jede Fehlermeldung geht an zwei Stellen: in den Hinweis, der sofort auffaellt,
+    /// und ins Protokoll, wo sie auch nach dem Wegklicken nachlesbar bleibt.
+    var fehler: String? {
+        didSet {
+            if let fehler, fehler != oldValue { log(fehler) }
+        }
+    }
     var protokoll: [String] = []
+    private static let protokollZeit: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
 
     /// Die Uhr verrät nicht, welche Anzeigen sie kennt — die App merkt sich, was sie
     /// selbst angelegt hat. Je Uhr getrennt: „Löschen“ schickt die leere Nutzlast nur
@@ -70,7 +81,9 @@ final class AppZustand {
     func brokerSichernUndPruefen() {
         kennwortSichern()
         guard let zugang else {
-            brokerStand = .abgelehnt("Broker-Port muss eine Zahl über 0 sein.")
+            let meldung = "Broker-Port muss eine Zahl über 0 sein."
+            brokerStand = .abgelehnt(meldung)
+            log("Broker-Prüfung abgelehnt: \(meldung)")
             return
         }
         brokerStand = .laeuft
@@ -80,10 +93,16 @@ final class AppZustand {
             pruefZugang.clientID = "tc002-app-pruef"
             do {
                 try MQTTSender().pruefen(zugang: pruefZugang)
-                await MainActor.run { [weak self] in self?.brokerStand = .angenommen }
+                await MainActor.run { [weak self] in
+                    self?.brokerStand = .angenommen
+                    self?.log("Broker-Prüfung: angenommen")
+                }
             } catch {
                 let meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-                await MainActor.run { [weak self] in self?.brokerStand = .abgelehnt(meldung) }
+                await MainActor.run { [weak self] in
+                    self?.brokerStand = .abgelehnt(meldung)
+                    self?.log("Broker-Prüfung abgelehnt: \(meldung)")
+                }
             }
         }
     }
@@ -140,7 +159,7 @@ final class AppZustand {
     var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
 
     func log(_ zeile: String) {
-        protokoll.append(zeile)
+        protokoll.append("\(Self.protokollZeit.string(from: Date())) \(zeile)")
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }
     }
 
