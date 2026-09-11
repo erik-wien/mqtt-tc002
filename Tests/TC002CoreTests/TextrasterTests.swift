@@ -258,4 +258,19 @@ final class TextrasterTests: XCTestCase {
         XCTAssertGreaterThan(tinte?.erste ?? 0, 0,
                              "die Grundlinie legt die Tinte tiefer als an den oberen Rand")
     }
+
+    /// Die Formatknoepfe richten sich danach. Menlo hat einen fetten Schnitt,
+    /// und Kleinbuchstaben kennt sie auch — das ist die Gegenprobe dazu, dass
+    /// die Messung ueberhaupt etwas unterscheidet.
+    func testMenloKannFettUndKleinbuchstaben() {
+        XCTAssertTrue(Textraster.kannFett(schrift: "Menlo", groesse: 11))
+        XCTAssertTrue(Textraster.kannKleinbuchstaben(schrift: "Menlo", groesse: 11))
+    }
+
+    /// Und die Gegenrichtung: Bei einer Schrift ohne fetten Schnitt faellt das
+    /// Rasterergebnis zusammen, dann bleibt der Knopf gesperrt.
+    func testOhneFettenSchnittFaelltDasRasterZusammen() {
+        // Geneva hat auf dieser Groesse keinen eigenen fetten Schnitt.
+        XCTAssertFalse(Textraster.kannFett(schrift: "Geneva", groesse: 12))
+    }
 }

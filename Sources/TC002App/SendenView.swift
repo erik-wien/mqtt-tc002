@@ -216,6 +216,31 @@ struct SendenView: View {
     /// zusaetzlich nach unten geschoben; „oben" hiess damit „lass es, wo es ist",
     /// und „unten" schob die Tinte unten hinaus. Deshalb wird hier erst gemessen,
     /// wo sie liegt, und dann die Verschiebung dorthin gerechnet, wo sie hinsoll.
+    /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
+    /// aendert — gemessen, nicht geraten. Sechs der acht angebotenen Schriften
+    /// haben keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner.
+    private var fettWirkt: Bool {
+        weg != .text && Textraster.kannFett(schrift: schrift, groesse: groesse)
+    }
+
+    /// Ob die Schrift eigene Kleinbuchstaben kennt. Silkscreen etwa setzt alles
+    /// in Versalien — dort bliebe der Grossbuchstaben-Schalter wirkungslos.
+    private var kleinbuchstabenMoeglich: Bool {
+        weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+    }
+
+    private var fettHilfe: String {
+        if weg == .text { return "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." }
+        return fettWirkt ? "Fett"
+            : "„\(schrift)“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung."
+    }
+
+    private var grossHilfe: String {
+        kleinbuchstabenMoeglich
+            ? "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert."
+            : "„\(schrift)“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung."
+    }
+
     private var textY: Int {
         let puffer = textPuffer
         guard let tinte = Textraster.tintenZeilen(puffer) else { return 0 }
@@ -493,12 +518,12 @@ struct SendenView: View {
                     .help("Schriftgröße")
             }
 
-            formatKnopf(icon: "bold", hilfe: weg == .text ? "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." : "Fett",
-                       aktiv: fett) { fett.toggle() }
-                .disabled(weg == .text)
+            formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
+                .disabled(!fettWirkt)
 
-            formatKnopf(icon: "capslock", hilfe: "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.",
-                       aktiv: grossbuchstaben) { grossbuchstaben.toggle() }
+            formatKnopf(icon: "capslock", hilfe: grossHilfe,
+                       aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
+                .disabled(!kleinbuchstabenMoeglich)
 
             Divider().frame(height: 18)
 

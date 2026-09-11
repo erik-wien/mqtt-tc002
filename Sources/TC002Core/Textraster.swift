@@ -93,6 +93,41 @@ public enum Textraster {
         }
     }
 
+    /// Bewirkt der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas?
+    ///
+    /// Gemessen, nicht aus einer Liste gelesen: Manche Schriften haben keinen
+    /// fetten Schnitt, bei anderen faellt er auf wenigen Pixeln mit dem normalen
+    /// zusammen. Beides macht den Knopf wirkungslos, und ein Knopf ohne Wirkung
+    /// ist schlimmer als keiner.
+    public static func kannFett(schrift: String, groesse: Double) -> Bool {
+        pruefung(schluessel: "fett|\(schrift)|\(groesse)") {
+            rasterPuffer("Hallo", schrift: schrift, groesse: groesse, fett: false, farbe: "#FFFFFF")
+                != rasterPuffer("Hallo", schrift: schrift, groesse: groesse, fett: true, farbe: "#FFFFFF")
+        }
+    }
+
+    /// Kennt diese Schrift eigene Kleinbuchstaben, oder setzt sie alles in
+    /// Versalien? Silkscreen etwa kennt keine — der Grossbuchstaben-Schalter
+    /// bleibt dort ohne sichtbare Wirkung.
+    public static func kannKleinbuchstaben(schrift: String, groesse: Double) -> Bool {
+        pruefung(schluessel: "klein|\(schrift)|\(groesse)") {
+            rasterPuffer("abc", schrift: schrift, groesse: groesse, fett: false, farbe: "#FFFFFF")
+                != rasterPuffer("ABC", schrift: schrift, groesse: groesse, fett: false, farbe: "#FFFFFF")
+        }
+    }
+
+    /// Beide Pruefungen rastern, das lohnt sich nur einmal je Schrift und Groesse.
+    private static let sperre = NSLock()
+    private static var gemerkt: [String: Bool] = [:]
+    private static func pruefung(schluessel: String, _ messen: () -> Bool) -> Bool {
+        sperre.lock()
+        if let da = gemerkt[schluessel] { sperre.unlock(); return da }
+        sperre.unlock()
+        let wert = messen()
+        sperre.lock(); gemerkt[schluessel] = wert; sperre.unlock()
+        return wert
+    }
+
     /// Erste und letzte **Zeile** mit mindestens einem gesetzten Pixel, oder `nil`
     /// bei leerem Feld. Die Gegenstueck zu `tintenSpalten` — und die Grundlage
     /// jeder senkrechten Ausrichtung: `rasterPuffer` legt die Tinte dorthin, wo
