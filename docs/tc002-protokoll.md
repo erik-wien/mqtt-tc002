@@ -113,6 +113,30 @@ Gerät es beim Broker abonniert, und daraus, dass Umschalten damit funktioniert.
 ❓ Offen: ob `switchDiyApp` auch greift, wenn die genannte Anzeige gar nicht
 existiert oder nicht in der DIY-Liste des Geräts steht.
 
+### 3.4 `<präfix>/status` — meldet die Uhr sich selbst
+
+✅ Die Uhr veröffentlicht hier `online`, solange sie am Broker hängt. Am
+11.09.2026 im Broker beobachtet.
+
+### 3.5 `<präfix>/customList` — welche Anzeigen die Uhr kennt
+
+✅ **Die Uhr veröffentlicht ihre eigene Anzeigenliste.** Am 11.09.2026 im Broker
+beobachtet:
+
+```json
+{"apps":[{"appName":"scrolltest"}],"count":1}
+```
+
+Das ist die Antwort auf „welche benannten Anzeigen gibt es gerade" — und zwar vom
+Gerät selbst, nicht aus der Buchführung des Senders. Wer mehrere Werkzeuge
+benutzt (diese App, Ulanzi Studio, PixDeck, `mosquitto_pub`), erfährt nur hier,
+was wirklich auf der Uhr steht.
+
+> ⚠️ **Es ist ein MQTT-Thema, kein HTTP-Endpunkt.** `GET /customList` liefert
+> nichts. Lesen lässt es sich nur, indem man es beim Broker abonniert.
+
+Beide Themen stehen in **keiner** Hersteller-Doku.
+
 ---
 
 ## 4. Das Rahmen-JSON
