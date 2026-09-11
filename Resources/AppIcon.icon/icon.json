@@ -81,20 +81,20 @@
     {
       "layers" : [
         {
-          "image-name" : "mqtt-icon-solid.svg",
-          "name" : "mqtt-icon-solid",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
-              -0.049999999999954525,
-              -117.14661248898636
-            ]
-          }
-        },
-        {
           "hidden" : true,
           "image-name" : "hinten-signal.svg",
           "name" : "hinten-signal"
+        },
+        {
+          "image-name" : "mqtt-icon-solid.svg",
+          "name" : "mqtt-icon-solid",
+          "position" : {
+            "scale" : 1.5,
+            "translation-in-points" : [
+              -0.07499999999993179,
+              -145.50000000000006
+            ]
+          }
         }
       ],
       "shadow" : {
