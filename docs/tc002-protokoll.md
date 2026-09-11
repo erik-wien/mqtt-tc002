@@ -366,6 +366,10 @@ curl -s -X POST 'http://192.168.1.20/api/custom?name=notiz' \
   -d '{"draw":[{"df":[0,0,4,4,"#00FF66"]}]}'
 ```
 
+> ❌ **Löschen geht hierüber nicht.** Ein leerer Rumpf antwortet zwar
+> `{"code":200,"message":"ok"}`, die Anzeige bleibt aber stehen — am 11.09.2026
+> nachgeprüft. Zum Löschen führt nur die leere MQTT-Nutzlast aus §3.2.
+
 Diesen Weg geht [PixDeck](https://github.com/cailurus/PixDeck), und deshalb steht
 im MQTT-Kapitel der Hersteller-Doku ein Programm empfohlen, das in Wahrheit über
 HTTP arbeitet. Für ein Gerät im selben Netz ist das der kürzere Weg; über MQTT
