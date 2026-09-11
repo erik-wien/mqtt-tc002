@@ -55,7 +55,7 @@ struct BilderView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104))], spacing: 10) {
                     ForEach(bilder, id: \.datei) { bild in
                         VStack(spacing: 4) {
-                            if let vorschau = NSImage(contentsOf: bild.datei) {
+                            if let vorschau = Bildladen.frisch(bild.datei) {
                                 Image(nsImage: vorschau).interpolation(.none)
                                     .resizable().aspectRatio(contentMode: .fit)
                                     .frame(width: 88, height: 27)

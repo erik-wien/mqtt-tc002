@@ -404,6 +404,14 @@ struct SendenView: View {
         }
         .padding()
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
+        .onAppear {
+            // Nach einem Besuch im Icon-Editor kann das gewaehlte Icon geaendert,
+            // umbenannt oder geloescht sein. Deshalb hier neu nachschlagen statt
+            // dem gemerkten Wert zu glauben — ist es weg, faellt die Wahl auf
+            // „ohne", statt auf eine Datei zu zeigen, die es nicht mehr gibt.
+            guard !iconNummer.isEmpty else { return }
+            gewaehltesIcon = sammlung.alle().first { $0.nummer == iconNummer }
+        }
         .onChange(of: schrift) { _, neu in
             // Wechsel weg von einer Pixelschrift laesst die Groesse stehen —
             // sie passt ja weiterhin in den allgemeinen Bereich 6...16.

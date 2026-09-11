@@ -282,7 +282,7 @@ struct IconEditorView: View {
                 .textFieldStyle(.roundedBorder)
             List(gefilterte, id: \.nummer) { icon in
                 HStack {
-                    if let bild = NSImage(contentsOf: icon.datei) {
+                    if let bild = Bildladen.frisch(icon.datei) {
                         Image(nsImage: bild).interpolation(.none)
                             .resizable().frame(width: 24, height: 24)
                     }

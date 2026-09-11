@@ -33,7 +33,7 @@ struct IconAuswahlView: View {
         HStack(spacing: 4) {
             Button { zeigeBlatt = true } label: {
                 HStack(spacing: 6) {
-                    if let icon = gewaehltesIcon, let bild = NSImage(contentsOf: icon.datei) {
+                    if let icon = gewaehltesIcon, let bild = Bildladen.frisch(icon.datei) {
                         Image(nsImage: bild).interpolation(.none)
                             .resizable().frame(width: 16, height: 16)
                         Text(icon.name)
@@ -69,7 +69,7 @@ struct IconAuswahlView: View {
                         ZStack(alignment: .topTrailing) {
                             Button { gewaehltesIcon = icon } label: {
                                 VStack(spacing: 2) {
-                                    if let bild = NSImage(contentsOf: icon.datei) {
+                                    if let bild = Bildladen.frisch(icon.datei) {
                                         Image(nsImage: bild).interpolation(.none)
                                             .resizable().frame(width: 36, height: 36)
                                     }
