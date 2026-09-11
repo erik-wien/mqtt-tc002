@@ -2,29 +2,68 @@
 
 Meldungen an die Ulanzi TC002 (Pixbar, 52×16) schicken — per MQTT.
 
-Noch nichts gebaut. Der Entwurf entsteht in `docs/superpowers/specs/`.
+## Was die App tut
 
-## Was über das Gerät bereits bekannt ist
+MQTT-TC002 ist eine macOS-App, die Text, Bilder und selbst gemalte Icons an
+eine oder mehrere Ulanzi-TC002-Pixeluhren schickt. Der Weg dorthin führt über
+einen MQTT-Broker, nicht direkt zur Uhr — die Uhr hört auf ihn, nicht auf die
+App.
 
-Ermittelt am 11.09.2026 am laufenden Gerät, nicht aus der Herstellerdoku:
+## Bauen
 
-- Die Firmware hängt an das eingestellte MQTT-Präfix ihre Gerätekennung an:
-  aus `awtrix` wird `awtrix_a86b`.
-- Sie abonniert genau zwei Themen: `awtrix_a86b/custom/+` (Anzeigen) und
-  `awtrix_a86b/switchDiyApp` (umschalten).
-- Nutzlast ist ein JSON mit `text`-Array: content, fontHeight, x, y, color,
-  align, valign, rect, charSpacing; dazu `duration` für die Standzeit.
-- Eine leere Nachricht auf `custom/<name>` löscht die Anzeige.
-- Dasselbe JSON nimmt das Gerät auch per HTTP: `POST /api/custom?name=<n>`.
-- Gerät scrollt nicht selbst; Laufschrift muss Bild für Bild geschickt werden.
-- Der Gerätefont kennt **keine Umlaute**, und an Satzzeichen nur `%`, `.`, `-`, `:`
-  (am 11.09.2026 am Gerät durchprobiert). Kleinbuchstaben funktionieren entgegen
-  einer verbreiteten Behauptung sehr wohl.
-- `carouselSpeed` (0 = kein Wechsel) steuert, ob mehrere Anzeigen abwechseln;
-  zu lesen und zu setzen über `/getConfig` und `/setConfig` am Gerät.
+`./build.sh` schnürt `build/MQTT-TC002.app`. Wer lieber in Xcode arbeitet,
+öffnet `Package.swift` direkt. Es gibt keine externen Paketabhängigkeiten;
+vorausgesetzt wird macOS 14 aufwärts.
 
-Broker: mosquitto auf hausserver, 192.168.1.10:1883, Konten siehe dortige
-`aclfile`. Verwaltung mit `mqtt-user` auf hausserver.
+## Die fünf Bereiche
+
+- **Verbindung** — Uhren eintragen und abfragen, Broker-Zugang verwalten.
+  „Abfragen“ ermittelt Themen-Präfix und MAC direkt von der Uhr; von Hand
+  eingetragen wird hier nichts.
+- **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
+  zusammensetzen und verschicken. Die Vorschau entsteht aus demselben Raster
+  wie die gesendete Nachricht.
+- **Malen** — eine freie 52×16-Zeichenfläche, aus der beim Senden Rechtecke
+  statt einzelner Pixel werden.
+- **Icons** — eigene 8×8-Bildchen malen oder über eine LaMetric-Nummer
+  nachladen.
+- **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
+  umschalten oder löschen, dazu der Seitenwechsel der Uhr.
+
+Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
+(⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
+[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md).
+
+## Warum Text als Pixel geht
+
+Die eingebaute Schrift der Uhr kennt keine Umlaute und kaum Satzzeichen. Die
+App umgeht das, indem sie Text nicht als Zeichenkette schickt, sondern selbst
+mit CoreText rastert und als `draw`-Rechtecke überträgt — damit gehen „ä“,
+„ö“, „ü“ und „ß“ trotzdem, und die Vorschau zeigt exakt das Bild, das auch
+gesendet wird, weil beide aus demselben Pixelfeld stammen.
+
+## Icons
+
+Drei Quellen stehen unter „Senden“ zur Wahl: die mitgelieferten Icons im
+App-Paket, selbst gemalte aus dem 8×8-Editor unter „Icons“, und Icons, die
+sich über ihre Nummer von developer.lametric.com nachladen lassen. Eigene und
+nachgeladene Icons liegen unter
+`~/Library/Application Support/MQTT-TC002/Icons` — nicht im App-Bündel, denn
+dort wären sie beim nächsten Bau weg, und unter `/Applications` ist der
+Ordner ohnehin nicht beschreibbar.
+
+## Tests
+
+`swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr
+laufen gegen einen `URLProtocol`-Doppelgänger, das Senden über MQTT gegen
+einen `NachrichtSendend`-Doppelgänger. Die erzeugten MQTT-Bytes selbst sind
+gegen eine echte Aufzeichnung von `mosquitto_pub` geprüft. Die echte Uhr und
+der Broker im Haus sind in Tests tabu.
+
+## Lizenz
+
+GPL-3.0. Die Herkunft ist [PixDeck](https://github.com/cailurus/PixDeck),
+siehe „Quellen“ unten.
 
 ## Quellen
 
