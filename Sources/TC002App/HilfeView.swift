@@ -75,6 +75,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 "Der Bereich „Icons“ malt eigene 8×8-Bildchen, die danach unter „Senden“ neben dem Text zur Wahl stehen. Farbe wählen über den ColorPicker „Farbe“, „Radieren“ entfernt einzelne Pixel, „Alles löschen“ die ganze Fläche.",
                 "„Sichern“ legt das gemalte Icon unter der eingetragenen „Nummer“ und dem „Name“ ab — die Nummer muss ausgefüllt sein, der Name ist frei. Rechts in „Vorhandene Icons“ stehen alle verfügbaren Icons; ein Klick lädt eines zurück in die Malfläche, das Kontextmenü bietet „Öffnen“ und „Löschen“.",
                 "Mitgelieferte Icons liegen im App-Paket und lassen sich nicht löschen — ein Versuch meldet das. Selbst gemalte liegen unter `~/Library/Application Support/MQTT-TC002/Icons`.",
+                "Über der Liste „Vorhandene Icons“ lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen. Das Icon landet danach bei den eigenen und steht unter „Senden“ zur Wahl. Eine unbekannte Nummer ergibt eine verständliche Meldung und macht sonst nichts kaputt.",
             ]
         case .anzeigen:
             return [

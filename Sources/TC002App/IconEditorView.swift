@@ -13,6 +13,8 @@ struct IconEditorView: View {
     @State private var name = ""
     @State private var vorhandene: [Icon] = []
     @State private var meldung: String?
+    @State private var lametricNummer = ""
+    @State private var laedt = false
 
     private let kante: Double = 28
 
@@ -83,6 +85,15 @@ struct IconEditorView: View {
     private var seitenleiste: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Vorhandene Icons").font(.headline)
+            HStack {
+                TextField("LaMetric-Nummer", text: $lametricNummer)
+                    .frame(width: 140)
+                    .onSubmit { nachladen() }
+                Button(laedt ? "Hole…" : "Nachladen") { nachladen() }
+                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
+                .font(.caption).foregroundStyle(.secondary)
             List(vorhandene, id: \.nummer) { icon in
                 HStack {
                     if let bild = NSImage(contentsOf: icon.datei) {
@@ -144,6 +155,33 @@ struct IconEditorView: View {
             zustand.log("Icon gesichert: \(icon.name)")
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        }
+    }
+
+    private func nachladen() {
+        let n = lametricNummer.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return }
+        laedt = true
+        Task.detached {
+            // holen() wartet bis zu zehn Sekunden auf LaMetric — nicht auf dem
+            // Hauptthread, sonst steht das Fenster so lange.
+            let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
+                                        leseordner: [Iconordner.mitgeliefert])
+            do {
+                let icon = try sammlung.holen(nummer: n)
+                let liste = sammlung.alle()
+                await MainActor.run {
+                    vorhandene = liste
+                    lametricNummer = ""
+                    meldung = "\(icon.name) von LaMetric geholt."
+                    laedt = false
+                }
+            } catch {
+                await MainActor.run {
+                    meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                    laedt = false
+                }
+            }
         }
     }
 
