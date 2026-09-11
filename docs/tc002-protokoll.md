@@ -281,6 +281,28 @@ Dieser Weg steht in **keiner** Hersteller-Doku; er ergibt sich daraus, dass
 | `rect` | Fläche `[x, y, breite, höhe]`, in der ausgerichtet wird |
 | `charSpacing` | Abstand zwischen den Zeichen in Pixeln |
 
+> ❌ **`text` scrollt nicht.** Ein Text, der breiter ist als das Display, wird
+> abgeschnitten — er läuft nicht durch, auch nicht bei `scrollSpeed` über null.
+> Am 11.09.2026 mit drei Fassungen geprüft: mit `rect` und allen Feldern, ohne
+> `rect`, und mit nichts als `content` und `color`. Keine davon lief.
+>
+> `scrollSpeed` (§5.4) gilt also offenbar nur für die Anzeigen, die das Gerät
+> selbst verwaltet, nicht für eigene über `custom`.
+>
+> **Zwei Wege führen trotzdem zu laufendem Text:**
+>
+> 1. **Als animiertes GIF** (§4.2a). Eine Nachricht, danach läuft es von allein
+>    weiter — auch wenn der Sender längst weg ist. Kann Umlaute. Kostet 10 bis
+>    30 KB.
+> 2. **Vom Sender getrieben.** Immer wieder derselbe `text`-Befehl mit
+>    verändertem `x`, etwa alle 0,4 Sekunden. So macht es
+>    [PixDeck](https://github.com/cailurus/PixDeck) in seinem `notice`-Modul.
+>    Jede Nachricht ist winzig, aber die Bewegung hört auf, sobald der Sender
+>    aufhört — und Umlaute gehen weiterhin nicht.
+>
+> Für eine Nachricht, die man hinschickt und vergisst, taugt der erste Weg; für
+> eine ständig aktualisierte Laufschrift der zweite.
+
 ### 4.4 `duration` — Standzeit
 
 📘 In **Sekunden**, wie lange diese Anzeige beim Blättern stehen bleibt.
@@ -347,7 +369,7 @@ Präfix stimmt nicht".
 | `brightness.level` | Helligkeitsstufe |
 | `volume` | Lautstärke des Weckers |
 | `carouselSpeed` | ✅ **der Seitenwechsel.** `0` heißt: es wird nicht geblättert, die erste Anzeige bleibt stehen. Größer als null ist die Standzeit je Seite. |
-| `scrollSpeed` | Lauftempo langer Texte |
+| `scrollSpeed` | Lauftempo langer Texte — ❌ **nicht** für eigene Anzeigen über `custom`, siehe §4.3 |
 
 ✅ `carouselSpeed` ist die Antwort auf „warum sehe ich immer nur die erste
 Meldung": ohne ihn zu setzen, blättert das Gerät nicht.
