@@ -2,10 +2,11 @@ import AppKit
 import SwiftUI
 import TC002Core
 
-/// Waehlt ein Icon aus der Sammlung — ein Knopf zeigt Vorschau und Namen des
-/// gewaehlten Icons (oder „kein Icon"), ein Druck oeffnet ein Blatt mit Suche
-/// und Raster. Baugleich mit `ZielauswahlView`: derselbe Blattkopf, derselbe
-/// „Schließen"-Knopf — die Blaetter der App sollen sich gleich anfuehlen.
+/// Waehlt ein Icon aus der Sammlung — ohne Auswahl nennt der Knopf die Handlung
+/// „Icon wählen…", mit Auswahl zeigt er Vorschau und Namen des gewaehlten Icons
+/// und bleibt anklickbar, um ein anderes zu waehlen; ein Druck oeffnet ein Blatt
+/// mit Suche und Raster. Baugleich mit `ZielauswahlView`: derselbe Blattkopf,
+/// derselbe „Schließen"-Knopf — die Blaetter der App sollen sich gleich anfuehlen.
 ///
 /// Ein Icon gehoert inhaltlich zum Text, nicht zum Versand — der Knopf steht
 /// deshalb bei Text und Vorschau, nicht in der Sendezeile.
@@ -19,16 +20,27 @@ struct IconAuswahlView: View {
     private var gefilterte: [Icon] { sammlung.alle().gefiltert(nach: suche) }
 
     var body: some View {
-        Button { zeigeBlatt = true } label: {
-            HStack(spacing: 6) {
-                if let icon = gewaehltesIcon, let bild = NSImage(contentsOf: icon.datei) {
-                    Image(nsImage: bild).interpolation(.none)
-                        .resizable().frame(width: 16, height: 16)
-                    Text(icon.name)
-                } else {
-                    Image(systemName: "square.dashed")
-                    Text("kein Icon")
+        HStack(spacing: 4) {
+            Button { zeigeBlatt = true } label: {
+                HStack(spacing: 6) {
+                    if let icon = gewaehltesIcon, let bild = NSImage(contentsOf: icon.datei) {
+                        Image(nsImage: bild).interpolation(.none)
+                            .resizable().frame(width: 16, height: 16)
+                        Text(icon.name)
+                    } else {
+                        Image(systemName: "photo")
+                        Text("Icon wählen…")
+                    }
                 }
+            }
+            if gewaehltesIcon != nil {
+                // Entfernt die Wahl, ohne erst das Blatt zu oeffnen — gedaempft,
+                // damit der Hauptknopf (Icon wechseln) im Vordergrund bleibt.
+                Button { gewaehltesIcon = nil } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help("Icon entfernen")
             }
         }
         .sheet(isPresented: $zeigeBlatt) { blatt }

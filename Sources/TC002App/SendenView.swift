@@ -150,8 +150,10 @@ struct SendenView: View {
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
     }
 
-    /// Alles, was den Text betrifft, in einer Zeile ueber dem Eingabefeld — wie in
-    /// einem Textprogramm gewohnt, statt zwischen den Sendeoptionen verstreut.
+    /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
+    /// — wie in einem Textprogramm gewohnt, statt zwischen den Sendeoptionen
+    /// verstreut. Systemmaterial statt fest eingetragener Farben, damit die
+    /// Leiste in hell und dunkel gleich stimmig aussieht.
     private var formatleiste: some View {
         HStack(spacing: 10) {
             Picker("Schriftart", selection: $schrift) {
@@ -162,8 +164,6 @@ struct SendenView: View {
 
             Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
                 .help("Schriftgröße")
-
-            Divider().frame(height: 18)
 
             formatKnopf(icon: "bold", hilfe: "Fett", aktiv: fett) { fett.toggle() }
 
@@ -187,6 +187,8 @@ struct SendenView: View {
 
             Spacer()
         }
+        .padding(8)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
     }
 
     /// Ein einzelner Umschaltknopf einer Ausrichtungsgruppe — Symbol statt Wort,
