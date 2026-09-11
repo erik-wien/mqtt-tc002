@@ -16,8 +16,18 @@ struct IconAuswahlView: View {
 
     @State private var zeigeBlatt = false
     @State private var suche = ""
+    /// Das Icon, fuer das gerade die Loesch-Rueckfrage steht — `nil` heisst
+    /// keine.
+    @State private var zuLoeschen: Icon?
+    /// Erzwingt das Neulesen von `sammlung.alle()`, das sonst niemand anstoesst:
+    /// die Liste wird bei jedem Zugriff frisch von der Platte gelesen, aber
+    /// SwiftUI zeichnet nur neu, wenn sich ein beobachteter Zustand aendert.
+    @State private var aktualisierung = 0
 
-    private var gefilterte: [Icon] { sammlung.alle().gefiltert(nach: suche) }
+    private var gefilterte: [Icon] {
+        _ = aktualisierung
+        return sammlung.alle().gefiltert(nach: suche)
+    }
 
     var body: some View {
         HStack(spacing: 4) {
@@ -56,19 +66,34 @@ struct IconAuswahlView: View {
                     Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
                         .buttonStyle(.bordered)
                     ForEach(gefilterte, id: \.nummer) { icon in
-                        Button { gewaehltesIcon = icon } label: {
-                            VStack(spacing: 2) {
-                                if let bild = NSImage(contentsOf: icon.datei) {
-                                    Image(nsImage: bild).interpolation(.none)
-                                        .resizable().frame(width: 36, height: 36)
+                        ZStack(alignment: .topTrailing) {
+                            Button { gewaehltesIcon = icon } label: {
+                                VStack(spacing: 2) {
+                                    if let bild = NSImage(contentsOf: icon.datei) {
+                                        Image(nsImage: bild).interpolation(.none)
+                                            .resizable().frame(width: 36, height: 36)
+                                    }
+                                    Text(icon.name).font(.system(size: 9)).lineLimit(1)
                                 }
-                                Text(icon.name).font(.system(size: 9)).lineLimit(1)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(4)
+                            .background(gewaehltesIcon?.nummer == icon.nummer ? Color.accentColor.opacity(0.25) : .clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                            // Nur eigene Icons duerfen geloescht werden — mitgelieferte
+                            // liegen im App-Bundle, ein Versuch schluege ohnehin fehl.
+                            if sammlung.istEigen(icon) {
+                                Button { zuLoeschen = icon } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.borderless)
+                                .help("„\(icon.name)“ löschen")
+                                .offset(x: 2, y: -2)
                             }
                         }
-                        .buttonStyle(.plain)
-                        .padding(4)
-                        .background(gewaehltesIcon?.nummer == icon.nummer ? Color.accentColor.opacity(0.25) : .clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                 }
             }
@@ -80,5 +105,22 @@ struct IconAuswahlView: View {
         }
         .padding()
         .frame(minWidth: 380, minHeight: 360)
+        .confirmationDialog(
+            "„\(zuLoeschen?.name ?? "")“ löschen?",
+            isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
+            presenting: zuLoeschen
+        ) { icon in
+            Button("Löschen", role: .destructive) { loeschen(icon) }
+        } message: { icon in
+            Text("Das Icon „\(icon.name)“ wird endgültig entfernt.")
+        }
+    }
+
+    private func loeschen(_ icon: Icon) {
+        guard (try? sammlung.loeschen(icon)) != nil else { return }
+        // War das geloeschte Icon gerade gewaehlt, faellt die Wahl auf „ohne"
+        // zurueck — es gibt danach schlicht nichts mehr, worauf sie zeigen koennte.
+        if gewaehltesIcon?.nummer == icon.nummer { gewaehltesIcon = nil }
+        aktualisierung += 1
     }
 }

@@ -218,6 +218,24 @@ final class IconsTests: XCTestCase {
         XCTAssertEqual(gelesen[63], "#00FF66", "unten rechts bleibt unten rechts")
     }
 
+    /// Eigene Icons liegen im Schreibordner und sind loeschbar, mitgelieferte
+    /// liegen nur im Leseordner und sind es nicht — dieselbe Unterscheidung,
+    /// auf der auch der Loeschen-Knopf in der Oberflaeche beruht.
+    func testIstEigenUnterscheidetEigeneVonMitgelieferten() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a-mitgeliefert".utf8).write(to: mit.appendingPathComponent("1.gif"))
+
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [mit])
+        let eigenes = try sammlung.sichern(nummer: "2", name: "Eigen",
+                                           pixel: [String?](repeating: nil, count: 64))
+        let mitgeliefertes = try XCTUnwrap(sammlung.alle().first { $0.nummer == "1" })
+
+        XCTAssertTrue(sammlung.istEigen(eigenes))
+        XCTAssertFalse(sammlung.istEigen(mitgeliefertes))
+    }
+
     func testSichernVerlangtAchtMalAcht() {
         let sammlung = Iconsammlung(schreibordner: temp())
         XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x", pixel: [nil, nil]))

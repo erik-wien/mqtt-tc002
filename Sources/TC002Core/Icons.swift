@@ -371,14 +371,23 @@ public struct Iconsammlung {
     /// Entfernt ein eigenes Icon. Mitgelieferte bleiben unangetastet — sie liegen im
     /// Bundle und tauchen nach einem Loeschversuch ohnehin wieder auf.
     public func loeschen(_ icon: Icon) throws {
-        // deletingLastPathComponent() haengt einen abschliessenden Schraegstrich an,
-        // standardizedFileURL entfernt ihn nicht — deshalb ueber die Pfad-Strings
-        // vergleichen statt ueber die URLs selbst.
-        guard Self.ordnerPfad(icon.datei.deletingLastPathComponent()) == Self.ordnerPfad(schreibordner) else {
+        guard istEigen(icon) else {
             throw IconFehler.nichtSchreibbar(icon.nummer)
         }
         try FileManager.default.removeItem(at: icon.datei)
         namenEntfernen(nummer: icon.nummer)
+    }
+
+    /// Ob dieses Icon im Schreibordner liegt und sich damit ueber `loeschen`
+    /// entfernen laesst — mitgelieferte Icons liegen in einem Leseordner und
+    /// sind hier `false`. Dieselbe Pruefung wie in `loeschen`, hier vorab
+    /// abfragbar, damit die Oberflaeche den Loeschen-Knopf bei ihnen gar nicht
+    /// erst anbietet statt ihn anzubieten und dann einen Fehler zu zeigen.
+    public func istEigen(_ icon: Icon) -> Bool {
+        // deletingLastPathComponent() haengt einen abschliessenden Schraegstrich an,
+        // standardizedFileURL entfernt ihn nicht — deshalb ueber die Pfad-Strings
+        // vergleichen statt ueber die URLs selbst.
+        Self.ordnerPfad(icon.datei.deletingLastPathComponent()) == Self.ordnerPfad(schreibordner)
     }
 
     private static func ordnerPfad(_ url: URL) -> String {

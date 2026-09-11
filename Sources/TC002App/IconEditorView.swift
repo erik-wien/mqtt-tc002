@@ -24,6 +24,9 @@ struct IconEditorView: View {
     @State private var lametricNummer = ""
     @State private var laedt = false
     @State private var suche = ""
+    /// Das Icon, fuer das gerade die Loesch-Rueckfrage steht — `nil` heisst
+    /// keine.
+    @State private var zuLoeschen: Icon?
 
     /// Zustand fuer „Datei einlesen…": erst die Dateiauswahl, danach ein Blatt
     /// fuer Nummer und Namen mit dem Dateinamen als Vorschlag.
@@ -288,18 +291,39 @@ struct IconEditorView: View {
                         Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
+                    // Nur eigene Icons duerfen geloescht werden — mitgelieferte
+                    // liegen im App-Bundle, ein Versuch schluege ohnehin fehl.
+                    if sammlung.istEigen(icon) {
+                        Button { zuLoeschen = icon } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.secondary)
+                        .help("„\(icon.name)“ löschen")
+                    }
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { oeffnen(icon) }
                 .contextMenu {
                     Button("Öffnen") { oeffnen(icon) }
-                    Button("Löschen", role: .destructive) { loeschen(icon) }
+                    if sammlung.istEigen(icon) {
+                        Button("Löschen", role: .destructive) { zuLoeschen = icon }
+                    }
                 }
             }
         }
         .padding()
         .frame(minWidth: 240)
         .onAppear { vorhandene = sammlung.alle() }
+        .confirmationDialog(
+            "„\(zuLoeschen?.name ?? "")“ löschen?",
+            isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
+            presenting: zuLoeschen
+        ) { icon in
+            Button("Löschen", role: .destructive) { loeschen(icon) }
+        } message: { icon in
+            Text("Das Icon „\(icon.name)“ wird endgültig entfernt.")
+        }
     }
 
     /// Laedt ein Icon zurueck ins Raster — bei einem animierten alle Einzelbilder,
@@ -392,6 +416,13 @@ struct IconEditorView: View {
         do {
             try sammlung.loeschen(icon)
             vorhandene = sammlung.alle()
+            if nummer == icon.nummer {
+                // War das geloeschte Icon gerade geoeffnet, bleibt das Bild im
+                // Raster stehen, aber Nummer und Name werden geleert — sonst
+                // sichert man aus Versehen wieder unter demselben Namen.
+                nummer = ""
+                name = ""
+            }
             meldung = "\(icon.name) gelöscht."
         } catch {
             meldung = "Mitgelieferte Icons lassen sich nicht löschen."
