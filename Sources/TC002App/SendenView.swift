@@ -7,13 +7,6 @@ import TC002Core
 enum SendenHAusrichtung: String, CaseIterable, Identifiable {
     case links, mittig, rechts
     var id: String { rawValue }
-    var beschriftung: String {
-        switch self {
-        case .links: return "Links"
-        case .mittig: return "Mittig"
-        case .rechts: return "Rechts"
-        }
-    }
 }
 
 /// Senkrechte Ausrichtung innerhalb der 16 Zeilen, gerechnet ueber die tatsaechlich
@@ -21,13 +14,6 @@ enum SendenHAusrichtung: String, CaseIterable, Identifiable {
 enum SendenVAusrichtung: String, CaseIterable, Identifiable {
     case oben, mittig, unten
     var id: String { rawValue }
-    var beschriftung: String {
-        switch self {
-        case .oben: return "Oben"
-        case .mittig: return "Mittig"
-        case .unten: return "Unten"
-        }
-    }
 }
 
 struct SendenView: View {
@@ -103,54 +89,8 @@ struct SendenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                TextField("Text", text: $text)
-                ColorPicker("Farbe", selection: $farbe)
-            }
-
-            HStack(alignment: .bottom, spacing: 16) {
-                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
-                    TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
-                }
-                Spacer()
-            }
-            Label("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.",
-                  systemImage: "arrow.left.arrow.right")
-                .font(.footnote).foregroundStyle(.secondary)
-
-            HStack(alignment: .bottom, spacing: 16) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Schriftart").font(.caption).foregroundStyle(.secondary)
-                    Picker("Schriftart", selection: $schrift) {
-                        ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
-                    }
-                    .labelsHidden().frame(width: 170)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Größe").font(.caption).foregroundStyle(.secondary)
-                    Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 90)
-                }
-                Toggle("Fett", isOn: $fett).toggleStyle(.button)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Waagrecht").font(.caption).foregroundStyle(.secondary)
-                    Picker("Waagrecht", selection: $horizontal) {
-                        ForEach(SendenHAusrichtung.allCases) { Text($0.beschriftung).tag($0) }
-                    }
-                    .pickerStyle(.segmented).labelsHidden().frame(width: 150)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Senkrecht").font(.caption).foregroundStyle(.secondary)
-                    Picker("Senkrecht", selection: $vertikal) {
-                        ForEach(SendenVAusrichtung.allCases) { Text($0.beschriftung).tag($0) }
-                    }
-                    .pickerStyle(.segmented).labelsHidden().frame(width: 150)
-                }
-                Spacer()
-            }
-            Text("Bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
-                .font(.footnote).foregroundStyle(.secondary)
+            formatleiste
+            TextField("Text", text: $text)
 
             HStack(alignment: .top, spacing: 20) {
                 VStack(alignment: .leading) {
@@ -165,19 +105,83 @@ struct SendenView: View {
             }
             .frame(maxHeight: .infinity)
 
-            HStack {
+            Divider()
+
+            HStack(alignment: .bottom, spacing: 16) {
+                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
+                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
+                    TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
+                }
+                Spacer()
                 ZielauswahlView(zustand: zustand)
                 Button(laeuft ? "Sende…" : "Senden") { senden() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(laeuft || zustand.ziele().isEmpty)
-                if zustand.ziele().isEmpty {
-                    Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                Spacer()
+            }
+            if zustand.ziele().isEmpty {
+                Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
         }
         .padding()
+    }
+
+    /// Alles, was den Text betrifft, in einer Zeile ueber dem Eingabefeld — wie in
+    /// einem Textprogramm gewohnt, statt zwischen den Sendeoptionen verstreut.
+    private var formatleiste: some View {
+        HStack(spacing: 10) {
+            Picker("Schriftart", selection: $schrift) {
+                ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+            }
+            .labelsHidden().frame(width: 150)
+            .help("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+
+            Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
+                .help("Schriftgröße")
+
+            Divider().frame(height: 18)
+
+            formatKnopf(icon: "bold", hilfe: "Fett", aktiv: fett) { fett.toggle() }
+
+            Divider().frame(height: 18)
+
+            HStack(spacing: 2) {
+                ausrichtungsKnopf(.links, aktuell: $horizontal, icon: "text.alignleft", hilfe: "Links ausrichten")
+                ausrichtungsKnopf(.mittig, aktuell: $horizontal, icon: "text.aligncenter", hilfe: "Mittig ausrichten")
+                ausrichtungsKnopf(.rechts, aktuell: $horizontal, icon: "text.alignright", hilfe: "Rechts ausrichten")
+            }
+            HStack(spacing: 2) {
+                ausrichtungsKnopf(.oben, aktuell: $vertikal, icon: "align.vertical.top", hilfe: "Oben ausrichten")
+                ausrichtungsKnopf(.mittig, aktuell: $vertikal, icon: "align.vertical.center", hilfe: "Mittig ausrichten")
+                ausrichtungsKnopf(.unten, aktuell: $vertikal, icon: "align.vertical.bottom", hilfe: "Unten ausrichten")
+            }
+
+            Divider().frame(height: 18)
+
+            ColorPicker("Farbe", selection: $farbe).labelsHidden()
+                .help("Farbe")
+
+            Spacer()
+        }
+    }
+
+    /// Ein einzelner Umschaltknopf einer Ausrichtungsgruppe — Symbol statt Wort,
+    /// mit Einblendtext. Als eigene Buttons statt eines segmentierten Pickers,
+    /// damit jeder Knopf sein eigenes `.help(...)` tragen kann.
+    private func ausrichtungsKnopf<T: Equatable>(_ wert: T, aktuell: Binding<T>, icon: String, hilfe: String) -> some View {
+        formatKnopf(icon: icon, hilfe: hilfe, aktiv: aktuell.wrappedValue == wert) { aktuell.wrappedValue = wert }
+    }
+
+    private func formatKnopf(icon: String, hilfe: String, aktiv: Bool, aktion: @escaping () -> Void) -> some View {
+        Button(action: aktion) {
+            Image(systemName: icon).frame(width: 22, height: 20)
+        }
+        .buttonStyle(.borderless)
+        .background(aktiv ? Color.accentColor.opacity(0.3) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .help(hilfe)
     }
 
     private var gefilterte: [Icon] { sammlung.alle().gefiltert(nach: suche) }

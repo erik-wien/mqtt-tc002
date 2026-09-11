@@ -52,8 +52,16 @@ struct MalenView: View {
                 Spacer()
             }
 
+            malflaeche
+
+            Text("\(feld.alsDrawBefehle().count) Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.")
+                .font(.footnote).foregroundStyle(.secondary)
+
+            Divider()
+
             HStack(alignment: .bottom, spacing: 16) {
                 MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
+                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.")
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
                     TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
@@ -64,18 +72,10 @@ struct MalenView: View {
                     .keyboardShortcut(.defaultAction)
                     .disabled(laeuft || zustand.ziele().isEmpty)
             }
-            Label("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.",
-                  systemImage: "arrow.left.arrow.right")
-                .font(.footnote).foregroundStyle(.secondary)
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-
-            malflaeche
-
-            Text("\(feld.alsDrawBefehle().count) Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.")
-                .font(.footnote).foregroundStyle(.secondary)
             Spacer()
         }
         .padding()
