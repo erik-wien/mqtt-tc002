@@ -1,3 +1,4 @@
+import ImageIO
 import XCTest
 @testable import TC002Core
 
@@ -63,5 +64,23 @@ final class TextrasterTests: XCTestCase {
         let h = Textraster.hoehe("Hallo", schrift: "Menlo", groesse: 11, fett: false)
         XCTAssertGreaterThanOrEqual(h, 1)
         XCTAssertLessThanOrEqual(h, Pixelfeld.hoeheStandard)
+    }
+
+    /// Der Rueckgabewert ist eine Daten-URI, und das darin steckende GIF hat so
+    /// viele Einzelbilder, wie Textbreite und Schrittweite ergeben — ein Bild je
+    /// Schritt von -52 (Fenster ganz vor dem Text) bis zur Textbreite (Fenster
+    /// ganz dahinter).
+    func testLaufschriftErgibtErwarteteAnzahlEinzelbilder() throws {
+        let text = "Grüße", schrift = "Menlo", groesse = 11.0, schrittweite = 2
+        let uri = try Textraster.laufschrift(text, schrift: schrift, groesse: groesse, fett: false,
+                                             farbe: "#00FF66", schrittweite: schrittweite, bilddauer: 0.08)
+        let praefix = "data:image/gif;base64,"
+        XCTAssertTrue(uri.hasPrefix(praefix))
+
+        let daten = try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst(praefix.count))))
+        let quelle = try XCTUnwrap(CGImageSourceCreateWithData(daten as CFData, nil))
+        let textBreite = Textraster.breite(text, schrift: schrift, groesse: groesse, fett: false)
+        let erwartet = Array(stride(from: -Pixelfeld.breiteStandard, through: textBreite, by: schrittweite)).count
+        XCTAssertEqual(CGImageSourceGetCount(quelle), erwartet)
     }
 }

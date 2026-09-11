@@ -146,6 +146,58 @@ public enum Bildraster {
         }
         return pixel
     }
+
+    /// Rechnet ein Farbraster in ein CGImage um. Zeilenweise von oben links, `nil`
+    /// heisst aus; GIF kennt keine Teildurchsichtigkeit und das Geraet hat ohnehin
+    /// einen schwarzen Grund, deshalb wird „aus“ zu Schwarz. Gemeinsamer Kern fuer
+    /// jede Stelle, die ein Farbraster als Bild braucht — Icons wie Laufschrift.
+    static func cgBild(aus pixel: [String?], breite: Int, hoehe: Int) throws -> CGImage {
+        guard pixel.count == breite * hoehe else { throw BildrasterFehler.nichtLesbar }
+        var bytes = [UInt8](repeating: 0, count: breite * hoehe * 4)
+        for (i, farbe) in pixel.enumerated() {
+            let (r, g, b) = zerlegen(farbe)
+            bytes[i * 4] = r; bytes[i * 4 + 1] = g; bytes[i * 4 + 2] = b; bytes[i * 4 + 3] = 255
+        }
+        guard let anbieter = CGDataProvider(data: Data(bytes) as CFData),
+              let bild = CGImage(width: breite, height: hoehe, bitsPerComponent: 8, bitsPerPixel: 32,
+                                 bytesPerRow: breite * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                 bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                                 provider: anbieter, decode: nil, shouldInterpolate: false,
+                                 intent: .defaultIntent)
+        else { throw BildrasterFehler.nichtLesbar }
+        return bild
+    }
+
+    /// "#RRGGBB" in drei Bytes. Alles Unbrauchbare wird schwarz.
+    private static func zerlegen(_ farbe: String?) -> (UInt8, UInt8, UInt8) {
+        guard var s = farbe else { return (0, 0, 0) }
+        if s.hasPrefix("#") { s.removeFirst() }
+        guard s.count == 6, let wert = UInt32(s, radix: 16) else { return (0, 0, 0) }
+        return (UInt8((wert >> 16) & 0xFF), UInt8((wert >> 8) & 0xFF), UInt8(wert & 0xFF))
+    }
+
+    /// Baut aus mehreren gleich grossen Farbrastern ein animiertes GIF in Schleife
+    /// und gibt es direkt als Daten-URI zurueck, ohne Umweg ueber eine Datei — fuer
+    /// Faelle wie die Laufschrift, die kein eigenes Icon in der Sammlung anlegen.
+    public static func alsDatenURI(_ bilder: [[String?]], breite: Int, hoehe: Int, verzoegerung: Double) throws -> String {
+        guard !bilder.isEmpty, bilder.allSatisfy({ $0.count == breite * hoehe }) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        guard let daten = CFDataCreateMutable(nil, 0),
+              let senke = CGImageDestinationCreateWithData(daten, UTType.gif.identifier as CFString, bilder.count, nil)
+        else { throw BildrasterFehler.nichtLesbar }
+        CGImageDestinationSetProperties(senke, [
+            kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]
+        ] as CFDictionary)
+        let jeBild = [
+            kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFUnclampedDelayTime: verzoegerung]
+        ] as CFDictionary
+        for pixel in bilder {
+            CGImageDestinationAddImage(senke, try cgBild(aus: pixel, breite: breite, hoehe: hoehe), jeBild)
+        }
+        guard CGImageDestinationFinalize(senke) else { throw BildrasterFehler.nichtLesbar }
+        return "data:image/gif;base64," + (daten as Data).base64EncodedString()
+    }
 }
 
 public enum BildrasterFehler: Error, LocalizedError {
@@ -298,30 +350,15 @@ public struct Iconsammlung {
             kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFUnclampedDelayTime: verzoegerung]
         ] as CFDictionary
         for pixel in bilder {
-            CGImageDestinationAddImage(senke, try Self.cgBild(aus: pixel, nummer: nummer), jeBild)
+            guard let bild = try? Bildraster.cgBild(aus: pixel, breite: 8, hoehe: 8) else {
+                throw IconFehler.nichtSchreibbar(nummer)
+            }
+            CGImageDestinationAddImage(senke, bild, jeBild)
         }
         guard CGImageDestinationFinalize(senke) else { throw IconFehler.nichtSchreibbar(nummer) }
 
         namenErgaenzen(nummer: nummer, name: name, kategorie: "eigen")
         return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel)
-    }
-
-    /// Rechnet ein 8×8-Raster in ein CGImage um — der gemeinsame Kern beider
-    /// `sichern`-Wege.
-    private static func cgBild(aus pixel: [String?], nummer: String) throws -> CGImage {
-        var bytes = [UInt8](repeating: 0, count: 64 * 4)
-        for (i, farbe) in pixel.enumerated() {
-            let (r, g, b) = zerlegen(farbe)
-            bytes[i * 4] = r; bytes[i * 4 + 1] = g; bytes[i * 4 + 2] = b; bytes[i * 4 + 3] = 255
-        }
-        guard let anbieter = CGDataProvider(data: Data(bytes) as CFData),
-              let bild = CGImage(width: 8, height: 8, bitsPerComponent: 8, bitsPerPixel: 32,
-                                 bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
-                                 bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                                 provider: anbieter, decode: nil, shouldInterpolate: false,
-                                 intent: .defaultIntent)
-        else { throw IconFehler.nichtSchreibbar(nummer) }
-        return bild
     }
 
     /// Entfernt ein eigenes Icon. Mitgelieferte bleiben unangetastet — sie liegen im
@@ -341,14 +378,6 @@ public struct Iconsammlung {
         var pfad = url.standardizedFileURL.path
         if pfad.hasSuffix("/") { pfad.removeLast() }
         return pfad
-    }
-
-    /// "#RRGGBB" in drei Bytes. Alles Unbrauchbare wird schwarz.
-    private static func zerlegen(_ farbe: String?) -> (UInt8, UInt8, UInt8) {
-        guard var s = farbe else { return (0, 0, 0) }
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let wert = UInt32(s, radix: 16) else { return (0, 0, 0) }
-        return (UInt8((wert >> 16) & 0xFF), UInt8((wert >> 8) & 0xFF), UInt8(wert & 0xFF))
     }
 
     /// Fuehrt eine Anfrage synchron ueber die uebergebene Sitzung aus, mit zehn

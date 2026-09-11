@@ -16,11 +16,13 @@ enum SendenVAusrichtung: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-/// Der Weg, auf dem der Text zur Uhr kommt — ein echter Zielkonflikt, keine
-/// beliebige Einstellung: eigenes Raster kann Umlaute, aber nicht scrollen;
-/// der Geraeteweg scrollt, kennt aber nur die Gerätschrift ohne Umlaute.
+/// Der Weg, auf dem der Text zur Uhr kommt. Drei Wege mit je eigener Luecke:
+/// eigenes Raster kann Umlaute und jede Schriftart, aber nicht scrollen; der
+/// Geraeteweg scrollt, kennt aber nur die Gerätschrift ohne Umlaute; die
+/// Laufschrift schafft beides zugleich, indem sie den scrollenden Lauf selbst
+/// als animiertes GIF rastert (siehe `docs/tc002-protokoll.md` §4.2a).
 enum SendeWeg: String, CaseIterable, Identifiable {
-    case pixel, geraet
+    case pixel, geraet, laufschrift
     var id: String { rawValue }
 }
 
@@ -41,6 +43,10 @@ struct SendenView: View {
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
     @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
     @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
+    /// Nur fuer den Weg „als Laufschrift": Pixel Versatz je Einzelbild und
+    /// Standzeit je Einzelbild in Sekunden.
+    @AppStorage("senden.laufschrittweite") private var laufschriftSchritt = 1
+    @AppStorage("senden.laufdauer") private var laufschriftDauer = 0.08
     /// Nur die Nummer wird gesichert, kein Pfad — der bricht, sobald ein Icon
     /// zwischen mitgeliefert und eigenen wandert. `gewaehltesIcon` wird daraus
     /// einmalig beim Start nachgeschlagen; eine verschwundene Nummer ergibt
@@ -48,6 +54,10 @@ struct SendenView: View {
     @AppStorage("senden.icon") private var iconNummer = ""
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
+    /// Die Einzelbilder der Laufschrift — einmal je Aenderung an Text oder
+    /// Formatierung berechnet (`.task(id:)`), nicht bei jedem Neuzeichnen der
+    /// mit `TimelineView` laufenden Vorschau. Fuellt zugleich die Groessenanzeige.
+    @State private var laufschriftFrames: [Bildraster.Einzelbild] = []
 
     init(zustand: AppZustand) {
         self.zustand = zustand
@@ -131,8 +141,19 @@ struct SendenView: View {
             Picker("Weg", selection: $weg) {
                 Text("als Pixel (Umlaute, scrollt nicht)").tag(SendeWeg.pixel)
                 Text("vom Gerät setzen (scrollt, keine Umlaute)").tag(SendeWeg.geraet)
+                Text("als Laufschrift (scrollt, mit Umlauten)").tag(SendeWeg.laufschrift)
             }
             .pickerStyle(.segmented).labelsHidden()
+
+            if weg == .laufschrift {
+                HStack(spacing: 16) {
+                    Stepper("Schrittweite: \(laufschriftSchritt)", value: $laufschriftSchritt, in: 1...3)
+                        .help("Pixel Versatz je Einzelbild — mehr ist gröber, aber ein kürzeres GIF.")
+                    Stepper("Bilddauer: \(String(format: "%.2f", laufschriftDauer)) s",
+                           value: $laufschriftDauer, in: 0.02...0.5, step: 0.01)
+                        .help("Standzeit je Einzelbild")
+                }
+            }
 
             formatleiste
             HStack {
@@ -141,7 +162,8 @@ struct SendenView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                VorschauView(feld: feld, kantenlaenge: 12, icon: gewaehltesIcon?.datei)
+                VorschauView(feld: feld, kantenlaenge: 12, icon: gewaehltesIcon?.datei,
+                            laufschriftBilder: weg == .laufschrift ? laufschriftFrames : nil)
                 switch weg {
                 case .pixel:
                     if !passt {
@@ -156,6 +178,18 @@ struct SendenView: View {
                     Label("Nur eine Annäherung — die Uhr setzt diesen Text selbst und zeigt ihn anders, vor allem fehlen Umlaute. Langer Text läuft durch; das Tempo bestimmt „Scrolltempo“ unter „Verbindung“.",
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
+                case .laufschrift:
+                    // Zu langer Text ist hier kein Fehler, sondern der Sinn der Sache —
+                    // stattdessen zeigen, worauf man sich einlaesst: niemand weiss, wo
+                    // die Uhr bei der Nutzlastgroesse aussteigt (§4.2a).
+                    Label("\(laufschriftFrames.count) Einzelbilder, \(text.count) Zeichen — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).",
+                          systemImage: "info.circle")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if text.count > 100_000 {
+                        Label("Sehr langer Text — das ergibt eine sehr große Nutzlast, an der die Uhr möglicherweise stumm bleibt.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.footnote).foregroundStyle(.orange)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -182,6 +216,20 @@ struct SendenView: View {
         }
         .padding()
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
+        .task(id: laufschriftSchluessel) {
+            guard weg == .laufschrift else { return }
+            laufschriftFrames = Textraster.laufschriftEinzelbilder(
+                text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
+                schrittweite: laufschriftSchritt, bilddauer: laufschriftDauer)
+        }
+    }
+
+    /// Fasst alles zusammen, wovon die Laufschrift abhaengt — als `.task(id:)`-
+    /// Schluessel, damit die (nicht ganz billige) Berechnung nur bei einer
+    /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
+    /// Vorschau.
+    private var laufschriftSchluessel: String {
+        "\(weg)|\(text)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(laufschriftSchritt)|\(laufschriftDauer)"
     }
 
     /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
@@ -266,14 +314,28 @@ struct SendenView: View {
         laeuft = true
         var frame: Frame
         switch weg {
-        case .pixel: frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
-        case .geraet: frame = Frame(texte: [textblock], dauer: dauer)
+        case .pixel:
+            frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        case .geraet:
+            frame = Frame(texte: [textblock], dauer: dauer)
+        case .laufschrift:
+            do {
+                let uri = try Textraster.laufschrift(text, schrift: schrift, groesse: groesse, fett: fett,
+                                                     farbe: farbeHex, schrittweite: laufschriftSchritt,
+                                                     bilddauer: laufschriftDauer)
+                frame = Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+            } catch {
+                zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                laeuft = false
+                return
+            }
         }
         if let icon = gewaehltesIcon {
             // Ohne Meldung ginge die Anzeige bei unlesbarer Icondatei kommentarlos
-            // ohne das gewaehlte Icon hinaus.
+            // ohne das gewaehlte Icon hinaus. Angehaengt statt ersetzt, damit ein
+            // schon gesetztes Laufschrift-Bild erhalten bleibt.
             do {
-                frame.bilder = [Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4)]
+                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
             } catch {
                 zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
                 laeuft = false

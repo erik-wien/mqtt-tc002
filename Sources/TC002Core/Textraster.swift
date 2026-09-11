@@ -62,4 +62,49 @@ public enum Textraster {
             }
         }
     }
+
+    /// Rastert den Text in voller Breite und laesst ein 52×16-Fenster darueber
+    /// wandern — ein Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig
+    /// vor dem Text (Fenster bei -52) bis vollstaendig dahinter (Fenster bei
+    /// Textbreite). Der gemeinsame Kern fuer die abspielende Vorschau (braucht die
+    /// Farbraster direkt) und `laufschrift` unten (kodiert sie zu einem GIF) —
+    /// siehe `docs/tc002-protokoll.md` §4.2a.
+    public static func laufschriftEinzelbilder(_ text: String, schrift: String, groesse: Double,
+                                               fett: Bool, farbe: String, schrittweite: Int,
+                                               bilddauer: Double) -> [Bildraster.Einzelbild] {
+        let textBreite = breite(text, schrift: schrift, groesse: groesse, fett: fett)
+        let textHoehe = hoehe(text, schrift: schrift, groesse: groesse, fett: fett)
+        let pufferBreite = max(textBreite, 1)
+        var voll = Pixelfeld(breite: pufferBreite, hoehe: Pixelfeld.hoeheStandard)
+        let y = max(0, (Pixelfeld.hoeheStandard - textHoehe) / 2)
+        rastern(text, schrift: schrift, groesse: groesse, farbe: farbe, x: 0, y: y, feld: &voll, fett: fett)
+
+        let schritt = max(1, schrittweite)
+        let breiteFenster = Pixelfeld.breiteStandard
+        var einzelbilder: [Bildraster.Einzelbild] = []
+        for versatz in stride(from: -breiteFenster, through: textBreite, by: schritt) {
+            var fenster = [String?](repeating: nil, count: breiteFenster * Pixelfeld.hoeheStandard)
+            for spalte in 0..<breiteFenster {
+                let quellSpalte = versatz + spalte
+                guard quellSpalte >= 0, quellSpalte < pufferBreite else { continue }
+                for zeile in 0..<Pixelfeld.hoeheStandard {
+                    fenster[zeile * breiteFenster + spalte] = voll.farbe(x: quellSpalte, y: zeile)
+                }
+            }
+            einzelbilder.append(Bildraster.Einzelbild(pixel: fenster, dauer: bilddauer))
+        }
+        return einzelbilder
+    }
+
+    /// Wie `laufschriftEinzelbilder`, aber als kodiertes, animiertes GIF in Form
+    /// einer Daten-URI, wie `image` es erwartet — der Weg, der Umlaute und
+    /// Scrollen zugleich schafft, weil weiterhin selbst gerastert wird.
+    public static func laufschrift(_ text: String, schrift: String, groesse: Double,
+                                   fett: Bool, farbe: String, schrittweite: Int,
+                                   bilddauer: Double) throws -> String {
+        let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
+                                             farbe: farbe, schrittweite: schrittweite, bilddauer: bilddauer)
+        return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
+                                          hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
+    }
 }

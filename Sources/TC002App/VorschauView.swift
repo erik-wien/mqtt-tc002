@@ -18,6 +18,11 @@ struct VorschauView: View {
     var icon: URL? = nil
     var iconX: Int = 0
     var iconY: Int = 4
+    /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
+    /// ueberlagern — fuer die Laufschrift, die selbst schon das ganze Display
+    /// belegt. Ein Aufrufer setzt entweder das hier oder verlaesst sich auf
+    /// `feld`/`icon`, nicht beides zugleich.
+    var laufschriftBilder: [Bildraster.Einzelbild]? = nil
 
     /// Einzelbilder des gewaehlten Icons mit ihren Standzeiten — einmal je
     /// Iconwechsel geladen (`.task(id:)`), nicht bei jedem Neuzeichnen. Ein
@@ -26,9 +31,17 @@ struct VorschauView: View {
 
     var body: some View {
         Group {
-            if einzelbilder.count > 1 {
+            if let laufschriftBilder, !laufschriftBilder.isEmpty {
+                if laufschriftBilder.count > 1 {
+                    TimelineView(.animation) { zeitpunkt in
+                        vollbild(Self.einzelbild(aus: laufschriftBilder, bei: zeitpunkt.date))
+                    }
+                } else {
+                    vollbild(laufschriftBilder.first)
+                }
+            } else if einzelbilder.count > 1 {
                 TimelineView(.animation) { zeitpunkt in
-                    rahmen(iconBild: einzelbild(bei: zeitpunkt.date))
+                    rahmen(iconBild: Self.einzelbild(aus: einzelbilder, bei: zeitpunkt.date))
                 }
             } else {
                 rahmen(iconBild: einzelbilder.first)
@@ -67,18 +80,34 @@ struct VorschauView: View {
         }
     }
 
-    /// Waehlt anhand der verstrichenen Zeit das faellige Einzelbild — in Schleife
-    /// ueber alle, jedes mit seiner eigenen Standzeit.
-    private func einzelbild(bei zeitpunkt: Date) -> Bildraster.Einzelbild? {
-        guard !einzelbilder.isEmpty else { return nil }
-        let gesamt = einzelbilder.reduce(0) { $0 + $1.dauer }
-        guard gesamt > 0 else { return einzelbilder.first }
+    /// Wie `rahmen`, aber das Einzelbild belegt das ganze 52×16-Raster selbst —
+    /// fuer die Laufschrift, die kein zusaetzliches `feld` mehr braucht.
+    private func vollbild(_ bild: Bildraster.Einzelbild?) -> some View {
+        Canvas { kontext, _ in
+            guard let bild else { return }
+            for y in 0..<feld.hoehe {
+                for x in 0..<feld.breite {
+                    guard let hex = bild.pixel[y * feld.breite + x], let farbe = Color(hex: hex) else { continue }
+                    let kaestchen = CGRect(x: Double(x) * kantenlaenge, y: Double(y) * kantenlaenge,
+                                           width: kantenlaenge - 1, height: kantenlaenge - 1)
+                    kontext.fill(Path(kaestchen), with: .color(farbe))
+                }
+            }
+        }
+    }
+
+    /// Waehlt anhand der verstrichenen Zeit das faellige Einzelbild aus einer
+    /// Liste — in Schleife ueber alle, jedes mit seiner eigenen Standzeit.
+    private static func einzelbild(aus liste: [Bildraster.Einzelbild], bei zeitpunkt: Date) -> Bildraster.Einzelbild? {
+        guard !liste.isEmpty else { return nil }
+        let gesamt = liste.reduce(0) { $0 + $1.dauer }
+        guard gesamt > 0 else { return liste.first }
         var rest = zeitpunkt.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: gesamt)
-        for bild in einzelbilder {
+        for bild in liste {
             if rest < bild.dauer { return bild }
             rest -= bild.dauer
         }
-        return einzelbilder.last
+        return liste.last
     }
 
     private static func geladen(_ icon: URL?) -> [Bildraster.Einzelbild] {
