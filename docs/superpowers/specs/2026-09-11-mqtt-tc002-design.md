@@ -22,7 +22,8 @@ Nicht gebaut wird:
 
 - Betrieb aus der Menueleiste
 - Zeitsteuerung, wiederkehrende Meldungen, Automatisierung
-- mehrere Geraete gleichzeitig — eines, einstellbar
+- Geraeteverwaltung ueber das Noetige hinaus — die App kennt eine Liste von Uhren mit
+  Name und Adresse, mehr nicht
 - Abonnieren von MQTT; Rueckmeldungen holt die App per HTTP
 - Stichwortsuche in der LaMetric-Galerie: die Schnittstelle antwortet ohne
   Entwicklerschluessel mit 401. Holen ueber die Nummer geht ohne Anmeldung.
@@ -163,7 +164,13 @@ sonst wird die Nutzlast unnoetig gross.
 
 **Anzeigen.** Liste dessen, was angelegt wurde, mit Umschalten und Loeschen.
 
-**Einstellungen.** Geraet und Broker, Kennwort im Schluesselbund. Darunter die
+**Verbindung.** Eine **Liste von Uhren** mit Name und Adresse, dazu der Broker; das
+Kennwort liegt im Schluesselbund. Praefix und MAC traegt niemand von Hand ein — die
+App fragt sie beim Geraet ab. Eine Uhr ist die aktive, an sie geht das Senden; ein
+Schalter schickt wahlweise an alle eingerichteten. Fehlschlaege einzelner Uhren halten
+die anderen nicht auf, sondern landen im Protokoll.
+
+**Geraeteeinstellungen.** Seitenwechsel, Helligkeit und Lautstaerke der aktiven Uhr. Darunter die
 Geraeteeinstellungen ueber HTTP: Seitenwechsel, Helligkeit, Lautstaerke.
 `/setConfig` erwartet die vollstaendige Konfiguration, nicht nur das geaenderte
 Feld — die App liest sie deshalb vor jedem Schreiben frisch.
