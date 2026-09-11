@@ -16,10 +16,27 @@ public enum Textraster {
         return fetter
     }
 
-    public static func breite(_ text: String, schrift: String, groesse: Double, fett: Bool = false) -> Int {
+    /// Baut den attribuierten Text fuer Breitenmessung und Rasterung gleichermassen.
+    /// `kern` sitzt nur zwischen den Zeichen, nicht mehr nach dem letzten — sonst
+    /// waere ein Text aus n Zeichen um n statt n-1 Pixel breiter, und „passt"/
+    /// „passt nicht" (siehe `SendenView.passt`) stimmte nicht mehr mit dem
+    /// sichtbaren Ergebnis ueberein. Nur ganze Pixel: ein gebrochener Wert schoebe
+    /// die Glyphen von der Rasterlinie, genau das, was die Pixelschrift verhindern soll.
+    private static func attribuiert(_ text: String, schrift: String, groesse: Double, fett: Bool,
+                                    kern: Int, vordergrund: CGColor?) -> NSAttributedString {
+        var attribute: [NSAttributedString.Key: Any] = [.font: font(schrift, groesse, fett: fett)]
+        if let vordergrund { attribute[.foregroundColor] = vordergrund }
+        let ergebnis = NSMutableAttributedString(string: text, attributes: attribute)
+        if kern != 0, ergebnis.length > 1 {
+            ergebnis.addAttribute(.kern, value: CGFloat(kern), range: NSRange(location: 0, length: ergebnis.length - 1))
+        }
+        return ergebnis
+    }
+
+    public static func breite(_ text: String, schrift: String, groesse: Double, fett: Bool = false, kern: Int = 0) -> Int {
         guard !text.isEmpty else { return 0 }
         let zeile = CTLineCreateWithAttributedString(
-            NSAttributedString(string: text, attributes: [.font: font(schrift, groesse, fett: fett)]))
+            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern, vordergrund: nil))
         return Int(CTLineGetTypographicBounds(zeile, nil, nil, nil).rounded())
     }
 
@@ -34,7 +51,8 @@ public enum Textraster {
     }
 
     public static func rastern(_ text: String, schrift: String, groesse: Double,
-                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld, fett: Bool = false) {
+                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld, fett: Bool = false,
+                               kern: Int = 0) {
         guard !text.isEmpty else { return }
         let b = feld.breite, h = feld.hoehe
 
@@ -46,9 +64,9 @@ public enum Textraster {
         ctx.setFillColor(gray: 0, alpha: 1)
         ctx.fill(CGRect(x: 0, y: 0, width: b, height: h))
 
-        let zeile = CTLineCreateWithAttributedString(NSAttributedString(
-            string: text, attributes: [.font: font(schrift, groesse, fett: fett),
-                                       .foregroundColor: NSColor.white.cgColor]))
+        let zeile = CTLineCreateWithAttributedString(
+            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern,
+                       vordergrund: NSColor.white.cgColor))
         // Quartz zaehlt von unten: die Grundlinie liegt bei Hoehe minus y minus Schriftgroesse.
         ctx.textPosition = CGPoint(x: Double(x), y: Double(h - y) - groesse)
         CTLineDraw(zeile, ctx)
@@ -74,13 +92,13 @@ public enum Textraster {
     /// dieselbe Schrift einmal duenner und einmal dicker — sichtbar, sobald die
     /// stehende Vorschau neben der laufenden steht.
     public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
-                                    fett: Bool, farbe: String) -> Pixelfeld {
+                                    fett: Bool, farbe: String, kern: Int = 0) -> Pixelfeld {
         // Zwei Spalten Zugabe: die typografische Breite rundet ab, die letzte
         // Glyphe darf daran nicht haengenbleiben.
-        let spalten = max(breite(text, schrift: schrift, groesse: groesse, fett: fett) + 2, 1)
+        let spalten = max(breite(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern) + 2, 1)
         var puffer = Pixelfeld(breite: spalten, hoehe: Pixelfeld.hoeheStandard)
         rastern(text, schrift: schrift, groesse: groesse, farbe: farbe,
-                x: 0, y: 0, feld: &puffer, fett: fett)
+                x: 0, y: 0, feld: &puffer, fett: fett, kern: kern)
         return puffer
     }
 
@@ -125,8 +143,8 @@ public enum Textraster {
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
                                                iconBilder: [[String?]] = [],
-                                               iconLaeuftMit: Bool = false) -> [Bildraster.Einzelbild] {
-        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe)
+                                               iconLaeuftMit: Bool = false, kern: Int = 0) -> [Bildraster.Einzelbild] {
+        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, kern: kern)
         let hatIcon = !iconBilder.isEmpty
         let festesIcon = hatIcon && !iconLaeuftMit
         let fensterBreite = Pixelfeld.breiteStandard
@@ -137,7 +155,7 @@ public enum Textraster {
         let textbereich = fensterBreite - fensterTextAb
         // Ueber die typografische Breite, nicht ueber die des Puffers: dessen zwei
         // Spalten Zugabe sollen die letzte Glyphe auffangen, nicht den Lauf verlaengern.
-        let bandBreite = bandTextAb + breite(text, schrift: schrift, groesse: groesse, fett: fett)
+        let bandBreite = bandTextAb + breite(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern)
         let schritt = max(1, schrittweite)
 
         var einzelbilder: [Bildraster.Einzelbild] = []
@@ -191,11 +209,11 @@ public enum Textraster {
                                    fett: Bool, farbe: String, schrittweite: Int,
                                    bilddauer: Double, versatzY: Int = 0,
                                    iconBilder: [[String?]] = [],
-                                   iconLaeuftMit: Bool = false) throws -> String {
+                                   iconLaeuftMit: Bool = false, kern: Int = 0) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,
-                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit)
+                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, kern: kern)
         return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
                                           hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
     }

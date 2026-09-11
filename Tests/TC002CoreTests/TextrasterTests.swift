@@ -17,6 +17,18 @@ final class TextrasterTests: XCTestCase {
         XCTAssertGreaterThan(kurz, 0)
     }
 
+    /// Zeichenabstand 1 muss die Breite eines n-Zeichen-Texts um genau n−1 Pixel
+    /// vergroessern — der Abstand sitzt nur zwischen den Zeichen, nicht nach dem
+    /// letzten, sonst stimmte „passt“/„passt nicht“ nicht mehr mit dem
+    /// sichtbaren Ergebnis ueberein.
+    func testZeichenabstandVergroessertBreiteUmNMinusEins() {
+        let text = "Hallo Welt"
+        let n = text.count
+        let ohne = Textraster.breite(text, schrift: "Menlo", groesse: 11, kern: 0)
+        let mit = Textraster.breite(text, schrift: "Menlo", groesse: 11, kern: 1)
+        XCTAssertEqual(mit - ohne, n - 1)
+    }
+
     /// Ein "L" hat unten den breiten Fuss. Liegt die breiteste Zeile in der oberen
     /// Haelfte, steht die Schrift auf dem Kopf.
     func testSchriftStehtNichtAufDemKopf() {
