@@ -60,12 +60,12 @@ struct AnzeigenView: View {
             return
         }
         guard let a = zustand.anzeigen(fuer: uhr) else {
-            zustand.fehler = AppZustand.zugangsmeldung(uhr)
+            zustand.fehler = zustand.zugangsmeldung(uhr)
             return
         }
         Task.detached {
             do { try a.umschalten(auf: name); await MainActor.run { zustand.log("umgeschaltet auf \(name)") } }
-            catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
+            catch { await MainActor.run { zustand.melde(error, uhr: uhr) } }
         }
     }
 
@@ -75,7 +75,7 @@ struct AnzeigenView: View {
             return
         }
         guard let a = zustand.anzeigen(fuer: uhr) else {
-            zustand.fehler = AppZustand.zugangsmeldung(uhr)
+            zustand.fehler = zustand.zugangsmeldung(uhr)
             return
         }
         Task.detached {
@@ -86,7 +86,7 @@ struct AnzeigenView: View {
                     zustand.anzeigeVergessen(name, fuer: uhr.id)
                     zustand.log("gelöscht: \(name)")
                 }
-            } catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
+            } catch { await MainActor.run { zustand.melde(error, uhr: uhr) } }
         }
     }
 

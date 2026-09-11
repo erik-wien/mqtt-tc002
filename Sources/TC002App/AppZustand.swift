@@ -274,46 +274,145 @@ final class AppZustand {
         return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
     }
 
-    /// Liefert `anzeigen(fuer:)` nichts, fehlt das Praefix oder der Broker-Port ist
-    /// keine brauchbare Zahl. Eine Meldung dafuer, statt stumm zurueckzukehren.
-    nonisolated static func zugangsmeldung(_ uhr: Uhr) -> String {
-        "\(uhr.name): Zugangsdaten unvollständig — Broker-Port prüfen."
+    /// Liefert `anzeigen(fuer:)` nichts, fehlt entweder das Präfix — die Uhr wurde
+    /// nie abgefragt — oder der Broker-Port ist keine brauchbare Zahl. Zwei
+    /// verschiedene Ursachen, zwei verschiedene Meldungen; eine Meldung überhaupt,
+    /// statt stumm zurückzukehren.
+    func zugangsmeldung(_ uhr: Uhr) -> String {
+        if uhr.praefix.isEmpty {
+            return "\(uhr.name) wurde noch nicht abgefragt. Unter „Verbindung“ „Abfragen“ drücken."
+        }
+        return "Der Broker-Port „\(brokerPort)“ ist keine Zahl über 0. Unter „Verbindung“ richtigstellen und „Sichern und prüfen“ drücken."
     }
 
-    /// Schickt einen Rahmen an eine oder alle eingerichteten Uhren. Ein Zweig je Uhr:
+    /// Wessen Schuld war es? Ein Brokerfehler träfe jede Uhr gleichermaßen — ihn
+    /// einer einzelnen anzulasten („Küche: Der Broker hat nicht geantwortet.")
+    /// schickt den Leser ans falsche Ende und steht bei fünf Zieluhren auch noch
+    /// fünfmal da.
+    private enum Sendefehler {
+        case broker(String)
+        case uhr(String)
+    }
+
+    private enum Sendeausgang {
+        case erfolg(Uhr)
+        case gescheitert(Sendefehler)
+    }
+
+    /// Ein Brokerfehler in Worten, die zur Abhilfe führen: welcher Broker, was zu
+    /// prüfen ist und wo der Knopf sitzt, der genau diese Frage beantwortet. nil
+    /// heißt: das war keiner — dann gehört er der Uhr zugeschrieben.
+    private func brokerMeldung(_ error: Error) -> String? {
+        let adresse = "\(brokerHost):\(brokerPort)"
+        switch error {
+        case MQTTFehler.zeitueberschreitung:
+            return "Der Broker \(adresse) antwortet nicht. Läuft er, und stimmen Adresse und Port? Unter „Verbindung“ beantwortet das „Sichern und prüfen“."
+        case MQTTFehler.nichtVerbunden(let grund):
+            return "Der Broker \(adresse) ist nicht erreichbar (\(grund)) Adresse und Port stehen unter „Verbindung“; „Sichern und prüfen“ sagt, ob er antwortet."
+        case MQTTFehler.abgelehnt(let code):
+            let konto = benutzer.isEmpty ? "ohne Benutzer" : "„\(benutzer)“"
+            if code == 4 || code == 5 {
+                return "Der Broker \(adresse) nimmt das Konto \(konto) nicht an. Benutzer und Kennwort stehen unter „Verbindung“ — „Sichern und prüfen“ zeigt, ob sie stimmen."
+            }
+            return "Der Broker \(adresse) lehnt die Anmeldung ab: \((error as? LocalizedError)?.errorDescription ?? "Code \(code)") Unter „Verbindung“ mit „Sichern und prüfen“ nachfassen."
+        default:
+            return nil
+        }
+    }
+
+    /// Ordnet einen Fehler der richtigen Partei zu. Bei einem Brokerfehler wandert
+    /// die Meldung zugleich in `brokerStand` — sonst behauptete „Verbindung“
+    /// weiter „Der Broker nimmt die Anmeldung an.“, während nichts durchgeht.
+    private func einordnen(_ error: Error, uhr: Uhr) -> Sendefehler {
+        if let meldung = brokerMeldung(error) {
+            brokerStand = .abgelehnt(meldung)
+            return .broker(meldung)
+        }
+        return .uhr("\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+    }
+
+    private func zugangsfehler(_ uhr: Uhr) -> Sendefehler {
+        let meldung = zugangsmeldung(uhr)
+        guard !uhr.praefix.isEmpty else { return .uhr(meldung) }
+        brokerStand = .abgelehnt(meldung)
+        return .broker(meldung)
+    }
+
+    /// Jeder Brokerfehler genau einmal und ohne Uhrnamen, danach die uhrbezogenen
+    /// Zeilen mit ihrem Namen — dort ist er ja die entscheidende Angabe.
+    private func zusammengefasst(_ fehlschlaege: [Sendefehler]) -> String? {
+        var broker: [String] = [], uhrbezogen: [String] = []
+        for f in fehlschlaege {
+            switch f {
+            case .broker(let m): if !broker.contains(m) { broker.append(m) }
+            case .uhr(let m): uhrbezogen.append(m)
+            }
+        }
+        let alle = broker + uhrbezogen
+        return alle.isEmpty ? nil : alle.joined(separator: "\n")
+    }
+
+    /// Für eine einzelne Sendung außerhalb von `anZiele` — dieselbe
+    /// Unterscheidung, damit ein Brokerfehler auch dort nicht der Uhr angelastet wird.
+    func melde(_ error: Error, uhr: Uhr) {
+        fehler = zusammengefasst([einordnen(error, uhr: uhr)])
+    }
+
+    /// Der gemeinsame Rumpf von `senden` und `loeschen`. Ein Zweig je Uhr:
     /// MQTTSender wartet bis zu acht Sekunden, eine unerreichbare Uhr darf die
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
-    func senden(_ frame: Frame, als name: String) async {
+    private func anZiele(_ tat: @escaping @Sendable (Anzeigen) throws -> Void,
+                         erledigt: (Uhr) -> Void) async {
         let ziele = ziele()
         guard !ziele.isEmpty else {
             fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
             return
         }
-        var meldungen: [String] = []
-        await withTaskGroup(of: String?.self) { gruppe in
+        var fehlschlaege: [Sendefehler] = []
+        await withTaskGroup(of: Sendeausgang?.self) { gruppe in
             for uhr in ziele {
                 gruppe.addTask { [weak self] in
-                    guard let anzeigen = await self?.anzeigen(fuer: uhr) else {
-                        return AppZustand.zugangsmeldung(uhr)
+                    guard let selbst = self else { return nil }
+                    guard let anzeigen = await selbst.anzeigen(fuer: uhr) else {
+                        return await .gescheitert(selbst.zugangsfehler(uhr))
                     }
                     do {
-                        try anzeigen.zeigen(frame, auf: name)
-                        await self?.erfolg(uhr: uhr, name: name)
-                        return nil
+                        try tat(anzeigen)
+                        return .erfolg(uhr)
                     } catch {
-                        return "\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")"
+                        return await .gescheitert(selbst.einordnen(error, uhr: uhr))
                     }
                 }
             }
-            for await m in gruppe { if let m { meldungen.append(m) } }
+            // Diese Schleife läuft schon wieder auf dem Hauptactor — die
+            // Buchführung gehört deshalb hierher, nicht in den Zweig.
+            for await ausgang in gruppe {
+                switch ausgang {
+                case .erfolg(let uhr): erledigt(uhr)
+                case .gescheitert(let f): fehlschlaege.append(f)
+                case nil: break
+                }
+            }
         }
-        fehler = meldungen.isEmpty ? nil : meldungen.joined(separator: "\n")
+        fehler = zusammengefasst(fehlschlaege)
     }
 
-    private func erfolg(uhr: Uhr, name: String) {
-        anzeigeGemerkt(name, fuer: uhr.id)
-        log("an \(uhr.name) gesendet: \(name)")
+    /// Schickt einen Rahmen an eine oder alle gewählten Uhren.
+    func senden(_ frame: Frame, als name: String) async {
+        await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
+            anzeigeGemerkt(name, fuer: uhr.id)
+            log("an \(uhr.name) gesendet: \(name)")
+        }
+    }
+
+    /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
+    /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
+    func loeschen(_ name: String) async {
+        await anZiele({ try $0.loeschen(name) }) { uhr in
+            anzeigeVergessen(name, fuer: uhr.id)
+            log("auf \(uhr.name) gelöscht: \(name)")
+        }
     }
 
     /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ein Praefix haben.
