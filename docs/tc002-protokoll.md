@@ -194,6 +194,11 @@ Am 11.09.2026 am Gerät nachgeprüft — das Herstellerrepository sagt dasselbe.
 ❓ Nicht belegt: ob die Bildgröße beschränkt ist und was bei Bildern größer als
 52×16 geschieht.
 
+❓ Ebenfalls nicht belegt: ob **zwei `image`-Einträge im selben Rahmen**
+nebeneinander gezeichnet werden oder der zweite den ersten ersetzt. Wer ein Icon
+neben einem anderen Bild zeigen will, ist mit einem einzigen Bild, in das beides
+hineingerechnet ist, auf der sicheren Seite.
+
 ### 4.2a Laufschrift als animiertes GIF — der Weg um beide Beschränkungen
 
 ✅ Am 11.09.2026 am Gerät bestätigt.

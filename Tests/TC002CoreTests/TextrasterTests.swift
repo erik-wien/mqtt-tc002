@@ -83,4 +83,102 @@ final class TextrasterTests: XCTestCase {
         let erwartet = Array(stride(from: -Pixelfeld.breiteStandard, through: textBreite, by: schrittweite)).count
         XCTAssertEqual(CGImageSourceGetCount(quelle), erwartet)
     }
+
+    /// Beide Wege muessen den Text in derselben Phase rastern. Bei 11 Punkt ohne
+    /// Kantenglaettung entscheidet ein Pixel Versatz darueber, welche Punkte den
+    /// Schwellwert ueberschreiten — sonst sieht dieselbe Schrift stehend anders
+    /// aus als laufend, und genau das ist gemeldet worden.
+    func testLaufschriftRastertWieDerStehendeWeg() {
+        let text = "Hallo Armin!"
+        var stehend = Pixelfeld()
+        Textraster.einsetzen(Textraster.rasterPuffer(text, schrift: "Menlo", groesse: 11,
+                                                     fett: false, farbe: "#00FF66"),
+                             x: 0, y: 0, in: &stehend)
+
+        let bilder = Textraster.laufschriftEinzelbilder(text, schrift: "Menlo", groesse: 11,
+                                                        fett: false, farbe: "#00FF66",
+                                                        schrittweite: 1, bilddauer: 0.08)
+        // Das Fenster startet 52 Spalten vor dem Text und wandert in Einerschritten:
+        // Bild 52 zeigt ihn ab Spalte 0 — dieselbe Lage wie stehend.
+        let bild = bilder[Pixelfeld.breiteStandard]
+        for y in 0..<Pixelfeld.hoeheStandard {
+            for x in 0..<Pixelfeld.breiteStandard {
+                XCTAssertEqual(bild.pixel[y * Pixelfeld.breiteStandard + x], stehend.farbe(x: x, y: y),
+                               "Punkt \(x)/\(y)")
+            }
+        }
+    }
+
+    /// Die senkrechte Ausrichtung gilt auch fuer die Laufschrift — vorher rechnete
+    /// sie sich stur die Mitte aus und liess die Einstellung liegen.
+    func testLaufschriftFolgtDerSenkrechtenAusrichtung() {
+        func zeilen(versatzY: Int) -> [Int] {
+            let bild = Textraster.laufschriftEinzelbilder("Hallo", schrift: "Menlo", groesse: 11,
+                                                          fett: false, farbe: "#FFFFFF",
+                                                          schrittweite: 1, bilddauer: 0.08,
+                                                          versatzY: versatzY)[Pixelfeld.breiteStandard]
+            return (0..<Pixelfeld.hoeheStandard).filter { y in
+                (0..<Pixelfeld.breiteStandard).contains { bild.pixel[y * Pixelfeld.breiteStandard + $0] != nil }
+            }
+        }
+        let oben = zeilen(versatzY: 0), unten = zeilen(versatzY: 3)
+        XCTAssertFalse(oben.isEmpty)
+        XCTAssertEqual(unten.first, oben.first.map { $0 + 3 })
+    }
+
+    /// Das feststehende Icon gehoert in jedes Einzelbild an dieselbe Stelle, und
+    /// seine Spalten bleiben frei vom durchlaufenden Text — sonst blitzt der
+    /// zwischen den Iconpunkten hindurch.
+    func testFeststehendesIconStehtInJedemBild() {
+        var icon = [String?](repeating: nil, count: 64)
+        icon[0] = "#FF0000"                                  // oben links im Icon
+        let bilder = Textraster.laufschriftEinzelbilder("Hallo Welt, hallo Welt", schrift: "Menlo",
+                                                        groesse: 11, fett: false, farbe: "#00FF66",
+                                                        schrittweite: 1, bilddauer: 0.08,
+                                                        iconBilder: [icon])
+        XCTAssertGreaterThan(bilder.count, 10)
+        let breite = Pixelfeld.breiteStandard
+        for (n, bild) in bilder.enumerated() {
+            XCTAssertEqual(bild.pixel[4 * breite + 0], "#FF0000", "Iconpunkt in Bild \(n)")
+            for y in 0..<Pixelfeld.hoeheStandard {
+                for x in 0..<(8 + 2) where !(x == 0 && y == 4) {
+                    XCTAssertNil(bild.pixel[y * breite + x], "Spalte \(x) in Bild \(n) gehört dem Icon")
+                }
+            }
+        }
+        XCTAssertNotEqual(bilder[bilder.count / 3].pixel, bilder[bilder.count / 2].pixel,
+                          "der Textbereich läuft trotzdem durch")
+    }
+
+    /// Mitlaufend heisst: das Icon wandert selbst durchs Bild und haelt die
+    /// linken Spalten nicht frei.
+    func testMitlaufendesIconWandert() {
+        var icon = [String?](repeating: nil, count: 64)
+        icon[0] = "#FF0000"
+        let bilder = Textraster.laufschriftEinzelbilder("Hallo", schrift: "Menlo", groesse: 11,
+                                                        fett: false, farbe: "#00FF66",
+                                                        schrittweite: 1, bilddauer: 0.08,
+                                                        iconBilder: [icon], iconLaeuftMit: true)
+        let breite = Pixelfeld.breiteStandard
+        let stellen = bilder.compactMap { bild -> Int? in
+            (0..<breite).first { bild.pixel[4 * breite + $0] == "#FF0000" }
+        }
+        XCTAssertGreaterThan(stellen.count, 5)
+        XCTAssertGreaterThan(Set(stellen).count, 5, "das Icon steht nicht still")
+    }
+
+    /// Ein animiertes Icon spielt waehrend des Laufs ab, statt auf seinem ersten
+    /// Einzelbild stehenzubleiben.
+    func testAnimiertesIconWechseltDieBilder() {
+        var eins = [String?](repeating: nil, count: 64), zwei = [String?](repeating: nil, count: 64)
+        eins[0] = "#FF0000"
+        zwei[63] = "#0000FF"
+        let bilder = Textraster.laufschriftEinzelbilder("Hallo", schrift: "Menlo", groesse: 11,
+                                                        fett: false, farbe: "#00FF66",
+                                                        schrittweite: 1, bilddauer: 0.08,
+                                                        iconBilder: [eins, zwei])
+        let breite = Pixelfeld.breiteStandard
+        XCTAssertEqual(bilder[0].pixel[4 * breite + 0], "#FF0000")
+        XCTAssertEqual(bilder[1].pixel[(4 + 7) * breite + 7], "#0000FF")
+    }
 }

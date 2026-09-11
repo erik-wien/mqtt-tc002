@@ -63,32 +63,103 @@ public enum Textraster {
         }
     }
 
-    /// Rastert den Text in voller Breite und laesst ein 52×16-Fenster darueber
-    /// wandern — ein Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig
-    /// vor dem Text (Fenster bei -52) bis vollstaendig dahinter (Fenster bei
-    /// Textbreite). Der gemeinsame Kern fuer die abspielende Vorschau (braucht die
-    /// Farbraster direkt) und `laufschrift` unten (kodiert sie zu einem GIF) —
-    /// siehe `docs/tc002-protokoll.md` §4.2a.
+    /// Rastert den Text in einen eigenen Puffer, immer in derselben Phase:
+    /// x 0, y 0, volle Displayhoehe. Ausrichtung wird danach angewandt, indem das
+    /// fertige Raster verschoben wird (`einsetzen`), nicht indem an anderer Stelle
+    /// gerastert wird.
+    ///
+    /// Der Grund ist nicht Ordnungsliebe: bei 11 Punkt ohne Kantenglaettung
+    /// entscheidet ein Pixel Versatz darueber, welche Punkte den Schwellwert von
+    /// 127 ueberschreiten. Wer an zwei Stellen mit verschiedenem x rastert, bekommt
+    /// dieselbe Schrift einmal duenner und einmal dicker — sichtbar, sobald die
+    /// stehende Vorschau neben der laufenden steht.
+    public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
+                                    fett: Bool, farbe: String) -> Pixelfeld {
+        // Zwei Spalten Zugabe: die typografische Breite rundet ab, die letzte
+        // Glyphe darf daran nicht haengenbleiben.
+        let spalten = max(breite(text, schrift: schrift, groesse: groesse, fett: fett) + 2, 1)
+        var puffer = Pixelfeld(breite: spalten, hoehe: Pixelfeld.hoeheStandard)
+        rastern(text, schrift: schrift, groesse: groesse, farbe: farbe,
+                x: 0, y: 0, feld: &puffer, fett: fett)
+        return puffer
+    }
+
+    /// Legt ein fertiges Raster an eine Stelle des Feldes. Nur gesetzte Punkte
+    /// wandern mit — was darunter liegt, bleibt sonst stehen.
+    public static func einsetzen(_ quelle: Pixelfeld, x: Int, y: Int, in feld: inout Pixelfeld) {
+        for zeile in 0..<quelle.hoehe {
+            for spalte in 0..<quelle.breite {
+                guard let farbe = quelle.farbe(x: spalte, y: zeile) else { continue }
+                feld.setzen(x: x + spalte, y: y + zeile, farbe: farbe)
+            }
+        }
+    }
+
+    /// Lage eines Icons im Bild: acht mal acht Punkte, senkrecht mittig, dahinter
+    /// zwei Spalten Luft, bevor der Text beginnt.
+    static let iconKante = 8
+    static let iconY = 4
+    static let iconLuecke = 2
+
+    /// Laesst ein 52×16-Fenster ueber den gerasterten Text wandern — ein
+    /// Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig vor dem Text
+    /// bis vollstaendig dahinter. Der gemeinsame Kern fuer die abspielende
+    /// Vorschau (braucht die Farbraster direkt) und `laufschrift` unten (kodiert
+    /// sie zu einem GIF) — siehe `docs/tc002-protokoll.md` §4.2a.
+    ///
+    /// `versatzY` verschiebt den Text senkrecht, genau wie im stehenden Weg — die
+    /// Ausrichtung der Formatleiste gilt also auch hier.
+    ///
+    /// `iconBilder` sind die Einzelbilder eines 8×8-Icons (je 64 Eintraege,
+    /// zeilenweise von oben links) oder leer. Sie werden **eingebacken**, statt
+    /// als zweites `image` neben dem Lauf-GIF im Rahmen zu stehen: ob die Uhr
+    /// zwei Bilder nebeneinander zeichnet oder das zweite das erste ersetzt, hat
+    /// niemand geprueft. Ein animiertes Icon laeuft dabei mit, Bild fuer Bild.
+    ///
+    /// `iconLaeuftMit` entscheidet, wo es steht: standardmaessig fest links,
+    /// waehrend der Text in den Spalten rechts daneben durchlaeuft — die Spalten
+    /// unter dem Icon bleiben dabei in jedem Einzelbild schwarz, sonst blitzte
+    /// der Text zwischen den Iconpunkten hindurch. Laeuft es mit, steht es am
+    /// Anfang des Bandes und wandert mit hinaus; der Text nutzt dann alle Spalten.
     public static func laufschriftEinzelbilder(_ text: String, schrift: String, groesse: Double,
                                                fett: Bool, farbe: String, schrittweite: Int,
-                                               bilddauer: Double) -> [Bildraster.Einzelbild] {
-        let textBreite = breite(text, schrift: schrift, groesse: groesse, fett: fett)
-        let textHoehe = hoehe(text, schrift: schrift, groesse: groesse, fett: fett)
-        let pufferBreite = max(textBreite, 1)
-        var voll = Pixelfeld(breite: pufferBreite, hoehe: Pixelfeld.hoeheStandard)
-        let y = max(0, (Pixelfeld.hoeheStandard - textHoehe) / 2)
-        rastern(text, schrift: schrift, groesse: groesse, farbe: farbe, x: 0, y: y, feld: &voll, fett: fett)
-
+                                               bilddauer: Double, versatzY: Int = 0,
+                                               iconBilder: [[String?]] = [],
+                                               iconLaeuftMit: Bool = false) -> [Bildraster.Einzelbild] {
+        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe)
+        let hatIcon = !iconBilder.isEmpty
+        let festesIcon = hatIcon && !iconLaeuftMit
+        let fensterBreite = Pixelfeld.breiteStandard
+        // Wo im Fenster der Text beginnt (feststehendes Icon) und wo er im
+        // laufenden Band beginnt (mitlaufendes Icon).
+        let fensterTextAb = festesIcon ? iconKante + iconLuecke : 0
+        let bandTextAb = iconLaeuftMit ? iconKante + iconLuecke : 0
+        let textbereich = fensterBreite - fensterTextAb
+        // Ueber die typografische Breite, nicht ueber die des Puffers: dessen zwei
+        // Spalten Zugabe sollen die letzte Glyphe auffangen, nicht den Lauf verlaengern.
+        let bandBreite = bandTextAb + breite(text, schrift: schrift, groesse: groesse, fett: fett)
         let schritt = max(1, schrittweite)
-        let breiteFenster = Pixelfeld.breiteStandard
+
         var einzelbilder: [Bildraster.Einzelbild] = []
-        for versatz in stride(from: -breiteFenster, through: textBreite, by: schritt) {
-            var fenster = [String?](repeating: nil, count: breiteFenster * Pixelfeld.hoeheStandard)
-            for spalte in 0..<breiteFenster {
-                let quellSpalte = versatz + spalte
-                guard quellSpalte >= 0, quellSpalte < pufferBreite else { continue }
+        for (n, versatz) in stride(from: -textbereich, through: bandBreite, by: schritt).enumerated() {
+            var fenster = [String?](repeating: nil, count: fensterBreite * Pixelfeld.hoeheStandard)
+            let iconBild = hatIcon ? iconBilder[n % iconBilder.count] : nil
+
+            for spalte in fensterTextAb..<fensterBreite {
+                let bandSpalte = versatz + (spalte - fensterTextAb)
                 for zeile in 0..<Pixelfeld.hoeheStandard {
-                    fenster[zeile * breiteFenster + spalte] = voll.farbe(x: quellSpalte, y: zeile)
+                    guard let punkt = bandpunkt(bandSpalte, zeile, puffer: puffer, versatzY: versatzY,
+                                                bandTextAb: bandTextAb, iconLaeuftMit: iconLaeuftMit,
+                                                iconBild: iconBild) else { continue }
+                    fenster[zeile * fensterBreite + spalte] = punkt
+                }
+            }
+            if festesIcon, let iconBild {
+                for y in 0..<iconKante {
+                    for x in 0..<iconKante {
+                        guard let punkt = iconBild[y * iconKante + x] else { continue }
+                        fenster[(iconY + y) * fensterBreite + x] = punkt
+                    }
                 }
             }
             einzelbilder.append(Bildraster.Einzelbild(pixel: fenster, dauer: bilddauer))
@@ -96,14 +167,35 @@ public enum Textraster {
         return einzelbilder
     }
 
+    /// Ein Punkt des laufenden Bandes: links das mitlaufende Icon, ab `bandTextAb`
+    /// der gerasterte Text. Ausserhalb ist nichts — dort bleibt das Bild schwarz.
+    private static func bandpunkt(_ spalte: Int, _ zeile: Int, puffer: Pixelfeld, versatzY: Int,
+                                  bandTextAb: Int, iconLaeuftMit: Bool,
+                                  iconBild: [String?]?) -> String? {
+        if iconLaeuftMit, spalte < iconKante {
+            guard spalte >= 0, let iconBild else { return nil }
+            let y = zeile - iconY
+            guard y >= 0, y < iconKante else { return nil }
+            return iconBild[y * iconKante + spalte]
+        }
+        let x = spalte - bandTextAb
+        let y = zeile - versatzY
+        guard x >= 0, x < puffer.breite, y >= 0, y < puffer.hoehe else { return nil }
+        return puffer.farbe(x: x, y: y)
+    }
+
     /// Wie `laufschriftEinzelbilder`, aber als kodiertes, animiertes GIF in Form
-    /// einer Daten-URI, wie `image` es erwartet — der Weg, der Umlaute und
-    /// Scrollen zugleich schafft, weil weiterhin selbst gerastert wird.
+    /// einer Daten-URI, wie `image` es erwartet — ein einziges Bild im Rahmen,
+    /// Icon eingebacken.
     public static func laufschrift(_ text: String, schrift: String, groesse: Double,
                                    fett: Bool, farbe: String, schrittweite: Int,
-                                   bilddauer: Double) throws -> String {
+                                   bilddauer: Double, versatzY: Int = 0,
+                                   iconBilder: [[String?]] = [],
+                                   iconLaeuftMit: Bool = false) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
-                                             farbe: farbe, schrittweite: schrittweite, bilddauer: bilddauer)
+                                             farbe: farbe, schrittweite: schrittweite,
+                                             bilddauer: bilddauer, versatzY: versatzY,
+                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit)
         return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
                                           hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
     }
