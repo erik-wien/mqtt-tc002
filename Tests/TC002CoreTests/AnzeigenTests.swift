@@ -34,4 +34,60 @@ final class AnzeigenTests: XCTestCase {
         XCTAssertEqual(sender.gesendet.first?.thema, "awtrix_a86b/switchDiyApp")
         XCTAssertEqual(sender.gesendet.first?.nutzlast, "notiz")
     }
+
+    func testNormalisierePraefixMitEinemSchrägstrich() throws {
+        let sender1 = MitschreibenderSender()
+        let sender2 = MitschreibenderSender()
+        let frame = Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 1, hoehe: 1, farbe: "#FFFFFF")])
+
+        let a1 = Anzeigen(sender: sender1, zugang: zugang, praefix: "awtrix_a86b")
+        let a2 = Anzeigen(sender: sender2, zugang: zugang, praefix: "awtrix_a86b/")
+
+        try a1.zeigen(frame, auf: "notiz")
+        try a2.zeigen(frame, auf: "notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+        XCTAssertEqual(sender1.gesendet.first?.thema, "awtrix_a86b/custom/notiz")
+
+        sender1.gesendet.removeAll()
+        sender2.gesendet.removeAll()
+
+        try a1.loeschen("notiz")
+        try a2.loeschen("notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+
+        sender1.gesendet.removeAll()
+        sender2.gesendet.removeAll()
+
+        try a1.umschalten(auf: "notiz")
+        try a2.umschalten(auf: "notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+    }
+
+    func testNormalisierePraefixMitMehrerenSchrägstrichen() throws {
+        let sender1 = MitschreibenderSender()
+        let sender2 = MitschreibenderSender()
+        let frame = Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 1, hoehe: 1, farbe: "#FFFFFF")])
+
+        let a1 = Anzeigen(sender: sender1, zugang: zugang, praefix: "awtrix_a86b")
+        let a2 = Anzeigen(sender: sender2, zugang: zugang, praefix: "awtrix_a86b///")
+
+        try a1.zeigen(frame, auf: "notiz")
+        try a2.zeigen(frame, auf: "notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+        XCTAssertEqual(sender1.gesendet.first?.thema, "awtrix_a86b/custom/notiz")
+
+        sender1.gesendet.removeAll()
+        sender2.gesendet.removeAll()
+
+        try a1.loeschen("notiz")
+        try a2.loeschen("notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+
+        sender1.gesendet.removeAll()
+        sender2.gesendet.removeAll()
+
+        try a1.umschalten(auf: "notiz")
+        try a2.umschalten(auf: "notiz")
+        XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
+    }
 }

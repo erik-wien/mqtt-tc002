@@ -7,7 +7,13 @@ public struct Anzeigen {
     private let praefix: String
 
     public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String) {
-        self.sender = sender; self.zugang = zugang; self.praefix = praefix
+        self.sender = sender
+        self.zugang = zugang
+        var normalisiert = praefix
+        while normalisiert.hasSuffix("/") {
+            normalisiert.removeLast()
+        }
+        self.praefix = normalisiert
     }
 
     public func zeigen(_ frame: Frame, auf name: String) throws {
