@@ -121,6 +121,7 @@ struct SendenView: View {
                             try anzeigen.zeigen(frame, auf: anzeigenName)
                             await MainActor.run {
                                 zustand.log("an \(uhr.name) gesendet: \(anzeigenName)")
+                                zustand.anzeigeGemerkt(anzeigenName)
                             }
                         } catch {
                             await MainActor.run {

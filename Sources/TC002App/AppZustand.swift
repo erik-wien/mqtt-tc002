@@ -28,6 +28,12 @@ final class AppZustand {
     var fehler: String?
     var protokoll: [String] = []
 
+    /// Die Uhr verrät nicht, welche Anzeigen sie kennt — die App merkt sich, was sie
+    /// selbst angelegt hat.
+    var bekannteAnzeigen: [String] {
+        didSet { UserDefaults.standard.set(bekannteAnzeigen, forKey: "bekannteAnzeigen") }
+    }
+
     private var initialisiert = false
 
     init() {
@@ -39,8 +45,14 @@ final class AppZustand {
         brokerPort = d.string(forKey: "brokerPort") ?? "1883"
         benutzer   = d.string(forKey: "benutzer") ?? "pixdeck"
         kennwort   = Schluesselbund.lesen("broker") ?? ""
+        bekannteAnzeigen = d.stringArray(forKey: "bekannteAnzeigen") ?? []
         if aktiveID == nil { aktiveID = uhren.first?.id }
         initialisiert = true
+    }
+
+    func anzeigeGemerkt(_ name: String) {
+        guard !bekannteAnzeigen.contains(name) else { return }
+        bekannteAnzeigen.append(name)
     }
 
     var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
