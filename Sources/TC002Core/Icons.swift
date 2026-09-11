@@ -64,6 +64,44 @@ public enum Bildraster {
         }
     }
 
+    /// Ein Einzelbild mitsamt der Zeit, die es vor dem naechsten steht.
+    public struct Einzelbild: Equatable, Sendable {
+        public var pixel: [String?]
+        /// Sekunden bis zum naechsten Bild, aus der Datei gelesen.
+        public var dauer: Double
+    }
+
+    /// Wie `lesen`, aber mit den Standzeiten je Einzelbild aus der Datei — fuer
+    /// die abspielende Vorschau. Fehlt der Wert oder ist er unsinnig klein (unter
+    /// 20 ms), gilt wie bei Browsern ueblich 0,1 Sekunden.
+    public static func lesenMitZeiten(_ datei: URL, breite: Int, hoehe: Int) throws -> [Einzelbild] {
+        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        let anzahl = CGImageSourceGetCount(quelle)
+        guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
+        return try (0..<anzahl).map { i in
+            guard let bild = CGImageSourceCreateImageAtIndex(quelle, i, nil) else {
+                throw BildrasterFehler.nichtLesbar
+            }
+            let p = try pixel(aus: bild, breite: breite, hoehe: hoehe)
+            return Einzelbild(pixel: p, dauer: verzoegerung(quelle, index: i))
+        }
+    }
+
+    /// Liest die Standzeit eines Einzelbilds aus den GIF-Eigenschaften. Bevorzugt
+    /// `UnclampedDelayTime` (die eigentlich gemeinte Zeit), ersatzweise `DelayTime`.
+    private static func verzoegerung(_ quelle: CGImageSource, index: Int) -> Double {
+        guard let eigenschaften = CGImageSourceCopyPropertiesAtIndex(quelle, index, nil) as? [CFString: Any],
+              let gif = eigenschaften[kCGImagePropertyGIFDictionary] as? [CFString: Any] else {
+            return 0.1
+        }
+        let wert = (gif[kCGImagePropertyGIFUnclampedDelayTime] as? Double)
+            ?? (gif[kCGImagePropertyGIFDelayTime] as? Double)
+        guard let wert, wert >= 0.02 else { return 0.1 }
+        return wert
+    }
+
     /// Die Pixelgroesse des ersten Einzelbilds einer Datei, wenn lesbar — fuer den
     /// Hinweis, wenn eine eingelesene Datei umgerechnet werden musste.
     public static func groesse(_ datei: URL) -> (breite: Int, hoehe: Int)? {

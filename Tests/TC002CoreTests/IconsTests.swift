@@ -244,6 +244,26 @@ final class IconsTests: XCTestCase {
         XCTAssertEqual(zurueck[1][63], "#00FF66", "unten rechts bleibt unten rechts")
     }
 
+    /// `lesenMitZeiten` liefert zu jedem Einzelbild die beim Sichern vergebene
+    /// Standzeit zurueck — die abspielende Vorschau braucht genau das.
+    func testLesenMitZeitenLiefertDieStandzeitenZurueck() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+
+        var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
+        var zwei = [String?](repeating: nil, count: 64); zwei[63] = "#00FF66"
+        let icon = try sammlung.sichern(nummer: "lauf2", name: "Lauf 2",
+                                        bilder: [eins, zwei], verzoegerung: 0.2)
+
+        let zurueck = try Bildraster.lesenMitZeiten(icon.datei, breite: 8, hoehe: 8)
+        XCTAssertEqual(zurueck.count, 2)
+        XCTAssertEqual(zurueck[0].dauer, 0.2, accuracy: 0.01)
+        XCTAssertEqual(zurueck[1].dauer, 0.2, accuracy: 0.01)
+        XCTAssertEqual(zurueck[0].pixel[0], "#FF0000")
+        XCTAssertEqual(zurueck[1].pixel[63], "#00FF66")
+    }
+
     /// Der bisherige Einzelbild-Weg (`pixel:`) bleibt eine Abkuerzung auf ein
     /// einzelnes Bild — `bilder(fuer:)` liest davon genau eines zurueck.
     func testEinzelbildBleibtEinzelbild() throws {
