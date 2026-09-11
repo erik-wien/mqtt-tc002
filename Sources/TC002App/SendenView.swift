@@ -15,7 +15,9 @@ struct SendenView: View {
 
     private let farben = ["#FFFFFF", "#00FF66", "#FFCC00", "#FF3030", "#4285F4", "#FF6400", "#00E5FF", "#FF6FB5"]
 
-    private var sammlung: Iconsammlung { Iconsammlung(ordner: Iconordner.pfad) }
+    private var sammlung: Iconsammlung {
+        Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+    }
 
     /// Vorschau und Sendung entstehen aus demselben Feld.
     private var feld: Pixelfeld {
@@ -133,13 +135,5 @@ struct SendenView: View {
             }
             await MainActor.run { laeuft = false }
         }
-    }
-}
-
-/// Der Ordner mit den mitgelieferten Icons, im Bundle neben der App.
-enum Iconordner {
-    static var pfad: URL {
-        Bundle.main.resourceURL?.appendingPathComponent("Icons")
-            ?? URL(fileURLWithPath: "Icons")
     }
 }

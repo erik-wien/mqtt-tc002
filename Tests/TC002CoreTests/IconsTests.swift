@@ -2,6 +2,12 @@ import XCTest
 @testable import TC002Core
 
 final class IconsTests: XCTestCase {
+    /// Ein frischer, noch nicht angelegter Ordnerpfad unter dem temporaeren
+    /// Verzeichnis — anlegen bleibt Sache des Aufrufers.
+    private func temp() -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    }
+
     private func ordnerMitIcon() throws -> URL {
         let ordner = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString)
@@ -127,5 +133,49 @@ final class IconsTests: XCTestCase {
         XCTAssertEqual(icon.name, "5555")
         XCTAssertEqual(icon.kategorie, "")
         XCTAssertTrue(FileManager.default.fileExists(atPath: ordner.appendingPathComponent("5555.gif").path))
+    }
+
+    func testZweiOrdnerWerdenZusammengefuehrt() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a-mitgeliefert".utf8).write(to: mit.appendingPathComponent("1.gif"))
+        try Data("GIF89a-eigen".utf8).write(to: eigen.appendingPathComponent("2.gif"))
+        // Gleiche Nummer in beiden Ordnern: das eigene gewinnt.
+        try Data("GIF89a-alt".utf8).write(to: mit.appendingPathComponent("3.gif"))
+        try Data("GIF89a-neu".utf8).write(to: eigen.appendingPathComponent("3.gif"))
+
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [mit])
+        let alle = sammlung.alle()
+        XCTAssertEqual(Set(alle.map(\.nummer)), ["1", "2", "3"])
+        let drei = try XCTUnwrap(alle.first { $0.nummer == "3" })
+        XCTAssertEqual(try Data(contentsOf: drei.datei), Data("GIF89a-neu".utf8),
+                       "Das eigene Icon muss das mitgelieferte verdecken")
+    }
+
+    func testSichernSchreibtEinLesbaresGif() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+
+        var pixel = [String?](repeating: nil, count: 64)
+        pixel[0] = "#FF0000"; pixel[63] = "#00FF66"
+        let icon = try sammlung.sichern(nummer: "eigen-1", name: "Testbild", pixel: pixel)
+
+        XCTAssertEqual(icon.name, "Testbild")
+        let daten = try Data(contentsOf: icon.datei)
+        XCTAssertEqual(daten.prefix(4), Data("GIF8".utf8), "Muss eine echte GIF-Datei sein")
+        XCTAssertTrue(try sammlung.datenURI(fuer: icon).hasPrefix("data:image/gif;base64,"))
+        XCTAssertEqual(sammlung.alle().first { $0.nummer == "eigen-1" }?.name, "Testbild",
+                       "Der Name muss aus names.json wieder auftauchen")
+
+        try sammlung.loeschen(icon)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: icon.datei.path))
+        XCTAssertNil(sammlung.alle().first { $0.nummer == "eigen-1" })
+    }
+
+    func testSichernVerlangtAchtMalAcht() {
+        let sammlung = Iconsammlung(schreibordner: temp())
+        XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x", pixel: [nil, nil]))
     }
 }
