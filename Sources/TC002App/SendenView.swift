@@ -12,6 +12,7 @@ struct SendenView: View {
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     @State private var anAlle = false
+    @State private var suche = ""
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
@@ -51,6 +52,7 @@ struct SendenView: View {
                 }
                 iconAuswahl
             }
+            .frame(maxHeight: .infinity)
 
             HStack {
                 Toggle("an alle Uhren", isOn: $anAlle)
@@ -64,19 +66,22 @@ struct SendenView: View {
                 }
                 Spacer()
             }
-            Spacer()
         }
         .padding()
     }
 
+    private var gefilterte: [Icon] { sammlung.alle().gefiltert(nach: suche) }
+
     private var iconAuswahl: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Icon").font(.headline)
+            TextField("Suchen", text: $suche)
+                .textFieldStyle(.roundedBorder)
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 6) {
                     Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
                         .buttonStyle(.bordered)
-                    ForEach(sammlung.alle(), id: \.nummer) { icon in
+                    ForEach(gefilterte, id: \.nummer) { icon in
                         Button { gewaehltesIcon = icon } label: {
                             VStack(spacing: 2) {
                                 if let bild = NSImage(contentsOf: icon.datei) {
@@ -93,8 +98,8 @@ struct SendenView: View {
                     }
                 }
             }
-            .frame(width: 220, height: 160)
         }
+        .frame(minWidth: 220, maxWidth: 220, maxHeight: .infinity, alignment: .top)
     }
 
     private func senden() {

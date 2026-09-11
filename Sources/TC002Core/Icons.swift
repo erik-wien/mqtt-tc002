@@ -10,6 +10,19 @@ public struct Icon: Equatable, Sendable {
     }
 }
 
+public extension Array where Element == Icon {
+    /// Filtert nach Name und Nummer, unabhaengig von Gross-/Kleinschreibung. Eine
+    /// leere oder nur aus Leerraum bestehende Suche laesst die Liste unveraendert —
+    /// dieselbe Logik fuer jede Stelle, die Icons durchsuchbar macht.
+    func gefiltert(nach suche: String) -> [Icon] {
+        let s = suche.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return self }
+        return filter {
+            $0.name.localizedCaseInsensitiveContains(s) || $0.nummer.localizedCaseInsensitiveContains(s)
+        }
+    }
+}
+
 public enum IconFehler: Error, LocalizedError {
     case nichtLesbar(String)
     case nichtGefunden(String)

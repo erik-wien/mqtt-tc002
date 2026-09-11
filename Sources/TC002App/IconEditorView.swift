@@ -103,13 +103,7 @@ struct IconEditorView: View {
             .disabled(nummer.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
-    private var gefilterte: [Icon] {
-        let s = suche.trimmingCharacters(in: .whitespaces)
-        guard !s.isEmpty else { return vorhandene }
-        return vorhandene.filter {
-            $0.name.localizedCaseInsensitiveContains(s) || $0.nummer.localizedCaseInsensitiveContains(s)
-        }
-    }
+    private var gefilterte: [Icon] { vorhandene.gefiltert(nach: suche) }
 
     private var seitenleiste: some View {
         VStack(alignment: .leading, spacing: 8) {
