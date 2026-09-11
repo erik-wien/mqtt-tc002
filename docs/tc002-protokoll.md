@@ -418,13 +418,13 @@ Ehrlich benannt, statt verschwiegen:
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
 - ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
-- ❓ Wie **groß** eine Nutzlast sein darf. Dass animierte GIFs laufen, ist geklärt
-  (§4.2); offen ist, wo die Grenze liegt. Das entscheidet, ob sich längerer Text
-  als durchlaufendes GIF schicken lässt — der einzige Weg, Umlaute **und**
-  Scrollen zugleich zu bekommen, denn `scrollSpeed` gilt nur für den
-  Gerätetext (§5.4) und ein `draw`-Rahmen ist starr.
-- ❓ Ob es weitere Themen unterhalb des Präfixes gibt. Das Gerät abonniert
-  `<präfix>/#`, also alles; welche Namen es darunter auswertet, ist nicht
-  dokumentiert, und `switchDiyApp` war selbst nur durch Hinsehen zu finden.
+- ❓ Wie **groß** eine Nutzlast sein darf. Belegt ist, dass rund **14 KB**
+  durchgehen (318 Einzelbilder, am 11.09.2026 gesendet und sauber angezeigt);
+  wo die Grenze darüber liegt, hat niemand ausgereizt. Wer sie sucht, sollte
+  vorher §4.2a gelesen haben — was wie eine Größengrenze aussieht, war dort in
+  Wahrheit das Entsorgungsverfahren.
+- ❓ Ob es **weitere** Themen unterhalb des Präfixes gibt. Das Gerät abonniert
+  `<präfix>/#`, also alles. Drei sind gefunden (§3.1 bis §3.5), alle drei nur
+  durch Hinsehen; welche es sonst noch auswertet, ist nicht dokumentiert.
 - ❓ Ob und wie sich Wecker, Lautstärke und Helligkeit über MQTT statt über
   `/setConfig` setzen lassen.
