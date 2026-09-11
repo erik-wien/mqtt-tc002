@@ -6,14 +6,12 @@ struct SendenView: View {
 
     @State private var name = "notiz"
     @State private var text = "Hallo"
-    @State private var farbe = "#00FF66"
+    @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
     @State private var schrift = "Menlo"
     @State private var groesse = 11.0
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     @State private var anAlle = false
-
-    private let farben = ["#FFFFFF", "#00FF66", "#FFCC00", "#FF3030", "#4285F4", "#FF6400", "#00E5FF", "#FF6FB5"]
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
@@ -24,7 +22,7 @@ struct SendenView: View {
         var f = Pixelfeld()
         let textX = gewaehltesIcon == nil ? 1 : 10
         Textraster.rastern(text, schrift: schrift, groesse: groesse,
-                           farbe: farbe, x: textX, y: 3, feld: &f)
+                           farbe: farbe.hexWert, x: textX, y: 3, feld: &f)
         return f
     }
 
@@ -39,17 +37,12 @@ struct SendenView: View {
             HStack {
                 TextField("Name der Anzeige", text: $name).frame(width: 160)
                 TextField("Text", text: $text)
-                Picker("", selection: $farbe) {
-                    ForEach(farben, id: \.self) { f in
-                        Text(f).tag(f).foregroundStyle(Color(hex: f) ?? .primary)
-                    }
-                }
-                .labelsHidden().frame(width: 120)
+                ColorPicker("Farbe", selection: $farbe)
             }
 
             HStack(alignment: .top, spacing: 20) {
                 VStack(alignment: .leading) {
-                    VorschauView(feld: feld)
+                    VorschauView(feld: feld, icon: gewaehltesIcon?.datei)
                     if !passt {
                         Label("Der Text ist breiter als das Display und wird abgeschnitten.",
                               systemImage: "exclamationmark.triangle")
