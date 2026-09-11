@@ -6,7 +6,7 @@ struct TC002App: App {
     @State private var bereich: Bereich? = .senden
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", malen = "Malen", anzeigen = "Anzeigen", verbindung = "Verbindung"
+        case senden = "Senden", malen = "Malen", anzeigen = "Anzeigen", verbindung = "Verbindung", icons = "Icons"
         var id: String { rawValue }
         var symbol: String {
             switch self {
@@ -14,6 +14,7 @@ struct TC002App: App {
             case .malen: return "paintbrush"
             case .anzeigen: return "list.bullet"
             case .verbindung: return "antenna.radiowaves.left.and.right"
+            case .icons: return "paintpalette"
             }
         }
     }
@@ -31,6 +32,7 @@ struct TC002App: App {
                 case .malen: MalenView(zustand: zustand)
                 case .anzeigen: AnzeigenView(zustand: zustand)
                 case .verbindung: VerbindungView(zustand: zustand)
+                case .icons: IconEditorView(zustand: zustand)
                 }
             }
             .frame(minWidth: 900, minHeight: 620)
