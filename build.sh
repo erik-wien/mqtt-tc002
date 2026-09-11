@@ -73,4 +73,6 @@ ${ICON_EINTRAEGE}
 </plist>
 PLIST
 
+cp -R Icons "$APP/Contents/Resources/Icons"
+
 echo "fertig: $APP"

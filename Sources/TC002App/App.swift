@@ -27,6 +27,7 @@ struct TC002App: App {
                 .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 220)
             } detail: {
                 switch bereich ?? .senden {
+                case .senden: SendenView(zustand: zustand)
                 case .verbindung: VerbindungView(zustand: zustand)
                 default: Text("kommt in der nächsten Aufgabe").foregroundStyle(.secondary)
                 }
