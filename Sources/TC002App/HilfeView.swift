@@ -20,7 +20,10 @@ struct HilfeView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(a.rawValue).font(.title2).fontWeight(.semibold)
                     ForEach(a.absaetze, id: \.self) { absatz in
-                        Text(absatz)
+                        // `lineSpacing` ist ein Zuschlag, kein Faktor: Fuer den
+                        // ueblichen Zeilenabstand von 1,2 kommen also 0,2 der
+                        // Schriftgroesse obendrauf, nicht das 1,2-fache davon.
+                        Text(absatz).lineSpacing(NSFont.systemFontSize * 0.2)
                     }
                 }
                 .frame(maxWidth: 560, alignment: .leading)
