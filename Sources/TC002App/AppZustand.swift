@@ -17,6 +17,9 @@ struct Uhr: Codable, Identifiable, Equatable {
 final class AppZustand {
     var uhren: [Uhr] { didSet { uhrenSichern() } }
     var aktiveID: UUID? { didSet { merke(aktiveID?.uuidString, "aktiveID") } }
+    /// An welche Uhren gesendet wird. Ueberlebt den Neustart, weil es eine
+    /// Entscheidung ist und keine Momentaufnahme.
+    var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     var verbunden: [UUID: Bool] = [:]
 
@@ -114,6 +117,8 @@ final class AppZustand {
         uhren = (try? JSONDecoder().decode([Uhr].self,
                     from: d.data(forKey: "uhren") ?? Data())) ?? []
         aktiveID = d.string(forKey: "aktiveID").flatMap(UUID.init(uuidString:))
+        zielIDs = (try? JSONDecoder().decode(Set<UUID>.self,
+                    from: d.data(forKey: "zielIDs") ?? Data())) ?? []
         brokerHost = d.string(forKey: "brokerHost") ?? "192.168.1.10"
         brokerPort = d.string(forKey: "brokerPort") ?? "1883"
         benutzer   = d.string(forKey: "benutzer") ?? "pixdeck"
@@ -166,9 +171,13 @@ final class AppZustand {
     /// Legt eine Uhr an und fragt sie sofort ab. Der Name kommt aus der Geraetekennung,
     /// laesst sich aber aendern — bei mehreren Uhren ist "Kueche" hilfreicher als eine MAC.
     func uhrHinzufuegen(host: String) {
+        let erste = uhren.isEmpty
         let neue = Uhr(name: host, host: host)
         uhren.append(neue)
         if aktiveID == nil { aktiveID = neue.id }
+        // Nur bei der allerersten Uhr: sonst traete eine spaeter hinzugefuegte
+        // Uhr unversehens der bisherigen Auswahl bei, statt aussen vor zu bleiben.
+        if erste { zielIDs.insert(neue.id) }
         abfragen(neue.id)
     }
 
@@ -176,6 +185,7 @@ final class AppZustand {
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
+        zielIDs.remove(id)
         if aktiveID == id { aktiveID = uhren.first?.id }
     }
 
@@ -245,8 +255,8 @@ final class AppZustand {
     /// MQTTSender wartet bis zu acht Sekunden, eine unerreichbare Uhr darf die
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
-    func senden(_ frame: Frame, als name: String, anAlle: Bool) async {
-        let ziele = ziele(alle: anAlle)
+    func senden(_ frame: Frame, als name: String) async {
+        let ziele = ziele()
         guard !ziele.isEmpty else {
             fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
             return
@@ -277,15 +287,24 @@ final class AppZustand {
         log("an \(uhr.name) gesendet: \(name)")
     }
 
-    /// Ziel einer Sendung: die aktive Uhr, oder alle eingerichteten.
-    func ziele(alle: Bool) -> [Uhr] {
-        alle ? uhren.filter { !$0.praefix.isEmpty }
-             : [aktiveUhr].compactMap { $0 }.filter { !$0.praefix.isEmpty }
+    /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ein Praefix haben.
+    /// Ist nichts gewaehlt, ist es die aktive Uhr — sonst liefe ein Sendeversuch
+    /// stillschweigend ins Leere.
+    func ziele() -> [Uhr] {
+        if zielIDs.isEmpty {
+            return [aktiveUhr].compactMap { $0 }.filter { !$0.praefix.isEmpty }
+        }
+        return uhren.filter { zielIDs.contains($0.id) && !$0.praefix.isEmpty }
     }
 
     private func uhrenSichern() {
         guard initialisiert, let daten = try? JSONEncoder().encode(uhren) else { return }
         UserDefaults.standard.set(daten, forKey: "uhren")
+    }
+
+    private func zielIDsSichern() {
+        guard initialisiert, let daten = try? JSONEncoder().encode(zielIDs) else { return }
+        UserDefaults.standard.set(daten, forKey: "zielIDs")
     }
 
     /// UserDefaults kennt keine UUID-Schluessel — deshalb als JSON ueber die

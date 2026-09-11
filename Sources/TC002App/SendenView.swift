@@ -44,13 +44,12 @@ struct SendenView: View {
     @State private var vertikal: SendenVAusrichtung = .oben
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
-    @State private var anAlle = false
     @State private var suche = ""
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
-    /// „an alle Uhren“ zaehlt jede Zieluhr, sonst nur die aktive.
+    /// mehreren Zieluhren zaehlt jede davon.
     private var belegtePlaetze: Set<Int> {
-        let namen = Set(zustand.ziele(alle: anAlle).flatMap { zustand.bekannteAnzeigen[$0.id] ?? [] })
+        let namen = Set(zustand.ziele().flatMap { zustand.bekannteAnzeigen[$0.id] ?? [] })
         return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
     }
 
@@ -167,12 +166,11 @@ struct SendenView: View {
             .frame(maxHeight: .infinity)
 
             HStack {
-                Toggle("an alle Uhren", isOn: $anAlle)
-                    .disabled(zustand.uhren.count < 2)
+                ZielauswahlView(zustand: zustand)
                 Button(laeuft ? "Sende…" : "Senden") { senden() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(laeuft || zustand.ziele(alle: anAlle).isEmpty)
-                if zustand.ziele(alle: anAlle).isEmpty {
+                    .disabled(laeuft || zustand.ziele().isEmpty)
+                if zustand.ziele().isEmpty {
                     Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
@@ -229,6 +227,6 @@ struct SendenView: View {
             }
         }
         let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
-        Task { await zustand.senden(frame, als: anzeigenName, anAlle: anAlle); laeuft = false }
+        Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
     }
 }
