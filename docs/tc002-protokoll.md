@@ -170,6 +170,43 @@ Am 11.09.2026 am Gerät nachgeprüft — das Herstellerrepository sagt dasselbe.
 ❓ Nicht belegt: ob die Bildgröße beschränkt ist und was bei Bildern größer als
 52×16 geschieht.
 
+### 4.2a Laufschrift als animiertes GIF — der Weg um beide Beschränkungen
+
+✅ Am 11.09.2026 am Gerät bestätigt.
+
+Das Gerät kennt zwei Wege, Text zu zeigen, und jeder hat eine Lücke:
+
+| | `text` (§4.3) | `draw` selbst gerastert (§4.1) |
+|---|---|---|
+| Umlaute, Satzzeichen | ❌ | ✅ |
+| freie Schriftart | ❌ | ✅ |
+| langer Text laeuft durch | ✅ über `scrollSpeed` (§5.4) | ❌ ein `draw`-Rahmen ist starr |
+
+**Beides zugleich geht über `image`:** Den Text in voller Breite selbst rastern,
+daraus ein animiertes GIF bauen, in dem ein 52×16-Fenster Bild für Bild über den
+Text wandert, und dieses GIF schicken. Das Gerät spielt es ab — der Text läuft,
+und weil wir selbst gerastert haben, sind Umlaute und jede Schriftart dabei.
+
+```
+Text:    [ G r ü ß e   a u s   W i e n ]      (z. B. 120 Pixel breit)
+Bild 1:  [      52-Pixel-Fenster      ]  Versatz -52
+Bild 2:   [      52-Pixel-Fenster     ]  Versatz -51
+…
+Bild n:                  [   Fenster  ]  Versatz 120
+```
+
+Ein Einzelbild je Pixel Versatz ergibt einen weichen Lauf; jeder zweite oder
+dritte Schritt spart Einzelbilder auf Kosten der Ruhe im Bild.
+
+❓ **Wo die Größengrenze liegt, ist offen.** Ein kurzer Satz geht nachweislich.
+Ein langer Text braucht schnell mehrere hundert Einzelbilder, und die Nutzlast
+wächst mit jedem davon — als Daten-URI zusätzlich um ein Drittel, weil Base64 so
+rechnet. Wer das ausreizt, sollte sich an die Grenze herantasten, statt sie zu
+erraten.
+
+Dieser Weg steht in **keiner** Hersteller-Doku; er ergibt sich daraus, dass
+`image` animierte GIFs annimmt (§4.2).
+
 ### 4.3 `text` — Text in der Gerätschrift
 
 ✅ Ein Eintrag je Textblock, alle Schlüssel belegt:
