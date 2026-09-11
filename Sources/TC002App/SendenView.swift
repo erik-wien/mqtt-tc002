@@ -77,6 +77,11 @@ struct SendenView: View {
     @AppStorage("senden.grossbuchstaben") private var grossbuchstaben = false
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
     @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    /// Zeilen, die bei „oben" und „unten" frei bleiben. Buendig (0) sieht je nach
+    /// Schrift verschieden aus: Manche bringen ueber der Grossbuchstabenhoehe
+    /// Platz mit, andere nicht. Ein eigener Rand macht den Eindruck unabhaengig
+    /// vom Bau der Schrift. Bei „mittig" wirkt er naturgemaess nicht.
+    @AppStorage("senden.rand") private var rand: Int = 1
     @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     /// Nur wirksam, wenn der Text laeuft.
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
@@ -245,10 +250,13 @@ struct SendenView: View {
         let puffer = textPuffer
         guard let tinte = Textraster.tintenZeilen(puffer) else { return 0 }
         let hoehe = tinte.letzte - tinte.erste + 1
+        // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
+        // Abschneiden, und das will niemand.
+        let r = min(rand, max(0, (Pixelfeld.hoeheStandard - hoehe) / 2))
         switch vertikal {
-        case .oben:   return -tinte.erste
+        case .oben:   return -tinte.erste + r
         case .mittig: return (Pixelfeld.hoeheStandard - hoehe) / 2 - tinte.erste
-        case .unten:  return (Pixelfeld.hoeheStandard - hoehe) - tinte.erste
+        case .unten:  return (Pixelfeld.hoeheStandard - hoehe) - tinte.erste - r
         }
     }
 
@@ -485,7 +493,7 @@ struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
     }
 
     /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
@@ -526,6 +534,10 @@ struct SendenView: View {
                 .disabled(!kleinbuchstabenMoeglich)
 
             Divider().frame(height: 18)
+
+            Stepper("Rand \(rand)", value: $rand, in: 0...3).frame(width: 100)
+                .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
+                .disabled(vertikal == .mittig)
 
             Stepper("Abstand \(luecke)", value: $luecke, in: 0...3).frame(width: 110)
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
