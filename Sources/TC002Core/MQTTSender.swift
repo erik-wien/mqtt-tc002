@@ -20,6 +20,26 @@ public protocol NachrichtSendend {
     func senden(_ nutzlast: Data, an thema: String, zugang: MQTTZugang) throws
 }
 
+/// Traegt einen Verbindungsfehler von der Netzwerk-Warteschlange zum wartenden
+/// Aufrufer. Noetig, weil das Semaphor nur das erste `signal()` absichert: der
+/// stateUpdateHandler kann danach erneut feuern, waehrend der Aufrufer den Wert
+/// schon liest. Schreiben und Lesen laufen deshalb unter demselben Schloss.
+final class Fehlerfach: @unchecked Sendable {
+    private let sperre = NSLock()
+    private var wert: String?
+
+    /// Der erste Grund zaehlt — er ist der, auf den das Semaphor freigegeben hat.
+    func melden(_ neu: String) {
+        sperre.lock(); defer { sperre.unlock() }
+        if wert == nil { wert = neu }
+    }
+
+    var gemeldet: String? {
+        sperre.lock(); defer { sperre.unlock() }
+        return wert
+    }
+}
+
 /// Verbinden, CONNACK lesen, eine Nachricht senden, trennen. Mehr braucht die App nicht.
 /// Das CONNACK ist der einzige Punkt, an dem der Broker uns einen Fehler nennen kann —
 /// eine abgelehnte Veroeffentlichung bleibt bei Version 3.1.1 stumm.
@@ -35,12 +55,12 @@ public struct MQTTSender {
             using: .tcp)
 
         let bereit = DispatchSemaphore(value: 0)
-        var verbindungsfehler: String?
+        let fach = Fehlerfach()
         verbindung.stateUpdateHandler = { zustand in
             switch zustand {
             case .ready: bereit.signal()
-            case .failed(let f): verbindungsfehler = f.localizedDescription; bereit.signal()
-            case .waiting(let f): verbindungsfehler = f.localizedDescription; bereit.signal()
+            case .failed(let f): fach.melden(f.localizedDescription); bereit.signal()
+            case .waiting(let f): fach.melden(f.localizedDescription); bereit.signal()
             default: break
             }
         }
@@ -48,8 +68,10 @@ public struct MQTTSender {
         defer { verbindung.cancel() }
 
         guard bereit.wait(timeout: .now() + frist) == .success else { throw MQTTFehler.zeitueberschreitung }
-        if let verbindungsfehler { throw MQTTFehler.nichtVerbunden(verbindungsfehler) }
+        // Erst abhaengen, dann lesen: sonst schreibt der Handler noch in denselben
+        // Wert, der hier gerade geprueft wird.
         verbindung.stateUpdateHandler = nil
+        if let grund = fach.gemeldet { throw MQTTFehler.nichtVerbunden(grund) }
 
         try sendeRoh(verbindung, MQTTPaket.connect(clientID: zugang.clientID,
                                                    benutzer: zugang.benutzer,

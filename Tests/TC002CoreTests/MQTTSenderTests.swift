@@ -79,6 +79,27 @@ final class MQTTSenderTests: XCTestCase {
         }
     }
 
+    /// Der erste Grund ist der, auf den der Aufrufer gewartet hat — spaetere
+    /// Zustandswechsel duerfen ihn nicht ueberschreiben.
+    func testFehlerfachBehaeltDenErstenGrund() {
+        let fach = Fehlerfach()
+        XCTAssertNil(fach.gemeldet)
+        fach.melden("zuerst")
+        fach.melden("danach")
+        XCTAssertEqual(fach.gemeldet, "zuerst")
+    }
+
+    /// Die Wettlaufstelle: der stateUpdateHandler schreibt auf einer eigenen
+    /// Warteschlange, waehrend der Aufrufer liest. Beides zugleich darf weder den
+    /// Wert verlieren noch abstuerzen.
+    func testFehlerfachVertraegtGleichzeitigesSchreibenUndLesen() {
+        let fach = Fehlerfach()
+        DispatchQueue.concurrentPerform(iterations: 128) { i in
+            if i.isMultiple(of: 2) { fach.melden("Grund \(i)") } else { _ = fach.gemeldet }
+        }
+        XCTAssertNotNil(fach.gemeldet)
+    }
+
     func testUnerreichbarerBrokerHaengtNicht() {
         let zugang = MQTTZugang(host: "127.0.0.1", port: 1, benutzer: nil,
                                 kennwort: nil, clientID: "tc002-app")
