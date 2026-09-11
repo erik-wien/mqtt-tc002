@@ -44,6 +44,7 @@ public struct MQTTSender {
 
         guard bereit.wait(timeout: .now() + frist) == .success else { throw MQTTFehler.zeitueberschreitung }
         if let verbindungsfehler { throw MQTTFehler.nichtVerbunden(verbindungsfehler) }
+        verbindung.stateUpdateHandler = nil
 
         try sendeRoh(verbindung, MQTTPaket.connect(clientID: zugang.clientID,
                                                    benutzer: zugang.benutzer,

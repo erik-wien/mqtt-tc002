@@ -9,6 +9,7 @@ final class MQTTSenderTests: XCTestCase {
         private let listener: NWListener
         private let sperre = NSLock()
         private var _empfangen = Data()
+        private let publishGesehen = DispatchSemaphore(value: 0)
         var empfangen: Data { sperre.lock(); defer { sperre.unlock() }; return _empfangen }
 
         init(connackCode: UInt8) throws {
@@ -22,6 +23,9 @@ final class MQTTSenderTests: XCTestCase {
                             if d[d.startIndex] == 0x10 {          // CONNECT gesehen
                                 verbindung.send(content: Data([0x20, 0x02, 0x00, connackCode]),
                                                 completion: .idempotent)
+                            }
+                            if d[d.startIndex] == 0x30 {          // PUBLISH gesehen
+                                self?.publishGesehen.signal()
                             }
                             lies()
                         }
@@ -39,6 +43,13 @@ final class MQTTSenderTests: XCTestCase {
             port = p
         }
         func stoppen() { listener.cancel() }
+
+        /// Wartet, bis der Lauscher ein PUBLISH gesehen hat (statt sofort mitten im
+        /// nebenlaeufigen Empfang zu lesen). `senden()` kehrt bereits zurueck, sobald
+        /// die Bytes abgeschickt sind — nicht, sobald der Lauscher sie eingesammelt hat.
+        func wartetAufPublish(frist: TimeInterval = 5) -> Bool {
+            publishGesehen.wait(timeout: .now() + frist) == .success
+        }
     }
 
     func testSendetConnectUndPublish() throws {
@@ -49,6 +60,7 @@ final class MQTTSenderTests: XCTestCase {
 
         try MQTTSender().senden(Data("HI".utf8), an: "awtrix_a86b/custom/test", zugang: zugang)
 
+        XCTAssertTrue(lauscher.wartetAufPublish(), "PUBLISH ist beim Lauscher angekommen")
         let hex = lauscher.empfangen.map { String(format: "%02x", $0) }.joined()
         XCTAssertTrue(hex.hasPrefix("1026"), "beginnt mit CONNECT")
         XCTAssertTrue(hex.contains("301b0017"), "enthält das PUBLISH")
