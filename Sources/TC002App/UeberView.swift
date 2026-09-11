@@ -7,6 +7,7 @@ import SwiftUI
 /// Verweise sind Text und werden nur über `Link` im Browser geöffnet.
 struct UeberView: View {
     @State private var lizenztextSichtbar = false
+    @State private var silkscreenLizenztextSichtbar = false
 
     private var fassung: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
@@ -61,6 +62,13 @@ struct UeberView: View {
                     url: "https://developer.lametric.com/icons",
                     text: "Herkunft der Icons, die sich über ihre Nummer nachladen lassen."
                 )
+                VStack(alignment: .leading, spacing: 2) {
+                    Link("Silkscreen", destination: URL(string: "https://github.com/googlefonts/silkscreen")!)
+                        .fontWeight(.semibold)
+                    Text("Eigens aufs Pixelraster gezeichnete Schrift, die Umlaute und „ß“ kann — anders als die eingebaute Gerätschrift. SIL Open Font License 1.1.")
+                    Button("Lizenztext anzeigen…") { silkscreenLizenztextSichtbar = true }
+                        .buttonStyle(.link)
+                }
             }
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -75,6 +83,9 @@ struct UeberView: View {
         .sheet(isPresented: $lizenztextSichtbar) {
             LizenztextView(dismiss: { lizenztextSichtbar = false })
         }
+        .sheet(isPresented: $silkscreenLizenztextSichtbar) {
+            LizenztextView(dismiss: { silkscreenLizenztextSichtbar = false }, pfad: "Schriften/OFL-Silkscreen.txt")
+        }
     }
 
     private func danksagung(name: String, url: String, text: String) -> some View {
@@ -86,14 +97,17 @@ struct UeberView: View {
     }
 }
 
-/// Der volle GPL-3.0-Text aus `LICENSE`, von `build.sh` ins App-Paket kopiert.
-/// Pflicht, nicht Kür: Die GPL-3.0 verlangt, den Lizenztext mitzuliefern, nicht
+/// Zeigt einen Lizenztext aus dem App-Paket an — Vorgabe die GPL-3.0 aus
+/// `LICENSE`, wahlweise auch die SIL Open Font License der Silkscreen-Schrift
+/// aus `Schriften/OFL-Silkscreen.txt`. Beide werden von `build.sh` ins
+/// App-Paket kopiert; beide Lizenzen verlangen, den Text mitzuliefern, nicht
 /// nur einen Verweis darauf.
 private struct LizenztextView: View {
     let dismiss: () -> Void
+    var pfad = "LICENSE"
 
     private var text: String {
-        guard let url = Bundle.main.resourceURL?.appendingPathComponent("LICENSE"),
+        guard let url = Bundle.main.resourceURL?.appendingPathComponent(pfad),
               let inhalt = try? String(contentsOf: url, encoding: .utf8) else {
             return "Die Lizenzdatei liegt nicht im App-Paket. Das passiert, wenn die App nicht über ./build.sh gebaut, sondern direkt aus Xcode gestartet wurde."
         }
