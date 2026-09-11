@@ -5,8 +5,9 @@ import TC002Core
 struct MalenView: View {
     @Bindable var zustand: AppZustand
 
-    /// Das zuletzt gemalte Feld ueberlebt den Neustart — nur das eine, keine
-    /// Sammlung mehrerer Bilder. `pixelfeldSichern()` schreibt es weg.
+    /// Das zuletzt gemalte Feld ueberlebt den Neustart — der Arbeitsstand.
+    /// `pixelfeldSichern()` schreibt es weg. Die Sammlung mehrerer benannter
+    /// Bilder ist daneben `BilderView`, die eigene Ablage.
     @State private var feld = Pixelfeld()
     /// Als "#RRGGBB" gesichert wie in SendenView: @AppStorage kennt keine Color.
     @AppStorage("malen.farbe") private var farbeHex = "#00FF66"
@@ -74,6 +75,7 @@ struct MalenView: View {
                     }
                 }
                 .disabled(sammlung.alle().isEmpty)
+                BilderView(feld: $feld, nachLaden: pixelfeldSichern)
                 Spacer()
             }
 
