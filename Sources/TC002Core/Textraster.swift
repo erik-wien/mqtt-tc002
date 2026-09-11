@@ -6,6 +6,12 @@ import Foundation
 /// exakt — sie entsteht aus demselben Raster —, erlaubt Umlaute und Satzzeichen,
 /// die der Geraetefont nicht kennt, und laesst die Schriftart frei waehlen.
 public enum Textraster {
+    /// Leerzeichen haben keine eigene Tinte — ihre Breite laesst sich also nicht
+    /// aus gesetzten Pixeln ableiten. Feste Breite statt einer nackten Zahl im
+    /// Aufruf; mit den Luecken davor und danach (siehe `rasterPuffer`) ergibt das
+    /// einen deutlich sichtbaren Wortabstand.
+    static let leerzeichenBreite = 2
+
     /// Erstellt die Schrift, wahlweise im fetten Schnitt — ueber die Merkmale,
     /// nicht ueber einen geratenen Schriftnamen, damit auch Schriften ohne eigene
     /// "…-Bold"-Variante einen fetten Schnitt liefern, sofern das System einen hat.
@@ -16,28 +22,36 @@ public enum Textraster {
         return fetter
     }
 
-    /// Baut den attribuierten Text fuer Breitenmessung und Rasterung gleichermassen.
-    /// `kern` sitzt nur zwischen den Zeichen, nicht mehr nach dem letzten — sonst
-    /// waere ein Text aus n Zeichen um n statt n-1 Pixel breiter, und „passt"/
-    /// „passt nicht" (siehe `SendenView.passt`) stimmte nicht mehr mit dem
-    /// sichtbaren Ergebnis ueberein. Nur ganze Pixel: ein gebrochener Wert schoebe
-    /// die Glyphen von der Rasterlinie, genau das, was die Pixelschrift verhindern soll.
+    /// Baut den attribuierten Text fuer Breitenmessung und Rasterung. Kein
+    /// Kern-Attribut mehr: der Abstand zwischen Zeichen entsteht beim
+    /// Zusammensetzen der einzeln gerasterten Zeichen (siehe `rasterPuffer`),
+    /// nicht ueber die eingebaute Unterschneidung der Schrift — die ist fuer
+    /// gedruckte Groessen gemacht und faellt auf sechzehn Pixeln mal zu eng,
+    /// mal zu weit aus.
     private static func attribuiert(_ text: String, schrift: String, groesse: Double, fett: Bool,
-                                    kern: Int, vordergrund: CGColor?) -> NSAttributedString {
+                                    vordergrund: CGColor?) -> NSAttributedString {
         var attribute: [NSAttributedString.Key: Any] = [.font: font(schrift, groesse, fett: fett)]
         if let vordergrund { attribute[.foregroundColor] = vordergrund }
-        let ergebnis = NSMutableAttributedString(string: text, attributes: attribute)
-        if kern != 0, ergebnis.length > 1 {
-            ergebnis.addAttribute(.kern, value: CGFloat(kern), range: NSRange(location: 0, length: ergebnis.length - 1))
-        }
-        return ergebnis
+        return NSAttributedString(string: text, attributes: attribute)
     }
 
-    public static func breite(_ text: String, schrift: String, groesse: Double, fett: Bool = false, kern: Int = 0) -> Int {
+    /// Rohe typografische Breite eines einzelnen Zeichens — nur als Puffergroesse
+    /// fuers Rastern gedacht (`zeichenTinte`), nicht als Antwort auf „wie breit
+    /// wird der Text“. Die beantwortet `breite(...)` unten, ueber dieselbe
+    /// Rechnung wie `rasterPuffer`.
+    private static func schriftBreite(_ text: String, schrift: String, groesse: Double, fett: Bool) -> Int {
         guard !text.isEmpty else { return 0 }
         let zeile = CTLineCreateWithAttributedString(
-            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern, vordergrund: nil))
+            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, vordergrund: nil))
         return Int(CTLineGetTypographicBounds(zeile, nil, nil, nil).rounded())
+    }
+
+    /// Breite des zusammengesetzten Textes in Pixeln — dieselbe Rechnung wie
+    /// `rasterPuffer`, damit „passt“/„passt nicht“ (siehe `SendenView.passt`)
+    /// zum tatsaechlich gerasterten Ergebnis passt.
+    public static func breite(_ text: String, schrift: String, groesse: Double, fett: Bool = false, luecke: Int = 0) -> Int {
+        guard !text.isEmpty else { return 0 }
+        return rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: "#FFFFFF", luecke: luecke).breite
     }
 
     /// Hoehe der gesetzten Flaeche in Pixeln — nicht die Schriftgroesse, sondern was
@@ -51,8 +65,7 @@ public enum Textraster {
     }
 
     public static func rastern(_ text: String, schrift: String, groesse: Double,
-                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld, fett: Bool = false,
-                               kern: Int = 0) {
+                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld, fett: Bool = false) {
         guard !text.isEmpty else { return }
         let b = feld.breite, h = feld.hoehe
 
@@ -65,8 +78,7 @@ public enum Textraster {
         ctx.fill(CGRect(x: 0, y: 0, width: b, height: h))
 
         let zeile = CTLineCreateWithAttributedString(
-            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern,
-                       vordergrund: NSColor.white.cgColor))
+            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, vordergrund: NSColor.white.cgColor))
         // Quartz zaehlt von unten: die Grundlinie liegt bei Hoehe minus y minus Schriftgroesse.
         ctx.textPosition = CGPoint(x: Double(x), y: Double(h - y) - groesse)
         CTLineDraw(zeile, ctx)
@@ -81,24 +93,76 @@ public enum Textraster {
         }
     }
 
-    /// Rastert den Text in einen eigenen Puffer, immer in derselben Phase:
-    /// x 0, y 0, volle Displayhoehe. Ausrichtung wird danach angewandt, indem das
-    /// fertige Raster verschoben wird (`einsetzen`), nicht indem an anderer Stelle
-    /// gerastert wird.
+    /// Erste und letzte Spalte mit mindestens einem gesetzten Pixel, oder `nil`,
+    /// wenn das Feld ganz leer ist.
+    private static func tintenSpalten(_ feld: Pixelfeld) -> (erste: Int, letzte: Int)? {
+        var erste: Int?, letzte: Int?
+        for spalte in 0..<feld.breite {
+            guard (0..<feld.hoehe).contains(where: { feld.farbe(x: spalte, y: $0) != nil }) else { continue }
+            if erste == nil { erste = spalte }
+            letzte = spalte
+        }
+        guard let e = erste, let l = letzte else { return nil }
+        return (e, l)
+    }
+
+    /// Rastert ein einzelnes Zeichen ueber die volle Displayhoehe und beschneidet
+    /// es waagrecht auf die Spalten mit gesetzten Pixeln — nur diese Tinte zaehlt
+    /// beim Zusammensetzen (siehe `rasterPuffer`), nicht die Vorschubbreite der
+    /// Schrift. Senkrecht wird nie beschnitten: sonst saessen Buchstaben mit und
+    /// ohne Unterlaenge auf verschiedenen Hoehen, und Umlautpunkte verschwaenden.
+    /// Leerzeichen haben keine Tinte und bekommen stattdessen die feste Breite
+    /// `leerzeichenBreite`.
+    private static func zeichenTinte(_ zeichen: Character, schrift: String, groesse: Double,
+                                     fett: Bool, farbe: String) -> Pixelfeld {
+        guard zeichen != " " else {
+            return Pixelfeld(breite: leerzeichenBreite, hoehe: Pixelfeld.hoeheStandard)
+        }
+        let text = String(zeichen)
+        // Grosszuegiger Puffer, immer an derselben Stelle gerastert (x 4) — sonst
+        // entscheidet der Zufall der Phase, welche Punkte bei ungeglaetteter
+        // Schrift den Schwellwert von 127 ueberschreiten (siehe `rastern`).
+        let breite = schriftBreite(text, schrift: schrift, groesse: groesse, fett: fett) + 12
+        var roh = Pixelfeld(breite: breite, hoehe: Pixelfeld.hoeheStandard)
+        rastern(text, schrift: schrift, groesse: groesse, farbe: farbe, x: 4, y: 0, feld: &roh, fett: fett)
+
+        guard let (erste, letzte) = tintenSpalten(roh) else {
+            return Pixelfeld(breite: 0, hoehe: Pixelfeld.hoeheStandard)
+        }
+        var ausschnitt = Pixelfeld(breite: letzte - erste + 1, hoehe: Pixelfeld.hoeheStandard)
+        for zeile in 0..<roh.hoehe {
+            for spalte in erste...letzte {
+                guard let f = roh.farbe(x: spalte, y: zeile) else { continue }
+                ausschnitt.setzen(x: spalte - erste, y: zeile, farbe: f)
+            }
+        }
+        return ausschnitt
+    }
+
+    /// Rastert den Text Zeichen fuer Zeichen und setzt die Ausschnitte nach der
+    /// Tinte aneinander, mit `luecke` leeren Spalten dazwischen — nicht nach den
+    /// Vorschubbreiten der Schrift, die fuer gedruckte Groessen gemacht sind und
+    /// auf sechzehn Pixeln mal zu eng, mal zu weit ausfallen. Der Abstand sitzt
+    /// nur zwischen den Zeichen, nicht nach dem letzten.
     ///
-    /// Der Grund ist nicht Ordnungsliebe: bei 11 Punkt ohne Kantenglaettung
-    /// entscheidet ein Pixel Versatz darueber, welche Punkte den Schwellwert von
-    /// 127 ueberschreiten. Wer an zwei Stellen mit verschiedenem x rastert, bekommt
-    /// dieselbe Schrift einmal duenner und einmal dicker — sichtbar, sobald die
-    /// stehende Vorschau neben der laufenden steht.
+    /// Jedes Zeichen wird fuer sich in derselben Phase gerastert (siehe
+    /// `zeichenTinte`) und danach nur noch kopiert, nie erneut an anderer Stelle
+    /// gerastert — genau das haette bei ungeglaetteter Schrift dieselben Zeichen
+    /// mal duenner, mal dicker aussehen lassen.
     public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
-                                    fett: Bool, farbe: String, kern: Int = 0) -> Pixelfeld {
-        // Zwei Spalten Zugabe: die typografische Breite rundet ab, die letzte
-        // Glyphe darf daran nicht haengenbleiben.
-        let spalten = max(breite(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern) + 2, 1)
-        var puffer = Pixelfeld(breite: spalten, hoehe: Pixelfeld.hoeheStandard)
-        rastern(text, schrift: schrift, groesse: groesse, farbe: farbe,
-                x: 0, y: 0, feld: &puffer, fett: fett, kern: kern)
+                                    fett: Bool, farbe: String, luecke: Int = 0) -> Pixelfeld {
+        let luecke = max(0, luecke)
+        let zeichen = text.map { zeichenTinte($0, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe) }
+        let tintenbreite = zeichen.reduce(0) { $0 + $1.breite }
+        let gesamtbreite = tintenbreite + luecke * max(0, zeichen.count - 1)
+        var puffer = Pixelfeld(breite: max(gesamtbreite, 1), hoehe: Pixelfeld.hoeheStandard)
+
+        var x = 0
+        for (index, ausschnitt) in zeichen.enumerated() {
+            einsetzen(ausschnitt, x: x, y: 0, in: &puffer)
+            x += ausschnitt.breite
+            if index < zeichen.count - 1 { x += luecke }
+        }
         return puffer
     }
 
@@ -143,8 +207,8 @@ public enum Textraster {
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
                                                iconBilder: [[String?]] = [],
-                                               iconLaeuftMit: Bool = false, kern: Int = 0) -> [Bildraster.Einzelbild] {
-        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, kern: kern)
+                                               iconLaeuftMit: Bool = false, luecke: Int = 0) -> [Bildraster.Einzelbild] {
+        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, luecke: luecke)
         let hatIcon = !iconBilder.isEmpty
         let festesIcon = hatIcon && !iconLaeuftMit
         let fensterBreite = Pixelfeld.breiteStandard
@@ -153,9 +217,9 @@ public enum Textraster {
         let fensterTextAb = festesIcon ? iconKante + iconLuecke : 0
         let bandTextAb = iconLaeuftMit ? iconKante + iconLuecke : 0
         let textbereich = fensterBreite - fensterTextAb
-        // Ueber die typografische Breite, nicht ueber die des Puffers: dessen zwei
-        // Spalten Zugabe sollen die letzte Glyphe auffangen, nicht den Lauf verlaengern.
-        let bandBreite = bandTextAb + breite(text, schrift: schrift, groesse: groesse, fett: fett, kern: kern)
+        // Der Puffer ist exakt so breit wie die Tinte plus die Luecken — keine
+        // Zugabe mehr, die hier herausgerechnet werden muesste.
+        let bandBreite = bandTextAb + puffer.breite
         let schritt = max(1, schrittweite)
 
         var einzelbilder: [Bildraster.Einzelbild] = []
@@ -209,11 +273,11 @@ public enum Textraster {
                                    fett: Bool, farbe: String, schrittweite: Int,
                                    bilddauer: Double, versatzY: Int = 0,
                                    iconBilder: [[String?]] = [],
-                                   iconLaeuftMit: Bool = false, kern: Int = 0) throws -> String {
+                                   iconLaeuftMit: Bool = false, luecke: Int = 0) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,
-                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, kern: kern)
+                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
         return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
                                           hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
     }

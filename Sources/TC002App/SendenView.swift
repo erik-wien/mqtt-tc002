@@ -63,10 +63,14 @@ struct SendenView: View {
     /// 8, nicht 11: Vorgabeschrift ist Silkscreen, die nur 8 und 16 sauber traegt.
     @AppStorage("senden.groesse") private var groesse = 8.0
     @AppStorage("senden.fett") private var fett = false
-    /// −1 bis +3 Pixel, ganzzahlig: ein gebrochener Wert schoebe die Glyphen von
-    /// der Rasterlinie und zerstoerte die Pixelgenauigkeit, fuer die Silkscreen
-    /// ueberhaupt mitgeliefert wird. Wirkt auf beiden Wegen (siehe unten).
-    @AppStorage("senden.zeichenabstand") private var zeichenabstand = 0
+    /// Zahl leerer Spalten zwischen zwei Zeichen, 0 bis 3, Vorgabe 1. Wirkt nur
+    /// beim Weg „als Pixel": Dort wird jedes Zeichen einzeln gerastert und nach
+    /// seiner Tinte an das vorige angehaengt (siehe `Textraster.rasterPuffer`),
+    /// nicht nach der Vorschubbreite der Schrift — die ist fuer gedruckte
+    /// Groessen gemacht und faellt auf sechzehn Pixeln mal zu eng, mal zu weit
+    /// aus. Beim Weg „als Text" setzt die Uhr selbst, mit ihrem eigenen,
+    /// unveraenderten `Textblock.zeichenabstand` (siehe `textblock` unten).
+    @AppStorage("senden.luecke") private var luecke = 1
     /// Wandelt erst beim Rastern bzw. beim Bauen des `Textblock` um (siehe
     /// `gesendeterText`), nie das Eingabefeld selbst — wer tippt, soll lesen,
     /// was er geschrieben hat.
@@ -187,7 +191,7 @@ struct SendenView: View {
         return zahlen.dropLast().joined(separator: ", ") + " und \(letzte) Pixeln"
     }
 
-    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, kern: zeichenabstand) }
+    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, luecke: luecke) }
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     private var textX: Int {
@@ -212,7 +216,7 @@ struct SendenView: View {
     private var feld: Pixelfeld {
         var f = Pixelfeld()
         Textraster.einsetzen(Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
-                                                     fett: fett, farbe: farbeHex, kern: zeichenabstand),
+                                                     fett: fett, farbe: farbeHex, luecke: luecke),
                              x: textX, y: textY, in: &f)
         return f
     }
@@ -251,9 +255,13 @@ struct SendenView: View {
         switch vertikal { case .oben: "top"; case .mittig: "middle"; case .unten: "bottom" }
     }
 
-    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung, Farbe und
-    /// Zeichenabstand aus derselben Formatleiste wie beim eigenen Raster —
-    /// Schriftart und Fett gelten hier nicht, die Uhr setzt ihre eigene Schrift.
+    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung und Farbe aus
+    /// derselben Formatleiste wie beim eigenen Raster — Schriftart und Fett
+    /// gelten hier nicht, die Uhr setzt ihre eigene Schrift. `zeichenabstand`
+    /// bleibt bei seiner eigenen Vorgabe: „Luecke" ist die Zahl leerer Spalten
+    /// zwischen Zeichen, die wir selbst rastern (siehe oben) — eine andere
+    /// Einheit als `charSpacing` fuer die Gerätschrift, die beiden gleichzusetzen
+    /// waere nur zufaellig richtig.
     private var textblock: Textblock {
         var t = Textblock(inhalt: gesendeterText)
         t.schrifthoehe = Int(groesse)
@@ -263,7 +271,6 @@ struct SendenView: View {
         t.ausrichtung = geraeteAusrichtung
         t.vertikal = geraeteVertikal
         t.flaeche = [flaecheX, 0, flaecheBreite, Pixelfeld.hoeheStandard]
-        t.zeichenabstand = zeichenabstand
         return t
     }
 
@@ -409,7 +416,7 @@ struct SendenView: View {
             laufschriftFrames = Textraster.laufschriftEinzelbilder(
                 gesendeterText, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
                 schrittweite: tempo.schrittweite, bilddauer: tempo.bilddauer,
-                versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit, kern: zeichenabstand)
+                versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
             // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
             // einmal gerastert, sonst liefe die Rechnung zweimal.
             laufschriftURI = (try? Bildraster.alsDatenURI(
@@ -423,7 +430,7 @@ struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)|\(zeichenabstand)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
     }
 
     /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
@@ -465,8 +472,8 @@ struct SendenView: View {
 
             Divider().frame(height: 18)
 
-            Stepper("Abstand \(zeichenabstand)", value: $zeichenabstand, in: -1...3).frame(width: 110)
-                .help("Zeichenabstand in Pixeln, −1 bis +3 — wirkt auf beiden Wegen. Negative Werte rücken die Zeichen enger zusammen, praktisch wenn ein Text knapp nicht passt.")
+            Stepper("Lücke \(luecke)", value: $luecke, in: 0...3).frame(width: 110)
+                .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
             Divider().frame(height: 18)
 
@@ -541,7 +548,7 @@ struct SendenView: View {
                                                  farbe: farbeHex, schrittweite: tempo.schrittweite,
                                                  bilddauer: tempo.bilddauer, versatzY: textY,
                                                  iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit,
-                                                 kern: zeichenabstand)
+                                                 luecke: luecke)
                     : laufschriftURI
                 return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
             }

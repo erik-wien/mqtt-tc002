@@ -17,16 +17,57 @@ final class TextrasterTests: XCTestCase {
         XCTAssertGreaterThan(kurz, 0)
     }
 
-    /// Zeichenabstand 1 muss die Breite eines n-Zeichen-Texts um genau n−1 Pixel
+    /// Luecke 1 muss die Breite eines n-Zeichen-Texts um genau n−1 Pixel
     /// vergroessern — der Abstand sitzt nur zwischen den Zeichen, nicht nach dem
     /// letzten, sonst stimmte „passt“/„passt nicht“ nicht mehr mit dem
     /// sichtbaren Ergebnis ueberein.
-    func testZeichenabstandVergroessertBreiteUmNMinusEins() {
+    func testLueckePlusEinsVergroessertBreiteUmNMinusEins() {
         let text = "Hallo Welt"
         let n = text.count
-        let ohne = Textraster.breite(text, schrift: "Menlo", groesse: 11, kern: 0)
-        let mit = Textraster.breite(text, schrift: "Menlo", groesse: 11, kern: 1)
+        let ohne = Textraster.breite(text, schrift: "Menlo", groesse: 11, luecke: 0)
+        let mit = Textraster.breite(text, schrift: "Menlo", groesse: 11, luecke: 1)
         XCTAssertEqual(mit - ohne, n - 1)
+    }
+
+    /// Der eigentliche Beleg fuer „ein Pixel Abstand, nicht mehr, nicht weniger“:
+    /// Zwischen zwei gleichen Zeichen muss genau `luecke` leere Spalten stehen —
+    /// gezaehlt ueber die gesetzten Spalten im Ergebnisfeld, nicht ueber die
+    /// Gesamtbreite. „H“ hat wegen des Querstrichs keine eigene interne Luecke,
+    /// darum entspricht Feldbreite minus Spalten-mit-Tinte genau der Luecke
+    /// zwischen den beiden Zeichen.
+    func testLueckeZwischenZweiGleichenZeichen() {
+        for erwarteteLuecke in 0...3 {
+            let puffer = Textraster.rasterPuffer("HH", schrift: "Menlo", groesse: 11, fett: false,
+                                                 farbe: "#FFFFFF", luecke: erwarteteLuecke)
+            let spaltenMitTinte = (0..<puffer.breite).filter { spalte in
+                (0..<puffer.hoehe).contains { puffer.farbe(x: spalte, y: $0) != nil }
+            }.count
+            XCTAssertEqual(puffer.breite - spaltenMitTinte, erwarteteLuecke,
+                           "bei Luecke \(erwarteteLuecke) müssen genau so viele leere Spalten zwischen den Zeichen stehen")
+        }
+    }
+
+    /// Ein Umlaut behaelt seine Punkte: Es gibt eine Zeile mit gesetzten Pixeln
+    /// bei „Ä“, die bei „A“ ganz leer ist.
+    func testUmlautBehaeltSeinePunkte() {
+        let mitUmlaut = Textraster.rasterPuffer("Ä", schrift: "Menlo", groesse: 11, fett: false, farbe: "#FFFFFF")
+        let ohne = Textraster.rasterPuffer("A", schrift: "Menlo", groesse: 11, fett: false, farbe: "#FFFFFF")
+        func zeilenMitTinte(_ feld: Pixelfeld) -> Set<Int> {
+            Set((0..<feld.hoehe).filter { y in (0..<feld.breite).contains { feld.farbe(x: $0, y: y) != nil } })
+        }
+        let nurBeimUmlaut = zeilenMitTinte(mitUmlaut).subtracting(zeilenMitTinte(ohne))
+        XCTAssertFalse(nurBeimUmlaut.isEmpty, "die Umlautpunkte müssen eine eigene Zeile besetzen, die A nicht hat")
+    }
+
+    /// Ein Leerzeichen hat keine eigene Tinte, muss aber trotzdem den
+    /// vorgesehenen Wortabstand erzeugen — die feste Leerzeichenbreite plus die
+    /// Luecken davor und danach.
+    func testLeerzeichenErgibtWortabstand() {
+        let mitLeerzeichen = Textraster.breite("H H", schrift: "Menlo", groesse: 11, luecke: 1)
+        let ohneLeerzeichen = Textraster.breite("HH", schrift: "Menlo", groesse: 11, luecke: 1)
+        // „H H“ hat gegenueber „HH“ ein zusaetzliches Zeichen (das Leerzeichen,
+        // feste Breite) und eine zusaetzliche Luecke davor.
+        XCTAssertEqual(mitLeerzeichen - ohneLeerzeichen, Textraster.leerzeichenBreite + 1)
     }
 
     /// Ein "L" hat unten den breiten Fuss. Liegt die breiteste Zeile in der oberen
