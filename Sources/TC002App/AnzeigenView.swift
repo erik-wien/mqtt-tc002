@@ -5,6 +5,9 @@ struct AnzeigenView: View {
     @Bindable var zustand: AppZustand
     @State private var seitenwechsel = 0
     @State private var geladen = false
+    /// Kennzeichen fuer den gelesenen Wert: das folgende .onChange stammt dann vom
+    /// Laden, nicht vom Nutzer, und darf nicht zurueckschreiben.
+    @State private var ladeLauf = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -28,7 +31,10 @@ struct AnzeigenView: View {
                 ForEach([10, 20, 30, 60], id: \.self) { Text("alle \($0) Sekunden").tag($0) }
             }
             .frame(width: 320)
-            .onChange(of: seitenwechsel) { _, neu in setzen("carouselSpeed", neu) }
+            .onChange(of: seitenwechsel) { _, neu in
+                guard !ladeLauf else { ladeLauf = false; return }
+                setzen("carouselSpeed", neu)
+            }
             Spacer()
         }
         .padding()
@@ -38,11 +44,19 @@ struct AnzeigenView: View {
             guard let host = zustand.aktiveUhr?.host else { return }
             // .task laeuft auf dem Hauptthread, konfiguration() blockiert bis zur Antwort
             // der Uhr. Ohne den losgeloesten Task steht das Fenster so lange still.
-            let wert: Int? = await Task.detached {
-                guard let k = try? Geraet(host: host).konfiguration() else { return nil }
-                return k["carouselSpeed"] as? Int
+            let ergebnis: (wert: Int?, fehler: String?) = await Task.detached {
+                do { return (try Geraet(host: host).konfiguration()["carouselSpeed"] as? Int, nil) }
+                catch { return (nil, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
             }.value
-            if let wert { seitenwechsel = wert }
+            // Ohne Meldung zeigte der Picker nach einem Fehlschlag faelschlich
+            // "kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
+            if let meldung = ergebnis.fehler {
+                zustand.fehler = "Die Einstellung „Seitenwechsel“ ließ sich nicht lesen: \(meldung)"
+            } else if let wert = ergebnis.wert {
+                if wert != seitenwechsel { ladeLauf = true; seitenwechsel = wert }
+            } else {
+                zustand.fehler = "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet."
+            }
         }
     }
 
