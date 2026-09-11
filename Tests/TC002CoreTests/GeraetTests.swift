@@ -56,6 +56,24 @@ final class GeraetTests: XCTestCase {
         XCTAssertEqual(try geraet().themenPraefix(), "awtrix_a86b")
     }
 
+    /// Ohne eingestelltes Praefix ergaebe die Formel "_a86b" — ein Thema, auf das
+    /// die Uhr nie hoert. Das darf nicht als gueltiges Praefix durchgehen.
+    func testLeeresPraefixErgibtFehlerStattUnsinn() {
+        Doppelgaenger.antworten["/getMqttConfig"] = #"{"isMqtt":true,"mqtt_prefix":""}"#
+        XCTAssertThrowsError(try geraet().themenPraefix()) { fehler in
+            guard case GeraetFehler.keinPraefix = fehler else {
+                return XCTFail("war stattdessen \(fehler)")
+            }
+        }
+    }
+
+    /// Praefix und Basisdaten kommen zusammen — sonst wird /getBase zweimal geholt.
+    func testPraefixUndBasisLiefertBeides() throws {
+        let ergebnis = try geraet().praefixUndBasis()
+        XCTAssertEqual(ergebnis.praefix, "awtrix_a86b")
+        XCTAssertEqual(ergebnis.basis.mac, "aabbccdda86b")
+    }
+
     func testBasisdaten() throws {
         let b = try geraet().basis()
         XCTAssertEqual(b.mac, "aabbccdda86b")

@@ -12,12 +12,14 @@ public enum GeraetFehler: Error, LocalizedError {
     case nichtErreichbar(String)
     case unerwarteteAntwort(String)
     case httpFehler(pfad: String, code: Int)
+    case keinPraefix
 
     public var errorDescription: String? {
         switch self {
         case .nichtErreichbar(let g): return "Die Uhr ist nicht erreichbar: \(g)"
         case .unerwarteteAntwort(let w): return "Die Uhr hat unerwartet geantwortet: \(w)"
         case .httpFehler(let pfad, let code): return "Die Uhr hat einen Fehler gemeldet: \(pfad) (Status \(code))"
+        case .keinPraefix: return "Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen."
         }
     }
 }
@@ -52,9 +54,18 @@ public struct Geraet {
     /// Das tatsaechliche Themen-Praefix. Die Firmware haengt an das eingestellte
     /// Praefix einen Unterstrich und die letzten vier Stellen der MAC-Adresse.
     public func themenPraefix() throws -> String {
+        try praefixUndBasis().praefix
+    }
+
+    /// Praefix und Basisdaten in einem Zug. Getrennt geholt wuerde `/getBase`
+    /// zweimal abgefragt — einmal fuer das Praefix, einmal fuer die MAC.
+    public func praefixUndBasis() throws -> (praefix: String, basis: Basisdaten) {
         let eingestellt = try mqttEinstellungen().praefix
-        let mac = try basis().mac
-        return eingestellt + "_" + String(mac.suffix(4))
+        let b = try basis()
+        // Ohne eingestelltes Praefix kaeme hier "_a86b" heraus — ein Thema, auf das
+        // die Uhr nie hoert. Lieber sagen, was fehlt, als stumm ins Leere senden.
+        guard !eingestellt.isEmpty else { throw GeraetFehler.keinPraefix }
+        return (eingestellt + "_" + String(b.mac.suffix(4)), b)
     }
 
     public func verbunden() throws -> Bool {
