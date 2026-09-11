@@ -5,11 +5,18 @@ struct MalenView: View {
     @Bindable var zustand: AppZustand
 
     @State private var feld = Pixelfeld()
-    @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
+    /// Als "#RRGGBB" gesichert wie in SendenView: @AppStorage kennt keine Color.
+    @AppStorage("malen.farbe") private var farbeHex = "#00FF66"
     @State private var radierer = false
-    @State private var platz = 1
-    @State private var dauerText = ""
+    @AppStorage("malen.meldungsplatz") private var platz = 1
+    @AppStorage("malen.dauer") private var dauerText = ""
     @State private var laeuft = false
+
+    /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
+    private var farbe: Binding<Color> {
+        Binding(get: { Color(hex: farbeHex) ?? Color(red: 0, green: 1, blue: 0.4) },
+                set: { farbeHex = $0.hexWert })
+    }
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
     /// mehreren Zieluhren zaehlt jede davon.
@@ -40,7 +47,7 @@ struct MalenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                ColorPicker("Farbe", selection: $farbe)
+                ColorPicker("Farbe", selection: farbe)
                 Toggle("Radierer", isOn: $radierer).toggleStyle(.button)
                 Button("Leeren") { feld.alleLoeschen() }
                 Menu("Icon einfügen") {
@@ -96,7 +103,7 @@ struct MalenView: View {
         .background(Color.black)
         .gesture(DragGesture(minimumDistance: 0).onChanged { wert in
             let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-            if radierer { feld.loeschen(x: x, y: y) } else { feld.setzen(x: x, y: y, farbe: farbe.hexWert) }
+            if radierer { feld.loeschen(x: x, y: y) } else { feld.setzen(x: x, y: y, farbe: farbeHex) }
         })
         .frame(maxWidth: .infinity, alignment: .center)
         .background(

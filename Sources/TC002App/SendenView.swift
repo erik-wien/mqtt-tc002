@@ -19,17 +19,39 @@ enum SendenVAusrichtung: String, CaseIterable, Identifiable {
 struct SendenView: View {
     @Bindable var zustand: AppZustand
 
-    @State private var platz = 1
-    @State private var dauerText = ""
-    @State private var text = "Hallo"
-    @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
-    @State private var schrift = "Menlo"
-    @State private var groesse = 11.0
-    @State private var fett = false
-    @State private var horizontal: SendenHAusrichtung = .links
-    @State private var vertikal: SendenVAusrichtung = .oben
+    /// Ueberlebt den Neustart — Einstellungen dieser einen Ansicht, kein
+    /// geteilter Zustand, deshalb @AppStorage statt des Umwegs ueber AppZustand.
+    @AppStorage("senden.meldungsplatz") private var platz = 1
+    @AppStorage("senden.dauer") private var dauerText = ""
+    @AppStorage("senden.text") private var text = "Hallo"
+    /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
+    /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
+    @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
+    @AppStorage("senden.schriftart") private var schrift = "Menlo"
+    @AppStorage("senden.groesse") private var groesse = 11.0
+    @AppStorage("senden.fett") private var fett = false
+    @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
+    @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    /// Nur die Nummer wird gesichert, kein Pfad — der bricht, sobald ein Icon
+    /// zwischen mitgeliefert und eigenen wandert. `gewaehltesIcon` wird daraus
+    /// einmalig beim Start nachgeschlagen; eine verschwundene Nummer ergibt
+    /// kommentarlos „kein Icon“.
+    @AppStorage("senden.icon") private var iconNummer = ""
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
+
+    init(zustand: AppZustand) {
+        self.zustand = zustand
+        let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
+        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil : sammlung.alle().first { $0.nummer == nummer })
+    }
+
+    /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
+    private var farbe: Binding<Color> {
+        Binding(get: { Color(hex: farbeHex) ?? Color(red: 0, green: 1, blue: 0.4) },
+                set: { farbeHex = $0.hexWert })
+    }
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
     /// mehreren Zieluhren zaehlt jede davon.
@@ -80,7 +102,7 @@ struct SendenView: View {
     private var feld: Pixelfeld {
         var f = Pixelfeld()
         Textraster.rastern(text, schrift: schrift, groesse: groesse,
-                           farbe: farbe.hexWert, x: textX, y: textY, feld: &f, fett: fett)
+                           farbe: farbeHex, x: textX, y: textY, feld: &f, fett: fett)
         return f
     }
 
@@ -125,6 +147,7 @@ struct SendenView: View {
             }
         }
         .padding()
+        .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
     }
 
     /// Alles, was den Text betrifft, in einer Zeile ueber dem Eingabefeld — wie in
@@ -159,7 +182,7 @@ struct SendenView: View {
 
             Divider().frame(height: 18)
 
-            ColorPicker("Farbe", selection: $farbe).labelsHidden()
+            ColorPicker("Farbe", selection: farbe).labelsHidden()
                 .help("Farbe")
 
             Spacer()
