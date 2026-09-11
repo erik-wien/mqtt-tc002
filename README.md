@@ -25,3 +25,17 @@ Ermittelt am 11.09.2026 am laufenden Gerät, nicht aus der Herstellerdoku:
 
 Broker: mosquitto auf hausserver, 192.168.1.10:1883, Konten siehe dortige
 `aclfile`. Verwaltung mit `mqtt-user` auf hausserver.
+
+## Quellen
+
+- **Offizielles Repository des Herstellers:**
+  https://github.com/UlanziTechnology/Ulanzi-U-Clock-TC002
+  Bestaetigt die Praefixbildung `<eingestellt>_<letzte vier MAC-Stellen>` (Vorgabe
+  `ulanzi`), nennt `text`, `image`, `draw` und `duration`, und fuehrt neben `df`
+  (Rechteck) auch `dfc` (gefuellter Kreis: `{"dfc":[x,y,radius,"#RRGGBB"]}`) auf.
+  Animierte GIFs sind laut dieser Quelle in `image` unterstuetzt.
+- **Nicht** dokumentiert sind dort: das Steuerthema `<praefix>/switchDiyApp` und das
+  Loeschen einer Anzeige durch eine leere Nutzlast. Beides haben wir am 11.09.2026 am
+  Geraet ermittelt — `switchDiyApp` aus den SUBSCRIBE-Zeilen des Brokers.
+- **PixDeck** (https://github.com/cailurus/PixDeck, GPL-3.0): Quelle der Erkenntnis, dass
+  dasselbe JSON auch per HTTP an `/api/custom?name=<n>` geht.

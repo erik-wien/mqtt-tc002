@@ -108,7 +108,11 @@ Drei Bestandteile, frei kombinierbar:
 ```
 
 `df` ist ein gefuelltes Rechteck; mit Breite und Hoehe 1 ist es ein einzelner
-Pixel. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — eine
+Pixel. Das Herstellerrepository nennt daneben `dfc` fuer einen gefuellten Kreis
+(`{"dfc":[x,y,radius,"#RRGGBB"]}`). Die App baut ihn **nicht** — der Malstift
+arbeitet pixelweise, ein Kreisbefehl braeuchte eine eigene Bedienfläche ohne
+erkennbaren Gewinn. Er ist hier nur vermerkt, damit er nicht in Vergessenheit
+geraet. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — eine
 Anzeige bleibt, bis sie ueberschrieben oder geloescht wird.
 
 Zwei Eigenheiten des Geraets: es **scrollt nicht selbst**, Laufschrift muss Bild
@@ -231,8 +235,8 @@ gemaltes Bild, Loeschen, Umschalten, Seitenwechsel aendern.
 Diese drei sind nicht geklaert und werden waehrend der Umsetzung am Geraet
 beantwortet, nicht vorher geraten:
 
-1. Spielt das Geraet **animierte** GIFs ab, oder zeigt es nur das erste Bild?
-   Mindestens ein mitgeliefertes Icon ist animiert.
+1. Spielt das Geraet **animierte** GIFs ab? Das offizielle Repository des Herstellers
+   sagt ja. Am Geraet gegengeprueft ist es noch nicht — Aufgabe 14 holt das nach.
 2. Wirkt `switchDiyApp` nur, wenn die Anzeige auf dem Geraet in der DIY-Liste
    aktiviert ist? Im Versuch blieb es wirkungslos.
 3. Wie verhaelt sich `duration` im Zusammenspiel mit `carouselSpeed`?
