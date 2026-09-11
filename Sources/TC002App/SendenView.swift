@@ -34,16 +34,23 @@ enum Lauftempo: String, CaseIterable, Identifiable {
     case langsam, mittel, schnell
     var id: String { rawValue }
 
-    /// Pixel Versatz je Einzelbild. Schnell heisst groebere Schritte — sonst
-    /// waechst die Nutzlast mit dem Tempo statt zu schrumpfen.
-    var schrittweite: Int { self == .schnell ? 2 : 1 }
+    /// Pixel Versatz je Einzelbild — immer einer.
+    ///
+    /// „Schnell" nahm frueher Zweierschritte, mit der Begruendung, das halte die
+    /// Nutzlast klein. Die Rechnung stimmte nicht: Die Zahl der Einzelbilder
+    /// haengt allein an der Schrittweite, nicht an der Standzeit — Zweierschritte
+    /// halbieren also die Nutzlast, kosten aber die Ruhe im Bild. Und zusammen
+    /// mit der kuerzeren Standzeit ergab das fast das Dreifache von „mittel",
+    /// also einen Sprung statt einer Stufe. Jetzt unterscheidet nur die Standzeit.
+    var schrittweite: Int { 1 }
 
-    /// Standzeit je Einzelbild in Sekunden.
+    /// Standzeit je Einzelbild in Sekunden. Die Stufen liegen rund das
+    /// Anderthalbfache auseinander — gleichmaessig statt sprunghaft.
     var bilddauer: Double {
         switch self {
-        case .langsam: return 0.12
-        case .mittel: return 0.07
-        case .schnell: return 0.05
+        case .langsam: return 0.12   //  8 Pixel je Sekunde
+        case .mittel:  return 0.08   // 12
+        case .schnell: return 0.055  // 18
         }
     }
 }
