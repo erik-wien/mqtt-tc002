@@ -66,6 +66,26 @@ Am 11.09.2026 am laufenden Geraet ermittelt, nicht aus der Herstellerdoku:
 | Broker | 192.168.1.10:1883, unverschluesselt, kein anonymer Zugang |
 | HTTP | `POST /api/custom?name=<n>`, `/getConfig`, `/setConfig`, `/getMqttStatus` |
 
+### Das Praefix ermittelt die App selbst
+
+Der Stolperstein des ganzen Projekts ist, dass das eingestellte Praefix nicht das
+tatsaechliche ist. Die Firmware haengt die **letzten vier Stellen der MAC-Adresse**
+an — `aabbccdda86b` wird zu `awtrix_a86b`. Die App muss das niemanden raten lassen:
+
+- `/getMqttConfig` liefert `mqtt_prefix`
+- `/getBase` liefert `mac`, `devSn`, `mcuVer`, `appVer`
+- daraus setzt die App das Themen-Praefix zusammen und zeigt es an
+
+Damit ist ausgeschlossen, dass Nachrichten ins Leere gehen, weil jemand das Feld
+aus der Geraeteoberflaeche abgeschrieben hat.
+
+### Firmware
+
+Die TC002 traegt **zwei** Firmwares, eine im Mikrocontroller (`mcuVer`) und eine
+im SoC (`appVer`), mit eigener Aktualisierung von Ulanzi. Alternative Firmware
+wie AWTRIX 3 ist auf dieser Hardware kein Thema — sie setzt einen ESP32 voraus,
+auf dem alles laeuft. Geprueft am Geraet: V1.0.17 und 1.1.1.
+
 Ein Platzhalter im Praefix macht die Anmeldung unmoeglich: die Uhr meldet beim
 Verbinden einen letzten Willen auf dieses Thema an, und ein `#` ist in einem
 Thema, auf das gesendet wird, verboten. Der Broker verwirft das Paket, im
@@ -90,10 +110,28 @@ Drei Bestandteile, frei kombinierbar:
 Pixel. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — eine
 Anzeige bleibt, bis sie ueberschrieben oder geloescht wird.
 
-Zwei Eigenheiten des Geraets, beide aus PixDeck belegt: es **scrollt nicht
-selbst**, Laufschrift muss Bild fuer Bild geschickt werden; und der Font hat
-Luecken bei Kleinbuchstaben, weshalb Text in Grossbuchstaben gewandelt wird.
-Zeichenbreite sechs Pixel plus Zeichenabstand.
+Zwei Eigenheiten des Geraets: es **scrollt nicht selbst**, Laufschrift muss Bild
+fuer Bild geschickt werden; und sein Font hat Luecken bei Kleinbuchstaben.
+
+## Schrift wird selbst gerastert
+
+Deshalb benutzt die App den `text`-Teil des Geraets **nicht** als Normalfall.
+Stattdessen rastert sie den Text selbst mit CoreText in das 52×16-Feld, fasst
+jede Zeile zu waagrechten Laeufen zusammen und schickt sie als `df`-Rechtecke.
+
+Das loest drei Probleme auf einmal: die Vorschau ist **exakt**, weil Vorschau und
+Sendung aus demselben Raster stammen; Umlaute und Kleinbuchstaben funktionieren
+unabhaengig vom Geraetefont; und die Schriftart ist frei waehlbar.
+
+Am laufenden Geraet belegt: „Grüße!" in Menlo 11 ergibt 40 Pixel Breite, 62
+Rechtecke, 1,7 KB Nutzlast — mit Umlauten, die der Geraetefont nicht kann.
+
+Der Weg ueber den geraeteeigenen `text` bleibt als Wahlmoeglichkeit erhalten: er
+erzeugt viel kleinere Nachrichten und ist sinnvoll, wenn Groesse zaehlt.
+
+Ein Fallstrick, der beim Bau schon einmal zugeschlagen hat: Quartz zeichnet mit
+dem Ursprung unten links, der Bildspeicher beginnt aber oben links. Wer hier
+spiegelt, bekommt die Schrift auf dem Kopf.
 
 ## Der MQTT-Client
 
