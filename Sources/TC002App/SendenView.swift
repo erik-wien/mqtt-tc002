@@ -1,5 +1,34 @@
+import AppKit
 import SwiftUI
 import TC002Core
+
+/// Waagrechte Ausrichtung des Textes innerhalb der verfuegbaren Breite (52 Pixel
+/// ohne Icon, ab Spalte 10 mit Icon).
+enum SendenHAusrichtung: String, CaseIterable, Identifiable {
+    case links, mittig, rechts
+    var id: String { rawValue }
+    var beschriftung: String {
+        switch self {
+        case .links: return "Links"
+        case .mittig: return "Mittig"
+        case .rechts: return "Rechts"
+        }
+    }
+}
+
+/// Senkrechte Ausrichtung innerhalb der 16 Zeilen, gerechnet ueber die tatsaechlich
+/// gesetzte Hoehe (`Textraster.hoehe`), nicht die Schriftgroesse.
+enum SendenVAusrichtung: String, CaseIterable, Identifiable {
+    case oben, mittig, unten
+    var id: String { rawValue }
+    var beschriftung: String {
+        switch self {
+        case .oben: return "Oben"
+        case .mittig: return "Mittig"
+        case .unten: return "Unten"
+        }
+    }
+}
 
 struct SendenView: View {
     @Bindable var zustand: AppZustand
@@ -9,29 +38,54 @@ struct SendenView: View {
     @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
     @State private var schrift = "Menlo"
     @State private var groesse = 11.0
+    @State private var fett = false
+    @State private var horizontal: SendenHAusrichtung = .links
+    @State private var vertikal: SendenVAusrichtung = .oben
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     @State private var anAlle = false
     @State private var suche = ""
 
+    /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
+    private static let schriftarten = NSFontManager.shared.availableFontFamilies.sorted()
+
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+    }
+
+    /// Beginn und Breite der Flaeche, in der der Text ausgerichtet wird: ohne Icon
+    /// die volle Displaybreite, mit Icon erst ab der Spalte, an der das Icon endet.
+    private var flaecheX: Int { gewaehltesIcon == nil ? 0 : 10 }
+    private var flaecheBreite: Int { gewaehltesIcon == nil ? Pixelfeld.breiteStandard : Pixelfeld.breiteStandard - 10 }
+
+    private var textBreite: Int { Textraster.breite(text, schrift: schrift, groesse: groesse, fett: fett) }
+    private var textHoehe: Int { Textraster.hoehe(text, schrift: schrift, groesse: groesse, fett: fett) }
+
+    private var textX: Int {
+        switch horizontal {
+        case .links: return flaecheX
+        case .mittig: return flaecheX + max(0, (flaecheBreite - textBreite) / 2)
+        case .rechts: return flaecheX + max(0, flaecheBreite - textBreite)
+        }
+    }
+
+    private var textY: Int {
+        switch vertikal {
+        case .oben: return 0
+        case .mittig: return max(0, (Pixelfeld.hoeheStandard - textHoehe) / 2)
+        case .unten: return max(0, Pixelfeld.hoeheStandard - textHoehe)
+        }
     }
 
     /// Vorschau und Sendung entstehen aus demselben Feld.
     private var feld: Pixelfeld {
         var f = Pixelfeld()
-        let textX = gewaehltesIcon == nil ? 1 : 10
         Textraster.rastern(text, schrift: schrift, groesse: groesse,
-                           farbe: farbe.hexWert, x: textX, y: 3, feld: &f)
+                           farbe: farbe.hexWert, x: textX, y: textY, feld: &f, fett: fett)
         return f
     }
 
-    /// Gerastert wird ohne Icon ab x: 1, mit Icon ab x: 10 — die Grenze ist also die
-    /// Displaybreite minus dem linken Rand, nicht die Displaybreite selbst.
-    private var passt: Bool {
-        Textraster.breite(text, schrift: schrift, groesse: groesse) <= (gewaehltesIcon == nil ? 51 : 42)
-    }
+    private var passt: Bool { textBreite <= flaecheBreite }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -40,6 +94,38 @@ struct SendenView: View {
                 TextField("Text", text: $text)
                 ColorPicker("Farbe", selection: $farbe)
             }
+
+            HStack(alignment: .bottom, spacing: 16) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Schriftart").font(.caption).foregroundStyle(.secondary)
+                    Picker("Schriftart", selection: $schrift) {
+                        ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 170)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Größe").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 90)
+                }
+                Toggle("Fett", isOn: $fett).toggleStyle(.button)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Waagrecht").font(.caption).foregroundStyle(.secondary)
+                    Picker("Waagrecht", selection: $horizontal) {
+                        ForEach(SendenHAusrichtung.allCases) { Text($0.beschriftung).tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 150)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Senkrecht").font(.caption).foregroundStyle(.secondary)
+                    Picker("Senkrecht", selection: $vertikal) {
+                        ForEach(SendenVAusrichtung.allCases) { Text($0.beschriftung).tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 150)
+                }
+                Spacer()
+            }
+            Text("Bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+                .font(.footnote).foregroundStyle(.secondary)
 
             HStack(alignment: .top, spacing: 20) {
                 VStack(alignment: .leading) {

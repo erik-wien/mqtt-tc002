@@ -43,4 +43,25 @@ final class TextrasterTests: XCTestCase {
         Textraster.rastern("", schrift: "Menlo", groesse: 11, farbe: "#FFFFFF", x: 0, y: 0, feld: &feld)
         XCTAssertTrue(feld.alsDrawBefehle().isEmpty)
     }
+
+    /// Fett muss mehr Pixel schwaerzen als der normale Schnitt bei gleicher Groesse.
+    func testFettErzeugtMehrPixelAlsNichtFett() {
+        func gesetztePixel(fett: Bool) -> Int {
+            var feld = Pixelfeld()
+            Textraster.rastern("HI", schrift: "Menlo", groesse: 11, farbe: "#FFFFFF",
+                               x: 1, y: 3, feld: &feld, fett: fett)
+            var n = 0
+            for y in 0..<feld.hoehe {
+                for x in 0..<feld.breite where feld.farbe(x: x, y: y) != nil { n += 1 }
+            }
+            return n
+        }
+        XCTAssertGreaterThan(gesetztePixel(fett: true), gesetztePixel(fett: false))
+    }
+
+    func testHoeheLiegtZwischenEinsUndDerFeldhoehe() {
+        let h = Textraster.hoehe("Hallo", schrift: "Menlo", groesse: 11, fett: false)
+        XCTAssertGreaterThanOrEqual(h, 1)
+        XCTAssertLessThanOrEqual(h, Pixelfeld.hoeheStandard)
+    }
 }

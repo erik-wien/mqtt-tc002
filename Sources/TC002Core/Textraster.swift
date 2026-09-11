@@ -6,16 +6,35 @@ import Foundation
 /// exakt — sie entsteht aus demselben Raster —, erlaubt Umlaute und Satzzeichen,
 /// die der Geraetefont nicht kennt, und laesst die Schriftart frei waehlen.
 public enum Textraster {
-    public static func breite(_ text: String, schrift: String, groesse: Double) -> Int {
-        guard !text.isEmpty else { return 0 }
+    /// Erstellt die Schrift, wahlweise im fetten Schnitt — ueber die Merkmale,
+    /// nicht ueber einen geratenen Schriftnamen, damit auch Schriften ohne eigene
+    /// "…-Bold"-Variante einen fetten Schnitt liefern, sofern das System einen hat.
+    private static func font(_ schrift: String, _ groesse: Double, fett: Bool) -> CTFont {
         let font = CTFontCreateWithName(schrift as CFString, groesse, nil)
+        guard fett, let fetter = CTFontCreateCopyWithSymbolicTraits(
+            font, groesse, nil, .boldTrait, .boldTrait) else { return font }
+        return fetter
+    }
+
+    public static func breite(_ text: String, schrift: String, groesse: Double, fett: Bool = false) -> Int {
+        guard !text.isEmpty else { return 0 }
         let zeile = CTLineCreateWithAttributedString(
-            NSAttributedString(string: text, attributes: [.font: font]))
+            NSAttributedString(string: text, attributes: [.font: font(schrift, groesse, fett: fett)]))
         return Int(CTLineGetTypographicBounds(zeile, nil, nil, nil).rounded())
     }
 
+    /// Hoehe der gesetzten Flaeche in Pixeln — nicht die Schriftgroesse, sondern was
+    /// wirklich schwarz wird. Nur damit laesst sich senkrecht mitteln.
+    public static func hoehe(_ text: String, schrift: String, groesse: Double, fett: Bool) -> Int {
+        guard !text.isEmpty else { return 0 }
+        let zeile = CTLineCreateWithAttributedString(
+            NSAttributedString(string: text, attributes: [.font: font(schrift, groesse, fett: fett)]))
+        let bounds = CTLineGetBoundsWithOptions(zeile, .useOpticalBounds)
+        return Int(bounds.height.rounded(.up))
+    }
+
     public static func rastern(_ text: String, schrift: String, groesse: Double,
-                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld) {
+                               farbe: String, x: Int, y: Int, feld: inout Pixelfeld, fett: Bool = false) {
         guard !text.isEmpty else { return }
         let b = feld.breite, h = feld.hoehe
 
@@ -27,9 +46,9 @@ public enum Textraster {
         ctx.setFillColor(gray: 0, alpha: 1)
         ctx.fill(CGRect(x: 0, y: 0, width: b, height: h))
 
-        let font = CTFontCreateWithName(schrift as CFString, groesse, nil)
         let zeile = CTLineCreateWithAttributedString(NSAttributedString(
-            string: text, attributes: [.font: font, .foregroundColor: NSColor.white.cgColor]))
+            string: text, attributes: [.font: font(schrift, groesse, fett: fett),
+                                       .foregroundColor: NSColor.white.cgColor]))
         // Quartz zaehlt von unten: die Grundlinie liegt bei Hoehe minus y minus Schriftgroesse.
         ctx.textPosition = CGPoint(x: Double(x), y: Double(h - y) - groesse)
         CTLineDraw(zeile, ctx)
