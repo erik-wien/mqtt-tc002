@@ -100,6 +100,29 @@ final class MQTTSenderTests: XCTestCase {
         XCTAssertNotNil(fach.gemeldet)
     }
 
+    func testPruefenNimmtAnUndSendetKeinPublish() throws {
+        let lauscher = try Lauscher(connackCode: 0)
+        defer { lauscher.stoppen() }
+        let zugang = MQTTZugang(host: "127.0.0.1", port: lauscher.port,
+                                benutzer: "pixdeck", kennwort: "geheim", clientID: "tc002-app-pruef")
+
+        try MQTTSender().pruefen(zugang: zugang)
+
+        XCTAssertFalse(lauscher.wartetAufPublish(frist: 1), "kein PUBLISH ist über die Leitung gegangen")
+    }
+
+    func testPruefenMeldetFalschesKennwort() throws {
+        let lauscher = try Lauscher(connackCode: 4)
+        defer { lauscher.stoppen() }
+        let zugang = MQTTZugang(host: "127.0.0.1", port: lauscher.port,
+                                benutzer: "x", kennwort: "falsch", clientID: "tc002-app-pruef")
+
+        XCTAssertThrowsError(try MQTTSender().pruefen(zugang: zugang)) { fehler in
+            guard case MQTTFehler.abgelehnt(let code) = fehler else { return XCTFail("falscher Fehler") }
+            XCTAssertEqual(code, 4)
+        }
+    }
+
     func testUnerreichbarerBrokerHaengtNicht() {
         let zugang = MQTTZugang(host: "127.0.0.1", port: 1, benutzer: nil,
                                 kennwort: nil, clientID: "tc002-app")

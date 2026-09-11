@@ -49,6 +49,26 @@ public struct MQTTSender {
     public init(frist: TimeInterval = 8) { self.frist = frist }
 
     public func senden(_ nutzlast: Data, an thema: String, zugang: MQTTZugang) throws {
+        let verbindung = try verbundenUndGeprueft(zugang: zugang)
+        defer { verbindung.cancel() }
+
+        try sendeRoh(verbindung, MQTTPaket.publish(thema: thema, nutzlast: nutzlast))
+        try sendeRoh(verbindung, MQTTPaket.disconnect())
+    }
+
+    /// Verbindet, liest das CONNACK und trennt gleich wieder — ohne etwas zu senden.
+    /// Wirft denselben Fehler wie `senden`, also insbesondere `.abgelehnt(code: 4)`
+    /// bei falschem Konto oder Kennwort.
+    public func pruefen(zugang: MQTTZugang) throws {
+        let verbindung = try verbundenUndGeprueft(zugang: zugang)
+        verbindung.cancel()
+    }
+
+    /// Verbindet, sendet das CONNECT-Paket und prueft das CONNACK. Das ist der
+    /// einzige Punkt, an dem der Broker einen Fehler nennen kann — danach ist
+    /// Version 3.1.1 stumm. Gibt die offene Verbindung zurueck; der Aufrufer
+    /// entscheidet, ob er noch etwas sendet oder sie sofort trennt.
+    private func verbundenUndGeprueft(zugang: MQTTZugang) throws -> NWConnection {
         let verbindung = NWConnection(
             host: NWEndpoint.Host(zugang.host),
             port: NWEndpoint.Port(rawValue: zugang.port)!,
@@ -65,23 +85,32 @@ public struct MQTTSender {
             }
         }
         verbindung.start(queue: .global())
-        defer { verbindung.cancel() }
 
-        guard bereit.wait(timeout: .now() + frist) == .success else { throw MQTTFehler.zeitueberschreitung }
+        guard bereit.wait(timeout: .now() + frist) == .success else {
+            verbindung.cancel()
+            throw MQTTFehler.zeitueberschreitung
+        }
         // Erst abhaengen, dann lesen: sonst schreibt der Handler noch in denselben
         // Wert, der hier gerade geprueft wird.
         verbindung.stateUpdateHandler = nil
-        if let grund = fach.gemeldet { throw MQTTFehler.nichtVerbunden(grund) }
+        if let grund = fach.gemeldet {
+            verbindung.cancel()
+            throw MQTTFehler.nichtVerbunden(grund)
+        }
 
-        try sendeRoh(verbindung, MQTTPaket.connect(clientID: zugang.clientID,
-                                                   benutzer: zugang.benutzer,
-                                                   kennwort: zugang.kennwort))
-        let antwort = try lies(verbindung, mindestens: 4)
-        guard let code = MQTTPaket.connackCode(antwort) else { throw MQTTFehler.nichtVerbunden("keine gültige Antwort") }
-        guard code == 0 else { throw MQTTFehler.abgelehnt(code: code) }
+        do {
+            try sendeRoh(verbindung, MQTTPaket.connect(clientID: zugang.clientID,
+                                                       benutzer: zugang.benutzer,
+                                                       kennwort: zugang.kennwort))
+            let antwort = try lies(verbindung, mindestens: 4)
+            guard let code = MQTTPaket.connackCode(antwort) else { throw MQTTFehler.nichtVerbunden("keine gültige Antwort") }
+            guard code == 0 else { throw MQTTFehler.abgelehnt(code: code) }
+        } catch {
+            verbindung.cancel()
+            throw error
+        }
 
-        try sendeRoh(verbindung, MQTTPaket.publish(thema: thema, nutzlast: nutzlast))
-        try sendeRoh(verbindung, MQTTPaket.disconnect())
+        return verbindung
     }
 
     private func sendeRoh(_ v: NWConnection, _ daten: Data) throws {
