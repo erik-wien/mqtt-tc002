@@ -24,8 +24,9 @@ public enum MQTTFehler: Error, LocalizedError {
     }
 }
 
-/// Baut die drei Pakete, die zum Senden genuegen. Reine Funktionen, damit sie
-/// Byte fuer Byte gegen eine Aufzeichnung geprueft werden koennen.
+/// Baut die Pakete, die zum Senden und zum Zuhoeren genuegen, und liest die
+/// Antworten des Brokers. Reine Funktionen, damit sie Byte fuer Byte gegen eine
+/// Aufzeichnung geprueft werden koennen.
 public enum MQTTPaket {
     /// MQTT-Restlaenge: sieben Bit je Byte, oberstes Bit heisst "es folgt noch eines".
     static func restlaenge(_ n: Int) -> Data {
@@ -71,5 +72,65 @@ public enum MQTTPaket {
     public static func connackCode(_ daten: Data) -> UInt8? {
         guard daten.count >= 4, daten[daten.startIndex] == 0x20 else { return nil }
         return daten[daten.startIndex + 3]
+    }
+
+    /// Liest eine Restlaenge ab dem Versatz `ab` — die Gegenrichtung zu
+    /// `restlaenge(_:)`. Liefert den Wert und die Zahl der dafuer gelesenen
+    /// Bytes; nil, solange noch nicht alle da sind. Mehr als vier Laengenbytes
+    /// gibt es nicht, danach ist der Strom kaputt und es bleibt ebenfalls nil.
+    static func restlaengeGelesen(_ daten: Data, ab: Int) -> (wert: Int, bytes: Int)? {
+        var wert = 0, faktor = 1, versatz = ab
+        while versatz < daten.count, versatz - ab < 4 {
+            let b = daten[daten.startIndex + versatz]
+            wert += Int(b & 0x7F) * faktor
+            versatz += 1
+            if b & 0x80 == 0 { return (wert, versatz - ab) }
+            faktor *= 128
+        }
+        return nil
+    }
+
+    /// SUBSCRIBE fuer ein Thema. Der feste Kopf ist 0x82: die unteren vier Bit
+    /// sind bei SUBSCRIBE laut Norm fest mit 0b0010 belegt, ein Broker weist
+    /// alles andere ab. Abonniert wird mit Guetegrad 0 — hoehere Guetegrade
+    /// braeuchten eine Empfangsbestaetigung je Nachricht.
+    public static func subscribe(thema: String, paketID: UInt16) -> Data {
+        var rumpf = Data([UInt8(paketID >> 8), UInt8(paketID & 0xFF)])
+        rumpf += zeichenkette(thema)
+        rumpf.append(0x00)                               // gewuenschter Guetegrad
+        return Data([0x82]) + restlaenge(rumpf.count) + rumpf
+    }
+
+    /// PINGREQ. Ohne ihn wirft der Broker die Verbindung nach dem Anderthalbfachen
+    /// der im CONNECT vereinbarten Frist hinaus.
+    public static func pingreq() -> Data { Data([0xC0, 0x00]) }
+
+    /// Liest ein SUBACK: Paketkennung und ob der Broker das Abonnement annimmt.
+    /// 0x80 heisst abgelehnt, 0x00 bis 0x02 ist der gewaehrte Guetegrad.
+    public static func subackGelesen(_ daten: Data) -> (paketID: UInt16, angenommen: Bool)? {
+        let s = daten.startIndex
+        guard daten.count >= 5, daten[s] == 0x90,
+              let (_, laengenBytes) = restlaengeGelesen(daten, ab: 1),
+              daten.count >= 1 + laengenBytes + 3 else { return nil }
+        let ab = s + 1 + laengenBytes
+        let id = UInt16(daten[ab]) << 8 | UInt16(daten[ab + 1])
+        return (id, daten[ab + 2] != 0x80)
+    }
+
+    /// Zerlegt ein eintreffendes PUBLISH mit Guetegrad 0 (0x30) in Thema und
+    /// Nutzlast. Hoehere Guetegrade traegen zwischen Thema und Nutzlast noch eine
+    /// Paketkennung; sie koennen hier nicht auftreten, weil mit Guetegrad 0
+    /// abonniert wird — deshalb der feste Vergleich statt einer Maske.
+    public static func publishGelesen(_ daten: Data) -> (thema: String, nutzlast: Data)? {
+        let s = daten.startIndex
+        guard daten.count >= 2, daten[s] == 0x30,
+              let (rest, laengenBytes) = restlaengeGelesen(daten, ab: 1) else { return nil }
+        let rumpfAb = 1 + laengenBytes
+        guard rest >= 2, daten.count >= rumpfAb + rest else { return nil }
+        let themaLaenge = Int(daten[s + rumpfAb]) << 8 | Int(daten[s + rumpfAb + 1])
+        guard rest >= 2 + themaLaenge else { return nil }
+        let themaAb = s + rumpfAb + 2
+        guard let thema = String(data: daten[themaAb ..< themaAb + themaLaenge], encoding: .utf8) else { return nil }
+        return (thema, Data(daten[(themaAb + themaLaenge) ..< (s + rumpfAb + rest)]))
     }
 }
