@@ -11,8 +11,16 @@ struct UeberView: View {
     @State private var silkscreenLizenztextSichtbar = false
     @State private var tiny5LizenztextSichtbar = false
 
+    /// Fassung samt Commit. Die Nummer allein sagt nicht, welchen Bau man vor
+    /// sich hat — zwischen zwei Veroeffentlichungen entstehen viele, und alle
+    /// tragen dieselbe. Der angehaengte Commit macht ein laufendes Programm
+    /// eindeutig zuordenbar; ein „+" heisst, es wurde aus einem geaenderten,
+    /// nicht eingecheckten Stand gebaut.
     private var fassung: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
+        let nummer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
+        guard let commit = Bundle.main.infoDictionary?["TC002Commit"] as? String,
+              !commit.isEmpty, commit != "unbekannt" else { return nummer }
+        return "\(nummer) (\(commit))"
     }
 
     var body: some View {

@@ -4,6 +4,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG="${1:-release}"
+
+# Die Fassungsnummer allein sagt nicht, welchen Bau man vor sich hat: Zwischen
+# zwei Veroeffentlichungen entstehen viele, und alle tragen dieselbe. Deshalb
+# wandert der Commit mit ins Buendel — damit laesst sich ein laufendes Programm
+# eindeutig zuordnen, und ein „warum wirkt meine Aenderung nicht" ist in
+# Sekunden geklaert statt in einer Dreiviertelstunde.
+COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unbekannt)"
+git diff --quiet 2>/dev/null || COMMIT="$COMMIT+"
 APP="build/MQTT-TC002.app"
 ICON_EINTRAEGE=""
 
@@ -65,6 +73,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>1.3</string>
     <key>CFBundleVersion</key><string>4</string>
+    <key>TC002Commit</key><string>${COMMIT}</string>
     <key>CFBundleDevelopmentRegion</key><string>de</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
