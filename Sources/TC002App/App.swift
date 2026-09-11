@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TC002Core
 
 @main
 struct TC002App: App {
@@ -31,6 +32,18 @@ struct TC002App: App {
             CommandGroup(replacing: .help) {
                 Button("MQTT-TC002-Hilfe") { openWindow(id: "hilfe") }
                     .keyboardShortcut("?", modifiers: .command)
+            }
+            // Beide Ordner liegen normalerweise unsichtbar in der Library und
+            // werden von Iconordner.eigene bzw. Bilderordner.eigene bei Bedarf
+            // selbst angelegt — der Finder greift hier also nie ins Leere.
+            CommandGroup(after: .newItem) {
+                Divider()
+                Button("Eigene Icons im Finder zeigen") {
+                    NSWorkspace.shared.open(Iconordner.eigene)
+                }
+                Button("Eigene Bilder im Finder zeigen") {
+                    NSWorkspace.shared.open(Bilderordner.eigene)
+                }
             }
         }
 
