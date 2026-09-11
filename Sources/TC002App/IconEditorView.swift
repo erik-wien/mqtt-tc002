@@ -130,7 +130,10 @@ struct IconEditorView: View {
         var bytes = [UInt8](repeating: 0, count: 64 * 4)
         guard let kontext = CGContext(data: &bytes, width: 8, height: 8, bitsPerComponent: 8,
                                       bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            meldung = "Dieses Icon lässt sich nicht öffnen."
+            return
+        }
         kontext.interpolationQuality = .none
         kontext.draw(cg, in: CGRect(x: 0, y: 0, width: 8, height: 8))
         // CGContext hat den Ursprung unten links, das Raster oben links.
@@ -138,7 +141,13 @@ struct IconEditorView: View {
             for x in 0..<8 {
                 let q = ((7 - y) * 8 + x) * 4
                 let hex = String(format: "#%02X%02X%02X", Int(bytes[q]), Int(bytes[q + 1]), Int(bytes[q + 2]))
-                pixel[y * 8 + x] = hex == "#000000" ? nil : hex
+                // Schwarz bleibt Schwarz. Beim Sichern wird „aus“ zu Schwarz, weil GIF
+                // hier keine Durchsichtigkeit traegt und die Uhr ohnehin schwarzen
+                // Grund hat — nach einem Rundlauf sind „aus“ und „schwarz gemalt“
+                // deshalb dasselbe und nicht mehr auseinanderzuhalten. Ein schwarzes
+                // Pixel hier zu leeren waere kein Rueckweg, sondern Verlust: was schwarz
+                // gemalt war, waere weg.
+                pixel[y * 8 + x] = hex
             }
         }
         nummer = icon.nummer
