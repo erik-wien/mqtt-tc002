@@ -3,6 +3,9 @@ import SwiftUI
 struct VerbindungView: View {
     @Bindable var zustand: AppZustand
     @State private var neuerHost = ""
+    /// Das Kennwort wandert beim Verlassen des Feldes in den Schluesselbund, nicht
+    /// bei jedem Tastendruck.
+    @FocusState private var kennwortFokus: Bool
 
     var body: some View {
         Form {
@@ -19,6 +22,7 @@ struct VerbindungView: View {
 
                         TextField("Name", text: $uhr.name).frame(width: 140)
                         TextField("Adresse", text: $uhr.host).frame(width: 130)
+                            .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
                         Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
                             .font(.system(.callout, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -50,6 +54,9 @@ struct VerbindungView: View {
                 TextField("Port", text: $zustand.brokerPort)
                 TextField("Benutzer", text: $zustand.benutzer)
                 SecureField("Kennwort", text: $zustand.kennwort)
+                    .focused($kennwortFokus)
+                    .onSubmit { zustand.kennwortSichern() }
+                    .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
                 Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
                     .font(.footnote).foregroundStyle(.secondary)
             }

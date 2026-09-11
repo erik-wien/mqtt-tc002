@@ -23,7 +23,10 @@ final class AppZustand {
     var brokerHost: String { didSet { merke(brokerHost, "brokerHost") } }
     var brokerPort: String { didSet { merke(brokerPort, "brokerPort") } }
     var benutzer: String { didSet { merke(benutzer, "benutzer") } }
-    var kennwort: String { didSet { Schluesselbund.setzen(kennwort, fuer: "broker") } }
+    /// Ohne didSet: jeder Schreibvorgang loescht den Schluesselbund-Eintrag und legt
+    /// ihn neu an — das gehoert nicht an jeden Tastendruck. `kennwortSichern()` ruft,
+    /// wer die Eingabe abschliesst.
+    var kennwort: String
 
     var fehler: String?
     var protokoll: [String] = []
@@ -34,6 +37,13 @@ final class AppZustand {
     /// übrigen stehen — und blockiert dort alles Weitere —, während die App sie
     /// vergessen hätte.
     var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
+
+    func kennwortSichern() {
+        guard Schluesselbund.setzen(kennwort, fuer: "broker") else {
+            fehler = "Das Kennwort ließ sich nicht im Schlüsselbund sichern."
+            return
+        }
+    }
 
     private var initialisiert = false
 
@@ -100,6 +110,17 @@ final class AppZustand {
         if aktiveID == id { aktiveID = uhren.first?.id }
     }
 
+    /// Eine geaenderte Adresse zeigt womoeglich auf eine andere Uhr. Praefix und MAC
+    /// gehoeren dann noch zur alten — blieben sie stehen, wuerde weiter auf das alte
+    /// Thema gesendet, an die alte Uhr oder ins Leere, ohne jeden Hinweis.
+    func adresseGeaendert(_ id: UUID) {
+        guard let i = uhren.firstIndex(where: { $0.id == id }) else { return }
+        guard !uhren[i].praefix.isEmpty || !uhren[i].mac.isEmpty || verbunden[id] != nil else { return }
+        uhren[i].praefix = ""
+        uhren[i].mac = ""
+        verbunden[id] = nil
+    }
+
     /// Holt Praefix, MAC und Verbindungsstand vom Geraet.
     func abfragen(_ id: UUID) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
@@ -107,8 +128,8 @@ final class AppZustand {
         Task.detached { [weak self] in
             do {
                 let geraet = Geraet(host: host)
-                let praefix = try geraet.themenPraefix()
-                let basis = try geraet.basis()
+                // In einem Zug: getrennt geholt kaeme /getBase zweimal dran.
+                let (praefix, basis) = try geraet.praefixUndBasis()
                 let steht = try geraet.verbunden()
                 await MainActor.run { [weak self] in
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
