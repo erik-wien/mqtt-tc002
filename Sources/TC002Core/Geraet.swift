@@ -16,7 +16,7 @@ public enum GeraetFehler: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .nichtErreichbar(let g): return "Die Uhr ist nicht erreichbar: \(g)"
+        case .nichtErreichbar(let g): return "Die Uhr ist nicht erreichbar: \(g) Kam dabei gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen."
         case .unerwarteteAntwort(let w): return "Die Uhr hat unerwartet geantwortet: \(w)"
         case .httpFehler(let pfad, let code): return "Die Uhr hat einen Fehler gemeldet: \(pfad) (Status \(code))"
         case .keinPraefix: return "Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen."
