@@ -1,0 +1,116 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "linear-gradient" : [
+          "srgb:0.20392,0.31373,0.49804,1.00000",
+          "srgb:0.10588,0.16471,0.29020,1.00000"
+        ],
+        "orientation" : {
+          "start" : {
+            "x" : 0.5,
+            "y" : 0
+          },
+          "stop" : {
+            "x" : 0.5,
+            "y" : 0.7
+          }
+        }
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "linear-gradient" : [
+          "srgb:0.08627,0.13333,0.22745,1.00000",
+          "srgb:0.05882,0.09412,0.16078,1.00000"
+        ],
+        "orientation" : {
+          "start" : {
+            "x" : 0.5,
+            "y" : 0
+          },
+          "stop" : {
+            "x" : 0.5,
+            "y" : 0.7
+          }
+        }
+      }
+    }
+  ],
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "vorne-3-pixel.svg",
+          "name" : "vorne-3-pixel"
+        },
+        {
+          "image-name" : "vorne-2-display.svg",
+          "name" : "vorne-2-display"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "vorne-1-gehaeuse.svg",
+          "name" : "vorne-1-gehaeuse"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "mqtt-icon-solid.svg",
+          "name" : "mqtt-icon-solid",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -0.049999999999954525,
+              -117.14661248898636
+            ]
+          }
+        },
+        {
+          "hidden" : true,
+          "image-name" : "hinten-signal.svg",
+          "name" : "hinten-signal"
+        }
+      ],
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
