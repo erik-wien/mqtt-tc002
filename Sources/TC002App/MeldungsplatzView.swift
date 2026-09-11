@@ -35,3 +35,31 @@ struct MeldungsplatzWahl: View {
         }
     }
 }
+
+/// Löscht den gewählten Meldungsplatz auf den gewählten Uhren. Er steht neben
+/// der Platzwahl, weil man den Platz dort gerade in der Hand hat — unter
+/// „Anzeigen" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
+///
+/// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: im
+/// Malbereich sitzt daneben „Leeren", und das meint das Bild, nicht das Gerät.
+struct MeldungLoeschenKnopf: View {
+    @Bindable var zustand: AppZustand
+    let platz: Int
+    /// Ein leerer Platz lässt sich nicht löschen. Woher das bekannt ist, steht
+    /// bei `belegtePlaetze`: gemeldet schlägt gemerkt.
+    let belegt: Bool
+
+    @State private var laeuft = false
+
+    var body: some View {
+        Button {
+            laeuft = true
+            let name = MeldungsplatzWahl.name(fuer: platz)
+            Task { await zustand.loeschen(name); laeuft = false }
+        } label: {
+            Image(systemName: "trash")
+        }
+        .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
+        .help("Meldung \(platz) auf der Uhr löschen")
+    }
+}

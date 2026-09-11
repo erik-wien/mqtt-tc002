@@ -38,9 +38,10 @@ struct MalenView: View {
     }
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
-    /// mehreren Zieluhren zaehlt jede davon.
+    /// mehreren Zieluhren zaehlt jede davon. Dieselbe Grundlage wie die Liste
+    /// unter „Anzeigen": was die Uhr meldet, sonst was die App sich gemerkt hat.
     private var belegtePlaetze: Set<Int> {
-        let namen = Set(zustand.ziele().flatMap { zustand.bekannteAnzeigen[$0.id] ?? [] })
+        let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
         return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
     }
 
@@ -89,6 +90,8 @@ struct MalenView: View {
             HStack(alignment: .bottom, spacing: 16) {
                 MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
                     .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.")
+                MeldungLoeschenKnopf(zustand: zustand, platz: platz,
+                                     belegt: belegtePlaetze.contains(platz))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
                     TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
