@@ -73,7 +73,7 @@ struct VerbindungView: View {
                     setzen("carouselSpeed", neu)
                 }
                 Stepper("Scrolltempo: \(scrollTempo)", value: $scrollTempo, in: 0...20)
-                    .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „vom Gerät setzen“). Der gültige Wertebereich ist nicht dokumentiert.")
+                    .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
                     .onChange(of: scrollTempo) { _, neu in
                         guard !scrollLadeLauf else { scrollLadeLauf = false; return }
                         nutzerHatScrollGewaehlt = true

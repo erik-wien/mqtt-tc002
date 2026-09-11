@@ -16,6 +16,18 @@ enum SendenVAusrichtung: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Der Weg, auf dem der Text zur Uhr kommt. `.pixel` (Vorgabe) rastert die App
+/// selbst — passt der Text, steht er starr, sonst laeuft er als GIF (siehe
+/// `passt`). `.text` schickt ihn stattdessen als `Textblock`, den die Uhr mit
+/// ihrer eigenen Schrift setzt und selbst zum Laufen bringt, wenn er nicht
+/// passt (`docs/tc002-protokoll.md` §4.3, §5.4). Deren Schrift kennt weder
+/// Schriftartwahl noch Fett — deshalb sind genau diese zwei Regler dort
+/// gesperrt, nicht mehr.
+enum SendeWeg: String, CaseIterable, Identifiable {
+    case pixel, text
+    var id: String { rawValue }
+}
+
 /// Wie schnell die Laufschrift durchlaeuft. Ein Regler statt zweier Zahlen:
 /// Schrittweite und Bilddauer rechnet niemand im Kopf in ein Tempo um.
 enum Lauftempo: String, CaseIterable, Identifiable {
@@ -50,8 +62,13 @@ struct SendenView: View {
     @AppStorage("senden.schriftart") private var schrift = "Menlo"
     @AppStorage("senden.groesse") private var groesse = 11.0
     @AppStorage("senden.fett") private var fett = false
+    /// Wandelt erst beim Rastern bzw. beim Bauen des `Textblock` um (siehe
+    /// `gesendeterText`), nie das Eingabefeld selbst — wer tippt, soll lesen,
+    /// was er geschrieben hat.
+    @AppStorage("senden.grossbuchstaben") private var grossbuchstaben = false
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
     @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     /// Nur wirksam, wenn der Text laeuft.
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
     @AppStorage("senden.iconmitlaufend") private var iconLaeuftMit = false
@@ -110,8 +127,16 @@ struct SendenView: View {
     private var flaecheX: Int { gewaehltesIcon == nil ? 0 : 10 }
     private var flaecheBreite: Int { gewaehltesIcon == nil ? Pixelfeld.breiteStandard : Pixelfeld.breiteStandard - 10 }
 
-    private var textBreite: Int { Textraster.breite(text, schrift: schrift, groesse: groesse, fett: fett) }
-    private var textHoehe: Int { Textraster.hoehe(text, schrift: schrift, groesse: groesse, fett: fett) }
+    /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
+    /// die einzige Stelle, an der „Großbuchstaben" wirkt. Das Eingabefeld
+    /// bleibt unangetastet, an ihm hängt nur `text`. Nebeneffekt von
+    /// `uppercased()`: aus „ß" wird „SS" — beim Weg „als Text" ein Gewinn,
+    /// die Gerätschrift kennt kein „ß" (§1); „Ä", „Ö", „Ü" bleiben Umlaute und
+    /// fehlen dort weiterhin.
+    private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
+
+    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
+    private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     private var textX: Int {
         switch horizontal {
@@ -134,7 +159,7 @@ struct SendenView: View {
     /// Schrift stehend anders aus als laufend.
     private var feld: Pixelfeld {
         var f = Pixelfeld()
-        Textraster.einsetzen(Textraster.rasterPuffer(text, schrift: schrift, groesse: groesse,
+        Textraster.einsetzen(Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
                                                      fett: fett, farbe: farbeHex),
                              x: textX, y: textY, in: &f)
         return f
@@ -165,9 +190,64 @@ struct SendenView: View {
         nutzlastBytes < 1024 ? "unter 1 KB Nutzlast" : "rund \(nutzlastBytes / 1024) KB Nutzlast"
     }
 
+    /// `align`/`valign` fuer den Weg „als Text" — dieselbe Wahl aus der
+    /// Formatleiste, nur in den Namen, die das Geraet fuer `text` erwartet (§4.3).
+    private var geraeteAusrichtung: String {
+        switch horizontal { case .links: "left"; case .mittig: "center"; case .rechts: "right" }
+    }
+    private var geraeteVertikal: String {
+        switch vertikal { case .oben: "top"; case .mittig: "middle"; case .unten: "bottom" }
+    }
+
+    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung und Farbe aus
+    /// derselben Formatleiste wie beim eigenen Raster — Schriftart und Fett
+    /// gelten hier nicht, die Uhr setzt ihre eigene Schrift.
+    private var textblock: Textblock {
+        var t = Textblock(inhalt: gesendeterText)
+        t.schrifthoehe = Int(groesse)
+        t.x = flaecheX
+        t.y = 0
+        t.farbe = farbeHex
+        t.ausrichtung = geraeteAusrichtung
+        t.vertikal = geraeteVertikal
+        t.flaeche = [flaecheX, 0, flaecheBreite, Pixelfeld.hoeheStandard]
+        return t
+    }
+
+    /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
+    /// den Satzzeichen nur `%`, `.`, `-`, `:` (Gerätereferenz, §1). Nur fürs
+    /// Vorwarnen beim Weg „als Text" gedacht — die Uhr meldet ein fehlendes
+    /// Zeichen sonst nicht, sie zeigt an der Stelle einfach nichts. Geprüft
+    /// wird `gesendeterText`, nicht `text`: Nach „Großbuchstaben" ist aus
+    /// einem „ß" längst ein darstellbares „SS" geworden, das soll die Warnung
+    /// nicht mehr treffen. Jedes betroffene Zeichen nur einmal, in der
+    /// Reihenfolge des ersten Auftretens.
+    private var unbekannteZeichen: [Character] {
+        let erlaubteSatzzeichen = Set("%.-:")
+        var gefunden: [Character] = []
+        for zeichen in gesendeterText where !gefunden.contains(zeichen) {
+            if zeichen.isASCII && (zeichen.isLetter || zeichen.isNumber) { continue }
+            if zeichen == " " { continue }
+            if erlaubteSatzzeichen.contains(zeichen) { continue }
+            gefunden.append(zeichen)
+        }
+        return gefunden
+    }
+
+    private var unbekannteZeichenText: String {
+        unbekannteZeichen.map { "„\($0)“" }.joined(separator: ", ")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if !passt {
+            Picker("Weg", selection: $weg) {
+                Text("als Pixel").tag(SendeWeg.pixel)
+                Text("als Text").tag(SendeWeg.text)
+            }
+            .pickerStyle(.segmented).labelsHidden()
+            .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
+
+            if weg == .pixel && !passt {
                 HStack(spacing: 16) {
                     Picker("Tempo", selection: $tempo) {
                         Text("langsam").tag(Lauftempo.langsam)
@@ -191,21 +271,40 @@ struct SendenView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                // Die Vorschau zeigt in beiden Faellen, was ankommt: stehend, wenn es
-                // passt, laufend, wenn nicht. Bei der Laufschrift steckt das Icon
-                // schon in den Einzelbildern — deshalb dort kein zweites.
+                // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
+                // passt, laufend, wenn nicht — bei der Laufschrift steckt das Icon
+                // schon in den Einzelbildern, deshalb dort kein zweites. Beim Weg
+                // „als Text" ist es immer unsere eigene Rasterung als Näherung, nie
+                // laufend: das Laufen besorgt dort die Uhr, wir kennen ihre Schrift
+                // nicht und können es nicht zeigen.
                 VorschauView(feld: feld, kantenlaenge: 12,
-                            icon: passt ? gewaehltesIcon?.datei : nil,
-                            laufschriftBilder: passt ? nil : laufschriftFrames)
-                if !passt {
-                    // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
-                    // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
-                    // der Nutzlastgroesse aussteigt (§4.2a).
-                    Label("Läuft durch: \(laufschriftFrames.count) Einzelbilder, \(nutzlastText) — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).",
+                            icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
+                            laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                switch weg {
+                case .pixel:
+                    if !passt {
+                        // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
+                        // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
+                        // der Nutzlastgroesse aussteigt (§4.2a).
+                        Label("Läuft durch: \(laufschriftFrames.count) Einzelbilder, \(nutzlastText) — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).",
+                              systemImage: "info.circle")
+                            .font(.footnote).foregroundStyle(.secondary)
+                        if nutzlastBytes > 60_000 {
+                            Label("Eine auffällig große Nutzlast — kürzerer Text oder höheres Tempo macht sie kleiner.",
+                                  systemImage: "exclamationmark.triangle")
+                                .font(.footnote).foregroundStyle(.orange)
+                        }
+                    }
+                case .text:
+                    // Zu langer Text ist hier kein Fehler und keine eigene Warnung
+                    // wert — die Uhr laesst ihn von selbst laufen (§4.3, §5.4). Statt
+                    // der Breitenwarnung steht hier, dass unsere Vorschau nur eine
+                    // Naeherung ist: die Uhr rastert selbst, mit ihrer eigenen Schrift.
+                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Verbindung“ das Tempo.",
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
-                    if nutzlastBytes > 60_000 {
-                        Label("Eine auffällig große Nutzlast — kürzerer Text oder höheres Tempo macht sie kleiner.",
+                    if !unbekannteZeichen.isEmpty {
+                        Label("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: \(unbekannteZeichenText). „als Pixel“ kann sie.",
                               systemImage: "exclamationmark.triangle")
                             .font(.footnote).foregroundStyle(.orange)
                     }
@@ -238,9 +337,9 @@ struct SendenView: View {
         .padding()
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
         .task(id: laufschriftSchluessel) {
-            guard !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
+            guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
             laufschriftFrames = Textraster.laufschriftEinzelbilder(
-                text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
+                gesendeterText, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
                 schrittweite: tempo.schrittweite, bilddauer: tempo.bilddauer,
                 versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit)
             // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
@@ -256,7 +355,7 @@ struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(passt)|\(text)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)"
     }
 
     /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
@@ -269,12 +368,19 @@ struct SendenView: View {
                 ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
             }
             .labelsHidden().frame(width: 150)
-            .help("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+            .disabled(weg == .text)
+            .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
+                               : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
 
             Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
                 .help("Schriftgröße")
 
-            formatKnopf(icon: "bold", hilfe: "Fett", aktiv: fett) { fett.toggle() }
+            formatKnopf(icon: "bold", hilfe: weg == .text ? "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." : "Fett",
+                       aktiv: fett) { fett.toggle() }
+                .disabled(weg == .text)
+
+            formatKnopf(icon: "capslock", hilfe: "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.",
+                       aktiv: grossbuchstaben) { grossbuchstaben.toggle() }
 
             Divider().frame(height: 18)
 
@@ -334,23 +440,35 @@ struct SendenView: View {
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
     }
 
-    /// Zwei Faelle, einer je Entscheidung von `passt`: ein starrer `draw`-Rahmen
-    /// mit dem Icon als zweitem Bild, oder ein einziges animiertes GIF, in dem das
-    /// Icon schon steckt.
+    /// Baut den Rahmen fuer den gewaehlten Weg. Beim Pixel-Weg zwei Faelle, einer
+    /// je Entscheidung von `passt`: ein starrer `draw`-Rahmen mit dem Icon als
+    /// zweitem Bild, oder ein einziges animiertes GIF, in dem das Icon schon
+    /// steckt. Beim Text-Weg ein `Textblock`, den die Uhr selbst setzt — ein
+    /// gewaehltes Icon kommt auch hier als eigenes Bild dazu, aber nie
+    /// mitlaufend: das Laufen macht dort die Uhr, nicht unsere Laufschrift.
     private func gebauterRahmen() throws -> Frame {
-        guard passt else {
-            let uri = laufschriftURI.isEmpty
-                ? try Textraster.laufschrift(text, schrift: schrift, groesse: groesse, fett: fett,
-                                             farbe: farbeHex, schrittweite: tempo.schrittweite,
-                                             bilddauer: tempo.bilddauer, versatzY: textY,
-                                             iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit)
-                : laufschriftURI
-            return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+        switch weg {
+        case .pixel:
+            guard passt else {
+                let uri = laufschriftURI.isEmpty
+                    ? try Textraster.laufschrift(gesendeterText, schrift: schrift, groesse: groesse, fett: fett,
+                                                 farbe: farbeHex, schrittweite: tempo.schrittweite,
+                                                 bilddauer: tempo.bilddauer, versatzY: textY,
+                                                 iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit)
+                    : laufschriftURI
+                return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+            }
+            var frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+            if let icon = gewaehltesIcon {
+                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
+            }
+            return frame
+        case .text:
+            var frame = Frame(texte: [textblock], dauer: dauer)
+            if let icon = gewaehltesIcon {
+                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
+            }
+            return frame
         }
-        var frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
-        if let icon = gewaehltesIcon {
-            frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
-        }
-        return frame
     }
 }
