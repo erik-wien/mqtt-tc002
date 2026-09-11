@@ -9,10 +9,10 @@ struct AnzeigenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Angelegte Anzeigen").font(.headline)
-            if zustand.bekannteAnzeigen.isEmpty {
-                Text("Noch nichts gesendet.").foregroundStyle(.secondary)
+            if zustand.anzeigenDerAktiven().isEmpty {
+                Text("Noch nichts an diese Uhr gesendet.").foregroundStyle(.secondary)
             }
-            ForEach(zustand.bekannteAnzeigen, id: \.self) { name in
+            ForEach(zustand.anzeigenDerAktiven(), id: \.self) { name in
                 HStack {
                     Text(name).font(.system(.body, design: .monospaced))
                     Spacer()
@@ -60,7 +60,8 @@ struct AnzeigenView: View {
             do {
                 try a.loeschen(name)
                 await MainActor.run {
-                    zustand.bekannteAnzeigen.removeAll { $0 == name }
+                    // Nur bei der aktiven Uhr: die leere Nutzlast ging auch nur dorthin.
+                    zustand.anzeigeVergessen(name, fuer: uhr.id)
                     zustand.log("gelöscht: \(name)")
                 }
             } catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }

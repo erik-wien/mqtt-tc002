@@ -29,10 +29,11 @@ final class AppZustand {
     var protokoll: [String] = []
 
     /// Die Uhr verrät nicht, welche Anzeigen sie kennt — die App merkt sich, was sie
-    /// selbst angelegt hat.
-    var bekannteAnzeigen: [String] {
-        didSet { UserDefaults.standard.set(bekannteAnzeigen, forKey: "bekannteAnzeigen") }
-    }
+    /// selbst angelegt hat. Je Uhr getrennt: „Löschen“ schickt die leere Nutzlast nur
+    /// an eine Uhr, und nach einem Versand „an alle“ bliebe die Anzeige auf den
+    /// übrigen stehen — und blockiert dort alles Weitere —, während die App sie
+    /// vergessen hätte.
+    var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
 
     private var initialisiert = false
 
@@ -45,14 +46,35 @@ final class AppZustand {
         brokerPort = d.string(forKey: "brokerPort") ?? "1883"
         benutzer   = d.string(forKey: "benutzer") ?? "pixdeck"
         kennwort   = Schluesselbund.lesen("broker") ?? ""
-        bekannteAnzeigen = d.stringArray(forKey: "bekannteAnzeigen") ?? []
+        let flach = (try? JSONDecoder().decode([String: [String]].self,
+                        from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]
+        bekannteAnzeigen = Dictionary(uniqueKeysWithValues:
+            flach.compactMap { text, liste in UUID(uuidString: text).map { ($0, liste) } })
         if aktiveID == nil { aktiveID = uhren.first?.id }
+        // Aus der Zeit, als die Liste keinen Uhrenbezug hatte: sie meinte die aktive
+        // Uhr, also gehört sie dorthin. Sonst bliebe eine stehende Anzeige auf ihr
+        // liegen, ohne dass es noch einen Weg gäbe, sie zu löschen.
+        if bekannteAnzeigen.isEmpty, let alt = d.stringArray(forKey: "bekannteAnzeigen"),
+           let id = aktiveID {
+            bekannteAnzeigen[id] = alt
+        }
         initialisiert = true
     }
 
-    func anzeigeGemerkt(_ name: String) {
-        guard !bekannteAnzeigen.contains(name) else { return }
-        bekannteAnzeigen.append(name)
+    func anzeigeGemerkt(_ name: String, fuer id: UUID) {
+        var liste = bekannteAnzeigen[id] ?? []
+        guard !liste.contains(name) else { return }
+        liste.append(name)
+        bekannteAnzeigen[id] = liste
+    }
+
+    func anzeigenDerAktiven() -> [String] {
+        guard let id = aktiveID else { return [] }
+        return bekannteAnzeigen[id] ?? []
+    }
+
+    func anzeigeVergessen(_ name: String, fuer id: UUID) {
+        bekannteAnzeigen[id]?.removeAll { $0 == name }
     }
 
     var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
@@ -74,6 +96,7 @@ final class AppZustand {
     func uhrEntfernen(_ id: UUID) {
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
+        bekannteAnzeigen[id] = nil
         if aktiveID == id { aktiveID = uhren.first?.id }
     }
 
@@ -131,6 +154,16 @@ final class AppZustand {
     private func uhrenSichern() {
         guard initialisiert, let daten = try? JSONEncoder().encode(uhren) else { return }
         UserDefaults.standard.set(daten, forKey: "uhren")
+    }
+
+    /// UserDefaults kennt keine UUID-Schluessel — deshalb als JSON ueber die
+    /// Zeichenketten-Fassung der Kennungen.
+    private func anzeigenSichern() {
+        guard initialisiert else { return }
+        let flach = Dictionary(uniqueKeysWithValues:
+            bekannteAnzeigen.map { ($0.key.uuidString, $0.value) })
+        guard let daten = try? JSONEncoder().encode(flach) else { return }
+        UserDefaults.standard.set(daten, forKey: "bekannteAnzeigen")
     }
 
     private func merke(_ wert: String?, _ schluessel: String) {

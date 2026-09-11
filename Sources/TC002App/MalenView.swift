@@ -83,7 +83,7 @@ struct MalenView: View {
                             try anzeigen.zeigen(frame, auf: anzeigenName)
                             await MainActor.run {
                                 zustand.log("Bild an \(uhr.name) gesendet: \(anzeigenName)")
-                                zustand.anzeigeGemerkt(anzeigenName)
+                                zustand.anzeigeGemerkt(anzeigenName, fuer: uhr.id)
                             }
                         } catch {
                             await MainActor.run {
