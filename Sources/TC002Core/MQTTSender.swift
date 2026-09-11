@@ -15,6 +15,11 @@ public struct MQTTZugang: Sendable {
     }
 }
 
+/// Damit der Anzeigendienst gegen einen Doppelgaenger geprueft werden kann.
+public protocol NachrichtSendend {
+    func senden(_ nutzlast: Data, an thema: String, zugang: MQTTZugang) throws
+}
+
 /// Verbinden, CONNACK lesen, eine Nachricht senden, trennen. Mehr braucht die App nicht.
 /// Das CONNACK ist der einzige Punkt, an dem der Broker uns einen Fehler nennen kann —
 /// eine abgelehnte Veroeffentlichung bleibt bei Version 3.1.1 stumm.
@@ -79,3 +84,5 @@ public struct MQTTSender {
         return ergebnis
     }
 }
+
+extension MQTTSender: NachrichtSendend {}
