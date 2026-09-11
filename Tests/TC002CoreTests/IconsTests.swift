@@ -329,4 +329,23 @@ final class IconsTests: XCTestCase {
         try Data("kein Bild".utf8).write(to: kaputt)
         XCTAssertThrowsError(try Bildraster.lesen(kaputt, breite: 8, hoehe: 8))
     }
+
+    /// Die Standzeit muss den Rundlauf ueberleben — sonst zeigt der Editor beim
+    /// Oeffnen immer seinen Anfangswert und ueberschreibt das Gesicherte still.
+    func testVerzoegerungUeberlebtDenRundlauf() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+
+        var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
+        var zwei = [String?](repeating: nil, count: 64); zwei[63] = "#00FF66"
+        let icon = try sammlung.sichern(nummer: "takt", name: "Takt",
+                                        bilder: [eins, zwei], verzoegerung: 0.4)
+
+        let gelesen = try sammlung.einzelbilder(fuer: icon)
+        XCTAssertEqual(gelesen.count, 2)
+        XCTAssertEqual(gelesen[0].dauer, 0.4, accuracy: 0.001,
+                       "0,4 Sekunden muessen als 0,4 zurueckkommen, nicht als Vorgabe")
+        XCTAssertEqual(gelesen[1].dauer, 0.4, accuracy: 0.001)
+    }
 }

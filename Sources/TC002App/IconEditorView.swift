@@ -337,7 +337,12 @@ struct IconEditorView: View {
             // nach einem Rundlauf sind „aus“ und „schwarz gemalt“ deshalb dasselbe und
             // nicht mehr auseinanderzuhalten. Ein schwarzes Pixel hier zu leeren waere
             // kein Rueckweg, sondern Verlust: was schwarz gemalt war, waere weg.
-            bilder = try sammlung.bilder(fuer: icon)
+            let gelesen = try sammlung.einzelbilder(fuer: icon)
+            bilder = gelesen.map(\.pixel)
+            // Die Standzeit kommt aus der Datei, nicht aus dem Anfangswert —
+            // sonst zeigt das Feld beim Oeffnen immer 0,2 und ueberschreibt die
+            // gesicherte Zeit beim naechsten Sichern still.
+            if let erste = gelesen.first?.dauer, erste > 0 { verzoegerung = erste }
         } catch {
             meldung = "Dieses Icon lässt sich nicht öffnen."
             return

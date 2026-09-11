@@ -280,6 +280,20 @@ public struct Iconsammlung {
         }
     }
 
+    /// Wie `bilder(fuer:)`, aber mit den Standzeiten aus der Datei. Der Editor
+    /// braucht sie, um die Verzoegerung eines geoeffneten Icons anzuzeigen —
+    /// ohne sie stuende dort immer der Anfangswert, und beim naechsten Sichern
+    /// waere die eingestellte Zeit still ueberschrieben.
+    public func einzelbilder(fuer icon: Icon) throws -> [Bildraster.Einzelbild] {
+        do {
+            let bilder = try Bildraster.lesenMitZeiten(icon.datei, breite: 8, hoehe: 8)
+            guard !bilder.isEmpty else { throw IconFehler.nichtLesbar(icon.nummer) }
+            return bilder
+        } catch {
+            throw IconFehler.nichtLesbar(icon.nummer)
+        }
+    }
+
     /// Liest alle Einzelbilder eines Icons — bei einem unbewegten Icon genau
     /// eines, bei einem animierten GIF jedes Frame in gespeicherter Reihenfolge.
     public func bilder(fuer icon: Icon) throws -> [[String?]] {
