@@ -7,9 +7,24 @@ struct MalenView: View {
     @State private var feld = Pixelfeld()
     @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
     @State private var radierer = false
-    @State private var name = "bild"
+    @State private var platz = 1
+    @State private var dauerText = ""
     @State private var laeuft = false
     @State private var anAlle = false
+
+    /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
+    /// „an alle Uhren“ zaehlt jede Zieluhr, sonst nur die aktive.
+    private var belegtePlaetze: Set<Int> {
+        let namen = Set(zustand.ziele(alle: anAlle).flatMap { zustand.bekannteAnzeigen[$0.id] ?? [] })
+        return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
+    }
+
+    /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
+    /// Nutzlast wie bisher.
+    private var dauer: Int? {
+        guard let n = Int(dauerText.trimmingCharacters(in: .whitespaces)), n > 0 else { return nil }
+        return n
+    }
     /// Die verfuegbare Breite der Malflaeche, von einem GeometryReader in ihrem
     /// Hintergrund gemessen — daraus ergibt sich die Kantenlaenge. Ohne das liefe die
     /// Flaeche bei ihrer festen Breite in einem schmalen Fenster rechts aus dem Bild.
@@ -36,12 +51,23 @@ struct MalenView: View {
                 }
                 .disabled(sammlung.alle().isEmpty)
                 Spacer()
-                TextField("Name", text: $name).frame(width: 120)
+            }
+
+            HStack(alignment: .bottom, spacing: 16) {
+                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
+                    TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
+                }
+                Spacer()
                 Toggle("an alle", isOn: $anAlle).disabled(zustand.uhren.count < 2)
                 Button(laeuft ? "Sende…" : "Senden") { senden() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(laeuft || zustand.ziele(alle: anAlle).isEmpty)
             }
+            Label("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.",
+                  systemImage: "arrow.left.arrow.right")
+                .font(.footnote).foregroundStyle(.secondary)
             if zustand.ziele(alle: anAlle).isEmpty {
                 Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -102,8 +128,8 @@ struct MalenView: View {
 
     private func senden() {
         laeuft = true
-        let frame = Frame(draw: feld.alsDrawBefehle())
-        let anzeigenName = name
+        let frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName, anAlle: anAlle); laeuft = false }
     }
 }

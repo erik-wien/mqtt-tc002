@@ -33,7 +33,8 @@ enum SendenVAusrichtung: String, CaseIterable, Identifiable {
 struct SendenView: View {
     @Bindable var zustand: AppZustand
 
-    @State private var name = "notiz"
+    @State private var platz = 1
+    @State private var dauerText = ""
     @State private var text = "Hallo"
     @State private var farbe = Color(red: 0, green: 1, blue: 0.4)
     @State private var schrift = "Menlo"
@@ -45,6 +46,20 @@ struct SendenView: View {
     @State private var laeuft = false
     @State private var anAlle = false
     @State private var suche = ""
+
+    /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
+    /// „an alle Uhren“ zaehlt jede Zieluhr, sonst nur die aktive.
+    private var belegtePlaetze: Set<Int> {
+        let namen = Set(zustand.ziele(alle: anAlle).flatMap { zustand.bekannteAnzeigen[$0.id] ?? [] })
+        return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
+    }
+
+    /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
+    /// Nutzlast wie bisher.
+    private var dauer: Int? {
+        guard let n = Int(dauerText.trimmingCharacters(in: .whitespaces)), n > 0 else { return nil }
+        return n
+    }
 
     /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
     private static let schriftarten = NSFontManager.shared.availableFontFamilies.sorted()
@@ -90,10 +105,21 @@ struct SendenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                TextField("Name der Anzeige", text: $name).frame(width: 160)
                 TextField("Text", text: $text)
                 ColorPicker("Farbe", selection: $farbe)
             }
+
+            HStack(alignment: .bottom, spacing: 16) {
+                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
+                    TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
+                }
+                Spacer()
+            }
+            Label("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.",
+                  systemImage: "arrow.left.arrow.right")
+                .font(.footnote).foregroundStyle(.secondary)
 
             HStack(alignment: .bottom, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -190,7 +216,7 @@ struct SendenView: View {
 
     private func senden() {
         laeuft = true
-        var frame = Frame(draw: feld.alsDrawBefehle())
+        var frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
         if let icon = gewaehltesIcon {
             // Ohne Meldung ginge die Anzeige bei unlesbarer Icondatei kommentarlos
             // ohne das gewaehlte Icon hinaus.
@@ -202,7 +228,7 @@ struct SendenView: View {
                 return
             }
         }
-        let anzeigenName = name
+        let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName, anAlle: anAlle); laeuft = false }
     }
 }
