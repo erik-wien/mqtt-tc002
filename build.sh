@@ -77,4 +77,25 @@ PLIST
 cp -R Icons "$APP/Contents/Resources/Icons"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 
+# Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,
+# und die Kennung traegt dann einen Hash ueber die Binaerdatei: nach jedem Bau
+# ist das fuer den Schluesselbund ein anderes Programm, das an einen fremden
+# Eintrag will — er fragt also erneut nach dem Broker-Kennwort. Mit fester
+# Identitaet ist die Kennung die Buendelkennung und bleibt ueber Baeue gleich.
+#
+# Anlegen: Schluesselbundverwaltung > Zertifikatsassistent > Zertifikat
+# erstellen, selbstsigniertes Root-Zertifikat, Typ Codesignatur.
+# Gegen Gatekeeper hilft das NICHT, dafuer braucht es Notarisierung.
+SIGNATUR="${TC002_SIGNATUR:-MQTT-TC002}"
+if security find-certificate -c "$SIGNATUR" >/dev/null 2>&1; then
+    if codesign --force --deep -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
+        echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
+    else
+        echo "Achtung: Signieren mit \"$SIGNATUR\" fehlgeschlagen — der Schluesselbund fragt weiter nach." >&2
+    fi
+else
+    echo "Hinweis: kein Zertifikat \"$SIGNATUR\" gefunden, die App bleibt ad hoc signiert." >&2
+    echo "         Der Schluesselbund fragt dann nach jedem Bau erneut nach dem Broker-Kennwort." >&2
+fi
+
 echo "fertig: $APP"
