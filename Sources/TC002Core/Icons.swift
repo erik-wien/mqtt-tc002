@@ -37,6 +37,87 @@ public enum IconFehler: Error, LocalizedError {
     }
 }
 
+/// Rechnet Bilddateien (GIF, PNG, JPEG) auf eine gewuenschte Pixelgroesse herunter —
+/// der gemeinsame Weg fuer Icons (8×8) und die Bildersammlung (52×16), damit es
+/// nur eine Stelle gibt, die das tut.
+public enum Bildraster {
+    /// Liest eine Bilddatei als Farbraster, ein Eintrag je Einzelbild. Zeilenweise
+    /// von oben links, `nil` heisst aus. Passt die Groesse nicht, wird ohne
+    /// Glaettung gerechnet — bei acht oder sechzehn Pixeln Hoehe waere jede
+    /// Zwischenfarbe Matsch.
+    ///
+    /// Der Ursprung bleibt die Falle: `CGContext` faengt unten links an, das
+    /// Raster oben links. `draw(_:in:)` haelt sich an die visuelle Ausrichtung
+    /// der Quelle, die Pufferzeile 0 ist bereits die oberste — eine
+    /// Zeilen-Spiegelung hat sich hier schon zweimal als falsch erwiesen.
+    public static func lesen(_ datei: URL, breite: Int, hoehe: Int) throws -> [[String?]] {
+        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        let anzahl = CGImageSourceGetCount(quelle)
+        guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
+        return try (0..<anzahl).map { i in
+            guard let bild = CGImageSourceCreateImageAtIndex(quelle, i, nil) else {
+                throw BildrasterFehler.nichtLesbar
+            }
+            return try pixel(aus: bild, breite: breite, hoehe: hoehe)
+        }
+    }
+
+    /// Die Pixelgroesse des ersten Einzelbilds einer Datei, wenn lesbar — fuer den
+    /// Hinweis, wenn eine eingelesene Datei umgerechnet werden musste.
+    public static func groesse(_ datei: URL) -> (breite: Int, hoehe: Int)? {
+        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil),
+              let eigenschaften = CGImageSourceCopyPropertiesAtIndex(quelle, 0, nil) as? [CFString: Any],
+              let breite = eigenschaften[kCGImagePropertyPixelWidth] as? Int,
+              let hoehe = eigenschaften[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
+        return (breite, hoehe)
+    }
+
+    /// Zeichnet erst 1:1 in einen Puffer in Quellgroesse — bei dieser Groesse
+    /// gibt es nichts zu rechnen, `draw(_:in:)` kopiert nur — und tastet danach
+    /// selbst ohne CoreGraphics ab. Ein Umweg ueber `draw(_:in:)` direkt auf
+    /// Zielgroesse tastet naemlich um die Pixelmitte jedes Zielpixels ab: bei
+    /// einem einzelnen farbigen Pixel in einem sonst leeren Bild trifft das
+    /// oft daneben, und aus einer 16×16-Vorlage mit einem roten Pixel oben
+    /// links wuerde beim Verkleinern auf 8×8 Schwarz statt Rot.
+    private static func pixel(aus bild: CGImage, breite: Int, hoehe: Int) throws -> [String?] {
+        let quellBreite = bild.width, quellHoehe = bild.height
+        var quellBytes = [UInt8](repeating: 0, count: quellBreite * quellHoehe * 4)
+        guard quellBreite > 0, quellHoehe > 0,
+              let quellKontext = CGContext(data: &quellBytes, width: quellBreite, height: quellHoehe,
+                                           bitsPerComponent: 8, bytesPerRow: quellBreite * 4,
+                                           space: CGColorSpaceCreateDeviceRGB(),
+                                           bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        quellKontext.interpolationQuality = .none
+        quellKontext.draw(bild, in: CGRect(x: 0, y: 0, width: quellBreite, height: quellHoehe))
+
+        var pixel = [String?](repeating: nil, count: breite * hoehe)
+        for y in 0..<hoehe {
+            let qy = min(quellHoehe - 1, y * quellHoehe / hoehe)
+            for x in 0..<breite {
+                let qx = min(quellBreite - 1, x * quellBreite / breite)
+                let q = (qy * quellBreite + qx) * 4
+                guard quellBytes[q + 3] != 0 else { continue }   // durchsichtig bleibt nil
+                pixel[y * breite + x] = String(format: "#%02X%02X%02X",
+                                               quellBytes[q], quellBytes[q + 1], quellBytes[q + 2])
+            }
+        }
+        return pixel
+    }
+}
+
+public enum BildrasterFehler: Error, LocalizedError {
+    case nichtLesbar
+
+    public var errorDescription: String? {
+        "Diese Datei lässt sich nicht als Bild lesen."
+    }
+}
+
 /// Die 8×8-Icons. Mitgeliefert im Ordner `Icons/`, erweiterbar ueber LaMetric-Nummern
 /// und eigene Zeichnungen.
 public struct Iconsammlung {
@@ -92,51 +173,36 @@ public struct Iconsammlung {
     /// Durchsichtigkeit kennt — mitgelieferte oder von LaMetric geholte Icons koennen
     /// aber echte durchsichtige Pixel tragen.
     public func pixel(fuer icon: Icon) throws -> [String?] {
-        guard let quelle = CGImageSourceCreateWithURL(icon.datei as CFURL, nil),
-              let bild = CGImageSourceCreateImageAtIndex(quelle, 0, nil) else {
+        do {
+            guard let erstes = try Bildraster.lesen(icon.datei, breite: 8, hoehe: 8).first else {
+                throw IconFehler.nichtLesbar(icon.nummer)
+            }
+            return erstes
+        } catch {
             throw IconFehler.nichtLesbar(icon.nummer)
         }
-        return try Self.pixel(aus: bild, nummer: icon.nummer)
     }
 
     /// Liest alle Einzelbilder eines Icons — bei einem unbewegten Icon genau
     /// eines, bei einem animierten GIF jedes Frame in gespeicherter Reihenfolge.
     public func bilder(fuer icon: Icon) throws -> [[String?]] {
-        guard let quelle = CGImageSourceCreateWithURL(icon.datei as CFURL, nil) else {
+        do {
+            let raster = try Bildraster.lesen(icon.datei, breite: 8, hoehe: 8)
+            guard !raster.isEmpty else { throw IconFehler.nichtLesbar(icon.nummer) }
+            return raster
+        } catch {
             throw IconFehler.nichtLesbar(icon.nummer)
-        }
-        let anzahl = CGImageSourceGetCount(quelle)
-        guard anzahl > 0 else { throw IconFehler.nichtLesbar(icon.nummer) }
-        return try (0..<anzahl).map { i in
-            guard let bild = CGImageSourceCreateImageAtIndex(quelle, i, nil) else {
-                throw IconFehler.nichtLesbar(icon.nummer)
-            }
-            return try Self.pixel(aus: bild, nummer: icon.nummer)
         }
     }
 
-    /// Rechnet ein einzelnes CGImage auf ein 8×8-Raster herunter. Gemeinsamer
-    /// Kern von `pixel(fuer:)` und `bilder(fuer:)`.
-    /// Kein Ursprungsunterschied auszugleichen: `draw(_:in:)` haelt sich an die
-    /// visuelle Ausrichtung der Quelle, die Pufferzeile 0 ist bereits die oberste —
-    /// eine Zeilen-Spiegelung hat sich hier schon einmal als falsch erwiesen.
-    private static func pixel(aus bild: CGImage, nummer: String) throws -> [String?] {
-        var bytes = [UInt8](repeating: 0, count: 64 * 4)
-        guard let kontext = CGContext(data: &bytes, width: 8, height: 8, bitsPerComponent: 8,
-                                      bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
-            throw IconFehler.nichtLesbar(nummer)
-        }
-        kontext.interpolationQuality = .none
-        kontext.draw(bild, in: CGRect(x: 0, y: 0, width: 8, height: 8))
-
-        var pixel = [String?](repeating: nil, count: 64)
-        for i in 0..<64 {
-            let q = i * 4
-            guard bytes[q + 3] != 0 else { continue }   // durchsichtig bleibt nil
-            pixel[i] = String(format: "#%02X%02X%02X", bytes[q], bytes[q + 1], bytes[q + 2])
-        }
-        return pixel
+    /// Nimmt eine Bilddatei (GIF, PNG, JPEG) in die Sammlung auf, auf 8×8
+    /// gerechnet. Animierte GIFs behalten ihre Einzelbilder. Die Quelldatei wird
+    /// nicht kopiert, sondern ueber `sichern` neu geschrieben, damit in der
+    /// Sammlung ausschliesslich Dateien in der richtigen Groesse liegen.
+    @discardableResult
+    public func einfuegen(datei: URL, nummer: String, name: String) throws -> Icon {
+        let raster = try Bildraster.lesen(datei, breite: 8, hoehe: 8)
+        return try sichern(nummer: nummer, name: name, bilder: raster, verzoegerung: 0.2)
     }
 
     /// Holt ein Icon ueber seine LaMetric-Nummer: erst das Bild, dann Name und

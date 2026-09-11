@@ -1,5 +1,6 @@
 import SwiftUI
 import TC002Core
+import UniformTypeIdentifiers
 
 /// 8×8-Editor fuer eigene Icons. Dasselbe Malprinzip wie der grosse Editor, nur
 /// kleiner und mit Ablage: was hier gesichert wird, steht unter „Senden" zur Wahl.
@@ -24,6 +25,15 @@ struct IconEditorView: View {
     @State private var laedt = false
     @State private var suche = ""
 
+    /// Zustand fuer „Datei einlesen…": erst die Dateiauswahl, danach ein Blatt
+    /// fuer Nummer und Namen mit dem Dateinamen als Vorschlag.
+    @State private var zeigeDateiImport = false
+    @State private var zeigeImportBlatt = false
+    @State private var importDatei: URL?
+    @State private var importNummer = ""
+    @State private var importName = ""
+    @State private var importGroesse: (breite: Int, hoehe: Int)?
+
     private let kante: Double = 28
 
     private var sammlung: Iconsammlung {
@@ -36,6 +46,38 @@ struct IconEditorView: View {
             seitenleiste
         }
         .onDisappear { stoppeAbspielen() }
+        .sheet(isPresented: $zeigeImportBlatt) { importBlatt }
+    }
+
+    private var importBlatt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Datei einlesen").font(.headline)
+            nummerFeldImport
+            nameFeldImport
+            HStack {
+                Spacer()
+                Button("Abbrechen") { zeigeImportBlatt = false }
+                Button("Einlesen") { einlesen() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(importNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding()
+        .frame(minWidth: 320)
+    }
+
+    private var nummerFeldImport: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Nummer").font(.caption).foregroundStyle(.secondary)
+            TextField("Nummer", text: $importNummer)
+        }
+    }
+
+    private var nameFeldImport: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Name").font(.caption).foregroundStyle(.secondary)
+            TextField("Name", text: $importName)
+        }
     }
 
     private var malflaeche: some View {
@@ -222,6 +264,17 @@ struct IconEditorView: View {
             }
             Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
                 .font(.caption).foregroundStyle(.secondary)
+            Button("Datei einlesen…") { zeigeDateiImport = true }
+                .fileImporter(isPresented: $zeigeDateiImport,
+                              allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
+                    guard case .success(let url) = ergebnis else { return }
+                    importDatei = url
+                    let basis = url.deletingPathExtension().lastPathComponent
+                    importNummer = basis
+                    importName = basis
+                    importGroesse = Bildraster.groesse(url)
+                    zeigeImportBlatt = true
+                }
             TextField("Suchen", text: $suche)
                 .textFieldStyle(.roundedBorder)
             List(gefilterte, id: \.nummer) { icon in
@@ -310,6 +363,28 @@ struct IconEditorView: View {
                     laedt = false
                 }
             }
+        }
+    }
+
+    /// Liest die zuvor per „Datei einlesen…" gewaehlte Datei unter der im Blatt
+    /// eingetragenen Nummer und Namen ein. Der Hinweis auf eine Umrechnung
+    /// nennt die Originalgroesse nur, wenn tatsaechlich gerechnet wurde.
+    private func einlesen() {
+        guard let datei = importDatei else { return }
+        let n = importNummer.trimmingCharacters(in: .whitespaces)
+        let name = importName.trimmingCharacters(in: .whitespaces)
+        do {
+            let icon = try sammlung.einfuegen(datei: datei, nummer: n, name: name.isEmpty ? n : name)
+            vorhandene = sammlung.alle()
+            zeigeImportBlatt = false
+            if let groesse = importGroesse, groesse != (8, 8) {
+                meldung = "\(icon.name) eingelesen. Das Bild wurde von \(groesse.breite)×\(groesse.hoehe) auf 8×8 gerechnet."
+            } else {
+                meldung = "\(icon.name) eingelesen."
+            }
+            zustand.log("Icon eingelesen: \(icon.name)")
+        } catch {
+            meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
     }
 

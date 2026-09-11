@@ -42,4 +42,25 @@ final class BildersammlungTests: XCTestCase {
         let sammlung = Bildersammlung(ordner: temp())
         XCTAssertThrowsError(try sammlung.sichern(name: "  ", feld: Pixelfeld()))
     }
+
+    /// Rundlauf ueber `einfuegen`: eine bereits gesicherte Datei wird unter
+    /// einem neuen Namen als eigener Eintrag aufgenommen.
+    func testEingefuegteDateiStehtInDerSammlung() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        var feld = Pixelfeld()
+        feld.setzen(x: 0, y: 0, farbe: "#FF0000")
+        let quelle = try sammlung.sichern(name: "Quelle", feld: feld).datei
+
+        let neu = try sammlung.einfuegen(datei: quelle, name: "Kopie")
+        XCTAssertEqual(neu.name, "Kopie")
+        XCTAssertEqual(try sammlung.laden(neu).farbe(x: 0, y: 0), "#FF0000")
+        XCTAssertTrue(sammlung.alle().contains { $0.name == "Kopie" })
+    }
+
+    func testEingefuegteNichtBilddateiWirdAbgelehnt() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        let kaputt = temp().appendingPathExtension("png")
+        try Data("kein Bild".utf8).write(to: kaputt)
+        XCTAssertThrowsError(try sammlung.einfuegen(datei: kaputt, name: "x"))
+    }
 }

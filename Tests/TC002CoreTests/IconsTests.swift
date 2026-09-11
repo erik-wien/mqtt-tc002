@@ -1,4 +1,5 @@
 import ImageIO
+import UniformTypeIdentifiers
 import XCTest
 @testable import TC002Core
 
@@ -7,6 +8,28 @@ final class IconsTests: XCTestCase {
     /// Verzeichnis — anlegen bleibt Sache des Aufrufers.
     private func temp() -> URL {
         URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    }
+
+    /// Schreibt ein Testbild mit gegebener Groesse; bei `roterPixelObenLinks`
+    /// ist genau das Pixel oben links rot, alles andere schwarz — ueber
+    /// `CGImageDestination`, wie `Iconsammlung.sichern` es tut.
+    private func schreibeTestbild(_ datei: URL, breite: Int, hoehe: Int, roterPixelObenLinks: Bool) throws {
+        var bytes = [UInt8](repeating: 0, count: breite * hoehe * 4)
+        for i in 0..<(breite * hoehe) { bytes[i * 4 + 3] = 255 }
+        if roterPixelObenLinks {
+            bytes[0] = 255; bytes[1] = 0; bytes[2] = 0; bytes[3] = 255
+        }
+        guard let anbieter = CGDataProvider(data: Data(bytes) as CFData),
+              let bild = CGImage(width: breite, height: hoehe, bitsPerComponent: 8, bitsPerPixel: 32,
+                                 bytesPerRow: breite * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                 bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                                 provider: anbieter, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+        else { throw IconFehler.nichtSchreibbar("test") }
+        guard let senke = CGImageDestinationCreateWithURL(datei as CFURL, UTType.gif.identifier as CFString, 1, nil) else {
+            throw IconFehler.nichtSchreibbar("test")
+        }
+        CGImageDestinationAddImage(senke, bild, nil)
+        guard CGImageDestinationFinalize(senke) else { throw IconFehler.nichtSchreibbar("test") }
     }
 
     private func ordnerMitIcon() throws -> URL {
@@ -237,5 +260,35 @@ final class IconsTests: XCTestCase {
         let sammlung = Iconsammlung(schreibordner: temp())
         XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x",
                                                   bilder: [], verzoegerung: 0.2))
+    }
+
+    /// Der Ursprung bleibt die Falle: `CGContext` faengt unten links an, das
+    /// Raster oben links — deshalb hier ausdruecklich oben links geprueft.
+    func testFremdeGroesseWirdGerechnet() throws {
+        let datei = temp().appendingPathExtension("gif")
+        try schreibeTestbild(datei, breite: 16, hoehe: 16, roterPixelObenLinks: true)
+        let raster = try Bildraster.lesen(datei, breite: 8, hoehe: 8)
+        XCTAssertEqual(raster.count, 1)
+        XCTAssertEqual(raster[0].count, 64)
+        XCTAssertEqual(raster[0][0], "#FF0000", "oben links bleibt oben links")
+    }
+
+    func testEingefuegtesIconStehtInDerSammlung() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+        var p = [String?](repeating: nil, count: 64); p[0] = "#FF0000"
+        let quelle = try XCTUnwrap(try? sammlung.sichern(nummer: "quelle", name: "Quelle", pixel: p)).datei
+
+        let neu = try sammlung.einfuegen(datei: quelle, nummer: "kopie", name: "Kopie")
+        XCTAssertEqual(neu.name, "Kopie")
+        XCTAssertEqual(try sammlung.bilder(fuer: neu)[0][0], "#FF0000")
+        XCTAssertNotNil(sammlung.alle().first { $0.nummer == "kopie" })
+    }
+
+    func testKeineBilddateiWirdAbgelehnt() throws {
+        let kaputt = temp().appendingPathExtension("gif")
+        try Data("kein Bild".utf8).write(to: kaputt)
+        XCTAssertThrowsError(try Bildraster.lesen(kaputt, breite: 8, hoehe: 8))
     }
 }

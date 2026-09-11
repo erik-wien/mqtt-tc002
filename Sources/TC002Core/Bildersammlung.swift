@@ -74,30 +74,29 @@ public struct Bildersammlung {
     /// Liest ein gesichertes Bild als Pixelfeld zurueck, zeilenweise von oben
     /// links wie das Feld selbst.
     public func laden(_ gemaltes: Gemaltes) throws -> Pixelfeld {
-        guard let quelle = CGImageSourceCreateWithURL(gemaltes.datei as CFURL, nil),
-              let bild = CGImageSourceCreateImageAtIndex(quelle, 0, nil) else {
-            throw BildersammlungFehler.nichtLesbar
-        }
         let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
-        var bytes = [UInt8](repeating: 0, count: breite * hoehe * 4)
-        guard let kontext = CGContext(data: &bytes, width: breite, height: hoehe, bitsPerComponent: 8,
-                                      bytesPerRow: breite * 4, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+        do {
+            guard let punkte = try Bildraster.lesen(gemaltes.datei, breite: breite, hoehe: hoehe).first,
+                  let feld = Pixelfeld(breite: breite, hoehe: hoehe, punkte: punkte) else {
+                throw BildersammlungFehler.nichtLesbar
+            }
+            return feld
+        } catch {
             throw BildersammlungFehler.nichtLesbar
         }
-        kontext.interpolationQuality = .none
-        kontext.draw(bild, in: CGRect(x: 0, y: 0, width: breite, height: hoehe))
+    }
 
-        var punkte = [String?](repeating: nil, count: breite * hoehe)
-        for i in 0..<(breite * hoehe) {
-            let q = i * 4
-            guard bytes[q + 3] != 0 else { continue }
-            punkte[i] = String(format: "#%02X%02X%02X", bytes[q], bytes[q + 1], bytes[q + 2])
-        }
-        guard let feld = Pixelfeld(breite: breite, hoehe: hoehe, punkte: punkte) else {
+    /// Nimmt eine Bilddatei (GIF, PNG, JPEG) in die Sammlung auf, auf 52×16
+    /// gerechnet. Bei mehreren Einzelbildern (animiertes GIF) zaehlt nur das
+    /// erste — die Bildersammlung kennt, anders als Icons, keine Animation.
+    @discardableResult
+    public func einfuegen(datei: URL, name: String) throws -> Gemaltes {
+        let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
+        guard let punkte = try Bildraster.lesen(datei, breite: breite, hoehe: hoehe).first,
+              let feld = Pixelfeld(breite: breite, hoehe: hoehe, punkte: punkte) else {
             throw BildersammlungFehler.nichtLesbar
         }
-        return feld
+        return try sichern(name: name, feld: feld)
     }
 
     public func loeschen(_ gemaltes: Gemaltes) throws {
