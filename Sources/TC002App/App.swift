@@ -32,6 +32,7 @@ struct TC002App: App {
             CommandGroup(replacing: .help) {
                 Button("MQTT-TC002-Hilfe") { openWindow(id: "hilfe") }
                     .keyboardShortcut("?", modifiers: .command)
+                Button("Gerätereferenz") { openWindow(id: "geraetereferenz") }
             }
             // Beide Ordner liegen normalerweise unsichtbar in der Library und
             // werden von Iconordner.eigene bzw. Bilderordner.eigene bei Bedarf
@@ -49,6 +50,11 @@ struct TC002App: App {
 
         Window("Hilfe", id: "hilfe") {
             HilfeView()
+        }
+        .windowResizability(.contentSize)
+
+        Window("Gerätereferenz", id: "geraetereferenz") {
+            GeraeteReferenzView()
         }
         .windowResizability(.contentSize)
     }

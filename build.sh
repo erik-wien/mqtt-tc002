@@ -75,5 +75,6 @@ ${ICON_EINTRAEGE}
 PLIST
 
 cp -R Icons "$APP/Contents/Resources/Icons"
+cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 
 echo "fertig: $APP"
