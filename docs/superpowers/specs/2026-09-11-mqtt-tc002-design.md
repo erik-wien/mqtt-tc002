@@ -43,7 +43,7 @@ Sources/
   TC002Core/            Bibliothek, alles ohne Oberflaeche
     MQTT.swift          CONNECT, CONNACK, PUBLISH — mehr braucht es nicht
     Frame.swift         das JSON-Modell: draw, image, text, duration
-    Layout.swift        Textvermessung, Grossbuchstaben-Regel, Laufschrift
+    Textraster.swift    Text mit CoreText rastern, Breite messen
     Icons.swift         Sammlung laden, Daten-URI bauen, LaMetric-Abruf
     Device.swift        HTTP: getConfig, setConfig, getMqttStatus, api/custom
     Displays.swift      benannte Anzeigen: anlegen, umschalten, loeschen
@@ -111,7 +111,8 @@ Pixel. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — ein
 Anzeige bleibt, bis sie ueberschrieben oder geloescht wird.
 
 Zwei Eigenheiten des Geraets: es **scrollt nicht selbst**, Laufschrift muss Bild
-fuer Bild geschickt werden; und sein Font hat Luecken bei Kleinbuchstaben.
+fuer Bild geschickt werden; und sein Font kennt **keine Umlaute** und an Satzzeichen
+nur `%`, `.`, `-` und `:` — am Geraet durchprobiert. Kleinbuchstaben gehen dagegen.
 
 ## Schrift wird selbst gerastert
 
@@ -120,8 +121,9 @@ Stattdessen rastert sie den Text selbst mit CoreText in das 52×16-Feld, fasst
 jede Zeile zu waagrechten Laeufen zusammen und schickt sie als `df`-Rechtecke.
 
 Das loest drei Probleme auf einmal: die Vorschau ist **exakt**, weil Vorschau und
-Sendung aus demselben Raster stammen; Umlaute und Kleinbuchstaben funktionieren
-unabhaengig vom Geraetefont; und die Schriftart ist frei waehlbar.
+Sendung aus demselben Raster stammen; Umlaute und Satzzeichen funktionieren
+unabhaengig vom Geraetefont, der beides nicht kann; und die Schriftart ist frei
+waehlbar.
 
 Am laufenden Geraet belegt: „Grüße!" in Menlo 11 ergibt 40 Pixel Breite, 62
 Rechtecke, 1,7 KB Nutzlast — mit Umlauten, die der Geraetefont nicht kann.
@@ -206,8 +208,8 @@ Der Kern, mit XCTest:
   echten Broker. Das ist der wichtigste Test des Projekts: er faengt genau die
   Fehlerklasse, die uns heute Stunden gekostet hat.
 - Frame-JSON gegen erwartete Zeichenketten, inklusive der drei Bestandteile.
-- Textvermessung: Breite, Umbruchentscheidung, Grossbuchstaben-Regel, Zeichen
-  ausserhalb von ASCII.
+- Textvermessung: Breite, Umbruchentscheidung, Umlaute und Satzzeichen, die der
+  Geraetefont nicht kennt.
 - Zusammenfassen benachbarter Pixel zu Rechtecken: gleiche Bildwirkung, weniger
   Bytes.
 - Icons: Daten-URI, fehlende Datei, Ablage einer geholten Nummer.

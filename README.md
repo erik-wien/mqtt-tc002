@@ -17,7 +17,9 @@ Ermittelt am 11.09.2026 am laufenden Gerät, nicht aus der Herstellerdoku:
 - Eine leere Nachricht auf `custom/<name>` löscht die Anzeige.
 - Dasselbe JSON nimmt das Gerät auch per HTTP: `POST /api/custom?name=<n>`.
 - Gerät scrollt nicht selbst; Laufschrift muss Bild für Bild geschickt werden.
-- Der Font hat Lücken bei Kleinbuchstaben — Grossbuchstaben sind verlässlich.
+- Der Gerätefont kennt **keine Umlaute**, und an Satzzeichen nur `%`, `.`, `-`, `:`
+  (am 11.09.2026 am Gerät durchprobiert). Kleinbuchstaben funktionieren entgegen
+  einer verbreiteten Behauptung sehr wohl.
 - `carouselSpeed` (0 = kein Wechsel) steuert, ob mehrere Anzeigen abwechseln;
   zu lesen und zu setzen über `/getConfig` und `/setConfig` am Gerät.
 
