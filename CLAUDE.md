@@ -22,3 +22,22 @@ sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
   `~/Library/Application Support/MQTT-TC002/Icons`, nie im App-Bündel — dort
   wären sie beim nächsten Bau weg, und unter `/Applications` ist der Ordner
   nicht beschreibbar.
+
+## Nach /Applications installieren
+
+**Nicht** mit `rm -rf` und `cp` ersetzen. Die Freigabe „Lokales Netzwerk" haengt
+bei macOS am Programm; ein so ausgetauschtes Buendel gilt leicht als ein anderes.
+Die Freigabe steht dann weiter auf „erteilt", greift aber nicht mehr, und
+nachgefragt wird auch nicht — die App erreicht Uhr und Broker einfach nicht.
+Am 11.09.2026 genau so passiert, nach dreimaligem Austausch.
+
+Stattdessen an Ort und Stelle ersetzen, das erhaelt die Identitaet:
+
+    ditto build/MQTT-TC002.app /Applications/MQTT-TC002.app
+
+Und die App moeglichst nur von **einem** Ort aus starten. Zwei Kopien mit
+derselben Buendelkennung — etwa `/Applications` und `build/` — verwirren die
+Rechteverwaltung zusaetzlich.
+
+Ist es doch passiert: Systemeinstellungen > Datenschutz & Sicherheit >
+Lokales Netzwerk > den Eintrag aus- und wieder einschalten.
