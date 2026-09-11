@@ -59,9 +59,14 @@ struct SendenView: View {
     /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
-    @AppStorage("senden.schriftart") private var schrift = "Chicago"
-    @AppStorage("senden.groesse") private var groesse = 11.0
+    @AppStorage("senden.schriftart") private var schrift = "Silkscreen"
+    /// 8, nicht 11: Vorgabeschrift ist Silkscreen, die nur 8 und 16 sauber traegt.
+    @AppStorage("senden.groesse") private var groesse = 8.0
     @AppStorage("senden.fett") private var fett = false
+    /// −1 bis +3 Pixel, ganzzahlig: ein gebrochener Wert schoebe die Glyphen von
+    /// der Rasterlinie und zerstoerte die Pixelgenauigkeit, fuer die Silkscreen
+    /// ueberhaupt mitgeliefert wird. Wirkt auf beiden Wegen (siehe unten).
+    @AppStorage("senden.zeichenabstand") private var zeichenabstand = 0
     /// Wandelt erst beim Rastern bzw. beim Bauen des `Textblock` um (siehe
     /// `gesendeterText`), nie das Eingabefeld selbst — wer tippt, soll lesen,
     /// was er geschrieben hat.
@@ -116,12 +121,12 @@ struct SendenView: View {
     }
 
     /// Geprueft bei 16 Pixeln Hoehe: Diese Schriften rastern mit gleichmaessigen
-    /// Strichstaerken. Chicago steht vorn, weil sie urspruenglich auf dem
-    /// Pixelraster entworfen wurde und dem Aussehen der Geraetschrift am
-    /// naechsten kommt. Alle anderen installierten Schriften sind bei dieser
-    /// Groesse unbrauchbar — Courier, SF Mono und Helvetica etwa bekommen
-    /// Loecher in den Stammen.
-    static let geeigneteSchriften = ["Chicago", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
+    /// Strichstaerken. Silkscreen steht vorn und ist die Vorgabe — sie ist
+    /// eigens aufs 8-Pixel-Raster gezeichnet (mitgeliefert, siehe unten) und
+    /// kann, anders als die Geraetschrift, Umlaute und das scharfe S. Alle anderen
+    /// installierten Schriften sind bei dieser Groesse unbrauchbar — Courier,
+    /// SF Mono und Helvetica etwa bekommen Loecher in den Staemmen.
+    static let geeigneteSchriften = ["Silkscreen", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
     /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
     /// Gefiltert auf das, was dieser Mac tatsaechlich installiert hat; nicht jede
@@ -153,7 +158,13 @@ struct SendenView: View {
     /// fehlen dort weiterhin.
     private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
 
-    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
+    /// Silkscreen ist aufs 8-Pixel-Raster gezeichnet — nur bei 8 und einem
+    /// Vielfachen davon (hier: 16) fallen ihre Striche sauber auf ganze Pixel.
+    /// Dazwischen entscheidet ohne Kantenglaettung ein Schwellwert willkuerlich,
+    /// welche Punkte gesetzt werden — das Ergebnis war beim Nutzer „hässlich".
+    private var schriftIstSilkscreen: Bool { schrift == "Silkscreen" }
+
+    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, kern: zeichenabstand) }
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     private var textX: Int {
@@ -178,7 +189,7 @@ struct SendenView: View {
     private var feld: Pixelfeld {
         var f = Pixelfeld()
         Textraster.einsetzen(Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
-                                                     fett: fett, farbe: farbeHex),
+                                                     fett: fett, farbe: farbeHex, kern: zeichenabstand),
                              x: textX, y: textY, in: &f)
         return f
     }
@@ -217,9 +228,9 @@ struct SendenView: View {
         switch vertikal { case .oben: "top"; case .mittig: "middle"; case .unten: "bottom" }
     }
 
-    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung und Farbe aus
-    /// derselben Formatleiste wie beim eigenen Raster — Schriftart und Fett
-    /// gelten hier nicht, die Uhr setzt ihre eigene Schrift.
+    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung, Farbe und
+    /// Zeichenabstand aus derselben Formatleiste wie beim eigenen Raster —
+    /// Schriftart und Fett gelten hier nicht, die Uhr setzt ihre eigene Schrift.
     private var textblock: Textblock {
         var t = Textblock(inhalt: gesendeterText)
         t.schrifthoehe = Int(groesse)
@@ -229,6 +240,7 @@ struct SendenView: View {
         t.ausrichtung = geraeteAusrichtung
         t.vertikal = geraeteVertikal
         t.flaeche = [flaecheX, 0, flaecheBreite, Pixelfeld.hoeheStandard]
+        t.zeichenabstand = zeichenabstand
         return t
     }
 
@@ -285,6 +297,10 @@ struct SendenView: View {
             formatleiste
             if weg == .pixel {
                 Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if schriftIstSilkscreen {
+                Text("Silkscreen ist aufs 8-Pixel-Raster gezeichnet — nur bei 8 und 16 Pixeln fallen ihre Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             HStack {
@@ -358,12 +374,17 @@ struct SendenView: View {
         }
         .padding()
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
+        .onChange(of: schrift) { _, neu in
+            // Wechsel weg von Silkscreen laesst die Groesse stehen — sie passt
+            // ja weiterhin in den allgemeinen Bereich 6...16.
+            if neu == "Silkscreen", groesse != 8, groesse != 16 { groesse = 8 }
+        }
         .task(id: laufschriftSchluessel) {
             guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
             laufschriftFrames = Textraster.laufschriftEinzelbilder(
                 gesendeterText, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
                 schrittweite: tempo.schrittweite, bilddauer: tempo.bilddauer,
-                versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit)
+                versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit, kern: zeichenabstand)
             // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
             // einmal gerastert, sonst liefe die Rechnung zweimal.
             laufschriftURI = (try? Bildraster.alsDatenURI(
@@ -377,7 +398,7 @@ struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(iconNummer)|\(iconLaeuftMit)|\(zeichenabstand)"
     }
 
     /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
@@ -401,8 +422,13 @@ struct SendenView: View {
             .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
                                : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
 
-            Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
-                .help("Schriftgröße")
+            if schriftIstSilkscreen {
+                Stepper("\(Int(groesse))", value: $groesse, in: 8...16, step: 8).frame(width: 80)
+                    .help("Schriftgröße — Silkscreen ist aufs 8-Pixel-Raster gezeichnet, dazwischen gibt es keine saubere Größe.")
+            } else {
+                Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
+                    .help("Schriftgröße")
+            }
 
             formatKnopf(icon: "bold", hilfe: weg == .text ? "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." : "Fett",
                        aktiv: fett) { fett.toggle() }
@@ -410,6 +436,11 @@ struct SendenView: View {
 
             formatKnopf(icon: "capslock", hilfe: "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.",
                        aktiv: grossbuchstaben) { grossbuchstaben.toggle() }
+
+            Divider().frame(height: 18)
+
+            Stepper("Abstand \(zeichenabstand)", value: $zeichenabstand, in: -1...3).frame(width: 110)
+                .help("Zeichenabstand in Pixeln, −1 bis +3 — wirkt auf beiden Wegen. Negative Werte rücken die Zeichen enger zusammen, praktisch wenn ein Text knapp nicht passt.")
 
             Divider().frame(height: 18)
 
@@ -483,7 +514,8 @@ struct SendenView: View {
                     ? try Textraster.laufschrift(gesendeterText, schrift: schrift, groesse: groesse, fett: fett,
                                                  farbe: farbeHex, schrittweite: tempo.schrittweite,
                                                  bilddauer: tempo.bilddauer, versatzY: textY,
-                                                 iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit)
+                                                 iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit,
+                                                 kern: zeichenabstand)
                     : laufschriftURI
                 return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
             }
