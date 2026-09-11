@@ -164,7 +164,8 @@ Ein grüner Punkt links oben und ein roter Balken darunter:
   die gebräuchlichen Typen; die AWTRIX-Welt arbeitet fast durchgehend mit **8×8-GIF**.
 - `position` — `[x, y]`, wieder oben links gerechnet.
 
-📘 **Animierte GIFs spielt das Gerät ab**, nicht nur deren erstes Einzelbild.
+✅ **Animierte GIFs spielt das Gerät ab**, nicht nur deren erstes Einzelbild.
+Am 11.09.2026 am Gerät nachgeprüft — das Herstellerrepository sagt dasselbe.
 
 ❓ Nicht belegt: ob die Bildgröße beschränkt ist und was bei Bildern größer als
 52×16 geschieht.
@@ -323,8 +324,11 @@ Ehrlich benannt, statt verschwiegen:
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
 - ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
-- ❓ Ob animierte GIFs tatsächlich laufen — das Herstellerrepository sagt ja,
-  am Gerät nachgesehen hat es hier noch niemand (§4.2).
+- ❓ Wie **groß** eine Nutzlast sein darf. Dass animierte GIFs laufen, ist geklärt
+  (§4.2); offen ist, wo die Grenze liegt. Das entscheidet, ob sich längerer Text
+  als durchlaufendes GIF schicken lässt — der einzige Weg, Umlaute **und**
+  Scrollen zugleich zu bekommen, denn `scrollSpeed` gilt nur für den
+  Gerätetext (§5.4) und ein `draw`-Rahmen ist starr.
 - ❓ Ob es weitere Themen unterhalb des Präfixes gibt. Das Gerät abonniert
   `<präfix>/#`, also alles; welche Namen es darunter auswertet, ist nicht
   dokumentiert, und `switchDiyApp` war selbst nur durch Hinsehen zu finden.
