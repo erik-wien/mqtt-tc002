@@ -87,15 +87,21 @@ cp LICENSE "$APP/Contents/Resources/LICENSE"
 # Anlegen: Schluesselbundverwaltung > Zertifikatsassistent > Zertifikat
 # erstellen, selbstsigniertes Root-Zertifikat, Typ Codesignatur.
 # Gegen Gatekeeper hilft das NICHT, dafuer braucht es Notarisierung.
-SIGNATUR="${TC002_SIGNATUR:-MQTT-TC002}"
-if security find-certificate -c "$SIGNATUR" >/dev/null 2>&1; then
-    if codesign --force --deep -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
-        echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
-    else
-        echo "Achtung: Signieren mit \"$SIGNATUR\" fehlgeschlagen — der Schluesselbund fragt weiter nach." >&2
-    fi
+# Bevorzugt die Developer ID, weil release.sh dieselbe nimmt. Zwei verschiedene
+# Identitaeten waeren fuer den Schluesselbund zwei verschiedene Programme, und er
+# fragt bei jedem Wechsel erneut nach dem Broker-Kennwort.
+SIGNATUR="${TC002_SIGNATUR:-}"
+if [ -z "$SIGNATUR" ]; then
+    SIGNATUR=$(security find-identity -v -p codesigning \
+               | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' | head -1)
+fi
+if [ -z "$SIGNATUR" ] && security find-certificate -c "MQTT-TC002" >/dev/null 2>&1; then
+    SIGNATUR="MQTT-TC002"
+fi
+if [ -n "$SIGNATUR" ] && codesign --force -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
+    echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
 else
-    echo "Hinweis: kein Zertifikat \"$SIGNATUR\" gefunden, die App bleibt ad hoc signiert." >&2
+    echo "Hinweis: keine Signieridentitaet gefunden, die App bleibt ad hoc signiert." >&2
     echo "         Der Schluesselbund fragt dann nach jedem Bau erneut nach dem Broker-Kennwort." >&2
 fi
 
