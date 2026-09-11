@@ -4,6 +4,7 @@ import SwiftUI
 struct TC002App: App {
     @State private var zustand = AppZustand()
     @State private var bereich: Bereich? = .senden
+    @Environment(\.openWindow) private var openWindow
 
     enum Bereich: String, CaseIterable, Identifiable {
         case senden = "Senden", malen = "Malen", anzeigen = "Anzeigen", verbindung = "Verbindung", icons = "Icons"
@@ -43,5 +44,16 @@ struct TC002App: App {
             } message: { Text(zustand.fehler ?? "") }
         }
         .windowResizability(.contentMinSize)
+        .commands {
+            CommandGroup(replacing: .help) {
+                Button("MQTT-TC002-Hilfe") { openWindow(id: "hilfe") }
+                    .keyboardShortcut("?", modifiers: .command)
+            }
+        }
+
+        Window("Hilfe", id: "hilfe") {
+            HilfeView()
+        }
+        .windowResizability(.contentSize)
     }
 }
