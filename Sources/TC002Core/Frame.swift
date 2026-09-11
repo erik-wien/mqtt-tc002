@@ -1,5 +1,30 @@
 import Foundation
 
+/// Maskiert einen Text fuer die Verwendung als JSON-Zeichenkette (ohne umschliessende
+/// Anfuehrungszeichen). Wird auf jeden nutzergesteuerten Text angewendet, bevor er in
+/// die JSON-Nutzlast eingebettet wird — sonst erzeugt ein Anfuehrungszeichen, ein
+/// Rueckwaertsstrich oder ein Steuerzeichen im Text ungueltiges JSON.
+private func jsonEscape(_ text: String) -> String {
+    var ergebnis = ""
+    ergebnis.reserveCapacity(text.count)
+    for scalar in text.unicodeScalars {
+        switch scalar {
+        case "\"": ergebnis += "\\\""
+        case "\\": ergebnis += "\\\\"
+        case "\n": ergebnis += "\\n"
+        case "\r": ergebnis += "\\r"
+        case "\t": ergebnis += "\\t"
+        default:
+            if scalar.value < 0x20 {
+                ergebnis += String(format: "\\u%04x", scalar.value)
+            } else {
+                ergebnis.unicodeScalars.append(scalar)
+            }
+        }
+    }
+    return ergebnis
+}
+
 /// Ein einzelner Zeichenbefehl: gefuelltes Rechteck. Mit Breite und Hoehe 1 ein Pixel.
 public struct DrawBefehl: Equatable, Sendable {
     public var x: Int, y: Int, breite: Int, hoehe: Int, farbe: String
@@ -10,9 +35,10 @@ public struct DrawBefehl: Equatable, Sendable {
 
 public struct Bild: Equatable, Sendable {
     public var datenURI: String
-    public var position: [Int]
-    public init(datenURI: String, position: [Int] = [0, 0]) {
-        self.datenURI = datenURI; self.position = position
+    public var x: Int
+    public var y: Int
+    public init(datenURI: String, x: Int = 0, y: Int = 0) {
+        self.datenURI = datenURI; self.x = x; self.y = y
     }
 }
 
@@ -44,17 +70,17 @@ public struct Frame: Equatable, Sendable {
     public func alsJSON() throws -> String {
         var teile: [String] = []
         if !draw.isEmpty {
-            let b = draw.map { #"{"df":[\#($0.x),\#($0.y),\#($0.breite),\#($0.hoehe),"\#($0.farbe)"]}"# }
+            let b = draw.map { #"{"df":[\#($0.x),\#($0.y),\#($0.breite),\#($0.hoehe),"\#(jsonEscape($0.farbe))"]}"# }
             teile.append(#""draw":[\#(b.joined(separator: ","))]"#)
         }
         if !bilder.isEmpty {
-            let b = bilder.map { #"{"data":"\#($0.datenURI)","position":[\#($0.position[0]),\#($0.position[1])]}"# }
+            let b = bilder.map { #"{"data":"\#(jsonEscape($0.datenURI))","position":[\#($0.x),\#($0.y)]}"# }
             teile.append(#""image":[\#(b.joined(separator: ","))]"#)
         }
         if !texte.isEmpty {
             let b = texte.map { t in
-                #"{"content":"\#(t.inhalt)","fontHeight":\#(t.schrifthoehe),"x":\#(t.x),"y":\#(t.y),"# +
-                #""color":"\#(t.farbe)","align":"\#(t.ausrichtung)","valign":"\#(t.vertikal)","# +
+                #"{"content":"\#(jsonEscape(t.inhalt))","fontHeight":\#(t.schrifthoehe),"x":\#(t.x),"y":\#(t.y),"# +
+                #""color":"\#(jsonEscape(t.farbe))","align":"\#(jsonEscape(t.ausrichtung))","valign":"\#(jsonEscape(t.vertikal))","# +
                 #""rect":[\#(t.flaeche.map(String.init).joined(separator: ","))],"charSpacing":\#(t.zeichenabstand)}"#
             }
             teile.append(#""text":[\#(b.joined(separator: ","))]"#)
