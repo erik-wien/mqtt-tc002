@@ -22,7 +22,11 @@ vorausgesetzt wird macOS 14 aufwärts.
   eingetragen wird hier nichts.
 - **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
   zusammensetzen und verschicken. Die Vorschau entsteht aus demselben Raster
-  wie die gesendete Nachricht.
+  wie die gesendete Nachricht. Zwei Wege stehen zur Wahl: **als Pixel**, von
+  der App selbst gerastert, mit Umlauten und freier Schrift — passt der Text
+  nicht, läuft er von selbst als Laufschrift durch; oder **als Text**, vom
+  Gerät gesetzt, das dafür mit seiner eigenen Schrift scrollt, aber keine
+  Umlaute kennt.
 - **Malen** — eine freie 52×16-Zeichenfläche, aus der beim Senden Rechtecke
   statt einzelner Pixel werden.
 - **Icons** — eigene 8×8-Bildchen malen oder über eine LaMetric-Nummer
@@ -36,6 +40,27 @@ vorausgesetzt wird macOS 14 aufwärts.
 Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
 (⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
 [`docs/tc002-protokoll.md`](docs/tc002-protokoll.md).
+
+## Schriften und Lücke
+
+Drei Pixelschriften liegen bei — **Micro 5**, **Silkscreen** und **Tiny5**,
+alle unter der SIL Open Font License. Sie sind auf einem Pixelraster
+entworfen, nicht als Bildschirmschriften mit Kurven, und sitzen deshalb bei
+ihrer Entwurfsgröße genau auf den Punkten des Displays. Krumme Zwischengrößen
+gibt es bei ihnen nicht: Dort landen die Striche zwischen zwei Pixeln, und
+ohne Kantenglättung — die das Display nicht kennt — entscheidet ein Schwellwert
+willkürlich. Die Auswahl bietet deshalb nur die sauberen Größen an.
+
+Dazu kommen ein paar Schriften aus dem System für alle, die es gewöhnlicher
+mögen.
+
+Die Einstellung **Lücke** ist keine Unterschneidung im üblichen Sinn: Die App
+rastert jedes Zeichen einzeln, misst, wo seine Tinte anfängt und aufhört, und
+setzt die Zeichen so aneinander, dass dazwischen genau so viele leere Spalten
+stehen, wie eingestellt. Der Wert ist also wörtlich eine Anzahl Pixelspalten.
+Die Vorschubbreiten der Schrift werden dabei verworfen — sie sind für
+gedruckte Größen gedacht und ergeben auf sechzehn Pixeln mal zu enge, mal zu
+weite Buchstabenpaare.
 
 ## Warum Text als Pixel geht
 
