@@ -76,6 +76,7 @@ PLIST
 
 cp -R Icons "$APP/Contents/Resources/Icons"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
+cp LICENSE "$APP/Contents/Resources/LICENSE"
 
 # Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,
 # und die Kennung traegt dann einen Hash ueber die Binaerdatei: nach jedem Bau

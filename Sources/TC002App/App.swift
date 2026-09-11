@@ -29,6 +29,9 @@ struct TC002App: App {
         .defaultSize(width: 1000, height: 680)
         .windowResizability(.contentMinSize)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("Über MQTT-TC002") { openWindow(id: "ueber") }
+            }
             CommandGroup(replacing: .help) {
                 Button("MQTT-TC002-Hilfe") { openWindow(id: "hilfe") }
                     .keyboardShortcut("?", modifiers: .command)
@@ -47,6 +50,11 @@ struct TC002App: App {
                 }
             }
         }
+
+        Window("Über MQTT-TC002", id: "ueber") {
+            UeberView()
+        }
+        .windowResizability(.contentSize)
 
         Window("Hilfe", id: "hilfe") {
             HilfeView()
