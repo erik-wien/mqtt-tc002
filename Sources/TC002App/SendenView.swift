@@ -173,17 +173,17 @@ struct SendenView: View {
     /// fehlen dort weiterhin.
     private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
 
-    /// Diese drei mitgelieferten Pixelschriften sind je aufs eigene Pixelraster
-    /// gezeichnet und tragen nur ihre eigene Entwurfsgroesse bzw. ein Vielfaches
-    /// davon sauber. Dazwischen entscheidet ohne Kantenglaettung ein Schwellwert
-    /// willkuerlich, welche Punkte gesetzt werden — das Ergebnis war beim
-    /// Nutzer „hässlich". Alle anderen Schriften bleiben im allgemeinen Bereich
-    /// 6...16 waehlbar.
-    static let sauberePixelgroessen: [String: [Double]] = [
-        "Micro 5": [12],
-        "Silkscreen": [8, 16],
-        "Tiny5": [8, 16],
-    ]
+    /// Silkscreen ist streng aufs 8-Pixel-Raster gezeichnet: Bei 8 und 16 sitzen
+    /// die Striche auf ganzen Pixeln, dazwischen entscheidet ohne Kantenglaettung
+    /// ein Schwellwert willkuerlich — am Bildschirm geprueft und vom Nutzer als
+    /// „hässlich" bestaetigt.
+    ///
+    /// Fuer Micro 5 und Tiny5 galt diese Einschraenkung hier eine Zeit lang
+    /// ebenfalls. Das war eine unbelegte Verallgemeinerung: Geprueft war nur
+    /// Silkscreen. Micro 5 traegt in Groesse 12 nur acht Zeilen Tinte und wirkte
+    /// dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16
+    /// fuellt sie es. Beide stehen deshalb wieder im vollen Bereich.
+    static let sauberePixelgroessen: [String: [Double]] = ["Silkscreen": [8, 16]]
 
     /// Die sauberen Groessen der aktuell gewaehlten Schrift, oder nil, wenn sie
     /// keine Pixelschrift mit eigenem Raster ist.
