@@ -22,7 +22,8 @@ Nicht gebaut wird:
 
 - Betrieb aus der Menueleiste
 - Zeitsteuerung, wiederkehrende Meldungen, Automatisierung
-- mehrere Geraete gleichzeitig — eines, einstellbar
+- Geraeteverwaltung ueber das Noetige hinaus — die App kennt eine Liste von Uhren mit
+  Name und Adresse, mehr nicht
 - Abonnieren von MQTT; Rueckmeldungen holt die App per HTTP
 - Stichwortsuche in der LaMetric-Galerie: die Schnittstelle antwortet ohne
   Entwicklerschluessel mit 401. Holen ueber die Nummer geht ohne Anmeldung.
@@ -43,7 +44,7 @@ Sources/
   TC002Core/            Bibliothek, alles ohne Oberflaeche
     MQTT.swift          CONNECT, CONNACK, PUBLISH — mehr braucht es nicht
     Frame.swift         das JSON-Modell: draw, image, text, duration
-    Layout.swift        Textvermessung, Grossbuchstaben-Regel, Laufschrift
+    Textraster.swift    Text mit CoreText rastern, Breite messen
     Icons.swift         Sammlung laden, Daten-URI bauen, LaMetric-Abruf
     Device.swift        HTTP: getConfig, setConfig, getMqttStatus, api/custom
     Displays.swift      benannte Anzeigen: anlegen, umschalten, loeschen
@@ -107,11 +108,16 @@ Drei Bestandteile, frei kombinierbar:
 ```
 
 `df` ist ein gefuelltes Rechteck; mit Breite und Hoehe 1 ist es ein einzelner
-Pixel. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — eine
+Pixel. Das Herstellerrepository nennt daneben `dfc` fuer einen gefuellten Kreis
+(`{"dfc":[x,y,radius,"#RRGGBB"]}`). Die App baut ihn **nicht** — der Malstift
+arbeitet pixelweise, ein Kreisbefehl braeuchte eine eigene Bedienfläche ohne
+erkennbaren Gewinn. Er ist hier nur vermerkt, damit er nicht in Vergessenheit
+geraet. `duration` steuert die Standzeit im Durchlauf, nicht das Ablaufen — eine
 Anzeige bleibt, bis sie ueberschrieben oder geloescht wird.
 
 Zwei Eigenheiten des Geraets: es **scrollt nicht selbst**, Laufschrift muss Bild
-fuer Bild geschickt werden; und sein Font hat Luecken bei Kleinbuchstaben.
+fuer Bild geschickt werden; und sein Font kennt **keine Umlaute** und an Satzzeichen
+nur `%`, `.`, `-` und `:` — am Geraet durchprobiert. Kleinbuchstaben gehen dagegen.
 
 ## Schrift wird selbst gerastert
 
@@ -120,8 +126,9 @@ Stattdessen rastert sie den Text selbst mit CoreText in das 52×16-Feld, fasst
 jede Zeile zu waagrechten Laeufen zusammen und schickt sie als `df`-Rechtecke.
 
 Das loest drei Probleme auf einmal: die Vorschau ist **exakt**, weil Vorschau und
-Sendung aus demselben Raster stammen; Umlaute und Kleinbuchstaben funktionieren
-unabhaengig vom Geraetefont; und die Schriftart ist frei waehlbar.
+Sendung aus demselben Raster stammen; Umlaute und Satzzeichen funktionieren
+unabhaengig vom Geraetefont, der beides nicht kann; und die Schriftart ist frei
+waehlbar.
 
 Am laufenden Geraet belegt: „Grüße!" in Menlo 11 ergibt 40 Pixel Breite, 62
 Rechtecke, 1,7 KB Nutzlast — mit Umlauten, die der Geraetefont nicht kann.
@@ -161,7 +168,13 @@ sonst wird die Nutzlast unnoetig gross.
 
 **Anzeigen.** Liste dessen, was angelegt wurde, mit Umschalten und Loeschen.
 
-**Einstellungen.** Geraet und Broker, Kennwort im Schluesselbund. Darunter die
+**Verbindung.** Eine **Liste von Uhren** mit Name und Adresse, dazu der Broker; das
+Kennwort liegt im Schluesselbund. Praefix und MAC traegt niemand von Hand ein — die
+App fragt sie beim Geraet ab. Eine Uhr ist die aktive, an sie geht das Senden; ein
+Schalter schickt wahlweise an alle eingerichteten. Fehlschlaege einzelner Uhren halten
+die anderen nicht auf, sondern landen im Protokoll.
+
+**Geraeteeinstellungen.** Seitenwechsel, Helligkeit und Lautstaerke der aktiven Uhr. Darunter die
 Geraeteeinstellungen ueber HTTP: Seitenwechsel, Helligkeit, Lautstaerke.
 `/setConfig` erwartet die vollstaendige Konfiguration, nicht nur das geaenderte
 Feld — die App liest sie deshalb vor jedem Schreiben frisch.
@@ -206,8 +219,8 @@ Der Kern, mit XCTest:
   echten Broker. Das ist der wichtigste Test des Projekts: er faengt genau die
   Fehlerklasse, die uns heute Stunden gekostet hat.
 - Frame-JSON gegen erwartete Zeichenketten, inklusive der drei Bestandteile.
-- Textvermessung: Breite, Umbruchentscheidung, Grossbuchstaben-Regel, Zeichen
-  ausserhalb von ASCII.
+- Textvermessung: Breite, Umbruchentscheidung, Umlaute und Satzzeichen, die der
+  Geraetefont nicht kennt.
 - Zusammenfassen benachbarter Pixel zu Rechtecken: gleiche Bildwirkung, weniger
   Bytes.
 - Icons: Daten-URI, fehlende Datei, Ablage einer geholten Nummer.
@@ -222,8 +235,8 @@ gemaltes Bild, Loeschen, Umschalten, Seitenwechsel aendern.
 Diese drei sind nicht geklaert und werden waehrend der Umsetzung am Geraet
 beantwortet, nicht vorher geraten:
 
-1. Spielt das Geraet **animierte** GIFs ab, oder zeigt es nur das erste Bild?
-   Mindestens ein mitgeliefertes Icon ist animiert.
+1. Spielt das Geraet **animierte** GIFs ab? Das offizielle Repository des Herstellers
+   sagt ja. Am Geraet gegengeprueft ist es noch nicht — Aufgabe 14 holt das nach.
 2. Wirkt `switchDiyApp` nur, wenn die Anzeige auf dem Geraet in der DIY-Liste
    aktiviert ist? Im Versuch blieb es wirkungslos.
 3. Wie verhaelt sich `duration` im Zusammenspiel mit `carouselSpeed`?
