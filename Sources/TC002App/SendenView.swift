@@ -142,8 +142,15 @@ struct SendenView: View {
     /// (kaum vorstellbar, aber moeglich), faellt es auf die Systemschrift zurueck,
     /// statt eine leere Auswahl zu zeigen.
     private static let schriftarten: [String] = {
-        let installiert = Set(NSFontManager.shared.availableFontFamilies)
-        let gefiltert = geeigneteSchriften.filter(installiert.contains)
+        // NSFontManager.availableFontFamilies listet Schriften, die nur fuer
+        // diesen Prozess angemeldet sind, NICHT auf — die mitgelieferten fielen
+        // dadurch immer heraus, obwohl CoreText sie kennt. Deshalb CoreText
+        // direkt fragen: Kommt derselbe Familienname zurueck, ist die Schrift
+        // da; sonst liefert es klaglos eine Ersatzschrift.
+        let gefiltert = geeigneteSchriften.filter { name in
+            let f = CTFontCreateWithName(name as CFString, 12, nil)
+            return (CTFontCopyFamilyName(f) as String) == name
+        }
         return gefiltert.isEmpty
             ? [NSFont.systemFont(ofSize: NSFont.systemFontSize).familyName ?? "Helvetica"]
             : gefiltert

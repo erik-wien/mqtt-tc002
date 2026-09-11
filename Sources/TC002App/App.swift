@@ -4,6 +4,11 @@ import TC002Core
 
 @main
 struct TC002App: App {
+    /// Die mitgelieferten Schriften muessen angemeldet sein, **bevor** irgendeine
+    /// Ansicht ihre Schriftliste aufbaut — die wird einmal berechnet und bleibt
+    /// dann stehen. In .onAppear waere es zu spaet gewesen.
+    init() { Schriftregistrierung.schriftAnmelden() }
+
     @State private var zustand = AppZustand()
     @State private var bereich: Bereich? = .senden
     @Environment(\.openWindow) private var openWindow
@@ -99,7 +104,6 @@ struct TC002App: App {
         }
         .onAppear {
             Netzfreigabe.anfragen()
-            Schriftregistrierung.schriftAnmelden()
             // Erst hier, nicht im Konstruktor: ein AppZustand allein soll keine
             // Verbindung aufbauen — sonst horchte auch jeder Test mit.
             zustand.horchenStarten()
