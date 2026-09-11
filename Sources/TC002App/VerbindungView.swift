@@ -17,6 +17,12 @@ struct VerbindungView: View {
     /// eintreffende gelesene Wert seine Wahl nicht ueberschreiben.
     @State private var nutzerHatGewaehlt = false
 
+    /// `scrollSpeed` — dieselben drei Zustaende wie bei `seitenwechsel` oben,
+    /// nur fuer ein zweites Feld derselben Konfiguration.
+    @State private var scrollTempo = 0
+    @State private var scrollLadeLauf = false
+    @State private var nutzerHatScrollGewaehlt = false
+
     var body: some View {
         Form {
             Section("Uhren") {
@@ -66,6 +72,13 @@ struct VerbindungView: View {
                     nutzerHatGewaehlt = true
                     setzen("carouselSpeed", neu)
                 }
+                Stepper("Scrolltempo: \(scrollTempo)", value: $scrollTempo, in: 0...20)
+                    .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „vom Gerät setzen“). Der gültige Wertebereich ist nicht dokumentiert.")
+                    .onChange(of: scrollTempo) { _, neu in
+                        guard !scrollLadeLauf else { scrollLadeLauf = false; return }
+                        nutzerHatScrollGewaehlt = true
+                        setzen("scrollSpeed", neu)
+                    }
             }
             Section("Broker") {
                 TextField("Adresse", text: $zustand.brokerHost)
@@ -96,20 +109,31 @@ struct VerbindungView: View {
             guard let host = zustand.aktiveUhr?.host else { return }
             // .task laeuft auf dem Hauptthread, konfiguration() blockiert bis zur Antwort
             // der Uhr. Ohne den losgeloesten Task steht das Fenster so lange still.
-            let ergebnis: (wert: Int?, fehler: String?) = await Task.detached {
-                do { return (try Geraet(host: host).konfiguration()["carouselSpeed"] as? Int, nil) }
-                catch { return (nil, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
+            // Ein Abruf fuer beide Felder statt zweier — sie stehen ohnehin in
+            // derselben Antwort.
+            let ergebnis: (carousel: Int?, scroll: Int?, fehler: String?) = await Task.detached {
+                do {
+                    let k = try Geraet(host: host).konfiguration()
+                    return (k["carouselSpeed"] as? Int, k["scrollSpeed"] as? Int, nil)
+                } catch { return (nil, nil, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
             }.value
             // Ohne Meldung zeigte der Picker nach einem Fehlschlag faelschlich
             // "kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
             if let meldung = ergebnis.fehler {
-                zustand.fehler = "Die Einstellung „Seitenwechsel“ ließ sich nicht lesen: \(meldung)"
-            } else if let wert = ergebnis.wert {
-                // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
-                // seine Wahl — der spaet eintreffende gelesene Wert ueberschreibt sie nicht.
+                zustand.fehler = "Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: \(meldung)"
+                return
+            }
+            // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
+            // seine Wahl — der spaet eintreffende gelesene Wert ueberschreibt sie nicht.
+            if let wert = ergebnis.carousel {
                 if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
             } else {
                 zustand.fehler = "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet."
+            }
+            if let wert = ergebnis.scroll {
+                if wert != scrollTempo, !nutzerHatScrollGewaehlt { scrollLadeLauf = true; scrollTempo = wert }
+            } else {
+                zustand.fehler = "Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet."
             }
         }
     }

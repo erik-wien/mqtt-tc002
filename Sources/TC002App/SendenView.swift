@@ -16,6 +16,14 @@ enum SendenVAusrichtung: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Der Weg, auf dem der Text zur Uhr kommt — ein echter Zielkonflikt, keine
+/// beliebige Einstellung: eigenes Raster kann Umlaute, aber nicht scrollen;
+/// der Geraeteweg scrollt, kennt aber nur die Gerätschrift ohne Umlaute.
+enum SendeWeg: String, CaseIterable, Identifiable {
+    case pixel, geraet
+    var id: String { rawValue }
+}
+
 struct SendenView: View {
     @Bindable var zustand: AppZustand
 
@@ -32,6 +40,7 @@ struct SendenView: View {
     @AppStorage("senden.fett") private var fett = false
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
     @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     /// Nur die Nummer wird gesichert, kein Pfad — der bricht, sobald ein Icon
     /// zwischen mitgeliefert und eigenen wandert. `gewaehltesIcon` wird daraus
     /// einmalig beim Start nachgeschlagen; eine verschwundene Nummer ergibt
@@ -108,20 +117,45 @@ struct SendenView: View {
 
     private var passt: Bool { textBreite <= flaecheBreite }
 
+    /// `align`/`valign` fuer den Geraeteweg — dieselbe Wahl aus der Formatleiste,
+    /// nur in den Namen, die das Geraet fuer `text` erwartet (§4.3).
+    private var geraeteAusrichtung: String {
+        switch horizontal { case .links: "left"; case .mittig: "center"; case .rechts: "right" }
+    }
+    private var geraeteVertikal: String {
+        switch vertikal { case .oben: "top"; case .mittig: "middle"; case .unten: "bottom" }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Picker("Weg", selection: $weg) {
+                Text("als Pixel (Umlaute, scrollt nicht)").tag(SendeWeg.pixel)
+                Text("vom Gerät setzen (scrollt, keine Umlaute)").tag(SendeWeg.geraet)
+            }
+            .pickerStyle(.segmented).labelsHidden()
+
             formatleiste
             HStack {
                 TextField("Text", text: $text)
                 IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
             }
 
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 VorschauView(feld: feld, kantenlaenge: 12, icon: gewaehltesIcon?.datei)
-                if !passt {
-                    Label("Der Text ist breiter als das Display und wird abgeschnitten.",
-                          systemImage: "exclamationmark.triangle")
-                        .font(.footnote).foregroundStyle(.orange)
+                switch weg {
+                case .pixel:
+                    if !passt {
+                        Label("Der Text ist breiter als das Display und wird abgeschnitten.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.footnote).foregroundStyle(.orange)
+                    }
+                case .geraet:
+                    // Wir rastern hier weiterhin selbst — die Vorschau kann also nur eine
+                    // Annaeherung sein, nicht das, was am Geraet tatsaechlich erscheint:
+                    // die Uhr setzt diesen Text mit ihrer eigenen Schrift und ohne Umlaute.
+                    Label("Nur eine Annäherung — die Uhr setzt diesen Text selbst und zeigt ihn anders, vor allem fehlen Umlaute. Langer Text läuft durch; das Tempo bestimmt „Scrolltempo“ unter „Verbindung“.",
+                          systemImage: "info.circle")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -160,12 +194,15 @@ struct SendenView: View {
                 ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
             }
             .labelsHidden().frame(width: 150)
-            .help("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+            .disabled(weg == .geraet)
+            .help(weg == .geraet ? "Gilt nur beim eigenen Raster — die Uhr setzt ihren Text in ihrer eigenen Schrift."
+                                 : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
 
             Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
                 .help("Schriftgröße")
 
-            formatKnopf(icon: "bold", hilfe: "Fett", aktiv: fett) { fett.toggle() }
+            formatKnopf(icon: "bold", hilfe: weg == .geraet ? "Gilt nur beim eigenen Raster" : "Fett",
+                       aktiv: fett, gesperrt: weg == .geraet) { fett.toggle() }
 
             Divider().frame(height: 18)
 
@@ -198,19 +235,40 @@ struct SendenView: View {
         formatKnopf(icon: icon, hilfe: hilfe, aktiv: aktuell.wrappedValue == wert) { aktuell.wrappedValue = wert }
     }
 
-    private func formatKnopf(icon: String, hilfe: String, aktiv: Bool, aktion: @escaping () -> Void) -> some View {
+    private func formatKnopf(icon: String, hilfe: String, aktiv: Bool, gesperrt: Bool = false,
+                             aktion: @escaping () -> Void) -> some View {
         Button(action: aktion) {
             Image(systemName: icon).frame(width: 22, height: 20)
         }
         .buttonStyle(.borderless)
+        .disabled(gesperrt)
         .background(aktiv ? Color.accentColor.opacity(0.3) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .help(hilfe)
     }
 
+    /// Baut den Textblock fuer den Geraeteweg: Farbe und Ausrichtung aus der
+    /// Formatleiste, Groesse aus dem Groesse-Stepper — Schriftart und Fett
+    /// gelten hier nicht, die Uhr setzt ihre eigene Schrift.
+    private var textblock: Textblock {
+        var t = Textblock(inhalt: text)
+        t.schrifthoehe = Int(groesse)
+        t.x = flaecheX
+        t.y = 0
+        t.farbe = farbeHex
+        t.ausrichtung = geraeteAusrichtung
+        t.vertikal = geraeteVertikal
+        t.flaeche = [flaecheX, 0, flaecheBreite, Pixelfeld.hoeheStandard]
+        return t
+    }
+
     private func senden() {
         laeuft = true
-        var frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        var frame: Frame
+        switch weg {
+        case .pixel: frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        case .geraet: frame = Frame(texte: [textblock], dauer: dauer)
+        }
         if let icon = gewaehltesIcon {
             // Ohne Meldung ginge die Anzeige bei unlesbarer Icondatei kommentarlos
             // ohne das gewaehlte Icon hinaus.

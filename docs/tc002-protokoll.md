@@ -268,6 +268,12 @@ Präfix stimmt nicht".
 ✅ `carouselSpeed` ist die Antwort auf „warum sehe ich immer nur die erste
 Meldung": ohne ihn zu setzen, blättert das Gerät nicht.
 
+❓ `scrollSpeed` gilt nach eigener Lektüre für den `text`-Befehl (§4.3) — dort
+scrollt langer Inhalt am Gerät durch. Für selbst gerasterte `draw`-Rahmen (§4.1)
+gilt er **nicht**: ein `draw`-Rahmen ist ein starres Pixelraster ohne Scrollen,
+gleich welchen Wert `scrollSpeed` hat. Diese Zuordnung ist begründete Annahme,
+am Gerät nicht nachgeprüft — ebenso wenig der gültige Wertebereich.
+
 ### 5.5 `POST /setConfig` — Einstellungen ändern
 
 ✅ Mit dem **vollständigen** Konfigurationsobjekt angenommen und wirksam.
