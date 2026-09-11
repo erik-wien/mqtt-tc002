@@ -102,7 +102,11 @@ final class AppZustand {
     }
 
     func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
-        guard !uhr.praefix.isEmpty, let zugang else { return nil }
+        guard !uhr.praefix.isEmpty, var zugang else { return nil }
+        // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
+        // dieselbe Kennung erneut verbindet. Mit einer festen Kennung wuerfen sich
+        // gleichzeitige Sendungen an mehrere Uhren gegenseitig hinaus.
+        zugang.clientID = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
         return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
     }
 

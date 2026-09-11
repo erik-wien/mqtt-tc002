@@ -110,17 +110,23 @@ struct SendenView: View {
         }
         let anzeigenName = name
         Task.detached {
-            // Jede Uhr einzeln, damit eine unerreichbare die anderen nicht aufhaelt.
-            for uhr in ziele {
-                guard let anzeigen = await zustand.anzeigen(fuer: uhr) else { continue }
-                do {
-                    try anzeigen.zeigen(frame, auf: anzeigenName)
-                    await MainActor.run {
-                        zustand.log("an \(uhr.name) gesendet: \(anzeigenName)")
-                    }
-                } catch {
-                    await MainActor.run {
-                        zustand.log("FEHLER bei \(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+            // Ein Zweig je Uhr statt einer Schleife: MQTTSender wartet bis zu acht
+            // Sekunden auf Antwort, und eine unerreichbare Uhr darf die anderen
+            // nicht so lange aufhalten.
+            await withTaskGroup(of: Void.self) { gruppe in
+                for uhr in ziele {
+                    gruppe.addTask {
+                        guard let anzeigen = await zustand.anzeigen(fuer: uhr) else { return }
+                        do {
+                            try anzeigen.zeigen(frame, auf: anzeigenName)
+                            await MainActor.run {
+                                zustand.log("an \(uhr.name) gesendet: \(anzeigenName)")
+                            }
+                        } catch {
+                            await MainActor.run {
+                                zustand.log("FEHLER bei \(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+                            }
+                        }
                     }
                 }
             }
