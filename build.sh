@@ -63,8 +63,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleExecutable</key><string>TC002App</string>
     <key>CFBundleIdentifier</key><string>cloud.eriks.mqtt-tc002</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.2</string>
-    <key>CFBundleVersion</key><string>3</string>
+    <key>CFBundleShortVersionString</key><string>1.3</string>
+    <key>CFBundleVersion</key><string>4</string>
     <key>CFBundleDevelopmentRegion</key><string>de</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
