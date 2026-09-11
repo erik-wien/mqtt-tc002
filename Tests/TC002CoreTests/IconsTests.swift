@@ -1,3 +1,4 @@
+import ImageIO
 import XCTest
 @testable import TC002Core
 
@@ -197,5 +198,44 @@ final class IconsTests: XCTestCase {
     func testSichernVerlangtAchtMalAcht() {
         let sammlung = Iconsammlung(schreibordner: temp())
         XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x", pixel: [nil, nil]))
+    }
+
+    /// Mehrere Einzelbilder ergeben ein animiertes GIF mit ebenso vielen Frames —
+    /// und beim Zurücklesen bleibt jedes Einzelbild an seinem Platz.
+    func testMehrereBilderErgebenEinAnimiertesGif() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+
+        var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
+        var zwei = [String?](repeating: nil, count: 64); zwei[63] = "#00FF66"
+        let icon = try sammlung.sichern(nummer: "lauf", name: "Lauf",
+                                        bilder: [eins, zwei], verzoegerung: 0.2)
+
+        let quelle = try XCTUnwrap(CGImageSourceCreateWithURL(icon.datei as CFURL, nil))
+        XCTAssertEqual(CGImageSourceGetCount(quelle), 2, "beide Einzelbilder muessen drin sein")
+
+        let zurueck = try sammlung.bilder(fuer: icon)
+        XCTAssertEqual(zurueck.count, 2)
+        XCTAssertEqual(zurueck[0][0], "#FF0000", "oben links bleibt oben links")
+        XCTAssertEqual(zurueck[1][63], "#00FF66", "unten rechts bleibt unten rechts")
+    }
+
+    /// Der bisherige Einzelbild-Weg (`pixel:`) bleibt eine Abkuerzung auf ein
+    /// einzelnes Bild — `bilder(fuer:)` liest davon genau eines zurueck.
+    func testEinzelbildBleibtEinzelbild() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+        var p = [String?](repeating: nil, count: 64); p[5] = "#123456"
+        let icon = try sammlung.sichern(nummer: "einzel", name: "Einzel", pixel: p)
+        XCTAssertEqual(try sammlung.bilder(fuer: icon).count, 1)
+        XCTAssertEqual(try sammlung.bilder(fuer: icon)[0][5], "#123456")
+    }
+
+    func testSichernVerlangtMindestensEinBild() {
+        let sammlung = Iconsammlung(schreibordner: temp())
+        XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x",
+                                                  bilder: [], verzoegerung: 0.2))
     }
 }

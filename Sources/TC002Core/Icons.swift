@@ -96,17 +96,40 @@ public struct Iconsammlung {
               let bild = CGImageSourceCreateImageAtIndex(quelle, 0, nil) else {
             throw IconFehler.nichtLesbar(icon.nummer)
         }
+        return try Self.pixel(aus: bild, nummer: icon.nummer)
+    }
+
+    /// Liest alle Einzelbilder eines Icons — bei einem unbewegten Icon genau
+    /// eines, bei einem animierten GIF jedes Frame in gespeicherter Reihenfolge.
+    public func bilder(fuer icon: Icon) throws -> [[String?]] {
+        guard let quelle = CGImageSourceCreateWithURL(icon.datei as CFURL, nil) else {
+            throw IconFehler.nichtLesbar(icon.nummer)
+        }
+        let anzahl = CGImageSourceGetCount(quelle)
+        guard anzahl > 0 else { throw IconFehler.nichtLesbar(icon.nummer) }
+        return try (0..<anzahl).map { i in
+            guard let bild = CGImageSourceCreateImageAtIndex(quelle, i, nil) else {
+                throw IconFehler.nichtLesbar(icon.nummer)
+            }
+            return try Self.pixel(aus: bild, nummer: icon.nummer)
+        }
+    }
+
+    /// Rechnet ein einzelnes CGImage auf ein 8×8-Raster herunter. Gemeinsamer
+    /// Kern von `pixel(fuer:)` und `bilder(fuer:)`.
+    /// Kein Ursprungsunterschied auszugleichen: `draw(_:in:)` haelt sich an die
+    /// visuelle Ausrichtung der Quelle, die Pufferzeile 0 ist bereits die oberste —
+    /// eine Zeilen-Spiegelung hat sich hier schon einmal als falsch erwiesen.
+    private static func pixel(aus bild: CGImage, nummer: String) throws -> [String?] {
         var bytes = [UInt8](repeating: 0, count: 64 * 4)
         guard let kontext = CGContext(data: &bytes, width: 8, height: 8, bitsPerComponent: 8,
                                       bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
-            throw IconFehler.nichtLesbar(icon.nummer)
+            throw IconFehler.nichtLesbar(nummer)
         }
         kontext.interpolationQuality = .none
         kontext.draw(bild, in: CGRect(x: 0, y: 0, width: 8, height: 8))
 
-        // Kein Ursprungsunterschied auszugleichen: `draw(_:in:)` haelt sich an die
-        // visuelle Ausrichtung der Quelle, die Pufferzeile 0 ist bereits die oberste.
         var pixel = [String?](repeating: nil, count: 64)
         for i in 0..<64 {
             let q = i * 4
@@ -142,13 +165,49 @@ public struct Iconsammlung {
 
     /// Legt ein selbst gemaltes 8×8-Icon als GIF ab. `pixel` ist zeilenweise von oben
     /// links, `nil` heisst aus. GIF kennt nur volle Durchsichtigkeit und die Uhr hat
-    /// ohnehin einen schwarzen Grund — aus wird deshalb zu Schwarz.
+    /// ohnehin einen schwarzen Grund — aus wird deshalb zu Schwarz. Abkuerzung auf
+    /// ein einzelnes Bild.
     @discardableResult
     public func sichern(nummer: String, name: String, pixel: [String?]) throws -> Icon {
-        guard pixel.count == 64 else { throw IconFehler.nichtSchreibbar(nummer) }
+        try sichern(nummer: nummer, name: name, bilder: [pixel], verzoegerung: 0.2)
+    }
+
+    /// Legt ein selbst gemaltes Icon aus einem oder mehreren 8×8-Einzelbildern als
+    /// GIF ab — mehrere ergeben ein animiertes GIF, das in Schleife laeuft.
+    /// `verzoegerung` gilt je Einzelbild, in Sekunden.
+    @discardableResult
+    public func sichern(nummer: String, name: String,
+                        bilder: [[String?]], verzoegerung: Double) throws -> Icon {
+        guard !bilder.isEmpty, bilder.allSatisfy({ $0.count == 64 }) else {
+            throw IconFehler.nichtSchreibbar(nummer)
+        }
+        try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
+        let ziel = schreibordner.appendingPathComponent("\(nummer).gif")
+        guard let senke = CGImageDestinationCreateWithURL(ziel as CFURL,
+                            UTType.gif.identifier as CFString, bilder.count, nil) else {
+            throw IconFehler.nichtSchreibbar(nummer)
+        }
+        CGImageDestinationSetProperties(senke, [
+            kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]
+        ] as CFDictionary)
+        let jeBild = [
+            kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFUnclampedDelayTime: verzoegerung]
+        ] as CFDictionary
+        for pixel in bilder {
+            CGImageDestinationAddImage(senke, try Self.cgBild(aus: pixel, nummer: nummer), jeBild)
+        }
+        guard CGImageDestinationFinalize(senke) else { throw IconFehler.nichtSchreibbar(nummer) }
+
+        namenErgaenzen(nummer: nummer, name: name, kategorie: "eigen")
+        return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel)
+    }
+
+    /// Rechnet ein 8×8-Raster in ein CGImage um — der gemeinsame Kern beider
+    /// `sichern`-Wege.
+    private static func cgBild(aus pixel: [String?], nummer: String) throws -> CGImage {
         var bytes = [UInt8](repeating: 0, count: 64 * 4)
         for (i, farbe) in pixel.enumerated() {
-            let (r, g, b) = Self.zerlegen(farbe)
+            let (r, g, b) = zerlegen(farbe)
             bytes[i * 4] = r; bytes[i * 4 + 1] = g; bytes[i * 4 + 2] = b; bytes[i * 4 + 3] = 255
         }
         guard let anbieter = CGDataProvider(data: Data(bytes) as CFData),
@@ -158,18 +217,7 @@ public struct Iconsammlung {
                                  provider: anbieter, decode: nil, shouldInterpolate: false,
                                  intent: .defaultIntent)
         else { throw IconFehler.nichtSchreibbar(nummer) }
-
-        try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
-        let ziel = schreibordner.appendingPathComponent("\(nummer).gif")
-        guard let senke = CGImageDestinationCreateWithURL(ziel as CFURL,
-                            UTType.gif.identifier as CFString, 1, nil) else {
-            throw IconFehler.nichtSchreibbar(nummer)
-        }
-        CGImageDestinationAddImage(senke, bild, nil)
-        guard CGImageDestinationFinalize(senke) else { throw IconFehler.nichtSchreibbar(nummer) }
-
-        namenErgaenzen(nummer: nummer, name: name, kategorie: "eigen")
-        return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel)
+        return bild
     }
 
     /// Entfernt ein eigenes Icon. Mitgelieferte bleiben unangetastet — sie liegen im

@@ -6,7 +6,14 @@ import TC002Core
 struct IconEditorView: View {
     @Bindable var zustand: AppZustand
 
-    @State private var pixel = [String?](repeating: nil, count: 64)
+    /// Ein oder mehrere Einzelbilder — mehrere ergeben beim Sichern ein animiertes
+    /// GIF. Gemalt wird immer auf `bilder[aktuellesBild]`.
+    @State private var bilder: [[String?]] = [[String?](repeating: nil, count: 64)]
+    @State private var aktuellesBild = 0
+    /// Verzoegerung je Einzelbild in Sekunden, gemeinsam fuer die ganze Animation.
+    @State private var verzoegerung: Double = 0.2
+    @State private var spielAb = false
+    @State private var spielTask: Task<Void, Never>?
     @State private var farbe = Color(red: 1, green: 1, blue: 1)
     @State private var radiert = false
     @State private var nummer = ""
@@ -28,6 +35,7 @@ struct IconEditorView: View {
             malflaeche
             seitenleiste
         }
+        .onDisappear { stoppeAbspielen() }
     }
 
     private var malflaeche: some View {
@@ -39,7 +47,7 @@ struct IconEditorView: View {
                     for x in 0..<8 {
                         let feld = CGRect(x: Double(x) * kante, y: Double(y) * kante,
                                           width: kante - 1, height: kante - 1)
-                        let p = pixel[y * 8 + x]
+                        let p = bilder[aktuellesBild][y * 8 + x]
                         kontext.fill(Path(feld), with: .color(p.flatMap(Color.init(hex:)) ?? .black))
                     }
                 }
@@ -51,13 +59,15 @@ struct IconEditorView: View {
             .gesture(DragGesture(minimumDistance: 0).onChanged { wert in
                 let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
                 guard (0..<8).contains(x), (0..<8).contains(y) else { return }
-                pixel[y * 8 + x] = radiert ? nil : farbe.hexWert
+                bilder[aktuellesBild][y * 8 + x] = radiert ? nil : farbe.hexWert
             })
+
+            bildleiste
 
             HStack {
                 ColorPicker("Farbe", selection: $farbe)
                 Toggle("Radieren", isOn: $radiert).toggleStyle(.button)
-                Button("Alles löschen") { pixel = [String?](repeating: nil, count: 64) }
+                Button("Alles löschen") { bilder[aktuellesBild] = [String?](repeating: nil, count: 64) }
                 Spacer()
             }
 
@@ -81,6 +91,99 @@ struct IconEditorView: View {
             Spacer()
         }
         .padding()
+    }
+
+    /// Die waagrechte Leiste der Einzelbilder — mehrere ergeben beim Sichern ein
+    /// animiertes GIF. Das gerade bearbeitete ist hervorgehoben.
+    private var bildleiste: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(bilder.indices, id: \.self) { i in
+                            bildVorschau(i)
+                        }
+                    }
+                }
+                Button("+") {
+                    bilder.append([String?](repeating: nil, count: 64))
+                    aktuellesBild = bilder.count - 1
+                }
+                .help("Leeres Bild anhängen")
+                Button("Verdoppeln") {
+                    bilder.insert(bilder[aktuellesBild], at: aktuellesBild + 1)
+                    aktuellesBild += 1
+                }
+                Button("Entfernen", role: .destructive) { bildEntfernen() }
+                    .disabled(bilder.count <= 1)
+            }
+            HStack {
+                Button { verschieben(-1) } label: { Image(systemName: "arrow.left") }
+                    .disabled(aktuellesBild == 0)
+                Button { verschieben(1) } label: { Image(systemName: "arrow.right") }
+                    .disabled(aktuellesBild == bilder.count - 1)
+                Text("Verzögerung")
+                TextField("", value: $verzoegerung, format: .number)
+                    .frame(width: 50)
+                Text("s")
+                Button(spielAb ? "Stopp" : "Abspielen") { abspielenUmschalten() }
+                    .disabled(bilder.count < 2)
+                Spacer()
+            }
+        }
+    }
+
+    private func bildVorschau(_ i: Int) -> some View {
+        Canvas { kontext, groesse in
+            let kante = groesse.width / 8
+            for y in 0..<8 {
+                for x in 0..<8 {
+                    let feld = CGRect(x: Double(x) * kante, y: Double(y) * kante, width: kante, height: kante)
+                    let p = bilder[i][y * 8 + x]
+                    kontext.fill(Path(feld), with: .color(p.flatMap(Color.init(hex:)) ?? .black))
+                }
+            }
+        }
+        .frame(width: 28, height: 28)
+        .background(Color.black)
+        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .overlay(RoundedRectangle(cornerRadius: 3)
+            .stroke(aktuellesBild == i ? Color.accentColor : Color.secondary.opacity(0.4),
+                    lineWidth: aktuellesBild == i ? 2 : 1))
+        .onTapGesture { stoppeAbspielen(); aktuellesBild = i }
+    }
+
+    private func bildEntfernen() {
+        guard bilder.count > 1 else { return }
+        bilder.remove(at: aktuellesBild)
+        aktuellesBild = min(aktuellesBild, bilder.count - 1)
+    }
+
+    private func verschieben(_ richtung: Int) {
+        let ziel = aktuellesBild + richtung
+        guard bilder.indices.contains(ziel) else { return }
+        bilder.swapAt(aktuellesBild, ziel)
+        aktuellesBild = ziel
+    }
+
+    /// Laeuft die Leiste in Schleife durch, solange „Abspielen" gedrueckt ist —
+    /// nur zur Ansicht, ohne dass vorher gesichert werden muss.
+    private func abspielenUmschalten() {
+        guard !spielAb else { stoppeAbspielen(); return }
+        spielAb = true
+        spielTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(max(0.05, verzoegerung)))
+                guard !Task.isCancelled, bilder.count > 1 else { continue }
+                await MainActor.run { aktuellesBild = (aktuellesBild + 1) % bilder.count }
+            }
+        }
+    }
+
+    private func stoppeAbspielen() {
+        spielAb = false
+        spielTask?.cancel()
+        spielTask = nil
     }
 
     private var nummerFeld: some View {
@@ -146,29 +249,35 @@ struct IconEditorView: View {
         .onAppear { vorhandene = sammlung.alle() }
     }
 
-    /// Laedt ein Icon zurueck ins Raster. Groesseres wird auf 8×8 gerechnet — die
-    /// Uhr zeigt ohnehin nur 8×8.
+    /// Laedt ein Icon zurueck ins Raster — bei einem animierten alle Einzelbilder,
+    /// nicht nur das erste. Groesseres wird auf 8×8 gerechnet — die Uhr zeigt
+    /// ohnehin nur 8×8.
     private func oeffnen(_ icon: Icon) {
+        stoppeAbspielen()
         do {
             // Schwarz bleibt Schwarz. Beim Sichern wird „aus“ zu Schwarz, weil GIF hier
             // keine Durchsichtigkeit traegt und die Uhr ohnehin schwarzen Grund hat —
             // nach einem Rundlauf sind „aus“ und „schwarz gemalt“ deshalb dasselbe und
             // nicht mehr auseinanderzuhalten. Ein schwarzes Pixel hier zu leeren waere
             // kein Rueckweg, sondern Verlust: was schwarz gemalt war, waere weg.
-            pixel = try sammlung.pixel(fuer: icon)
+            bilder = try sammlung.bilder(fuer: icon)
         } catch {
             meldung = "Dieses Icon lässt sich nicht öffnen."
             return
         }
+        aktuellesBild = 0
         nummer = icon.nummer
         name = icon.name
-        meldung = "\(icon.name) geöffnet."
+        meldung = bilder.count > 1
+            ? "\(icon.name) geöffnet (\(bilder.count) Bilder)."
+            : "\(icon.name) geöffnet."
     }
 
     private func sichern() {
         let n = nummer.trimmingCharacters(in: .whitespaces)
         do {
-            let icon = try sammlung.sichern(nummer: n, name: name.isEmpty ? n : name, pixel: pixel)
+            let icon = try sammlung.sichern(nummer: n, name: name.isEmpty ? n : name,
+                                            bilder: bilder, verzoegerung: verzoegerung)
             vorhandene = sammlung.alle()
             meldung = "\(icon.name) gesichert."
             zustand.log("Icon gesichert: \(icon.name)")
