@@ -227,6 +227,24 @@ Bild n:                  [   Fenster  ]  Versatz 120
 Ein Einzelbild je Pixel Versatz ergibt einen weichen Lauf; jeder zweite oder
 dritte Schritt spart Einzelbilder auf Kosten der Ruhe im Bild.
 
+> ⚠️ **Die Uhr beherrscht nur das Entsorgungsverfahren 2.** Jedes Einzelbild
+> eines animierten GIFs trägt eine Anweisung, was vor dem nächsten Bild mit dem
+> Bildschirm geschehen soll. Verfahren **2** heißt „vorher löschen", Verfahren
+> **1** heißt „stehenlassen und nur den geänderten Ausschnitt darüberzeichnen".
+> Mit Verfahren 1 **fehlen auf der Uhr einzelne Pixel** — die Formen stimmen,
+> aber es sind Löcher darin.
+>
+> Der Haken: Man wählt das Verfahren nicht selbst. `CGImageDestination` unter
+> macOS leitet es daraus ab, ob die Einzelbilder durchsichtige Stellen haben.
+> **Deckende Bilder ergeben Verfahren 1, durchsichtige ergeben Verfahren 2.**
+> Wer ein Lauf-GIF baut, muss unbeleuchtete Pixel deshalb **durchsichtig**
+> lassen statt sie schwarz zu malen — auf schwarzem Grund sieht beides gleich
+> aus, für die Uhr ist es der Unterschied zwischen lesbar und löchrig.
+>
+> Am 11.09.2026 gemessen: dieselben 86 Einzelbilder, einmal deckend (Verfahren 1,
+> löchrig), einmal durchsichtig (Verfahren 2, sauber). Nachsehen lässt sich das
+> im dritten Byte jeder Grafiksteuer-Erweiterung (`0x21 0xF9`), Bits 2 bis 4.
+
 ❓ **Wo die Größengrenze liegt, ist offen.** Ein kurzer Satz geht nachweislich.
 Ein langer Text braucht schnell mehrere hundert Einzelbilder, und die Nutzlast
 wächst mit jedem davon — als Daten-URI zusätzlich um ein Drittel, weil Base64 so

@@ -155,6 +155,13 @@ public enum Bildraster {
         guard pixel.count == breite * hoehe else { throw BildrasterFehler.nichtLesbar }
         var bytes = [UInt8](repeating: 0, count: breite * hoehe * 4)
         for (i, farbe) in pixel.enumerated() {
+            // Aus heisst durchsichtig, nicht schwarz. Das ist nicht kosmetisch:
+            // ImageIO waehlt danach das Entsorgungsverfahren des GIFs. Deckende
+            // Bilder ergeben Verfahren 1 ("stehenlassen, darueberzeichnen"), und
+            // damit fehlen auf der Uhr einzelne Pixel — sie setzt das nicht um.
+            // Durchsichtige ergeben Verfahren 2 ("vor jedem Bild loeschen"), und
+            // damit steht jedes Einzelbild fuer sich. Am 11.09.2026 gemessen.
+            guard let farbe else { continue }
             let (r, g, b) = zerlegen(farbe)
             bytes[i * 4] = r; bytes[i * 4 + 1] = g; bytes[i * 4 + 2] = b; bytes[i * 4 + 3] = 255
         }
