@@ -47,7 +47,14 @@ struct AnzeigenView: View {
     }
 
     private func umschalten(_ name: String) {
-        guard let uhr = zustand.aktiveUhr, let a = zustand.anzeigen(fuer: uhr) else { return }
+        guard let uhr = zustand.aktiveUhr else {
+            zustand.fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
+            return
+        }
+        guard let a = zustand.anzeigen(fuer: uhr) else {
+            zustand.fehler = AppZustand.zugangsmeldung(uhr)
+            return
+        }
         Task.detached {
             do { try a.umschalten(auf: name); await MainActor.run { zustand.log("umgeschaltet auf \(name)") } }
             catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
@@ -55,7 +62,14 @@ struct AnzeigenView: View {
     }
 
     private func loeschen(_ name: String) {
-        guard let uhr = zustand.aktiveUhr, let a = zustand.anzeigen(fuer: uhr) else { return }
+        guard let uhr = zustand.aktiveUhr else {
+            zustand.fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
+            return
+        }
+        guard let a = zustand.anzeigen(fuer: uhr) else {
+            zustand.fehler = AppZustand.zugangsmeldung(uhr)
+            return
+        }
         Task.detached {
             do {
                 try a.loeschen(name)

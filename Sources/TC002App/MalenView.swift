@@ -36,6 +36,10 @@ struct MalenView: View {
                     .keyboardShortcut(.defaultAction)
                     .disabled(laeuft || zustand.ziele(alle: anAlle).isEmpty)
             }
+            if zustand.ziele(alle: anAlle).isEmpty {
+                Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
 
             malflaeche
 
@@ -66,34 +70,9 @@ struct MalenView: View {
     }
 
     private func senden() {
-        let ziele = zustand.ziele(alle: anAlle)
-        guard !ziele.isEmpty else { return }
         laeuft = true
         let frame = Frame(draw: feld.alsDrawBefehle())
         let anzeigenName = name
-        Task.detached {
-            // Ein Zweig je Uhr statt einer Schleife: MQTTSender wartet bis zu acht
-            // Sekunden auf Antwort, und eine unerreichbare Uhr darf die anderen
-            // nicht so lange aufhalten.
-            await withTaskGroup(of: Void.self) { gruppe in
-                for uhr in ziele {
-                    gruppe.addTask {
-                        guard let anzeigen = await zustand.anzeigen(fuer: uhr) else { return }
-                        do {
-                            try anzeigen.zeigen(frame, auf: anzeigenName)
-                            await MainActor.run {
-                                zustand.log("Bild an \(uhr.name) gesendet: \(anzeigenName)")
-                                zustand.anzeigeGemerkt(anzeigenName, fuer: uhr.id)
-                            }
-                        } catch {
-                            await MainActor.run {
-                                zustand.log("FEHLER bei \(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
-                            }
-                        }
-                    }
-                }
-            }
-            await MainActor.run { laeuft = false }
-        }
+        Task { await zustand.senden(frame, als: anzeigenName, anAlle: anAlle); laeuft = false }
     }
 }

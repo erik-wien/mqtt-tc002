@@ -145,6 +145,48 @@ final class AppZustand {
         return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
     }
 
+    /// Liefert `anzeigen(fuer:)` nichts, fehlt das Praefix oder der Broker-Port ist
+    /// keine brauchbare Zahl. Eine Meldung dafuer, statt stumm zurueckzukehren.
+    nonisolated static func zugangsmeldung(_ uhr: Uhr) -> String {
+        "\(uhr.name): Zugangsdaten unvollständig — Broker-Port prüfen."
+    }
+
+    /// Schickt einen Rahmen an eine oder alle eingerichteten Uhren. Ein Zweig je Uhr:
+    /// MQTTSender wartet bis zu acht Sekunden, eine unerreichbare Uhr darf die
+    /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
+    /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
+    func senden(_ frame: Frame, als name: String, anAlle: Bool) async {
+        let ziele = ziele(alle: anAlle)
+        guard !ziele.isEmpty else {
+            fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
+            return
+        }
+        var meldungen: [String] = []
+        await withTaskGroup(of: String?.self) { gruppe in
+            for uhr in ziele {
+                gruppe.addTask { [weak self] in
+                    guard let anzeigen = await self?.anzeigen(fuer: uhr) else {
+                        return AppZustand.zugangsmeldung(uhr)
+                    }
+                    do {
+                        try anzeigen.zeigen(frame, auf: name)
+                        await self?.erfolg(uhr: uhr, name: name)
+                        return nil
+                    } catch {
+                        return "\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")"
+                    }
+                }
+            }
+            for await m in gruppe { if let m { meldungen.append(m) } }
+        }
+        fehler = meldungen.isEmpty ? nil : meldungen.joined(separator: "\n")
+    }
+
+    private func erfolg(uhr: Uhr, name: String) {
+        anzeigeGemerkt(name, fuer: uhr.id)
+        log("an \(uhr.name) gesendet: \(name)")
+    }
+
     /// Ziel einer Sendung: die aktive Uhr, oder alle eingerichteten.
     func ziele(alle: Bool) -> [Uhr] {
         alle ? uhren.filter { !$0.praefix.isEmpty }
