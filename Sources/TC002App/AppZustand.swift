@@ -38,11 +38,18 @@ final class AppZustand {
     /// vergessen hätte.
     var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
 
+    /// Der zuletzt gesicherte Wert — Grundlage dafuer, dass mehrfache Aufrufe
+    /// (Fokuswechsel, .onDisappear, Beenden) gefahrlos sind: ein unveraenderter
+    /// Wert loest keinen zweiten Schluesselbund-Schreibvorgang aus.
+    private var kennwortGesichert: String?
+
     func kennwortSichern() {
+        guard kennwort != kennwortGesichert else { return }
         guard Schluesselbund.setzen(kennwort, fuer: "broker") else {
             fehler = "Das Kennwort ließ sich nicht im Schlüsselbund sichern."
             return
         }
+        kennwortGesichert = kennwort
     }
 
     private var initialisiert = false
@@ -58,8 +65,13 @@ final class AppZustand {
         kennwort   = Schluesselbund.lesen("broker") ?? ""
         let flach = (try? JSONDecoder().decode([String: [String]].self,
                         from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]
-        bekannteAnzeigen = Dictionary(uniqueKeysWithValues:
-            flach.compactMap { text, liste in UUID(uuidString: text).map { ($0, liste) } })
+        // uniquingKeysWith statt uniqueKeysWithValues: UUID(uuidString:) ist gegenueber
+        // Gross-/Kleinschreibung nachsichtig, zwei von Hand verbogene Schluessel in
+        // unterschiedlicher Schreibweise ergaeben sonst denselben Schluessel und liessen
+        // die App beim Start abstuerzen. Der erste Eintrag gewinnt.
+        bekannteAnzeigen = Dictionary(
+            flach.compactMap { text, liste in UUID(uuidString: text).map { ($0, liste) } },
+            uniquingKeysWith: { erster, _ in erster })
         if aktiveID == nil { aktiveID = uhren.first?.id }
         // Aus der Zeit, als die Liste keinen Uhrenbezug hatte: sie meinte die aktive
         // Uhr, also gehört sie dorthin. Sonst bliebe eine stehende Anzeige auf ihr
@@ -67,7 +79,9 @@ final class AppZustand {
         if bekannteAnzeigen.isEmpty, let alt = d.stringArray(forKey: "bekannteAnzeigen"),
            let id = aktiveID {
             bekannteAnzeigen[id] = alt
+            d.removeObject(forKey: "bekannteAnzeigen")
         }
+        kennwortGesichert = kennwort
         initialisiert = true
     }
 

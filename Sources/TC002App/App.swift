@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -42,6 +43,11 @@ struct TC002App: App {
                 set: { if !$0 { zustand.fehler = nil } })) {
                 Button("OK") { zustand.fehler = nil }
             } message: { Text(zustand.fehler ?? "") }
+            // ⌘Q verlaesst das Fokusfeld nicht — ohne dieses Netz ginge ein eben erst
+            // eingetipptes Kennwort verloren, das noch nicht im Schluesselbund steht.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                zustand.kennwortSichern()
+            }
         }
         .windowResizability(.contentMinSize)
         .commands {

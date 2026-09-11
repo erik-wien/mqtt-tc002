@@ -8,6 +8,9 @@ struct AnzeigenView: View {
     /// Kennzeichen fuer den gelesenen Wert: das folgende .onChange stammt dann vom
     /// Laden, nicht vom Nutzer, und darf nicht zurueckschreiben.
     @State private var ladeLauf = false
+    /// Waehlt der Nutzer, waehrend die Abfrage noch unterwegs ist, darf der spaeter
+    /// eintreffende gelesene Wert seine Wahl nicht ueberschreiben.
+    @State private var nutzerHatGewaehlt = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -33,6 +36,7 @@ struct AnzeigenView: View {
             .frame(width: 320)
             .onChange(of: seitenwechsel) { _, neu in
                 guard !ladeLauf else { ladeLauf = false; return }
+                nutzerHatGewaehlt = true
                 setzen("carouselSpeed", neu)
             }
             Spacer()
@@ -53,7 +57,9 @@ struct AnzeigenView: View {
             if let meldung = ergebnis.fehler {
                 zustand.fehler = "Die Einstellung „Seitenwechsel“ ließ sich nicht lesen: \(meldung)"
             } else if let wert = ergebnis.wert {
-                if wert != seitenwechsel { ladeLauf = true; seitenwechsel = wert }
+                // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
+                // seine Wahl — der spaet eintreffende gelesene Wert ueberschreibt sie nicht.
+                if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
             } else {
                 zustand.fehler = "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet."
             }

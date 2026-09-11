@@ -63,5 +63,9 @@ struct VerbindungView: View {
         }
         .formStyle(.grouped)
         .padding()
+        // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
+        // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
+        // eingetipptes Kennwort dabei verloren.
+        .onDisappear { zustand.kennwortSichern() }
     }
 }
