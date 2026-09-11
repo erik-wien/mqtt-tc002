@@ -74,6 +74,35 @@ public struct Iconsammlung {
         return "data:\(typ);base64," + daten.base64EncodedString()
     }
 
+    /// Liest ein Icon als 8×8-Raster, zeilenweise von oben links. `nil` heisst aus:
+    /// bei selbst gesicherten Icons kommt das praktisch nie vor, da `sichern` keine
+    /// Durchsichtigkeit kennt — mitgelieferte oder von LaMetric geholte Icons koennen
+    /// aber echte durchsichtige Pixel tragen.
+    public func pixel(fuer icon: Icon) throws -> [String?] {
+        guard let quelle = CGImageSourceCreateWithURL(icon.datei as CFURL, nil),
+              let bild = CGImageSourceCreateImageAtIndex(quelle, 0, nil) else {
+            throw IconFehler.nichtLesbar(icon.nummer)
+        }
+        var bytes = [UInt8](repeating: 0, count: 64 * 4)
+        guard let kontext = CGContext(data: &bytes, width: 8, height: 8, bitsPerComponent: 8,
+                                      bytesPerRow: 8 * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            throw IconFehler.nichtLesbar(icon.nummer)
+        }
+        kontext.interpolationQuality = .none
+        kontext.draw(bild, in: CGRect(x: 0, y: 0, width: 8, height: 8))
+
+        // Kein Ursprungsunterschied auszugleichen: `draw(_:in:)` haelt sich an die
+        // visuelle Ausrichtung der Quelle, die Pufferzeile 0 ist bereits die oberste.
+        var pixel = [String?](repeating: nil, count: 64)
+        for i in 0..<64 {
+            let q = i * 4
+            guard bytes[q + 3] != 0 else { continue }   // durchsichtig bleibt nil
+            pixel[i] = String(format: "#%02X%02X%02X", bytes[q], bytes[q + 1], bytes[q + 2])
+        }
+        return pixel
+    }
+
     /// Holt ein Icon ueber seine LaMetric-Nummer: erst das Bild, dann Name und
     /// Kategorie. Beides ohne Anmeldung erreichbar. Schlaegt nur die Namensabfrage
     /// fehl, bleibt das Icon trotzdem bestehen, dann eben mit der Nummer als Namen.

@@ -174,6 +174,26 @@ final class IconsTests: XCTestCase {
         XCTAssertNil(sammlung.alle().first { $0.nummer == "eigen-1" })
     }
 
+    /// Der Rundlauf durch `sichern` und `pixel(fuer:)`: oben links muss oben links
+    /// bleiben. Genau an dieser Stelle stand mit dem Ursprungsunterschied zwischen
+    /// CGContext (unten links) und Raster (oben links) schon einmal etwas auf dem Kopf.
+    func testPixelListDenRundlaufZuSichernRichtigHerum() throws {
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let sammlung = Iconsammlung(schreibordner: eigen)
+
+        var geschrieben = [String?](repeating: nil, count: 64)
+        geschrieben[0] = "#FF0000"    // oben links
+        geschrieben[63] = "#00FF66"   // unten rechts
+        let icon = try sammlung.sichern(nummer: "rundlauf", name: "Testbild", pixel: geschrieben)
+
+        let gelesen = try sammlung.pixel(fuer: icon)
+
+        XCTAssertEqual(gelesen.count, 64)
+        XCTAssertEqual(gelesen[0], "#FF0000", "oben links bleibt oben links")
+        XCTAssertEqual(gelesen[63], "#00FF66", "unten rechts bleibt unten rechts")
+    }
+
     func testSichernVerlangtAchtMalAcht() {
         let sammlung = Iconsammlung(schreibordner: temp())
         XCTAssertThrowsError(try sammlung.sichern(nummer: "x", name: "x", pixel: [nil, nil]))
