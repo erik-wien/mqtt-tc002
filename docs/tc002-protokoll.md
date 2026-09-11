@@ -269,10 +269,11 @@ Meldung": ohne ihn zu setzen, blättert das Gerät nicht.
 
 ### 5.5 `POST /setConfig` — Einstellungen ändern
 
-✅ **Das Gerät erwartet das vollständige Konfigurationsobjekt, nicht nur das
-geänderte Feld.** Wer nur `{"carouselSpeed":20}` schickt, verliert die übrigen
-Einstellungen. Der richtige Ablauf ist immer: `/getConfig` lesen, ein Feld ändern,
-alles zurückschicken.
+✅ Mit dem **vollständigen** Konfigurationsobjekt angenommen und wirksam.
+❓ Ob eine Teilangabe wie `{"carouselSpeed":20}` die übrigen Felder verliert oder
+abgelehnt wird, ist nicht ausprobiert — die Firmware anderer Ulanzi-Geräte
+verhält sich so, und der sichere Ablauf ist deshalb ohnehin: `/getConfig` lesen,
+ein Feld ändern, alles zurückschicken.
 
 ```bash
 K=$(curl -s http://192.168.1.20/getConfig \
