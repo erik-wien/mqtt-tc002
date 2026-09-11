@@ -4,12 +4,28 @@ struct AnzeigenView: View {
     @Bindable var zustand: AppZustand
 
     var body: some View {
+        let liste = zustand.anzeigenDerAktivenMitQuelle()
         VStack(alignment: .leading, spacing: 16) {
-            Text("Angelegte Anzeigen").font(.headline)
-            if zustand.anzeigenDerAktiven().isEmpty {
-                Text("Noch nichts an diese Uhr gesendet.").foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Anzeigen").font(.headline)
+                // Der Unterschied ist die eigentliche Auskunft: das eine ist
+                // Tatsache, das andere Erinnerung.
+                Text(liste.quelle == .geraet ? "vom Gerät gemeldet" : "von dieser App angelegt")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .help(liste.quelle == .geraet
+                          ? "Die Uhr veröffentlicht selbst, welche Anzeigen auf ihr stehen — auch solche, die ein anderes Werkzeug angelegt hat."
+                          : "Solange die Uhr nichts gemeldet hat, zeigt die Liste, was diese App selbst an sie geschickt hat. Was ein anderes Werkzeug angelegt hat, fehlt darin.")
+                if let online = zustand.aktiveID.flatMap({ zustand.geraetOnline[$0] }) {
+                    Text(online ? "· Uhr meldet sich online" : "· Uhr meldet sich offline")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
-            ForEach(zustand.anzeigenDerAktiven(), id: \.self) { name in
+            if liste.namen.isEmpty {
+                Text(liste.quelle == .geraet ? "Die Uhr meldet gerade keine Anzeige."
+                                             : "Noch nichts an diese Uhr gesendet.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(liste.namen, id: \.self) { name in
                 HStack {
                     Text(name).font(.system(.body, design: .monospaced))
                     Spacer()

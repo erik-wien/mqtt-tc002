@@ -22,6 +22,11 @@ final class AppZustand {
     var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     var verbunden: [UUID: Bool] = [:]
+    /// Was die Uhr selbst als ihre Anzeigen meldet (`<praefix>/customList`, §3.5).
+    /// Kein Eintrag heisst: noch nichts empfangen — dann gilt `bekannteAnzeigen`.
+    var gemeldeteAnzeigen: [UUID: [String]] = [:]
+    /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
+    var geraetOnline: [UUID: Bool] = [:]
 
     var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
     var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
@@ -57,8 +62,9 @@ final class AppZustand {
         return f
     }()
 
-    /// Die Uhr verrät nicht, welche Anzeigen sie kennt — die App merkt sich, was sie
-    /// selbst angelegt hat. Je Uhr getrennt: „Löschen“ schickt die leere Nutzlast nur
+    /// Was die App selbst angelegt hat — der Rückfall, solange die Uhr ihre eigene
+    /// Liste noch nicht gemeldet hat (`gemeldeteAnzeigen`). Je Uhr getrennt:
+    /// „Löschen“ schickt die leere Nutzlast nur
     /// an eine Uhr, und nach einem Versand „an alle“ bliebe die Anzeige auf den
     /// übrigen stehen — und blockiert dort alles Weitere —, während die App sie
     /// vergessen hätte.
@@ -99,6 +105,7 @@ final class AppZustand {
                 await MainActor.run { [weak self] in
                     self?.brokerStand = .angenommen
                     self?.log("Broker-Prüfung: angenommen")
+                    self?.horchenAbgleichen()
                 }
             } catch {
                 let meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
@@ -152,13 +159,30 @@ final class AppZustand {
         bekannteAnzeigen[id] = liste
     }
 
-    func anzeigenDerAktiven() -> [String] {
-        guard let id = aktiveID else { return [] }
-        return bekannteAnzeigen[id] ?? []
+    /// Woher die Liste der Anzeigen stammt.
+    enum Anzeigenquelle { case geraet, app }
+
+    /// Was auf einer Uhr steht: was sie selbst meldet, sonst was die App sich
+    /// gemerkt hat. Beides zugleich gibt es nicht — die Meldung ist die bessere
+    /// Auskunft, sobald es eine gibt.
+    func anzeigenAufUhr(_ id: UUID) -> [String] {
+        gemeldeteAnzeigen[id] ?? bekannteAnzeigen[id] ?? []
+    }
+
+    /// Wie `anzeigenAufUhr`, aber mit der Herkunft — die Ansicht muss den
+    /// Unterschied benennen: das eine ist Tatsache, das andere Erinnerung.
+    func anzeigenDerAktivenMitQuelle() -> (namen: [String], quelle: Anzeigenquelle) {
+        guard let id = aktiveID else { return ([], .app) }
+        if let gemeldet = gemeldeteAnzeigen[id] { return (gemeldet, .geraet) }
+        return (bekannteAnzeigen[id] ?? [], .app)
     }
 
     func anzeigeVergessen(_ name: String, fuer id: UUID) {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
+        // Auch aus der gemeldeten Liste: ob die Uhr ihre `customList` nach dem
+        // Loeschen von sich aus erneut veroeffentlicht, ist nicht belegt — bliebe
+        // der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht mehr gibt.
+        gemeldeteAnzeigen[id]?.removeAll { $0 == name }
     }
 
     var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
@@ -187,6 +211,7 @@ final class AppZustand {
         bekannteAnzeigen[id] = nil
         zielIDs.remove(id)
         if aktiveID == id { aktiveID = uhren.first?.id }
+        horchenAbgleichen()
     }
 
     /// Eine geaenderte Adresse zeigt womoeglich auf eine andere Uhr. Praefix und MAC
@@ -198,6 +223,7 @@ final class AppZustand {
         uhren[i].praefix = ""
         uhren[i].mac = ""
         verbunden[id] = nil
+        horchenAbgleichen()
     }
 
     /// Holt Praefix, MAC und Verbindungsstand vom Geraet.
@@ -217,6 +243,9 @@ final class AppZustand {
                     if self.uhren[i].name == self.uhren[i].host { self.uhren[i].name = praefix }
                     self.verbunden[id] = steht
                     self.log("\(self.uhren[i].name): Präfix \(praefix), MQTT \(steht ? "verbunden" : "nicht verbunden")")
+                    // Erst jetzt steht das Praefix — vorher gab es kein Thema, auf das
+                    // sich horchen liesse.
+                    self.horchenAbgleichen()
                 }
             } catch {
                 await MainActor.run { [weak self] in
@@ -295,6 +324,111 @@ final class AppZustand {
             return [aktiveUhr].compactMap { $0 }.filter { !$0.praefix.isEmpty }
         }
         return uhren.filter { zielIDs.contains($0.id) && !$0.praefix.isEmpty }
+    }
+
+    // MARK: - Zuhören
+
+    /// Ein laufendes Abonnement je Uhr, samt der Angaben, unter denen es aufgebaut
+    /// wurde: ändert sich Präfix oder Broker, gehört es erneuert.
+    private struct Horcher {
+        let abonnent: MQTTAbonnent
+        let praefix: String
+        let brokerkennung: String
+    }
+    private var horcher: [UUID: Horcher] = [:]
+    private var horchtGerade: [UUID: Bool] = [:]
+    private var horchenErlaubt = false
+
+    /// Alles, dessen Änderung ein bestehendes Abonnement ungültig macht.
+    private var brokerkennung: String { "\(brokerHost)|\(brokerPort)|\(benutzer)|\(kennwort)" }
+
+    /// Beginnt zuzuhören. Ausdrücklich und nicht aus `init` heraus: ein AppZustand
+    /// allein — etwa im Test — darf keine Verbindung aufbauen.
+    func horchenStarten() {
+        horchenErlaubt = true
+        horchenAbgleichen()
+    }
+
+    /// Je eingerichteter Uhr mit Präfix ein Abonnent auf ihre beiden Themen, und
+    /// keiner für die übrigen. Mehrfach aufrufbar: was schon passt, bleibt stehen —
+    /// ein Abgleich soll keine laufende Verbindung abreißen.
+    func horchenAbgleichen() {
+        guard horchenErlaubt else { return }
+        let kennung = brokerkennung
+        for (id, vorhanden) in horcher {
+            let uhr = uhren.first { $0.id == id }
+            guard uhr == nil || uhr?.praefix != vorhanden.praefix
+                    || vorhanden.brokerkennung != kennung else { continue }
+            vorhanden.abonnent.beenden()
+            horcher[id] = nil
+            horchtGerade[id] = nil
+            gemeldeteAnzeigen[id] = nil
+            geraetOnline[id] = nil
+        }
+        guard let zugang else { return }
+        for uhr in uhren where !uhr.praefix.isEmpty && horcher[uhr.id] == nil {
+            var eigener = zugang
+            // Eigene Kennung wie beim Senden: ein Broker trennt die bestehende
+            // Sitzung, sobald dieselbe Kennung erneut verbindet — und gesendet wird
+            // ja weiter, während hier zugehört wird.
+            eigener.clientID = "tc002-app-horch-" + uhr.id.uuidString.prefix(8).lowercased()
+            let id = uhr.id
+            let abonnent = MQTTAbonnent(zugang: eigener,
+                                        themen: ["\(uhr.praefix)/customList", "\(uhr.praefix)/status"])
+            // Die Rückmeldungen kommen von der Warteschlange des Abonnenten;
+            // AppZustand ist @MainActor-isoliert, also dorthin zurück.
+            abonnent.beiNachricht = { thema, nutzlast in
+                Task { @MainActor [weak self] in
+                    self?.gemeldet(thema: thema, nutzlast: nutzlast, fuer: id)
+                }
+            }
+            abonnent.beiZustand = { steht, grund in
+                Task { @MainActor [weak self] in self?.horchzustand(steht, grund, fuer: id) }
+            }
+            abonnent.starten()
+            horcher[id] = Horcher(abonnent: abonnent, praefix: uhr.praefix, brokerkennung: kennung)
+        }
+    }
+
+    /// Was von der Uhr hereinkommt. Das Thema entscheidet, nicht die Reihenfolge:
+    /// beide Abonnements laufen über dieselbe Verbindung.
+    private func gemeldet(thema: String, nutzlast: Data, fuer id: UUID) {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return }
+        switch thema {
+        case "\(uhr.praefix)/customList":
+            // nil heißt unlesbar — dann lieber den letzten Stand behalten, als ihn
+            // durch eine leere Liste zu ersetzen, die etwas anderes behauptet.
+            guard let namen = Anzeigen.namenAusCustomList(nutzlast),
+                  gemeldeteAnzeigen[id] != namen else { return }
+            gemeldeteAnzeigen[id] = namen
+            log("\(uhr.name) meldet: \(namen.isEmpty ? "keine Anzeige" : namen.joined(separator: ", "))")
+        case "\(uhr.praefix)/status":
+            let text = String(data: nutzlast, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let online = text == "online"
+            guard geraetOnline[id] != online else { return }
+            geraetOnline[id] = online
+            log("\(uhr.name) meldet sich \(online ? "online" : "offline")")
+        default:
+            break
+        }
+    }
+
+    /// Nur ins Protokoll, nicht in `fehler`: ein Abriss im Hintergrund darf nicht
+    /// mitten in der Arbeit ein Hinweisfenster aufziehen. Und nur bei Änderung —
+    /// der Abonnent versucht es von selbst immer wieder.
+    private func horchzustand(_ steht: Bool, _ grund: String?, fuer id: UUID) {
+        guard let uhr = uhren.first(where: { $0.id == id }), horchtGerade[id] != steht else { return }
+        horchtGerade[id] = steht
+        if steht {
+            log("hört bei \(uhr.name) mit")
+        } else {
+            // Ohne Verbindung ist die gemeldete Liste nur noch Erinnerung — dann
+            // soll die Ansicht das auch sagen und auf die eigene Buchführung fallen.
+            gemeldeteAnzeigen[id] = nil
+            geraetOnline[id] = nil
+            log("hört bei \(uhr.name) nicht mehr mit: \(grund ?? "Verbindung weg")")
+        }
     }
 
     private func uhrenSichern() {

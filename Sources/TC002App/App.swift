@@ -97,6 +97,11 @@ struct TC002App: App {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             zustand.kennwortSichern()
         }
-        .onAppear { Netzfreigabe.anfragen() }
+        .onAppear {
+            Netzfreigabe.anfragen()
+            // Erst hier, nicht im Konstruktor: ein AppZustand allein soll keine
+            // Verbindung aufbauen — sonst horchte auch jeder Test mit.
+            zustand.horchenStarten()
+        }
     }
 }

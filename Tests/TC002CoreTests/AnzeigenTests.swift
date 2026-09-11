@@ -91,3 +91,24 @@ final class AnzeigenTests: XCTestCase {
         XCTAssertEqual(sender1.gesendet.first?.thema, sender2.gesendet.first?.thema)
     }
 }
+
+extension AnzeigenTests {
+    /// Genau die Nutzlast, die am 11.09.2026 im Broker beobachtet wurde.
+    func testCustomListWirdGelesen() {
+        let daten = Data(#"{"apps":[{"appName":"scrolltest"}],"count":1}"#.utf8)
+        XCTAssertEqual(Anzeigen.namenAusCustomList(daten), ["scrolltest"])
+    }
+
+    /// Eine leere Liste ist eine Aussage — auf der Uhr steht nichts —, kein Fehler.
+    func testLeereCustomListIstKeineStoerung() {
+        XCTAssertEqual(Anzeigen.namenAusCustomList(Data(#"{"apps":[],"count":0}"#.utf8)), [])
+    }
+
+    /// Unlesbares ergibt nil und nicht die leere Liste: sonst behauptete die App,
+    /// die Uhr habe nichts, obwohl sie nur nichts Verstaendliches gesagt hat.
+    func testUnlesbareCustomListErgibtNichts() {
+        XCTAssertNil(Anzeigen.namenAusCustomList(Data("online".utf8)))
+        XCTAssertNil(Anzeigen.namenAusCustomList(Data()))
+        XCTAssertNil(Anzeigen.namenAusCustomList(Data(#"{"count":0}"#.utf8)))
+    }
+}

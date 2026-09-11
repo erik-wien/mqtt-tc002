@@ -29,3 +29,17 @@ public struct Anzeigen {
         try sender.senden(Data(name.utf8), an: "\(praefix)/switchDiyApp", zugang: zugang)
     }
 }
+
+extension Anzeigen {
+    /// Liest die Anzeigenliste, die die Uhr selbst veroeffentlicht (§3.5):
+    /// `{"apps":[{"appName":"scrolltest"}],"count":1}`.
+    ///
+    /// nil heisst „das war keine lesbare Liste" — etwas anderes als die leere
+    /// Liste, die sehr wohl eine Aussage ist: auf der Uhr steht gerade nichts.
+    public static func namenAusCustomList(_ daten: Data) -> [String]? {
+        guard let objekt = try? JSONSerialization.jsonObject(with: daten),
+              let woerterbuch = objekt as? [String: Any],
+              let apps = woerterbuch["apps"] as? [[String: Any]] else { return nil }
+        return apps.compactMap { $0["appName"] as? String }
+    }
+}
