@@ -81,18 +81,14 @@ struct IconAuswahlView: View {
                             .background(gewaehltesIcon?.nummer == icon.nummer ? Color.accentColor.opacity(0.25) : .clear)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
 
-                            // Nur eigene Icons duerfen geloescht werden — mitgelieferte
-                            // liegen im App-Bundle, ein Versuch schluege ohnehin fehl.
-                            if sammlung.istEigen(icon) {
-                                Button { zuLoeschen = icon } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 9))
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.borderless)
-                                .help("„\(icon.name)“ löschen")
-                                .offset(x: 2, y: -2)
+                            Button { zuLoeschen = icon } label: {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
                             }
+                            .buttonStyle(.borderless)
+                            .help("„\(icon.name)“ löschen")
+                            .offset(x: 2, y: -2)
                         }
                     }
                 }

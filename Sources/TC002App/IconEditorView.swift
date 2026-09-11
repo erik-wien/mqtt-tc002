@@ -27,6 +27,9 @@ struct IconEditorView: View {
     /// Das Icon, fuer das gerade die Loesch-Rueckfrage steht — `nil` heisst
     /// keine.
     @State private var zuLoeschen: Icon?
+    /// Steht die Rueckfrage vor „Neu“, weil im Raster noch etwas Ungesichertes
+    /// steht.
+    @State private var zeigeNeuBestaetigung = false
 
     /// Zustand fuer „Datei einlesen…": erst die Dateiauswahl, danach ein Blatt
     /// fuer Nummer und Namen mit dem Dateinamen als Vorschlag.
@@ -40,7 +43,7 @@ struct IconEditorView: View {
     private let kante: Double = 28
 
     private var sammlung: Iconsammlung {
-        Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
     var body: some View {
@@ -113,6 +116,8 @@ struct IconEditorView: View {
                 ColorPicker("Farbe", selection: $farbe)
                 Toggle("Radieren", isOn: $radiert).toggleStyle(.button)
                 Button("Alles löschen") { bilder[aktuellesBild] = [String?](repeating: nil, count: 64) }
+                Button("Neu") { neuAnfragen() }
+                    .help("Beginnt ein neues Icon: Raster, Nummer und Name werden geleert.")
                 Spacer()
             }
 
@@ -136,6 +141,12 @@ struct IconEditorView: View {
             Spacer()
         }
         .padding()
+        .alert("Neues Icon anfangen?", isPresented: $zeigeNeuBestaetigung) {
+            Button("Abbrechen", role: .cancel) {}
+            Button("Neu anfangen", role: .destructive) { neu() }
+        } message: {
+            Text("Das gemalte Icon ist nicht gesichert und geht dabei verloren.")
+        }
     }
 
     /// Die waagrechte Leiste der Einzelbilder — mehrere ergeben beim Sichern ein
@@ -291,26 +302,23 @@ struct IconEditorView: View {
                         Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    // Nur eigene Icons duerfen geloescht werden — mitgelieferte
-                    // liegen im App-Bundle, ein Versuch schluege ohnehin fehl.
-                    if sammlung.istEigen(icon) {
-                        Button { zuLoeschen = icon } label: {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.borderless)
-                        .foregroundStyle(.secondary)
-                        .help("„\(icon.name)“ löschen")
+                    Button { zuLoeschen = icon } label: {
+                        Image(systemName: "trash")
                     }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("„\(icon.name)“ löschen")
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { oeffnen(icon) }
                 .contextMenu {
                     Button("Öffnen") { oeffnen(icon) }
-                    if sammlung.istEigen(icon) {
-                        Button("Löschen", role: .destructive) { zuLoeschen = icon }
-                    }
+                    Button("Löschen", role: .destructive) { zuLoeschen = icon }
                 }
             }
+            Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
+                .font(.caption)
+                .help("Holt gelöschte mitgelieferte Icons zurück — Vorhandenes bleibt unangetastet.")
         }
         .padding()
         .frame(minWidth: 240)
@@ -355,6 +363,33 @@ struct IconEditorView: View {
             : "\(icon.name) geöffnet."
     }
 
+    /// Ob der Editor gerade leer ist — Raster, Nummer und Name. „Neu“ fragt
+    /// nur nach, wenn hier tatsaechlich etwas stuende, das verloren ginge.
+    private var istLeer: Bool {
+        nummer.trimmingCharacters(in: .whitespaces).isEmpty
+            && name.trimmingCharacters(in: .whitespaces).isEmpty
+            && bilder.count == 1
+            && bilder[0].allSatisfy { $0 == nil }
+    }
+
+    private func neuAnfragen() {
+        if istLeer { neu() } else { zeigeNeuBestaetigung = true }
+    }
+
+    /// Setzt den Editor auf den Anfangszustand zurueck: ein leeres
+    /// Einzelbild, keine Nummer, kein Name, Verzoegerung auf ihren
+    /// Anfangswert. Der bisherige Trick — Raster leeren und Nummer/Name von
+    /// Hand ueberschreiben — ist damit nicht mehr noetig.
+    private func neu() {
+        stoppeAbspielen()
+        bilder = [[String?](repeating: nil, count: 64)]
+        aktuellesBild = 0
+        verzoegerung = 0.2
+        nummer = ""
+        name = ""
+        meldung = nil
+    }
+
     private func sichern() {
         let n = nummer.trimmingCharacters(in: .whitespaces)
         do {
@@ -375,8 +410,7 @@ struct IconEditorView: View {
         Task.detached {
             // holen() wartet bis zu zehn Sekunden auf LaMetric — nicht auf dem
             // Hauptthread, sonst steht das Fenster so lange.
-            let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
-                                        leseordner: [Iconordner.mitgeliefert])
+            let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
             do {
                 let icon = try sammlung.holen(nummer: n)
                 let liste = sammlung.alle()
@@ -415,6 +449,18 @@ struct IconEditorView: View {
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
+    }
+
+    /// Holt mitgelieferte Icons zurueck, die im Schreibordner fehlen — etwa
+    /// nach dem Loeschen. Vorhandene Dateien bleiben unberuehrt; die Meldung
+    /// nennt die Anzahl, damit „nichts passiert“ nicht wie ein Fehlschlag wirkt.
+    private func grundschatzWiederherstellen() {
+        let quelle = Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        let anzahl = quelle.mitgelieferteUebernehmen()
+        vorhandene = sammlung.alle()
+        meldung = anzahl > 0
+            ? "\(anzahl) mitgelieferte Icons wiederhergestellt."
+            : "Nichts zu holen — alle mitgelieferten Icons sind schon da."
     }
 
     private func loeschen(_ icon: Icon) {

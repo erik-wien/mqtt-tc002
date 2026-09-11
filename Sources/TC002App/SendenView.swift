@@ -111,7 +111,7 @@ struct SendenView: View {
     init(zustand: AppZustand) {
         self.zustand = zustand
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
-        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
         _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil : sammlung.alle().first { $0.nummer == nummer })
     }
 
@@ -169,7 +169,7 @@ struct SendenView: View {
     }()
 
     private var sammlung: Iconsammlung {
-        Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
     /// Beginn und Breite der Flaeche, in der der Text ausgerichtet wird: ohne Icon

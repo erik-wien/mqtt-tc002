@@ -7,7 +7,15 @@ struct TC002App: App {
     /// Die mitgelieferten Schriften muessen angemeldet sein, **bevor** irgendeine
     /// Ansicht ihre Schriftliste aufbaut — die wird einmal berechnet und bleibt
     /// dann stehen. In .onAppear waere es zu spaet gewesen.
-    init() { Schriftregistrierung.schriftAnmelden() }
+    ///
+    /// Ebenfalls hier: die mitgelieferten Icons wandern beim allerersten Start
+    /// in den Schreibordner (`Iconsammlung.grundschatzEinmalUebernehmen`) —
+    /// auch das, bevor eine Ansicht die Iconliste zum ersten Mal liest.
+    init() {
+        Schriftregistrierung.schriftAnmelden()
+        Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+            .grundschatzEinmalUebernehmen()
+    }
 
     @State private var zustand = AppZustand()
     @State private var bereich: Bereich? = .senden

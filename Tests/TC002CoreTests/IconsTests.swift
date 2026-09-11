@@ -348,4 +348,64 @@ final class IconsTests: XCTestCase {
                        "0,4 Sekunden muessen als 0,4 zurueckkommen, nicht als Vorgabe")
         XCTAssertEqual(gelesen[1].dauer, 0.4, accuracy: 0.001)
     }
+
+    /// Erststart-Szenario: ein leerer Schreibordner bekommt alle mitgelieferten
+    /// Dateien samt ihrem Namen aus `names.json`.
+    func testMitgelieferteUebernehmenKopiertInLeeresVerzeichnis() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a-a".utf8).write(to: mit.appendingPathComponent("1.gif"))
+        try Data("GIF89a-b".utf8).write(to: mit.appendingPathComponent("2.gif"))
+        try Data(#"[{"nummer":"1","name":"Eins","kategorie":"Test"}]"#.utf8)
+            .write(to: mit.appendingPathComponent("names.json"))
+
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [mit])
+        XCTAssertEqual(sammlung.mitgelieferteUebernehmen(), 2)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: eigen.appendingPathComponent("1.gif").path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: eigen.appendingPathComponent("2.gif").path))
+        let kopiert = try XCTUnwrap(sammlung.alle().first { $0.nummer == "1" })
+        XCTAssertTrue(sammlung.istEigen(kopiert))
+        XCTAssertEqual(kopiert.name, "Eins", "der Name aus names.json muss mitkommen")
+    }
+
+    /// „Grundschatz wiederherstellen“ darf Vorhandenes nicht anruehren und
+    /// ergaenzt ausschliesslich, was im Schreibordner fehlt.
+    func testMitgelieferteUebernehmenUeberschreibtVorhandenesNichtUndErgaenztNurFehlendes() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a-1".utf8).write(to: mit.appendingPathComponent("1.gif"))
+        try Data("GIF89a-2-mitgeliefert".utf8).write(to: mit.appendingPathComponent("2.gif"))
+        try Data("GIF89a-2-eigen".utf8).write(to: eigen.appendingPathComponent("2.gif"))
+
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [mit])
+        XCTAssertEqual(sammlung.mitgelieferteUebernehmen(), 1, "nur die fehlende Nummer 1 kommt dazu")
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: eigen.appendingPathComponent("1.gif").path))
+        XCTAssertEqual(try Data(contentsOf: eigen.appendingPathComponent("2.gif")), Data("GIF89a-2-eigen".utf8),
+                       "die eigene Datei darf nicht ueberschrieben werden")
+    }
+
+    /// Der Merker sorgt dafuer, dass die Uebernahme wirklich nur einmal
+    /// laeuft — ein danach geloeschtes Icon darf beim naechsten Aufruf nicht
+    /// zurueckkommen.
+    func testGrundschatzEinmalUebernehmenLaeuftNurBeimErstenMal() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a".utf8).write(to: mit.appendingPathComponent("1.gif"))
+
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: UUID().uuidString))
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [mit])
+
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults), 1)
+        try FileManager.default.removeItem(at: eigen.appendingPathComponent("1.gif"))
+
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults), 0,
+                       "der zweite Aufruf darf nichts mehr tun")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: eigen.appendingPathComponent("1.gif").path),
+                       "ein zuvor geloeschtes Icon darf nicht zurueckkommen")
+    }
 }

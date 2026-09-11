@@ -61,7 +61,7 @@ struct MalenView: View {
     }
 
     private var sammlung: Iconsammlung {
-        Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
+        Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
     var body: some View {

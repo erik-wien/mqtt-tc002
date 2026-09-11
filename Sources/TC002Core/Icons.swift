@@ -392,11 +392,60 @@ public struct Iconsammlung {
         namenEntfernen(nummer: icon.nummer)
     }
 
+    /// Kopiert Dateien aus den Leseordnern, deren Nummer im Schreibordner noch
+    /// fehlt, dorthin — mitsamt ihrem Eintrag in `names.json`. Vorhandene
+    /// Dateien gleicher Nummer bleiben unangetastet: wer schon ein eigenes
+    /// Icon mit dieser Nummer hat, behaelt es. Gibt zurueck, wie viele Dateien
+    /// tatsaechlich kopiert wurden — Grundlage fuer die Meldung bei
+    /// „Grundschatz wiederherstellen“.
+    @discardableResult
+    public func mitgelieferteUebernehmen() -> Int {
+        guard !leseordner.isEmpty else { return 0 }
+        try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
+        var vorhandeneNummern = Set(
+            ((try? FileManager.default.contentsOfDirectory(at: schreibordner,
+                                                            includingPropertiesForKeys: nil)) ?? [])
+                .filter { ["gif", "png", "jpg"].contains($0.pathExtension.lowercased()) }
+                .map { $0.deletingPathExtension().lastPathComponent })
+        let namen = geladeneNamen()
+        var kopiert = 0
+        for ordner in leseordner {
+            let dateien = (try? FileManager.default.contentsOfDirectory(at: ordner,
+                           includingPropertiesForKeys: nil)) ?? []
+            for datei in dateien where ["gif", "png", "jpg"].contains(datei.pathExtension.lowercased()) {
+                let nummer = datei.deletingPathExtension().lastPathComponent
+                guard !vorhandeneNummern.contains(nummer) else { continue }
+                let ziel = schreibordner.appendingPathComponent(datei.lastPathComponent)
+                guard (try? FileManager.default.copyItem(at: datei, to: ziel)) != nil else { continue }
+                if let eintrag = namen[nummer] {
+                    namenErgaenzen(nummer: nummer, name: eintrag.0, kategorie: eintrag.1)
+                }
+                vorhandeneNummern.insert(nummer)
+                kopiert += 1
+            }
+        }
+        return kopiert
+    }
+
+    /// Holt die mitgelieferten Icons genau einmal — beim allerersten Aufruf
+    /// nach der Installation — in den Schreibordner; danach sind es ganz
+    /// normale eigene Icons, loeschbar und aenderbar. Ein Merker in `defaults`
+    /// sorgt dafuer, dass das nur einmal geschieht: der Ordnerinhalt selbst
+    /// waere kein verlaesslicher Massstab — leer koennte auch "aufgeraeumt"
+    /// statt "noch nie uebernommen" heissen, und ein zuvor geloeschtes Icon
+    /// duerfte dann nicht zurueckkommen.
+    @discardableResult
+    public func grundschatzEinmalUebernehmen(defaults: UserDefaults = .standard) -> Int {
+        let schluessel = "icons.grundschatzUebernommen"
+        guard !defaults.bool(forKey: schluessel) else { return 0 }
+        defaults.set(true, forKey: schluessel)
+        return mitgelieferteUebernehmen()
+    }
+
     /// Ob dieses Icon im Schreibordner liegt und sich damit ueber `loeschen`
-    /// entfernen laesst — mitgelieferte Icons liegen in einem Leseordner und
-    /// sind hier `false`. Dieselbe Pruefung wie in `loeschen`, hier vorab
-    /// abfragbar, damit die Oberflaeche den Loeschen-Knopf bei ihnen gar nicht
-    /// erst anbietet statt ihn anzubieten und dann einen Fehler zu zeigen.
+    /// entfernen laesst. Nur relevant, wenn `icon` aus einer Sammlung mit
+    /// gesetztem Leseordner stammt — die Oberflaeche liest inzwischen
+    /// ausschliesslich den Schreibordner, dort ist es immer `true`.
     public func istEigen(_ icon: Icon) -> Bool {
         // deletingLastPathComponent() haengt einen abschliessenden Schraegstrich an,
         // standardizedFileURL entfernt ihn nicht — deshalb ueber die Pfad-Strings

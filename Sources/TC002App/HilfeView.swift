@@ -239,6 +239,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .ueberschrift("Zeichnen"),
                 .absatz("Der Bereich „Icons“ malt eigene 8×8-Bildchen, die danach unter „Senden“ neben dem Text zur Wahl stehen. Der Systemfarbwähler „Farbe“ unter der Malfläche stellt die Farbe ein, „Radieren“ entfernt einzelne Pixel, „Alles löschen“ leert das gerade bearbeitete Einzelbild."),
 
+                .ueberschrift("Neu anfangen"),
+                .absatz("„Neu“ daneben setzt den ganzen Editor zurück, nicht nur das gerade bearbeitete Einzelbild: Malfläche, Bildleiste, „Nummer“ und „Name“ werden geleert und die Verzögerung auf ihren Anfangswert gestellt. Steht noch etwas Ungesichertes im Raster, fragt eine Rückfrage vorher nach, genau wie beim Löschen eines Icons."),
+
                 .ueberschrift("Mehrere Einzelbilder (Animation)"),
                 .absatz("Ein Icon kann aus mehreren Einzelbildern bestehen — das ergibt beim Sichern ein animiertes GIF. Die Leiste unter der Malfläche zeigt alle Einzelbilder, das gerade bearbeitete hervorgehoben; ein Klick auf eines schaltet die Malfläche darauf um."),
                 .absatz("„+“ hängt ein leeres Bild an, „Verdoppeln“ eine Kopie des aktuellen — das ist beim Zeichnen einer Bewegung meist der schnellste Weg. „Entfernen“ nimmt das aktuelle Bild wieder heraus und ist gesperrt, wenn nur noch eines übrig ist; die beiden Pfeile tauschen es mit dem Nachbarn."),
@@ -246,13 +249,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
                 .ueberschrift("Sichern und vorhandene Icons"),
                 .absatz("„Sichern“ legt das gemalte Icon — ein Einzelbild oder alle Bilder der Leiste — unter der eingetragenen „Nummer“ und dem „Name“ ab — die Nummer ist zugleich der Dateiname und muss deshalb eindeutig sein, der Name ist frei; die Eingabetaste löst „Sichern“ aus. Rechts in „Vorhandene Icons“ stehen alle verfügbaren Icons, durch das Suchfeld nach Name oder Nummer eingrenzbar; ein Klick lädt eines mit allen seinen Einzelbildern zurück in die Malfläche."),
-                .absatz("Bei einem selbst gemalten oder von LaMetric geholten Icon steht in der Zeile zusätzlich ein Papierkorb-Symbol zum Löschen, mit Rückfrage, die den Namen nennt; dasselbe bietet auch „Löschen“ im Kontextmenü der Zeile. War das gelöschte Icon gerade in die Malfläche geladen, bleibt das Bild dort stehen, nur „Nummer“ und „Name“ werden geleert — sonst würde ein erneutes „Sichern“ es unter demselben Namen wieder anlegen."),
+                .absatz("In der Zeile jedes Icons steht zusätzlich ein Papierkorb-Symbol zum Löschen, mit Rückfrage, die den Namen nennt; dasselbe bietet auch „Löschen“ im Kontextmenü der Zeile. War das gelöschte Icon gerade in die Malfläche geladen, bleibt das Bild dort stehen, nur „Nummer“ und „Name“ werden geleert — sonst würde ein erneutes „Sichern“ es unter demselben Namen wieder anlegen."),
 
                 .ueberschrift("Zurückladen und Transparenz"),
                 .absatz("Ein zurückgeladenes Icon kommt schwarz als schwarz zurück, nicht als leeres Pixel. Beim Sichern wird „aus“ nämlich zu Schwarz — GIF trägt hier keine Durchsichtigkeit, und die Uhr hat ohnehin einen schwarzen Grund. Nach einem Rundlauf sind „aus“ und „schwarz gemalt“ deshalb dasselbe und nicht mehr auseinanderzuhalten."),
 
-                .ueberschrift("Mitgelieferte gegenüber eigenen Icons"),
-                .absatz("Mitgelieferte Icons liegen im App-Paket und lassen sich nicht löschen — bei ihnen fehlt deshalb sowohl der Papierkorb als auch „Löschen“ im Kontextmenü, statt einen Löschversuch erst zuzulassen und dann scheitern zu lassen. Dieselbe Unterscheidung gilt auch im Blatt „Icon wählen“ unter „Senden“: Auch dort trägt jedes eigene Icon im Raster sein Papierkorb-Symbol, mitgelieferte keines; war das gelöschte Icon gerade gewählt, fällt die Wahl auf „ohne“ zurück. Selbst gemalte liegen unter `~/Library/Application Support/MQTT-TC002/Icons`, erreichbar auch über „Ablage → Eigene Icons im Finder zeigen“."),
+                .ueberschrift("Mitgelieferte Icons"),
+                .absatz("Rund dreißig Icons liegen der App bei. Beim allerersten Start wandern sie einmalig in den eigenen Ordner — von da an sind es ganz normale eigene Icons: löschbar und überschreibbar wie jedes selbst gemalte oder von LaMetric geholte. Ein späterer Start holt sie nicht erneut, sonst käme ein zwischenzeitlich gelöschtes Icon wieder zurück."),
+                .absatz("Wer zu gründlich aufgeräumt hat, findet unter der Liste „Grundschatz wiederherstellen“: Es ergänzt nur, was im eigenen Ordner fehlt, und lässt Vorhandenes unangetastet — die Meldung danach nennt, wie viele Icons zurückkamen. Alle eigenen Icons, mitgelieferte wie selbst angelegte, liegen unter `~/Library/Application Support/MQTT-TC002/Icons`, erreichbar auch über „Ablage → Eigene Icons im Finder zeigen“."),
 
                 .ueberschrift("Von LaMetric nachladen"),
                 .absatz("Über der Liste „Vorhandene Icons“ lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen — die Eingabetaste im Feld tut dasselbe. Das Icon landet danach bei den eigenen und steht unter „Senden“ zur Wahl. Eine unbekannte Nummer ergibt eine verständliche Meldung und macht sonst nichts kaputt. Der Verweis „LaMetric Icon Gallery“ darüber öffnet die Übersicht im Browser, um erst eine passende Nummer herauszusuchen und dann hier einzutragen."),
