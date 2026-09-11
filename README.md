@@ -54,6 +54,10 @@ willkürlich. Die Auswahl bietet deshalb nur die sauberen Größen an.
 Dazu kommen ein paar Schriften aus dem System für alle, die es gewöhnlicher
 mögen.
 
+Die Einstellung **Rand** bestimmt, wie viele Zeilen bei „oben" und „unten" frei
+bleiben. Sie ist nötig, weil bündig je nach Schrift verschieden aussieht: Manche
+bringen über der Großbuchstabenhöhe Platz mit, andere nicht.
+
 Die Einstellung **Abstand** ist keine Unterschneidung im üblichen Sinn: Die App
 rastert jedes Zeichen einzeln, misst, wo seine Tinte anfängt und aufhört, und
 setzt die Zeichen so aneinander, dass dazwischen genau so viele leere Spalten
