@@ -75,6 +75,7 @@ ${ICON_EINTRAEGE}
 PLIST
 
 cp -R Icons "$APP/Contents/Resources/Icons"
+cp -R Resources/Schriften "$APP/Contents/Resources/Schriften"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 

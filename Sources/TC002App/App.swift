@@ -99,6 +99,7 @@ struct TC002App: App {
         }
         .onAppear {
             Netzfreigabe.anfragen()
+            Schriftregistrierung.schriftAnmelden()
             // Erst hier, nicht im Konstruktor: ein AppZustand allein soll keine
             // Verbindung aufbauen — sonst horchte auch jeder Test mit.
             zustand.horchenStarten()
