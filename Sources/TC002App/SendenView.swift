@@ -502,7 +502,7 @@ struct SendenView: View {
 
             Divider().frame(height: 18)
 
-            Stepper("Lücke \(luecke)", value: $luecke, in: 0...3).frame(width: 110)
+            Stepper("Abstand \(luecke)", value: $luecke, in: 0...3).frame(width: 110)
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
             Divider().frame(height: 18)

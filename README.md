@@ -41,7 +41,7 @@ Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
 (⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
 [`docs/tc002-protokoll.md`](docs/tc002-protokoll.md).
 
-## Schriften und Lücke
+## Schriften und Abstand
 
 Drei Pixelschriften liegen bei — **Micro 5**, **Silkscreen** und **Tiny5**,
 alle unter der SIL Open Font License. Sie sind auf einem Pixelraster
@@ -54,7 +54,7 @@ willkürlich. Die Auswahl bietet deshalb nur die sauberen Größen an.
 Dazu kommen ein paar Schriften aus dem System für alle, die es gewöhnlicher
 mögen.
 
-Die Einstellung **Lücke** ist keine Unterschneidung im üblichen Sinn: Die App
+Die Einstellung **Abstand** ist keine Unterschneidung im üblichen Sinn: Die App
 rastert jedes Zeichen einzeln, misst, wo seine Tinte anfängt und aufhört, und
 setzt die Zeichen so aneinander, dass dazwischen genau so viele leere Spalten
 stehen, wie eingestellt. Der Wert ist also wörtlich eine Anzahl Pixelspalten.
