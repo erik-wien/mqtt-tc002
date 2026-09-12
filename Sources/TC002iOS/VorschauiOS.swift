@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 
 /// Das Display, 52×16 Pixel, sechsfach vergroessert. Zeigt entweder ein
@@ -25,9 +26,9 @@ struct VorschauiOS: View {
 
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
-        // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmeniOS`.
-        GeraeteRahmeniOS(breite: Double(Pixelfeld.breiteStandard) * kante,
-                         hoehe: Double(Pixelfeld.hoeheStandard) * kante) {
+        // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
+        GeraeteRahmen(breite: Double(Pixelfeld.breiteStandard) * kante,
+                      hoehe: Double(Pixelfeld.hoeheStandard) * kante) {
             Group {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {

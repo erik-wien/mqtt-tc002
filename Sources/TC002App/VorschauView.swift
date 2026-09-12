@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 
 /// Zeigt das 52×16-Feld vergroessert. Weil Vorschau und Sendung aus demselben
@@ -30,30 +31,35 @@ struct VorschauView: View {
     @State private var einzelbilder: [Bildraster.Einzelbild] = []
 
     var body: some View {
-        Group {
-            if let laufschriftBilder, !laufschriftBilder.isEmpty {
-                if laufschriftBilder.count > 1 {
+        // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
+        // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
+        GeraeteRahmen(breite: Double(feld.breite) * kantenlaenge,
+                      hoehe: Double(feld.hoehe) * kantenlaenge) {
+            Group {
+                if let laufschriftBilder, !laufschriftBilder.isEmpty {
+                    if laufschriftBilder.count > 1 {
+                        TimelineView(.animation) { zeitpunkt in
+                            vollbild(Self.einzelbild(aus: laufschriftBilder, bei: zeitpunkt.date))
+                        }
+                    } else {
+                        vollbild(laufschriftBilder.first)
+                    }
+                } else if einzelbilder.count > 1 {
                     TimelineView(.animation) { zeitpunkt in
-                        vollbild(Self.einzelbild(aus: laufschriftBilder, bei: zeitpunkt.date))
+                        rahmen(iconBild: Self.einzelbild(aus: einzelbilder, bei: zeitpunkt.date))
                     }
                 } else {
-                    vollbild(laufschriftBilder.first)
+                    rahmen(iconBild: einzelbilder.first)
                 }
-            } else if einzelbilder.count > 1 {
-                TimelineView(.animation) { zeitpunkt in
-                    rahmen(iconBild: Self.einzelbild(aus: einzelbilder, bei: zeitpunkt.date))
-                }
-            } else {
-                rahmen(iconBild: einzelbilder.first)
             }
+            .frame(width: Double(feld.breite) * kantenlaenge,
+                   height: Double(feld.hoehe) * kantenlaenge, alignment: .topLeading)
+            .background(Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
+            .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
+            .task(id: icon) { einzelbilder = Self.geladen(icon) }
         }
-        .frame(width: Double(feld.breite) * kantenlaenge,
-               height: Double(feld.hoehe) * kantenlaenge, alignment: .topLeading)
-        .background(Color.black)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
-        .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
-        .task(id: icon) { einzelbilder = Self.geladen(icon) }
     }
 
     private func rahmen(iconBild: Bildraster.Einzelbild?) -> some View {
