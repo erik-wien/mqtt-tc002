@@ -1,0 +1,56 @@
+name: MQTT-TC002-iOS
+options:
+  bundleIdPrefix: cloud.eriks
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  TC002:
+    path: .
+
+targets:
+  MQTT-TC002-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/TC002iOS
+    resources:
+      - path: Icons
+      - path: Resources/Schriften
+      # Der `.lproj`-Ordner selbst, nicht sein Elternordner: Xcode behandelt
+      # `.lproj` besonders und legt seinen Inhalt in die Buendelwurzel. Der
+      # Elternordner ergaebe `Sprachen/en.lproj`, und dort sucht niemand — die
+      # englische Fassung waere stillschweigend wirkungslos.
+      - path: Resources/Sprachen/en.lproj
+      - path: Resources/AppIconiOS.xcassets
+    dependencies:
+      - package: TC002
+        product: TC002Core
+      - package: TC002
+        product: TC002Modell
+    scheme: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cloud.eriks.mqtt-tc002
+        DEVELOPMENT_TEAM: 25ZK4SS655
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        DEVELOPMENT_ASSET_PATHS: ""
+    info:
+      path: build/InfoiOS.plist
+      properties:
+        CFBundleName: MQTT-TC002
+        CFBundleDisplayName: MQTT-TC002
+        CFBundleDevelopmentRegion: de
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # Ohne diesen Eintrag erreicht die App weder Uhr noch Broker, und die
+        # Fehlermeldung zeigt in die falsche Richtung — derselbe Fall wie auf
+        # dem Mac.
+        NSLocalNetworkUsageDescription: >-
+          Die App spricht die Pixeluhr und den MQTT-Broker in Ihrem Heimnetz an.

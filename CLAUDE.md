@@ -99,6 +99,21 @@ jüngsten Tag, die Baunummer ist die Zahl der Commits. `release.sh <fassung>`
 setzt die Variable, bricht bei geändertem Arbeitsbaum ab und prüft hinterher
 die Info.plist gegen sein Argument.
 
+## Die iOS-Fassung
+
+`project.yml` beschreibt das Xcode-Projekt; `xcodegen generate` erzeugt es.
+Die `.xcodeproj` wird **nicht** eingecheckt — wer eine Quelldatei hinzufügt,
+ändert die YAML und erzeugt neu, statt in erzeugtem XML zu schneiden.
+
+    brew install xcodegen        # einmalig
+    xcodegen generate
+    xcodebuild -project MQTT-TC002-iOS.xcodeproj -scheme MQTT-TC002-iOS \
+               -destination 'generic/platform=iOS Simulator' build
+
+Aufs Gerät kommt sie aus Xcode. `TC002App` und `TC002CLI` binden AppKit ein und
+sind nur unter macOS übersetzbar; das iOS-Ziel hängt ausschließlich an den
+Bibliotheken `TC002Core` und `TC002Modell`.
+
 ## Nach /Applications installieren
 
 **Nicht** mit `rm -rf` und `cp` ersetzen. Die Freigabe „Lokales Netzwerk" haengt
