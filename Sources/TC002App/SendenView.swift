@@ -294,7 +294,12 @@ struct SendenView: View {
                 // „als Text" ist es immer unsere eigene Rasterung als Näherung, nie
                 // laufend: das Laufen besorgt dort die Uhr, wir kennen ihre Schrift
                 // nicht und können es nicht zeigen.
-                VorschauView(feld: feld, kantenlaenge: 12,
+                // Kantenlaenge 6, nicht mehr 12: Der Geraeterahmen ist gut
+                // doppelt so hoch wie das Pixelfeld darin (356 zu 177 in der
+                // Zeichnung). Bei 12 wurde die Vorschau 386 Punkte hoch statt
+                // 192 — das Fenster schnitt oben und unten ab. Bei 6 ist die
+                // gerahmte Vorschau so hoch wie die ungerahmte vorher.
+                VorschauView(feld: feld, kantenlaenge: 6,
                             icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
                             laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
                 switch weg {
