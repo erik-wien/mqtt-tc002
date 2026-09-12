@@ -281,13 +281,16 @@ struct SendeniOS: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     Button { zeigeIcons = true } label: {
-                        if let icon = gewaehltesIcon {
-                            IconbildiOS(datei: icon.datei, kante: 2.5)
-                        } else {
-                            Image(systemName: "face.smiling")
+                        Group {
+                            if let icon = gewaehltesIcon {
+                                IconbildiOS(datei: icon.datei, kante: 2.5)
+                            } else {
+                                Image(systemName: "face.smiling")
+                            }
                         }
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     .accessibilityLabel("Icon")
                     Menu {
                         Button { horizontal = .links } label: {
@@ -301,8 +304,9 @@ struct SendeniOS: View {
                         }
                     } label: {
                         Image(systemName: horizontalSymbol)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
                     Menu {
                         Button { vertikal = .oben } label: {
@@ -316,8 +320,9 @@ struct SendeniOS: View {
                         }
                     } label: {
                         Image(systemName: vertikalSymbol)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
                     ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
                         .labelsHidden()
@@ -325,8 +330,9 @@ struct SendeniOS: View {
                         .accessibilityLabel("Farbe")
                     Button { zeigeFormat = true } label: {
                         Image(systemName: "paintbrush")
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     Menu {
                         Picker("Schriftart", selection: $schrift) {
                             ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
@@ -347,16 +353,18 @@ struct SendeniOS: View {
                     .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
                     Button { fett.toggle() } label: {
                         Image(systemName: "bold")
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     .foregroundStyle(fett ? Color.accentColor : Color.secondary)
                     .disabled(weg == .text)
                     .accessibilityLabel("Fett")
                     .accessibilityAddTraits(fett ? [.isSelected] : [])
                     Button { grossbuchstaben.toggle() } label: {
                         Image(systemName: "capslock")
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(width: 44, height: 44)
                     .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
                     .accessibilityLabel("Großbuchstaben")
                     .accessibilityAddTraits(grossbuchstaben ? [.isSelected] : [])
@@ -425,11 +433,15 @@ struct SendeniOS: View {
             Button {
                 Task { await senden() }
             } label: {
-                if laeuft {
-                    ProgressView()
-                } else {
-                    Image(systemName: "arrow.up.circle.fill").font(.title)
+                Group {
+                    if laeuft {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.up.circle.fill").font(.title)
+                    }
                 }
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
             }
             .disabled(laeuft || text.trimmingCharacters(in: .whitespaces).isEmpty)
         }

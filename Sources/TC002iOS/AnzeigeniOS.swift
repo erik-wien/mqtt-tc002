@@ -61,7 +61,14 @@ struct AnzeigeniOS: View {
             HStack {
                 Text("Protokoll")
                 Spacer()
-                Button("Leeren") { zustand.protokoll.removeAll() }.font(.caption)
+                Button {
+                    zustand.protokoll.removeAll()
+                } label: {
+                    Text("Leeren")
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .font(.caption)
             }
         }
     }

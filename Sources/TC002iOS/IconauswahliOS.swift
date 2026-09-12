@@ -112,7 +112,16 @@ struct IconauswahliOS: View {
                                         )
                                     Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
                                 }
+                                // Die Zelle selbst ist bei acht Spalten schmaler als 44pt und
+                                // bleibt es, damit alle acht sichtbar nebeneinander passen. Die
+                                // Trefferflaeche greift stattdessen in den Zwischenraum zur
+                                // naechsten Zelle: nach aussen gepolstert, dann wieder
+                                // eingezogen — das Rasterlayout bleibt gleich gross, nur was
+                                // trifft, wird groesser.
+                                .padding(Self.zwischenraum / 2)
+                                .contentShape(Rectangle())
                             }
+                            .padding(-Self.zwischenraum / 2)
                             .tint(.primary)
                             .accessibilityLabel(Text(icon.name))
                             .accessibilityAddTraits(gewaehlt?.nummer == icon.nummer ? [.isSelected] : [])
