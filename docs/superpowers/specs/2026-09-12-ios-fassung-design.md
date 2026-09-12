@@ -25,10 +25,15 @@ Gebaut wird:
 
 Nicht gebaut wird:
 
-- **Icon-Editor.** Ausdrücklich zurückgestellt, um schneller eine testfähige
-  Fassung zu haben. Icons lassen sich wählen und nachladen, aber nicht malen.
-- **Malen** (die freie 52×16-Fläche). Mit dem Finger ist das eigenständige
-  Arbeit und auf dem Telefon am wenigsten gebraucht.
+- **Icon-Editor.** Nicht zurückgestellt, sondern eine Festlegung: Icons werden
+  am Schreibtisch bearbeitet, also am Mac und später am iPad. Auf dem iPhone
+  wird es ihn nicht geben. Ein 8×8-Raster mit dem Finger auf einem
+  Telefonbildschirm zu malen wäre eine Funktion, die man einmal ausprobiert und
+  nie wieder benutzt. Icons **wählen** und über die LaMetric-Nummer
+  **nachladen** geht auf dem iPhone sehr wohl.
+- **Malen** (die freie 52×16-Fläche). Zurückgestellt, nicht ausgeschlossen. Mit
+  dem Finger ist das eigenständige Arbeit, und auf einem Telefon braucht man es
+  am wenigsten. Auf einem iPad mit Stift sähe die Rechnung anders aus.
 - **Hilfe und Gerätereferenz.** Beide hängen am Markdown-Zerleger, der heute in
   der macOS-Schicht liegt. Später billig nachzurüsten.
 - **iPad-eigenes Layout.** Die App läuft dort im iPhone-Fenster mit.
@@ -48,6 +53,7 @@ Nicht gebaut wird:
 | Projektdatei | `xcodegen` aus einer `project.yml` | `swift build` kann keine iOS-App. Eine eingecheckte `.xcodeproj` wäre die erste undurchsichtige Datei im Repo, und jede später hinzugefügte Quelldatei wäre ein Eingriff in 2000 Zeilen erzeugtes XML. |
 | Untergrenze iOS 17 | keine freie Wahl | `@Observable` gibt es erst ab iOS 17, und `AppZustand` hängt daran. |
 | Bündelkennung | dieselbe wie beim Mac | Apple sieht eine geteilte Kennung für dasselbe Produkt auf zwei Plattformen vor. Hält den Weg zu gemeinsamem Verkauf und iCloud-Abgleich offen. |
+| Icons bearbeiten | nur am Schreibtisch | Mac und später iPad. Auf dem iPhone dauerhaft nicht — ein 8×8-Raster mit dem Finger ist keine Arbeitsfläche. Wählen und Nachladen geht überall. |
 
 ---
 
