@@ -296,6 +296,7 @@
 "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht." = "The clock has only one built-in font — this does not apply here.";
 "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." = "The clock has no bold cut — this does not apply here.";
 "Fett" = "Bold";
+"Stil" = "Style";
 "„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung." = "\"%@\" has no bold cut at this size — the button would have no effect.";
 "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert." = "Uppercase — works with both methods, and leaves the input field itself unchanged.";
 "„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung." = "\"%@\" knows only capitals — the switch would have no effect.";

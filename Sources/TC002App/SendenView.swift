@@ -409,46 +409,41 @@ struct SendenView: View {
     /// es dafuer nicht mehr.
     private var inspektor: some View {
         Form {
+            // Segmentschalter ueber die volle Breite, ohne Beschriftung links:
+            // Der Abschnittstitel sagt schon, worum es geht. Eine Beschriftung
+            // daneben quetschte den Schalter zusammen — genau das sah man.
             Section("Senden als") {
-                LabeledContent("Weg") {
-                    Picker("Weg", selection: $weg) {
-                        Text("als Pixel").tag(SendeWeg.pixel)
-                        Text("als Text").tag(SendeWeg.text)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                Picker("Weg", selection: $weg) {
+                    Text("als Pixel").tag(SendeWeg.pixel)
+                    Text("als Text").tag(SendeWeg.text)
                 }
+                .pickerStyle(.segmented).labelsHidden()
                 .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
             }
 
-            // Ganz weg, statt eines Abschnitts mit leerem Rumpf, wenn der Text
-            // ohnehin steht oder die Uhr selbst laeuft (Weg „als Text“) — beide
-            // Zeilen dieser Gruppe haben nur beim laufenden Pixel-Weg eine
-            // Bedeutung.
-            if weg == .pixel && !passt {
-                Section("Laufschrift") {
-                    LabeledContent("Tempo") {
-                        Picker("Tempo", selection: $tempo) {
-                            Text("langsam").tag(Lauftempo.langsam)
-                            Text("mittel").tag(Lauftempo.mittel)
-                            Text("schnell").tag(Lauftempo.schnell)
-                        }
-                        .pickerStyle(.segmented).labelsHidden()
+            // Immer da, gesperrt statt versteckt: Ein Abschnitt, der je nach
+            // Zustand erscheint und verschwindet, laesst die Seitenleiste
+            // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
+            // Regler hier.
+            Section("Laufschrift") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Picker("Tempo", selection: $tempo) {
+                        Text("langsam").tag(Lauftempo.langsam)
+                        Text("mittel").tag(Lauftempo.mittel)
+                        Text("schnell").tag(Lauftempo.schnell)
                     }
-                    .help("Wie schnell der Text durchläuft.")
-
-                    if gewaehltesIcon != nil {
-                        LabeledContent("Icon mitscrollen") {
-                            Toggle("Icon mitscrollen", isOn: $iconLaeuftMit).labelsHidden()
-                        }
+                    .pickerStyle(.segmented).labelsHidden()
+                    Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
+                        .disabled(gewaehltesIcon == nil)
                         .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
-                    }
                 }
+                .disabled(!(weg == .pixel && !passt))
+                .help(weg == .pixel && !passt ? "Wie schnell der Text durchläuft."
+                                              : "Gilt nur, wenn der Text nicht ins Display passt.")
             }
 
             Section("Icon") {
-                LabeledContent("Icon") {
-                    IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
-                }
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
             }
 
             Section("Schrift") {
@@ -482,18 +477,28 @@ struct SendenView: View {
                     .help("Schriftgröße")
                 }
 
-                LabeledContent("Fett") {
-                    formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
+                // Beide Schalter in einer Zeile, wie B I U bei Pages — nicht je
+                // eine volle Zeile fuer ein einsames Symbol rechts.
+                LabeledContent("Stil") {
+                    HStack(spacing: 4) {
+                        Toggle(isOn: $fett) { Image(systemName: "bold") }
+                            .toggleStyle(.button)
+                            .disabled(!fettWirkt)
+                            .help(fettHilfe)
+                            .accessibilityLabel(Text("Fett"))
+                        Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
+                            .toggleStyle(.button)
+                            .disabled(!kleinbuchstabenMoeglich)
+                            .help(grossHilfe)
+                            .accessibilityLabel(Text("Großbuchstaben"))
+                    }
                 }
-                .disabled(!fettWirkt)
-                .help(fettHilfe)
 
-                LabeledContent("Großbuchstaben") {
-                    formatKnopf(icon: "capslock", hilfe: grossHilfe,
-                               aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
+                // Farbe gehoert zur Schrift, wie „Textfarbe" bei Pages — kein
+                // eigener Abschnitt mit einer einzigen Zeile.
+                LabeledContent("Farbe") {
+                    ColorPicker("Farbe", selection: farbe).labelsHidden()
                 }
-                .disabled(!kleinbuchstabenMoeglich)
-                .help(grossHilfe)
             }
 
             Section("Lage") {
@@ -508,54 +513,32 @@ struct SendenView: View {
                 }
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
+                // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
+                // die Ausrichtung bei Pages.
                 LabeledContent("Waagrecht") {
-                    HStack(spacing: 2) {
-                        ausrichtungsKnopf(.links, aktuell: $horizontal, icon: "text.alignleft", hilfe: "Links ausrichten")
-                        ausrichtungsKnopf(.mittig, aktuell: $horizontal, icon: "text.aligncenter", hilfe: "Mittig ausrichten")
-                        ausrichtungsKnopf(.rechts, aktuell: $horizontal, icon: "text.alignright", hilfe: "Rechts ausrichten")
+                    Picker("Waagrecht", selection: $horizontal) {
+                        Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
+                        Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
+                        Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
                     }
+                    .pickerStyle(.segmented).labelsHidden()
                 }
-
                 LabeledContent("Senkrecht") {
-                    HStack(spacing: 2) {
-                        ausrichtungsKnopf(.oben, aktuell: $vertikal, icon: "align.vertical.top", hilfe: "Oben ausrichten")
-                        ausrichtungsKnopf(.mittig, aktuell: $vertikal, icon: "align.vertical.center", hilfe: "Mittig ausrichten")
-                        ausrichtungsKnopf(.unten, aktuell: $vertikal, icon: "align.vertical.bottom", hilfe: "Unten ausrichten")
+                    Picker("Senkrecht", selection: $vertikal) {
+                        Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
+                        Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)
+                        Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
                     }
-                }
-            }
-
-            Section("Farbe") {
-                LabeledContent("Farbe") {
-                    ColorPicker("Farbe", selection: farbe).labelsHidden()
+                    .pickerStyle(.segmented).labelsHidden()
                 }
             }
         }
         .formStyle(.grouped)
-        // 340, nicht mehr 260: Die Zeilen tragen jetzt eine eigene Beschriftung
-        // links vom Regler (vorher stand z. B. der Tempo-Regler allein, ohne
-        // eigene Spalte dafuer) — die breiteste Zeile ist "Tempo" mit dem
-        // dreiteiligen Segment "langsam"/"mittel"/"schnell" daneben, siehe
-        // Breitenrechnung im Bericht.
-        .frame(minWidth: 340)
-    }
-
-    /// Ein einzelner Umschaltknopf einer Ausrichtungsgruppe — Symbol statt Wort,
-    /// mit Einblendtext. Als eigene Buttons statt eines segmentierten Pickers,
-    /// damit jeder Knopf sein eigenes `.help(...)` tragen kann.
-    private func ausrichtungsKnopf<T: Equatable>(_ wert: T, aktuell: Binding<T>, icon: String, hilfe: String) -> some View {
-        formatKnopf(icon: icon, hilfe: hilfe, aktiv: aktuell.wrappedValue == wert) { aktuell.wrappedValue = wert }
-    }
-
-    private func formatKnopf(icon: String, hilfe: String, aktiv: Bool,
-                             aktion: @escaping () -> Void) -> some View {
-        Button(action: aktion) {
-            Image(systemName: icon).frame(width: 22, height: 20)
-        }
-        .buttonStyle(.borderless)
-        .background(aktiv ? Color.accentColor.opacity(0.3) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .help(hilfe)
+        // Die Breite bestimmt der Inspektor ueber seine Spalte — NICHT ueber
+        // ein `.frame(minWidth:)` am Inhalt. Das machte den Inhalt breiter als
+        // die Spalte; er wurde mittig gesetzt und lief auf beiden Seiten hinaus,
+        // links fehlten die ersten Buchstaben jeder Zeile.
+        .inspectorColumnWidth(min: 300, ideal: 340, max: 460)
     }
 
     private func senden() {
