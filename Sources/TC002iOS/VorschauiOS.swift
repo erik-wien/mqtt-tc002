@@ -24,28 +24,33 @@ struct VorschauiOS: View {
     @State private var iconBilder: [Bildraster.Einzelbild] = []
 
     var body: some View {
-        Group {
-            if let bilder = laufschriftBilder, !bilder.isEmpty {
-                if bilder.count > 1 {
+        // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
+        // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmeniOS`.
+        GeraeteRahmeniOS(breite: Double(Pixelfeld.breiteStandard) * kante,
+                         hoehe: Double(Pixelfeld.hoeheStandard) * kante) {
+            Group {
+                if let bilder = laufschriftBilder, !bilder.isEmpty {
+                    if bilder.count > 1 {
+                        TimelineView(.animation) { zeit in
+                            anzeige(Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel)
+                        }
+                    } else {
+                        anzeige(bilder[0].pixel)
+                    }
+                } else if iconBilder.count > 1 {
                     TimelineView(.animation) { zeit in
-                        anzeige(Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel)
+                        anzeige(mitIcon(Self.einzelbild(aus: iconBilder, bei: zeit.date)))
                     }
                 } else {
-                    anzeige(bilder[0].pixel)
+                    anzeige(mitIcon(iconBilder.first))
                 }
-            } else if iconBilder.count > 1 {
-                TimelineView(.animation) { zeit in
-                    anzeige(mitIcon(Self.einzelbild(aus: iconBilder, bei: zeit.date)))
-                }
-            } else {
-                anzeige(mitIcon(iconBilder.first))
             }
+            .frame(width: Double(Pixelfeld.breiteStandard) * kante,
+                   height: Double(Pixelfeld.hoeheStandard) * kante)
+            .background(.black)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .task(id: icon) { iconBilder = Self.geladen(icon) }
         }
-        .frame(width: Double(Pixelfeld.breiteStandard) * kante,
-               height: Double(Pixelfeld.hoeheStandard) * kante)
-        .background(.black)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .task(id: icon) { iconBilder = Self.geladen(icon) }
     }
 
     /// Zeichnet ein volles 52×16-Punkteraster.
