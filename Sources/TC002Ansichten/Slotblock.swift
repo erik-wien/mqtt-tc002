@@ -1,31 +1,6 @@
 import SwiftUI
 import TC002Core
 
-/// Was die App über einen der fünf festen Plätze weiß — nicht zwei bequeme
-/// Fälle, sondern drei ehrliche (Entwurf, Abschnitt „Drei Zustände je Block“).
-///
-/// Die Uhr verrät über `customList` nur **Namen**, nie den Inhalt. Belegt
-/// oder frei ist damit Tatsache; was darauf steht, weiß die App nur, wenn sie
-/// die Sendung mitgelesen hat:
-///
-/// - `.frei` — kein Name auf diesem Platz.
-/// - `.bekannt(punkte)` — ein Name ist da, und die App hat die Sendung
-///   mitgelesen. `punkte` sind die 52×16 Pixel in derselben Form, die
-///   `Meldungsbau.feld(...).punkteRoh` liefert — genau diese Form gibt auch
-///   das Zerlegen einer mitgelesenen Nutzlast zurück.
-/// - `.unbekannt` — ein Name ist da, aber die App weiß nicht, was darauf
-///   steht (nie mitgelesen, oder ein Weg, der sich nicht zerlegen lässt, z. B.
-///   ein Lauf-GIF). Das ist keine Lücke, sondern die Auskunft: ein Block, der
-///   hier einen Inhalt zeigte, behauptete etwas, das niemand mehr belegen
-///   kann.
-///
-/// Warum ein Platz `.unbekannt` ist, steht nicht hier — das sagt die Hilfe.
-public enum Slotzustand: Equatable, Sendable {
-    case frei
-    case bekannt([String?])
-    case unbekannt
-}
-
 /// Der Block als geteilte Ansicht: Slotnummer, Zustand, ob er gerade gewählt
 /// ist. Geteilt zwischen allen Oberflächen (Mac, iPhone, künftig iPad).
 ///
@@ -35,9 +10,11 @@ public enum Slotzustand: Equatable, Sendable {
 ///
 /// Zustand hängt **nicht allein an der Farbe**: `.frei` (gestrichelter,
 /// leerer Rahmen) und `.unbekannt` (gefüllter Rahmen mit dem Wort „belegt“)
-/// unterscheiden sich auch in der Form; `.bekannt` zeigt die tatsächlichen
-/// Pixel. Der gewählte Block trägt zusätzlich einen eigenen, sichtbaren
-/// Rahmen — keine bloße Tönung.
+/// unterscheiden sich auch in der Form; `.bekannt` zeigt Pixel. Ob die
+/// mitgelesen oder aus dem Slotgedächtnis gerechnet sind, entscheidet
+/// `AppZustand.slotzustand` und steht hier nicht mehr zur Debatte. Der
+/// gewählte Block trägt zusätzlich einen eigenen, sichtbaren Rahmen — keine
+/// bloße Tönung.
 ///
 /// Die Trefferfläche (`.frame(minWidth:minHeight:)`) sitzt **in** dieser
 /// Ansicht, nicht um sie herum — sonst träfe ein Fingertipp nur die kleine

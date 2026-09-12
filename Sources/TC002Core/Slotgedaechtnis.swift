@@ -64,6 +64,28 @@ public struct Slotstand: Codable, Equatable, Sendable {
         self.dauer = dauer
         self.pruefsumme = pruefsumme
     }
+
+    /// Baut aus dem gemerkten Stand wieder vollstaendige Optionen — oder nil,
+    /// wenn eine der Kennungen (Weg, Ausrichtung, Tempo) nicht mehr zu einem
+    /// bekannten Fall passt, etwa nach einer von Hand verbogenen Datei.
+    ///
+    /// Steht hier und nicht in den Ansichten, obwohl nur sie es brauchen: Die
+    /// Rechnung ist rein und haengt an nichts Plattformabhaengigem, und in
+    /// zwei Ansichten stand sie zeichengleich. Gebraucht an zwei Stellen —
+    /// um die Pixel eines Slots ueber `Meldungsbau` neu zu rechnen
+    /// (`AppZustand.slotzustand(_:belegt:)`) und um die Regler beim Antippen
+    /// zu uebernehmen (`reglerUebernehmen` in den Sendeansichten).
+    public var optionen: Meldungsoptionen? {
+        guard let weg = SendeWeg(rawValue: weg),
+              let waagrecht = SendenHAusrichtung(rawValue: waagrecht),
+              let senkrecht = SendenVAusrichtung(rawValue: senkrecht),
+              let tempo = Lauftempo(rawValue: tempo) else { return nil }
+        return Meldungsoptionen(text: text, weg: weg, schrift: schrift,
+                                groesse: groesse, fett: fett, farbe: farbe,
+                                grossbuchstaben: grossbuchstaben, waagrecht: waagrecht,
+                                senkrecht: senkrecht, rand: rand, abstand: abstand,
+                                tempo: tempo, iconLaeuftMit: iconLaeuftMit, dauer: dauer)
+    }
 }
 
 /// Je Uhr eine Datei mit den Reglern, mit denen ihre fuenf Slots zuletzt

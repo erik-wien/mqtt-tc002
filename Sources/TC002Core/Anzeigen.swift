@@ -82,3 +82,35 @@ public struct Slotbild: Equatable, Sendable {
         self.zeitpunkt = zeitpunkt
     }
 }
+
+/// Was die App über einen der fünf festen Plätze weiß — nicht zwei bequeme
+/// Fälle, sondern drei ehrliche (Entwurf, Abschnitt „Drei Zustände je Block“).
+///
+/// Die Uhr verrät über `customList` nur **Namen**, nie den Inhalt. Belegt
+/// oder frei ist damit Tatsache; was darauf steht, weiß die App nur, wenn sie
+/// die Sendung mitgelesen hat oder sich die Regler gemerkt hat:
+///
+/// - `.frei` — kein Name auf diesem Platz.
+/// - `.bekannt(punkte)` — ein Name ist da, und die App hat ein Bild dazu.
+///   `punkte` sind die 52×16 Pixel in derselben Form, die
+///   `Meldungsbau.feld(...).punkteRoh` liefert — genau diese Form gibt auch
+///   das Zerlegen einer mitgelesenen Nutzlast zurück. **Woher** das Bild
+///   stammt, steht nicht mehr darin: mitgelesen (Tatsache) oder aus dem
+///   Slotgedächtnis neu gerechnet (Erinnerung). Wer darauf angewiesen ist,
+///   fragt das Gedächtnis und die Prüfsumme selbst — siehe `slotWaehlen` in
+///   den Sendeansichten.
+/// - `.unbekannt` — ein Name ist da, aber die App weiß nicht, was darauf
+///   steht (nie mitgelesen und nichts gemerkt, oder ein Weg, der sich nicht
+///   zerlegen lässt, z. B. ein Lauf-GIF eines fremden Absenders). Das ist
+///   keine Lücke, sondern die Auskunft: ein Block, der hier einen Inhalt
+///   zeigte, behauptete etwas, das niemand mehr belegen kann.
+///
+/// Warum ein Platz `.unbekannt` ist, steht nicht hier — das sagt die Hilfe.
+///
+/// Liegt im Kern und nicht bei `Slotblock`, weil beide Seiten ihn brauchen:
+/// `AppZustand.slotzustand(_:belegt:)` entscheidet ihn, `Slotblock` zeigt ihn.
+public enum Slotzustand: Equatable, Sendable {
+    case frei
+    case bekannt([String?])
+    case unbekannt
+}

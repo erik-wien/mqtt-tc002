@@ -88,50 +88,9 @@ struct SendeniOS: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
-    /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
-    /// ein Block geprueft wird: die aktive Uhr — dieselbe, die das
-    /// Titelmenue oben zeigt. Nicht `zustand.ziele().first`: das waere bei
-    /// mehreren Zieluhren willkuerlich (dieselbe Korrektur wie in
-    /// `SendenView.swift`, Mac).
-    private var referenzUhr: Uhr? { zustand.aktiveUhr }
-
     /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
     /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
     private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
-
-    /// Baut aus einem gemerkten Slotstand wieder vollstaendige Optionen —
-    /// oder nil, wenn eine der Kennungen (Weg, Ausrichtung, Tempo) nicht mehr
-    /// zu einem bekannten Fall passt. Dieselbe Rechnung wie am Mac
-    /// (`SendenView.meldungsoptionen(aus:)`).
-    private func meldungsoptionen(aus stand: Slotstand) -> Meldungsoptionen? {
-        guard let weg = SendeWeg(rawValue: stand.weg),
-              let waagrecht = SendenHAusrichtung(rawValue: stand.waagrecht),
-              let senkrecht = SendenVAusrichtung(rawValue: stand.senkrecht),
-              let tempo = Lauftempo(rawValue: stand.tempo) else { return nil }
-        return Meldungsoptionen(text: stand.text, weg: weg, schrift: stand.schrift,
-                                groesse: stand.groesse, fett: stand.fett, farbe: stand.farbe,
-                                grossbuchstaben: stand.grossbuchstaben, waagrecht: waagrecht,
-                                senkrecht: senkrecht, rand: stand.rand, abstand: stand.abstand,
-                                tempo: tempo, iconLaeuftMit: stand.iconLaeuftMit, dauer: stand.dauer)
-    }
-
-    /// Was ein Block zeigt — dieselben drei Faelle wie am Mac
-    /// (`SendenView.slotzustand`): frei, wenn kein Name auf dem Platz liegt;
-    /// sonst die mitgelesenen Pixel, wenn welche da sind; sonst, falls das
-    /// Gedaechtnis einen Text fuer diesen Platz hat, dieselben Pixel neu
-    /// gerechnet ueber `Meldungsbau`.
-    private func slotzustand(_ platz: Int) -> Slotzustand {
-        guard belegtePlaetze.contains(platz) else { return .frei }
-        guard let uhr = referenzUhr else { return .unbekannt }
-        if let bild = zustand.slotInhalt[uhr.id]?[platz] {
-            return .bekannt(bild.pixel)
-        }
-        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
-           let optionen = meldungsoptionen(aus: stand) {
-            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
-        }
-        return .unbekannt
-    }
 
     /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
     /// das belegbar ist: Pixel muessen mitgelesen worden sein, und ihre
@@ -139,7 +98,7 @@ struct SendeniOS: View {
     /// Mac (`SendenView.slotWaehlen`).
     private func slotWaehlen(_ i: Int) {
         platz = i
-        guard let uhr = referenzUhr,
+        guard let uhr = zustand.referenzUhr,
               let bild = zustand.slotInhalt[uhr.id]?[i],
               let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
               Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
@@ -150,7 +109,7 @@ struct SendeniOS: View {
     /// Setzt alle Regler auf den gemerkten Stand — dieselben Felder wie am
     /// Mac (`SendenView.reglerUebernehmen`).
     private func reglerUebernehmen(_ stand: Slotstand) {
-        guard let o = meldungsoptionen(aus: stand) else { return }
+        guard let o = stand.optionen else { return }
         text = o.text
         weg = o.weg
         schrift = o.schrift
@@ -352,7 +311,9 @@ struct SendeniOS: View {
         HStack(spacing: 6) {
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                 Button { slotWaehlen(i) } label: {
-                    Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                    Slotblock(platz: i,
+                              zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
+                              gewaehlt: platz == i)
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)

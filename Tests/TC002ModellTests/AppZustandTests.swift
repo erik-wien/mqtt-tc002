@@ -146,4 +146,52 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
         XCTAssertEqual(zustand.ziele(), [a, b])
     }
+
+    // MARK: Slot-Blöcke
+
+    /// Ein frischer, noch nicht angelegter Ordnerpfad unter dem temporaeren
+    /// Verzeichnis — nie unter „Application Support/MQTT-TC002": dort liegen
+    /// die echten Slotdateien einer Installation.
+    private func temp() -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    }
+
+    /// Ein belegter Platz ohne mitgelesene Pixel zeigt trotzdem etwas, sobald
+    /// das Gedaechtnis einen Stand dafuer hat — neu gerechnet ueber
+    /// `Meldungsbau`, nicht aus der Nutzlast zurueckgewonnen. Ohne diesen
+    /// Rueckfall saehe ein gerade selbst gefuellter Platz nach einem Neustart
+    /// „unbekannt" aus.
+    func testSlotzustandFaelltAufDasGedaechtnisZurueck() throws {
+        let uhr = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let optionen = Meldungsoptionen(text: "Bus kommt")
+        gedaechtnis.merken(optionen, dauer: nil, icon: nil, fuer: uhr.id, platz: 2)
+
+        let zustand = AppZustand()
+
+        XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(Meldungsbau.feld(optionen, mitIcon: false).punkteRoh))
+        XCTAssertEqual(zustand.slotzustand(3, belegt: true, gedaechtnis: gedaechtnis), .unbekannt)
+        XCTAssertEqual(zustand.slotzustand(2, belegt: false, gedaechtnis: gedaechtnis), .frei)
+    }
+
+    /// Die Bloecke richten sich nach der **aktiven** Uhr, nicht nach der
+    /// ersten Zieluhr: Bei mehreren Zieluhren waere „die erste" willkuerlich,
+    /// und zwei Ansichten derselben Sitzung zeigten verschiedene Bilder.
+    func testSlotzustandRichtetSichNachDerAktivenUhr() throws {
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(b.id.uuidString, forKey: "aktiveID")
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), mitIcon: false).punkteRoh
+
+        let zustand = AppZustand()
+        zustand.slotInhalt[a.id] = [1: Slotbild(pixel: pixel, zeitpunkt: Date())]
+
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
+                       "Das Bild der ersten Uhr darf nicht für die aktive Uhr einstehen.")
+    }
 }

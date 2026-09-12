@@ -47,18 +47,6 @@ struct MalenView: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
-    /// Wie in `SendenView`: die eine Uhr, deren mitgelesener Slotinhalt einen
-    /// Block fuellt, wenn mehrere Zieluhren zur Wahl stehen. Anders als dort
-    /// braucht das Malen kein Gedaechtnis — hier gibt es keine Regler, nur
-    /// Pixel, also bleibt es bei dem, was tatsaechlich mitgelesen wurde.
-    private var referenzUhr: Uhr? { zustand.ziele().first }
-
-    private func slotzustand(_ platz: Int) -> Slotzustand {
-        guard belegtePlaetze.contains(platz) else { return .frei }
-        guard let uhr = referenzUhr, let bild = zustand.slotInhalt[uhr.id]?[platz] else { return .unbekannt }
-        return .bekannt(bild.pixel)
-    }
-
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
     /// Nutzlast wie bisher.
     private var dauer: Int? {
@@ -103,9 +91,16 @@ struct MalenView: View {
 
             HStack(alignment: .bottom, spacing: 16) {
                 HStack(spacing: 6) {
+                    // Dieselben Bloecke wie unter „Senden", aus derselben
+                    // Rechnung (`AppZustand.slotzustand`) — derselbe Platz
+                    // derselben Uhr soll hier nicht etwas anderes zeigen.
+                    // Antippen waehlt hier nur den Platz: Regler, die sich
+                    // wiederherstellen liessen, gibt es beim Malen nicht.
                     ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                         Button { platz = i } label: {
-                            Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                            Slotblock(platz: i,
+                                      zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
+                                      gewaehlt: platz == i)
                         }
                         .buttonStyle(.plain)
                     }

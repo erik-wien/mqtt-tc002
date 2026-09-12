@@ -199,6 +199,47 @@ public final class AppZustand {
 
     public var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
 
+    /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
+    /// die fuenf Slot-Bloecke geprueft werden: die aktive. Ein Platz zaehlt
+    /// als belegt, sobald ihn *irgendeine* Zieluhr kennt — welches Bild und
+    /// welche gemerkten Regler dann gelten sollen, bliebe bei mehreren
+    /// Zieluhren offen. `ziele().first` waere dabei willkuerlich; die aktive
+    /// Uhr ist dieselbe, die die Zielauswahl (Mac) und das Titelmenue
+    /// (iPhone) zeigen.
+    ///
+    /// Eigene Benennung statt `aktiveUhr` an drei Stellen, damit die Wahl an
+    /// einer Stelle steht: `slotzustand(_:belegt:)` unten und `slotWaehlen`
+    /// in den beiden Sendeansichten muessen dieselbe Uhr meinen, sonst zeigt
+    /// ein Block die Pixel der einen und stellt die Regler der anderen her.
+    public var referenzUhr: Uhr? { aktiveUhr }
+
+    /// Was ein Slot-Block zeigt — drei ehrliche Faelle (siehe `Slotzustand`):
+    /// frei, wenn kein Name auf dem Platz liegt; sonst die mitgelesenen
+    /// Pixel, wenn welche da sind; sonst, falls das Gedaechtnis einen Stand
+    /// fuer diesen Platz hat, dieselben Pixel neu gerechnet ueber
+    /// `Meldungsbau` — exakt statt aus einem Lauf-GIF zurueckgewonnen.
+    ///
+    /// **Ohne Pruefsummenvergleich.** Ob die gemerkten Regler auch noch
+    /// gelten, ist eine andere Frage (`slotWaehlen` in den Sendeansichten):
+    /// Hier geht es allein um die Anzeige, und die darf auch eine Erinnerung
+    /// sein — dass sie eine ist, sagt die Hilfe.
+    ///
+    /// `belegt` kommt von aussen, weil die Ansichten es ohnehin fuer den
+    /// Papierkorb brauchen; es ist `belegtePlaetze.contains(platz)`.
+    ///
+    /// Eine Fassung fuer alle drei Ansichten (Senden Mac, Senden iPhone,
+    /// Malen): Derselbe Platz derselben Uhr soll ueberall dasselbe zeigen.
+    public func slotzustand(_ platz: Int, belegt: Bool,
+                            gedaechtnis: Slotgedaechtnis = Slotgedaechtnis()) -> Slotzustand {
+        guard belegt else { return .frei }
+        guard let uhr = referenzUhr else { return .unbekannt }
+        if let bild = slotInhalt[uhr.id]?[platz] { return .bekannt(bild.pixel) }
+        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz), let optionen = stand.optionen {
+            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
+        }
+        return .unbekannt
+    }
+
     public func log(_ zeile: String) {
         protokoll.append("\(Self.protokollZeit.string(from: Date())) \(zeile)")
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }

@@ -83,66 +83,20 @@ struct SendenView: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
-    /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
-    /// ein Block geprueft wird. Bei mehreren Zieluhren (siehe `belegtePlaetze`,
-    /// das ueber alle summiert) bliebe sonst offen, wessen Slotbild und wessen
-    /// gemerkte Regler gelten sollen — hier zaehlt die aktive Uhr, dieselbe,
-    /// die die Zielauswahl oben und (am iPhone) das Titelmenue zeigen. Nicht
-    /// `zustand.ziele().first`: das waere bei mehreren Zieluhren willkuerlich.
-    private var referenzUhr: Uhr? { zustand.aktiveUhr }
-
     /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
     /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
     private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
-
-    /// Baut aus einem gemerkten Slotstand wieder vollstaendige Optionen —
-    /// oder nil, wenn eine der Kennungen (Weg, Ausrichtung, Tempo) nicht mehr
-    /// zu einem bekannten Fall passt, etwa nach einer von Hand verbogenen
-    /// Datei. Gebraucht an zwei Stellen: um bei fehlendem Mitlesen die Pixel
-    /// ueber `Meldungsbau` neu zu rechnen (siehe `slotzustand`), und um die
-    /// Regler beim Antippen zu uebernehmen (siehe `reglerUebernehmen`).
-    private func meldungsoptionen(aus stand: Slotstand) -> Meldungsoptionen? {
-        guard let weg = SendeWeg(rawValue: stand.weg),
-              let waagrecht = SendenHAusrichtung(rawValue: stand.waagrecht),
-              let senkrecht = SendenVAusrichtung(rawValue: stand.senkrecht),
-              let tempo = Lauftempo(rawValue: stand.tempo) else { return nil }
-        return Meldungsoptionen(text: stand.text, weg: weg, schrift: stand.schrift,
-                                groesse: stand.groesse, fett: stand.fett, farbe: stand.farbe,
-                                grossbuchstaben: stand.grossbuchstaben, waagrecht: waagrecht,
-                                senkrecht: senkrecht, rand: stand.rand, abstand: stand.abstand,
-                                tempo: tempo, iconLaeuftMit: stand.iconLaeuftMit, dauer: stand.dauer)
-    }
-
-    /// Was ein Block zeigt — drei ehrliche Faelle (siehe `Slotzustand` in
-    /// `TC002Ansichten`): frei, wenn kein Name auf dem Platz liegt; sonst die
-    /// mitgelesenen Pixel, wenn welche da sind; sonst, falls das Gedaechtnis
-    /// einen Text fuer diesen Platz hat, dieselben Pixel neu gerechnet ueber
-    /// `Meldungsbau` — exakt statt aus einem Lauf-GIF zurueckgewonnen. Ob die
-    /// Regler dabei uebernommen werden duerfen, ist eine andere Frage
-    /// (`slotWaehlen`): hier geht es nur um die Anzeige.
-    private func slotzustand(_ platz: Int) -> Slotzustand {
-        guard belegtePlaetze.contains(platz) else { return .frei }
-        guard let uhr = referenzUhr else { return .unbekannt }
-        if let bild = zustand.slotInhalt[uhr.id]?[platz] {
-            return .bekannt(bild.pixel)
-        }
-        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
-           let optionen = meldungsoptionen(aus: stand) {
-            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
-        }
-        return .unbekannt
-    }
 
     /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
     /// das belegbar ist: Pixel muessen mitgelesen worden sein (sonst gibt es
     /// nichts, wogegen zu pruefen waere), und ihre Pruefsumme muss zu den
     /// gemerkten Reglern passen (sonst hat ein fremder Absender geschrieben).
     /// In jedem anderen Fall bleiben die Regler unangeruehrt — auch dann, wenn
-    /// `slotzustand` oben trotzdem Pixel zeigt (neu gerechnet aus dem
+    /// `AppZustand.slotzustand` trotzdem Pixel zeigt (neu gerechnet aus dem
     /// Gedaechtnis): dass dieses Gedaechtnis noch stimmt, ist dort unbelegt.
     private func slotWaehlen(_ i: Int) {
         platz = i
-        guard let uhr = referenzUhr,
+        guard let uhr = zustand.referenzUhr,
               let bild = zustand.slotInhalt[uhr.id]?[i],
               let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
               Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
@@ -154,7 +108,7 @@ struct SendenView: View {
     /// `optionen` oben aus ihnen zusammensetzt, plus Dauer und Icon, die dort
     /// nicht mitgefuehrt werden.
     private func reglerUebernehmen(_ stand: Slotstand) {
-        guard let o = meldungsoptionen(aus: stand) else { return }
+        guard let o = stand.optionen else { return }
         text = o.text
         weg = o.weg
         schrift = o.schrift
@@ -416,7 +370,9 @@ struct SendenView: View {
                 HStack(spacing: 6) {
                     ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                         Button { slotWaehlen(i) } label: {
-                            Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                            Slotblock(platz: i,
+                                      zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
+                                      gewaehlt: platz == i)
                         }
                         .buttonStyle(.plain)
                     }
