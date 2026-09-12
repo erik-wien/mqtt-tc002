@@ -22,7 +22,7 @@ im Gespräch danach dazu. Ihre Begründung trägt sie deshalb selbst.
 - Quelltext, Kommentare und Oberfläche auf Deutsch. Englisch entsteht über `Resources/Sprachen/en.lproj/Localizable.strings`.
 - Jeder sichtbare Text, der als gewöhnliches `String` weitergereicht wird, geht durch `lok(…)` bzw. `lokf(…)`. `python3 scripts/texte-sammeln.py --pruefen` muss am Ende jeder Aufgabe `0 ohne Uebersetzung` melden.
 - Die `rawValue`-Zeichenketten der Aufzählungen und die `Codable`-Form von `Uhr` sind ein Dateiformat. Wer sie ändert, macht die Einstellungen einer laufenden Installation unlesbar.
-- Das echte Gerät (`10.10.10.96`) und der Broker (`10.10.10.18`) sind in Tests tabu.
+- Das echte Gerät und der Broker im Hausnetz sind in Tests tabu (ihre Adressen stehen in den Einstellungen der App, nicht hier).
 - Nach jeder Aufgabe: `swift test` grün.
 
 ---
