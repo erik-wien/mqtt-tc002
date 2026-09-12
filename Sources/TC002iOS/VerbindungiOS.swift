@@ -11,9 +11,12 @@ struct VerbindungiOS: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                uhrenAbschnitt
-                brokerAbschnitt
+            VStack(spacing: 0) {
+                FehlerleisteiOS(zustand: zustand)
+                Form {
+                    uhrenAbschnitt
+                    brokerAbschnitt
+                }
             }
             .navigationTitle("Einstellungen")
         }
