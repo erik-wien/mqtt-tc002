@@ -27,6 +27,10 @@ public final class AppZustand {
     public var gemeldeteAnzeigen: [UUID: [String]] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
+    /// Was zuletzt auf einem Slot zu sehen war — mitgelesen von `<praefix>/custom/#`,
+    /// nicht von der Uhr erfragt (sie verraet den Inhalt selbst nicht). Live-Strom,
+    /// kein Gedaechtnis: nur, was waehrend dieser Verbindung gesendet wurde.
+    public var slotInhalt: [UUID: [Int: Slotbild]] = [:]
 
     public var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
     public var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
@@ -472,6 +476,7 @@ public final class AppZustand {
         horchtGerade[id] = nil
         gemeldeteAnzeigen[id] = nil
         geraetOnline[id] = nil
+        slotInhalt[id] = nil
     }
 
     /// Bricht alle laufenden Abonnements ab, ohne `horchenErlaubt` zurückzusetzen —
@@ -502,8 +507,13 @@ public final class AppZustand {
             // ja weiter, während hier zugehört wird.
             eigener.clientID = "tc002-app-horch-" + uhr.id.uuidString.prefix(8).lowercased()
             let id = uhr.id
+            // `custom/#` macht die App zum Mitleser: was auf ein Thema
+            // veroeffentlicht wird, bekommen alle Abonnenten — gleich ob die
+            // Sendung von dieser App, dem Kommandozeilenwerkzeug, einem
+            // Kurzbefehl oder einem fremden Werkzeug kam.
             let abonnent = MQTTAbonnent(zugang: eigener,
-                                        themen: ["\(uhr.praefix)/customList", "\(uhr.praefix)/status"])
+                                        themen: ["\(uhr.praefix)/customList", "\(uhr.praefix)/status",
+                                                 "\(uhr.praefix)/custom/#"])
             // Die Rückmeldungen kommen von der Warteschlange des Abonnenten;
             // AppZustand ist @MainActor-isoliert, also dorthin zurück.
             abonnent.beiNachricht = { thema, nutzlast in
@@ -540,7 +550,22 @@ public final class AppZustand {
             geraetOnline[id] = online
             log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
         default:
-            break
+            // `custom/#` liefert auch fremde Anzeigen (z. B. aus „Malen") — nur
+            // unsere fuenf Slotnamen (`meldung1`…`meldung5`) betreffen `slotInhalt`.
+            let vorsilbe = "\(uhr.praefix)/custom/"
+            guard thema.hasPrefix(vorsilbe) else { return }
+            let name = String(thema.dropFirst(vorsilbe.count))
+            guard let platz = (1...Meldungsplatz.anzahl).first(where: { Meldungsplatz.name(fuer: $0) == name })
+            else { return }
+            if nutzlast.isEmpty {
+                // Leere Nutzlast loescht die Anzeige auf der Uhr (`Anzeigen.loeschen`) —
+                // der Slot ist also wieder leer.
+                slotInhalt[id]?[platz] = nil
+            } else if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
+                slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel, zeitpunkt: Date())
+            }
+            // Sonst: nicht zerlegbare Nutzlast (Bild-Weg oder Geraeteschrift-Weg) —
+            // der zuletzt bekannte Inhalt bleibt stehen, statt ihn durch nichts zu ersetzen.
         }
     }
 
@@ -557,6 +582,7 @@ public final class AppZustand {
             // soll die Ansicht das auch sagen und auf die eigene Buchführung fallen.
             gemeldeteAnzeigen[id] = nil
             geraetOnline[id] = nil
+            slotInhalt[id] = nil
             log(lokf("hört bei %@ nicht mehr mit: %@", uhr.name, grund ?? lok("Verbindung weg")))
         }
     }

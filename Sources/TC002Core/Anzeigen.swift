@@ -42,4 +42,43 @@ extension Anzeigen {
               let apps = woerterbuch["apps"] as? [[String: Any]] else { return nil }
         return apps.compactMap { $0["appName"] as? String }
     }
+
+    /// Zerlegt eine mitgelesene `custom`-Nutzlast (unser eigenes Format,
+    /// `Frame.alsJSON()`) in die 52×16-Pixel, die daraus auf der Uhr staenden.
+    ///
+    /// Deckt den stehenden Fall ab: `draw` mit Rechtecken. Ein Bild-Weg
+    /// (`image`: eine Icon-Bitmap oder ein Lauf-GIF als Daten-URI) und der
+    /// Geraeteschrift-Weg (`text`) liefern noch keine Pixel — nil heisst
+    /// „nicht zerlegbar", nicht „leer".
+    public static func pixelAusCustomNutzlast(_ daten: Data) -> [String?]? {
+        guard !daten.isEmpty,
+              let objekt = try? JSONSerialization.jsonObject(with: daten),
+              let woerterbuch = objekt as? [String: Any],
+              let rechtecke = woerterbuch["draw"] as? [[String: Any]] else { return nil }
+        var feld = Pixelfeld()
+        for rechteck in rechtecke {
+            guard let df = rechteck["df"] as? [Any], df.count == 5,
+                  let x = df[0] as? Int, let y = df[1] as? Int,
+                  let breite = df[2] as? Int, let hoehe = df[3] as? Int,
+                  let farbe = df[4] as? String else { continue }
+            for dy in 0..<max(0, hoehe) {
+                for dx in 0..<max(0, breite) {
+                    feld.setzen(x: x + dx, y: y + dy, farbe: farbe)
+                }
+            }
+        }
+        return feld.punkteRoh
+    }
+}
+
+/// Was zuletzt auf einem Slot der Uhr zu sehen war — aus einer mitgelesenen
+/// `custom`-Nutzlast gewonnen, nicht von der Uhr erfragt (sie verraet den
+/// Inhalt selbst nicht, siehe `namenAusCustomList`).
+public struct Slotbild: Equatable, Sendable {
+    public var pixel: [String?]
+    public var zeitpunkt: Date
+    public init(pixel: [String?], zeitpunkt: Date) {
+        self.pixel = pixel
+        self.zeitpunkt = zeitpunkt
+    }
 }
