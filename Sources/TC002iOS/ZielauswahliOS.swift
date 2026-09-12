@@ -43,5 +43,6 @@ struct ZielauswahliOS: View {
                 if zustand.zielIDs.isEmpty { zustand.zielIDs = Set(zustand.ziele().map(\.id)) }
             }
         }
+        .presentationDragIndicator(.visible)
     }
 }

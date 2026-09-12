@@ -20,6 +20,7 @@ struct VerbindungiOS: View {
             }
             .navigationTitle("Einstellungen")
         }
+        .presentationDragIndicator(.visible)
     }
 
     private var uhrenAbschnitt: some View {

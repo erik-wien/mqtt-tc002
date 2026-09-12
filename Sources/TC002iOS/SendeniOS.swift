@@ -2,6 +2,22 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
+// Melden die Geometrie der schiebbaren Formatpille (Inhaltsbreite, sichtbare
+// Breite, Schiebeversatz) von innerhalb der ScrollView nach aussen — daraus
+// entscheidet `SendeniOS.zeigtPfeil`, ob rechts noch etwas liegt.
+private struct PilleInhaltsbreiteKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+private struct PilleSichtbarKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+private struct PilleVersatzKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
 /// Der Kern der App, aufgebaut wie ein Nachrichtenfenster: die Vorschau oben
 /// und sichtbar bleibend, Eingabe und Sendeknopf unten über der Tastatur. Wer
 /// tippt, will sehen, was herauskommt — stünde die Vorschau unten, verdeckte
@@ -38,9 +54,23 @@ struct SendeniOS: View {
     @State private var zeigeEinstellungen = false
     @State private var zeigeVerlauf = false
 
+    // Misst die schiebbare Formatpille, um den Pfeil nur zu zeigen, solange
+    // rechts wirklich noch etwas liegt (siehe `zeigtPfeil` unten).
+    @State private var pilleInhaltsbreite: CGFloat = 0
+    @State private var pilleSichtbareBreite: CGFloat = 0
+    @State private var pilleVersatz: CGFloat = 0
+
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
     }
+
+    /// Dieselbe Auswahl wie auf dem Mac (`geeigneteSchriften` in
+    /// SendenView.swift) — geprueft bei sechzehn Pixeln Hoehe. Eine Liste statt
+    /// zweier: Frueher stand dieselben acht Namen zusätzlich in
+    /// FormatblattiOS, seit die Schriftart in die Formatpille gewandert ist,
+    /// steht sie nur noch hier.
+    private static let schriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva",
+                                    "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann im Rahmen.
     private var dauer: Int? {
@@ -111,9 +141,9 @@ struct SendeniOS: View {
             }
         }
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(weg: $weg, schrift: $schrift, groesse: $groesse, fett: $fett,
-                           grossbuchstaben: $grossbuchstaben, rand: $rand, abstand: $luecke,
-                           senkrecht: $vertikal, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit)
+            FormatblattiOS(weg: $weg, groesse: $groesse, fett: $fett,
+                           grossbuchstaben: $grossbuchstaben, tempo: $tempo,
+                           iconLaeuftMit: $iconLaeuftMit)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)
@@ -164,30 +194,151 @@ struct SendeniOS: View {
         .padding(.horizontal)
     }
 
-    /// Was man ständig ändert, direkt erreichbar. Alles Übrige hinter „Format".
-    private var formatleiste: some View {
-        HStack(spacing: 14) {
-            ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
-                .labelsHidden()
-            Button { zeigeIcons = true } label: {
-                if let icon = gewaehltesIcon {
-                    IconbildiOS(datei: icon.datei, kante: 2.5)
-                } else {
-                    Image(systemName: "face.smiling")
-                }
-            }
-            Picker("Ausrichtung", selection: $horizontal) {
-                Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
-                Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
-                Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
-            }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 150)
-            Spacer()
-            Button("Format") { zeigeFormat = true }
-                .font(.callout)
+    /// Symbol fuer den Stand der waagrechten Ausrichtung — kein Ternaer, sonst
+    /// greift die nicht uebersetzende Overload von `Image(systemName:)`.
+    private var horizontalSymbol: String {
+        switch horizontal {
+        case .links: return "text.alignleft"
+        case .mittig: return "text.aligncenter"
+        case .rechts: return "text.alignright"
         }
-        .padding(.horizontal)
+    }
+
+    /// Dieselben Symbole wie am Mac (`ausrichtungsKnopf` in SendenView.swift).
+    private var vertikalSymbol: String {
+        switch vertikal {
+        case .oben: return "align.vertical.top"
+        case .mittig: return "align.vertical.center"
+        case .unten: return "align.vertical.bottom"
+        }
+    }
+
+    /// Der Pfeil am rechten Rand der Pille zeigt nur an, solange dort
+    /// wirklich noch etwas liegt, und verschwindet, sobald ganz durchgeschoben
+    /// ist — sonst verspraeche er etwas, das nicht mehr da ist. 1pt Toleranz
+    /// gegen Rundung der gemeldeten Groessen.
+    private var zeigtPfeil: Bool {
+        let rest = pilleInhaltsbreite - pilleSichtbareBreite - pilleVersatz
+        return pilleInhaltsbreite > pilleSichtbareBreite + 1 && rest > 1
+    }
+
+    /// Was man ständig ändert, direkt erreichbar. Alles Übrige hinter dem
+    /// Pinsel. Eine Pille wie in Pages: gleichwertige, einfarbige Symbole
+    /// nebeneinander. Acht Stueck passen nicht immer nebeneinander auf ein
+    /// Telefon, deshalb schiebbar — die ersten fuenf (Icon, waagrecht,
+    /// senkrecht, Farbe, Pinsel) muessen dafuer ohne Schieben sichtbar
+    /// bleiben, siehe Bericht zur Breitenrechnung. Farbe steht bewusst nicht
+    /// neben Icon: beide sind bunt und rund, nebeneinander leicht verwechselt;
+    /// mit dem Pinsel dazwischen nicht mehr.
+    private var formatleiste: some View {
+        ZStack(alignment: .trailing) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    Button { zeigeIcons = true } label: {
+                        if let icon = gewaehltesIcon {
+                            IconbildiOS(datei: icon.datei, kante: 2.5)
+                        } else {
+                            Image(systemName: "face.smiling")
+                        }
+                    }
+                    .frame(width: 44, height: 44)
+                    Menu {
+                        Button { horizontal = .links } label: {
+                            Label("Linksbündig", systemImage: "text.alignleft")
+                        }
+                        Button { horizontal = .mittig } label: {
+                            Label("Zentriert", systemImage: "text.aligncenter")
+                        }
+                        Button { horizontal = .rechts } label: {
+                            Label("Rechtsbündig", systemImage: "text.alignright")
+                        }
+                    } label: {
+                        Image(systemName: horizontalSymbol)
+                    }
+                    .frame(width: 44, height: 44)
+                    Menu {
+                        Button { vertikal = .oben } label: {
+                            Label("Oben", systemImage: "align.vertical.top")
+                        }
+                        Button { vertikal = .mittig } label: {
+                            Label("Mittig", systemImage: "align.vertical.center")
+                        }
+                        Button { vertikal = .unten } label: {
+                            Label("Unten", systemImage: "align.vertical.bottom")
+                        }
+                    } label: {
+                        Image(systemName: vertikalSymbol)
+                    }
+                    .frame(width: 44, height: 44)
+                    ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
+                        .labelsHidden()
+                        .frame(width: 44, height: 44)
+                    Button { zeigeFormat = true } label: {
+                        Image(systemName: "paintbrush")
+                    }
+                    .frame(width: 44, height: 44)
+                    Menu {
+                        Picker("Schriftart", selection: $schrift) {
+                            ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
+                        }
+                    } label: {
+                        Text(schrift)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    Menu {
+                        Picker("Rand", selection: $rand) {
+                            ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
+                        }
+                    } label: {
+                        Label { Text(String(rand)) } icon: { Image(systemName: "arrow.up.and.down") }
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text(lokf("Rand %d", rand)))
+                    Menu {
+                        Picker("Abstand", selection: $luecke) {
+                            ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
+                        }
+                    } label: {
+                        Label { Text(String(luecke)) } icon: { Image(systemName: "arrow.left.and.right") }
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
+                }
+                .font(.body)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(key: PilleInhaltsbreiteKey.self, value: geo.size.width)
+                            .preference(key: PilleVersatzKey.self,
+                                        value: -geo.frame(in: .named("pilleRaum")).minX)
+                    }
+                )
+            }
+            .coordinateSpace(.named("pilleRaum"))
+            .frame(height: 60)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: PilleSichtbarKey.self, value: geo.size.width)
+                }
+            )
+            .background(.thinMaterial)
+            .clipShape(Capsule())
+            .onPreferenceChange(PilleInhaltsbreiteKey.self) { pilleInhaltsbreite = $0 }
+            .onPreferenceChange(PilleVersatzKey.self) { pilleVersatz = $0 }
+            .onPreferenceChange(PilleSichtbarKey.self) { pilleSichtbareBreite = $0 }
+
+            if zeigtPfeil {
+                Image(systemName: "chevron.compact.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 8)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel("Weitere Bedienelemente")
+            }
+        }
+        .padding(.horizontal, 8)
         .padding(.vertical, 8)
     }
 

@@ -3,24 +3,18 @@ import TC002Core
 
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
-/// gestapelt verdeckte es die Vorschau.
+/// gestapelt verdeckte es die Vorschau. Schriftart, Ausrichtung (waagrecht und
+/// senkrecht), Rand und Abstand sitzen inzwischen in der Formatpille ueber dem
+/// Eingabefeld (SendeniOS.swift) — hier bleibt, was selten genug gebraucht
+/// wird, um ein eigenes Blatt zu rechtfertigen.
 struct FormatblattiOS: View {
     @Binding var weg: SendeWeg
-    @Binding var schrift: String
     @Binding var groesse: Double
     @Binding var fett: Bool
     @Binding var grossbuchstaben: Bool
-    @Binding var rand: Int
-    @Binding var abstand: Int
-    @Binding var senkrecht: SendenVAusrichtung
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Environment(\.dismiss) private var schliessen
-
-    /// Dieselbe Auswahl wie auf dem Mac. Nur diese wenigen, weil bei sechzehn
-    /// Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.
-    private static let schriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva",
-                                    "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
     var body: some View {
         NavigationStack {
@@ -40,28 +34,9 @@ struct FormatblattiOS: View {
                     }
                 }
                 Section("Schrift") {
-                    Picker("Schriftart", selection: $schrift) {
-                        ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
-                    }
-                    .disabled(weg == .text)
                     Stepper(lokf("Größe %d", Int(groesse)), value: $groesse, in: 6...16, step: 1)
                     Toggle("Fett", isOn: $fett).disabled(weg == .text)
                     Toggle("Großbuchstaben", isOn: $grossbuchstaben)
-                }
-                Section("Lage") {
-                    // Dieselben Symbole wie am Mac (`ausrichtungsKnopf` in
-                    // SendenView.swift) und derselbe Wortlaut wie die
-                    // waagrechte Ausrichtung oben in der Formatleiste
-                    // (`Picker("Ausrichtung", …)` in SendeniOS.swift) — kein
-                    // neuer Uebersetzungsschluessel.
-                    Picker("Ausrichtung", selection: $senkrecht) {
-                        Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
-                        Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)
-                        Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
-                    }
-                    .pickerStyle(.segmented)
-                    Stepper(lokf("Rand %d", rand), value: $rand, in: 0...3)
-                    Stepper(lokf("Abstand %d", abstand), value: $abstand, in: 0...3)
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {
@@ -81,5 +56,6 @@ struct FormatblattiOS: View {
                 Button("Fertig") { schliessen() }
             } }
         }
+        .presentationDragIndicator(.visible)
     }
 }

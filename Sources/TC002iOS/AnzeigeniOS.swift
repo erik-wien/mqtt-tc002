@@ -19,6 +19,7 @@ struct AnzeigeniOS: View {
             }
             .navigationTitle("Verlauf")
         }
+        .presentationDragIndicator(.visible)
     }
 
     private var anzeigenAbschnitt: some View {

@@ -90,6 +90,7 @@ struct IconauswahliOS: View {
             } }
             .onAppear { vorhandene = sammlung.alle() }
         }
+        .presentationDragIndicator(.visible)
     }
 
     /// Holt ein Icon über seine Nummer. Blockiert nicht den Hauptthread — der

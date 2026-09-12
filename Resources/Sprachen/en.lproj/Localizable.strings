@@ -424,7 +424,6 @@
 "Schrift" = "Font";
 "Größe %d" = "Size %d";
 "Großbuchstaben" = "Capital letters";
-"Lage" = "Position";
 "Laufschrift" = "Scrolling";
 "Die App rastert selbst. Umlaute gehen, die Schrift ist frei wählbar." = "The app rasterizes it itself. Umlauts work, and the font is freely selectable.";
 "Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute." = "The clock sets it itself, with its built-in font. It knows no umlauts.";
@@ -436,7 +435,13 @@
 /* TC002iOS/SendeniOS.swift */
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Dauer" = "Duration";
-"Ausrichtung" = "Alignment";
+"Linksbündig" = "Left-aligned";
+"Zentriert" = "Centered";
+"Rechtsbündig" = "Right-aligned";
+"Oben" = "Top";
+"Mittig" = "Middle";
+"Unten" = "Bottom";
+"Weitere Bedienelemente" = "More controls";
 
 /* TC002iOS/AnzeigeniOS.swift */
 "Nach links wischen löscht, nach rechts schaltet auf die Anzeige um." = "Swipe left to delete, swipe right to switch to the display.";
