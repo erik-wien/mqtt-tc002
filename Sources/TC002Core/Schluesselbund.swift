@@ -16,10 +16,11 @@ public enum Schluesselbund {
     /// das Kennwort weg und niemand weiss, warum.
     /// Ein leerer Wert loescht nur: SecItemAdd nimmt keine leere Nutzlast an.
     @discardableResult
-    public static func setzen(_ wert: String, fuer konto: String) -> Bool {
-        loeschen(konto)
+    public static func setzen(_ wert: String, fuer konto: String,
+                              dienst: String = Einstellungen.kennung) -> Bool {
+        loeschen(konto, dienst: dienst)
         guard !wert.isEmpty else { return true }
-        var eintrag = basis(konto)
+        var eintrag = basis(konto, dienst: dienst)
         eintrag[kSecValueData as String] = Data(wert.utf8)
         return SecItemAdd(eintrag as CFDictionary, nil) == errSecSuccess
     }
@@ -36,7 +37,7 @@ public enum Schluesselbund {
         return String(data: daten, encoding: .utf8)
     }
 
-    public static func loeschen(_ konto: String) {
-        SecItemDelete(basis(konto) as CFDictionary)
+    public static func loeschen(_ konto: String, dienst: String = Einstellungen.kennung) {
+        SecItemDelete(basis(konto, dienst: dienst) as CFDictionary)
     }
 }

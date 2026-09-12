@@ -52,17 +52,32 @@ public struct Einstellungen: Sendable {
     public var brokerHost: String
     public var brokerPort: UInt16
     public var benutzer: String?
-    public var kennwort: String?
+    private let kennwortQuelle: @Sendable () -> String?
     public var uhren: [Uhr]
     /// An welche Uhren die App zuletzt senden sollte. Leer heisst „alle".
     public var zielIDs: Set<UUID>
+
+    /// Wird erst beim Zugriff geholt. Eifriges Lesen oeffnet einen
+    /// Passwortdialog auch dort, wo gar nichts gesendet wird.
+    public var kennwort: String? { kennwortQuelle() }
 
     public init(brokerHost: String, brokerPort: UInt16, benutzer: String?,
                 kennwort: String?, uhren: [Uhr], zielIDs: Set<UUID>) {
         self.brokerHost = brokerHost
         self.brokerPort = brokerPort
         self.benutzer = benutzer
-        self.kennwort = kennwort
+        self.kennwortQuelle = { kennwort }
+        self.uhren = uhren
+        self.zielIDs = zielIDs
+    }
+
+    init(brokerHost: String, brokerPort: UInt16, benutzer: String?,
+         kennwortQuelle: @escaping @Sendable () -> String?,
+         uhren: [Uhr], zielIDs: Set<UUID>) {
+        self.brokerHost = brokerHost
+        self.brokerPort = brokerPort
+        self.benutzer = benutzer
+        self.kennwortQuelle = kennwortQuelle
         self.uhren = uhren
         self.zielIDs = zielIDs
     }
@@ -98,12 +113,11 @@ public struct Einstellungen: Sendable {
         let ziele = (try? JSONDecoder().decode(Set<UUID>.self,
                         from: d?.data(forKey: "zielIDs") ?? Data())) ?? []
         let benutzer = d?.string(forKey: "benutzer") ?? Vorgabe.benutzer
-        let kennwort = Schluesselbund.lesen("broker", dienst: bereich) ?? ""
         return Einstellungen(
             brokerHost: d?.string(forKey: "brokerHost") ?? Vorgabe.brokerHost,
             brokerPort: UInt16(d?.string(forKey: "brokerPort") ?? Vorgabe.brokerPort) ?? 0,
             benutzer: benutzer.isEmpty ? nil : benutzer,
-            kennwort: kennwort.isEmpty ? nil : kennwort,
+            kennwortQuelle: { Schluesselbund.lesen("broker", dienst: bereich) },
             uhren: uhren,
             zielIDs: ziele)
     }
@@ -123,8 +137,12 @@ public struct Einstellungen: Sendable {
             ?? uhren.first { $0.host.caseInsensitiveCompare(name) == .orderedSame }
     }
 
+    /// Reicht, um zu wissen, ob ueberhaupt gesendet werden kann — und kommt
+    /// ohne das Kennwort aus.
+    public var brokerEingerichtet: Bool { !brokerHost.isEmpty && brokerPort > 0 }
+
     public func zugang(clientID: String) -> MQTTZugang? {
-        guard !brokerHost.isEmpty, brokerPort > 0 else { return nil }
+        guard brokerEingerichtet else { return nil }
         return MQTTZugang(host: brokerHost, port: brokerPort,
                           benutzer: benutzer, kennwort: kennwort)
             .mit(clientID: clientID)

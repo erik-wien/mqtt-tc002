@@ -108,4 +108,18 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertTrue(e.ziele.isEmpty)
         UserDefaults.standard.removePersistentDomain(forName: bereich)
     }
+
+    /// Das Kennwort wird erst beim Zugriff geholt, nicht beim Lesen der
+    /// Einstellungen. Sonst fragt der Schluesselbund auch dann, wenn gar nicht
+    /// gesendet wird — `mqtttc002 uhren` etwa.
+    func testKennwortWirdErstBeiBedarfGelesen() {
+        let bereich = "test-\(UUID().uuidString)"
+        defer { Schluesselbund.loeschen("broker", dienst: bereich) }
+
+        let e = Einstellungen.gelesen(bereich: bereich)
+        Schluesselbund.setzen("geheim", fuer: "broker", dienst: bereich)
+
+        XCTAssertEqual(e.kennwort, "geheim",
+                       "Eifrig gelesen waere es hier nil — der Eintrag entstand danach.")
+    }
 }

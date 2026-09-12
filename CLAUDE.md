@@ -75,6 +75,18 @@ schreibt sie nie. Es reist im Bündel mit (`Contents/MacOS/mqtttc002`) und wird
 - **`UserDefaults(suiteName:)` mit der eigenen Kennung liefert nichts.** Genau
   das passiert, wenn das Werkzeug unmittelbar im Bündel aufgerufen wird. Dort
   ist `.standard` das Richtige — siehe `Einstellungen.ablage`.
+- **Eine mit `swift build` erzeugte Binärdatei ist ad hoc signiert**, ihre
+  Kennung ein Hash über die Datei selbst — und damit ist sie für den
+  Schlüsselbund nach jedem Bau ein anderes Programm. „Immer erlauben" gilt
+  darum immer nur für den einen Bau. Abhilfe für eine Entwicklerfassung, die
+  wirklich senden soll, ist einmaliges Nachsignieren mit derselben Identität,
+  die `build.sh` nimmt:
+
+      codesign --force -s "Developer ID Application: …" .build/debug/mqtttc002
+
+  Seit `Einstellungen.kennwort` träge geworden ist, fragen nur noch der
+  Trockenlauf von `senden` und das wirkliche Senden den Schlüsselbund
+  überhaupt.
 
 Die `Codable`-Form von `Uhr` ist ein Dateiformat: Die App schreibt sie, das
 Werkzeug liest sie. Feldnamen ändern macht die Einstellungen einer laufenden

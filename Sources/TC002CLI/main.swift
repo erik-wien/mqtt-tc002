@@ -117,7 +117,7 @@ func lauf() throws {
     }
 
     // Ab hier wird gesendet, also braucht es einen Broker.
-    guard einstellungen.zugang(clientID: "x") != nil else {
+    guard einstellungen.brokerEingerichtet else {
         throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Verbindung“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
     }
 
