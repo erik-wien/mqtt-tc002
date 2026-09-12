@@ -199,7 +199,11 @@ Abweichung ist ein Fehler der Verschiebung, keine Verbesserung.
 
 ## Die iPhone-Oberfläche
 
-Drei Reiter unten: Senden, Anzeigen, Verbindung.
+Keine Reiterleiste. „Senden“ ist die ganze App und die Wurzel der
+Navigation; „Verlauf“ und „Einstellungen“ hängen als Menüpunkte in der
+Titelleiste und werden von dort aufgeschlagen. Der Grund: Von den drei
+Bereichen benutzt man einen ständig und zwei selten — eine Reiterleiste
+gäbe allen dreien gleich viel Platz und nähme ihn dem, worum es geht.
 
 ### Senden
 
@@ -316,8 +320,10 @@ wenn die Form steht.
 3. `AppZustand` nach `TC002Modell`; `Package.swift` um iOS und die Produkte
    erweitern; `swift test` grün.
 4. `project.yml`, Programmsymbol, Simulatorbau ohne Oberfläche.
-5. Die drei Reiter, in der Reihenfolge Verbindung, Senden, Anzeigen — ohne
-   Verbindung lässt sich das Senden nicht ausprobieren.
+5. Die drei Bereiche, in der Reihenfolge Einstellungen, Senden, Verlauf —
+   ohne Einstellungen lässt sich das Senden nicht ausprobieren. Zuerst ist
+   „Einstellungen“ die Wurzel; sobald „Senden“ steht, rückt es dorthin und
+   „Einstellungen“ wandert ins Menü.
 6. Auf dem Gerät prüfen.
 
 Nach Schritt 3 ist die Mac-App noch genau die von heute, nur anders sortiert.

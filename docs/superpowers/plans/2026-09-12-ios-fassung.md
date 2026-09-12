@@ -4,7 +4,7 @@
 
 **Ziel:** Eine iPhone-App, die Meldungen an eine Ulanzi TC002 schickt und sich mit der bestehenden macOS-App Kern und Zustandsschicht teilt.
 
-**Aufbau:** Die Rechnungen zum Bau einer Meldung wandern aus der macOS-Sendeansicht in den Kern, abgesichert durch Schnappschusstests, die das heutige Rahmen-JSON Byte für Byte festhalten. Die Zustandsschicht `AppZustand` wandert in ein eigenes Ziel `TC002Modell`, das beide Oberflächen benutzen. Die iPhone-Oberfläche entsteht neu als drei Reiter.
+**Aufbau:** Die Rechnungen zum Bau einer Meldung wandern aus der macOS-Sendeansicht in den Kern, abgesichert durch Schnappschusstests, die das heutige Rahmen-JSON Byte für Byte festhalten. Die Zustandsschicht `AppZustand` wandert in ein eigenes Ziel `TC002Modell`, das beide Oberflächen benutzen. Die iPhone-Oberfläche entsteht neu: „Senden“ ist die ganze App, „Verlauf“ und „Einstellungen“ hängen als Menüpunkte in der Titelleiste — keine Reiterleiste.
 
 **Technik:** Swift 6 (Sprachmodus 5), SwiftUI, Swift Package Manager, xcodegen, Xcode 26.6, iOS-26.5-SDK. Keine Paketabhängigkeiten.
 
@@ -862,7 +862,7 @@ git commit -m "feat(ios): Projektgeruest, baut gegen den Simulator"
 
 ---
 
-### Aufgabe 5: Der Reiter „Verbindung"
+### Aufgabe 5: Der Bereich „Einstellungen"
 
 Zuerst dieser, weil sich ohne eingerichtete Uhr nichts ausprobieren lässt.
 
@@ -1003,11 +1003,14 @@ struct TC002iOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // `Tab(_:systemImage:)` gibt es erst ab iOS 18; die Untergrenze
-            // ist 17, deshalb die herkoemmliche Form mit `.tabItem`.
-            TabView {
+            // Keine Reiterleiste: „Senden" ist spaeter die ganze App,
+            // „Verlauf" und „Einstellungen" haengen als Menuepunkte in der
+            // Titelleiste. Solange es nur diese eine Ansicht gibt, ist sie
+            // die Wurzel — Aufgabe 7 setzt „Senden" davor.
+            NavigationStack {
                 VerbindungiOS(zustand: zustand)
-                    .tabItem { Label("Verbindung", systemImage: "antenna.radiowaves.left.and.right") }
+                    .navigationTitle("Einstellungen")
+                    .navigationBarTitleDisplayMode(.inline)
             }
             .onChange(of: phase) { _, neu in
                 // Eine offene MQTT-Verbindung ueberlebt den Hintergrund nicht.
@@ -1060,7 +1063,7 @@ struct FehlerleisteiOS: View {
 }
 ```
 
-Sie kommt in allen drei Reitern unmittelbar unter die Titelleiste. In
+Sie kommt in allen drei Bereichen unmittelbar unter die Titelleiste. In
 `VerbindungiOS` dafür den `Form`-Rumpf in ein `VStack(spacing: 0)` setzen, mit
 `FehlerleisteiOS(zustand: zustand)` davor.
 
@@ -1084,7 +1087,7 @@ Der Sammler liest `Sources/TC002App`, `Sources/TC002CLI` und `Sources/TC002Core`
 
 ```bash
 git add Sources/TC002iOS scripts/texte-sammeln.py Resources/Sprachen
-git commit -m "feat(ios): Reiter Verbindung samt Fehlerleiste"
+git commit -m "feat(ios): Einstellungen samt Fehlerleiste"
 ```
 
 ---
@@ -1298,7 +1301,7 @@ git commit -m "feat(ios): Icons waehlen und ueber die LaMetric-Nummer nachladen"
 
 ---
 
-### Aufgabe 7: Der Reiter „Senden"
+### Aufgabe 7: Die Hauptansicht „Senden"
 
 Der Kern der App, aufgebaut wie ein Nachrichtenfenster.
 
@@ -1785,14 +1788,36 @@ struct ZielauswahliOS: View {
 
 - [ ] **Schritt 5: In den Einstieg einhängen**
 
-In `App.swift` einen zweiten Reiter vor „Verbindung" setzen:
+In `App.swift` wird „Senden" die Wurzel, und „Einstellungen" wandert in
+ein Menue in der Titelleiste. Der `NavigationStack` aus Aufgabe 5 bleibt, sein
+Inhalt wird getauscht:
 
 ```swift
+            NavigationStack {
                 SendeniOS(zustand: zustand)
-                    .tabItem { Label("Senden", systemImage: "paperplane") }
+                    .navigationTitle("MQTT-TC002")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Menu {
+                                NavigationLink {
+                                    VerbindungiOS(zustand: zustand)
+                                        .navigationTitle("Einstellungen")
+                                } label: {
+                                    Label("Einstellungen", systemImage: "antenna.radiowaves.left.and.right")
+                                }
+                            } label: {
+                                Label("Menü", systemImage: "line.3.horizontal")
+                            }
+                        }
+                    }
+            }
 ```
 
-Er steht **vor** „Verbindung", damit die App dort aufgeht, wo man sie benutzt.
+„Senden" ist damit die ganze App — man landet dort, wo man sie benutzt, und
+alles andere ist zwei Fingertipps entfernt. Die Typnamen der Ansichten
+(`VerbindungiOS`) bleiben, wie sie sind; umbenannt wird nur, was der Benutzer
+liest.
 
 - [ ] **Schritt 6: Bauen und Übersetzung prüfen**
 
@@ -1809,12 +1834,12 @@ Erwartet: `** BUILD SUCCEEDED **` und `0 ohne Uebersetzung`.
 
 ```bash
 git add Sources/TC002iOS Resources/Sprachen
-git commit -m "feat(ios): Reiter Senden als Nachrichtenfenster"
+git commit -m "feat(ios): Senden als Nachrichtenfenster und Wurzel"
 ```
 
 ---
 
-### Aufgabe 8: Der Reiter „Anzeigen", dann aufs Gerät
+### Aufgabe 8: Der Bereich „Verlauf", dann aufs Gerät
 
 **Dateien:**
 - Anlegen: `Sources/TC002iOS/AnzeigeniOS.swift`
@@ -1939,11 +1964,16 @@ nachgetragen.
 
 - [ ] **Schritt 2: In den Einstieg einhängen**
 
-In `App.swift` als dritten Reiter:
+In `App.swift` als zweiten Eintrag in dasselbe Menue, **vor**
+„Einstellungen":
 
 ```swift
-                AnzeigeniOS(zustand: zustand)
-                    .tabItem { Label("Anzeigen", systemImage: "list.bullet") }
+                                NavigationLink {
+                                    AnzeigeniOS(zustand: zustand)
+                                        .navigationTitle("Verlauf")
+                                } label: {
+                                    Label("Verlauf", systemImage: "list.bullet")
+                                }
 ```
 
 - [ ] **Schritt 3: Bauen und Übersetzung prüfen**
@@ -1966,7 +1996,7 @@ In `README.md` vor „## Tests" einen Abschnitt „## Auf dem iPhone" mit dem, w
 
 ```bash
 git add Sources/TC002iOS README.md README.en.md Resources/Sprachen
-git commit -m "feat(ios): Reiter Anzeigen; README um die iOS-Fassung ergaenzt"
+git commit -m "feat(ios): Verlauf im Menue; README um die iOS-Fassung ergaenzt"
 ```
 
 - [ ] **Schritt 6: Auf das Gerät bringen**
