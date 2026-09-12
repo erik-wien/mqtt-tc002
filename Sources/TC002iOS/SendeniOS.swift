@@ -217,6 +217,24 @@ struct SendeniOS: View {
         }
     }
 
+    /// Wortlaut fuer die Bedienungshilfen der beiden Ausrichtungsknoepfe —
+    /// dieselben Woerter wie in ihren Menues, kein Ternaer (siehe
+    /// `horizontalSymbol` oben), kein neuer Uebersetzungsschluessel.
+    private var horizontalWort: LocalizedStringKey {
+        switch horizontal {
+        case .links: return "Linksbündig"
+        case .mittig: return "Zentriert"
+        case .rechts: return "Rechtsbündig"
+        }
+    }
+    private var vertikalWort: LocalizedStringKey {
+        switch vertikal {
+        case .oben: return "Oben"
+        case .mittig: return "Mittig"
+        case .unten: return "Unten"
+        }
+    }
+
     /// Der Pfeil am rechten Rand der Pille zeigt nur an, solange dort
     /// wirklich noch etwas liegt, und verschwindet, sobald ganz durchgeschoben
     /// ist — sonst verspraeche er etwas, das nicht mehr da ist. 1pt Toleranz
@@ -245,6 +263,7 @@ struct SendeniOS: View {
                         }
                     }
                     .frame(width: 44, height: 44)
+                    .accessibilityLabel("Icon")
                     Menu {
                         Button { horizontal = .links } label: {
                             Label("Linksbündig", systemImage: "text.alignleft")
@@ -259,6 +278,7 @@ struct SendeniOS: View {
                         Image(systemName: horizontalSymbol)
                     }
                     .frame(width: 44, height: 44)
+                    .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
                     Menu {
                         Button { vertikal = .oben } label: {
                             Label("Oben", systemImage: "align.vertical.top")
@@ -273,9 +293,11 @@ struct SendeniOS: View {
                         Image(systemName: vertikalSymbol)
                     }
                     .frame(width: 44, height: 44)
+                    .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
                     ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
                         .labelsHidden()
                         .frame(width: 44, height: 44)
+                        .accessibilityLabel("Farbe")
                     Button { zeigeFormat = true } label: {
                         Image(systemName: "paintbrush")
                     }
@@ -288,6 +310,7 @@ struct SendeniOS: View {
                         Text(schrift)
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                     Menu {
                         Picker("Größe", selection: groesseInt) {
                             ForEach(6...16, id: \.self) { n in Text(String(n)).tag(n) }
@@ -304,12 +327,14 @@ struct SendeniOS: View {
                     .foregroundStyle(fett ? Color.accentColor : Color.secondary)
                     .disabled(weg == .text)
                     .accessibilityLabel("Fett")
+                    .accessibilityAddTraits(fett ? [.isSelected] : [])
                     Button { grossbuchstaben.toggle() } label: {
                         Image(systemName: "capslock")
                     }
                     .frame(width: 44, height: 44)
                     .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
                     .accessibilityLabel("Großbuchstaben")
+                    .accessibilityAddTraits(grossbuchstaben ? [.isSelected] : [])
                     Menu {
                         Picker("Rand", selection: $rand) {
                             ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }

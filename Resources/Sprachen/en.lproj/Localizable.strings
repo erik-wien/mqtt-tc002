@@ -434,6 +434,7 @@
 /* TC002iOS/SendeniOS.swift */
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Dauer" = "Duration";
+"Ausrichtung" = "Alignment";
 "Linksbündig" = "Left-aligned";
 "Zentriert" = "Centered";
 "Rechtsbündig" = "Right-aligned";
