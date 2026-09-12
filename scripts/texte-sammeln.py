@@ -57,6 +57,14 @@ DYNAMISCH = [
     "Senden", "Malen", "Icons", "Verlauf", "Einstellungen",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
+    # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
+    # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
+    "Meldung an die Uhr schicken",
+    "Meldung von der Uhr nehmen",
+    "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Entfernt eine der fünf Meldungen wieder von der Uhr.",
+    "Meldung schicken",
+    "Meldung nehmen",
 ]
 
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit

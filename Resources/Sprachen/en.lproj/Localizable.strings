@@ -454,3 +454,17 @@
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";
 "%@ Pixeln" = "%@ pixels";
+
+/* TC002iOS/Kurzbefehle.swift */
+"Meldung an die Uhr schicken" = "Send a message to the clock";
+"Meldung von der Uhr nehmen" = "Remove a message from the clock";
+"Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen." = "Sends text to a configured Ulanzi TC002. Font and alignment come from the settings last chosen in the app.";
+"Entfernt eine der fünf Meldungen wieder von der Uhr." = "Removes one of the five messages from the clock.";
+"Meldung schicken" = "Send message";
+"Meldung nehmen" = "Remove message";
+"Kein Icon mit der Nummer %@. In der App unter „Icon“ nachsehen." = "No icon with the number %@. Check under “Icon” in the app.";
+"An %@ geschickt." = "Sent to %@.";
+"Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“." = "No clock set up yet. That's done in the app under “Settings”.";
+"Keine Uhr namens %@." = "No clock named %@.";
+"Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen." = "Not queried yet: %@. Tap “Query” under “Settings” in the app.";
+"Meldung %d entfernt." = "Message %d removed.";
