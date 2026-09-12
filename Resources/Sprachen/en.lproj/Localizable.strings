@@ -418,6 +418,7 @@
 "Icon" = "Icon";
 "Kein Icon" = "No icon";
 "%@ geholt." = "%@ fetched.";
+"Übernehmen" = "Use";
 
 /* TC002iOS/FormatblattiOS.swift */
 "Format" = "Format";
