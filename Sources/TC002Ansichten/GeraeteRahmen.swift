@@ -54,7 +54,7 @@ public struct GeraeteRahmen<Inhalt: View>: View {
 
     public var body: some View {
         ZStack(alignment: .topLeading) {
-            Image("GeraeteRahmen", bundle: .module)
+            Image("GeraeteRahmen", bundle: Bilder.buendel)
                 .resizable()
                 .frame(width: rahmenBreite, height: rahmenHoehe)
 
