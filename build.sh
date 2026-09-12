@@ -60,6 +60,34 @@ for b in "$APP/Contents/Resources"/*.bundle; do
     done
 done
 
+# SwiftPMs nativer Bauweg legt ein Ressourcenbuendel ohne Info.plist an — die
+# Datei landet nirgends im Quelltext, `swift build` erzeugt sie nur fuer
+# Xcode-Bauten. Ohne CFBundleIdentifier kann das Buendel seinen Bildkatalog
+# aber nicht bei CoreUI registrieren: `Bundle(path:)` gelingt, `Assets.car`
+# ist da und lesbar (auch fuer assetutil), doch `image(forResource:)` liefert
+# trotzdem still nil — genau der Fehler, der den Geraeterahmen am Mac
+# unsichtbar machte, waehrend die alte Pruefung nur nach der Datei sah statt
+# nach ihrer Benutzbarkeit. Die Kennung wird aus dem Buendelnamen abgeleitet,
+# damit mehrere Ziele mit eigenem Katalog sich nicht ins Gehege kommen.
+for b in "$APP/Contents/Resources"/*.bundle; do
+    [ -d "$b" ] || continue
+    [ -f "$b/Info.plist" ] && continue
+    NAME="$(basename "$b" .bundle)"
+    KENNUNG="cloud.eriks.mqtt-tc002.bundle.$(printf '%s' "$NAME" | tr -c 'A-Za-z0-9' '-')"
+    cat > "$b/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key><string>${KENNUNG}</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundlePackageType</key><string>BNDL</string>
+    <key>CFBundleName</key><string>${NAME}</string>
+</dict>
+</plist>
+PLIST
+done
+
 # Icon: Das Icon-Composer-Buendel wird mit actool zu Assets.car (Liquid Glass ab macOS 26)
 # plus AppIcon.icns uebersetzt. Ohne actool wird Resources/AppIcon-flach.icns benutzt,
 # falls vorhanden; sonst bleibt die App ohne eigenes Icon.

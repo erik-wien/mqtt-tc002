@@ -48,12 +48,36 @@ if [ -d "$APP/Contents" ]; then
         echo "Buendel unvollstaendig: $APP" >&2
         exit 1
     fi
-    if ! xcrun --sdk macosx assetutil --info "$CAR" 2>/dev/null | grep -q '"Name" : "GeraeteRahmen"'; then
-        echo "fehlt   Bild \"GeraeteRahmen\" in $CAR" >&2
+    # assetutil liest nur die Katalogmetadaten und sagt nichts darueber, ob
+    # das Bild zur Laufzeit tatsaechlich ladbar ist. SwiftPMs nativer Bauweg
+    # legt das Ressourcenbuendel ohne Info.plist an (build.sh legt seit der
+    # GeraeteRahmen-Behebung eine nach), und ohne CFBundleIdentifier kann ein
+    # Buendel seinen Bildkatalog bei CoreUI nicht registrieren: assetutil
+    # findet "GeraeteRahmen" trotzdem, `Bundle(path:).image(forResource:)`
+    # liefert dann aber still nil. Genau das hat diese Pruefung „Buendel
+    # vollstaendig" gemeldet, waehrend die App am Mac keinen Rahmen zeigte —
+    # deshalb hier der tatsaechliche Ladeversuch, wie AppKit ihn zur
+    # Laufzeit auch macht.
+    BUENDEL_PFAD="$(dirname "$CAR")"
+    if ! ERGEBNIS="$(swift - "$BUENDEL_PFAD" <<'SWIFT' 2>&1
+import AppKit
+let pfad = CommandLine.arguments[1]
+guard let buendel = Bundle(path: pfad) else {
+    print("Bundle(path:) fehlgeschlagen fuer \(pfad)")
+    exit(1)
+}
+guard let bild = buendel.image(forResource: "GeraeteRahmen") else {
+    print("image(forResource: \"GeraeteRahmen\") liefert nil in \(pfad)")
+    exit(1)
+}
+print("geladen, Groesse \(bild.size)")
+SWIFT
+)"; then
+        echo "fehlt   Bild \"GeraeteRahmen\" nicht ladbar: $ERGEBNIS" >&2
         echo "Buendel unvollstaendig: $APP" >&2
         exit 1
     fi
-    echo "Buendel vollstaendig: $APP ($CAR enthaelt GeraeteRahmen)"
+    echo "Buendel vollstaendig: $APP ($BUENDEL_PFAD: $ERGEBNIS)"
     exit 0
 fi
 
