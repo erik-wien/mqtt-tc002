@@ -8,6 +8,8 @@
 "Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen." = "No clock set up. Enter one under Settings and query it.";
 "vom Gerät gemeldet" = "reported by the device";
 "von dieser App angelegt" = "created by this app";
+"Die Uhr veröffentlicht selbst, welche Anzeigen auf ihr stehen — auch solche, die ein anderes Werkzeug angelegt hat." = "The clock reports itself which displays are on it — including ones another tool created.";
+"Solange die Uhr nichts gemeldet hat, zeigt die Liste, was diese App selbst an sie geschickt hat. Was ein anderes Werkzeug angelegt hat, fehlt darin." = "As long as the clock has not reported anything, the list shows what this app itself has sent to it. What another tool has created is missing from it.";
 "· Uhr meldet sich online" = "· clock reports online";
 "· Uhr meldet sich offline" = "· clock reports offline";
 "Die Uhr meldet gerade keine Anzeige." = "The clock is currently reporting no display.";
@@ -277,6 +279,7 @@
 "Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "A noticeably large payload — only a shorter text makes it smaller, the speed changes nothing.";
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo." = "Only an approximation — the clock typesets this text itself and shows it differently. If it scrolls because it does not fit, \"Scroll speed\" under Settings sets the speed.";
 "Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: %@. \"as pixels\" can do them.";
+"Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten." = "Font — narrow, monospaced fonts work best at a height of 16 pixels.";
 "Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe." = "Font size — %@ is drawn for the pixel grid, in between there is no clean size.";
 "Schriftgröße" = "Font size";
 "Rand %d" = "Margin %d";
@@ -285,6 +288,7 @@
 "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar." = "Empty columns between the characters, 0 to 3 — only with the \"as pixels\" method: each character is rasterized on its own and appended by its ink, so the gap is always exactly as large as set here, independent of font, size and character pair.";
 "Farbe" = "Color";
 " und %@ Pixeln" = " and %d pixels";
+"Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht." = "The clock has only one built-in font — this does not apply here.";
 "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." = "The clock has no bold cut — this does not apply here.";
 "Fett" = "Bold";
 "„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung." = "\"%@\" has no bold cut at this size — the button would have no effect.";
@@ -314,6 +318,8 @@
 "Uhren" = "Clocks";
 "Diese Uhr ist das Ziel beim Senden" = "This clock is the target when sending";
 "Adresse" = "Address";
+"Am Broker angemeldet" = "Signed in at the broker";
+"Nicht am Broker angemeldet" = "Not signed in at the broker";
 "Adresse einer weiteren Uhr" = "Address of another clock";
 "Hinzufügen" = "Add";
 "Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse." = "The app determines the prefix itself — it is the one set plus the last four digits of the MAC address.";

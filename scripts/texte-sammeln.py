@@ -38,6 +38,7 @@ ERSTES_ARGUMENT = [
     "Section", "Stepper", "Slider", "Link", "Menu", "DisclosureGroup",
     "confirmationDialog", "alert", "Tab", "GroupBox", "LabeledContent",
     "NavigationLink", "ProgressView", "ToolbarItem", "ContentUnavailableView",
+    "ColorPicker",
 ]
 # Aufrufe, die eine *Liste* von Texten bekommen — die Hilfe baut ihre
 # Aufzaehlungen und Tabellen so. Hier steht der Text nicht hinter der Klammer,
@@ -70,6 +71,16 @@ MUSTER = (
     [re.compile(rf'\.{n}\(\s*{ZEICHENKETTE}') for n in MODIFIKATOREN] +
     [re.compile(rf'\b{re.escape(n)}\(\s*{ZEICHENKETTE}') for n in EIGENE]
 )
+
+# Modifikatoren mit einer Fallunterscheidung: .help(x ? "A" : "B"). Die
+# Bedingung und die beiden Zweige koennen auf zwei Zeilen verteilt sein (Zweig
+# eins hinter dem Fragezeichen, Zweig zwei hinter dem Doppelpunkt in der
+# naechsten Zeile) — deshalb ueber den ganzen Dateitext gesucht, nicht
+# zeilenweise wie die uebrigen MUSTER.
+MODIFIKATOR_TERNAER = [
+    re.compile(rf'\.{n}\([^,)"]*?\?\s*{ZEICHENKETTE}\s*:\s*{ZEICHENKETTE}')
+    for n in MODIFIKATOREN
+]
 
 
 def brauchbar(schluessel):
@@ -124,6 +135,11 @@ def sammeln():
             for schluessel in aus_listen(text):
                 if brauchbar(schluessel):
                     gesehen.setdefault(schluessel, datei.name)
+            for muster in MODIFIKATOR_TERNAER:
+                for treffer in muster.finditer(text):
+                    for schluessel in treffer.groups():
+                        if schluessel and brauchbar(schluessel):
+                            gesehen.setdefault(schluessel, datei.name)
     for schluessel in DYNAMISCH:
         gesehen.setdefault(schluessel, "dynamisch")
     return gesehen
