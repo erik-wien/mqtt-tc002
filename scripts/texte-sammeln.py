@@ -9,12 +9,15 @@ das nicht. Also hier.
     python3 scripts/texte-sammeln.py            # Schluessel auf die Ausgabe
     python3 scripts/texte-sammeln.py --pruefen  # meldet, was in en.lproj fehlt
 
-Gefunden wird zweierlei:
+Gefunden wird dreierlei:
   1. Zeichenketten an Stellen, die SwiftUI als `LocalizedStringKey` nimmt
      (`Text`, `Button`, `Label`, `.help`, `Toggle`, `Picker`, `.navigationTitle`,
      `confirmationDialog`, `alert`, `TextField`, `Section`, `Stepper` …).
   2. Zeichenketten in `lok("…")` — der Weg fuer alles, was als gewoehnliches
      `String` weitergereicht wird und deshalb nie durch SwiftUI laeuft.
+  3. `title:`/`description:` in `@Parameter(...)` (AppIntents, Kurzbefehle.swift)
+     — sichtbarer Text in Apples Kurzbefehle-App, aber als benanntes Argument
+     statt als erstes Argument uebergeben.
 
 Nicht gefunden wird, was in einer Variablen steht, bevor es angezeigt wird.
 Genau dafuer gibt es `lok(…)`.
@@ -48,6 +51,12 @@ LISTEN = ["punkte", "tabelle"]
 MODIFIKATOREN = ["help", "navigationTitle", "navigationSubtitle", "accessibilityLabel"]
 # Eigene Bausteine der Hilfe und des Werkzeugs.
 EIGENE = ["lok", "lokf", "ueberschrift", "absatz"]
+# Schluesselwoerter von `@Parameter(...)` (AppIntents, Kurzbefehle.swift), die
+# als sichtbare Beschriftung in der Kurzbefehle-App auftauchen. Kein Aufruf
+# mit Text als erstem Argument, sondern ein benanntes Argument irgendwo in der
+# Klammer — deshalb eine eigene Suche nach dem Schluesselwort statt nach dem
+# Aufrufnamen.
+PARAMETER_SCHLUESSEL = ["title", "description"]
 
 # Texte, die als Variable nachgeschlagen werden — `lok(a.rawValue)` — und
 # deshalb nicht im Quelltext stehen koennen. Sie muessen von Hand hier gefuehrt
@@ -65,6 +74,14 @@ DYNAMISCH = [
     "Entfernt eine der fünf Meldungen wieder von der Uhr.",
     "Meldung schicken",
     "Meldung nehmen",
+    # `Summary(...)` in Kurzbefehle.swift: der Text enthaelt mit `\(\.$…)`
+    # SwiftUIs Parameterverweis-Syntax, keine gewoehnliche Zeichenketten-
+    # Interpolation. Ob der Wortlaut so oder mit einem anderen Platzhalter
+    # (z. B. `${…}`) tatsaechlich zur Laufzeit nachgeschlagen wird, laesst
+    # sich ohne Bauen/Starten der App nicht pruefen — deshalb hier von Hand
+    # eingetragen statt ein wackliges Muster zu bauen.
+    r"\(\.$text) an die Uhr schicken",
+    r"Meldung \(\.$platz) von der Uhr nehmen",
 ]
 
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit
@@ -77,7 +94,10 @@ MUSTER = (
     [re.compile(rf'\b{n}\([^,)"]*\?\s*{ZEICHENKETTE}\s*:\s*{ZEICHENKETTE}')
      for n in ERSTES_ARGUMENT] +
     [re.compile(rf'\.{n}\(\s*{ZEICHENKETTE}') for n in MODIFIKATOREN] +
-    [re.compile(rf'\b{re.escape(n)}\(\s*{ZEICHENKETTE}') for n in EIGENE]
+    [re.compile(rf'\b{re.escape(n)}\(\s*{ZEICHENKETTE}') for n in EIGENE] +
+    # title:/description: von @Parameter(...) — beide auf derselben Zeile wie
+    # die oeffnende Klammer, wie in Kurzbefehle.swift durchgehend der Fall.
+    [re.compile(rf'@Parameter\([^\n]*?\b{n}:\s*{ZEICHENKETTE}') for n in PARAMETER_SCHLUESSEL]
 )
 
 # Modifikatoren mit einer Fallunterscheidung: .help(x ? "A" : "B"). Die

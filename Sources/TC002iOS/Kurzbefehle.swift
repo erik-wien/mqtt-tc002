@@ -24,7 +24,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Text")
     var text: String
 
-    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: an alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: String?
 
     @Parameter(title: "Icon-Nummer", description: "Nummer eines vorhandenen Icons.")
@@ -118,7 +118,7 @@ struct MeldungLoeschenIntent: AppIntent {
                inclusiveRange: (1, 5))
     var platz: Int
 
-    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: von allen.")
+    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: String?
 
     static var parameterSummary: some ParameterSummary {

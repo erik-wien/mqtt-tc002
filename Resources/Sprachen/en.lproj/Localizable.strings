@@ -473,3 +473,11 @@
 "Keine Uhr namens %@." = "No clock named %@.";
 "Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen." = "Not queried yet: %@. Tap “Query” under “Settings” in the app.";
 "Meldung %d entfernt." = "Message %d removed.";
+"Uhr" = "Clock";
+"Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten." = "Name or address. Empty means: the targets selected in the app, otherwise all configured ones.";
+"Icon-Nummer" = "Icon number";
+"Nummer eines vorhandenen Icons." = "Number of an existing icon.";
+"Dauer in Sekunden" = "Duration in seconds";
+"Platz 1 bis 5 auf der Uhr." = "Slot 1 to 5 on the clock.";
+"\(\.$text) an die Uhr schicken" = "Send \(\.$text) to the clock";
+"Meldung \(\.$platz) von der Uhr nehmen" = "Remove message \(\.$platz) from the clock";
