@@ -113,6 +113,16 @@ Stellen, und der Unterschied zwischen ihnen ist der Kern der Sache:
   passender Prüfsumme, sonst hat seither jemand anderes auf den Platz
   geschrieben (Hilfe → Senden erklärt das aus Anwendersicht).
 
+Geschrieben wird es an zwei Stellen — und an einer davon wird **gelöscht**:
+Wer einen Platz mit etwas Unmerkbarem überschreibt, also ein gemaltes Bild
+sendet (`MalenView` → `AppZustand.senden` mit `slotPlatz`, ohne
+`slotOptionen`), wirft die Erinnerung an diesen Platz weg
+(`Slotgedaechtnis.vergessen(fuer:platz:)`). Bliebe sie liegen, zeigte der Block
+nach dem nächsten Start ohne Broker den Text, der vor dem Malen dort stand.
+Dieselbe Regel gilt beim Mitlesen: Eine Nutzlast, die sich nicht in Pixel
+zerlegen lässt, löscht den Eintrag in `slotInhalt`, statt den alten stehen zu
+lassen.
+
 `TC002Ansichten/Slotblock.swift` rührt das Gedächtnis nirgends an: Der Block
 zeigt nur, was ihm gereicht wird. Das Werkzeug reist im Bündel mit
 (`Contents/MacOS/mqtttc002`)
@@ -187,7 +197,8 @@ Die `.xcodeproj` wird **nicht** eingecheckt — wer eine Quelldatei hinzufügt,
 
 Aufs Gerät kommt sie aus Xcode. `TC002App` und `TC002CLI` binden AppKit ein und
 sind nur unter macOS übersetzbar; das iOS-Ziel hängt ausschließlich an den
-Bibliotheken `TC002Core` und `TC002Modell`.
+Bibliotheken `TC002Core`, `TC002Modell` und `TC002Ansichten` (die drei Produkte
+in `project.yml`).
 
 ## Nach /Applications installieren
 

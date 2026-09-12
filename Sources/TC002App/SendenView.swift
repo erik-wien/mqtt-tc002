@@ -83,9 +83,11 @@ struct SendenView: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
-    /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
-    /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
-    private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
+    /// Je Uhr eine Datei unter Application Support. Die gehaltene Fassung,
+    /// nicht bei jedem Zugriff eine neue: `init` legt den Ordner an, und das
+    /// gehoert nicht in einen Zugriff, der beim Zeichnen faellt (siehe
+    /// `Slotgedaechtnis.gemeinsam`).
+    private var gedaechtnis: Slotgedaechtnis { .gemeinsam }
 
     /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
     /// das belegbar ist: Pixel muessen mitgelesen worden sein (sonst gibt es
@@ -667,11 +669,9 @@ struct SendenView: View {
 /// der Blockreihe, weil man den Platz dort gerade in der Hand hat — unter
 /// „Verlauf" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
 ///
-/// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: im
-/// Malbereich sitzt daneben „Leeren", und das meint das Bild, nicht das Gerät.
-///
-/// Wortgetreu aus `MeldungsplatzView` gelöst — die Ziffernreihe daneben ist
-/// entfallen, dieser Knopf blieb unverändert.
+/// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: Im
+/// Malbereich gibt es oben in der Werkzeugzeile „Leeren", und das meint das
+/// Bild, nicht das Gerät.
 struct MeldungLoeschenKnopf: View {
     @Bindable var zustand: AppZustand
     let platz: Int
