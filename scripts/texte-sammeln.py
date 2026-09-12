@@ -74,14 +74,16 @@ DYNAMISCH = [
     "Entfernt eine der fünf Meldungen wieder von der Uhr.",
     "Meldung schicken",
     "Meldung nehmen",
-    # `Summary(...)` in Kurzbefehle.swift: der Text enthaelt mit `\(\.$…)`
-    # SwiftUIs Parameterverweis-Syntax, keine gewoehnliche Zeichenketten-
-    # Interpolation. Ob der Wortlaut so oder mit einem anderen Platzhalter
-    # (z. B. `${…}`) tatsaechlich zur Laufzeit nachgeschlagen wird, laesst
-    # sich ohne Bauen/Starten der App nicht pruefen — deshalb hier von Hand
-    # eingetragen statt ein wackliges Muster zu bauen.
-    r"\(\.$text) an die Uhr schicken",
-    r"Slot \(\.$platz) von der Uhr nehmen",
+    # `Summary(...)` in Kurzbefehle.swift: Im Quelltext steht SwiftUIs
+    # Parameterverweis-Syntax `\(\.$…)`, aber `appintentsmetadataprocessor`
+    # baut daraus beim Bauen einen eigenen Platzhalter `${…}` — nachgesehen in
+    # `Metadata.appintents/extract.actionsdata` des gebauten Buendels
+    # (`actionConfiguration.actionSummary.wrapper.summaryString.formatString`).
+    # Genau dieser Wortlaut, nicht der aus dem Quelltext, wird zur Laufzeit
+    # nachgeschlagen — deshalb hier von Hand eingetragen statt ein wackliges
+    # Muster zu bauen.
+    r"${text} an die Uhr schicken",
+    r"Slot ${platz} von der Uhr nehmen",
 ]
 
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit
