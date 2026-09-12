@@ -89,25 +89,23 @@ struct SendeniOS: View {
             .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Button {
-                            zeigeVerlauf = true
-                        } label: {
-                            Label("Verlauf", systemImage: "clock.arrow.circlepath")
-                        }
-                        Button {
-                            zeigeEinstellungen = true
-                        } label: {
-                            Label("Einstellungen", systemImage: "gearshape")
-                        }
-                    } label: {
-                        Label("Menü", systemImage: "line.3.horizontal")
+                if zustand.uhren.count > 1 {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Ziel") { zeigeZiele = true }
                     }
                 }
-                if zustand.uhren.count > 1 {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Ziel") { zeigeZiele = true }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        zeigeVerlauf = true
+                    } label: {
+                        Label("Verlauf", systemImage: "clock.arrow.circlepath")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        zeigeEinstellungen = true
+                    } label: {
+                        Label("Einstellungen", systemImage: "gearshape")
                     }
                 }
             }

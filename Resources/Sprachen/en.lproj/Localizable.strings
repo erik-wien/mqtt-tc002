@@ -435,7 +435,6 @@
 
 /* TC002iOS/SendeniOS.swift */
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
-"Menü" = "Menu";
 "Dauer" = "Duration";
 "Ausrichtung" = "Alignment";
 
