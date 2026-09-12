@@ -348,6 +348,10 @@ struct SendenView: View {
             }
         }
         .padding()
+        // Die Mitte braucht mindestens so viel wie ihre unterste Zeile (Slot,
+        // Papierkorb, Dauer); mit Seitenleiste 170 und Inspektor 340 ergibt
+        // das die Mindestbreite des Fensters (App.swift).
+        .frame(minWidth: 490)
         // Alle Formatierungsregler sitzen im Inspektor rechts (siehe
         // `inspektor` unten) — auf macOS/iPadOS eine Seitenleiste, auf dem
         // iPhone (liefe diese Ansicht dort) ein Blatt von unten, ganz von
