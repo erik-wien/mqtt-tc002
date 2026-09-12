@@ -31,8 +31,8 @@ struct TC002App: App {
             case .senden: return "paperplane"
             case .malen: return "paintbrush"
             case .icons: return "paintpalette"
-            case .verlauf: return "list.bullet"
-            case .einstellungen: return "antenna.radiowaves.left.and.right"
+            case .verlauf: return "clock.arrow.circlepath"
+            case .einstellungen: return "gearshape"
             }
         }
         /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.

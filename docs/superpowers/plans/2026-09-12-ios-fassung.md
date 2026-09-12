@@ -1804,7 +1804,7 @@ Inhalt wird getauscht:
                                     VerbindungiOS(zustand: zustand)
                                         .navigationTitle("Einstellungen")
                                 } label: {
-                                    Label("Einstellungen", systemImage: "antenna.radiowaves.left.and.right")
+                                    Label("Einstellungen", systemImage: "gearshape")
                                 }
                             } label: {
                                 Label("Menü", systemImage: "line.3.horizontal")
@@ -1972,7 +1972,7 @@ In `App.swift` als zweiten Eintrag in dasselbe Menue, **vor**
                                     AnzeigeniOS(zustand: zustand)
                                         .navigationTitle("Verlauf")
                                 } label: {
-                                    Label("Verlauf", systemImage: "list.bullet")
+                                    Label("Verlauf", systemImage: "clock.arrow.circlepath")
                                 }
 ```
 
