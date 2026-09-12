@@ -1,5 +1,7 @@
 # Die Ulanzi TC002 fernsteuern
 
+*[English version](en/tc002-protocol.md)*
+
 Was das Gerät kann und wie man es anspricht — über MQTT und über HTTP. Diese
 Beschreibung ist von unserer App unabhängig: sie gilt genauso für `mosquitto_pub`,
 Node-RED, Home Assistant oder ein eigenes Skript. Wie man dieselben Dinge **in der
