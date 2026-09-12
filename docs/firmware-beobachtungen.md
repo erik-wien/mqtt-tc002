@@ -1,5 +1,7 @@
 # Was uns an der Firmware aufgefallen ist
 
+*[English version](en/firmware-observations.md)*
+
 Gesammelt beim Bau von MQTT-TC002. Zwei Zwecke: eine Liste zum **Nachprüfen,
 sobald eine neue Firmware erscheint**, und eine Grundlage, falls jemand das dem
 Hersteller melden möchte.
