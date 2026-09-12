@@ -85,7 +85,7 @@ struct SendeniOS: View {
                 formatleiste
                 eingabe
             }
-            .navigationTitle(zustand.uhren.count > 1 ? zielName : "Senden")
+            .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

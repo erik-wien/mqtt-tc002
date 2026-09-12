@@ -2,56 +2,99 @@ import SwiftUI
 import TC002Core
 
 /// Das Display, 52×16 Pixel, sechsfach vergroessert. Zeigt entweder ein
-/// stehendes Feld oder spielt die Einzelbilder der Laufschrift ab.
+/// stehendes Feld (mit eingesetztem Icon) oder spielt die Einzelbilder der
+/// Laufschrift ab.
+///
+/// Bauart wie die Mac-Fassung (`Sources/TC002App/VorschauView.swift`): Das
+/// Icon wird einmal je Wechsel ueber `.task(id:)` in `@State` gelesen, nicht
+/// bei jedem Neuzeichnen — `Bildraster.lesen` dekodiert alle Einzelbilder
+/// einer Datei, und der Zeichenblock liefe unter `TimelineView(.animation)`
+/// 60 bis 120 mal je Sekunde auf dem Hauptthread. `TimelineView` wird
+/// ausserdem nur montiert, wenn tatsaechlich mehr als ein Einzelbild
+/// abzuspielen ist; ein stehendes Bild zeichnet sich einmal und bleibt dann
+/// in Ruhe. Nebeneffekt: ein animiertes Icon spielt jetzt auch hier, wie am Mac.
 struct VorschauiOS: View {
     let feld: Pixelfeld
     let icon: URL?
     let laufschriftBilder: [Bildraster.Einzelbild]?
     var kante: Double = 6
 
+    /// Einzelbilder des gewaehlten Icons mit ihren Standzeiten — einmal je
+    /// Iconwechsel geladen. Ein unbewegtes Icon hat genau eines.
+    @State private var iconBilder: [Bildraster.Einzelbild] = []
+
     var body: some View {
-        TimelineView(.animation) { zeit in
-            Canvas { kontext, _ in
-                let punkte = punkteJetzt(zeit.date)
-                for y in 0..<Pixelfeld.hoeheStandard {
-                    for x in 0..<Pixelfeld.breiteStandard {
-                        let farbe = punkte[y * Pixelfeld.breiteStandard + x]
-                        guard let farbe, let c = Color(hex: farbe) else { continue }
-                        kontext.fill(Path(CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                                 width: kante - 0.5, height: kante - 0.5)),
-                                     with: .color(c))
+        Group {
+            if let bilder = laufschriftBilder, !bilder.isEmpty {
+                if bilder.count > 1 {
+                    TimelineView(.animation) { zeit in
+                        anzeige(Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel)
                     }
+                } else {
+                    anzeige(bilder[0].pixel)
                 }
+            } else if iconBilder.count > 1 {
+                TimelineView(.animation) { zeit in
+                    anzeige(mitIcon(Self.einzelbild(aus: iconBilder, bei: zeit.date)))
+                }
+            } else {
+                anzeige(mitIcon(iconBilder.first))
             }
         }
         .frame(width: Double(Pixelfeld.breiteStandard) * kante,
                height: Double(Pixelfeld.hoeheStandard) * kante)
         .background(.black)
         .clipShape(RoundedRectangle(cornerRadius: 6))
+        .task(id: icon) { iconBilder = Self.geladen(icon) }
     }
 
-    /// Bei Laufschrift das Einzelbild, das jetzt an der Reihe ist; sonst das
-    /// stehende Feld mit eingesetztem Icon.
-    private func punkteJetzt(_ jetzt: Date) -> [String?] {
-        if let bilder = laufschriftBilder, !bilder.isEmpty {
-            let gesamt = bilder.reduce(0.0) { $0 + $1.dauer }
-            guard gesamt > 0 else { return bilder[0].pixel }
-            var rest = jetzt.timeIntervalSince1970.truncatingRemainder(dividingBy: gesamt)
-            for bild in bilder {
-                rest -= bild.dauer
-                if rest <= 0 { return bild.pixel }
-            }
-            return bilder[bilder.count - 1].pixel
-        }
-        var punkte = feld.punkteRoh
-        if let icon, let bilder = try? Bildraster.lesen(icon, breite: 8, hoehe: 8), let erstes = bilder.first {
-            for y in 0..<8 {
-                for x in 0..<8 {
-                    guard let p = erstes[y * 8 + x] else { continue }
-                    punkte[(y + 4) * Pixelfeld.breiteStandard + x] = p
+    /// Zeichnet ein volles 52×16-Punkteraster.
+    private func anzeige(_ punkte: [String?]) -> some View {
+        Canvas { kontext, _ in
+            for y in 0..<Pixelfeld.hoeheStandard {
+                for x in 0..<Pixelfeld.breiteStandard {
+                    let farbe = punkte[y * Pixelfeld.breiteStandard + x]
+                    guard let farbe, let c = Color(hex: farbe) else { continue }
+                    kontext.fill(Path(CGRect(x: Double(x) * kante, y: Double(y) * kante,
+                                             width: kante - 0.5, height: kante - 0.5)),
+                                 with: .color(c))
                 }
             }
         }
+    }
+
+    /// Das stehende Feld mit eingesetztem Icon-Einzelbild, falls eines da ist.
+    private func mitIcon(_ iconBild: Bildraster.Einzelbild?) -> [String?] {
+        var punkte = feld.punkteRoh
+        guard let iconBild else { return punkte }
+        for y in 0..<8 {
+            for x in 0..<8 {
+                guard let p = iconBild.pixel[y * 8 + x] else { continue }
+                punkte[(y + 4) * Pixelfeld.breiteStandard + x] = p
+            }
+        }
         return punkte
+    }
+
+    /// Waehlt anhand der verstrichenen Zeit das faellige Einzelbild aus einer
+    /// Liste — wie in der Mac-Fassung, in Schleife ueber alle, jedes mit
+    /// seiner eigenen Standzeit.
+    private static func einzelbild(aus liste: [Bildraster.Einzelbild], bei zeitpunkt: Date) -> Bildraster.Einzelbild? {
+        guard !liste.isEmpty else { return nil }
+        let gesamt = liste.reduce(0) { $0 + $1.dauer }
+        guard gesamt > 0 else { return liste.first }
+        var rest = zeitpunkt.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: gesamt)
+        for bild in liste {
+            if rest < bild.dauer { return bild }
+            rest -= bild.dauer
+        }
+        return liste.last
+    }
+
+    /// Liest das Icon einmal, mit seinen Standzeiten — fuer den unbewegten
+    /// Fall genau ein Einzelbild.
+    private static func geladen(_ icon: URL?) -> [Bildraster.Einzelbild] {
+        guard let icon else { return [] }
+        return (try? Bildraster.lesenMitZeiten(icon, breite: 8, hoehe: 8)) ?? []
     }
 }
