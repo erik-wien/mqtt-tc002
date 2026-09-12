@@ -385,6 +385,13 @@ struct SendeniOS: View {
                             .contentShape(Rectangle())
                     }
                     .foregroundStyle(fett ? Color.accentColor : Color.secondary)
+                    // Nicht allein die Farbe traegt den Zustand — sonst hiesse
+                    // Blau zugleich "tippbar" (wie bei den Menueknoepfen daneben)
+                    // und "eingeschaltet". Ein Hintergrund macht "an" auch ohne
+                    // Farbwahrnehmung sichtbar, dieselbe Bauart wie `formatKnopf`
+                    // in der Mac-Fassung (SendenView.swift).
+                    .background(fett ? Color.accentColor.opacity(0.3) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .disabled(weg == .text)
                     .accessibilityLabel("Fett")
                     .accessibilityAddTraits(fett ? [.isSelected] : [])
@@ -394,6 +401,8 @@ struct SendeniOS: View {
                             .contentShape(Rectangle())
                     }
                     .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
+                    .background(grossbuchstaben ? Color.accentColor.opacity(0.3) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .accessibilityLabel("Großbuchstaben")
                     .accessibilityAddTraits(grossbuchstaben ? [.isSelected] : [])
                     Menu {
