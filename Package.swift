@@ -11,12 +11,18 @@ let package = Package(
         // Fuer das iOS-Projekt, das dieses Paket ueber xcodegen einbindet.
         .library(name: "TC002Core", targets: ["TC002Core"]),
         .library(name: "TC002Modell", targets: ["TC002Modell"]),
+        // Plattformfreie SwiftUI-Ansichten, die sich alle Oberflaechen teilen
+        // (Mac, iPhone, kuenftig iPad) — angefangen beim Geraeterahmen.
+        .library(name: "TC002Ansichten", targets: ["TC002Ansichten"]),
     ],
     targets: [
         .target(name: "TC002Core", swiftSettings: [.swiftLanguageMode(.v5)]),
         .target(name: "TC002Modell", dependencies: ["TC002Core"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
-        .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell"],
+        .target(name: "TC002Ansichten", dependencies: ["TC002Core"],
+                resources: [.process("Resources")],
+                swiftSettings: [.swiftLanguageMode(.v5)]),
+        .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell", "TC002Ansichten"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),
         // Das Kommandozeilenwerkzeug. Liest die Einrichtung der App und schickt
         // damit Meldungen — eigenes Ziel, damit die Oberflaeche nicht mitkommt.
