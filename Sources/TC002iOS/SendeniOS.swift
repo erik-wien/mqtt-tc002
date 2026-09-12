@@ -163,6 +163,13 @@ struct SendeniOS: View {
                 eingabe
             }
             .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
+            // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
+            // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
+            // von noetigen rund 265 Punkten fuer den Inhalt, die Slot-Zeile
+            // liegt unter der Kante, bis man scrollt. .inline bringt die 52
+            // Punkte des grossen Titels zurueck; das Titelmenue unten
+            // funktioniert dort genauso — Dateien und Notizen machen es so.
+            .navigationBarTitleDisplayMode(.inline)
             .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
                 Picker("Ziel", selection: zielAuswahl) {
                     ForEach(zustand.uhren) { uhr in
