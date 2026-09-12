@@ -88,9 +88,11 @@ struct SendeniOS: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
-    /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
-    /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
-    private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
+    /// Je Uhr eine Datei unter Application Support. Die gehaltene Fassung,
+    /// nicht bei jedem Zugriff eine neue: `init` legt den Ordner an, und das
+    /// gehoert nicht in einen Zugriff, der beim Zeichnen faellt (siehe
+    /// `Slotgedaechtnis.gemeinsam`).
+    private var gedaechtnis: Slotgedaechtnis { .gemeinsam }
 
     /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
     /// das belegbar ist: Pixel muessen mitgelesen worden sein, und ihre

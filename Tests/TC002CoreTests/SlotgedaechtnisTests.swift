@@ -210,4 +210,51 @@ final class SlotgedaechtnisTests: XCTestCase {
         let inhalt = try FileManager.default.contentsOfDirectory(at: ordner, includingPropertiesForKeys: nil)
         XCTAssertEqual(inhalt.map(\.lastPathComponent), ["\(uhr.uuidString).json"])
     }
+
+    // MARK: Vergessen je Platz
+
+    /// Wer einen Platz mit etwas Unmerkbarem ueberschreibt — ein gemaltes Bild
+    /// hat keine Regler —, muss die alte Erinnerung an diesen Platz wegwerfen.
+    /// Bliebe sie liegen, rechnete `AppZustand.slotzustand` daraus beim
+    /// naechsten Start ohne Broker wieder den Text, der vor dem Malen dort
+    /// stand. Die andern vier Plaetze gehen dabei nichts an.
+    func testVergessenJePlatzLaesstDieAndernStehen() {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let uhr = UUID()
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "drei"), icon: nil, fuer: uhr, platz: 3)
+
+        XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 3))
+
+        XCTAssertNil(gedaechtnis.gemerkt(fuer: uhr, platz: 3))
+        XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "eins")
+    }
+
+    /// War zu diesem Platz nichts gemerkt, ist nichts zu tun — und kein
+    /// Fehler: Auf einen Platz, der noch nie eine Textsendung getragen hat,
+    /// darf ein gemaltes Bild ebenso gehen wie auf jeden anderen.
+    func testVergessenOhneEintragIstKeinFehler() {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let uhr = UUID()
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
+
+        XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 4))
+        XCTAssertTrue(gedaechtnis.vergessen(fuer: UUID(), platz: 1))
+
+        XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "eins")
+    }
+
+    /// War es der letzte gemerkte Platz, geht die Datei ganz — ein Ordner voll
+    /// leerer Listen waere nur Altbestand, den niemand mehr liest.
+    func testVergessenDesLetztenPlatzesNimmtDieDatei() throws {
+        let ordner = temp()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+        let uhr = UUID()
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
+
+        XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 1))
+
+        let inhalt = try FileManager.default.contentsOfDirectory(at: ordner, includingPropertiesForKeys: nil)
+        XCTAssertEqual(inhalt, [])
+    }
 }

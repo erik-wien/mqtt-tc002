@@ -10,7 +10,7 @@ import CryptoKit
 /// Kurzbefehle schreiben dieselbe Datei. Wer hier ein Feld umbenennt, macht
 /// die Ablage einer laufenden Installation unlesbar —
 /// `testSlotstandBleibtLesbar` haelt die Feldnamen fest.
-public struct Slotstand: Codable, Equatable, Sendable {
+public struct Slotstand: Codable, Hashable, Sendable {
     public var platz: Int
     /// Der eingegebene Text, vor „Großbuchstaben" — wie im Editor, nicht wie
     /// gesendet. `Meldungsbau` wendet `grossbuchstaben` beim Neuberechnen
@@ -108,6 +108,18 @@ public struct Slotgedaechtnis: Sendable {
             .appendingPathComponent("MQTT-TC002/Slots")
     }
 
+    /// Eine gehaltene Fassung fuer die Oberflaeche. `init` legt den Ordner an,
+    /// und `AppZustand.slotzustand` laeuft fuenfmal je Neuzeichnen — in
+    /// `SendenView` also bei jedem Tastendruck im Textfeld, in `MalenView` bei
+    /// jedem Strich. Als Vorgabewert eines Arguments wuerde `Slotgedaechtnis()`
+    /// dabei jedes Mal neu ausgewertet und jedes Mal `createDirectory` rufen.
+    ///
+    /// Unbedenklich, weil der ganze Zustand dieses Typs der Ordnerpfad ist:
+    /// Eine gehaltene Fassung verhaelt sich Zeichen fuer Zeichen wie eine
+    /// frisch gebaute — jeder Lesezugriff geht ohnehin auf die Platte. Tests
+    /// reichen weiterhin ihren eigenen, wegwerfbaren Ordner herein.
+    public static let gemeinsam = Slotgedaechtnis()
+
     public init(ordner: URL = Slotgedaechtnis.eigenerOrdner) {
         self.ordner = ordner
         try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
@@ -192,6 +204,33 @@ public struct Slotgedaechtnis: Sendable {
     /// Uhr, auf die nie etwas gesendet wurde.
     public func vergessen(fuer uhr: UUID) {
         try? FileManager.default.removeItem(at: datei(fuer: uhr))
+    }
+
+    /// Wirft die Erinnerung an **einen** Platz weg — aufzurufen, wenn dieser
+    /// Platz mit etwas ueberschrieben wird, das sich nicht merken laesst: Ein
+    /// gemaltes Bild hat keine Regler (`MalenView`, und damit `AppZustand.senden`
+    /// mit `slotPlatz`, aber ohne `slotOptionen`).
+    ///
+    /// Ohne das bliebe der Stand der letzten Textsendung liegen, und
+    /// `AppZustand.slotzustand` rechnete beim naechsten Start ohne Broker
+    /// daraus wieder ein Bild — den Text, der seit dem Malen gar nicht mehr
+    /// auf dem Platz steht. Ohne Erinnerung faellt der Block stattdessen
+    /// ehrlich auf „belegt, Inhalt unbekannt".
+    ///
+    /// Die andern vier Plaetze bleiben stehen, geschrieben wird atomar wie in
+    /// `merken`. War zu diesem Platz nichts gemerkt, bleibt die Datei
+    /// unangetastet. Der Rueckgabewert hat denselben Vertrag wie dort: Er sagt,
+    /// ob es gelungen ist — eine schon angekommene Sendung kippt dadurch nicht.
+    @discardableResult
+    public func vergessen(fuer uhr: UUID, platz: Int) -> Bool {
+        let vorhanden = alle(fuer: uhr)
+        let uebrig = vorhanden.filter { $0.platz != platz }
+        guard uebrig.count != vorhanden.count else { return true }
+        guard !uebrig.isEmpty else {
+            return (try? FileManager.default.removeItem(at: datei(fuer: uhr))) != nil
+        }
+        guard let daten = try? JSONEncoder().encode(uebrig) else { return false }
+        return (try? daten.write(to: datei(fuer: uhr), options: .atomic)) != nil
     }
 
     /// Der Fingerabdruck eines Pixelfelds — dieselbe Form, in der

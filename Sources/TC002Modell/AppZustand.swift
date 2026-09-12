@@ -230,14 +230,52 @@ public final class AppZustand {
     /// Eine Fassung fuer alle drei Ansichten (Senden Mac, Senden iPhone,
     /// Malen): Derselbe Platz derselben Uhr soll ueberall dasselbe zeigen.
     public func slotzustand(_ platz: Int, belegt: Bool,
-                            gedaechtnis: Slotgedaechtnis = Slotgedaechtnis()) -> Slotzustand {
+                            gedaechtnis: Slotgedaechtnis = .gemeinsam) -> Slotzustand {
         guard belegt else { return .frei }
         guard let uhr = referenzUhr else { return .unbekannt }
         if let bild = slotInhalt[uhr.id]?[platz] { return .bekannt(bild.pixel) }
-        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz), let optionen = stand.optionen {
-            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
-        }
-        return .unbekannt
+        guard let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
+              let optionen = stand.optionen else { return .unbekannt }
+        return .bekannt(gerastert(stand, optionen))
+    }
+
+    /// Zwischenspeicher fuer die aus einem gemerkten Stand gerechneten Pixel.
+    ///
+    /// `Meldungsbau.feld` rastert je Aufruf zwei- bis dreimal und legt dabei
+    /// je Zeichen einen `CGContext` an; `slotzustand` laeuft fuenfmal je
+    /// Neuzeichnen, und neu gezeichnet wird bei jedem Tastendruck im Textfeld.
+    /// Der Gedaechtniszweig ist dabei der Normalfall, nicht die Ausnahme: Er
+    /// greift immer, solange nichts mitgelesen wurde — ohne Broker, nach jedem
+    /// Start, nach jedem Abriss.
+    ///
+    /// **Der Schluessel ist der gemerkte Stand selbst, nicht Uhr und Platz.**
+    /// Das ist der ganze Grund, warum dieser Speicher nicht veralten kann: Er
+    /// beantwortet nur die reine Frage „welche Pixel ergeben diese Regler",
+    /// und die hat fuer immer dieselbe Antwort. Wird auf den Platz etwas
+    /// anderes gemerkt, ist es ein anderer `Slotstand` und damit ein anderer
+    /// Schluessel. Ein Speicher ueber (Uhr, Platz) muesste dagegen bei jeder
+    /// Sendung ausdruecklich verworfen werden — genau die Sorte Fehler, die
+    /// dieses Vorhaben schon dreimal hatte. Die beiden anderen Stufen liegen
+    /// ohnehin davor: Mitgelesene Pixel und ein wieder freier Platz kommen hier
+    /// gar nicht an.
+    ///
+    /// `@ObservationIgnored`, weil dies kein Zustand der App ist, sondern eine
+    /// Rechnung: Beobachtet, wuerde das Schreiben aus `body` heraus ein
+    /// erneutes Zeichnen ausloesen.
+    @ObservationIgnored private var gerastertePixel: [Slotstand: [String?]] = [:]
+
+    /// Die Pixel zu einem gemerkten Stand — gerechnet, wenn noetig, sonst aus
+    /// dem Zwischenspeicher darueber.
+    private func gerastert(_ stand: Slotstand, _ optionen: Meldungsoptionen) -> [String?] {
+        if let fertig = gerastertePixel[stand] { return fertig }
+        let pixel = Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh
+        // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt
+        // fuellt: Jede Sendung legt einen weiteren Stand an, gebraucht werden
+        // fuenf je Uhr. Ganz leeren statt einzeln verdraengen — der naechste
+        // Durchlauf rastert die fuenf sichtbaren sofort wieder ein.
+        if gerastertePixel.count >= 40 { gerastertePixel.removeAll() }
+        gerastertePixel[stand] = pixel
+        return pixel
     }
 
     public func log(_ zeile: String) {
@@ -261,7 +299,7 @@ public final class AppZustand {
     /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
     /// Ablage unter Application Support greifen muessen — die Oberflaeche
     /// ruft wie bisher `uhrEntfernen(id)`.
-    public func uhrEntfernen(_ id: UUID, gedaechtnis: Slotgedaechtnis = Slotgedaechtnis()) {
+    public func uhrEntfernen(_ id: UUID, gedaechtnis: Slotgedaechtnis = .gemeinsam) {
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
@@ -467,14 +505,20 @@ public final class AppZustand {
 
     /// Schickt einen Rahmen an eine oder alle gewählten Uhren.
     ///
-    /// `slotOptionen`/`slotIcon`/`slotPlatz` sind nur gesetzt, wenn diese
-    /// Sendung zu einem der fünf Meldungsplätze mit bekannten Reglern gehört
-    /// (`SendenView`, `SendeniOS`) — beim Malen (`MalenView`) bleiben sie
-    /// `nil`, denn ein gemaltes Bild hat keine Regler, die sich
-    /// wiederherstellen ließen. Die Dauer kommt aus `slotOptionen.dauer`, kein
-    /// eigener Parameter: Ein zweiter, unabhängig übergebener Wert könnte von
-    /// den tatsächlich gesendeten Reglern abweichen — die Prüfsumme deckt nur
-    /// die Pixel ab, nicht die Dauer, ein Abweichen fiele also nie auf.
+    /// `slotOptionen`/`slotIcon` sind nur gesetzt, wenn diese Sendung zu einem
+    /// der fünf Meldungsplätze mit bekannten Reglern gehört (`SendenView`,
+    /// `SendeniOS`). Beim Malen (`MalenView`) bleiben sie `nil`, denn ein
+    /// gemaltes Bild hat keine Regler, die sich wiederherstellen ließen —
+    /// `slotPlatz` kommt aber auch von dort, und genau dann wird die alte
+    /// Erinnerung an diesen Platz **weggeworfen**: Wer einen Platz mit etwas
+    /// Unmerkbarem überschreibt, darf dort nicht den vorherigen Text
+    /// zurücklassen, sonst zeigt der Block nach dem nächsten Start etwas, das
+    /// seit dem Malen nicht mehr dort steht.
+    ///
+    /// Die Dauer kommt aus `slotOptionen.dauer`, kein eigener Parameter: Ein
+    /// zweiter, unabhängig übergebener Wert könnte von den tatsächlich
+    /// gesendeten Reglern abweichen — die Prüfsumme deckt nur die Pixel ab,
+    /// nicht die Dauer, ein Abweichen fiele also nie auf.
     /// Geschrieben wird je erfolgreich erreichter Uhr, nie vorher: Eine
     /// Sendung, die scheitert, darf das Gedächtnis nicht verändern. Schlägt
     /// das Schreiben selbst fehl, bleibt die Sendung trotzdem erfolgreich —
@@ -484,12 +528,15 @@ public final class AppZustand {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
             anzeigeGemerkt(name, fuer: uhr.id)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
-            if let slotOptionen, let slotPlatz {
-                let gemerkt = Slotgedaechtnis().merken(slotOptionen, icon: slotIcon,
-                                                       fuer: uhr.id, platz: slotPlatz)
+            guard let slotPlatz else { return }
+            if let slotOptionen {
+                let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
+                                                              fuer: uhr.id, platz: slotPlatz)
                 if !gemerkt {
                     log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))
                 }
+            } else if !Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: slotPlatz) {
+                log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, slotPlatz))
             }
         }
     }
@@ -600,7 +647,12 @@ public final class AppZustand {
 
     /// Was von der Uhr hereinkommt. Das Thema entscheidet, nicht die Reihenfolge:
     /// beide Abonnements laufen über dieselbe Verbindung.
-    private func gemeldet(thema: String, nutzlast: Data, fuer id: UUID) {
+    ///
+    /// Nicht `private`, damit der Test es ohne Broker aufrufen kann: Was eine
+    /// eintreffende Nachricht mit `slotInhalt` macht, ist die einzige Stelle,
+    /// an der ein Block behaupten könnte, etwas zu zeigen, das längst
+    /// überschrieben ist — dafür gibt es sonst keine Naht.
+    func gemeldet(thema: String, nutzlast: Data, fuer id: UUID) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         switch thema {
         case "\(uhr.praefix)/customList":
@@ -628,15 +680,20 @@ public final class AppZustand {
             guard thema.hasPrefix(vorsilbe) else { return }
             let name = String(thema.dropFirst(vorsilbe.count))
             guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
-            if nutzlast.isEmpty {
-                // Leere Nutzlast loescht die Anzeige auf der Uhr (`Anzeigen.loeschen`) —
-                // der Slot ist also wieder leer.
-                slotInhalt[id]?[platz] = nil
-            } else if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
+            if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
                 slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel)
+            } else {
+                // Zwei Faelle, eine Folge. Eine leere Nutzlast loescht die Anzeige
+                // auf der Uhr (`Anzeigen.loeschen`) — der Platz ist wieder leer.
+                // Eine nicht zerlegbare (Lauf-GIF oder Geraeteschrift, siehe
+                // `pixelAusCustomNutzlast`) sagt zweierlei: Dort liegt etwas
+                // Neues, und wir kennen es nicht. Den alten Eintrag
+                // stehenzulassen hiesse, einen Stand zu behaupten, den der Block
+                // nachweislich nicht mehr hat. Geloescht greift von selbst die
+                // naechste Stufe von `slotzustand`: fuer eigene Sendungen das
+                // Gedaechtnis, fuer fremde „unbekannt".
+                slotInhalt[id]?[platz] = nil
             }
-            // Sonst: nicht zerlegbare Nutzlast (Bild-Weg oder Geraeteschrift-Weg) —
-            // der zuletzt bekannte Inhalt bleibt stehen, statt ihn durch nichts zu ersetzen.
         }
     }
 

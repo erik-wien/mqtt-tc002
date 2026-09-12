@@ -95,7 +95,9 @@ struct MalenView: View {
                     // Rechnung (`AppZustand.slotzustand`) — derselbe Platz
                     // derselben Uhr soll hier nicht etwas anderes zeigen.
                     // Antippen waehlt hier nur den Platz: Regler, die sich
-                    // wiederherstellen liessen, gibt es beim Malen nicht.
+                    // wiederherstellen liessen, gibt es beim Malen nicht —
+                    // und eine Sendung von hier wirft die zum Platz gemerkten
+                    // weg, statt sie ueberleben zu lassen (siehe `senden`).
                     ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                         Button { platz = i } label: {
                             Slotblock(platz: i,
@@ -179,10 +181,21 @@ struct MalenView: View {
         }
     }
 
+    /// `slotPlatz` ohne `slotOptionen`: Ein gemaltes Bild hat keine Regler, es
+    /// gibt hier nichts zu merken — wohl aber etwas zu vergessen. Stand auf dem
+    /// Platz vorher eine Textsendung, liegt dazu ein gemerkter Stand, und der
+    /// Block rechnete daraus beim naechsten Start ohne Broker weiter den alten
+    /// Text. `AppZustand.senden` wirft ihn deshalb je erreichter Uhr weg.
     private func senden() {
         laeuft = true
         let frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
         let anzeigenName = Meldungsplatz.name(fuer: platz)
-        Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
+        // Momentaufnahme wie in `SendenView.senden`: der Task soll den Platz
+        // von jetzt sehen, nicht den beim spaeteren Ausfuehren.
+        let slotPlatz = platz
+        Task {
+            await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz)
+            laeuft = false
+        }
     }
 }

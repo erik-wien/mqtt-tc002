@@ -185,6 +185,10 @@ final class AppZustandTests: XCTestCase {
         let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
         d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
         d.set(b.id.uuidString, forKey: "aktiveID")
+        // Ausdruecklich, nicht dem Rueckfall in `init` ueberlassen: Laege im
+        // Testprozess ein abweichendes `zielIDs`, haenge das Ergebnis daran
+        // statt an der Regression, um die es hier geht.
+        d.set(try JSONEncoder().encode(Set([a.id, b.id])), forKey: "zielIDs")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), mitIcon: false).punkteRoh
 
@@ -193,6 +197,107 @@ final class AppZustandTests: XCTestCase {
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
                        "Das Bild der ersten Uhr darf nicht für die aktive Uhr einstehen.")
+    }
+
+    /// Eine Uhr, eine Zieluhr, sie selbst aktiv — die uebliche Buehne fuer die
+    /// Bloecke. Sie steht in den Einstellungen des Testprozesses, weil
+    /// `AppZustand.init` von dort liest; `zielIDs` ausdruecklich, damit kein
+    /// Rueckfall die Buehne baut.
+    private func buehne(praefix: String = "pa") throws -> Uhr {
+        let uhr = Uhr(name: "Küche", host: "10.0.0.1", praefix: praefix)
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([uhr.id])), forKey: "zielIDs")
+        return uhr
+    }
+
+    /// Eine Nutzlast, die sich nicht in Pixel zerlegen laesst — ein Lauf-GIF
+    /// oder der Weg „als Text" —, sagt zweierlei: Auf dem Platz liegt etwas
+    /// Neues, und wir kennen es nicht. Bliebe der alte Eintrag stehen, zeigte
+    /// der Block weiter das vorige Bild, obwohl auf der Uhr nachweislich etwas
+    /// anderes steht, und nichts meldete es.
+    func testUnzerlegbareNutzlastLoeschtDenAltenSlotinhalt() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let zustand = AppZustand()
+
+        let hallo = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: hallo, fuer: uhr.id)
+        XCTAssertNotNil(zustand.slotInhalt[uhr.id]?[1], "Der Pixel-Weg muss ankommen.")
+
+        let laufschrift = Data("{\"image\":\"data:image/gif;base64,R0lGODlh\"}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: laufschrift, fuer: uhr.id)
+
+        XCTAssertNil(zustand.slotInhalt[uhr.id]?[1],
+                     "Was nicht zerlegbar ist, darf den alten Eintrag nicht stehenlassen.")
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
+                       "Ohne gemerkten Stand bleibt nur „belegt, Inhalt unbekannt“.")
+    }
+
+    // MARK: Zwischenspeicher der gerechneten Pixel
+
+    /// Nach einer eigenen Sendung: `senden` merkt den neuen Stand, und der
+    /// Block muss ihn zeigen. Ein Zwischenspeicher ueber (Uhr, Platz) statt
+    /// ueber den gemerkten Stand selbst liesse hier das alte Bild stehen.
+    func testGerechnetePixelVerfallenNachEigenerSendung() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let alt = Meldungsoptionen(text: "alt")
+        let neu = Meldungsoptionen(text: "ganz neu")
+        gedaechtnis.merken(alt, icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(Meldungsbau.feld(alt, mitIcon: false).punkteRoh))
+
+        gedaechtnis.merken(neu, icon: nil, fuer: uhr.id, platz: 1)
+
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(Meldungsbau.feld(neu, mitIcon: false).punkteRoh),
+                       "Nach dem Merken neuer Regler darf nicht das alte Bild stehenbleiben.")
+    }
+
+    /// Nach einer eingetroffenen Nachricht: Mitgelesene Pixel schlagen das
+    /// Gedaechtnis. Ein Zwischenspeicher, der das ganze Ergebnis je (Uhr,
+    /// Platz) haelt, zeigte hier weiter die Erinnerung.
+    func testGerechnetePixelVerfallenNachEingetroffenerNachricht() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let gemerkt = Meldungsoptionen(text: "gemerkt")
+        gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh))
+
+        let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
+
+        let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(mitgelesen),
+                       "Mitgelesene Pixel schlagen die Erinnerung — auch beim zweiten Blick.")
+    }
+
+    /// Nach einem Verbindungsabriss: `slotInhalt` faellt weg, und der Block
+    /// muss wieder auf die Erinnerung zurueckfallen statt die letzten
+    /// mitgelesenen Pixel festzuhalten, die nun niemand mehr bestaetigt.
+    func testGerechnetePixelVerfallenNachVerbindungsabriss() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let gemerkt = Meldungsoptionen(text: "gemerkt")
+        gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
+        let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(mitgelesen))
+
+        // Was `horchzustand` beim Abriss tut (`slotInhalt[id] = nil`).
+        zustand.slotInhalt[uhr.id] = nil
+
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
+                       .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh),
+                       "Ohne Verbindung gilt wieder die Erinnerung, nicht der letzte Mitschnitt.")
     }
 
     /// Mit der Uhr geht auch ihre Slotdatei. Die Kennung einer entfernten Uhr

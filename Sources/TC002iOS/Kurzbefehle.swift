@@ -86,8 +86,8 @@ struct MeldungSendenIntent: AppIntent {
                 // fuer diesen Platz auf dieser Uhr. Schlaegt das Schreiben
                 // fehl, bleibt die Sendung trotzdem erfolgreich — Kurzbefehle
                 // haben kein Protokoll, in das eine Zeile koennte.
-                Slotgedaechtnis().merken(slotOptionen, icon: slotIcon,
-                                         fuer: ziel.id, platz: slotPlatz)
+                Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
+                                                 fuer: ziel.id, platz: slotPlatz)
             }
             return erledigt
         }.value
