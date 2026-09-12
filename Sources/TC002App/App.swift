@@ -44,7 +44,7 @@ struct TC002App: App {
         WindowGroup("MQTT-TC002") {
             hauptfenster
         }
-        .defaultSize(width: 1000, height: 680)
+        .defaultSize(width: 1360, height: 720)
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .appInfo) {
@@ -113,6 +113,13 @@ struct TC002App: App {
         // Mal-/Vorschaufläche bei ihrer groessten Kantenlaenge (14) plus
         // Innenabstand — sonst faellt die Flaeche wie im gemeldeten Fall rechts
         // aus dem Fenster, bevor die reaktive Anpassung ueberhaupt eingreift.
+        // 980 kommt von „Malen": 52 Spalten bei groesster Kantenlaenge plus
+        // Seitenleiste. Der Inspektor von „Senden" braucht rund 340 Punkte
+        // obendrauf — erzwungen wird das hier aber nicht, sonst waere das
+        // Fenster fuer alle Bereiche so breit wie fuer den einen, der ihn hat,
+        // und wuechse ueber den Bildschirmrand. Die Vorgabegroesse ist breit
+        // genug; ist das Fenster schmaler, hilft der Knopf in der
+        // Werkzeugleiste, der den Inspektor einklappt.
         .frame(minWidth: 980, minHeight: 640)
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
