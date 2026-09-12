@@ -104,6 +104,13 @@ struct Optionen {
         var i = 0
         while i < rest.count {
             let arg = rest[i]
+            // `-AppleLanguages "(en)"` und Verwandte: Argumente mit *einem*
+            // Strich und grossem Anfangsbuchstaben nimmt Foundation selbst
+            // entgegen (der Argumentbereich von `UserDefaults`) — damit laesst
+            // sich das Werkzeug einmalig in einer anderen Sprache starten, ohne
+            // etwas umzustellen. Sie duerfen weder als Option noch als Text
+            // durchgehen: samt Wert ueberspringen.
+            if Self.istEinstellungsargument(arg) { i += 2; continue }
             guard arg.hasPrefix("--") else { freie.append(arg); i += 1; continue }
 
             /// Holt den Wert hinter einer Option und schiebt den Zeiger weiter.
@@ -168,6 +175,13 @@ struct Optionen {
             break
         }
         return o
+    }
+
+    /// Ein Argument, das Foundation fuer sich beansprucht: ein Strich, dann ein
+    /// Grossbuchstabe (`-AppleLanguages`, `-AppleLocale`, `-NSShowAllViews` …).
+    private static func istEinstellungsargument(_ arg: String) -> Bool {
+        guard arg.count > 1, arg.hasPrefix("-"), !arg.hasPrefix("--") else { return false }
+        return arg.dropFirst().first?.isUppercase == true
     }
 
     private static func istFarbe(_ s: String) -> Bool {

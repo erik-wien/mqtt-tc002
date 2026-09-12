@@ -80,6 +80,21 @@ final class OptionenTests: XCTestCase {
         XCTAssertEqual(o.waagrecht, .links)
     }
 
+    /// `-AppleLanguages "(en)"` startet das Werkzeug einmalig auf Englisch.
+    /// Foundation wertet das selbst aus; hier darf es weder als unbekannte
+    /// Option scheitern noch im Text landen.
+    func testEinstellungsargumenteLandenNichtImText() throws {
+        let o = try Optionen.zerlegt(["senden", "-AppleLanguages", "(en)", "Hallo"])
+        XCTAssertEqual(o.befehl, .senden(text: "Hallo"))
+    }
+
+    /// Ein einzelner Strich mit Kleinbuchstaben ist dagegen keines — das soll
+    /// weiterhin als unbekannt auffallen und nicht stillschweigend verschwinden.
+    func testEinzelnerStrichKleingeschriebenBleibtText() throws {
+        let o = try Optionen.zerlegt(["senden", "-5", "Grad"])
+        XCTAssertEqual(o.befehl, .senden(text: "-5 Grad"))
+    }
+
     // MARK: - Der Rahmenbau
 
     private func sammlung() -> Iconsammlung {
