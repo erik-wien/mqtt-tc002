@@ -470,7 +470,9 @@ Der Reihe nach, vom Häufigsten zum Seltensten:
 
 ## 7. Was hier noch fehlt
 
-Ehrlich benannt, statt verschwiegen:
+Ehrlich benannt, statt verschwiegen. Was davon nach einem Firmware-Update
+erneut zu prüfen wäre, steht gesammelt in
+[`firmware-beobachtungen.md`](firmware-beobachtungen.md).
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
 - ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).

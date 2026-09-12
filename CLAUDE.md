@@ -2,7 +2,9 @@
 
 Arbeitsregeln für dieses Repo. Was die App tut, steht in `README.md`; wie man
 sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
-`docs/tc002-protokoll.md`. Hier nur, was sonst verletzt würde.
+`docs/tc002-protokoll.md`; was uns an dessen Firmware als Mangel aufgefallen
+ist und bei einem Update nachzuprüfen wäre, in
+`docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
 
 - Logik gehört in `TC002Core` und wird dort getestet. `TC002App` bleibt dünn
   — reine SwiftUI-Views und Zustandsverdrahtung, keine Geschäftslogik.
