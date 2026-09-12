@@ -94,9 +94,13 @@ Probieren, ohne etwas umzustellen:
 schreibt sie **nie** — zwei Schreiber auf denselben Schlüsseln wären ein
 Wettlauf. Das Slotgedächtnis (`Slotgedaechtnis` im Kern, eine eigene Datei je
 Uhr unter `Application Support/MQTT-TC002/Slots`) ist davon ausdrücklich
-ausgenommen: Dorthin schreibt das Werkzeug nach jeder erfolgreichen Sendung,
+ausgenommen: Dorthin schreibt das Werkzeug nach einer erfolgreichen Sendung,
 wie App und Kurzbefehle auch — es ist eben keine Einstellung, sondern eine
-eigens dafür gebaute Datei mit mehreren Schreibern. Es reist im Bündel mit
+eigens dafür gebaute Datei mit mehreren Schreibern. Das gilt aber nur, wenn
+`--name` einen der fünf festen Plätze trifft (`meldung1`…`meldung5`); die
+Vorgabe `--name cli` ist keiner davon, und `mqtttc002 senden "…"` ohne
+`--name` schreibt darum **nicht** ins Slotgedächtnis — kein Fehler im
+Schreiber, sondern der fehlende Platzbezug. Es reist im Bündel mit
 (`Contents/MacOS/mqtttc002`) und wird über einen Verweis benutzt. Zwei Fallen,
 beide schon zugeschnappt:
 

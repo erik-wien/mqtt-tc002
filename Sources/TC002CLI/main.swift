@@ -187,10 +187,15 @@ func lauf() throws {
             // entspricht, gibt es einen Platz, den sich das Slotgedaechtnis
             // merken koennte — bei einem frei gewaehlten Namen (Vorgabe
             // „cli") gibt es keinen. Schlaegt das Schreiben fehl, bleibt die
-            // Sendung trotzdem erfolgreich; das Werkzeug hat kein Protokoll,
-            // in das eine Zeile koennte.
+            // Sendung trotzdem erfolgreich; eine Zeile auf der Fehlerausgabe
+            // haelt es trotzdem fest — das Werkzeug hat kein Protokoll wie
+            // die App, aber stderr verunreinigt die eigentliche Ausgabe nicht.
             if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
-                Slotgedaechtnis().merken(m, dauer: m.dauer, icon: icon?.nummer, fuer: uhr.id, platz: platz)
+                let gemerkt = Slotgedaechtnis().merken(m, dauer: m.dauer, icon: icon?.nummer,
+                                                       fuer: uhr.id, platz: platz)
+                if !gemerkt {
+                    fehlerAusgeben(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, platz))
+                }
             }
         }
 

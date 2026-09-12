@@ -701,7 +701,7 @@ struct SendenView: View {
         let slotIcon = gewaehltesIcon?.nummer
         Task {
             await zustand.senden(frame, als: anzeigenName, slotOptionen: slotOptionen,
-                                 slotDauer: slotOptionen.dauer, slotIcon: slotIcon, slotPlatz: slotPlatz)
+                                 slotIcon: slotIcon, slotPlatz: slotPlatz)
             laeuft = false
         }
     }
