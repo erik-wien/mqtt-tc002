@@ -91,8 +91,14 @@ struct VerbindungiOS: View {
                     .focused($portFokus)
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Fertig") { portFokus = false }
+                            // Nur beim Port: `.keyboard` gilt sonst fuer jede
+                            // Tastatur dieses Blattes, auch fuer Adresse,
+                            // Benutzer und Kennwort, die ihre Eingabetaste
+                            // schon haben.
+                            if portFokus {
+                                Spacer()
+                                Button("Fertig") { portFokus = false }
+                            }
                         }
                     }
             }

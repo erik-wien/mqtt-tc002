@@ -272,12 +272,11 @@ struct SendeniOS: View {
             Text("s")
         }
         .font(.callout)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Fertig") { dauerFokus = false }
-            }
-        }
+        // Keine „Fertig"-Leiste ueber der Tastatur: `placement: .keyboard` gilt
+        // fuer **jede** Tastatur dieser Ansicht, nicht nur fuer das Zahlenfeld
+        // daneben — sie erschien also auch beim Schreiben der Meldung und legte
+        // sich dort ueber den Sendeknopf. Aus dem Dauerfeld kommt man durch
+        // Tippen daneben heraus.
     }
 
     /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus Slot-
