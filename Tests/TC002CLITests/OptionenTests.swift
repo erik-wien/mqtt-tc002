@@ -72,10 +72,14 @@ final class OptionenTests: XCTestCase {
 
     /// Beide Achsen teilen sich den Fallnamen `.mittig` — eine Vertauschung von
     /// waagrecht und senkrecht faellt sonst keinem Test und keinem Uebersetzer auf.
+    /// Deshalb hier je Achse ein Wert, der sich vom anderen unterscheidet.
     func testZentriertUndMitteTreffenVerschiedeneAchsen() throws {
-        let o = try Optionen.zerlegt(["senden", "x", "--zentriert", "--mitte"])
-        XCTAssertEqual(o.waagrecht, .mittig)
-        XCTAssertEqual(o.senkrecht, .mittig)
+        let a = try Optionen.zerlegt(["senden", "x", "--zentriert", "--oben"])
+        XCTAssertEqual(a.waagrecht, .mittig)
+        XCTAssertEqual(a.senkrecht, .oben)
+        let b = try Optionen.zerlegt(["senden", "x", "--rechts", "--mitte"])
+        XCTAssertEqual(b.waagrecht, .rechts)
+        XCTAssertEqual(b.senkrecht, .mittig)
     }
 
     func testVorgabenEntsprechenDerApp() throws {
