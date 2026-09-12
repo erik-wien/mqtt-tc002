@@ -486,3 +486,8 @@
 "Platz 1 bis 5 auf der Uhr." = "Slot 1 to 5 on the clock.";
 "${text} an die Uhr schicken" = "Send ${text} to the clock";
 "Slot ${platz} von der Uhr nehmen" = "Remove slot ${platz} from the clock";
+/* Slotblock.swift */
+"belegt" = "occupied";
+"Slot %d, frei" = "Slot %d, free";
+"Slot %d, belegt" = "Slot %d, occupied";
+"Slot %d, unbekannt" = "Slot %d, unknown";

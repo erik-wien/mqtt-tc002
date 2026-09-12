@@ -32,7 +32,10 @@ QUELLEN = [WURZEL / "Sources" / "TC002App",
            WURZEL / "Sources" / "TC002CLI",
            WURZEL / "Sources" / "TC002Core",
            WURZEL / "Sources" / "TC002Modell",
-           WURZEL / "Sources" / "TC002iOS"]
+           WURZEL / "Sources" / "TC002iOS",
+           # Plattformfreie, geteilte Ansichten (Mac, iPhone, künftig iPad) —
+           # seit `Slotblock.swift` der erste eigene, übersetzte Text hier.
+           WURZEL / "Sources" / "TC002Ansichten"]
 SPRACHDATEI = WURZEL / "Resources" / "Sprachen" / "en.lproj" / "Localizable.strings"
 
 # Aufrufe, deren erstes Argument SwiftUI als LocalizedStringKey behandelt.
