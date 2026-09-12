@@ -6,6 +6,14 @@
 "Protokoll" = "Log";
 "Leeren" = "Clear";
 "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen." = "No clock set up. Enter one under Connection and query it.";
+"vom Gerät gemeldet" = "reported by the device";
+"von dieser App angelegt" = "created by this app";
+"· Uhr meldet sich online" = "· clock reports online";
+"· Uhr meldet sich offline" = "· clock reports offline";
+"Die Uhr meldet gerade keine Anzeige." = "The clock is currently reporting no display.";
+"Noch nichts an diese Uhr gesendet." = "Nothing sent to this clock yet.";
+"umgeschaltet auf %@" = "switched to %@";
+"gelöscht: %@" = "deleted: %@";
 /* App.swift */
 "Über MQTT-TC002" = "About MQTT-TC002";
 "MQTT-TC002-Hilfe" = "MQTT-TC002 Help";
@@ -17,6 +25,20 @@
 /* AppZustand.swift */
 "Das Kennwort ließ sich nicht im Schlüsselbund sichern." = "The password could not be saved to the Keychain.";
 "Broker-Port muss eine Zahl über 0 sein." = "The broker port must be a number greater than 0.";
+"Broker-Prüfung abgelehnt: %@" = "broker check rejected: %@";
+"Broker-Prüfung: angenommen" = "broker check: accepted";
+"%@: Präfix %@, MQTT %@" = "%@: prefix %@, MQTT %@";
+"verbunden" = "connected";
+"nicht verbunden" = "not connected";
+"an %@ gesendet: %@" = "sent to %@: %@";
+"auf %@ gelöscht: %@" = "deleted on %@: %@";
+"%@ meldet: %@" = "%@ reports: %@";
+"keine Anzeige" = "no display";
+"%@ meldet sich online" = "%@ reports online";
+"%@ meldet sich offline" = "%@ reports offline";
+"hört bei %@ mit" = "listening in on %@";
+"Verbindung weg" = "connection gone";
+"hört bei %@ nicht mehr mit: %@" = "no longer listening in on %@: %@";
 /* BilderView.swift */
 "Bilder" = "Images";
 "Noch keine gesicherten Bilder." = "No saved images yet.";
@@ -160,12 +182,37 @@
 "Weitere Symptome" = "Further symptoms";
 "Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Verbindung“ steht vermutlich auf „kein Wechsel“." = "If the clock does not turn to the new display although several are set up: \"Page change\" under Connection is probably set to \"no change\".";
 "Fehlende Zeichen, insbesondere Umlaute, kann es bei „Malen“ nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht." = "Missing characters, umlauts above all, cannot happen in Draw, and under Send only with the \"as text\" method — where the app warns beforehand which characters are affected. With \"as pixels\" the app rasterizes every text itself, standing or scrolling, and does not use the clock's umlaut-less font at all.";
+"„Seitenwechsel“: wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — „kein Wechsel“ bedeutet, die erste Anzeige bleibt stehen, egal was sonst ankommt." = "\"Page change\": how long a display stays before the clock turns to the next — \"no change\" means the first display stays put, no matter what else arrives.";
+"„Scrolltempo“: wie schnell Text läuft, den die Uhr selbst setzt — eine Einstellung des Geräts, deren gültiger Wertebereich nicht dokumentiert ist." = "\"Scroll speed\": how fast text scrolls that the clock typesets itself — a setting of the device whose valid range of values is not documented.";
+"„Micro 5“ ist die schmalste und bringt am meisten Text stehend aufs Display, ohne zu laufen." = "\"Micro 5\" is the narrowest and gets the most text onto the display standing, without scrolling.";
+"„Silkscreen“ ist die klassische Pixeloptik, gut lesbar." = "\"Silkscreen\" is the classic pixel look, easy to read.";
+"„Tiny5“ wirkt bei großer Größe kräftig und plakativ." = "\"Tiny5\" looks strong and poster-like at a large size.";
+"jede Abfrage einer Uhr" = "every query of a clock";
+"jedes Umschalten und Löschen einer Anzeige" = "every switch and every deletion of a display";
+"jede Änderung des Seitenwechsels" = "every change to \"Page change\"";
+"jede Broker-Prüfung" = "every broker check";
+"jede Meldung, die von einer Uhr hereinkommt" = "every message that comes in from a clock";
+"Erstens das Präfix — unter „Verbindung“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen; es ist nicht das in Ulanzi Studio eingetragene." = "First the prefix — run \"Query\" again under Connection and compare it with the actual prefix; it is not the one entered in Ulanzi Studio.";
+"Zweitens, ob die Uhr überhaupt beim Broker angemeldet ist — das Häkchen- oder Warndreieck-Symbol in derselben Zeile." = "Second, whether the clock is logged in to the broker at all — the checkmark or warning-triangle symbol in the same row.";
+"Drittens, ob das Broker-Konto auf dieses Thema schreiben darf. Das steht in der Rechtedatei des Brokers, nicht in dieser App, und lässt sich nur am Broker-Protokoll ablesen." = "Third, whether the broker account may write to this topic. That stands in the broker's permissions file, not in this app, and can only be read off the broker's log.";
+"Viertens, ob unter „Anzeigen“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen." = "Fourth, whether an old standing display is still blocking under Displays — delete that one first, or replace it under the same name.";
+"Text und Icon verschicken" = "send text and an icon";
+"ein frei gezeichnetes Bild verschicken" = "send a freely drawn image";
+"bereits verschickte Inhalte und das Protokoll" = "content already sent, and the log";
+"Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr" = "clocks, broker, and the page change and scroll speed of the active clock";
+"eigene 8×8-Bildchen" = "your own 8×8 pictures";
+"Umlaute und „ß“ gehen; die App entscheidet selbst — passt der Text, bleibt er stehen, sonst läuft er als GIF." = "umlauts and \"ß\" work; the app decides for itself — if the text fits, it stands still, otherwise it scrolls as a GIF.";
+"nur `%`, `.`, `-` und `:` als Sonderzeichen; läuft von selbst durch, wenn nötig, ohne dass die App ein GIF bauen muss." = "only `%`, `.`, `-` and `:` as special characters; scrolls by itself when needed, without the app having to build a GIF.";
+"nur 8 oder 16 Pixel" = "only 8 or 16 pixels";
+"alle anderen Schriften" = "all other fonts";
+"der volle Bereich 6 bis 16 Pixel" = "the full range, 6 to 16 pixels";
 /* IconAuswahlView.swift */
 "Icon wählen…" = "Choose icon…";
 "Icon entfernen" = "Remove icon";
 "Suchen" = "Search";
 "„%@“ löschen" = "Delete \"%@\"";
 "Das Icon „%@“ wird endgültig entfernt." = "The icon \"%@\" will be permanently removed.";
+"ohne" = "none";
 /* IconEditorView.swift */
 "Nummer" = "Number";
 "Icon malen" = "Draw icon";
@@ -194,6 +241,13 @@
 "Nichts zu holen — der Grundschatz ist vollständig da." = "Nothing to fetch — the starter set is complete.";
 "%@ gelöscht." = "%@ deleted.";
 "Das Icon ließ sich nicht löschen." = "The icon could not be deleted.";
+"s" = "s";
+"Stopp" = "Stop";
+"Abspielen" = "Play";
+"Hole…" = "Fetching…";
+"Nachladen" = "Fetch";
+"%@ geöffnet (%d Bilder)." = "%@ opened (%d frames).";
+"%@ geöffnet." = "%@ opened.";
 /* MalenView.swift */
 "Radierer" = "Eraser";
 "%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst." = "%d rectangles — horizontal runs of the same color are merged.";
@@ -201,9 +255,12 @@
 "Dauer (Sek.)" = "Duration (sec.)";
 "Uhr entscheidet" = "Clock decides";
 "Erst unter „Verbindung“ eine Uhr eintragen und abfragen." = "First enter and query a clock under Connection.";
+"Sende…" = "Sending…";
 /* MeldungsplatzView.swift */
 "Meldung" = "Message";
 "Meldung %d auf der Uhr löschen" = "Delete message %d on the clock";
+"%@ ist belegt — Senden ersetzt diese Anzeige." = "%@ is taken — sending replaces this display.";
+"%@ ist frei." = "%@ is free.";
 /* SendenView.swift */
 "Weg" = "Method";
 "als Pixel" = "as pixels";
@@ -227,6 +284,15 @@
 "Abstand %d" = "Gap %d";
 "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar." = "Empty columns between the characters, 0 to 3 — only with the \"as pixels\" method: each character is rasterized on its own and appended by its ink, so the gap is always exactly as large as set here, independent of font, size and character pair.";
 "Farbe" = "Color";
+" und %@ Pixeln" = " and %d pixels";
+"Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." = "The clock has no bold cut — this does not apply here.";
+"Fett" = "Bold";
+"„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung." = "\"%@\" has no bold cut at this size — the button would have no effect.";
+"Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert." = "Uppercase — works with both methods, and leaves the input field itself unchanged.";
+"„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung." = "\"%@\" knows only capitals — the switch would have no effect.";
+"langsam" = "slow";
+"mittel" = "medium";
+"schnell" = "fast";
 /* UeberView.swift */
 "MQTT-TC002" = "MQTT-TC002";
 "Version %@" = "Version %@";
@@ -266,6 +332,7 @@
 "noch nicht geprüft" = "not checked yet";
 "prüfe…" = "checking…";
 "Der Broker nimmt die Anmeldung an." = "The broker accepts the login.";
+"%@ auf %@ gesetzt" = "%@ set to %@";
 /* VorschauView.swift */
 "Vorschau der Anzeige, 52 mal 16 Pixel" = "Preview of the display, 52 by 16 pixels";
 /* ZielauswahlView.swift */
@@ -273,6 +340,9 @@
 "Alle" = "All";
 "Keine" = "None";
 "kein Präfix — kann erst empfangen, wenn abgefragt" = "no prefix — can only receive once queried";
+"an alle Uhren (%d)" = "to all clocks (%d)";
+"an: %@" = "to: %@";
+"an %d Uhren" = "to %d clocks";
 /* Optionen.swift */
 "Unbekannte Option „%@“. „mqtttc002 hilfe“ zeigt alle." = "Unknown option \"%@\". \"mqtttc002 help\" shows them all.";
 "Zu „%@“ fehlt der Wert." = "\"%@\" is missing its value.";
@@ -296,6 +366,8 @@
 "„%@“ gelöscht" = "\"%@\" deleted";
 "Würde auf „%@“ umschalten." = "Would switch to \"%@\".";
 "auf „%@“ umgeschaltet" = "switched to \"%@\"";
+"fehlt" = "missing";
+"vorhanden" = "present";
 /* Bildersammlung.swift */
 "Ein Name wird gebraucht." = "A name is required.";
 "Das Bild lässt sich nicht lesen." = "The image cannot be read.";
@@ -305,6 +377,7 @@
 "Die Uhr hat unerwartet geantwortet: %@" = "The clock gave an unexpected answer: %@";
 "Die Uhr hat einen Fehler gemeldet: %@ (Status %d)" = "The clock reported an error: %@ (status %d)";
 "Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen." = "The clock has no MQTT prefix set. Enter one in Ulanzi Studio under MQTT and then query again.";
+"keine Antwort" = "no answer";
 /* Icons.swift */
 "Das Icon %@ lässt sich nicht lesen." = "The icon %@ cannot be read.";
 "Für die Nummer %@ gibt es bei LaMetric kein Icon." = "There is no icon at LaMetric for the number %@.";
@@ -326,6 +399,8 @@
 "Dieses Konto darf sich nicht anmelden." = "This account is not allowed to log in.";
 "Der Broker hat die Anmeldung abgelehnt (Code %d)." = "The broker rejected the login (code %d).";
 "Der Broker hat nicht geantwortet." = "The broker did not answer.";
+/* MQTTSender.swift */
+"keine gültige Antwort" = "no valid answer";
 
 /* TC002CLI/main.swift — hilfetext */
 "cli.hilfe" = "mqtttc002 — send messages to an Ulanzi TC002.\n\nUses the setup of the MQTT-TC002 app: broker, password and clocks are read\nfrom there. Setting up happens in the app only.\n\nUSAGE\n  mqtttc002 [send] <text>          send text to the clocks\n  mqtttc002 delete <display>       remove a named display\n  mqtttc002 switch <display>       switch to a display\n  mqtttc002 clocks                 list the clocks that are set up\n  mqtttc002 icons                  list the icons that are there\n  mqtttc002 help                   this text\n\nOPTIONS FOR \"send\"\n  --to <clock>        name or address; may be given more than once.\n                      Without it, the selection that applies in the app.\n  --name <display>    name of the display on the clock (default: cli)\n  --color #RRGGBB     default: #00FF66\n  --icon <number>     an 8x8 icon to the left of the text\n  --font <name>       default: Silkscreen\n  --size <number>     default: 8\n  --bold              bold cut, if the font has one\n  --upper             everything in capitals\n  --top|--middle|--bottom       vertical alignment (default: middle)\n  --left|--center|--right       horizontal alignment (default: left)\n  --margin <number>   rows left free at top/bottom (default: 1)\n  --gap <number>      empty columns between the characters (default: 1)\n  --duration <seconds>  how long the clock shows the display\n  --speed langsam|mittel|schnell   only for scrolling text\n  --device-font       use the clock's built-in font instead of\n                      rasterizing here. Knows no umlauts.\n  --dry-run           only show what would be sent\n\nThe German names work as well: senden, loeschen, umschalten, uhren, hilfe,\n--an, --farbe, --schrift, --groesse, --fett, --gross, --oben, --mitte,\n--unten, --links, --zentriert, --rechts, --rand, --abstand, --dauer,\n--tempo, --geraeteschrift, --trocken.\n\nEXAMPLES\n  mqtttc002 \"Coffee ready\"\n  mqtttc002 send \"Mail is here\" --icon 1673 --color \"#FFAA00\"\n  mqtttc002 send Attention --to Kitchen --duration 10 --center\n  mqtttc002 delete cli\n\nTexts that are too long scroll by themselves; the app does the same.";
@@ -340,3 +415,4 @@
 "Icons" = "Icons";
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";
+"%@ Pixeln" = "%@ pixels";

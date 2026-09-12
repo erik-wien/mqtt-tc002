@@ -207,8 +207,8 @@ struct SendenView: View {
     private func groessenText(_ werte: [Double]) -> String {
         let zahlen = werte.map { String(Int($0)) }
         guard let letzte = zahlen.last else { return "" }
-        guard zahlen.count > 1 else { return "\(letzte) Pixeln" }
-        return zahlen.dropLast().joined(separator: ", ") + lokf(" und %d Pixeln", letzte)
+        guard zahlen.count > 1 else { return lokf("%@ Pixeln", letzte) }
+        return zahlen.dropLast().joined(separator: ", ") + lokf(" und %@ Pixeln", letzte)
     }
 
     private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, luecke: luecke) }
