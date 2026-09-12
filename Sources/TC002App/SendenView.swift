@@ -267,23 +267,33 @@ struct SendenView: View {
                 // „als Text" ist es immer unsere eigene Rasterung als Näherung, nie
                 // laufend: das Laufen besorgt dort die Uhr, wir kennen ihre Schrift
                 // nicht und können es nicht zeigen.
-                // Kantenlaenge 6, nicht mehr 12: Der Geraeterahmen ist gut
-                // doppelt so hoch wie das Pixelfeld darin (356 zu 177 in der
-                // Zeichnung). Bei 12 wurde die Vorschau 386 Punkte hoch statt
-                // 192 — das Fenster schnitt oben und unten ab. Bei 6 ist die
-                // gerahmte Vorschau so hoch wie die ungerahmte vorher.
-                VorschauView(feld: feld, kantenlaenge: 6,
-                            icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
-                            laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                //
+                // Die Kantenlaenge richtet sich nach dem Platz, nicht nach einer
+                // festen Zahl: Der Geraeterahmen ist 680/584 mal so breit und
+                // 356/177 mal so hoch wie das Pixelfeld darin. Was in Breite und
+                // Hoehe passt, bestimmt die Groesse; die Uhr steht mittig.
+                GeometryReader { geo in
+                    let breitenFaktor = 680.0 / 584.0
+                    let hoehenFaktor = 356.0 / 177.0
+                    let nachBreite = (geo.size.width - 24) / (Double(feld.breite) * breitenFaktor)
+                    let nachHoehe = (geo.size.height - 24) / (Double(feld.hoehe) * hoehenFaktor)
+                    let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
+                    VorschauView(feld: feld, kantenlaenge: kante,
+                                icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
+                                laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+                }
                 switch weg {
                 case .pixel:
                     if !passt {
                         // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
                         // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
                         // der Nutzlastgroesse aussteigt (§4.2a).
-                        Label(lokf("Läuft durch: %d Einzelbilder, %@ — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).", laufschriftFrames.count, nutzlastText),
-                              systemImage: "info.circle")
+                        // Nur der Stand, keine Erklaerung — die steht in der Hilfe
+                        // („Senden", Absatz zur Nutzlastgroesse).
+                        Text(lokf("Laufschrift · %d Bilder · %@", laufschriftFrames.count, nutzlastText))
                             .font(.footnote).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         if nutzlastBytes > 60_000 {
                             Label("Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts.",
                                   systemImage: "exclamationmark.triangle")
@@ -307,14 +317,21 @@ struct SendenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            HStack(alignment: .bottom, spacing: 16) {
-                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
-                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
-                MeldungLoeschenKnopf(zustand: zustand, platz: platz,
-                                     belegt: belegtePlaetze.contains(platz))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
-                    TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
+            HStack(alignment: .center, spacing: 20) {
+                // Der Papierkorb gehoert zum Slot, den er leert — direkt daneben.
+                HStack(spacing: 6) {
+                    MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
+                        .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
+                    MeldungLoeschenKnopf(zustand: zustand, platz: platz,
+                                         belegt: belegtePlaetze.contains(platz))
+                }
+                // Beschriftung links, Wert rechts, Einheit dahinter — nicht eine
+                // Ueberschrift ueber dem Feld.
+                LabeledContent("Dauer") {
+                    HStack(spacing: 4) {
+                        TextField("Uhr entscheidet", text: $dauerText).frame(width: 90)
+                        Text("s").foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
             }
@@ -323,7 +340,7 @@ struct SendenView: View {
                 TextField("Text", text: $text)
                 Button(laeuft ? "Sende…" : "Senden") { senden() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(laeuft || zustand.ziele().isEmpty)
+                    .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
@@ -426,17 +443,12 @@ struct SendenView: View {
             // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
             // Regler hier.
             Section("Laufschrift") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Picker("Tempo", selection: $tempo) {
-                        Text("langsam").tag(Lauftempo.langsam)
-                        Text("mittel").tag(Lauftempo.mittel)
-                        Text("schnell").tag(Lauftempo.schnell)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
-                    Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
-                        .disabled(gewaehltesIcon == nil)
-                        .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
+                Picker("Tempo", selection: $tempo) {
+                    Text("langsam").tag(Lauftempo.langsam)
+                    Text("mittel").tag(Lauftempo.mittel)
+                    Text("schnell").tag(Lauftempo.schnell)
                 }
+                .pickerStyle(.segmented).labelsHidden()
                 .disabled(!(weg == .pixel && !passt))
                 .help(weg == .pixel && !passt ? "Wie schnell der Text durchläuft."
                                               : "Gilt nur, wenn der Text nicht ins Display passt.")
@@ -444,6 +456,11 @@ struct SendenView: View {
 
             Section("Icon") {
                 IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
+                // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
+                // beim Laufen tut.
+                Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
+                    .disabled(gewaehltesIcon == nil || !(weg == .pixel && !passt))
+                    .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
             }
 
             Section("Schrift") {

@@ -276,7 +276,6 @@
 "Icon mitscrollen" = "Scroll icon along";
 "Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus." = "Off: the icon sits at the left, the text scrolls past to the right of it. On: it sits at the start of the text and travels out with it.";
 "Text" = "Text";
-"Läuft durch: %d Einzelbilder, %@ — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a)." = "Scrolls through: %d frames, %@ — where the clock's size limit lies is an open question (Device Reference, §4.2a).";
 "Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "A noticeably large payload — only a shorter text makes it smaller, the speed changes nothing.";
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo." = "Only an approximation — the clock typesets this text itself and shows it differently. If it scrolls because it does not fit, \"Scroll speed\" under Settings sets the speed.";
 "Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: %@. \"as pixels\" can do them.";
@@ -432,6 +431,7 @@
 "Größe %d" = "Size %d";
 "Großbuchstaben" = "Capital letters";
 "Laufschrift" = "Scrolling";
+"Laufschrift · %d Bilder · %@" = "Scrolling · %d frames · %@";
 "Die App rastert selbst. Umlaute gehen, die Schrift ist frei wählbar." = "The app rasterizes it itself. Umlauts work, and the font is freely selectable.";
 "Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute." = "The clock sets it itself, with its built-in font. It knows no umlauts.";
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
