@@ -71,7 +71,7 @@ struct SendenView: View {
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt — bei
     /// mehreren Zieluhren zaehlt jede davon. Dieselbe Grundlage wie die Liste
-    /// unter „Anzeigen": was die Uhr meldet, sonst was die App sich gemerkt hat.
+    /// unter „Verlauf": was die Uhr meldet, sonst was die App sich gemerkt hat.
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
@@ -317,7 +317,7 @@ struct SendenView: View {
                     // wert — die Uhr laesst ihn von selbst laufen (§4.3, §5.4). Statt
                     // der Breitenwarnung steht hier, dass unsere Vorschau nur eine
                     // Naeherung ist: die Uhr rastert selbst, mit ihrer eigenen Schrift.
-                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Verbindung“ das Tempo.",
+                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo.",
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
                     if !unbekannteZeichen.isEmpty {
@@ -333,7 +333,7 @@ struct SendenView: View {
 
             HStack(alignment: .bottom, spacing: 16) {
                 MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
-                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht.")
+                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
                 MeldungLoeschenKnopf(zustand: zustand, platz: platz,
                                      belegt: belegtePlaetze.contains(platz))
                 VStack(alignment: .leading, spacing: 2) {
@@ -347,7 +347,7 @@ struct SendenView: View {
                     .disabled(laeuft || zustand.ziele().isEmpty)
             }
             if zustand.ziele().isEmpty {
-                Text("Erst unter „Verbindung“ eine Uhr eintragen und abfragen.")
+                Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }

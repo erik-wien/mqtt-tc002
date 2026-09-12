@@ -36,7 +36,7 @@ struct MeldungsplatzWahl: View {
 
 /// Löscht den gewählten Meldungsplatz auf den gewählten Uhren. Er steht neben
 /// der Platzwahl, weil man den Platz dort gerade in der Hand hat — unter
-/// „Anzeigen" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
+/// „Verlauf" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
 ///
 /// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: im
 /// Malbereich sitzt daneben „Leeren", und das meint das Bild, nicht das Gerät.

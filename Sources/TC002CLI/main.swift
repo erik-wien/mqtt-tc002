@@ -103,7 +103,7 @@ func lauf() throws {
 
     if case .uhren = optionen.befehl {
         guard !einstellungen.uhren.isEmpty else {
-            throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
+            throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Einstellungen“ eine anlegen."))
         }
         let ziele = Set(einstellungen.ziele.map(\.id))
         for uhr in einstellungen.uhren {
@@ -118,7 +118,7 @@ func lauf() throws {
 
     // Ab hier wird gesendet, also braucht es einen Broker.
     guard einstellungen.brokerEingerichtet else {
-        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Verbindung“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
+        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
     }
 
     let gewaehlte: [Uhr]
@@ -133,12 +133,12 @@ func lauf() throws {
         }
     }
     guard !gewaehlte.isEmpty else {
-        throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
+        throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Einstellungen“ eine anlegen."))
     }
 
     let ohnePraefix = gewaehlte.filter { $0.praefix.isEmpty }
     if !ohnePraefix.isEmpty {
-        throw Abbruch(lokf("Noch nicht abgefragt: %@. In der App unter „Verbindung“ „Abfragen“ drücken — ohne Präfix gibt es kein Thema, an das sich senden liesse.", ohnePraefix.map(\.name).joined(separator: ", ")))
+        throw Abbruch(lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ „Abfragen“ drücken — ohne Präfix gibt es kein Thema, an das sich senden liesse.", ohnePraefix.map(\.name).joined(separator: ", ")))
     }
 
     let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)

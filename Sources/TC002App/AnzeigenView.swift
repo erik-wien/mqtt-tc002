@@ -58,7 +58,7 @@ struct AnzeigenView: View {
 
     private func umschalten(_ name: String) {
         guard let uhr = zustand.aktiveUhr else {
-            zustand.fehler = lok("Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen.")
+            zustand.fehler = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
             return
         }
         guard let a = zustand.anzeigen(fuer: uhr) else {
@@ -73,7 +73,7 @@ struct AnzeigenView: View {
 
     private func loeschen(_ name: String) {
         guard let uhr = zustand.aktiveUhr else {
-            zustand.fehler = lok("Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen.")
+            zustand.fehler = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
             return
         }
         guard let a = zustand.anzeigen(fuer: uhr) else {

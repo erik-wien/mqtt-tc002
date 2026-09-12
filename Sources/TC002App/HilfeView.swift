@@ -81,11 +81,11 @@ private enum Hilfebaustein {
 
 private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
-    case verbindung = "Verbindung"
+    case verbindung = "Einstellungen"
     case senden = "Senden"
     case malen = "Malen"
     case icons = "Icons"
-    case anzeigen = "Anzeigen"
+    case anzeigen = "Verlauf"
     case fehlersuche = "Wenn nichts erscheint"
 
     var id: String { rawValue }
@@ -94,13 +94,13 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         switch self {
         case .ueberblick:
             return [
-                .absatz("MQTT-TC002 schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Es tut das nicht direkt: alle Nachrichten laufen über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind. Nur für ein paar Abfragen und Einstellungen spricht die App eine Uhr selbst per HTTP an — das steht jeweils unten bei „Verbindung“ und „Anzeigen“."),
+                .absatz("MQTT-TC002 schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Es tut das nicht direkt: alle Nachrichten laufen über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind. Nur für ein paar Abfragen und Einstellungen spricht die App eine Uhr selbst per HTTP an — das steht jeweils unten bei „Einstellungen“ und „Verlauf“."),
                 .ueberschrift("Bereiche"),
                 .tabelle([
                     ("Senden", "Text und Icon verschicken"),
                     ("Malen", "ein frei gezeichnetes Bild verschicken"),
-                    ("Anzeigen", "bereits verschickte Inhalte und das Protokoll"),
-                    ("Verbindung", "Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr"),
+                    ("Verlauf", "bereits verschickte Inhalte und das Protokoll"),
+                    ("Einstellungen", "Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr"),
                     ("Icons", "eigene 8×8-Bildchen"),
                 ]),
                 .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),
@@ -108,7 +108,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .verbindung:
             return [
                 .ueberschrift("Uhr hinzufügen"),
-                .absatz("Unter „Verbindung“ trägt man zuerst die Adresse einer Uhr ein (Feld „Adresse einer weiteren Uhr“, dann „Hinzufügen“ oder die Eingabetaste im Feld) oder passt eine vorhandene an. Der Radioknopf links in der Zeile wählt, welche Uhr gerade das Ziel beim Senden ist — bei nur einer Uhr ist das ohne Bedeutung."),
+                .absatz("Unter „Einstellungen“ trägt man zuerst die Adresse einer Uhr ein (Feld „Adresse einer weiteren Uhr“, dann „Hinzufügen“ oder die Eingabetaste im Feld) oder passt eine vorhandene an. Der Radioknopf links in der Zeile wählt, welche Uhr gerade das Ziel beim Senden ist — bei nur einer Uhr ist das ohne Bedeutung."),
                 .absatz("Beim allerersten Start fragt macOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und die allererste „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt — einfach erlauben und erneut abfragen. Zurücknehmen lässt sich die Freigabe später unter Systemeinstellungen → Datenschutz & Sicherheit → Lokales Netzwerk."),
 
                 .ueberschrift("Abfragen"),
@@ -117,7 +117,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
 
                 .ueberschrift("Entfernen"),
-                .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Anzeigen“ löschen."),
+                .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
 
                 .ueberschrift("Einstellungen der aktiven Uhr"),
                 .punkte([
@@ -130,12 +130,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .ueberschrift("Broker"),
                 .absatz("Darunter steht der Broker: Adresse, Port, Benutzer und Kennwort. Das Kennwort liegt im Schlüsselbund und nicht, wie die übrigen Felder, in den App-Einstellungen. Es wird gesichert, sobald man das Feld verlässt, die Eingabetaste drückt, den Bereich wechselt oder die App beendet — nicht bei jedem Tastendruck."),
                 .absatz("„Sichern und prüfen“ schreibt Adresse, Port, Benutzer und Kennwort ausdrücklich fest und fragt danach den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt."),
-                .absatz("„Der Broker nimmt die Anmeldung an“ heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Anzeigen“."),
+                .absatz("„Der Broker nimmt die Anmeldung an“ heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Verlauf“."),
             ]
         case .senden:
             return [
                 .ueberschrift("Meldung und Platz"),
-                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. „Meldung“ ①–⑤ wählt einen von fünf festen Plätzen — der gewählte Platz ist zugleich der Bezeichner, unter dem die Anzeige danach bei „Anzeigen“ auftaucht (`meldung1` bis `meldung5`)."),
+                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. „Meldung“ ①–⑤ wählt einen von fünf festen Plätzen — der gewählte Platz ist zugleich der Bezeichner, unter dem die Anzeige danach bei „Verlauf“ auftaucht (`meldung1` bis `meldung5`)."),
                 .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen — ein orange umrandeter Platz ist bereits belegt, ein grau umrandeter frei. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt."),
 
                 .ueberschrift("Weg: als Pixel oder als Text"),
@@ -147,13 +147,13 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
                 .absatz("Läuft der Text beim Weg „als Pixel“, erscheint über der Formatleiste eine Einstellung, die es sonst nicht gibt: „Tempo“ — langsam, mittel oder schnell. Darunter unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
                 .absatz("Die Größe ist der Grund für die Angabe: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage). Wird es auffällig groß, sagt ein zusätzlicher Hinweis das."),
-                .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Dafür kann sie etwas, das „als Pixel“ nicht kann: Passt der Text nicht aufs Display, läuft er von selbst durch, ohne dass die App dafür ein GIF bauen muss — wie schnell, stellt „Scrolltempo“ unter „Verbindung“ bei der aktiven Uhr ein (Gerätereferenz, §5.4). Eine Breitenwarnung gibt es hier deshalb nicht: Laufen ist auf diesem Weg der Normalfall, kein Fehler."),
+                .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Dafür kann sie etwas, das „als Pixel“ nicht kann: Passt der Text nicht aufs Display, läuft er von selbst durch, ohne dass die App dafür ein GIF bauen muss — wie schnell, stellt „Scrolltempo“ unter „Einstellungen“ bei der aktiven Uhr ein (Gerätereferenz, §5.4). Eine Breitenwarnung gibt es hier deshalb nicht: Laufen ist auf diesem Weg der Normalfall, kein Fehler."),
 
                 .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
-                .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Verbindung“ bei der aktiven Uhr. Und egal wie viele Plätze belegt sind: Eine gerade angezeigte, stehende Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder ersetzt wird — deshalb ist „auf denselben Platz senden“ oft das, was man eigentlich will."),
+                .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ bei der aktiven Uhr. Und egal wie viele Plätze belegt sind: Eine gerade angezeigte, stehende Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder ersetzt wird — deshalb ist „auf denselben Platz senden“ oft das, was man eigentlich will."),
 
                 .ueberschrift("Löschen und Dauer"),
-                .absatz("Der Papierkorb rechts neben der Platzwahl löscht den gewählten Platz auf den gewählten Uhren — dasselbe, was unter „Anzeigen“ der Knopf „Löschen“ tut, nur dort, wo man den Platz gerade in der Hand hat. Er ist gesperrt, solange der Platz leer ist. Im Malbereich steht er neben „Leeren“, und die beiden meinen Verschiedenes: „Leeren“ macht die Malfläche leer, der Papierkorb löscht die Anzeige auf der Uhr."),
+                .absatz("Der Papierkorb rechts neben der Platzwahl löscht den gewählten Platz auf den gewählten Uhren — dasselbe, was unter „Verlauf“ der Knopf „Löschen“ tut, nur dort, wo man den Platz gerade in der Hand hat. Er ist gesperrt, solange der Platz leer ist. Im Malbereich steht er neben „Leeren“, und die beiden meinen Verschiedenes: „Leeren“ macht die Malfläche leer, der Papierkorb löscht die Anzeige auf der Uhr."),
                 .absatz("„Dauer (Sek.)“ gibt der Uhr eine eigene Standzeit für diese eine Anzeige mit; leer oder 0 bedeutet keine Angabe, dann entscheidet allein der Seitenwechsel. Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Hilfe → Gerätereferenz, §4.4)."),
 
                 .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
@@ -208,9 +208,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Beim Weg „als Text“ gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell die Uhr den Text daneben laufen lässt."),
 
                 .ueberschrift("Sendeziel"),
-                .absatz("Rechts vom Sendeknopf steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, Präfix und derselbe Verbindungsstand wie unter „Verbindung“, dazu ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
-                .absatz("Eine Uhr ohne Präfix ist im Blatt als solche gekennzeichnet — sie kann erst empfangen, sobald sie unter „Verbindung“ abgefragt wurde, und wird beim Senden stillschweigend übersprungen, solange das nicht geschehen ist. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
-                .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht jede Sendung ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Verbindung“ eine Uhr einzutragen und abzufragen."),
+                .absatz("Rechts vom Sendeknopf steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, Präfix und derselbe Verbindungsstand wie unter „Einstellungen“, dazu ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
+                .absatz("Eine Uhr ohne Präfix ist im Blatt als solche gekennzeichnet — sie kann erst empfangen, sobald sie unter „Einstellungen“ abgefragt wurde, und wird beim Senden stillschweigend übersprungen, solange das nicht geschehen ist. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
+                .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht jede Sendung ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
 
                 .ueberschrift("Senden auslösen"),
                 .absatz("Die Eingabetaste löst „Senden“ aus, solange der Knopf nicht gesperrt ist. Geht dabei etwas schief — falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert. Bleibt das Fenster aus, ist die Nachricht beim Broker angekommen — was das noch nicht heißt, steht unter „Wenn nichts erscheint“."),
@@ -268,12 +268,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .anzeigen:
             return [
                 .ueberschrift("Herkunft der Liste"),
-                .absatz("„Anzeigen“ listet, was auf der aktiven Uhr steht. Der graue Zusatz neben der Überschrift sagt, woher die Liste kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Uhr selbst hat sie veröffentlicht; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen."),
-                .absatz("„von dieser App angelegt“ heißt dagegen, es ist nur die eigene Buchführung — das eine ist Tatsache, das andere Erinnerung. Je Uhr getrennt: die Liste wechselt mit, wenn man unter „Verbindung“ eine andere Uhr zur aktiven macht."),
+                .absatz("„Verlauf“ listet, was auf der aktiven Uhr steht. Der graue Zusatz neben der Überschrift sagt, woher die Liste kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Uhr selbst hat sie veröffentlicht; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen."),
+                .absatz("„von dieser App angelegt“ heißt dagegen, es ist nur die eigene Buchführung — das eine ist Tatsache, das andere Erinnerung. Je Uhr getrennt: die Liste wechselt mit, wenn man unter „Einstellungen“ eine andere Uhr zur aktiven macht."),
 
                 .ueberschrift("Wie die Liste entsteht"),
                 .absatz("Die Uhr veröffentlicht ihre Anzeigenliste von sich aus über das MQTT-Thema `<präfix>/customList`, und über `<präfix>/status`, ob sie gerade am Broker hängt (Hilfe → Gerätereferenz, §3.4 und §3.5). Abfragen lässt sich beides nicht — es kommt, wenn die Uhr es schickt."),
-                .absatz("Die App hört deshalb dauerhaft beim Broker mit, sobald eine Uhr ein Präfix hat. Steht neben der Überschrift „von dieser App angelegt“, ist noch nichts gemeldet worden: kein Broker erreichbar, die Uhr aus, oder unter „Verbindung“ noch nicht abgefragt. Reißt die Verbindung ab, fällt die Liste auf die Buchführung zurück und sagt es."),
+                .absatz("Die App hört deshalb dauerhaft beim Broker mit, sobald eine Uhr ein Präfix hat. Steht neben der Überschrift „von dieser App angelegt“, ist noch nichts gemeldet worden: kein Broker erreichbar, die Uhr aus, oder unter „Einstellungen“ noch nicht abgefragt. Reißt die Verbindung ab, fällt die Liste auf die Buchführung zurück und sagt es."),
 
                 .ueberschrift("Anzeigen und Löschen"),
                 .absatz("„Zeigen“ schaltet auf den Namen um, „Löschen“ entfernt ihn mit leerer Nachricht von der aktiven Uhr. Ging dieselbe Anzeige über die Zielauswahl auch an andere Uhren, steht sie dort weiter und muss bei jeder einzeln gelöscht werden. Eine stehende, gerade gezeigte Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder unter demselben Namen ersetzt wird — das ist der häufigste Grund, warum eine frisch gesendete Anzeige nicht auftaucht."),
@@ -290,7 +290,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("„Leeren“ macht die Liste leer. Fehler erscheinen zusätzlich zum Hinweisfenster auch hier, damit sie nach dem Wegklicken nicht verloren sind."),
 
                 .ueberschrift("Seitenwechsel"),
-                .absatz("Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht mehr hier, sondern unter „Verbindung“ bei der jeweils aktiven Uhr, direkt neben der Liste der Uhren."),
+                .absatz("Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht mehr hier, sondern unter „Einstellungen“ bei der jeweils aktiven Uhr, direkt neben der Liste der Uhren."),
             ]
         case .fehlersuche:
             return [
@@ -299,18 +299,18 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("Alles bis zur Anmeldung am Broker meldet die App dagegen sehr wohl: falsches Kennwort, unerreichbarer Broker, Zeitüberschreitung, fehlende Zugangsdaten. Kam nach dem Senden kein Hinweisfenster, ist die Nachricht beim Broker gewesen — dann liegt die Ursache hinter ihm, und die folgenden Punkte helfen weiter."),
 
                 .ueberschrift("Welche Meldung ist gemeint?"),
-                .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Verbindung“ → „Sichern und prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
+                .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Sichern und prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
 
                 .ueberschrift("Der Reihe nach prüfen"),
                 .punkte([
-                    "Erstens das Präfix — unter „Verbindung“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen; es ist nicht das in Ulanzi Studio eingetragene.",
+                    "Erstens das Präfix — unter „Einstellungen“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen; es ist nicht das in Ulanzi Studio eingetragene.",
                     "Zweitens, ob die Uhr überhaupt beim Broker angemeldet ist — das Häkchen- oder Warndreieck-Symbol in derselben Zeile.",
                     "Drittens, ob das Broker-Konto auf dieses Thema schreiben darf. Das steht in der Rechtedatei des Brokers, nicht in dieser App, und lässt sich nur am Broker-Protokoll ablesen.",
-                    "Viertens, ob unter „Anzeigen“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen.",
+                    "Viertens, ob unter „Verlauf“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen.",
                 ]),
 
                 .ueberschrift("Weitere Symptome"),
-                .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Verbindung“ steht vermutlich auf „kein Wechsel“."),
+                .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“."),
                 .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es bei „Malen“ nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
             ]
         }

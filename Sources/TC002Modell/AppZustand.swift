@@ -274,9 +274,9 @@ public final class AppZustand {
     /// statt stumm zurückzukehren.
     public func zugangsmeldung(_ uhr: Uhr) -> String {
         if uhr.praefix.isEmpty {
-            return "\(uhr.name) wurde noch nicht abgefragt. Unter „Verbindung“ „Abfragen“ drücken."
+            return "\(uhr.name) wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken."
         }
-        return "Der Broker-Port „\(brokerPort)“ ist keine Zahl über 0. Unter „Verbindung“ richtigstellen und „Sichern und prüfen“ drücken."
+        return "Der Broker-Port „\(brokerPort)“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken."
     }
 
     /// Wessen Schuld war es? Ein Brokerfehler träfe jede Uhr gleichermaßen — ihn
@@ -300,22 +300,22 @@ public final class AppZustand {
         let adresse = "\(brokerHost):\(brokerPort)"
         switch error {
         case MQTTFehler.zeitueberschreitung:
-            return "Der Broker \(adresse) antwortet nicht. Läuft er, und stimmen Adresse und Port? Unter „Verbindung“ beantwortet das „Sichern und prüfen“."
+            return "Der Broker \(adresse) antwortet nicht. Läuft er, und stimmen Adresse und Port? Unter „Einstellungen“ beantwortet das „Sichern und prüfen“."
         case MQTTFehler.nichtVerbunden(let grund):
-            return "Der Broker \(adresse) ist nicht erreichbar (\(grund)) Adresse und Port stehen unter „Verbindung“; „Sichern und prüfen“ sagt, ob er antwortet."
+            return "Der Broker \(adresse) ist nicht erreichbar (\(grund)) Adresse und Port stehen unter „Einstellungen“; „Sichern und prüfen“ sagt, ob er antwortet."
         case MQTTFehler.abgelehnt(let code):
             let konto = benutzer.isEmpty ? "ohne Benutzer" : "„\(benutzer)“"
             if code == 4 || code == 5 {
-                return "Der Broker \(adresse) nimmt das Konto \(konto) nicht an. Benutzer und Kennwort stehen unter „Verbindung“ — „Sichern und prüfen“ zeigt, ob sie stimmen."
+                return "Der Broker \(adresse) nimmt das Konto \(konto) nicht an. Benutzer und Kennwort stehen unter „Einstellungen“ — „Sichern und prüfen“ zeigt, ob sie stimmen."
             }
-            return "Der Broker \(adresse) lehnt die Anmeldung ab: \((error as? LocalizedError)?.errorDescription ?? "Code \(code)") Unter „Verbindung“ mit „Sichern und prüfen“ nachfassen."
+            return "Der Broker \(adresse) lehnt die Anmeldung ab: \((error as? LocalizedError)?.errorDescription ?? "Code \(code)") Unter „Einstellungen“ mit „Sichern und prüfen“ nachfassen."
         default:
             return nil
         }
     }
 
     /// Ordnet einen Fehler der richtigen Partei zu. Bei einem Brokerfehler wandert
-    /// die Meldung zugleich in `brokerStand` — sonst behauptete „Verbindung“
+    /// die Meldung zugleich in `brokerStand` — sonst behauptete „Einstellungen“
     /// weiter „Der Broker nimmt die Anmeldung an.“, während nichts durchgeht.
     private func einordnen(_ error: Error, uhr: Uhr) -> Sendefehler {
         if let meldung = brokerMeldung(error) {
@@ -360,7 +360,7 @@ public final class AppZustand {
                          erledigt: (Uhr) -> Void) async {
         let ziele = ziele()
         guard !ziele.isEmpty else {
-            fehler = lok("Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen.")
+            fehler = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
             return
         }
         var fehlschlaege: [Sendefehler] = []

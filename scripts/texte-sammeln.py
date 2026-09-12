@@ -52,7 +52,7 @@ EIGENE = ["lok", "lokf", "ueberschrift", "absatz"]
 # werden, sonst faellt ihr Fehlen erst dem Anwender auf.
 DYNAMISCH = [
     # Bereiche der Seitenleiste (App.swift, enum Bereich)
-    "Senden", "Malen", "Anzeigen", "Verbindung", "Icons",
+    "Senden", "Malen", "Icons", "Verlauf", "Einstellungen",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
 ]
