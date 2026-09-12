@@ -6,10 +6,25 @@ sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
 ist und bei einem Update nachzuprüfen wäre, in
 `docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
 
-- Logik gehört in `TC002Core` und wird dort getestet. `TC002App` bleibt dünn
-  — reine SwiftUI-Views und Zustandsverdrahtung, keine Geschäftslogik.
-- Das echte Gerät (`192.168.1.20`) und der Broker (`192.168.1.10`) sind in
-  Tests tabu. Dafür gibt es Doppelgänger: `URLProtocol` für die
+- Logik gehört in `TC002Core` und wird dort getestet. Die Oberflächen bleiben
+  dünn — reine SwiftUI-Views und Zustandsverdrahtung, keine Geschäftslogik.
+- Sechs Ziele, und wer wohin gehört:
+  `TC002Core` rechnet (Rastern, Laufschrift, Rahmenbau, MQTT-Bytes, Icons),
+  `TC002Modell` hält den Zustand (`AppZustand`), `TC002Ansichten` sind
+  plattformfreie SwiftUI-Bausteine für alle Oberflächen, `TC002App` ist die
+  Mac-App, `TC002iOS` die iPhone-App, `TC002CLI` das Werkzeug. Die ersten
+  drei kennen **keine** Plattform: kein `import AppKit`, kein `import UIKit`,
+  kein `NSColor`, kein `UIColor`.
+- **Zwei Oberflächenfamilien, nicht eine.** Das iPhone hat seine eigene
+  (Senden als Wurzel, Titelmenü, schiebbare Formatpille, Blätter). Mac und —
+  sobald es sie gibt — die iPad-Fassung teilen sich die Desktop-Oberfläche mit
+  Seitenleiste. Was auf dem Telefon richtig ist, ist es dort selten.
+- Das echte Gerät und der Broker im Hausnetz sind in Tests tabu — ebenso in
+  jeder Arbeit, die ein Agent ausführt. Ihre Adressen stehen in den
+  Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
+  genannt. (Bis 12.09.2026 standen an dieser Stelle zwei Adressen, die längst
+  nicht mehr stimmten — gefährlicher als keine, weil sie die falschen
+  Maschinen schützten.) Dafür gibt es Doppelgänger: `URLProtocol` für die
   HTTP-Schnittstelle des Geräts, `NachrichtSendend` für das MQTT-Senden.
 - Die MQTT-Bytes sind gegen eine echte Aufzeichnung von `mosquitto_pub`
   geprüft (`MQTTPaketTests`). Dieser Test wird nicht abgeschwächt.
@@ -37,6 +52,16 @@ deutschen Satz zurück, nicht auf einen Schlüsselnamen.
   Meldungen, Protokollzeilen, die Hilfebausteine, das Kommandozeilenwerkzeug —
   muss durch `lok(…)` bzw. `lokf(…, %@)`. Sonst bleibt es deutsch, ohne dass
   irgendetwas darauf hinweist.
+- **Ein Ternär mit einem `String`-Zweig übersetzt nicht.**
+  `.navigationTitle(mehrere ? name : "Senden")` zwingt SwiftUI in die
+  `StringProtocol`-Überladung, und die schlägt nichts nach. Der Eintrag steht
+  in `en.lproj` und wird nie gefunden. Abhilfe: `lok("Senden")` — dann ist die
+  Übersetzung schon geschehen, bevor SwiftUI den Wert sieht.
+- **Was in der Kurzbefehle-App steht, schlüsselt anders.** App Intents führen
+  ihre `parameterSummary` im Bündel als `${text} …`, nicht als
+  `\(\.$text) …`. Wer den Quelltext abschreibt, legt einen Schlüssel an, den
+  nie jemand nachschlägt. Nachsehen in `Metadata.appintents/extract.actionsdata`
+  des gebauten Bündels.
 - **Keine Werte in den Schlüssel einsetzen.** `Text("Rand \(rand)")` trägt zur
   Laufzeit den Schlüssel `Rand %lld`, im Quelltext steht aber `Rand \(rand)` —
   gesucht wird dann etwas, das es nicht gibt. Stattdessen `lokf("Rand %d", rand)`.
@@ -91,6 +116,32 @@ schreibt sie nie. Es reist im Bündel mit (`Contents/MacOS/mqtttc002`) und wird
 Die `Codable`-Form von `Uhr` ist ein Dateiformat: Die App schreibt sie, das
 Werkzeug liest sie. Feldnamen ändern macht die Einstellungen einer laufenden
 Installation unlesbar (`EinstellungenTests` hält das fest).
+
+## Ein grüner Bau beweist nichts über das Bündel
+
+`** BUILD SUCCEEDED **` sagt, dass übersetzt wurde — nicht, dass Schriften,
+Icons, das App-Symbol und die Übersetzungen im Programm gelandet sind. Am
+12.09.2026 fehlte im iOS-Bündel **jede einzelne** Ressource, weil `project.yml`
+sie unter einem Schlüssel führte, den XcodeGen nicht kennt und stillschweigend
+überliest. Neun Aufgaben und ebenso viele Durchsichten haben das nicht
+gesehen; aufgefallen ist es erst am Gerät, an einer Vorschau in der falschen
+Schrift.
+
+Deshalb nach jedem Bau:
+
+    sh scripts/buendel-pruefen.sh                    # iOS
+    sh scripts/buendel-pruefen.sh build/MQTT-TC002.app   # macOS
+
+Zwei Eigenheiten, die dahinterstecken:
+
+- In XcodeGen gehören Ressourcen unter `sources:` mit `buildPhase: resources`.
+  Ordner, die als Ordner im Bündel liegen sollen — `Icons`, `Schriften` —
+  brauchen zusätzlich `type: folder`, sonst landen ihre Dateien einzeln in der
+  Wurzel und niemand findet sie.
+- **SwiftPM übersetzt Bildkataloge nur, wenn Xcode der Bauherr ist.** Über den
+  nativen Bauweg, den `build.sh` benutzt, wird `.xcassets` roh kopiert — kein
+  `actool`, kein `Assets.car`, ein leerer Rahmen zur Laufzeit. `build.sh` holt
+  den Übersetzungsschritt deshalb selbst nach.
 
 ## Fassungsnummer
 

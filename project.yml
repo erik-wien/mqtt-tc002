@@ -55,7 +55,12 @@ targets:
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_ASSET_PATHS: ""
     info:
-      path: build/InfoiOS.plist
+      # NICHT nach build/ — das ist das Ausgabeverzeichnis der Mac-App, und
+      # `release.sh` raeumt es mit `rm -rf` ab. Diese Datei ist aber eine
+      # **Eingabe** des iOS-Projekts: Ist sie weg, bricht Xcode mit
+      # „Build input file cannot be found" ab. Am 12.09.2026 genau so passiert,
+      # mitten in einer Veroeffentlichung.
+      path: erzeugt/InfoiOS.plist
       properties:
         CFBundleName: MQTT-TC002
         CFBundleDisplayName: MQTT-TC002

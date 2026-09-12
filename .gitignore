@@ -5,4 +5,4 @@
 build/
 __pycache__/
 MQTT-TC002-iOS.xcodeproj/
-build/InfoiOS.plist
+erzeugt/
