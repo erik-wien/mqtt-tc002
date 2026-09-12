@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 import TC002Modell
 
@@ -80,6 +81,94 @@ struct SendenView: View {
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
+    }
+
+    /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
+    /// ein Block geprueft wird. Bei mehreren Zieluhren (siehe `belegtePlaetze`,
+    /// das ueber alle summiert) bliebe sonst offen, wessen Slotbild und wessen
+    /// gemerkte Regler gelten sollen — hier zaehlt die erste gewaehlte Uhr.
+    private var referenzUhr: Uhr? { zustand.ziele().first }
+
+    /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
+    /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
+    private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
+
+    /// Baut aus einem gemerkten Slotstand wieder vollstaendige Optionen —
+    /// oder nil, wenn eine der Kennungen (Weg, Ausrichtung, Tempo) nicht mehr
+    /// zu einem bekannten Fall passt, etwa nach einer von Hand verbogenen
+    /// Datei. Gebraucht an zwei Stellen: um bei fehlendem Mitlesen die Pixel
+    /// ueber `Meldungsbau` neu zu rechnen (siehe `slotzustand`), und um die
+    /// Regler beim Antippen zu uebernehmen (siehe `reglerUebernehmen`).
+    private func meldungsoptionen(aus stand: Slotstand) -> Meldungsoptionen? {
+        guard let weg = SendeWeg(rawValue: stand.weg),
+              let waagrecht = SendenHAusrichtung(rawValue: stand.waagrecht),
+              let senkrecht = SendenVAusrichtung(rawValue: stand.senkrecht),
+              let tempo = Lauftempo(rawValue: stand.tempo) else { return nil }
+        return Meldungsoptionen(text: stand.text, weg: weg, schrift: stand.schrift,
+                                groesse: stand.groesse, fett: stand.fett, farbe: stand.farbe,
+                                grossbuchstaben: stand.grossbuchstaben, waagrecht: waagrecht,
+                                senkrecht: senkrecht, rand: stand.rand, abstand: stand.abstand,
+                                tempo: tempo, iconLaeuftMit: stand.iconLaeuftMit, dauer: stand.dauer)
+    }
+
+    /// Was ein Block zeigt — drei ehrliche Faelle (siehe `Slotzustand` in
+    /// `TC002Ansichten`): frei, wenn kein Name auf dem Platz liegt; sonst die
+    /// mitgelesenen Pixel, wenn welche da sind; sonst, falls das Gedaechtnis
+    /// einen Text fuer diesen Platz hat, dieselben Pixel neu gerechnet ueber
+    /// `Meldungsbau` — exakt statt aus einem Lauf-GIF zurueckgewonnen. Ob die
+    /// Regler dabei uebernommen werden duerfen, ist eine andere Frage
+    /// (`slotWaehlen`): hier geht es nur um die Anzeige.
+    private func slotzustand(_ platz: Int) -> Slotzustand {
+        guard belegtePlaetze.contains(platz) else { return .frei }
+        guard let uhr = referenzUhr else { return .unbekannt }
+        if let bild = zustand.slotInhalt[uhr.id]?[platz] {
+            return .bekannt(bild.pixel)
+        }
+        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
+           let optionen = meldungsoptionen(aus: stand) {
+            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
+        }
+        return .unbekannt
+    }
+
+    /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
+    /// das belegbar ist: Pixel muessen mitgelesen worden sein (sonst gibt es
+    /// nichts, wogegen zu pruefen waere), und ihre Pruefsumme muss zu den
+    /// gemerkten Reglern passen (sonst hat ein fremder Absender geschrieben).
+    /// In jedem anderen Fall bleiben die Regler unangeruehrt — auch dann, wenn
+    /// `slotzustand` oben trotzdem Pixel zeigt (neu gerechnet aus dem
+    /// Gedaechtnis): dass dieses Gedaechtnis noch stimmt, ist dort unbelegt.
+    private func slotWaehlen(_ i: Int) {
+        platz = i
+        guard let uhr = referenzUhr,
+              let bild = zustand.slotInhalt[uhr.id]?[i],
+              let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
+              Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
+        else { return }
+        reglerUebernehmen(stand)
+    }
+
+    /// Setzt alle Regler auf den gemerkten Stand — dieselben Felder, die
+    /// `optionen` oben aus ihnen zusammensetzt, plus Dauer und Icon, die dort
+    /// nicht mitgefuehrt werden.
+    private func reglerUebernehmen(_ stand: Slotstand) {
+        guard let o = meldungsoptionen(aus: stand) else { return }
+        text = o.text
+        weg = o.weg
+        schrift = o.schrift
+        groesse = o.groesse
+        fett = o.fett
+        grossbuchstaben = o.grossbuchstaben
+        rand = o.rand
+        luecke = o.abstand
+        horizontal = o.waagrecht
+        vertikal = o.senkrecht
+        farbeHex = o.farbe
+        tempo = o.tempo
+        iconLaeuftMit = o.iconLaeuftMit
+        dauerText = o.dauer.map(String.init) ?? ""
+        // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon)`.
+        gewaehltesIcon = stand.icon.flatMap { nummer in sammlung.alle().first { $0.nummer == nummer } }
     }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -318,10 +407,17 @@ struct SendenView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             HStack(alignment: .center, spacing: 20) {
-                // Der Papierkorb gehoert zum Slot, den er leert — direkt daneben.
+                // Die fuenf Bloecke zeigen, was auf der Uhr liegt — Antippen
+                // waehlt den Platz und stellt, wenn belegbar, die Regler
+                // wieder her (siehe `slotWaehlen`). Der Papierkorb gehoert
+                // zum gewaehlten Platz und leert ihn — direkt daneben.
                 HStack(spacing: 6) {
-                    MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
-                        .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
+                    ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
+                        Button { slotWaehlen(i) } label: {
+                            Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     MeldungLoeschenKnopf(zustand: zustand, platz: platz,
                                          belegt: belegtePlaetze.contains(platz))
                 }
@@ -596,5 +692,36 @@ struct SendenView: View {
         }
         let anzeigenName = Meldungsplatz.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
+    }
+}
+
+/// Löscht den gewählten Meldungsplatz auf den gewählten Uhren. Er steht neben
+/// der Blockreihe, weil man den Platz dort gerade in der Hand hat — unter
+/// „Verlauf" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
+///
+/// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: im
+/// Malbereich sitzt daneben „Leeren", und das meint das Bild, nicht das Gerät.
+///
+/// Wortgetreu aus `MeldungsplatzView` gelöst — die Ziffernreihe daneben ist
+/// entfallen, dieser Knopf blieb unverändert.
+struct MeldungLoeschenKnopf: View {
+    @Bindable var zustand: AppZustand
+    let platz: Int
+    /// Ein leerer Platz lässt sich nicht löschen. Woher das bekannt ist, steht
+    /// bei `belegtePlaetze`: gemeldet schlägt gemerkt.
+    let belegt: Bool
+
+    @State private var laeuft = false
+
+    var body: some View {
+        Button {
+            laeuft = true
+            let name = Meldungsplatz.name(fuer: platz)
+            Task { await zustand.loeschen(name); laeuft = false }
+        } label: {
+            Image(systemName: "trash")
+        }
+        .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
+        .help(lokf("Slot %d auf der Uhr löschen", platz))
     }
 }

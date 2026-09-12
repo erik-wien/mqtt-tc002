@@ -255,17 +255,13 @@
 /* MalenView.swift */
 "Radierer" = "Eraser";
 "%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst." = "%d rectangles — horizontal runs of the same color are merged.";
-"Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht." = "Pages between occupied slots only if the page change under Settings is not set to \"no change\".";
 "Dauer (Sek.)" = "Duration (sec.)";
 "Uhr entscheidet" = "Clock decides";
 "Erst unter „Einstellungen“ eine Uhr eintragen und abfragen." = "First enter and query a clock under Settings.";
 "Sende…" = "Sending…";
-/* MeldungsplatzView.swift */
+/* SendenView.swift */
 "Slot" = "Slot";
 "Slot %d auf der Uhr löschen" = "Delete slot %d on the clock";
-"%@ ist belegt — Senden ersetzt diese Anzeige." = "%@ is taken — sending replaces this display.";
-"%@ ist frei." = "%@ is free.";
-/* SendenView.swift */
 "Senden als" = "Send as";
 "Weg" = "Method";
 "als Pixel" = "as pixels";

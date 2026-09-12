@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 import TC002Modell
 
@@ -46,6 +47,18 @@ struct MalenView: View {
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
+    /// Wie in `SendenView`: die eine Uhr, deren mitgelesener Slotinhalt einen
+    /// Block fuellt, wenn mehrere Zieluhren zur Wahl stehen. Anders als dort
+    /// braucht das Malen kein Gedaechtnis — hier gibt es keine Regler, nur
+    /// Pixel, also bleibt es bei dem, was tatsaechlich mitgelesen wurde.
+    private var referenzUhr: Uhr? { zustand.ziele().first }
+
+    private func slotzustand(_ platz: Int) -> Slotzustand {
+        guard belegtePlaetze.contains(platz) else { return .frei }
+        guard let uhr = referenzUhr, let bild = zustand.slotInhalt[uhr.id]?[platz] else { return .unbekannt }
+        return .bekannt(bild.pixel)
+    }
+
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
     /// Nutzlast wie bisher.
     private var dauer: Int? {
@@ -89,8 +102,14 @@ struct MalenView: View {
             Divider()
 
             HStack(alignment: .bottom, spacing: 16) {
-                MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
-                    .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
+                HStack(spacing: 6) {
+                    ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
+                        Button { platz = i } label: {
+                            Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 MeldungLoeschenKnopf(zustand: zustand, platz: platz,
                                      belegt: belegtePlaetze.contains(platz))
                 VStack(alignment: .leading, spacing: 2) {
