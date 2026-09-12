@@ -185,10 +185,6 @@ struct SendenView: View {
     private var mitIcon: Bool { gewaehltesIcon != nil }
     private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon) }
     private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon) }
-    private var textBreite: Int { Meldungsbau.breite(optionen) }
-    private var flaecheX: Int { Meldungsbau.flaecheX(mitIcon: mitIcon) }
-    private var flaecheBreite: Int { Meldungsbau.flaecheBreite(mitIcon: mitIcon) }
-    private var textPuffer: Pixelfeld { Meldungsbau.puffer(optionen) }
 
     private func gebauterRahmen() throws -> Frame {
         try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
@@ -202,7 +198,7 @@ struct SendenView: View {
     /// wenn die Gerätschrift Versalien kennt — belegt sind bisher allein
     /// Kleinbuchstaben und Ziffern (Gerätereferenz, §1); „Ä", „Ö", „Ü" bleiben
     /// Umlaute und fehlen dort in jedem Fall.
-    private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
+    private var gesendeterText: String { optionen.gesendeterText }
 
     /// Silkscreen ist streng aufs 8-Pixel-Raster gezeichnet: Bei 8 und 16 sitzen
     /// die Striche auf ganzen Pixeln, dazwischen entscheidet ohne Kantenglaettung

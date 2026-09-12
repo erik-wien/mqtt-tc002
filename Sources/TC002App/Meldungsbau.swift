@@ -144,15 +144,21 @@ enum Meldungsbau {
         switch o.weg {
         case .pixel:
             guard passt(o, mitIcon: mitIcon) else {
-                let iconBilder = icon.flatMap { i -> [[String?]]? in
-                    try? Bildraster.lesenMitZeiten(i.datei, breite: 8, hoehe: 8).map(\.pixel)
-                } ?? []
-                let uri = try vorberechnet.flatMap { $0.isEmpty ? nil : $0 }
-                    ?? Textraster.laufschrift(
+                let uri: String
+                if let fertig = vorberechnet, !fertig.isEmpty {
+                    uri = fertig
+                } else {
+                    // Erst hier lesen: Liegt das GIF schon vor, waere das
+                    // Oeffnen der Icondatei bei jedem Senden umsonst.
+                    let iconBilder = icon.flatMap { i -> [[String?]]? in
+                        try? Bildraster.lesenMitZeiten(i.datei, breite: 8, hoehe: 8).map(\.pixel)
+                    } ?? []
+                    uri = try Textraster.laufschrift(
                         o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
                         farbe: o.farbe, schrittweite: o.tempo.schrittweite,
                         bilddauer: o.tempo.bilddauer, versatzY: versatzY(o),
                         iconBilder: iconBilder, iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
+                }
                 return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: o.dauer)
             }
             var frame = Frame(draw: feld(o, mitIcon: mitIcon).alsDrawBefehle(), dauer: o.dauer)
