@@ -100,12 +100,22 @@ eigens dafür gebaute Datei mit mehreren Schreibern. Das gilt aber nur, wenn
 `--name` einen der fünf festen Plätze trifft (`meldung1`…`meldung5`); die
 Vorgabe `--name cli` ist keiner davon, und `mqtttc002 senden "…"` ohne
 `--name` schreibt darum **nicht** ins Slotgedächtnis — kein Fehler im
-Schreiber, sondern der fehlende Platzbezug. Gelesen wird die Datei von den
-Slot-Blöcken der Sendeansicht (`TC002Ansichten/Slotblock.swift`) als
-Erinnerung, nicht als Tatsache: Übernommen werden die gemerkten Regler nur,
-wenn ihre Prüfsumme noch zu den tatsächlich gesehenen Pixeln passt — sonst
-hat seither jemand anderes auf den Platz geschrieben (Hilfe → Senden erklärt
-das aus Anwendersicht). Es reist im Bündel mit (`Contents/MacOS/mqtttc002`)
+Schreiber, sondern der fehlende Platzbezug. Gelesen wird die Datei an zwei
+Stellen, und der Unterschied zwischen ihnen ist der Kern der Sache:
+
+- **Was ein Block zeigt**, entscheidet `AppZustand.slotzustand(_:belegt:)`
+  (`Sources/TC002Modell/AppZustand.swift`) für alle drei Ansichten gleich —
+  **ohne** Prüfsummenvergleich. Fehlen mitgelesene Pixel, rechnet es das Bild
+  aus dem gemerkten Stand neu; ein Block kann damit eine Erinnerung zeigen.
+- **Ob die Regler übernommen werden**, entscheidet `slotWaehlen` in den beiden
+  Sendeansichten (`Sources/TC002App/SendenView.swift`,
+  `Sources/TC002iOS/SendeniOS.swift`) — nur bei mitgelesenen Pixeln *und*
+  passender Prüfsumme, sonst hat seither jemand anderes auf den Platz
+  geschrieben (Hilfe → Senden erklärt das aus Anwendersicht).
+
+`TC002Ansichten/Slotblock.swift` rührt das Gedächtnis nirgends an: Der Block
+zeigt nur, was ihm gereicht wird. Das Werkzeug reist im Bündel mit
+(`Contents/MacOS/mqtttc002`)
 und wird über einen Verweis benutzt. Zwei Fallen, beide schon zugeschnappt:
 
 - **`Bundle.main` ist über einen Verweis nicht das App-Bündel**, sondern der
