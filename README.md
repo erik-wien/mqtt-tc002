@@ -151,7 +151,9 @@ open MQTT-TC002-iOS.xcodeproj
 ```
 
 und dann in Xcode Ziel wählen und starten. `xcodegen` erzeugt das Projekt aus
-`project.yml`; das Projekt selbst ist nicht eingecheckt.
+`project.yml`; das Projekt selbst ist nicht eingecheckt. Ein erfolgreicher Bau
+sagt nichts darüber, ob Schriften, Icons, App-Symbol und Übersetzungen im
+Bündel gelandet sind — das prüft `scripts/buendel-pruefen.sh`.
 
 ## Tests
 

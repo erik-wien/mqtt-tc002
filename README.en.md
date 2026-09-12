@@ -152,7 +152,9 @@ open MQTT-TC002-iOS.xcodeproj
 ```
 
 then pick a target in Xcode and run. `xcodegen` generates the project from
-`project.yml`; the project itself is not checked in.
+`project.yml`; the project itself is not checked in. A successful build says
+nothing about whether fonts, icons, the app icon, and translations actually
+ended up in the bundle — `scripts/buendel-pruefen.sh` checks that.
 
 ## Tests
 

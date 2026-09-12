@@ -15,15 +15,20 @@ targets:
     platform: iOS
     sources:
       - path: Sources/TC002iOS
-    resources:
       - path: Icons
+        type: folder
+        buildPhase: resources
       - path: Resources/Schriften
+        type: folder
+        buildPhase: resources
       # Der `.lproj`-Ordner selbst, nicht sein Elternordner: Xcode behandelt
       # `.lproj` besonders und legt seinen Inhalt in die Buendelwurzel. Der
       # Elternordner ergaebe `Sprachen/en.lproj`, und dort sucht niemand — die
       # englische Fassung waere stillschweigend wirkungslos.
       - path: Resources/Sprachen/en.lproj
+        buildPhase: resources
       - path: Resources/AppIconiOS.xcassets
+        buildPhase: resources
     dependencies:
       - package: TC002
         product: TC002Core
