@@ -86,6 +86,9 @@ struct MeldungSendenIntent: AppIntent {
 
     /// Die gemeinten Uhren, oder ein Fehler, der sagt was fehlt.
     private func zieleBestimmen(_ e: Einstellungen) throws -> [Uhr] {
+        guard e.brokerEingerichtet else {
+            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+        }
         guard !e.uhren.isEmpty else {
             throw $text.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
         }
@@ -127,6 +130,12 @@ struct MeldungLoeschenIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let e = Einstellungen.gelesen()
+        guard e.brokerEingerichtet else {
+            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+        }
+        guard !e.uhren.isEmpty else {
+            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
+        }
         let ziele: [Uhr]
         if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
             guard let gefunden = e.uhr(benannt: name) else {
@@ -136,9 +145,13 @@ struct MeldungLoeschenIntent: AppIntent {
         } else {
             ziele = e.ziele
         }
+        let abgefragt = ziele.filter { !$0.praefix.isEmpty }
+        guard !abgefragt.isEmpty else {
+            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ziele.map(\.name).joined(separator: ", "))))
+        }
         let name = Meldungsplatz.name(fuer: platz)
         try await Task.detached(priority: .userInitiated) {
-            for ziel in ziele where !ziel.praefix.isEmpty {
+            for ziel in abgefragt {
                 guard let zugang = e.zugang(
                     clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
                 try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
