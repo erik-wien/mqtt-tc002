@@ -117,7 +117,6 @@ struct SendeniOS: View {
                 eingabe
             }
             .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if zustand.uhren.count > 1 {
                     ToolbarItem(placement: .topBarLeading) {
