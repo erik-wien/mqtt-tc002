@@ -122,12 +122,13 @@ struct TC002App: App {
         // und wuechse ueber den Bildschirmrand. Die Vorgabegroesse ist breit
         // genug; ist das Fenster schmaler, hilft der Knopf in der
         // Werkzeugleiste, der den Inspektor einklappt.
-        // Rechnung: Seitenleiste 170 (fest) + Inspektor 340 (fest, nur bei
-        // „Senden") + Mitte mindestens 420 (Slot-Zeile; der Sendeknopf rueckt
-        // bei Enge unter das Feld) = 930. Fuer „Malen" braucht es 980: 170 +
-        // 52 Spalten mal 14 + Rand — das ist die Grenze. Darunter wuerden die
-        // festen Leisten angeschnitten statt die Mitte.
-        .frame(minWidth: 980, minHeight: 640)
+        // GEMESSEN, nicht gerechnet (12.09.2026, Bildschirmfoto bei 980):
+        // Die Detailspalte des Split-View geht nicht unter rund 600 Punkte,
+        // gleich was ihr Inhalt an Mindestbreite angibt. Mit fester
+        // Seitenleiste (170) und festem Inspektor (340) fehlten bei 980 genau
+        // 128 Punkte — beide Leisten wurden angeschnitten, nicht die Mitte.
+        // 170 + 600 + 340 = 1110, mit Luft 1120. Malen braucht weniger.
+        .frame(minWidth: 1120, minHeight: 640)
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
             set: { if !$0 { zustand.fehler = nil } })) {

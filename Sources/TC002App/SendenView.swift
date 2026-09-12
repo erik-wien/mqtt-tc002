@@ -341,7 +341,10 @@ struct SendenView: View {
             // bevor irgendetwas abgeschnitten wird.
             ViewThatFits(in: .horizontal) {
                 HStack {
-                    TextField("Text", text: $text)
+                    // Ohne Mindestbreite "passt" das Feld immer, weil es sich
+                    // beliebig zusammendruecken laesst — dann kaeme die zweite
+                    // Variante nie zum Zug.
+                    TextField("Text", text: $text).frame(minWidth: 320)
                     sendeKnopf
                 }
                 VStack(alignment: .trailing, spacing: 8) {
