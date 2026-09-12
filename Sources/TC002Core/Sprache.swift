@@ -12,12 +12,12 @@ import Foundation
 /// ist fuer alles, was als gewoehnliches `String` weitergereicht wird: Fehler-
 /// texte, Meldungen, die Hilfebausteine, das Kommandozeilenwerkzeug.
 ///
-/// Nachgesehen wird in `Bundle.main`. In der App ist das das App-Buendel, im
-/// Kommandozeilenwerkzeug das Buendel, in dem es steckt — es reist in
-/// `MQTT-TC002.app/Contents/MacOS` mit. In Tests gibt es dort nichts zu finden,
-/// und es bleibt beim deutschen Wortlaut.
+/// Nachgesehen wird im Buendel, in dem das Programm steckt (siehe
+/// `Programmbuendel`) — in der App das App-Buendel, beim Werkzeug dasselbe,
+/// weil es darin mitreist. In Tests gibt es dort nichts zu finden, und es
+/// bleibt beim deutschen Wortlaut.
 public func lok(_ deutsch: String) -> String {
-    Bundle.main.localizedString(forKey: deutsch, value: deutsch, table: nil)
+    Programmbuendel.eigenes.localizedString(forKey: deutsch, value: deutsch, table: nil)
 }
 
 /// Wie `lok`, mit Platzhaltern. Im Schluessel stehen `%@` und `%d` — nicht die
@@ -33,5 +33,5 @@ public func lokf(_ deutsch: String, _ argumente: CVarArg...) -> String {
 /// `vorgabe` ist der deutsche Wortlaut und zugleich der Rueckfall, falls keine
 /// Uebersetzung da ist.
 public func lok(_ schluessel: String, vorgabe: String) -> String {
-    Bundle.main.localizedString(forKey: schluessel, value: vorgabe, table: nil)
+    Programmbuendel.eigenes.localizedString(forKey: schluessel, value: vorgabe, table: nil)
 }

@@ -4,7 +4,7 @@ import Foundation
 public enum Iconordner {
     /// Die mitgelieferten Icons, im Bundle neben der App.
     public static var mitgeliefert: URL {
-        Bundle.main.resourceURL?.appendingPathComponent("Icons")
+        Programmbuendel.eigenes.resourceURL?.appendingPathComponent("Icons")
             ?? URL(fileURLWithPath: "Icons")
     }
 

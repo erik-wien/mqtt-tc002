@@ -76,8 +76,8 @@ func lauf() throws {
         print(lok("cli.hilfe", vorgabe: hilfetext))
         return
     case .fassung:
-        let fassung = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        let commit = Bundle.main.object(forInfoDictionaryKey: "TC002Commit") as? String
+        let fassung = Programmbuendel.eigenes.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let commit = Programmbuendel.eigenes.object(forInfoDictionaryKey: "TC002Commit") as? String
         print("mqtttc002 \(fassung ?? "?")\(commit.map { " (\($0))" } ?? "")")
         return
     default:

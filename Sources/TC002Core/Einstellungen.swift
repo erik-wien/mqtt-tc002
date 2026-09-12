@@ -76,11 +76,16 @@ public struct Einstellungen: Sendable {
     /// anderer als der der App — es braucht also ausdruecklich den unter der
     /// Buendelkennung der App.
     ///
-    /// Liegt es dagegen im Buendel der App, ist `Bundle.main` genau dieses
-    /// Buendel, und seine Kennung ist bereits die der App. Ein Bereich mit dem
-    /// eigenen Namen ist bei `UserDefaults` aber nicht vorgesehen: Der Aufruf
-    /// meldet „does not make sense and will not work" und liefert eine Ablage,
-    /// in der nichts steht. Dann ist `.standard` das Richtige.
+    /// Wird es dagegen unmittelbar im Buendel der App aufgerufen, ist
+    /// `Bundle.main` genau dieses Buendel, und seine Kennung ist bereits die der
+    /// App. Ein Bereich mit dem eigenen Namen ist bei `UserDefaults` aber nicht
+    /// vorgesehen: Der Aufruf meldet „does not make sense and will not work" und
+    /// liefert eine Ablage, in der nichts steht. Dann ist `.standard` richtig.
+    ///
+    /// Gefragt ist also, welchen Bereich das laufende Programm als *seinen
+    /// eigenen* ansieht — nur damit kann `suiteName` zusammenstossen. Deshalb
+    /// steht hier `Bundle.main` und nicht `Programmbuendel`, obwohl beide
+    /// sonst dasselbe Buendel meinen.
     private static func ablage(_ bereich: String) -> UserDefaults? {
         Bundle.main.bundleIdentifier == bereich ? .standard : UserDefaults(suiteName: bereich)
     }

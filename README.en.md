@@ -94,7 +94,8 @@ app — broker, password and clocks come from its settings. Setting up still
 happens only in the app. Link it once:
 
 ```bash
-ln -s /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 /usr/local/bin/mqtttc002
+mkdir -p ~/.local/bin
+ln -sf /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 ~/.local/bin/mqtttc002
 ```
 
 ```bash

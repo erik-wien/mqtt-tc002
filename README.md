@@ -97,7 +97,8 @@ App — Broker, Kennwort und Uhren kommen aus deren Einstellungen, eingerichtet
 wird weiterhin nur in der App. Einmal verlinken:
 
 ```bash
-ln -s /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 /usr/local/bin/mqtttc002
+mkdir -p ~/.local/bin
+ln -sf /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 ~/.local/bin/mqtttc002
 ```
 
 ```bash

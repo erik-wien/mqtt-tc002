@@ -10,7 +10,7 @@ import Foundation
 /// beide rastern Text, und beide sollen dieselben Schriften kennen.
 public enum Schriften {
     public static func registrieren() {
-        guard let ordner = Bundle.main.resourceURL?.appendingPathComponent("Schriften"),
+        guard let ordner = Programmbuendel.eigenes.resourceURL?.appendingPathComponent("Schriften"),
               let dateien = try? FileManager.default.contentsOfDirectory(
                   at: ordner, includingPropertiesForKeys: nil) else { return }
         for datei in dateien where datei.pathExtension.lowercased() == "ttf" {
