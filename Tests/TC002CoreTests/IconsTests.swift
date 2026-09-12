@@ -408,4 +408,93 @@ final class IconsTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: eigen.appendingPathComponent("1.gif").path),
                        "ein zuvor geloeschtes Icon darf nicht zurueckkommen")
     }
+
+    /// Schlaegt die erste Uebernahme fehl — der Leseordner ist nicht da, etwa
+    /// beim Start aus `swift run` —, darf der Merker nicht gesetzt sein: der
+    /// naechste Start bekommt noch einen Versuch.
+    func testGrundschatzMerkerBleibtOhneErfolgUngesetzt() throws {
+        let fehlt = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: UUID().uuidString))
+
+        XCTAssertEqual(Iconsammlung(schreibordner: eigen, leseordner: [fehlt])
+                           .grundschatzEinmalUebernehmen(defaults: defaults), 0)
+
+        // Jetzt gibt es den Ordner samt Inhalt — und die Uebernahme laeuft noch.
+        try FileManager.default.createDirectory(at: fehlt, withIntermediateDirectories: true)
+        try Data("GIF89a".utf8).write(to: fehlt.appendingPathComponent("1.gif"))
+        XCTAssertEqual(Iconsammlung(schreibordner: eigen, leseordner: [fehlt])
+                           .grundschatzEinmalUebernehmen(defaults: defaults), 1)
+    }
+
+    /// Die Namen kommen in einem Zug in die `names.json`, nicht je Datei einmal.
+    func testMitgelieferteUebernehmenTraegtAlleNamenEin() throws {
+        let mit = temp(), eigen = temp()
+        try FileManager.default.createDirectory(at: mit, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        for n in ["1", "2", "3"] { try Data("GIF89a".utf8).write(to: mit.appendingPathComponent("\(n).gif")) }
+        try Data(#"[{"nummer":"1","name":"eins","kategorie":"k"},{"nummer":"3","name":"drei","kategorie":"k"}]"#.utf8)
+            .write(to: mit.appendingPathComponent("names.json"))
+
+        XCTAssertEqual(Iconsammlung(schreibordner: eigen, leseordner: [mit]).mitgelieferteUebernehmen(), 3)
+        let namen = Dictionary(uniqueKeysWithValues:
+            Iconsammlung(schreibordner: eigen).alle().map { ($0.nummer, $0.name) })
+        XCTAssertEqual(namen["1"], "eins")
+        XCTAssertEqual(namen["3"], "drei")
+        XCTAssertEqual(namen["2"], "2", "ohne Eintrag bleibt die Nummer der Name")
+    }
+
+    // MARK: - Das Entsorgungsverfahren
+
+    /// Die eine Sache, die niemand am Schreibtisch sieht: Unbeleuchtete Pixel
+    /// muessen im GIF durchsichtig sein, nicht schwarz. ImageIO waehlt danach
+    /// das Entsorgungsverfahren — deckende Bilder ergeben Verfahren 1
+    /// („stehenlassen“), und damit fehlen auf der Uhr einzelne Pixel;
+    /// durchsichtige ergeben Verfahren 2 („vor jedem Bild loeschen“). Geprueft
+    /// wird direkt im Bytestrom: im dritten Byte jeder Grafiksteuer-Erweiterung
+    /// (0x21 0xF9) stehen die Bits 2 bis 4.
+    func testLaufschriftGifNutztEntsorgungsverfahrenZwei() throws {
+        let breite = 52, hoehe = 16
+        var a = [String?](repeating: nil, count: breite * hoehe)
+        var b = a
+        a[0] = "#00FF66"; a[breite * hoehe - 1] = "#FF0000"
+        b[breite + 1] = "#00FF66"
+        let uri = try Bildraster.alsDatenURI([a, b, a], breite: breite, hoehe: hoehe, verzoegerung: 0.08)
+        let bytes = [UInt8](try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst("data:image/gif;base64,".count)))))
+
+        var gefunden = 0
+        for i in 0..<(bytes.count - 3) where bytes[i] == 0x21 && bytes[i + 1] == 0xF9 && bytes[i + 2] == 0x04 {
+            let verfahren = (bytes[i + 3] >> 2) & 0x07
+            XCTAssertEqual(verfahren, 2, "Grafiksteuer-Erweiterung bei Byte \(i): Verfahren \(verfahren)")
+            gefunden += 1
+        }
+        XCTAssertEqual(gefunden, 3, "eine Grafiksteuer-Erweiterung je Einzelbild")
+    }
+
+    /// Einen Schritt naeher an der Ursache: `nil` muss im CGImage Alpha 0 haben.
+    /// Wer „aus“ in Schwarz aendert, bricht diesen Test, bevor er das GIF bricht.
+    func testAusBleibtImBildDurchsichtig() throws {
+        let bild = try Bildraster.cgBild(aus: [nil, "#FFFFFF", "#000000", nil], breite: 2, hoehe: 2)
+        let daten = try XCTUnwrap(bild.dataProvider?.data as Data?)
+        XCTAssertEqual(daten[3], 0, "aus: Alpha 0")
+        XCTAssertEqual(daten[7], 255, "weiss: deckend")
+        XCTAssertEqual(daten[11], 255, "schwarz gemalt: deckend, also von „aus“ unterscheidbar")
+        XCTAssertEqual(daten[15], 0)
+    }
+
+    /// Und der Rundlauf: gesichert und wieder geladen bleibt „aus“ `nil`, und
+    /// schwarz gemalt bleibt Schwarz — die beiden sind nicht dasselbe.
+    func testRundlaufUnterscheidetAusVonSchwarz() throws {
+        let ordner = temp()
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        var pixel = [String?](repeating: nil, count: 64)
+        pixel[0] = "#000000"; pixel[9] = "#00FF66"
+        let sammlung = Iconsammlung(schreibordner: ordner)
+        let icon = try sammlung.sichern(nummer: "7", name: "probe", pixel: pixel)
+        let zurueck = try sammlung.bilder(fuer: icon)[0]
+        XCTAssertEqual(zurueck[0], "#000000")
+        XCTAssertEqual(zurueck[9], "#00FF66")
+        XCTAssertNil(zurueck[1])
+        XCTAssertNil(zurueck[63])
+    }
 }

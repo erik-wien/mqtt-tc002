@@ -148,9 +148,9 @@ public enum Bildraster {
     }
 
     /// Rechnet ein Farbraster in ein CGImage um. Zeilenweise von oben links, `nil`
-    /// heisst aus; GIF kennt keine Teildurchsichtigkeit und das Geraet hat ohnehin
-    /// einen schwarzen Grund, deshalb wird „aus“ zu Schwarz. Gemeinsamer Kern fuer
-    /// jede Stelle, die ein Farbraster als Bild braucht — Icons wie Laufschrift.
+    /// heisst aus und bleibt durchsichtig — warum, steht in der Schleife.
+    /// Gemeinsamer Kern fuer jede Stelle, die ein Farbraster als Bild braucht —
+    /// Icons wie Laufschrift.
     static func cgBild(aus pixel: [String?], breite: Int, hoehe: Int) throws -> CGImage {
         guard pixel.count == breite * hoehe else { throw BildrasterFehler.nichtLesbar }
         var bytes = [UInt8](repeating: 0, count: breite * hoehe * 4)
@@ -382,8 +382,11 @@ public struct Iconsammlung {
         return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel)
     }
 
-    /// Entfernt ein eigenes Icon. Mitgelieferte bleiben unangetastet — sie liegen im
-    /// Bundle und tauchen nach einem Loeschversuch ohnehin wieder auf.
+    /// Entfernt ein Icon aus dem Schreibordner. Alles ausserhalb — etwa der
+    /// Grundschatz im Bundle, falls eine Sammlung ihn als Leseordner fuehrt —
+    /// wird abgelehnt, nicht still uebergangen: die Oberflaeche baut ihre
+    /// Sammlungen zwar ohne Leseordner, aber die Bibliothek soll auch ohne
+    /// diese Ruecksicht nichts im App-Paket anfassen.
     public func loeschen(_ icon: Icon) throws {
         guard istEigen(icon) else {
             throw IconFehler.nichtSchreibbar(icon.nummer)
@@ -409,6 +412,10 @@ public struct Iconsammlung {
                 .map { $0.deletingPathExtension().lastPathComponent })
         let namen = geladeneNamen()
         var kopiert = 0
+        // Die Namen werden gesammelt und am Ende in einem Zug geschrieben —
+        // nicht je Datei einmal: dreissig Runden ueber eine wachsende
+        // `names.json`, und ein Absturz mittendrin hinterliesse eine halbe.
+        var neueNamen: [(String, String, String)] = []
         for ordner in leseordner {
             let dateien = (try? FileManager.default.contentsOfDirectory(at: ordner,
                            includingPropertiesForKeys: nil)) ?? []
@@ -417,13 +424,12 @@ public struct Iconsammlung {
                 guard !vorhandeneNummern.contains(nummer) else { continue }
                 let ziel = schreibordner.appendingPathComponent(datei.lastPathComponent)
                 guard (try? FileManager.default.copyItem(at: datei, to: ziel)) != nil else { continue }
-                if let eintrag = namen[nummer] {
-                    namenErgaenzen(nummer: nummer, name: eintrag.0, kategorie: eintrag.1)
-                }
+                if let eintrag = namen[nummer] { neueNamen.append((nummer, eintrag.0, eintrag.1)) }
                 vorhandeneNummern.insert(nummer)
                 kopiert += 1
             }
         }
+        if !neueNamen.isEmpty { namenErgaenzen(neueNamen) }
         return kopiert
     }
 
@@ -438,8 +444,26 @@ public struct Iconsammlung {
     public func grundschatzEinmalUebernehmen(defaults: UserDefaults = .standard) -> Int {
         let schluessel = "icons.grundschatzUebernommen"
         guard !defaults.bool(forKey: schluessel) else { return 0 }
-        defaults.set(true, forKey: schluessel)
-        return mitgelieferteUebernehmen()
+        let kopiert = mitgelieferteUebernehmen()
+        // Der Merker erst hinterher, und nur, wenn tatsaechlich etwas da war:
+        // Schlaegt das Kopieren fehl — Leseordner nicht gefunden, Zielordner
+        // nicht anlegbar —, bekommt der naechste Start noch einen Versuch,
+        // statt den Anwender mit leerer Liste sitzen zu lassen.
+        if kopiert > 0 || leseordnerLeer() { defaults.set(true, forKey: schluessel) }
+        return kopiert
+    }
+
+    /// Ob in keinem Leseordner eine Bilddatei liegt — dann gibt es nichts zu
+    /// holen, und der Merker darf trotz 0 kopierter Dateien gesetzt werden.
+    private func leseordnerLeer() -> Bool {
+        leseordner.allSatisfy { ordner in
+            // Ein Ordner, der sich nicht lesen laesst, ist nicht leer, sondern
+            // unerreichbar — das darf den Merker nicht setzen.
+            guard let inhalt = try? FileManager.default.contentsOfDirectory(at: ordner,
+                                                                           includingPropertiesForKeys: nil)
+            else { return false }
+            return inhalt.filter { ["gif", "png", "jpg"].contains($0.pathExtension.lowercased()) }.isEmpty
+        }
     }
 
     /// Ob dieses Icon im Schreibordner liegt und sich damit ueber `loeschen`
@@ -500,14 +524,22 @@ public struct Iconsammlung {
     }
 
     private func namenErgaenzen(nummer: String, name: String, kategorie: String) {
+        namenErgaenzen([(nummer, name, kategorie)])
+    }
+
+    /// Traegt mehrere Namen in einem Schreibvorgang ein; vorhandene Eintraege
+    /// derselben Nummer werden ersetzt. Geschrieben wird atomar — eine halbe
+    /// `names.json` waere schlimmer als eine alte.
+    private func namenErgaenzen(_ eintraege: [(nummer: String, name: String, kategorie: String)]) {
         var liste: [[String: String]] = []
+        let neueNummern = Set(eintraege.map(\.nummer))
         if let daten = try? Data(contentsOf: namenDatei()),
            let vorhanden = try? JSONSerialization.jsonObject(with: daten) as? [[String: String]] {
-            liste = vorhanden.filter { $0["nummer"] != nummer }
+            liste = vorhanden.filter { !neueNummern.contains($0["nummer"] ?? "") }
         }
-        liste.append(["nummer": nummer, "name": name, "kategorie": kategorie])
+        for e in eintraege { liste.append(["nummer": e.nummer, "name": e.name, "kategorie": e.kategorie]) }
         if let daten = try? JSONSerialization.data(withJSONObject: liste, options: [.prettyPrinted]) {
-            try? daten.write(to: namenDatei())
+            try? daten.write(to: namenDatei(), options: .atomic)
         }
     }
 
@@ -517,7 +549,7 @@ public struct Iconsammlung {
         else { return }
         let liste = vorhanden.filter { $0["nummer"] != nummer }
         if let neu = try? JSONSerialization.data(withJSONObject: liste, options: [.prettyPrinted]) {
-            try? neu.write(to: namenDatei())
+            try? neu.write(to: namenDatei(), options: .atomic)
         }
     }
 }
