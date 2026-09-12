@@ -17,8 +17,18 @@ extension Color {
     /// unter iOS heißt dasselbe `UIColor`, und die Komponenten kommen über
     /// `getRed(_:green:blue:alpha:)` statt über Eigenschaften.
     var hexWert: String {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
-        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+        // Der Umweg ueber CGColor ist noetig, nicht umstaendlich:
+        // `getRed(_:green:blue:alpha:)` rechnet **nicht** um, sondern liefert die
+        // Komponenten im Farbraum der Farbe. Ein iPhone-Farbwaehler gibt Display-P3
+        // heraus; ohne diese Umrechnung kaeme fuer dieselbe optische Farbe ein
+        // anderer Hexwert heraus als am Mac. Ausserhalb des sRGB-Umfangs liegende
+        // Anteile werden dabei geklammert, und truncated wie am Mac gerundet.
+        guard let ziel = CGColorSpace(name: CGColorSpace.sRGB),
+              let teile = UIColor(self).cgColor
+                  .converted(to: ziel, intent: .defaultIntent, options: nil)?.components,
+              teile.count >= 3 else { return "#FFFFFF" }
+        func stufe(_ wert: CGFloat) -> Int { Int(min(max(wert, 0), 1) * 255) }
+        return String(format: "#%02X%02X%02X",
+                      stufe(teile[0]), stufe(teile[1]), stufe(teile[2]))
     }
 }
