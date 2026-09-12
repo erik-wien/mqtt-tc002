@@ -149,6 +149,19 @@ was wirklich auf der Uhr steht.
 > ⚠️ **Es ist ein MQTT-Thema, kein HTTP-Endpunkt.** `GET /customList` liefert
 > nichts. Lesen lässt es sich nur, indem man es beim Broker abonniert.
 
+✅ **Die Uhr meldet auch, was über HTTP entstanden ist.** Die Anzeige
+`scrolltest` oben war über `POST /api/custom?name=scrolltest` (§5.6) angelegt
+worden, ohne dass der Broker daran beteiligt war — und trotzdem steht sie in der
+Liste, die die Uhr über MQTT veröffentlicht. Am 11.09.2026 so beobachtet.
+`customList` ist damit wirklich der Zustand des Geräts und nicht die
+Buchführung eines einzelnen Senders.
+
+Daraus folgt etwas Praktisches: **Senden über HTTP und Zuhören über MQTT lässt
+sich mischen.** Wer einen Broker hat, kann über HTTP schicken — dort gibt es
+echte Fehlercodes statt der Stille aus §2 — und den Rückkanal trotzdem
+behalten. Ohne Broker fehlt der Rückkanal, und es fehlen Löschen (§5.6) und
+Umschalten (§3.3), die beide nur über MQTT gehen.
+
 Beide Themen stehen in **keiner** Hersteller-Doku.
 
 ❓ Ob die Uhr diese Themen **aufbewahrt** (`retain`) veröffentlicht, ist nicht

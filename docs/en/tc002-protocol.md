@@ -148,6 +148,18 @@ you learn what is really on the clock.
 > ⚠️ **It is an MQTT topic, not an HTTP endpoint.** `GET /customList` returns
 > nothing. It can only be read by subscribing to it at the broker.
 
+✅ **The clock also reports what was created over HTTP.** The `scrolltest`
+display above had been created with `POST /api/custom?name=scrolltest` (§5.6),
+with no broker involved — and it still appears in the list the clock publishes
+over MQTT. Observed on 2026-09-11. So `customList` really is the state of the
+device, not the bookkeeping of one particular sender.
+
+There is a practical consequence: **sending over HTTP and listening over MQTT
+can be mixed.** If you have a broker, you can send over HTTP — which gives you
+real error codes instead of the silence described in §2 — and still keep the
+feedback channel. Without a broker you lose the feedback channel, and you lose
+deleting (§5.6) and switching (§3.3), both of which only work over MQTT.
+
 Both topics appear in **no** vendor documentation.
 
 ❓ Whether the clock publishes these topics **retained** (`retain`) is not
