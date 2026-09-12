@@ -1,4 +1,12 @@
+// `NSAttributedString.Key.font` und `.foregroundColor` sind hier keine
+// Foundation-Konstanten: Foundation kennt nur den Schluesseltyp selbst, die
+// vorgegebenen Schluessel kommen von der Oberflaechen-Bibliothek — unter
+// macOS aus AppKit, unter iOS aus UIKit.
+#if canImport(AppKit)
 import AppKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
 import CoreText
 import Foundation
 
