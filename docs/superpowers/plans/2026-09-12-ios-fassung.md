@@ -896,7 +896,7 @@ struct VerbindungiOS: View {
                 uhrenAbschnitt
                 brokerAbschnitt
             }
-            .navigationTitle("Verbindung")
+            .navigationTitle("Einstellungen")
         }
     }
 
@@ -1004,14 +1004,12 @@ struct TC002iOSApp: App {
     var body: some Scene {
         WindowGroup {
             // Keine Reiterleiste: „Senden" ist spaeter die ganze App,
-            // „Verlauf" und „Einstellungen" haengen als Menuepunkte in der
-            // Titelleiste. Solange es nur diese eine Ansicht gibt, ist sie
-            // die Wurzel — Aufgabe 7 setzt „Senden" davor.
-            NavigationStack {
-                VerbindungiOS(zustand: zustand)
-                    .navigationTitle("Einstellungen")
-                    .navigationBarTitleDisplayMode(.inline)
-            }
+            // „Verlauf" und „Einstellungen" haengen als Menuepunkte in ihrer
+            // Titelleiste und gehen als Blatt auf. Solange es nur diese eine
+            // Ansicht gibt, ist sie die Wurzel — Aufgabe 7 setzt „Senden"
+            // davor. Jede dieser Ansichten bringt ihren eigenen
+            // `NavigationStack` mit; hier darf deshalb keiner mehr herum.
+            VerbindungiOS(zustand: zustand)
             .onChange(of: phase) { _, neu in
                 // Eine offene MQTT-Verbindung ueberlebt den Hintergrund nicht.
                 switch neu {
@@ -1037,7 +1035,7 @@ import TC002Modell
 ///
 /// Ausdrücklich kein Blatt: Ein Blatt verdeckte die Vorschau, und die
 /// Meldungen sind Hinweise, keine Entscheidungen. Wegtippen räumt sie weg;
-/// im Protokoll unter „Anzeigen" stehen sie ohnehin weiter.
+/// im Protokoll unter „Verlauf" stehen sie ohnehin weiter.
 struct FehlerleisteiOS: View {
     @Bindable var zustand: AppZustand
 
@@ -1788,30 +1786,46 @@ struct ZielauswahliOS: View {
 
 - [ ] **Schritt 5: In den Einstieg einhängen**
 
-In `App.swift` wird „Senden" die Wurzel, und „Einstellungen" wandert in
-ein Menue in der Titelleiste. Der `NavigationStack` aus Aufgabe 5 bleibt, sein
-Inhalt wird getauscht:
+In `App.swift` wird „Senden" die Wurzel. Die Ansicht bringt ihren eigenen
+`NavigationStack` mit, also steht hier nichts mehr darum:
 
 ```swift
-            NavigationStack {
-                SendeniOS(zustand: zustand)
-                    .navigationTitle("MQTT-TC002")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Menu {
-                                NavigationLink {
-                                    VerbindungiOS(zustand: zustand)
-                                        .navigationTitle("Einstellungen")
-                                } label: {
-                                    Label("Einstellungen", systemImage: "gearshape")
-                                }
-                            } label: {
-                                Label("Menü", systemImage: "line.3.horizontal")
-                            }
+            SendeniOS(zustand: zustand)
+```
+
+„Einstellungen" haengt als Menuepunkt in der Titelleiste der Sendeansicht und
+geht als Blatt auf — nicht als geschobene Seite. Grund: `VerbindungiOS` hat
+einen eigenen `NavigationStack` (Aufgabe 5), und ein geschobenes Ziel mit
+eigenem Stack waere einer zu viel.
+
+In `SendeniOS` zu den vorhandenen `@State`-Zeilen:
+
+```swift
+    @State private var zeigeEinstellungen = false
+```
+
+In den vorhandenen `.toolbar`-Block, **vor** dem `if zustand.uhren.count > 1`:
+
+```swift
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button {
+                            zeigeEinstellungen = true
+                        } label: {
+                            Label("Einstellungen", systemImage: "gearshape")
                         }
+                    } label: {
+                        Label("Menü", systemImage: "line.3.horizontal")
                     }
-            }
+                }
+```
+
+Und zu den vorhandenen `.sheet`-Zeilen (neben `zeigeFormat` und `zeigeIcons`):
+
+```swift
+        .sheet(isPresented: $zeigeEinstellungen) {
+            VerbindungiOS(zustand: zustand)
+        }
 ```
 
 „Senden" ist damit die ganze App — man landet dort, wo man sie benutzt, und
@@ -1874,7 +1888,7 @@ struct AnzeigeniOS: View {
                     protokollAbschnitt
                 }
             }
-            .navigationTitle("Anzeigen")
+            .navigationTitle("Verlauf")
         }
     }
 
@@ -1964,16 +1978,23 @@ nachgetragen.
 
 - [ ] **Schritt 2: In den Einstieg einhängen**
 
-In `App.swift` als zweiten Eintrag in dasselbe Menue, **vor**
-„Einstellungen":
+In `SendeniOS` als zweiten Eintrag in dasselbe Menue, **vor**
+„Einstellungen" — wieder als Blatt, aus demselben Grund:
 
 ```swift
-                                NavigationLink {
-                                    AnzeigeniOS(zustand: zustand)
-                                        .navigationTitle("Verlauf")
-                                } label: {
-                                    Label("Verlauf", systemImage: "clock.arrow.circlepath")
-                                }
+                        Button {
+                            zeigeVerlauf = true
+                        } label: {
+                            Label("Verlauf", systemImage: "clock.arrow.circlepath")
+                        }
+```
+
+dazu die Zustandszeile `@State private var zeigeVerlauf = false` und das Blatt:
+
+```swift
+        .sheet(isPresented: $zeigeVerlauf) {
+            AnzeigeniOS(zustand: zustand)
+        }
 ```
 
 - [ ] **Schritt 3: Bauen und Übersetzung prüfen**
