@@ -40,6 +40,15 @@ Nicht gebaut wird:
 - **Abgleich der Icons mit dem Mac.** Eigenes Vorhaben (iCloud), nicht hier.
 - **TestFlight und App Store.** Installiert wird aus Xcode aufs eigene Gerät.
 
+Nachgetragen am 12.09.2026, nach dem Entwurf:
+
+- **Kurzbefehle** (App Intents) zum Senden und Löschen. Sie stehen im Plan als
+  Aufgabe 9. Der Grund, sie mitzunehmen: Die Zutaten liegen mit
+  `Meldungsoptionen`, `Meldungsbau` und `Einstellungen` bereits fertig im Kern,
+  und der Intent braucht keine laufende Oberfläche. Nebeneffekt: Die Uhr ist
+  damit auch von der Apple Watch aus erreichbar, ohne eine Zeile watchOS-Code —
+  Kurzbefehle laufen dort ohne eigene App.
+
 ---
 
 ## Entscheidungen und ihre Gründe

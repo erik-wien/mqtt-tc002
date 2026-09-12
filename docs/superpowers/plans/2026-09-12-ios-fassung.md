@@ -10,6 +10,9 @@
 
 **Spezifikation:** `docs/superpowers/specs/2026-09-12-ios-fassung-design.md`
 
+Aufgabe 9 (Kurzbefehle) steht **nicht** in jener Spezifikation — sie kam
+im Gespräch danach dazu. Ihre Begründung trägt sie deshalb selbst.
+
 ## Übergreifende Vorgaben
 
 - Zweig `ios`. `main` wird nicht angefasst.
@@ -1942,11 +1945,403 @@ Auf dem Gerät prüfen:
 
 ---
 
+### Aufgabe 9: Kurzbefehle
+
+Ein App Intent macht das Senden von außen erreichbar: über Siri, über die
+Kurzbefehle-App, über eine Automation, über einen Knopf auf dem Sperrbildschirm
+— und nebenbei auf der Apple Watch, weil Kurzbefehle dort ohne eigene App
+laufen.
+
+Der Intent benutzt **nicht** `AppZustand`, sondern nur den Kern: Einstellungen
+lesen, Rahmen bauen, senden. Genau der Weg, den das Kommandozeilenwerkzeug
+schon geht. Dadurch braucht er keine laufende Oberfläche.
+
+Die Formateinstellungen — Schrift, Größe, Ausrichtung, Rand — kommen aus dem,
+was zuletzt unter „Senden" eingestellt war. Ein Kurzbefehl, der zwölf Fragen
+stellt, benutzt niemand.
+
+**Dateien:**
+- Anlegen: `Sources/TC002Core/MeldungsoptionenAblage.swift`
+- Anlegen: `Sources/TC002iOS/Kurzbefehle.swift`
+- Anlegen: `Tests/TC002CoreTests/MeldungsoptionenAblageTests.swift`
+- Ändern: `scripts/texte-sammeln.py`
+
+**Schnittstellen:**
+- Verbraucht: `Einstellungen`, `Meldungsoptionen`, `Meldungsbau`, `MeldungsplatzWahl`, `Iconsammlung`, `Iconordner`, `Anzeigen`, `MQTTSender` aus `TC002Core`.
+- Erzeugt: `Meldungsoptionen.ausAblage(_:)`, `MeldungSendenIntent`, `MeldungLoeschenIntent`, `TC002Kurzbefehle`.
+
+- [ ] **Schritt 1: Den Test für das Lesen der Formateinstellungen schreiben**
+
+`Tests/TC002CoreTests/MeldungsoptionenAblageTests.swift`:
+
+```swift
+import XCTest
+@testable import TC002Core
+
+/// Der Intent muss dieselben Formateinstellungen benutzen wie die Ansicht,
+/// sonst sieht eine über Siri geschickte Meldung anders aus als dieselbe
+/// Meldung aus der App. Gelesen werden die `senden.*`-Schlüssel, die
+/// `@AppStorage` ablegt.
+final class MeldungsoptionenAblageTests: XCTestCase {
+
+    private func ablage() -> UserDefaults {
+        UserDefaults(suiteName: "test.mqtt-tc002." + UUID().uuidString)!
+    }
+
+    func testLeereAblageErgibtDieVorgaben() {
+        let o = Meldungsoptionen.ausAblage(ablage())
+        XCTAssertEqual(o.schrift, "Silkscreen")
+        XCTAssertEqual(o.groesse, 8)
+        XCTAssertEqual(o.farbe, "#00FF66")
+        XCTAssertEqual(o.abstand, 1)
+        XCTAssertEqual(o.rand, 1)
+        XCTAssertEqual(o.weg, .pixel)
+        XCTAssertEqual(o.waagrecht, .links)
+        XCTAssertEqual(o.senkrecht, .oben)
+        XCTAssertEqual(o.tempo, .mittel)
+    }
+
+    func testGesicherteWerteWerdenGelesen() {
+        let d = ablage()
+        d.set("Menlo", forKey: "senden.schriftart")
+        d.set(12.0, forKey: "senden.groesse")
+        d.set("#FF0000", forKey: "senden.farbe")
+        d.set(true, forKey: "senden.fett")
+        d.set(3, forKey: "senden.rand")
+        d.set("rechts", forKey: "senden.horizontal")
+        d.set("unten", forKey: "senden.vertikal")
+        d.set("text", forKey: "senden.weg")
+        d.set("schnell", forKey: "senden.tempo")
+
+        let o = Meldungsoptionen.ausAblage(d)
+        XCTAssertEqual(o.schrift, "Menlo")
+        XCTAssertEqual(o.groesse, 12)
+        XCTAssertEqual(o.farbe, "#FF0000")
+        XCTAssertTrue(o.fett)
+        XCTAssertEqual(o.rand, 3)
+        XCTAssertEqual(o.waagrecht, .rechts)
+        XCTAssertEqual(o.senkrecht, .unten)
+        XCTAssertEqual(o.weg, .text)
+        XCTAssertEqual(o.tempo, .schnell)
+    }
+
+    /// Ein unsinniger Wert darf nicht zum Absturz führen, sondern fällt auf die
+    /// Vorgabe zurück — von Hand verbogene Einstellungen gibt es.
+    func testUnsinnFaelltAufDieVorgabeZurueck() {
+        let d = ablage()
+        d.set("grün", forKey: "senden.horizontal")
+        d.set("sehr schnell", forKey: "senden.tempo")
+        let o = Meldungsoptionen.ausAblage(d)
+        XCTAssertEqual(o.waagrecht, .links)
+        XCTAssertEqual(o.tempo, .mittel)
+    }
+}
+```
+
+- [ ] **Schritt 2: Den Test laufen lassen, er muss scheitern**
+
+Ausführen: `swift test --filter MeldungsoptionenAblageTests`
+Erwartet: Übersetzungsfehler, `ausAblage` gibt es nicht.
+
+- [ ] **Schritt 3: Das Lesen umsetzen**
+
+`Sources/TC002Core/MeldungsoptionenAblage.swift`:
+
+```swift
+import Foundation
+
+public extension Meldungsoptionen {
+    /// Liest die Formateinstellungen, die die Sendeansicht zuletzt abgelegt hat.
+    ///
+    /// Für alles, was nicht die Ansicht selbst ist — den App Intent vor allem.
+    /// Ohne das sähe eine über Siri geschickte Meldung anders aus als dieselbe
+    /// Meldung aus der App, und niemand käme darauf, warum.
+    ///
+    /// `text` bleibt leer; der kommt vom Aufrufer. Unsinnige Werte fallen auf
+    /// die Vorgabe zurück statt zu scheitern — von Hand verbogene Einstellungen
+    /// gibt es.
+    static func ausAblage(_ d: UserDefaults) -> Meldungsoptionen {
+        var o = Meldungsoptionen(text: "")
+        if let s = d.string(forKey: "senden.schriftart"), !s.isEmpty { o.schrift = s }
+        if let s = d.string(forKey: "senden.farbe"), !s.isEmpty { o.farbe = s }
+        if d.object(forKey: "senden.groesse") != nil { o.groesse = d.double(forKey: "senden.groesse") }
+        if d.object(forKey: "senden.fett") != nil { o.fett = d.bool(forKey: "senden.fett") }
+        if d.object(forKey: "senden.luecke") != nil { o.abstand = d.integer(forKey: "senden.luecke") }
+        if d.object(forKey: "senden.rand") != nil { o.rand = d.integer(forKey: "senden.rand") }
+        if d.object(forKey: "senden.grossbuchstaben") != nil {
+            o.grossbuchstaben = d.bool(forKey: "senden.grossbuchstaben")
+        }
+        if d.object(forKey: "senden.iconmitlaufend") != nil {
+            o.iconLaeuftMit = d.bool(forKey: "senden.iconmitlaufend")
+        }
+        o.weg = d.string(forKey: "senden.weg").flatMap(SendeWeg.init(rawValue:)) ?? o.weg
+        o.waagrecht = d.string(forKey: "senden.horizontal")
+            .flatMap(SendenHAusrichtung.init(rawValue:)) ?? o.waagrecht
+        o.senkrecht = d.string(forKey: "senden.vertikal")
+            .flatMap(SendenVAusrichtung.init(rawValue:)) ?? o.senkrecht
+        o.tempo = d.string(forKey: "senden.tempo").flatMap(Lauftempo.init(rawValue:)) ?? o.tempo
+        return o
+    }
+}
+```
+
+- [ ] **Schritt 4: Den Test laufen lassen, er muss durchgehen**
+
+Ausführen: `swift test --filter MeldungsoptionenAblageTests`
+Erwartet: alle grün.
+
+- [ ] **Schritt 5: Die Kurzbefehle anlegen**
+
+`Sources/TC002iOS/Kurzbefehle.swift`:
+
+```swift
+import AppIntents
+import Foundation
+import TC002Core
+
+/// Schickt eine Meldung an die Uhr — aus der Kurzbefehle-App, per Siri, aus
+/// einer Automation oder von einem Knopf auf dem Sperrbildschirm.
+///
+/// Benutzt bewusst nicht `AppZustand`, sondern nur den Kern: Einstellungen
+/// lesen, Rahmen bauen, senden. Dadurch braucht der Intent keine laufende
+/// Oberfläche — und derselbe Weg trägt auf der Apple Watch, wo Kurzbefehle
+/// ohne eigene App laufen.
+///
+/// Schrift, Größe, Ausrichtung und Rand kommen aus dem, was zuletzt unter
+/// „Senden" eingestellt war. Ein Kurzbefehl, der zwölf Fragen stellt, benutzt
+/// niemand.
+struct MeldungSendenIntent: AppIntent {
+    static let title: LocalizedStringResource = "Meldung an die Uhr schicken"
+    static let description = IntentDescription(
+        "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.")
+    /// Kein Aufmachen der App: Das Senden dauert Bruchteile einer Sekunde, und
+    /// wer aus einer Automation heraus schickt, will kein Fenster.
+    static let openAppWhenRun = false
+
+    @Parameter(title: "Text")
+    var text: String
+
+    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: an alle eingerichteten.")
+    var uhr: String?
+
+    @Parameter(title: "Icon-Nummer", description: "Nummer eines vorhandenen Icons.")
+    var iconNummer: String?
+
+    @Parameter(title: "Dauer in Sekunden")
+    var dauer: Int?
+
+    @Parameter(title: "Meldung", description: "Platz 1 bis 5 auf der Uhr.",
+               inclusiveRange: (1, 5))
+    var platz: Int?
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("\(\.$text) an die Uhr schicken") {
+            \.$uhr
+            \.$iconNummer
+            \.$dauer
+            \.$platz
+        }
+    }
+
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let einstellungen = Einstellungen.gelesen()
+        let ziele = try zieleBestimmen(einstellungen)
+
+        var optionen = Meldungsoptionen.ausAblage(.standard)
+        optionen.text = text
+        if let dauer, dauer > 0 { optionen.dauer = dauer }
+
+        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
+                                    leseordner: [Iconordner.mitgeliefert])
+        var icon: Icon?
+        if let nummer = iconNummer?.trimmingCharacters(in: .whitespaces), !nummer.isEmpty {
+            guard let gefunden = sammlung.alle().first(where: { $0.nummer == nummer }) else {
+                throw $iconNummer.needsValueError(
+                    "Kein Icon mit der Nummer \(nummer). In der App unter „Icon" nachsehen.")
+            }
+            icon = gefunden
+        }
+
+        let name = MeldungsplatzWahl.name(fuer: platz ?? 1)
+        let rahmen = try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung)
+
+        // Blockierende Netzarbeit gehört nicht auf den Hauptthread, auch nicht
+        // im Intent — dort wartet sonst das System auf uns.
+        let gesendet = try await Task.detached(priority: .userInitiated) { () -> [String] in
+            var erledigt: [String] = []
+            for ziel in ziele {
+                guard let zugang = einstellungen.zugang(
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
+                try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
+                    .zeigen(rahmen, auf: name)
+                erledigt.append(ziel.name)
+            }
+            return erledigt
+        }.value
+
+        return .result(dialog: IntentDialog(
+            stringLiteral: lokf("An %@ geschickt.", gesendet.joined(separator: ", "))))
+    }
+
+    /// Die gemeinten Uhren, oder ein Fehler, der sagt was fehlt.
+    private func zieleBestimmen(_ e: Einstellungen) throws -> [Uhr] {
+        guard !e.uhren.isEmpty else {
+            throw $text.needsValueError(
+                "Noch keine Uhr eingerichtet. Das geht in der App unter „Verbindung".")
+        }
+        let gewaehlt: [Uhr]
+        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
+            guard let gefunden = e.uhr(benannt: name) else {
+                throw $uhr.needsValueError("Keine Uhr namens \(name).")
+            }
+            gewaehlt = [gefunden]
+        } else {
+            gewaehlt = e.ziele
+        }
+        let ohnePraefix = gewaehlt.filter { $0.praefix.isEmpty }
+        guard ohnePraefix.isEmpty else {
+            throw $uhr.needsValueError(
+                "Noch nicht abgefragt: \(ohnePraefix.map(\.name).joined(separator: ", ")). In der App unter „Verbindung" auf „Abfragen" tippen.")
+        }
+        return gewaehlt
+    }
+}
+
+/// Nimmt eine Meldung wieder von der Uhr. Über HTTP ginge das nicht — nur die
+/// leere MQTT-Nutzlast löscht wirklich (Gerätereferenz §3.2 und §5.6).
+struct MeldungLoeschenIntent: AppIntent {
+    static let title: LocalizedStringResource = "Meldung von der Uhr nehmen"
+    static let description = IntentDescription(
+        "Entfernt eine der fünf Meldungen wieder von der Uhr.")
+    static let openAppWhenRun = false
+
+    @Parameter(title: "Meldung", description: "Platz 1 bis 5 auf der Uhr.",
+               inclusiveRange: (1, 5))
+    var platz: Int
+
+    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: von allen.")
+    var uhr: String?
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Meldung \(\.$platz) von der Uhr nehmen") { \.$uhr }
+    }
+
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let e = Einstellungen.gelesen()
+        let ziele: [Uhr]
+        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
+            guard let gefunden = e.uhr(benannt: name) else {
+                throw $uhr.needsValueError("Keine Uhr namens \(name).")
+            }
+            ziele = [gefunden]
+        } else {
+            ziele = e.ziele
+        }
+        let name = MeldungsplatzWahl.name(fuer: platz)
+        try await Task.detached(priority: .userInitiated) {
+            for ziel in ziele where !ziel.praefix.isEmpty {
+                guard let zugang = e.zugang(
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
+                try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
+                    .loeschen(name)
+            }
+        }.value
+        return .result(dialog: IntentDialog(stringLiteral: lokf("Meldung %d entfernt.", platz)))
+    }
+}
+
+/// Damit die beiden ohne Zutun in Siri und in der Suche auftauchen. Ohne diesen
+/// Anbieter müsste man sie erst von Hand in einen Kurzbefehl einbauen.
+struct TC002Kurzbefehle: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(intent: MeldungSendenIntent(),
+                    phrases: ["Schicke eine Meldung mit \(.applicationName)",
+                              "Send a message with \(.applicationName)"],
+                    shortTitle: "Meldung schicken",
+                    systemImageName: "paperplane")
+        AppShortcut(intent: MeldungLoeschenIntent(),
+                    phrases: ["Nimm die Meldung von der Uhr mit \(.applicationName)",
+                              "Clear a message with \(.applicationName)"],
+                    shortTitle: "Meldung nehmen",
+                    systemImageName: "trash")
+    }
+}
+```
+
+- [ ] **Schritt 6: Bauen**
+
+```bash
+xcodegen generate
+xcodebuild -project MQTT-TC002-iOS.xcodeproj -scheme MQTT-TC002-iOS \
+           -destination 'generic/platform=iOS Simulator' build
+```
+
+Erwartet: `** BUILD SUCCEEDED **`.
+
+Meldet der Übersetzer, `AppShortcutsProvider` brauche mindestens einen
+Kurzbefehl je Intent oder höchstens zehn: Das ist eine harte Vorgabe von
+Apple, keine Empfehlung. Die Zahl der `AppShortcut`-Einträge entsprechend
+anpassen, nicht den Anbieter entfernen.
+
+- [ ] **Schritt 7: Die Texte der Kurzbefehle übersetzen**
+
+`LocalizedStringResource` schlägt im Bündel nach, genau wie `lok`. Der Sammler
+findet diese Zeichenketten aber nicht, weil sie in `static let title` und in
+`IntentDescription` stehen. In `scripts/texte-sammeln.py` die Liste `DYNAMISCH`
+um die sichtbaren Texte der beiden Intents erweitern:
+
+```python
+    # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
+    # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
+    "Meldung an die Uhr schicken",
+    "Meldung von der Uhr nehmen",
+    "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Entfernt eine der fünf Meldungen wieder von der Uhr.",
+    "Meldung schicken",
+    "Meldung nehmen",
+```
+
+Danach `python3 scripts/texte-sammeln.py --pruefen` und die gemeldeten Texte in
+`Resources/Sprachen/en.lproj/Localizable.strings` ergänzen.
+
+- [ ] **Schritt 8: Alles prüfen**
+
+```bash
+swift test
+xcodebuild -project MQTT-TC002-iOS.xcodeproj -scheme MQTT-TC002-iOS \
+           -destination 'generic/platform=iOS Simulator' build
+python3 scripts/texte-sammeln.py --pruefen
+```
+
+Erwartet: alle Tests grün, `** BUILD SUCCEEDED **`, `0 ohne Uebersetzung`.
+
+- [ ] **Schritt 9: Einchecken**
+
+```bash
+git add Sources/TC002Core/MeldungsoptionenAblage.swift Sources/TC002iOS/Kurzbefehle.swift \
+        Tests/TC002CoreTests/MeldungsoptionenAblageTests.swift scripts/texte-sammeln.py \
+        Resources/Sprachen
+git commit -m "feat(ios): Kurzbefehle zum Senden und Loeschen"
+```
+
+- [ ] **Schritt 10: Am Gerät ausprobieren**
+
+Dieser Schritt gehört dem Menschen.
+
+In der Kurzbefehle-App nachsehen, ob „Meldung an die Uhr schicken" unter den
+Aktionen auftaucht. Einen Kurzbefehl damit bauen, ausführen, auf die Uhr sehen.
+Danach dasselbe auf der Apple Watch: Die Kurzbefehle-App dort zeigt denselben
+Kurzbefehl, ohne dass eine Zeile watchOS-Code geschrieben wurde.
+
+---
+
 ## Was dieser Plan nicht enthält
 
 - **Icon-Editor auf dem iPhone.** Dauerhafte Festlegung, siehe Spezifikation.
 - **Malen.** Zurückgestellt.
 - **Hilfe und Gerätereferenz auf dem iPhone.** Beide hängen am Markdown-Zerleger in der macOS-Schicht.
 - **Automatische Oberflächentests.** Geprüft wird durch den Simulatorbau und am Gerät.
+- **Kurzbefehle auf dem Mac.** Derselbe Intent ließe sich dort anbieten; dafür müsste er nach `TC002Modell` wandern, damit ihn beide Ziele einbinden. Billig, aber eine eigene Entscheidung.
+- **Eine eigene Apple-Watch-App.** Über die Kurzbefehle aus Aufgabe 9 ist die Uhr am Handgelenk bereits erreichbar. Eine eigene App wäre deutlich mehr Arbeit für deutlich weniger.
 - **TestFlight und App Store.**
 - **iPad-eigenes Layout.**
