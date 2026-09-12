@@ -429,10 +429,9 @@
 "Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute." = "The clock sets it itself, with its built-in font. It knows no umlauts.";
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
 
-/* TC002iOS/ZielauswahliOS.swift */
-"Ziel" = "Target";
-
 /* TC002iOS/SendeniOS.swift */
+"Ziel" = "Target";
+"Alle Uhren" = "All clocks";
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Dauer" = "Duration";
 "Ausrichtung" = "Alignment";

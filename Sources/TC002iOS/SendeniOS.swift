@@ -50,7 +50,6 @@ struct SendeniOS: View {
     @State private var laeuft = false
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
-    @State private var zeigeZiele = false
     @State private var zeigeEinstellungen = false
     @State private var zeigeVerlauf = false
 
@@ -124,12 +123,15 @@ struct SendeniOS: View {
                 eingabe
             }
             .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
-            .toolbar {
-                if zustand.uhren.count > 1 {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Ziel") { zeigeZiele = true }
+            .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
+                Picker("Ziel", selection: zielAuswahl) {
+                    ForEach(zustand.uhren) { uhr in
+                        Text(uhr.name).tag(Optional(uhr.id))
                     }
+                    Text("Alle Uhren").tag(UUID?.none)
                 }
+            }
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         zeigeVerlauf = true
@@ -152,9 +154,6 @@ struct SendeniOS: View {
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)
         }
-        .sheet(isPresented: $zeigeZiele) {
-            ZielauswahliOS(zustand: zustand)
-        }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)
         }
@@ -174,6 +173,32 @@ struct SendeniOS: View {
         let ziele = zustand.ziele()
         if ziele.count == 1 { return ziele[0].name }
         return lokf("an %d Uhren", ziele.count)
+    }
+
+    /// Bildet `zustand.zielIDs` auf die Zeile im Titelmenue ab: eine Uhr-ID
+    /// fuer eine bestimmte Uhr, `nil` fuer „Alle Uhren“. Leer heisst nach
+    /// `AppZustand.ziele()` „die aktive Uhr“ — das zeigt hier folgerichtig
+    /// deren Zeile an, statt keine.
+    private var zielAuswahl: Binding<UUID?> {
+        Binding(
+            get: {
+                let alle = Set(zustand.uhren.map(\.id))
+                if zustand.zielIDs.isEmpty { return zustand.aktiveID }
+                if zustand.zielIDs == alle { return nil }
+                if zustand.zielIDs.count == 1 { return zustand.zielIDs.first }
+                // Altlast aus der frueheren Einzelauswahl-Liste: eine
+                // gemischte Teilmenge, die es in diesem Menue nicht mehr
+                // gibt. „Alle Uhren“ ist ihr am naechsten.
+                return nil
+            },
+            set: { neu in
+                if let neu {
+                    zustand.zielIDs = [neu]
+                } else {
+                    zustand.zielIDs = Set(zustand.uhren.map(\.id))
+                }
+            }
+        )
     }
 
     private var platzUndDauer: some View {
@@ -450,6 +475,21 @@ struct SendeniOS: View {
             await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz))
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        }
+    }
+}
+
+private extension View {
+    /// Haengt das Auswahlmenue an den Titel, aber nur ab zwei Uhren — bei
+    /// genau einer waere ein Menue mit einem Eintrag eine Falle, keine
+    /// Auswahl, und der Titel bleibt schlichter Text ohne Pfeil.
+    @ViewBuilder
+    func titelmenuFallsMehrereUhren<Inhalt: View>(_ mehrere: Bool,
+                                                  @ViewBuilder inhalt: () -> Inhalt) -> some View {
+        if mehrere {
+            toolbarTitleMenu(content: inhalt)
+        } else {
+            self
         }
     }
 }
