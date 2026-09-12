@@ -67,13 +67,27 @@ public struct Einstellungen: Sendable {
         self.zielIDs = zielIDs
     }
 
-    /// Liest die Einstellungen der App.
+    /// Die Ablage der App, von wo auch immer gelesen wird.
     ///
-    /// `UserDefaults.standard` taugt dafuer nicht: Es zeigt auf den Bereich des
-    /// *laufenden* Programms, und das Kommandozeilenwerkzeug hat einen eigenen.
-    /// Deshalb der Bereich unter der Buendelkennung der App.
+    /// Zwei Faelle, und beide kommen vor:
+    ///
+    /// Laeuft das Werkzeug als eigenstaendiges Programm (aus `swift run`, oder
+    /// ueber einen Verweis irgendwo im Pfad), ist sein eigener Bereich ein
+    /// anderer als der der App — es braucht also ausdruecklich den unter der
+    /// Buendelkennung der App.
+    ///
+    /// Liegt es dagegen im Buendel der App, ist `Bundle.main` genau dieses
+    /// Buendel, und seine Kennung ist bereits die der App. Ein Bereich mit dem
+    /// eigenen Namen ist bei `UserDefaults` aber nicht vorgesehen: Der Aufruf
+    /// meldet „does not make sense and will not work" und liefert eine Ablage,
+    /// in der nichts steht. Dann ist `.standard` das Richtige.
+    private static func ablage(_ bereich: String) -> UserDefaults? {
+        Bundle.main.bundleIdentifier == bereich ? .standard : UserDefaults(suiteName: bereich)
+    }
+
+    /// Liest die Einstellungen der App.
     public static func gelesen(bereich: String = kennung) -> Einstellungen {
-        let d = UserDefaults(suiteName: bereich)
+        let d = ablage(bereich)
         let uhren = (try? JSONDecoder().decode([Uhr].self,
                         from: d?.data(forKey: "uhren") ?? Data())) ?? []
         let ziele = (try? JSONDecoder().decode(Set<UUID>.self,
