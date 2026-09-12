@@ -21,6 +21,7 @@ struct FehlerleisteiOS: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Schließen")
             }
             .padding(10)
             .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))

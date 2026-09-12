@@ -50,6 +50,7 @@ struct VorschauiOS: View {
                    height: Double(Pixelfeld.hoeheStandard) * kante)
             .background(.black)
             .clipShape(RoundedRectangle(cornerRadius: 6))
+            .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
             .task(id: icon) { iconBilder = Self.geladen(icon) }
         }
     }

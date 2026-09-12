@@ -260,6 +260,14 @@ struct SendeniOS: View {
         }
     }
 
+    /// Sprachausgabe fuer den Sendeknopf, der laufend nur ein Symbol zeigt —
+    /// dieselben zwei Woerter wie im Mac-Knopf (`SendenView.swift`), kein
+    /// Ternaer (siehe `horizontalSymbol` oben), kein neuer Uebersetzungsschluessel.
+    private var sendenWort: LocalizedStringKey {
+        if laeuft { return "Sende…" }
+        return "Senden"
+    }
+
     /// Der Pfeil am rechten Rand der Pille zeigt nur an, solange dort
     /// wirklich noch etwas liegt, und verschwindet, sobald ganz durchgeschoben
     /// ist — sonst verspraeche er etwas, das nicht mehr da ist. 1pt Toleranz
@@ -333,6 +341,7 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Format")
                     Menu {
                         Picker("Schriftart", selection: $schrift) {
                             ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
@@ -444,6 +453,7 @@ struct SendeniOS: View {
                 .contentShape(Rectangle())
             }
             .disabled(laeuft || text.trimmingCharacters(in: .whitespaces).isEmpty)
+            .accessibilityLabel(Text(sendenWort))
         }
         .padding(.horizontal)
         .padding(.bottom, 8)
