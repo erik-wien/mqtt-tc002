@@ -73,7 +73,7 @@ struct SendenView: View {
     /// unter „Anzeigen": was die Uhr meldet, sonst was die App sich gemerkt hat.
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
-        return Set((1...TC002Core.MeldungsplatzWahl.anzahl).filter { namen.contains(TC002Core.MeldungsplatzWahl.name(fuer: $0)) })
+        return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
     }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -498,7 +498,7 @@ struct SendenView: View {
             laeuft = false
             return
         }
-        let anzeigenName = TC002Core.MeldungsplatzWahl.name(fuer: platz)
+        let anzeigenName = Meldungsplatz.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
     }
 }

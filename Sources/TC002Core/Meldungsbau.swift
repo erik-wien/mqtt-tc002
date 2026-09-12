@@ -260,9 +260,10 @@ public enum Meldungsbau {
 
 /// Die fünf Plätze, unter denen diese App Anzeigen auf der Uhr ablegt.
 ///
-/// Der Name ist zugleich der Bezeichner der Anzeige auf dem Gerät. Wer ihn
-/// ändert, findet die alten Anzeigen nicht mehr und kann sie nicht mehr löschen.
-public enum MeldungsplatzWahl {
+/// Der Name eines Platzes ist zugleich der Bezeichner der Anzeige auf dem
+/// Gerät. Wer ihn ändert, findet die alten Anzeigen nicht mehr und kann sie
+/// nicht mehr löschen.
+public enum Meldungsplatz {
     public static let anzahl = 5
     public static func name(fuer platz: Int) -> String { "meldung\(platz)" }
 }

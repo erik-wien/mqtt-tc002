@@ -157,8 +157,8 @@ final class MeldungsbauTests: XCTestCase {
     /// Gerät. Ändert er sich, findet die App ihre alten Anzeigen nicht mehr und
     /// kann sie auch nicht mehr löschen.
     func testMeldungsplatzNamenBleiben() {
-        XCTAssertEqual(MeldungsplatzWahl.anzahl, 5)
-        XCTAssertEqual((1...5).map(MeldungsplatzWahl.name(fuer:)),
+        XCTAssertEqual(Meldungsplatz.anzahl, 5)
+        XCTAssertEqual((1...5).map(Meldungsplatz.name(fuer:)),
                        ["meldung1", "meldung2", "meldung3", "meldung4", "meldung5"])
     }
 }

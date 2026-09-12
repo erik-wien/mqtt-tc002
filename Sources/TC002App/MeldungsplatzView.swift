@@ -15,7 +15,7 @@ struct MeldungsplatzWahl: View {
     var body: some View {
         HStack(spacing: 4) {
             Text("Meldung").font(.caption).foregroundStyle(.secondary)
-            ForEach(1...TC002Core.MeldungsplatzWahl.anzahl, id: \.self) { i in
+            ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                 let belegt = belegtePlaetze.contains(i)
                 Button { platz = i } label: {
                     Text(Self.ziffern[i - 1]).font(.title3)
@@ -26,8 +26,8 @@ struct MeldungsplatzWahl: View {
                 .overlay(RoundedRectangle(cornerRadius: 5)
                     .stroke(belegt ? Color.orange : Color.secondary.opacity(0.4), lineWidth: belegt ? 2 : 1))
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-                .help(belegt ? lokf("%@ ist belegt — Senden ersetzt diese Anzeige.", TC002Core.MeldungsplatzWahl.name(fuer: i))
-                             : lokf("%@ ist frei.", TC002Core.MeldungsplatzWahl.name(fuer: i)))
+                .help(belegt ? lokf("%@ ist belegt — Senden ersetzt diese Anzeige.", Meldungsplatz.name(fuer: i))
+                             : lokf("%@ ist frei.", Meldungsplatz.name(fuer: i)))
             }
         }
     }
@@ -51,7 +51,7 @@ struct MeldungLoeschenKnopf: View {
     var body: some View {
         Button {
             laeuft = true
-            let name = TC002Core.MeldungsplatzWahl.name(fuer: platz)
+            let name = Meldungsplatz.name(fuer: platz)
             Task { await zustand.loeschen(name); laeuft = false }
         } label: {
             Image(systemName: "trash")
