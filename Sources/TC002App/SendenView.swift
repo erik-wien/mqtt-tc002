@@ -336,11 +336,18 @@ struct SendenView: View {
                 Spacer()
             }
 
-            HStack {
-                TextField("Text", text: $text)
-                Button(laeuft ? "Sende…" : "Senden") { senden() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
+            // Breit: Feld und Knopf in einer Zeile. Schmal: der Knopf rueckt
+            // unter das Feld, rechts — damit die Mitte weiter nachgeben kann,
+            // bevor irgendetwas abgeschnitten wird.
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    TextField("Text", text: $text)
+                    sendeKnopf
+                }
+                VStack(alignment: .trailing, spacing: 8) {
+                    TextField("Text", text: $text)
+                    sendeKnopf
+                }
             }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
@@ -348,10 +355,11 @@ struct SendenView: View {
             }
         }
         .padding()
-        // Die Mitte braucht mindestens so viel wie ihre unterste Zeile (Slot,
-        // Papierkorb, Dauer); mit Seitenleiste 170 und Inspektor 340 ergibt
-        // das die Mindestbreite des Fensters (App.swift).
-        .frame(minWidth: 490)
+        // Die Mitte braucht mindestens so viel wie die Slot-Zeile (Slot,
+        // Papierkorb, Dauer); das Eingabefeld gibt weiter nach, weil der
+        // Sendeknopf bei Enge darunterrueckt. Mit Seitenleiste 170 und
+        // Inspektor 340 bleiben bei 980 Fensterbreite 470 — reicht.
+        .frame(minWidth: 420)
         // Alle Formatierungsregler sitzen im Inspektor rechts (siehe
         // `inspektor` unten) — auf macOS/iPadOS eine Seitenleiste, auf dem
         // iPhone (liefe diese Ansicht dort) ein Blatt von unten, ganz von
@@ -563,6 +571,12 @@ struct SendenView: View {
         // Schrumpft das Fenster, soll die Vorschau kleiner werden, nicht der
         // Inspektor. Die Zeilen darin sind auf 340 gerechnet.
         .inspectorColumnWidth(340)
+    }
+
+    private var sendeKnopf: some View {
+        Button(laeuft ? "Sende…" : "Senden") { senden() }
+            .keyboardShortcut(.defaultAction)
+            .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
     private func senden() {

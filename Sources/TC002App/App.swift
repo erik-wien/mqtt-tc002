@@ -123,11 +123,11 @@ struct TC002App: App {
         // genug; ist das Fenster schmaler, hilft der Knopf in der
         // Werkzeugleiste, der den Inspektor einklappt.
         // Rechnung: Seitenleiste 170 (fest) + Inspektor 340 (fest, nur bei
-        // „Senden") + Mitte mindestens 490 — darin die Slot-Zeile mit Dauer und
-        // die Vorschau bei kleinster Kantenlaenge. Das ergibt 1000. Fuer
-        // „Malen" reichen die 1000 ebenfalls: 170 + 52 Spalten mal 14 + Rand.
-        // Unter 1000 wurden beide Leisten angeschnitten statt die Mitte.
-        .frame(minWidth: 1000, minHeight: 640)
+        // „Senden") + Mitte mindestens 420 (Slot-Zeile; der Sendeknopf rueckt
+        // bei Enge unter das Feld) = 930. Fuer „Malen" braucht es 980: 170 +
+        // 52 Spalten mal 14 + Rand — das ist die Grenze. Darunter wuerden die
+        // festen Leisten angeschnitten statt die Mitte.
+        .frame(minWidth: 980, minHeight: 640)
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
             set: { if !$0 { zustand.fehler = nil } })) {
