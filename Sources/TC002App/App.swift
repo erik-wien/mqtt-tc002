@@ -97,7 +97,11 @@ struct TC002App: App {
                 List(Bereich.unten, selection: $bereich) { b in
                     Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
                 }
-                .frame(height: 76)
+                // Zwei Zeilen, kein Rollen: Bei 76 war der Inhalt ein paar
+                // Punkte hoeher als die Liste, und sie bot einen Rollbalken an.
+                .scrollDisabled(true)
+                .scrollIndicators(.hidden)
+                .frame(height: 88)
             }
             // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
             // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
