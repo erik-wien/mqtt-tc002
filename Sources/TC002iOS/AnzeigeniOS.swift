@@ -7,6 +7,7 @@ import TC002Modell
 /// aus zwei Knöpfen je Zeile werden zwei Wischgesten.
 struct AnzeigeniOS: View {
     @Bindable var zustand: AppZustand
+    @Environment(\.dismiss) private var schliessen
 
     var body: some View {
         NavigationStack {
@@ -18,6 +19,12 @@ struct AnzeigeniOS: View {
                 }
             }
             .navigationTitle("Verlauf")
+            // Format- und Icon-Blatt haben "Fertig" bzw. "Abbrechen" in der
+            // Titelleiste, dieses hatte nur den Greifer — uneinheitlich, und
+            // ohne ausdruecklichen Weg hinaus.
+            .toolbar { ToolbarItem(placement: .confirmationAction) {
+                Button("Fertig") { schliessen() }
+            } }
         }
         .presentationDragIndicator(.visible)
     }

@@ -8,6 +8,7 @@ import TC002Modell
 struct VerbindungiOS: View {
     @Bindable var zustand: AppZustand
     @State private var neueAdresse = ""
+    @Environment(\.dismiss) private var schliessen
 
     var body: some View {
         NavigationStack {
@@ -19,6 +20,12 @@ struct VerbindungiOS: View {
                 }
             }
             .navigationTitle("Einstellungen")
+            // Format- und Icon-Blatt haben "Fertig" bzw. "Abbrechen" in der
+            // Titelleiste, dieses hatte nur den Greifer — uneinheitlich, und
+            // ohne ausdruecklichen Weg hinaus.
+            .toolbar { ToolbarItem(placement: .confirmationAction) {
+                Button("Fertig") { schliessen() }
+            } }
         }
         .presentationDragIndicator(.visible)
         // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
