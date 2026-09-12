@@ -89,6 +89,46 @@ struct SendeniOS: View {
     private var mitIcon: Bool { gewaehltesIcon != nil }
     private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon) }
 
+    /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
+    /// aendert — dieselbe Rechnung wie `SendenView.fettWirkt` (Mac). Ein Knopf
+    /// ohne Wirkung ist schlimmer als keiner, deshalb wird er gesperrt statt
+    /// nur eingefaerbt.
+    private var fettWirkt: Bool {
+        weg != .text && Textraster.kannFett(schrift: schrift, groesse: groesse)
+    }
+
+    /// Ob die Schrift eigene Kleinbuchstaben kennt — dieselbe Rechnung wie
+    /// `SendenView.kleinbuchstabenMoeglich` (Mac). Silkscreen etwa setzt alles
+    /// in Versalien; dort bliebe der Grossbuchstaben-Schalter wirkungslos.
+    private var kleinbuchstabenMoeglich: Bool {
+        weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+    }
+
+    /// Erklaerung fuer den gesperrten Fett-Knopf. Auf dem Telefon gibt es kein
+    /// `.help`; VoiceOver bekommt denselben Wortlaut wie die Mac-Hilfe
+    /// (`SendenView.fettHilfe`) als accessibilityHint mit.
+    private var fettHinweis: String {
+        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
+        if !fettWirkt { return lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift) }
+        return lok("Fett")
+    }
+
+    /// Wie `fettHinweis`, fuer Grossbuchstaben (`SendenView.grossHilfe`, Mac).
+    private var grossHinweis: String {
+        if kleinbuchstabenMoeglich {
+            return lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
+        }
+        return lokf("„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung.", schrift)
+    }
+
+    /// Erklaerung fuer den Schriftart-Knopf, gesperrt beim Weg „als Text" —
+    /// dieselben zwei Saetze wie `.help(...)` an der Schriftart-Auswahl der
+    /// Mac-Fassung (SendenView.swift).
+    private var schriftartHinweis: String {
+        if weg == .text { return lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.") }
+        return lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+    }
+
     private var farbe: Binding<Color> {
         Binding(get: { Color(hex: farbeHex) ?? Color(red: 0, green: 1, blue: 0.4) },
                 set: { farbeHex = $0.hexWert })
@@ -369,7 +409,9 @@ struct SendeniOS: View {
                         Text(schrift)
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    .disabled(weg == .text)
                     .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
+                    .accessibilityHint(Text(schriftartHinweis))
                     Menu {
                         Picker("Größe", selection: groesseInt) {
                             ForEach(6...16, id: \.self) { n in Text(String(n)).tag(n) }
@@ -392,8 +434,12 @@ struct SendeniOS: View {
                     // in der Mac-Fassung (SendenView.swift).
                     .background(fett ? Color.accentColor.opacity(0.3) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .disabled(weg == .text)
+                    // Wie am Mac (`fettWirkt`) statt nur beim Weg „als Text":
+                    // auch Schriften/Groessen ohne fetten Schnitt sperren den
+                    // Knopf, sonst waere er bedienbar, ohne etwas zu bewirken.
+                    .disabled(!fettWirkt)
                     .accessibilityLabel("Fett")
+                    .accessibilityHint(Text(fettHinweis))
                     .accessibilityAddTraits(fett ? [.isSelected] : [])
                     Button { grossbuchstaben.toggle() } label: {
                         Image(systemName: "capslock")
@@ -403,7 +449,9 @@ struct SendeniOS: View {
                     .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
                     .background(grossbuchstaben ? Color.accentColor.opacity(0.3) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .disabled(!kleinbuchstabenMoeglich)
                     .accessibilityLabel("Großbuchstaben")
+                    .accessibilityHint(Text(grossHinweis))
                     .accessibilityAddTraits(grossbuchstaben ? [.isSelected] : [])
                     Menu {
                         Picker("Rand", selection: $rand) {
@@ -413,7 +461,12 @@ struct SendeniOS: View {
                         Label { Text(String(rand)) } icon: { Image(systemName: "arrow.up.and.down") }
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    // Wie am Mac (SendenView.swift): bei "Mittig" wirkt der
+                    // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
+                    // Wirkung.
+                    .disabled(vertikal == .mittig)
                     .accessibilityLabel(Text(lokf("Rand %d", rand)))
+                    .accessibilityHint(Text(lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
                     Menu {
                         Picker("Abstand", selection: $luecke) {
                             ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
