@@ -19,7 +19,11 @@ let package = Package(
                           swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002CoreTests", dependencies: ["TC002Core"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
+        // Die Schnappschuesse des Rahmenbaus sind keine Buendelressourcen: Die
+        // Tests lesen sie ueber `#filePath` aus dem Quellbaum. Ohne diesen
+        // Ausschluss warnt SwiftPM bei jedem Bau ueber unbehandelte Dateien.
         .testTarget(name: "TC002AppTests", dependencies: ["TC002App"],
+                    exclude: ["Schnappschuesse"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002CLITests", dependencies: ["TC002CLI"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
