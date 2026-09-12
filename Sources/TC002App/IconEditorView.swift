@@ -1,5 +1,6 @@
 import SwiftUI
 import TC002Core
+import TC002Modell
 import UniformTypeIdentifiers
 
 /// 8×8-Editor fuer eigene Icons. Dasselbe Malprinzip wie der grosse Editor, nur

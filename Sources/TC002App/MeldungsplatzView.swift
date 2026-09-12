@@ -1,5 +1,6 @@
 import SwiftUI
 import TC002Core
+import TC002Modell
 
 /// Waehlt einen von fuenf festen Anzeigenplaetzen. Der gewaehlte Platz *ist* der
 /// Anzeigenname ("meldung1" … "meldung5") — das ersetzt ein freies Namensfeld:

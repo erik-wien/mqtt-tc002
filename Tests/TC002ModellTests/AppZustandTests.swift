@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 import TC002Core
-@testable import TC002App
+@testable import TC002Modell
 
 /// Die Tests fassen nur die Einstellungs-Schluessel `uhren`, `aktiveID`,
 /// `bekannteAnzeigen` und `zielIDs` an — nie den Schluesselbund, nie eine echte

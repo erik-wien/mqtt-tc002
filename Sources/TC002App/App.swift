@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import TC002Core
+import TC002Modell
 
 @main
 struct TC002App: App {

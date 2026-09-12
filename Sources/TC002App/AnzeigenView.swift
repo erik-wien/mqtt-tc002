@@ -1,5 +1,6 @@
 import SwiftUI
 import TC002Core
+import TC002Modell
 
 struct AnzeigenView: View {
     @Bindable var zustand: AppZustand

@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import TC002Core
+import TC002Modell
 
 struct SendenView: View {
     @Bindable var zustand: AppZustand

@@ -7,29 +7,29 @@ import TC002Core
 
 @Observable
 @MainActor
-final class AppZustand {
-    var uhren: [Uhr] { didSet { uhrenSichern() } }
-    var aktiveID: UUID? { didSet { merke(aktiveID?.uuidString, "aktiveID") } }
+public final class AppZustand {
+    public var uhren: [Uhr] { didSet { uhrenSichern() } }
+    public var aktiveID: UUID? { didSet { merke(aktiveID?.uuidString, "aktiveID") } }
     /// An welche Uhren gesendet wird. Ueberlebt den Neustart, weil es eine
     /// Entscheidung ist und keine Momentaufnahme.
-    var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
+    public var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
-    var verbunden: [UUID: Bool] = [:]
+    public var verbunden: [UUID: Bool] = [:]
     /// Was die Uhr selbst als ihre Anzeigen meldet (`<praefix>/customList`, §3.5).
     /// Kein Eintrag heisst: noch nichts empfangen — dann gilt `bekannteAnzeigen`.
-    var gemeldeteAnzeigen: [UUID: [String]] = [:]
+    public var gemeldeteAnzeigen: [UUID: [String]] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
-    var geraetOnline: [UUID: Bool] = [:]
+    public var geraetOnline: [UUID: Bool] = [:]
 
-    var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
-    var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
-    var benutzer: String { didSet { merke(benutzer, "benutzer"); brokerStand = .unbekannt } }
+    public var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
+    public var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
+    public var benutzer: String { didSet { merke(benutzer, "benutzer"); brokerStand = .unbekannt } }
     /// Ohne Schluesselbund-Schreibvorgang im didSet: jeder Schreibvorgang loeschte den
     /// Eintrag und legte ihn neu an — das gehoert nicht an jeden Tastendruck.
     /// `kennwortSichern()` ruft, wer die Eingabe abschliesst.
-    var kennwort: String { didSet { brokerStand = .unbekannt } }
+    public var kennwort: String { didSet { brokerStand = .unbekannt } }
 
-    enum Brokerstand: Equatable {
+    public enum Brokerstand: Equatable {
         case unbekannt
         case laeuft
         case angenommen
@@ -39,16 +39,16 @@ final class AppZustand {
     /// Nicht gesichert: eine Momentaufnahme der letzten Pruefung, keine Einstellung.
     /// Jede Aenderung an Adresse, Port, Konto oder Kennwort setzt sie zurueck, damit
     /// kein veraltetes „angenommen“ stehenbleibt.
-    var brokerStand: Brokerstand = .unbekannt
+    public var brokerStand: Brokerstand = .unbekannt
 
     /// Jede Fehlermeldung geht an zwei Stellen: in den Hinweis, der sofort auffaellt,
     /// und ins Protokoll, wo sie auch nach dem Wegklicken nachlesbar bleibt.
-    var fehler: String? {
+    public var fehler: String? {
         didSet {
             if let fehler, fehler != oldValue { log(fehler) }
         }
     }
-    var protokoll: [String] = []
+    public var protokoll: [String] = []
     private static let protokollZeit: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss"
@@ -61,14 +61,14 @@ final class AppZustand {
     /// an eine Uhr, und nach einem Versand „an alle“ bliebe die Anzeige auf den
     /// übrigen stehen — und blockiert dort alles Weitere —, während die App sie
     /// vergessen hätte.
-    var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
+    public var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
 
     /// Der zuletzt gesicherte Wert — Grundlage dafuer, dass mehrfache Aufrufe
     /// (Fokuswechsel, .onDisappear, Beenden) gefahrlos sind: ein unveraenderter
     /// Wert loest keinen zweiten Schluesselbund-Schreibvorgang aus.
     private var kennwortGesichert: String?
 
-    func kennwortSichern() {
+    public func kennwortSichern() {
         guard kennwort != kennwortGesichert else { return }
         guard Schluesselbund.setzen(kennwort, fuer: "broker") else {
             fehler = lok("Das Kennwort ließ sich nicht im Schlüsselbund sichern.")
@@ -80,7 +80,7 @@ final class AppZustand {
     /// Sichert die Broker-Angaben ausdruecklich und fragt den Broker, ob er sie
     /// annimmt. Ohne das erfaehrt man einen Tippfehler im Kennwort erst dann,
     /// wenn eine Sendung stillschweigend nicht ankommt.
-    func brokerSichernUndPruefen() {
+    public func brokerSichernUndPruefen() {
         kennwortSichern()
         guard let zugang else {
             let meldung = lok("Broker-Port muss eine Zahl über 0 sein.")
@@ -112,7 +112,7 @@ final class AppZustand {
 
     private var initialisiert = false
 
-    init() {
+    public init() {
         let d = UserDefaults.standard
         uhren = (try? JSONDecoder().decode([Uhr].self,
                     from: d.data(forKey: "uhren") ?? Data())) ?? []
@@ -145,7 +145,7 @@ final class AppZustand {
         initialisiert = true
     }
 
-    func anzeigeGemerkt(_ name: String, fuer id: UUID) {
+    public func anzeigeGemerkt(_ name: String, fuer id: UUID) {
         var liste = bekannteAnzeigen[id] ?? []
         guard !liste.contains(name) else { return }
         liste.append(name)
@@ -153,24 +153,24 @@ final class AppZustand {
     }
 
     /// Woher die Liste der Anzeigen stammt.
-    enum Anzeigenquelle { case geraet, app }
+    public enum Anzeigenquelle { case geraet, app }
 
     /// Was auf einer Uhr steht: was sie selbst meldet, sonst was die App sich
     /// gemerkt hat. Beides zugleich gibt es nicht — die Meldung ist die bessere
     /// Auskunft, sobald es eine gibt.
-    func anzeigenAufUhr(_ id: UUID) -> [String] {
+    public func anzeigenAufUhr(_ id: UUID) -> [String] {
         gemeldeteAnzeigen[id] ?? bekannteAnzeigen[id] ?? []
     }
 
     /// Wie `anzeigenAufUhr`, aber mit der Herkunft — die Ansicht muss den
     /// Unterschied benennen: das eine ist Tatsache, das andere Erinnerung.
-    func anzeigenDerAktivenMitQuelle() -> (namen: [String], quelle: Anzeigenquelle) {
+    public func anzeigenDerAktivenMitQuelle() -> (namen: [String], quelle: Anzeigenquelle) {
         guard let id = aktiveID else { return ([], .app) }
         if let gemeldet = gemeldeteAnzeigen[id] { return (gemeldet, .geraet) }
         return (bekannteAnzeigen[id] ?? [], .app)
     }
 
-    func anzeigeVergessen(_ name: String, fuer id: UUID) {
+    public func anzeigeVergessen(_ name: String, fuer id: UUID) {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
         // Auch aus der gemeldeten Liste: ob die Uhr ihre `customList` nach dem
         // Loeschen von sich aus erneut veroeffentlicht, ist nicht belegt — bliebe
@@ -178,16 +178,16 @@ final class AppZustand {
         gemeldeteAnzeigen[id]?.removeAll { $0 == name }
     }
 
-    var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
+    public var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
 
-    func log(_ zeile: String) {
+    public func log(_ zeile: String) {
         protokoll.append("\(Self.protokollZeit.string(from: Date())) \(zeile)")
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }
     }
 
     /// Legt eine Uhr an und fragt sie sofort ab. Der Name kommt aus der Geraetekennung,
     /// laesst sich aber aendern — bei mehreren Uhren ist "Kueche" hilfreicher als eine MAC.
-    func uhrHinzufuegen(host: String) {
+    public func uhrHinzufuegen(host: String) {
         let erste = uhren.isEmpty
         let neue = Uhr(name: host, host: host)
         uhren.append(neue)
@@ -198,7 +198,7 @@ final class AppZustand {
         abfragen(neue.id)
     }
 
-    func uhrEntfernen(_ id: UUID) {
+    public func uhrEntfernen(_ id: UUID) {
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
@@ -210,7 +210,7 @@ final class AppZustand {
     /// Eine geaenderte Adresse zeigt womoeglich auf eine andere Uhr. Praefix und MAC
     /// gehoeren dann noch zur alten — blieben sie stehen, wuerde weiter auf das alte
     /// Thema gesendet, an die alte Uhr oder ins Leere, ohne jeden Hinweis.
-    func adresseGeaendert(_ id: UUID) {
+    public func adresseGeaendert(_ id: UUID) {
         guard let i = uhren.firstIndex(where: { $0.id == id }) else { return }
         guard !uhren[i].praefix.isEmpty || !uhren[i].mac.isEmpty || verbunden[id] != nil else { return }
         uhren[i].praefix = ""
@@ -220,7 +220,7 @@ final class AppZustand {
     }
 
     /// Holt Praefix, MAC und Verbindungsstand vom Geraet.
-    func abfragen(_ id: UUID) {
+    public func abfragen(_ id: UUID) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
         Task.detached { [weak self] in
@@ -259,7 +259,7 @@ final class AppZustand {
                           kennwort: kennwort.isEmpty ? nil : kennwort)
     }
 
-    func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
+    public func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
         guard !uhr.praefix.isEmpty, var zugang else { return nil }
         // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
         // dieselbe Kennung erneut verbindet. Mit einer festen Kennung wuerfen sich
@@ -272,7 +272,7 @@ final class AppZustand {
     /// nie abgefragt — oder der Broker-Port ist keine brauchbare Zahl. Zwei
     /// verschiedene Ursachen, zwei verschiedene Meldungen; eine Meldung überhaupt,
     /// statt stumm zurückzukehren.
-    func zugangsmeldung(_ uhr: Uhr) -> String {
+    public func zugangsmeldung(_ uhr: Uhr) -> String {
         if uhr.praefix.isEmpty {
             return "\(uhr.name) wurde noch nicht abgefragt. Unter „Verbindung“ „Abfragen“ drücken."
         }
@@ -348,7 +348,7 @@ final class AppZustand {
 
     /// Für eine einzelne Sendung außerhalb von `anZiele` — dieselbe
     /// Unterscheidung, damit ein Brokerfehler auch dort nicht der Uhr angelastet wird.
-    func melde(_ error: Error, uhr: Uhr) {
+    public func melde(_ error: Error, uhr: Uhr) {
         fehler = zusammengefasst([einordnen(error, uhr: uhr)])
     }
 
@@ -393,7 +393,7 @@ final class AppZustand {
     }
 
     /// Schickt einen Rahmen an eine oder alle gewählten Uhren.
-    func senden(_ frame: Frame, als name: String) async {
+    public func senden(_ frame: Frame, als name: String) async {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
             anzeigeGemerkt(name, fuer: uhr.id)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
@@ -402,7 +402,7 @@ final class AppZustand {
 
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
     /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
-    func loeschen(_ name: String) async {
+    public func loeschen(_ name: String) async {
         await anZiele({ try $0.loeschen(name) }) { uhr in
             anzeigeVergessen(name, fuer: uhr.id)
             log(lokf("auf %@ gelöscht: %@", uhr.name, name))
@@ -412,7 +412,7 @@ final class AppZustand {
     /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ein Praefix haben.
     /// Ist nichts gewaehlt, ist es die aktive Uhr — sonst liefe ein Sendeversuch
     /// stillschweigend ins Leere.
-    func ziele() -> [Uhr] {
+    public func ziele() -> [Uhr] {
         if zielIDs.isEmpty {
             return [aktiveUhr].compactMap { $0 }.filter { !$0.praefix.isEmpty }
         }
@@ -437,9 +437,28 @@ final class AppZustand {
 
     /// Beginnt zuzuhören. Ausdrücklich und nicht aus `init` heraus: ein AppZustand
     /// allein — etwa im Test — darf keine Verbindung aufbauen.
-    func horchenStarten() {
+    public func horchenStarten() {
         horchenErlaubt = true
         horchenAbgleichen()
+    }
+
+    /// Bricht ein einzelnes Abonnement ab und leert seine Buchführung. Gemeinsamer
+    /// Rumpf von `horchenAbgleichen` (dort nur für ungültig gewordene Abonnements)
+    /// und `horchenBeenden` (dort für alle).
+    private func abonnementBeenden(_ id: UUID, _ horcher: Horcher) {
+        horcher.abonnent.beenden()
+        self.horcher[id] = nil
+        horchtGerade[id] = nil
+        gemeldeteAnzeigen[id] = nil
+        geraetOnline[id] = nil
+    }
+
+    /// Bricht alle laufenden Abonnements ab, ohne `horchenErlaubt` zurückzusetzen —
+    /// `ausDemHintergrund` ruft danach `horchenAbgleichen()`, das sie neu aufbaut.
+    func horchenBeenden() {
+        for (id, vorhanden) in horcher {
+            abonnementBeenden(id, vorhanden)
+        }
     }
 
     /// Je eingerichteter Uhr mit Präfix ein Abonnent auf ihre beiden Themen, und
@@ -452,11 +471,7 @@ final class AppZustand {
             let uhr = uhren.first { $0.id == id }
             guard uhr == nil || uhr?.praefix != vorhanden.praefix
                     || vorhanden.brokerkennung != kennung else { continue }
-            vorhanden.abonnent.beenden()
-            horcher[id] = nil
-            horchtGerade[id] = nil
-            gemeldeteAnzeigen[id] = nil
-            geraetOnline[id] = nil
+            abonnementBeenden(id, vorhanden)
         }
         guard let zugang else { return }
         for uhr in uhren where !uhr.praefix.isEmpty && horcher[uhr.id] == nil {
@@ -548,5 +563,21 @@ final class AppZustand {
     private func merke(_ wert: String?, _ schluessel: String) {
         guard initialisiert else { return }
         UserDefaults.standard.set(wert, forKey: schluessel)
+    }
+
+    /// Die App geht in den Hintergrund. Unter iOS überlebt eine offene
+    /// MQTT-Verbindung das nicht: Das System friert den Prozess ein, die
+    /// Verbindung stirbt unbemerkt, und beim Zurückkommen hielte sich die App
+    /// für verbunden. Also ausdrücklich beenden.
+    ///
+    /// Auf dem Mac wird das nie gerufen — dort läuft die App weiter.
+    public func inDenHintergrund() {
+        horchenBeenden()
+    }
+
+    /// Die App kommt zurück. Der Zuhörer wird neu aufgebaut, sofern es etwas
+    /// zum Zuhören gibt.
+    public func ausDemHintergrund() {
+        horchenAbgleichen()
     }
 }

@@ -70,6 +70,14 @@ final class OptionenTests: XCTestCase {
         XCTAssertEqual(deutsch.senkrecht, englisch.senkrecht)
     }
 
+    /// Beide Achsen teilen sich den Fallnamen `.mittig` — eine Vertauschung von
+    /// waagrecht und senkrecht faellt sonst keinem Test und keinem Uebersetzer auf.
+    func testZentriertUndMitteTreffenVerschiedeneAchsen() throws {
+        let o = try Optionen.zerlegt(["senden", "x", "--zentriert", "--mitte"])
+        XCTAssertEqual(o.waagrecht, .mittig)
+        XCTAssertEqual(o.senkrecht, .mittig)
+    }
+
     func testVorgabenEntsprechenDerApp() throws {
         let o = try Optionen.zerlegt(["senden", "x"])
         XCTAssertEqual(o.farbe, "#00FF66")

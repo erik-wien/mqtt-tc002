@@ -27,7 +27,8 @@ from pathlib import Path
 WURZEL = Path(__file__).resolve().parent.parent
 QUELLEN = [WURZEL / "Sources" / "TC002App",
            WURZEL / "Sources" / "TC002CLI",
-           WURZEL / "Sources" / "TC002Core"]
+           WURZEL / "Sources" / "TC002Core",
+           WURZEL / "Sources" / "TC002Modell"]
 SPRACHDATEI = WURZEL / "Resources" / "Sprachen" / "en.lproj" / "Localizable.strings"
 
 # Aufrufe, deren erstes Argument SwiftUI als LocalizedStringKey behandelt.
