@@ -166,6 +166,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
                 .ueberschrift("Schriftart"),
                 .absatz("Bei „Schriftart“ stehen nicht alle installierten Schriften zur Wahl, sondern eine kurze, geprüfte Auswahl — bei 16 Pixeln Displayhöhe fällt kaum eine Schrift sauber aufs Raster, die meisten proportionalen Schriften wirken bei dieser Größe eher wie ein Brei aus Pixeln."),
+                .absatz("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt."),
                 .absatz("Vorgabe ist „Silkscreen“, eine mitgelieferte, eigens fürs 8-Pixel-Raster gezeichnete Schrift — anders als die eingebaute Gerätschrift kann sie Umlaute und „ß“; dasselbe gilt für „Micro 5“ und „Tiny5“, zwei weitere mitgelieferte Pixelschriften. Die drei unterscheiden sich in der Wirkung:"),
                 .punkte([
                     "„Micro 5“ ist die schmalste und bringt am meisten Text stehend aufs Display, ohne zu laufen.",
@@ -179,6 +180,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     ("Silkscreen", "nur 8 oder 16 Pixel"),
                     ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
                 ]),
+                .absatz(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", "Silkscreen", "8 und 16 Pixeln")),
                 .absatz("Der Grund: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus — geprüft und dafür eingeschränkt ist deshalb nur Silkscreen. Micro 5 und Tiny5 waren eine Zeit lang ebenso eingeschränkt — das war voreilig verallgemeinert, geprüft war nur Silkscreen."),
                 .absatz("Micro 5 trägt in Größe 12 nur acht Zeilen Tinte und wirkt dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16 füllt sie es."),
 

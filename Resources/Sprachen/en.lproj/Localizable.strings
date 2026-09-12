@@ -102,9 +102,11 @@
 "Für den Weg „als Pixel“ gilt die ganze Leiste, auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon." = "The whole bar applies to the \"as pixels\" method, scrolling text included: it is rasterized in the same phase as standing text, so that the same font does not look thinner one time and thicker the next. Horizontal alignment naturally has no effect on scrolling text; vertical alignment does.";
 "Schriftart" = "Font";
 "Bei „Schriftart“ stehen nicht alle installierten Schriften zur Wahl, sondern eine kurze, geprüfte Auswahl — bei 16 Pixeln Displayhöhe fällt kaum eine Schrift sauber aufs Raster, die meisten proportionalen Schriften wirken bei dieser Größe eher wie ein Brei aus Pixeln." = "Under \"Font\" not every installed font is offered, but a short, tested selection — at a display height of 16 pixels hardly any font falls cleanly onto the grid, and most proportional fonts look more like a mush of pixels at that size.";
+"Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt." = "Only this few, because at sixteen pixels high hardly any font falls cleanly onto the grid.";
 "Vorgabe ist „Silkscreen“, eine mitgelieferte, eigens fürs 8-Pixel-Raster gezeichnete Schrift — anders als die eingebaute Gerätschrift kann sie Umlaute und „ß“; dasselbe gilt für „Micro 5“ und „Tiny5“, zwei weitere mitgelieferte Pixelschriften. Die drei unterscheiden sich in der Wirkung:" = "The default is \"Silkscreen\", a bundled font drawn specifically for the 8-pixel grid — unlike the device's built-in font it can do umlauts and \"ß\". The same goes for \"Micro 5\" and \"Tiny5\", two more bundled pixel fonts. The three differ in effect:";
 "Eine früher gewählte Schrift, die nicht mehr in dieser Auswahl steht, bleibt gesetzt und wählbar, abgesetzt unten in der Liste, bis man selbst etwas anderes wählt." = "A font chosen earlier that is no longer in this selection stays set and selectable, set apart at the bottom of the list, until you pick something else yourself.";
 "Größe" = "Size";
+"%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe." = "%@ is drawn for the pixel grid — only at %@ do the strokes fall cleanly on whole pixels, in between there is no clean size.";
 "Der Grund: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus — geprüft und dafür eingeschränkt ist deshalb nur Silkscreen. Micro 5 und Tiny5 waren eine Zeit lang ebenso eingeschränkt — das war voreilig verallgemeinert, geprüft war nur Silkscreen." = "The reason: without antialiasing, a pixel font frays arbitrarily between its design size and multiples of it — so Silkscreen is the only one tested, and the only one restricted. Micro 5 and Tiny5 were restricted the same way for a while — that was generalized too hastily, only Silkscreen had been tested.";
 "Micro 5 trägt in Größe 12 nur acht Zeilen Tinte und wirkt dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16 füllt sie es." = "At size 12 Micro 5 carries only eight rows of ink and therefore looks lost on a display sixteen rows high; only at 16 does it fill it.";
 "Fett und Großbuchstaben" = "Bold and uppercase";
@@ -264,6 +266,7 @@
 "%@ ist belegt — Senden ersetzt diese Anzeige." = "%@ is taken — sending replaces this display.";
 "%@ ist frei." = "%@ is free.";
 /* SendenView.swift */
+"Senden als" = "Send as";
 "Weg" = "Method";
 "als Pixel" = "as pixels";
 "als Text" = "as text";
@@ -272,22 +275,24 @@
 "Wie schnell der Text durchläuft." = "How fast the text scrolls through.";
 "Icon mitscrollen" = "Scroll icon along";
 "Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus." = "Off: the icon sits at the left, the text scrolls past to the right of it. On: it sits at the start of the text and travels out with it.";
-"Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt." = "Only this few, because at sixteen pixels high hardly any font falls cleanly onto the grid.";
-"%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe." = "%@ is drawn for the pixel grid — only at %@ do the strokes fall cleanly on whole pixels, in between there is no clean size.";
 "Text" = "Text";
 "Läuft durch: %d Einzelbilder, %@ — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a)." = "Scrolls through: %d frames, %@ — where the clock's size limit lies is an open question (Device Reference, §4.2a).";
 "Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "A noticeably large payload — only a shorter text makes it smaller, the speed changes nothing.";
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo." = "Only an approximation — the clock typesets this text itself and shows it differently. If it scrolls because it does not fit, \"Scroll speed\" under Settings sets the speed.";
 "Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: %@. \"as pixels\" can do them.";
+"Schrift" = "Font";
 "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten." = "Font — narrow, monospaced fonts work best at a height of 16 pixels.";
+"%d px" = "%d px";
 "Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe." = "Font size — %@ is drawn for the pixel grid, in between there is no clean size.";
 "Schriftgröße" = "Font size";
+"Lage" = "Layout";
 "Rand %d" = "Margin %d";
 "Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht." = "Rows that stay free at \"top\" and \"bottom\" — 0 sets the text flush against the edge. Flush looks different from font to font, because some bring space above the cap height and others do not; a margin of your own makes the impression independent of that. With \"middle\" it has no effect.";
 "Abstand %d" = "Gap %d";
 "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar." = "Empty columns between the characters, 0 to 3 — only with the \"as pixels\" method: each character is rasterized on its own and appended by its ink, so the gap is always exactly as large as set here, independent of font, size and character pair.";
+"Waagrecht" = "Horizontal";
+"Senkrecht" = "Vertical";
 "Farbe" = "Color";
-" und %@ Pixeln" = " and %d pixels";
 "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht." = "The clock has only one built-in font — this does not apply here.";
 "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." = "The clock has no bold cut — this does not apply here.";
 "Fett" = "Bold";
@@ -458,7 +463,6 @@
 "Icons" = "Icons";
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";
-"%@ Pixeln" = "%@ pixels";
 
 /* TC002iOS/Kurzbefehle.swift */
 "Meldung an die Uhr schicken" = "Send a message to the clock";

@@ -169,15 +169,6 @@ struct SendenView: View {
     /// keine Pixelschrift mit eigenem Raster ist.
     private var zulaessigeGroessen: [Double]? { Self.sauberePixelgroessen[schrift] }
 
-    /// Deutscher Aufzaehlungstext der sauberen Groessen, etwa "8 und 16 Pixeln"
-    /// oder bei nur einem Wert "12 Pixeln" — fuer den erklaerenden Satz unten.
-    private func groessenText(_ werte: [Double]) -> String {
-        let zahlen = werte.map { String(Int($0)) }
-        guard let letzte = zahlen.last else { return "" }
-        guard zahlen.count > 1 else { return lokf("%@ Pixeln", letzte) }
-        return zahlen.dropLast().joined(separator: ", ") + lokf(" und %@ Pixeln", letzte)
-    }
-
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     /// Wohin der gerasterte Text senkrecht geschoben wird.
@@ -408,121 +399,145 @@ struct SendenView: View {
     /// daraus je nach Geraet von selbst das Richtige — eine Seitenleiste am
     /// Mac und am (kuenftigen) iPad, ein Blatt von unten am iPhone, liefe diese
     /// Ansicht dort. Deshalb hier keine feste Fensterbreite voraussetzen.
+    ///
+    /// `Form` mit `.formStyle(.grouped)` statt handgestapelter `VStack`s: Genau
+    /// diese Form benutzt macOS selbst fuer Seitenleisten wie in Pages — sie
+    /// bringt Ausrichtung (Beschriftung links, Bedienelement rechts, an
+    /// derselben Kante), Zeilenabstand und die kleinen grauen Abschnittstitel
+    /// von selbst mit, ohne dass hier noch etwas dafuer getan werden muss.
+    /// Scrollt bei Bedarf ebenfalls von selbst, ein eigenes `ScrollView` bräuchte
+    /// es dafuer nicht mehr.
     private var inspektor: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Picker("Weg", selection: $weg) {
-                    Text("als Pixel").tag(SendeWeg.pixel)
-                    Text("als Text").tag(SendeWeg.text)
-                }
-                .pickerStyle(.segmented).labelsHidden()
-                .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
-
-                if weg == .pixel && !passt {
-                    Picker("Tempo", selection: $tempo) {
-                        Text("langsam").tag(Lauftempo.langsam)
-                        Text("mittel").tag(Lauftempo.mittel)
-                        Text("schnell").tag(Lauftempo.schnell)
+        Form {
+            Section("Senden als") {
+                LabeledContent("Weg") {
+                    Picker("Weg", selection: $weg) {
+                        Text("als Pixel").tag(SendeWeg.pixel)
+                        Text("als Text").tag(SendeWeg.text)
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.segmented).labelsHidden()
+                }
+                .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
+            }
+
+            // Ganz weg, statt eines Abschnitts mit leerem Rumpf, wenn der Text
+            // ohnehin steht oder die Uhr selbst laeuft (Weg „als Text“) — beide
+            // Zeilen dieser Gruppe haben nur beim laufenden Pixel-Weg eine
+            // Bedeutung.
+            if weg == .pixel && !passt {
+                Section("Laufschrift") {
+                    LabeledContent("Tempo") {
+                        Picker("Tempo", selection: $tempo) {
+                            Text("langsam").tag(Lauftempo.langsam)
+                            Text("mittel").tag(Lauftempo.mittel)
+                            Text("schnell").tag(Lauftempo.schnell)
+                        }
+                        .pickerStyle(.segmented).labelsHidden()
+                    }
                     .help("Wie schnell der Text durchläuft.")
-                }
 
-                Divider()
-
-                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
-                if weg == .pixel && !passt, gewaehltesIcon != nil {
-                    Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
+                    if gewaehltesIcon != nil {
+                        LabeledContent("Icon mitscrollen") {
+                            Toggle("Icon mitscrollen", isOn: $iconLaeuftMit).labelsHidden()
+                        }
                         .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
-                }
-
-                Divider()
-
-                formatregler
-            }
-            .padding()
-        }
-        .frame(minWidth: 260)
-    }
-
-    /// Alles, was den Text betrifft — vormals eine einzeilige Leiste ueber dem
-    /// Eingabefeld, jetzt untereinander im Inspektor, der dafuer zu schmal
-    /// waere. Dieselben Regler wie vorher, nur gestapelt statt nebeneinander;
-    /// jeder Hinweistext steht direkt bei seinem Regler. Systemmaterial statt
-    /// fest eingetragener Farben, damit die Karte in hell und dunkel gleich
-    /// stimmig aussieht.
-    private var formatregler: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Picker("Schriftart", selection: $schrift) {
-                ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
-                // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
-                // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
-                // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
-                if !Self.schriftarten.contains(schrift) {
-                    Divider()
-                    Text(schrift).tag(schrift)
+                    }
                 }
             }
-            .labelsHidden().frame(width: 150)
-            .disabled(weg == .text)
-            .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
-                               : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
-            if weg == .pixel {
-                Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
-                    .font(.caption).foregroundStyle(.secondary)
+
+            Section("Icon") {
+                LabeledContent("Icon") {
+                    IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
+                }
             }
 
-            if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
-                let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
-                Stepper(String(Int(groesse)), value: $groesse, in: erste...letzte, step: schritt).frame(width: 80)
+            Section("Schrift") {
+                LabeledContent("Schriftart") {
+                    Picker("Schriftart", selection: $schrift) {
+                        ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+                        // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
+                        // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
+                        // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
+                        if !Self.schriftarten.contains(schrift) {
+                            Divider()
+                            Text(schrift).tag(schrift)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                .disabled(weg == .text)
+                .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
+                                   : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+
+                if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
+                    let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
+                    LabeledContent("Größe") {
+                        Stepper(lokf("%d px", Int(groesse)), value: $groesse, in: erste...letzte, step: schritt)
+                    }
                     .help(lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift))
-            } else {
-                Stepper(String(Int(groesse)), value: $groesse, in: 6...16).frame(width: 80)
+                } else {
+                    LabeledContent("Größe") {
+                        Stepper(lokf("%d px", Int(groesse)), value: $groesse, in: 6...16)
+                    }
                     .help("Schriftgröße")
+                }
+
+                LabeledContent("Fett") {
+                    formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
+                }
+                .disabled(!fettWirkt)
+                .help(fettHilfe)
+
+                LabeledContent("Großbuchstaben") {
+                    formatKnopf(icon: "capslock", hilfe: grossHilfe,
+                               aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
+                }
+                .disabled(!kleinbuchstabenMoeglich)
+                .help(grossHilfe)
             }
-            if let zulaessig = zulaessigeGroessen {
-                Text(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", schrift, groessenText(zulaessig)))
-                    .font(.caption).foregroundStyle(.secondary)
-            }
 
-            HStack(spacing: 10) {
-                formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
-                    .disabled(!fettWirkt)
-
-                formatKnopf(icon: "capslock", hilfe: grossHilfe,
-                           aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
-                    .disabled(!kleinbuchstabenMoeglich)
-            }
-
-            Divider()
-
-            Stepper(lokf("Rand %d", rand), value: $rand, in: 0...3).frame(width: 100)
-                .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
+            Section("Lage") {
+                LabeledContent("Rand") {
+                    Stepper(String(rand), value: $rand, in: 0...3)
+                }
                 .disabled(vertikal == .mittig)
+                .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
 
-            Stepper(lokf("Abstand %d", luecke), value: $luecke, in: 0...3).frame(width: 110)
+                LabeledContent("Abstand") {
+                    Stepper(String(luecke), value: $luecke, in: 0...3)
+                }
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
-            Divider()
+                LabeledContent("Waagrecht") {
+                    HStack(spacing: 2) {
+                        ausrichtungsKnopf(.links, aktuell: $horizontal, icon: "text.alignleft", hilfe: "Links ausrichten")
+                        ausrichtungsKnopf(.mittig, aktuell: $horizontal, icon: "text.aligncenter", hilfe: "Mittig ausrichten")
+                        ausrichtungsKnopf(.rechts, aktuell: $horizontal, icon: "text.alignright", hilfe: "Rechts ausrichten")
+                    }
+                }
 
-            HStack(spacing: 2) {
-                ausrichtungsKnopf(.links, aktuell: $horizontal, icon: "text.alignleft", hilfe: "Links ausrichten")
-                ausrichtungsKnopf(.mittig, aktuell: $horizontal, icon: "text.aligncenter", hilfe: "Mittig ausrichten")
-                ausrichtungsKnopf(.rechts, aktuell: $horizontal, icon: "text.alignright", hilfe: "Rechts ausrichten")
+                LabeledContent("Senkrecht") {
+                    HStack(spacing: 2) {
+                        ausrichtungsKnopf(.oben, aktuell: $vertikal, icon: "align.vertical.top", hilfe: "Oben ausrichten")
+                        ausrichtungsKnopf(.mittig, aktuell: $vertikal, icon: "align.vertical.center", hilfe: "Mittig ausrichten")
+                        ausrichtungsKnopf(.unten, aktuell: $vertikal, icon: "align.vertical.bottom", hilfe: "Unten ausrichten")
+                    }
+                }
             }
-            HStack(spacing: 2) {
-                ausrichtungsKnopf(.oben, aktuell: $vertikal, icon: "align.vertical.top", hilfe: "Oben ausrichten")
-                ausrichtungsKnopf(.mittig, aktuell: $vertikal, icon: "align.vertical.center", hilfe: "Mittig ausrichten")
-                ausrichtungsKnopf(.unten, aktuell: $vertikal, icon: "align.vertical.bottom", hilfe: "Unten ausrichten")
+
+            Section("Farbe") {
+                LabeledContent("Farbe") {
+                    ColorPicker("Farbe", selection: farbe).labelsHidden()
+                }
             }
-
-            Divider()
-
-            ColorPicker("Farbe", selection: farbe).labelsHidden()
-                .help("Farbe")
         }
-        .padding(8)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .formStyle(.grouped)
+        // 340, nicht mehr 260: Die Zeilen tragen jetzt eine eigene Beschriftung
+        // links vom Regler (vorher stand z. B. der Tempo-Regler allein, ohne
+        // eigene Spalte dafuer) — die breiteste Zeile ist "Tempo" mit dem
+        // dreiteiligen Segment "langsam"/"mittel"/"schnell" daneben, siehe
+        // Breitenrechnung im Bericht.
+        .frame(minWidth: 340)
     }
 
     /// Ein einzelner Umschaltknopf einer Ausrichtungsgruppe — Symbol statt Wort,
