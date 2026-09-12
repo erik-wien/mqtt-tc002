@@ -192,9 +192,17 @@ final class SlotgedaechtnisTests: XCTestCase {
                                           fuer: UUID(), platz: 1))
     }
 
-    /// Schreibt atomar (`.atomic`): die Datei existiert danach unter ihrem
-    /// endgueltigen Namen, nie unter einem Zwischennamen liegengelassen.
-    func testMerkenSchreibtAtomar() throws {
+    /// Die Datei heisst nach der Uhr-ID und liegt allein im Ordner — kein
+    /// Zwischenname bleibt liegen, und ein zweiter Name waere eine zweite
+    /// Ablage. Der Dateiname ist Dateiformat: Danach sucht `gemerkt(fuer:)`
+    /// und `vergessen(fuer:)`.
+    ///
+    /// **Was dieser Test nicht haelt:** dass `.atomic` gesetzt ist. Ein
+    /// Einzelprozess-Test kann das nicht ehrlich beweisen — er bliebe auch
+    /// mit `options: []` gruen. Ein Test, der in beiden Faellen gruen ist,
+    /// waere schlimmer als keiner; deshalb steht die Zusicherung, die er
+    /// wirklich haelt, in seinem Namen.
+    func testMerkenLegtDateiUnterUhrIDAn() throws {
         let ordner = temp()
         let gedaechtnis = Slotgedaechtnis(ordner: ordner)
         let uhr = UUID()
