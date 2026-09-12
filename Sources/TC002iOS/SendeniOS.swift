@@ -153,9 +153,11 @@ struct SendeniOS: View {
             .frame(maxWidth: 200)
             HStack(spacing: 4) {
                 Text("Dauer")
+                // Ohne feste Breite: Bei "Uhr entscheidet" als Platzhalter
+                // schnitt 64pt auf dem Telefon den Text ab (auf dem breiteren
+                // Mac-Fenster passte dieselbe Breite noch).
                 TextField("Uhr entscheidet", text: $dauerText)
                     .keyboardType(.numberPad)
-                    .frame(width: 64)
                     .multilineTextAlignment(.trailing)
                 Text("s")
             }
