@@ -34,6 +34,10 @@ fehlt ersatzlos — das Gerät zeigt an der Stelle nichts an und meldet auch nic
 Wer „Grüße" schreiben will, muss den Text selbst in Pixel wandeln und als
 `draw` schicken (siehe §4.1).
 
+❓ Ob die Schrift **Großbuchstaben** kennt, ist nicht nachgeprüft — belegt sind
+nur Kleinbuchstaben und Ziffern. Prüfung: `"content":"ABC abc"` schicken und
+hinsehen.
+
 ---
 
 ## 2. Das Themen-Präfix — die häufigste Fehlerquelle
@@ -144,6 +148,13 @@ was wirklich auf der Uhr steht.
 > nichts. Lesen lässt es sich nur, indem man es beim Broker abonniert.
 
 Beide Themen stehen in **keiner** Hersteller-Doku.
+
+❓ Ob die Uhr diese Themen **aufbewahrt** (`retain`) veröffentlicht, ist nicht
+nachgeprüft. Es entscheidet, ob ein frisches Abonnement sofort einen Stand
+bekommt oder bis zur nächsten Sendung der Uhr wartet. Prüfung:
+`mosquitto_sub -v -t '<präfix>/#'` frisch starten — kommt sofort etwas, war es
+aufbewahrt. (Ein Abonnent muss aufbewahrte Nachrichten ohnehin annehmen: sie
+kommen mit gesetztem RETAIN-Bit, Kopfbyte `0x31` statt `0x30`.)
 
 ---
 
@@ -448,6 +459,8 @@ Ehrlich benannt, statt verschwiegen:
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
 - ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
+- ❓ Ob die Gerätschrift Großbuchstaben kennt (§1).
+- ❓ Ob `status` und `customList` aufbewahrt veröffentlicht werden (§3.5).
 - ❓ Wie **groß** eine Nutzlast sein darf. Belegt ist, dass rund **14 KB**
   durchgehen (318 Einzelbilder, am 11.09.2026 gesendet und sauber angezeigt);
   wo die Grenze darüber liegt, hat niemand ausgereizt. Wer sie sucht, sollte

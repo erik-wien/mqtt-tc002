@@ -35,12 +35,27 @@ if [ -z "$IDENTITAET" ]; then
 fi
 echo "Identitaet: $IDENTITAET"
 
+# Ein veroeffentlichter Bau traegt den Commit im Ueber-Fenster. Mit „+" hiesse
+# das „aus einem geaenderten, nicht eingecheckten Stand gebaut" — genau das
+# soll niemand herunterladen koennen.
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "Der Arbeitsbaum ist geaendert — erst einchecken, dann veroeffentlichen." >&2
+    exit 1
+fi
+
 echo "== Tests =="
 swift test
 
 echo "== Bauen =="
 rm -rf build
-./build.sh >/dev/null
+TC002_VERSION="$VERSION" ./build.sh >/dev/null
+
+# Gegenprobe: Die App im Abbild muss sich als genau diese Fassung ausgeben.
+GEBAUT="$(defaults read "$PWD/$APP/Contents/Info" CFBundleShortVersionString)"
+if [ "$GEBAUT" != "$VERSION" ]; then
+    echo "Info.plist traegt $GEBAUT, verlangt war $VERSION." >&2
+    exit 1
+fi
 
 echo "== Signieren mit Developer ID =="
 # --options runtime ist die Hardened Runtime, ohne die Apple nicht notarisiert.

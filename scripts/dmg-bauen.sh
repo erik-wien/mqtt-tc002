@@ -76,7 +76,14 @@ APPLESCRIPT
 # Die Platzierung landet in .DS_Store; der Finder schreibt sie verzoegert.
 sync
 sleep 2
-hdiutil detach "$BERG" >/dev/null
+# Der Finder haelt den Datentraeger manchmal noch ein paar Sekunden — dann
+# scheitert das Aushaengen, und ein haengengebliebenes Abbild blockiert den
+# naechsten Lauf. Deshalb ein paar Anlaeufe statt eines.
+for versuch in 1 2 3 4 5; do
+    hdiutil detach "$BERG" >/dev/null 2>&1 && break
+    [ "$versuch" -eq 5 ] && { echo "$BERG laesst sich nicht aushaengen." >&2; exit 1; }
+    sleep 2
+done
 sleep 1
 
 echo "== Zusammenpressen =="

@@ -1,5 +1,22 @@
 # mqtt-tc002 — Design
 
+> **Stand nach der Umsetzung (12.09.2026):** Dieses Dokument ist der Entwurf vom
+> 11.09.2026 und wird nicht fortgeschrieben. Wo die Umsetzung bewusst abweicht:
+>
+> - **MQTT wird abonniert.** Unter „Nicht gebaut wird" steht das Gegenteil. Die
+>   Uhr veroeffentlicht `customList` und `status` von sich aus und bietet dafuer
+>   keinen HTTP-Weg — der einzige Beleg fuer eine angekommene Sendung ist der
+>   Rueckkanal (`MQTTAbonnent.swift`, Geraetereferenz §3.4/§3.5).
+> - **Text wird echt gerastert, nicht angenaehert.** „Die Vorschau, und was sie
+>   nicht kann" beschreibt sechs Pixel je Zeichen; gebaut ist CoreText ohne
+>   Glaettung, Zeichen fuer Zeichen mit gemessenen Luecken (`Textraster.swift`).
+>   Zu lange Texte laufen als animiertes GIF (Geraetereferenz §4.2a).
+> - **Der Grundschatz wird uebernommen, nicht gelesen.** Die 30 Icons unter
+>   `Icons/` wandern beim ersten Start in den Schreibordner und sind danach
+>   normale eigene Icons; das App-Paket wird nie als Quelle gelesen.
+> - **Modulnamen:** `MQTTPaket`/`MQTTSender`/`MQTTAbonnent` statt `MQTT.swift`,
+>   `Geraet` statt `Device`, `Anzeigen` statt `Displays`.
+
 Native macOS-Fenster-App, die einer Ulanzi TC002 (Pixbar, 52×16 Pixel) Meldungen
 schickt: Text mit Farbe, 8×8-Icons, frei gemalte Pixel. Dazu die Verwaltung der
 Anzeigen auf dem Geraet und seiner Einstellungen.

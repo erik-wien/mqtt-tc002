@@ -12,6 +12,12 @@ CONFIG="${1:-release}"
 # Sekunden geklaert statt in einer Dreiviertelstunde.
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unbekannt)"
 git diff --quiet 2>/dev/null || COMMIT="$COMMIT+"
+# Die Fassung kommt von aussen (release.sh setzt sie) oder vom juengsten Tag —
+# fest eingetragen driftete sie: ein DMG „1.5" mit einer App, die sich als 1.4
+# ausgibt. Die Baunummer ist die Zahl der Commits, damit sie von selbst steigt.
+VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')}"
+[ -n "$VERSION" ] || VERSION="0.0"
+BAUNUMMER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 APP="build/MQTT-TC002.app"
 ICON_EINTRAEGE=""
 
@@ -71,8 +77,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleExecutable</key><string>TC002App</string>
     <key>CFBundleIdentifier</key><string>cloud.eriks.mqtt-tc002</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.4</string>
-    <key>CFBundleVersion</key><string>5</string>
+    <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+    <key>CFBundleVersion</key><string>${BAUNUMMER}</string>
     <key>TC002Commit</key><string>${COMMIT}</string>
     <key>CFBundleDevelopmentRegion</key><string>de</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
@@ -115,4 +121,4 @@ else
     echo "         Der Schluesselbund fragt dann nach jedem Bau erneut nach dem Broker-Kennwort." >&2
 fi
 
-echo "fertig: $APP"
+echo "fertig: $APP — Fassung $VERSION ($COMMIT), Bau $BAUNUMMER"
