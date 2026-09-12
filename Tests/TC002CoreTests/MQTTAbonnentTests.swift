@@ -53,6 +53,115 @@ final class MQTTAbonnentTests: XCTestCase {
         // Danach faengt er wieder sauber an.
         let paket = MQTTPaket.publish(thema: "a/b", nutzlast: Data("x".utf8))
         XCTAssertEqual(zerleger.aufnehmen(paket).count, 1)
+        XCTAssertTrue(zerleger.gestoert, "das Verwerfen bleibt vermerkt")
+    }
+
+    /// Eine lesbare Restlaenge darf laut Norm bis 268 MB gehen. So viel traegt
+    /// kein Thema, auf das die App hoert — der Puffer darf nicht so weit wachsen.
+    func testZerlegerDeckeltRiesigeLaenge() {
+        var zerleger = Paketstrom()
+        // 0x80 0x80 0x80 0x01 = 2 097 152 Byte Restlaenge, ueber der Grenze.
+        XCTAssertTrue(zerleger.aufnehmen(Data([0x30, 0x80, 0x80, 0x80, 0x01])).isEmpty)
+        XCTAssertTrue(zerleger.gestoert)
+        let paket = MQTTPaket.publish(thema: "a/b", nutzlast: Data("x".utf8))
+        XCTAssertEqual(zerleger.aufnehmen(paket).count, 1, "danach faengt er wieder sauber an")
+    }
+
+    // MARK: - PUBLISH mit Kennbits
+
+    /// Nur das obere Halbbyte ist der Pakettyp. Ein aufbewahrtes PUBLISH kommt mit
+    /// RETAIN als 0x31, ein wiederholtes mit DUP als 0x38 — beide muessen lesbar
+    /// bleiben. Guetegrad 1 (0x32) dagegen truege eine Paketkennung, die hier
+    /// nicht erwartet wird, und muss abgelehnt werden.
+    func testPublishMitRetainOderDupWirdGelesen() {
+        var retain = MQTTPaket.publish(thema: "awtrix_a86b/status", nutzlast: Data("online".utf8))
+        retain[retain.startIndex] = 0x31
+        XCTAssertEqual(MQTTPaket.publishGelesen(retain)?.thema, "awtrix_a86b/status")
+        XCTAssertEqual(MQTTPaket.publishGelesen(retain)?.nutzlast, Data("online".utf8))
+
+        var dup = MQTTPaket.publish(thema: "a/b", nutzlast: Data("x".utf8))
+        dup[dup.startIndex] = 0x38
+        XCTAssertEqual(MQTTPaket.publishGelesen(dup)?.thema, "a/b")
+
+        var qos1 = MQTTPaket.publish(thema: "a/b", nutzlast: Data("x".utf8))
+        qos1[qos1.startIndex] = 0x32
+        XCTAssertNil(MQTTPaket.publishGelesen(qos1), "Guetegrad 1 hat einen anderen Aufbau")
+    }
+
+    /// Dasselbe am ganzen Abonnenten: Der Broker liefert beim Abonnieren eine
+    /// aufbewahrte Nachricht, und die muss bei `beiNachricht` ankommen.
+    func testAufbewahrteNachrichtKommtAn() throws {
+        let broker = try Brokerdoppel()
+        defer { broker.stoppen() }
+
+        let abonnent = MQTTAbonnent(zugang: broker.zugang, themen: ["awtrix_a86b/status"])
+        defer { abonnent.beenden() }
+
+        let steht = expectation(description: "verbunden")
+        abonnent.beiZustand = { verbunden, _ in if verbunden { steht.fulfill() } }
+        let angekommen = expectation(description: "Nachricht")
+        let fach = NachrichtenFach()
+        abonnent.beiNachricht = { thema, nutzlast in
+            fach.merken(thema, nutzlast)
+            angekommen.fulfill()
+        }
+        abonnent.starten()
+        wait(for: [steht], timeout: 5)
+        XCTAssertTrue(broker.wartetAufAbo())
+
+        broker.veroeffentliche(thema: "awtrix_a86b/status", nutzlast: Data("online".utf8), aufbewahrt: true)
+        wait(for: [angekommen], timeout: 5)
+        XCTAssertEqual(fach.text, "online")
+    }
+
+    // MARK: - Fristen
+
+    /// Hinter dem Port nimmt etwas TCP an, spricht aber kein MQTT — der Abonnent
+    /// darf daran nicht fuer immer haengen, sondern muss es melden.
+    func testSchweigenderBrokerWirdGemeldet() throws {
+        let broker = try Brokerdoppel(antwortetAufConnect: false)
+        defer { broker.stoppen() }
+
+        let abonnent = MQTTAbonnent(zugang: broker.zugang, themen: ["awtrix_a86b/status"],
+                                    anmeldefrist: 0.5)
+        defer { abonnent.beenden() }
+
+        let gemeldet = expectation(description: "Abriss gemeldet")
+        gemeldet.assertForOverFulfill = false
+        let fach = NachrichtenFach()
+        abonnent.beiZustand = { verbunden, grund in
+            guard !verbunden, let grund else { return }
+            fach.merken(grund, Data())
+            gemeldet.fulfill()
+        }
+        abonnent.starten()
+        wait(for: [gemeldet], timeout: 5)
+        XCTAssertTrue(fach.thema?.contains("Anmeldung") == true, "nennt den Grund: \(fach.thema ?? "—")")
+    }
+
+    /// Der Broker hat angenommen, antwortet aber nicht mehr auf Pings — eine halb
+    /// offene Verbindung, wie sie ein weggefallenes WLAN hinterlaesst. TCP meldet
+    /// das nicht; der Abonnent muss es an den ausbleibenden Antworten merken.
+    func testAusbleibendePingAntwortReisstAb() throws {
+        let broker = try Brokerdoppel(antwortetAufPing: false)
+        defer { broker.stoppen() }
+
+        let abonnent = MQTTAbonnent(zugang: broker.zugang, themen: ["awtrix_a86b/status"],
+                                    pingAbstand: 0.3)
+        defer { abonnent.beenden() }
+
+        let steht = expectation(description: "verbunden")
+        steht.assertForOverFulfill = false
+        let abriss = expectation(description: "Abriss gemeldet")
+        abriss.assertForOverFulfill = false
+        let fach = NachrichtenFach()
+        abonnent.beiZustand = { verbunden, grund in
+            if verbunden { steht.fulfill() } else if let grund { fach.merken(grund, Data()); abriss.fulfill() }
+        }
+        abonnent.starten()
+        wait(for: [steht], timeout: 5)
+        wait(for: [abriss], timeout: 5)
+        XCTAssertTrue(fach.thema?.contains("antwortet nicht") == true, "nennt den Grund: \(fach.thema ?? "—")")
     }
 
     // MARK: - Der Abonnent am Doppelgaenger
@@ -160,6 +269,8 @@ private final class NachrichtenFach: @unchecked Sendable {
 private final class Brokerdoppel: @unchecked Sendable {
     private let listener: NWListener
     private let connackCode: UInt8
+    private let antwortetAufConnect: Bool
+    private let antwortetAufPing: Bool
     private let sperre = NSLock()
     private var _abos: [String] = []
     private var _verbindungen = 0
@@ -174,8 +285,10 @@ private final class Brokerdoppel: @unchecked Sendable {
     var abonnierteThemen: [String] { sperre.lock(); defer { sperre.unlock() }; return _abos }
     var verbindungen: Int { sperre.lock(); defer { sperre.unlock() }; return _verbindungen }
 
-    init(connackCode: UInt8 = 0) throws {
+    init(connackCode: UInt8 = 0, antwortetAufConnect: Bool = true, antwortetAufPing: Bool = true) throws {
         self.connackCode = connackCode
+        self.antwortetAufConnect = antwortetAufConnect
+        self.antwortetAufPing = antwortetAufPing
         listener = try NWListener(using: .tcp, on: .any)
         listener.newConnectionHandler = { [weak self] verbindung in
             guard let self else { return }
@@ -208,9 +321,13 @@ private final class Brokerdoppel: @unchecked Sendable {
         v?.cancel()
     }
 
-    func veroeffentliche(thema: String, nutzlast: Data) {
+    /// `aufbewahrt` setzt das RETAIN-Bit, so wie ein echter Broker es bei der
+    /// Auslieferung einer aufbewahrten Nachricht tut.
+    func veroeffentliche(thema: String, nutzlast: Data, aufbewahrt: Bool = false) {
         sperre.lock(); let v = aktuelle; sperre.unlock()
-        v?.send(content: MQTTPaket.publish(thema: thema, nutzlast: nutzlast), completion: .idempotent)
+        var paket = MQTTPaket.publish(thema: thema, nutzlast: nutzlast)
+        if aufbewahrt { paket[paket.startIndex] |= 0x01 }
+        v?.send(content: paket, completion: .idempotent)
     }
 
     private func lies(_ v: NWConnection, strom: Paketstrom) {
@@ -228,6 +345,7 @@ private final class Brokerdoppel: @unchecked Sendable {
     private func beantworte(_ paket: Data, auf v: NWConnection) {
         switch paket.first {
         case 0x10:
+            guard antwortetAufConnect else { return }
             v.send(content: Data([0x20, 0x02, 0x00, connackCode]), completion: .idempotent)
         case 0x82:
             guard let (thema, paketID) = Self.subscribeGelesen(paket) else { return }
@@ -236,6 +354,7 @@ private final class Brokerdoppel: @unchecked Sendable {
             v.send(content: Data([0x90, 0x03, UInt8(paketID >> 8), UInt8(paketID & 0xFF), 0x00]),
                    completion: .idempotent)
         case 0xC0:
+            guard antwortetAufPing else { return }
             v.send(content: Data([0xD0, 0x00]), completion: .idempotent)
         default:
             break

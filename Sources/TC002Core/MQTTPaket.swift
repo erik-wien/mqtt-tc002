@@ -117,13 +117,15 @@ public enum MQTTPaket {
         return (id, daten[ab + 2] != 0x80)
     }
 
-    /// Zerlegt ein eintreffendes PUBLISH mit Guetegrad 0 (0x30) in Thema und
-    /// Nutzlast. Hoehere Guetegrade traegen zwischen Thema und Nutzlast noch eine
+    /// Zerlegt ein eintreffendes PUBLISH mit Guetegrad 0 in Thema und Nutzlast.
+    /// Hoehere Guetegrade traegen zwischen Thema und Nutzlast noch eine
     /// Paketkennung; sie koennen hier nicht auftreten, weil mit Guetegrad 0
-    /// abonniert wird — deshalb der feste Vergleich statt einer Maske.
+    /// abonniert wird — deshalb muessen die Guetegrad-Bits (1 und 2) leer sein.
+    /// DUP (Bit 3) und RETAIN (Bit 0) dagegen aendern den Aufbau nicht und
+    /// werden ausgeblendet: eine aufbewahrte Nachricht kommt als 0x31 an.
     public static func publishGelesen(_ daten: Data) -> (thema: String, nutzlast: Data)? {
         let s = daten.startIndex
-        guard daten.count >= 2, daten[s] == 0x30,
+        guard daten.count >= 2, daten[s] & 0xF6 == 0x30,
               let (rest, laengenBytes) = restlaengeGelesen(daten, ab: 1) else { return nil }
         let rumpfAb = 1 + laengenBytes
         guard rest >= 2, daten.count >= rumpfAb + rest else { return nil }
