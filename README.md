@@ -76,13 +76,17 @@ gesendet wird, weil beide aus demselben Pixelfeld stammen.
 
 ## Icons
 
-Drei Quellen stehen unter „Senden“ zur Wahl: die mitgelieferten Icons im
-App-Paket, selbst gemalte aus dem 8×8-Editor unter „Icons“, und Icons, die
-sich über ihre Nummer von developer.lametric.com nachladen lassen. Eigene und
-nachgeladene Icons liegen unter
+Alle Icons liegen an einer Stelle:
 `~/Library/Application Support/MQTT-TC002/Icons` — nicht im App-Bündel, denn
 dort wären sie beim nächsten Bau weg, und unter `/Applications` ist der
-Ordner ohnehin nicht beschreibbar.
+Ordner ohnehin nicht beschreibbar. Dorthin kommen sie auf drei Wegen: Ein
+**Grundschatz** von rund dreißig 8×8-Icons wird beim allerersten Start
+einmalig aus dem App-Paket übernommen, danach sind es ganz normale eigene
+Icons — löschbar und überschreibbar. Weitere entstehen im 8×8-Editor unter
+„Icons“ oder lassen sich über ihre Nummer von developer.lametric.com
+nachladen. Wer zu gründlich aufgeräumt hat, holt fehlende Grundschatz-Icons
+mit „Grundschatz wiederherstellen“ zurück; Vorhandenes bleibt dabei
+unangetastet.
 
 ## Tests
 

@@ -5,12 +5,12 @@ final class FrameTests: XCTestCase {
     /// Das Geraet erwartet df als flaches Feld [x, y, breite, hoehe, farbe].
     func testDrawBefehlWirdAlsFlachesFeldKodiert() throws {
         let frame = Frame(draw: [DrawBefehl(x: 2, y: 3, breite: 4, hoehe: 1, farbe: "#00FF66")])
-        let json = try frame.alsJSON()
+        let json = frame.alsJSON()
         XCTAssertEqual(json, ##"{"draw":[{"df":[2,3,4,1,"#00FF66"]}]}"##)
     }
 
     func testLeeresFrameIstLeeresObjekt() throws {
-        XCTAssertEqual(try Frame().alsJSON(), "{}")
+        XCTAssertEqual(Frame().alsJSON(), "{}")
     }
 
     /// Anfuehrungszeichen und Rueckwaertsstrich im Text muessen maskiert werden — der
@@ -19,7 +19,7 @@ final class FrameTests: XCTestCase {
     func testTextMitAnfuehrungszeichenUndRueckwaertsstrichBleibtUnverfaelscht() throws {
         let text = #"Sag "Hallo" \ Tschuess"#
         let frame = Frame(texte: [Textblock(inhalt: text)])
-        let json = try frame.alsJSON()
+        let json = frame.alsJSON()
         let data = try XCTUnwrap(json.data(using: .utf8))
         let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let texte = try XCTUnwrap(obj?["text"] as? [[String: Any]])
@@ -29,7 +29,7 @@ final class FrameTests: XCTestCase {
     func testZeilenumbruchImTextBleibtParsbar() throws {
         let text = "Erste Zeile\nZweite Zeile"
         let frame = Frame(texte: [Textblock(inhalt: text)])
-        let json = try frame.alsJSON()
+        let json = frame.alsJSON()
         let data = try XCTUnwrap(json.data(using: .utf8))
         let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let texte = try XCTUnwrap(obj?["text"] as? [[String: Any]])
@@ -38,7 +38,7 @@ final class FrameTests: XCTestCase {
 
     func testBildErzeugtPositionAlsXYFeld() throws {
         let frame = Frame(bilder: [Bild(datenURI: "data:image/png;base64,AA==", x: 3, y: 4)])
-        let json = try frame.alsJSON()
+        let json = frame.alsJSON()
         let data = try XCTUnwrap(json.data(using: .utf8))
         let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let bilder = try XCTUnwrap(obj?["image"] as? [[String: Any]])
@@ -61,7 +61,7 @@ final class FrameTests: XCTestCase {
         ]
 
         for frame in frames {
-            let json = try frame.alsJSON()
+            let json = frame.alsJSON()
             let data = try XCTUnwrap(json.data(using: .utf8))
             XCTAssertNoThrow(try JSONSerialization.jsonObject(with: data))
         }

@@ -67,7 +67,7 @@ public struct Frame: Equatable, Sendable {
         self.draw = draw; self.bilder = bilder; self.texte = texte; self.dauer = dauer
     }
 
-    public func alsJSON() throws -> String {
+    public func alsJSON() -> String {
         var teile: [String] = []
         if !draw.isEmpty {
             let b = draw.map { #"{"df":[\#($0.x),\#($0.y),\#($0.breite),\#($0.hoehe),"\#(jsonEscape($0.farbe))"]}"# }

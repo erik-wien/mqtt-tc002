@@ -318,7 +318,7 @@ struct IconEditorView: View {
             }
             Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
                 .font(.caption)
-                .help("Holt gelöschte mitgelieferte Icons zurück — Vorhandenes bleibt unangetastet.")
+                .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
         }
         .padding()
         .frame(minWidth: 240)
@@ -459,8 +459,8 @@ struct IconEditorView: View {
         let anzahl = quelle.mitgelieferteUebernehmen()
         vorhandene = sammlung.alle()
         meldung = anzahl > 0
-            ? "\(anzahl) mitgelieferte Icons wiederhergestellt."
-            : "Nichts zu holen — alle mitgelieferten Icons sind schon da."
+            ? "\(anzahl) Icons aus dem Grundschatz wiederhergestellt."
+            : "Nichts zu holen — der Grundschatz ist vollständig da."
     }
 
     private func loeschen(_ icon: Icon) {
@@ -476,7 +476,9 @@ struct IconEditorView: View {
             }
             meldung = "\(icon.name) gelöscht."
         } catch {
-            meldung = "Mitgelieferte Icons lassen sich nicht löschen."
+            // Hier kommt nur noch ein Dateisystemfehler an — Rechte, Datei schon
+            // weg —, keine Herkunftsfrage: die Sammlung kennt nur den eigenen Ordner.
+            meldung = (error as? LocalizedError)?.errorDescription ?? "Das Icon ließ sich nicht löschen."
         }
     }
 }

@@ -180,9 +180,10 @@ struct SendenView: View {
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
     /// die einzige Stelle, an der „Großbuchstaben" wirkt. Das Eingabefeld
     /// bleibt unangetastet, an ihm hängt nur `text`. Nebeneffekt von
-    /// `uppercased()`: aus „ß" wird „SS" — beim Weg „als Text" ein Gewinn,
-    /// die Gerätschrift kennt kein „ß" (§1); „Ä", „Ö", „Ü" bleiben Umlaute und
-    /// fehlen dort weiterhin.
+    /// `uppercased()`: aus „ß" wird „SS". Beim Weg „als Text" hilft das nur,
+    /// wenn die Gerätschrift Versalien kennt — belegt sind bisher allein
+    /// Kleinbuchstaben und Ziffern (Gerätereferenz, §1); „Ä", „Ö", „Ü" bleiben
+    /// Umlaute und fehlen dort in jedem Fall.
     private var gesendeterText: String { grossbuchstaben ? text.uppercased() : text }
 
     /// Silkscreen ist streng aufs 8-Pixel-Raster gezeichnet: Bei 8 und 16 sitzen
@@ -420,7 +421,7 @@ struct SendenView: View {
                               systemImage: "info.circle")
                             .font(.footnote).foregroundStyle(.secondary)
                         if nutzlastBytes > 60_000 {
-                            Label("Eine auffällig große Nutzlast — kürzerer Text oder höheres Tempo macht sie kleiner.",
+                            Label("Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts.",
                                   systemImage: "exclamationmark.triangle")
                                 .font(.footnote).foregroundStyle(.orange)
                         }
@@ -483,15 +484,29 @@ struct SendenView: View {
         }
         .task(id: laufschriftSchluessel) {
             guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
-            laufschriftFrames = Textraster.laufschriftEinzelbilder(
-                gesendeterText, schrift: schrift, groesse: groesse, fett: fett, farbe: farbeHex,
-                schrittweite: tempo.schrittweite, bilddauer: tempo.bilddauer,
-                versatzY: textY, iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
-            // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
-            // einmal gerastert, sonst liefe die Rechnung zweimal.
-            laufschriftURI = (try? Bildraster.alsDatenURI(
-                laufschriftFrames.map(\.pixel), breite: Pixelfeld.breiteStandard,
-                hoehe: Pixelfeld.hoeheStandard, verzoegerung: tempo.bilddauer)) ?? ""
+            // Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64
+            // darueber — bei jedem Tastendruck. Das gehoert nicht auf den
+            // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
+            // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
+            // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
+            let (text, schrift, groesse, fett, farbe) = (gesendeterText, schrift, groesse, fett, farbeHex)
+            let (schrittweite, bilddauer, versatzY) = (tempo.schrittweite, tempo.bilddauer, textY)
+            let (iconBilder, iconLaeuftMit, luecke) = (iconRaster, iconLaeuftMit, luecke)
+            let (frames, uri) = await Task.detached(priority: .userInitiated) {
+                let frames = Textraster.laufschriftEinzelbilder(
+                    text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe,
+                    schrittweite: schrittweite, bilddauer: bilddauer,
+                    versatzY: versatzY, iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
+                // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
+                // einmal gerastert, sonst liefe die Rechnung zweimal.
+                let uri = (try? Bildraster.alsDatenURI(
+                    frames.map(\.pixel), breite: Pixelfeld.breiteStandard,
+                    hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)) ?? ""
+                return (frames, uri)
+            }.value
+            guard !Task.isCancelled else { return }
+            laufschriftFrames = frames
+            laufschriftURI = uri
         }
     }
 

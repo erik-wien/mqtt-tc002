@@ -78,7 +78,7 @@ public enum Textraster {
         ctx.fill(CGRect(x: 0, y: 0, width: b, height: h))
 
         let zeile = CTLineCreateWithAttributedString(
-            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, vordergrund: NSColor.white.cgColor))
+            attribuiert(text, schrift: schrift, groesse: groesse, fett: fett, vordergrund: CGColor(gray: 1, alpha: 1)))
         // Quartz zaehlt von unten: die Grundlinie liegt bei Hoehe minus y minus Schriftgroesse.
         ctx.textPosition = CGPoint(x: Double(x), y: Double(h - y) - groesse)
         CTLineDraw(zeile, ctx)
@@ -120,11 +120,12 @@ public enum Textraster {
     private static let sperre = NSLock()
     private static var gemerkt: [String: Bool] = [:]
     private static func pruefung(schluessel: String, _ messen: () -> Bool) -> Bool {
-        sperre.lock()
-        if let da = gemerkt[schluessel] { sperre.unlock(); return da }
-        sperre.unlock()
+        // Das Schloss bleibt ueber die Messung: zwei Aufrufer mit derselben
+        // Kombination sollen nicht beide rastern, sondern der zweite wartet.
+        sperre.lock(); defer { sperre.unlock() }
+        if let da = gemerkt[schluessel] { return da }
         let wert = messen()
-        sperre.lock(); gemerkt[schluessel] = wert; sperre.unlock()
+        gemerkt[schluessel] = wert
         return wert
     }
 
