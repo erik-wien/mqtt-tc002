@@ -29,6 +29,8 @@ targets:
         buildPhase: resources
       - path: Resources/AppIconiOS.xcassets
         buildPhase: resources
+      - path: Resources/Bilder.xcassets
+        buildPhase: resources
     dependencies:
       - package: TC002
         product: TC002Core
