@@ -297,6 +297,7 @@
 "langsam" = "slow";
 "mittel" = "medium";
 "schnell" = "fast";
+"Formatierung ein- oder ausblenden" = "Show or hide formatting";
 /* UeberView.swift */
 "MQTT-TC002" = "MQTT-TC002";
 "Version %@" = "Version %@";

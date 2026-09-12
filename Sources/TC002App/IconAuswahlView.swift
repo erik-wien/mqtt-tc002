@@ -9,7 +9,8 @@ import TC002Core
 /// derselbe „Schließen"-Knopf — die Blaetter der App sollen sich gleich anfuehlen.
 ///
 /// Ein Icon gehoert inhaltlich zum Text, nicht zum Versand — der Knopf steht
-/// deshalb bei Text und Vorschau, nicht in der Sendezeile.
+/// deshalb bei den uebrigen Formatierungsreglern im Inspektor (SendenView.swift),
+/// nicht in der Sendezeile.
 struct IconAuswahlView: View {
     @Binding var gewaehltesIcon: Icon?
     let sammlung: Iconsammlung

@@ -55,6 +55,11 @@ struct SendenView: View {
     /// Das fertig kodierte GIF zu diesen Einzelbildern — einmal gebaut, zweimal
     /// gebraucht: fuer die Groessenangabe unter der Vorschau und fuers Senden.
     @State private var laufschriftURI = ""
+    /// Steuert den Inspektor (`.inspector`), der alle Formatierungsregler
+    /// traegt. Offen als Vorgabe: Schrift, Groesse, Ausrichtung und Farbe sind
+    /// keine Kuer, sondern werden staendig gebraucht — versteckt haetten sie
+    /// beim ersten Start ausgesehen, als waeren sie weg.
+    @State private var zeigeInspektor = true
 
     init(zustand: AppZustand) {
         self.zustand = zustand
@@ -249,45 +254,22 @@ struct SendenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Picker("Weg", selection: $weg) {
-                Text("als Pixel").tag(SendeWeg.pixel)
-                Text("als Text").tag(SendeWeg.text)
-            }
-            .pickerStyle(.segmented).labelsHidden()
-            .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
-
-            if weg == .pixel && !passt {
-                HStack(spacing: 16) {
-                    Picker("Tempo", selection: $tempo) {
-                        Text("langsam").tag(Lauftempo.langsam)
-                        Text("mittel").tag(Lauftempo.mittel)
-                        Text("schnell").tag(Lauftempo.schnell)
-                    }
-                    .pickerStyle(.segmented).frame(width: 240)
-                    .help("Wie schnell der Text durchläuft.")
-                    if gewaehltesIcon != nil {
-                        Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
-                            .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
-                    }
-                    Spacer()
-                }
-            }
-
-            formatleiste
-            if weg == .pixel {
-                Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            if let zulaessig = zulaessigeGroessen {
-                Text(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", schrift, groessenText(zulaessig)))
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            HStack {
-                TextField("Text", text: $text)
-                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
-            }
-
+            // Wie ein Nachrichtenfenster: Vorschau oben und sichtbar bleibend
+            // (waechst mit dem Fenster, siehe .frame(...) unten), Eingabe und
+            // Sendeknopf ganz unten — dieselbe Reihenfolge wie am iPhone
+            // (SendeniOS.swift), nur ohne dessen ScrollView: hier passt alles
+            // ohne Scrollen ins Fenster.
             VStack(alignment: .leading, spacing: 4) {
+                // Die Uhrenauswahl sitzt hier oben, nicht neben der Vorschau:
+                // am iPhone steht ihr Gegenstueck (ein Aufklappmenue) im
+                // Titel, also ueber dem Vorschaubereich, nicht daneben — das
+                // uebernimmt dieselbe Stelle, ohne die Bauart des Knopfs
+                // (samt seinem Blatt) anzutasten. Ohne zweite Uhr zeigt
+                // ZielauswahlView nichts, die Zeile bleibt dann leer.
+                HStack {
+                    Spacer()
+                    ZielauswahlView(zustand: zustand)
+                }
                 // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
                 // passt, laufend, wenn nicht — bei der Laufschrift steckt das Icon
                 // schon in den Einzelbildern, deshalb dort kein zweites. Beim Weg
@@ -334,8 +316,6 @@ struct SendenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            Divider()
-
             HStack(alignment: .bottom, spacing: 16) {
                 MeldungsplatzWahl(platz: $platz, belegtePlaetze: belegtePlaetze)
                     .help("Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Einstellungen“ nicht auf „kein Wechsel“ steht.")
@@ -346,7 +326,10 @@ struct SendenView: View {
                     TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
                 }
                 Spacer()
-                ZielauswahlView(zustand: zustand)
+            }
+
+            HStack {
+                TextField("Text", text: $text)
                 Button(laeuft ? "Sende…" : "Senden") { senden() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(laeuft || zustand.ziele().isEmpty)
@@ -357,6 +340,22 @@ struct SendenView: View {
             }
         }
         .padding()
+        // Alle Formatierungsregler sitzen im Inspektor rechts (siehe
+        // `inspektor` unten) — auf macOS/iPadOS eine Seitenleiste, auf dem
+        // iPhone (liefe diese Ansicht dort) ein Blatt von unten, ganz von
+        // selbst durch `.inspector`. Der Knopf in der Werkzeugleiste blendet
+        // ihn ein und aus.
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    zeigeInspektor.toggle()
+                } label: {
+                    Image(systemName: "sidebar.trailing")
+                }
+                .help("Formatierung ein- oder ausblenden")
+            }
+        }
+        .inspector(isPresented: $zeigeInspektor) { inspektor }
         .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
         .onAppear {
             // Nach einem Besuch im Icon-Editor kann das gewaehlte Icon geaendert,
@@ -404,12 +403,56 @@ struct SendenView: View {
         "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
     }
 
-    /// Alles, was den Text betrifft, in einer eigenen Leiste ueber dem Eingabefeld
-    /// — wie in einem Textprogramm gewohnt, statt zwischen den Sendeoptionen
-    /// verstreut. Systemmaterial statt fest eingetragener Farben, damit die
-    /// Leiste in hell und dunkel gleich stimmig aussieht.
-    private var formatleiste: some View {
-        HStack(spacing: 10) {
+    /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
+    /// das frueher zwischen Vorschau und Eingabefeld stand. `.inspector` macht
+    /// daraus je nach Geraet von selbst das Richtige — eine Seitenleiste am
+    /// Mac und am (kuenftigen) iPad, ein Blatt von unten am iPhone, liefe diese
+    /// Ansicht dort. Deshalb hier keine feste Fensterbreite voraussetzen.
+    private var inspektor: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Picker("Weg", selection: $weg) {
+                    Text("als Pixel").tag(SendeWeg.pixel)
+                    Text("als Text").tag(SendeWeg.text)
+                }
+                .pickerStyle(.segmented).labelsHidden()
+                .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
+
+                if weg == .pixel && !passt {
+                    Picker("Tempo", selection: $tempo) {
+                        Text("langsam").tag(Lauftempo.langsam)
+                        Text("mittel").tag(Lauftempo.mittel)
+                        Text("schnell").tag(Lauftempo.schnell)
+                    }
+                    .pickerStyle(.segmented)
+                    .help("Wie schnell der Text durchläuft.")
+                }
+
+                Divider()
+
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
+                if weg == .pixel && !passt, gewaehltesIcon != nil {
+                    Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
+                        .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
+                }
+
+                Divider()
+
+                formatregler
+            }
+            .padding()
+        }
+        .frame(minWidth: 260)
+    }
+
+    /// Alles, was den Text betrifft — vormals eine einzeilige Leiste ueber dem
+    /// Eingabefeld, jetzt untereinander im Inspektor, der dafuer zu schmal
+    /// waere. Dieselben Regler wie vorher, nur gestapelt statt nebeneinander;
+    /// jeder Hinweistext steht direkt bei seinem Regler. Systemmaterial statt
+    /// fest eingetragener Farben, damit die Karte in hell und dunkel gleich
+    /// stimmig aussieht.
+    private var formatregler: some View {
+        VStack(alignment: .leading, spacing: 10) {
             Picker("Schriftart", selection: $schrift) {
                 ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
                 // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
@@ -424,6 +467,10 @@ struct SendenView: View {
             .disabled(weg == .text)
             .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
                                : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+            if weg == .pixel {
+                Text("Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
 
             if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
                 let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
@@ -433,15 +480,21 @@ struct SendenView: View {
                 Stepper(String(Int(groesse)), value: $groesse, in: 6...16).frame(width: 80)
                     .help("Schriftgröße")
             }
+            if let zulaessig = zulaessigeGroessen {
+                Text(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", schrift, groessenText(zulaessig)))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
 
-            formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
-                .disabled(!fettWirkt)
+            HStack(spacing: 10) {
+                formatKnopf(icon: "bold", hilfe: fettHilfe, aktiv: fett && fettWirkt) { fett.toggle() }
+                    .disabled(!fettWirkt)
 
-            formatKnopf(icon: "capslock", hilfe: grossHilfe,
-                       aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
-                .disabled(!kleinbuchstabenMoeglich)
+                formatKnopf(icon: "capslock", hilfe: grossHilfe,
+                           aktiv: grossbuchstaben && kleinbuchstabenMoeglich) { grossbuchstaben.toggle() }
+                    .disabled(!kleinbuchstabenMoeglich)
+            }
 
-            Divider().frame(height: 18)
+            Divider()
 
             Stepper(lokf("Rand %d", rand), value: $rand, in: 0...3).frame(width: 100)
                 .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
@@ -450,7 +503,7 @@ struct SendenView: View {
             Stepper(lokf("Abstand %d", luecke), value: $luecke, in: 0...3).frame(width: 110)
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
-            Divider().frame(height: 18)
+            Divider()
 
             HStack(spacing: 2) {
                 ausrichtungsKnopf(.links, aktuell: $horizontal, icon: "text.alignleft", hilfe: "Links ausrichten")
@@ -463,12 +516,10 @@ struct SendenView: View {
                 ausrichtungsKnopf(.unten, aktuell: $vertikal, icon: "align.vertical.bottom", hilfe: "Unten ausrichten")
             }
 
-            Divider().frame(height: 18)
+            Divider()
 
             ColorPicker("Farbe", selection: farbe).labelsHidden()
                 .help("Farbe")
-
-            Spacer()
         }
         .padding(8)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
