@@ -3,9 +3,9 @@ import Security
 
 /// Das Broker-Kennwort gehoert nicht in die Einstellungsdatei.
 public enum Schluesselbund {
-    private static let dienst = "cloud.eriks.mqtt-tc002"
+    private static let dienst = Einstellungen.kennung
 
-    private static func basis(_ konto: String) -> [String: Any] {
+    private static func basis(_ konto: String, dienst: String = dienst) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: dienst,
          kSecAttrAccount as String: konto]
@@ -24,8 +24,10 @@ public enum Schluesselbund {
         return SecItemAdd(eintrag as CFDictionary, nil) == errSecSuccess
     }
 
-    public static func lesen(_ konto: String) -> String? {
-        var frage = basis(konto)
+    /// `dienst` weicht nur ab, wenn ein anderes Programm als die App liest —
+    /// das Kommandozeilenwerkzeug etwa, das den Eintrag der App braucht.
+    public static func lesen(_ konto: String, dienst: String = Einstellungen.kennung) -> String? {
+        var frage = basis(konto, dienst: dienst)
         frage[kSecReturnData as String] = true
         frage[kSecMatchLimit as String] = kSecMatchLimitOne
         var ergebnis: CFTypeRef?

@@ -12,7 +12,7 @@ struct TC002App: App {
     /// in den Schreibordner (`Iconsammlung.grundschatzEinmalUebernehmen`) —
     /// auch das, bevor eine Ansicht die Iconliste zum ersten Mal liest.
     init() {
-        Schriftregistrierung.schriftAnmelden()
+        Schriften.registrieren()
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
             .grundschatzEinmalUebernehmen()
     }

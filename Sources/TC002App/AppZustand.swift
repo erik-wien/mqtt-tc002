@@ -2,15 +2,8 @@ import Foundation
 import Observation
 import TC002Core
 
-/// Eine eingerichtete Uhr. Praefix und MAC ermittelt die App selbst beim Abfragen —
-/// sie werden nie von Hand eingetragen.
-struct Uhr: Codable, Identifiable, Equatable {
-    var id = UUID()
-    var name: String
-    var host: String
-    var praefix: String = ""
-    var mac: String = ""
-}
+// `Uhr` liegt im Kern (`Einstellungen.swift`), weil das Kommandozeilenwerkzeug
+// dieselbe Liste liest — die Codable-Form ist damit ein Dateiformat.
 
 @Observable
 @MainActor
@@ -126,9 +119,9 @@ final class AppZustand {
         aktiveID = d.string(forKey: "aktiveID").flatMap(UUID.init(uuidString:))
         zielIDs = (try? JSONDecoder().decode(Set<UUID>.self,
                     from: d.data(forKey: "zielIDs") ?? Data())) ?? []
-        brokerHost = d.string(forKey: "brokerHost") ?? "192.168.1.10"
-        brokerPort = d.string(forKey: "brokerPort") ?? "1883"
-        benutzer   = d.string(forKey: "benutzer") ?? "pixdeck"
+        brokerHost = d.string(forKey: "brokerHost") ?? Einstellungen.Vorgabe.brokerHost
+        brokerPort = d.string(forKey: "brokerPort") ?? Einstellungen.Vorgabe.brokerPort
+        benutzer   = d.string(forKey: "benutzer") ?? Einstellungen.Vorgabe.benutzer
         kennwort   = Schluesselbund.lesen("broker") ?? ""
         let flach = (try? JSONDecoder().decode([String: [String]].self,
                         from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]

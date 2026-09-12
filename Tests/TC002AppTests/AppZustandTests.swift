@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import TC002Core
 @testable import TC002App
 
 /// Die Tests fassen nur die Einstellungs-Schluessel `uhren`, `aktiveID`,

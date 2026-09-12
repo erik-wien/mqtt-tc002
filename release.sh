@@ -61,6 +61,10 @@ echo "== Signieren mit Developer ID =="
 # --options runtime ist die Hardened Runtime, ohne die Apple nicht notarisiert.
 # --timestamp holt einen Zeitstempel von Apple, damit die Signatur gueltig bleibt,
 # wenn das Zertifikat spaeter ablaeuft.
+# Erst das mitreisende Kommandozeilenwerkzeug, dann das Buendel: eine zweite
+# Mach-O-Datei in Contents/MacOS wird nicht von der Buendelsignatur miterfasst,
+# sondern muss ihre eigene tragen — sonst scheitert die Notarisierung.
+codesign --force --options runtime --timestamp -s "$IDENTITAET" "$APP/Contents/MacOS/mqtttc002"
 codesign --force --options runtime --timestamp -s "$IDENTITAET" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 

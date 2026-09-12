@@ -4,13 +4,24 @@ import PackageDescription
 let package = Package(
     name: "TC002",
     platforms: [.macOS(.v14)],
+    products: [
+        // Der Name des Produkts ist der Name der Datei — so heisst das Werkzeug
+        // auf der Kommandozeile `mqtttc002` und nicht `TC002CLI`.
+        .executable(name: "mqtttc002", targets: ["TC002CLI"]),
+    ],
     targets: [
         .target(name: "TC002Core", swiftSettings: [.swiftLanguageMode(.v5)]),
         .executableTarget(name: "TC002App", dependencies: ["TC002Core"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),
+        // Das Kommandozeilenwerkzeug. Liest die Einrichtung der App und schickt
+        // damit Meldungen — eigenes Ziel, damit die Oberflaeche nicht mitkommt.
+        .executableTarget(name: "TC002CLI", dependencies: ["TC002Core"],
+                          swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002CoreTests", dependencies: ["TC002Core"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002AppTests", dependencies: ["TC002App"],
+                    swiftSettings: [.swiftLanguageMode(.v5)]),
+        .testTarget(name: "TC002CLITests", dependencies: ["TC002CLI"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )

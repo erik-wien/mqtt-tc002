@@ -88,6 +88,31 @@ nachladen. Wer zu gründlich aufgeräumt hat, holt fehlende Grundschatz-Icons
 mit „Grundschatz wiederherstellen“ zurück; Vorhandenes bleibt dabei
 unangetastet.
 
+## Auf der Kommandozeile
+
+Im App-Bündel reist ein Werkzeug mit, das dieselbe Einrichtung benutzt wie die
+App — Broker, Kennwort und Uhren kommen aus deren Einstellungen, eingerichtet
+wird weiterhin nur in der App. Einmal verlinken:
+
+```bash
+ln -s /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 /usr/local/bin/mqtttc002
+```
+
+```bash
+mqtttc002 "Kaffee fertig"
+mqtttc002 senden "Post da" --icon 1673 --farbe "#FFAA00" --dauer 10
+mqtttc002 senden Achtung --an Küche --zentriert --unten
+mqtttc002 uhren            # was eingerichtet ist, * sind die Ziele
+mqtttc002 icons            # Nummer und Name
+mqtttc002 loeschen cli     # die Anzeige wieder von der Uhr nehmen
+mqtttc002 hilfe            # alle Optionen
+```
+
+Zu lange Texte laufen von selbst als GIF durch, genau wie in der App.
+`--trocken` zeigt Thema, Nutzlast und Größe, ohne zu senden — und nebenbei, ob
+ein Broker-Kennwort gefunden wurde. Beim ersten Lauf fragt macOS einmal, ob das
+Werkzeug an den Schlüsselbundeintrag der App darf.
+
 ## Tests
 
 `swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr

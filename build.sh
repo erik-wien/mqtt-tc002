@@ -27,6 +27,10 @@ BIN_DIR="$(swift build -c "$CONFIG" --show-bin-path)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/TC002App" "$APP/Contents/MacOS/TC002App"
+# Das Kommandozeilenwerkzeug reist im Buendel mit. Dort findet es die
+# mitgelieferten Schriften und die Uebersetzungen ueber Bundle.main, und es
+# bleibt mit der App zusammen — eine zweite Auslieferung braucht es nicht.
+cp "$BIN_DIR/mqtttc002" "$APP/Contents/MacOS/mqtttc002"
 for b in "$BIN_DIR"/*.bundle; do [ -e "$b" ] && cp -R "$b" "$APP/Contents/Resources/"; done
 
 # Icon: Das Icon-Composer-Buendel wird mit actool zu Assets.car (Liquid Glass ab macOS 26)
@@ -113,6 +117,11 @@ if [ -z "$SIGNATUR" ]; then
 fi
 if [ -z "$SIGNATUR" ] && security find-certificate -c "MQTT-TC002" >/dev/null 2>&1; then
     SIGNATUR="MQTT-TC002"
+fi
+# Das mitreisende Werkzeug ist eine eigene Mach-O-Datei und muss vor dem
+# Buendel signiert werden — danach besiegelt die Signatur des Buendels es mit.
+if [ -n "$SIGNATUR" ]; then
+    codesign --force -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
 fi
 if [ -n "$SIGNATUR" ] && codesign --force -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
     echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
