@@ -115,7 +115,7 @@ struct SendeniOS: View {
         .sheet(isPresented: $zeigeFormat) {
             FormatblattiOS(weg: $weg, schrift: $schrift, groesse: $groesse, fett: $fett,
                            grossbuchstaben: $grossbuchstaben, rand: $rand, abstand: $luecke,
-                           tempo: $tempo, iconLaeuftMit: $iconLaeuftMit)
+                           senkrecht: $vertikal, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)

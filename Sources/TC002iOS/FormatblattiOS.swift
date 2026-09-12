@@ -12,6 +12,7 @@ struct FormatblattiOS: View {
     @Binding var grossbuchstaben: Bool
     @Binding var rand: Int
     @Binding var abstand: Int
+    @Binding var senkrecht: SendenVAusrichtung
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Environment(\.dismiss) private var schliessen
@@ -48,6 +49,17 @@ struct FormatblattiOS: View {
                     Toggle("Großbuchstaben", isOn: $grossbuchstaben)
                 }
                 Section("Lage") {
+                    // Dieselben Symbole wie am Mac (`ausrichtungsKnopf` in
+                    // SendenView.swift) und derselbe Wortlaut wie die
+                    // waagrechte Ausrichtung oben in der Formatleiste
+                    // (`Picker("Ausrichtung", …)` in SendeniOS.swift) — kein
+                    // neuer Uebersetzungsschluessel.
+                    Picker("Ausrichtung", selection: $senkrecht) {
+                        Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
+                        Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)
+                        Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
+                    }
+                    .pickerStyle(.segmented)
                     Stepper(lokf("Rand %d", rand), value: $rand, in: 0...3)
                     Stepper(lokf("Abstand %d", abstand), value: $abstand, in: 0...3)
                 }
