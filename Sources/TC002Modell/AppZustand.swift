@@ -12,6 +12,13 @@ public final class AppZustand {
     public var aktiveID: UUID? { didSet { merke(aktiveID?.uuidString, "aktiveID") } }
     /// An welche Uhren gesendet wird. Ueberlebt den Neustart, weil es eine
     /// Entscheidung ist und keine Momentaufnahme.
+    ///
+    /// `Einstellungen.ziele` (Kern, fuer Werkzeug und Kurzbefehle) liest eine
+    /// leere Menge als "alle", `ziele()` weiter unten dagegen als "die aktive
+    /// Uhr" — zwei verschiedene Lesarten desselben leeren Zustands. Statt eine
+    /// davon umzudefinieren, halten `init`, `uhrHinzufuegen` und
+    /// `uhrEntfernen` diese Menge nichtleer, solange ueberhaupt Uhren
+    /// eingerichtet sind — dann stimmen beide Leser trivial ueberein.
     public var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     public var verbunden: [UUID: Bool] = [:]
@@ -133,6 +140,14 @@ public final class AppZustand {
             flach.compactMap { text, liste in UUID(uuidString: text).map { ($0, liste) } },
             uniquingKeysWith: { erster, _ in erster })
         if aktiveID == nil { aktiveID = uhren.first?.id }
+        // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
+        // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren
+        // eingerichtet waren. Leer heisst fuer Einstellungen.ziele() "alle",
+        // fuer ziele() weiter unten dagegen "die aktive Uhr" — dieselbe
+        // Zweideutigkeit wie beim Entfernen der letzten Auswahl. Hier
+        // uebernimmt die App dieselbe Lesart wie das Kommandozeilenwerkzeug
+        // und die Kurzbefehle: "alle".
+        if zielIDs.isEmpty, !uhren.isEmpty { zielIDs = Set(uhren.map(\.id)) }
         // Aus der Zeit, als die Liste keinen Uhrenbezug hatte: sie meinte die aktive
         // Uhr, also gehört sie dorthin. Sonst bliebe eine stehende Anzeige auf ihr
         // liegen, ohne dass es noch einen Weg gäbe, sie zu löschen.
@@ -203,6 +218,12 @@ public final class AppZustand {
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
         zielIDs.remove(id)
+        // War `id` die einzige gewaehlte Uhr, faellt zielIDs sonst leer —
+        // und leer bedeutet fuer Einstellungen.ziele() "alle", fuer
+        // ziele() weiter unten dagegen "die aktive Uhr". Sofort wieder
+        // alle verbleibenden waehlen haelt beide Lesarten deckungsgleich,
+        // statt die Zweideutigkeit erneut herzustellen.
+        if zielIDs.isEmpty, !uhren.isEmpty { zielIDs = Set(uhren.map(\.id)) }
         if aktiveID == id { aktiveID = uhren.first?.id }
         horchenAbgleichen()
     }

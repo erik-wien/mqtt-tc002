@@ -107,4 +107,43 @@ final class AppZustandTests: XCTestCase {
 
         XCTAssertEqual(zustand.ziele(), [b])
     }
+
+    /// Wird die einzige gewaehlte Uhr entfernt, muss zielIDs sofort wieder
+    /// alle verbleibenden Uhren waehlen — sonst zaehlte die Menge als "keine
+    /// Auswahl", und Einstellungen.ziele() (alle) und ziele() (die aktive Uhr)
+    /// zeigten wieder auf verschiedene Ziele.
+    func testEntfernenDerEinzigenAuswahlWaehltAlleVerbleibenden() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+        let zustand = AppZustand()
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
+        zustand.uhren = [a, b]
+        zustand.zielIDs = [a.id]
+
+        zustand.uhrEntfernen(a.id)
+
+        XCTAssertFalse(zustand.zielIDs.isEmpty)
+        XCTAssertEqual(zustand.zielIDs, [b.id])
+        XCTAssertEqual(zustand.ziele(), [b])
+    }
+
+    /// Eine Installation von vor dem Zielmenue hat Uhren, aber nie eine
+    /// ausdrueckliche Auswahl geschrieben — zielIDs steht leer in den
+    /// Einstellungen. Der Start muss das auf "alle" aufloesen, sonst zeigte
+    /// die App fortan nur die aktive Uhr, waehrend Werkzeug und Kurzbefehle
+    /// weiter alle ansprechen.
+    func testAlteInstallationOhneAuswahlBekommtAlleUhrenBeimStart() throws {
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(a.id.uuidString, forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+
+        let zustand = AppZustand()
+
+        XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
+        XCTAssertEqual(zustand.ziele(), [a, b])
+    }
 }
