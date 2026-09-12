@@ -99,7 +99,9 @@ struct TC002App: App {
                 }
                 .frame(height: 76)
             }
-            .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 220)
+            // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
+            // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
+            .navigationSplitViewColumnWidth(170)
         } detail: {
             switch bereich ?? .senden {
             case .senden: SendenView(zustand: zustand)

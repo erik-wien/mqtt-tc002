@@ -555,7 +555,10 @@ struct SendenView: View {
         // ein `.frame(minWidth:)` am Inhalt. Das machte den Inhalt breiter als
         // die Spalte; er wurde mittig gesetzt und lief auf beiden Seiten hinaus,
         // links fehlten die ersten Buchstaben jeder Zeile.
-        .inspectorColumnWidth(min: 300, ideal: 340, max: 460)
+        // Feste Breite aus demselben Grund wie bei der Seitenleiste links:
+        // Schrumpft das Fenster, soll die Vorschau kleiner werden, nicht der
+        // Inspektor. Die Zeilen darin sind auf 340 gerechnet.
+        .inspectorColumnWidth(340)
     }
 
     private func senden() {
