@@ -133,6 +133,26 @@ deutschen Satz zurück. `python3 scripts/texte-sammeln.py --pruefen` meldet jede
 sichtbaren Text ohne Übersetzung. Eine weitere Sprache ist ein Ordner
 `Resources/Sprachen/<code>.lproj` mit einer `Localizable.strings`.
 
+## Auf dem iPhone
+
+Eine iOS-Fassung (`MQTT-TC002-iOS.xcodeproj`, iOS 17 aufwärts) teilt sich Kern
+und Zustandsschicht mit der Mac-App. Sie kann Uhren einrichten und abfragen
+(„Einstellungen“), Text mit Icon und Format senden („Senden“, die Wurzel der
+App), und zeigen, was auf der aktiven Uhr steht samt Protokoll („Verlauf“) —
+beides über Menüpunkte in der Titelleiste erreichbar statt über eine eigene
+Reiterleiste. Bewusst fehlen Icons bearbeiten und die freie Zeichenfläche
+(„Malen“): Beides bleibt dem Schreibtisch vorbehalten.
+
+Gebaut wird mit
+
+```bash
+xcodegen generate
+open MQTT-TC002-iOS.xcodeproj
+```
+
+und dann in Xcode Ziel wählen und starten. `xcodegen` erzeugt das Projekt aus
+`project.yml`; das Projekt selbst ist nicht eingecheckt.
+
 ## Tests
 
 `swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr

@@ -36,6 +36,7 @@ struct SendeniOS: View {
     @State private var zeigeIcons = false
     @State private var zeigeZiele = false
     @State private var zeigeEinstellungen = false
+    @State private var zeigeVerlauf = false
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
@@ -91,6 +92,11 @@ struct SendeniOS: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button {
+                            zeigeVerlauf = true
+                        } label: {
+                            Label("Verlauf", systemImage: "clock.arrow.circlepath")
+                        }
+                        Button {
                             zeigeEinstellungen = true
                         } label: {
                             Label("Einstellungen", systemImage: "gearshape")
@@ -119,6 +125,9 @@ struct SendeniOS: View {
         }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)
+        }
+        .sheet(isPresented: $zeigeVerlauf) {
+            AnzeigeniOS(zustand: zustand)
         }
         .onAppear {
             if gewaehltesIcon == nil, !iconNummer.isEmpty {

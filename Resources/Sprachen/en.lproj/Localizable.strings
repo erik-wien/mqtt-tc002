@@ -439,6 +439,9 @@
 "Dauer" = "Duration";
 "Ausrichtung" = "Alignment";
 
+/* TC002iOS/AnzeigeniOS.swift */
+"Nach links wischen löscht, nach rechts schaltet auf die Anzeige um." = "Swipe left to delete, swipe right to switch to the display.";
+
 /* Bereichsnamen der Seitenleiste und Abschnitte der Hilfe. Sie stehen als
    rawValue in einem enum und werden ueber lok(…) nachgeschlagen — der
    Sammler findet sie deshalb nicht im Quelltext, sie sind in ihm als

@@ -134,6 +134,26 @@ also the lookup key, so a missing translation falls back to the German sentence.
 translation. Another language is a folder `Resources/Sprachen/<code>.lproj` with a
 `Localizable.strings` in it.
 
+## On the iPhone
+
+An iOS version (`MQTT-TC002-iOS.xcodeproj`, iOS 17 and up) shares its core and
+state layer with the Mac app. It can set up and query clocks ("Settings"),
+send text with an icon and formatting ("Send", the app's root view), and show
+what is currently on the active clock plus its log ("History") — both reached
+through menu items in the title bar instead of a tab bar of their own.
+Deliberately missing: editing icons and the free-form canvas ("Draw"). Both
+stay on the desktop.
+
+Built with
+
+```bash
+xcodegen generate
+open MQTT-TC002-iOS.xcodeproj
+```
+
+then pick a target in Xcode and run. `xcodegen` generates the project from
+`project.yml`; the project itself is not checked in.
+
 ## Tests
 
 `swift test` runs without network and without a real device: HTTP calls to the
