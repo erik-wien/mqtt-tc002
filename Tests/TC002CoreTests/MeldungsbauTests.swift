@@ -161,4 +161,14 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertEqual((1...5).map(Meldungsplatz.name(fuer:)),
                        ["meldung1", "meldung2", "meldung3", "meldung4", "meldung5"])
     }
+
+    /// Die Kehrseite von `name(fuer:)` — gebraucht vom Kommandozeilenwerkzeug,
+    /// um zu erkennen, ob ein frei gewaehlter Anzeigename (`--name`) zufaellig
+    /// einen der fuenf festen Plaetze trifft.
+    func testMeldungsplatzPlatzFuerNameSpiegeltName() {
+        XCTAssertEqual((1...5).map { Meldungsplatz.platz(fuerName: Meldungsplatz.name(fuer: $0)) },
+                       [1, 2, 3, 4, 5])
+        XCTAssertNil(Meldungsplatz.platz(fuerName: "cli"))
+        XCTAssertNil(Meldungsplatz.platz(fuerName: "meldung6"))
+    }
 }

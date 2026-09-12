@@ -181,8 +181,17 @@ func lauf() throws {
             print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))
             return
         }
-        try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, _ in
+        try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
             try anzeigen.zeigen(rahmen, auf: optionen.anzeigename)
+            // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
+            // entspricht, gibt es einen Platz, den sich das Slotgedaechtnis
+            // merken koennte — bei einem frei gewaehlten Namen (Vorgabe
+            // „cli") gibt es keinen. Schlaegt das Schreiben fehl, bleibt die
+            // Sendung trotzdem erfolgreich; das Werkzeug hat kein Protokoll,
+            // in das eine Zeile koennte.
+            if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
+                Slotgedaechtnis().merken(m, dauer: m.dauer, icon: icon?.nummer, fuer: uhr.id, platz: platz)
+            }
         }
 
     case .loeschen(let name):

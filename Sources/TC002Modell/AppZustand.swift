@@ -418,10 +418,27 @@ public final class AppZustand {
     }
 
     /// Schickt einen Rahmen an eine oder alle gewählten Uhren.
-    public func senden(_ frame: Frame, als name: String) async {
+    ///
+    /// `slotOptionen`/`slotDauer`/`slotIcon`/`slotPlatz` sind nur gesetzt, wenn
+    /// diese Sendung zu einem der fünf Meldungsplätze mit bekannten Reglern
+    /// gehört (`SendenView`, `SendeniOS`) — beim Malen (`MalenView`) bleiben
+    /// sie `nil`, denn ein gemaltes Bild hat keine Regler, die sich
+    /// wiederherstellen ließen. Geschrieben wird je erfolgreich erreichter
+    /// Uhr, nie vorher: Eine Sendung, die scheitert, darf das Gedächtnis
+    /// nicht verändern. Schlägt das Schreiben selbst fehl, bleibt die Sendung
+    /// trotzdem erfolgreich — nur eine Protokollzeile hält es fest.
+    public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
+                       slotDauer: Int? = nil, slotIcon: String? = nil, slotPlatz: Int? = nil) async {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
             anzeigeGemerkt(name, fuer: uhr.id)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
+            if let slotOptionen, let slotPlatz {
+                let gemerkt = Slotgedaechtnis().merken(slotOptionen, dauer: slotDauer, icon: slotIcon,
+                                                       fuer: uhr.id, platz: slotPlatz)
+                if !gemerkt {
+                    log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))
+                }
+            }
         }
     }
 

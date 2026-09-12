@@ -117,8 +117,16 @@ public struct Slotgedaechtnis: Sendable {
     /// nicht verlorengehen. Ein Wettlauf zweier Schreiber auf demselben Platz
     /// bleibt moeglich (der letzte gewinnt); die Prüfsumme faengt das ab, denn
     /// wer auch immer zuletzt geschrieben hat, hat auch zuletzt gesendet.
+    ///
+    /// Gibt zurueck, ob das Schreiben gelungen ist — der Aufrufer entscheidet
+    /// selbst, was ein Fehlschlagen bedeutet: Eine Sendung, die schon
+    /// angekommen ist, wird dadurch nicht rueckgaengig gemacht, hoechstens
+    /// eine Protokollzeile daraus (siehe `AppZustand.senden`).
+    /// `@discardableResult`, weil ein Aufrufer ohne eigenes Protokoll
+    /// (Werkzeug, Kurzbefehle) den Rueckgabewert nicht braucht.
+    @discardableResult
     public func merken(_ optionen: Meldungsoptionen, dauer: Int?, icon: String?,
-                       fuer uhr: UUID, platz: Int) {
+                       fuer uhr: UUID, platz: Int) -> Bool {
         let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil).punkteRoh
         let stand = Slotstand(
             platz: platz,
@@ -140,9 +148,10 @@ public struct Slotgedaechtnis: Sendable {
             pruefsumme: Self.pruefsumme(pixel: pixel))
         var neu = alle(fuer: uhr).filter { $0.platz != platz }
         neu.append(stand)
-        guard let daten = try? JSONEncoder().encode(neu) else { return }
+        guard let daten = try? JSONEncoder().encode(neu) else { return false }
         try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
-        try? daten.write(to: datei(fuer: uhr), options: .atomic)
+        guard (try? daten.write(to: datei(fuer: uhr), options: .atomic)) != nil else { return false }
+        return true
     }
 
     /// Der Fingerabdruck eines Pixelfelds — dieselbe Form, in der

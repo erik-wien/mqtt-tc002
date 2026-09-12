@@ -165,6 +165,29 @@ final class SlotgedaechtnisTests: XCTestCase {
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "neu")
     }
 
+    // MARK: Schritt 3 — Ruckgabewert (Aufgabe 6)
+
+    /// Erfolgreiches Schreiben meldet sich als `true` — die Absender (App,
+    /// Werkzeug, Kurzbefehle) muessen das nicht extra pruefen, um es zu
+    /// wissen.
+    func testMerkenMeldetErfolgAlsRueckgabewert() {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        XCTAssertTrue(gedaechtnis.merken(Meldungsoptionen(text: "x"), dauer: nil, icon: nil,
+                                         fuer: UUID(), platz: 1))
+    }
+
+    /// Ein unbeschreibbarer Ordner (hier: eine Datei an der Stelle, an der ein
+    /// Ordner erwartet wird) darf nicht abstuerzen, sondern muss sich als
+    /// `false` melden — der Aufrufer entscheidet dann, was das bedeutet
+    /// (`AppZustand.senden`: eine Protokollzeile, keine gescheiterte Sendung).
+    func testMerkenMeldetFehlschlagAlsRueckgabewert() throws {
+        let datei = temp()
+        try Data().write(to: datei)
+        let gedaechtnis = Slotgedaechtnis(ordner: datei.appendingPathComponent("Slots"))
+        XCTAssertFalse(gedaechtnis.merken(Meldungsoptionen(text: "x"), dauer: nil, icon: nil,
+                                          fuer: UUID(), platz: 1))
+    }
+
     /// Schreibt atomar (`.atomic`): die Datei existiert danach unter ihrem
     /// endgueltigen Namen, nie unter einem Zwischennamen liegengelassen.
     func testMerkenSchreibtAtomar() throws {

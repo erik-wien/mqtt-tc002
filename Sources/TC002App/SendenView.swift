@@ -693,7 +693,17 @@ struct SendenView: View {
             return
         }
         let anzeigenName = Meldungsplatz.name(fuer: platz)
-        Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
+        // Momentaufnahme fuer das Slotgedaechtnis: `optionen` ist berechnet,
+        // nicht gespeichert — der Task unten soll den Stand von jetzt sehen,
+        // nicht den beim spaeteren Ausfuehren.
+        let slotOptionen = optionen
+        let slotPlatz = platz
+        let slotIcon = gewaehltesIcon?.nummer
+        Task {
+            await zustand.senden(frame, als: anzeigenName, slotOptionen: slotOptionen,
+                                 slotDauer: slotOptionen.dauer, slotIcon: slotIcon, slotPlatz: slotPlatz)
+            laeuft = false
+        }
     }
 }
 

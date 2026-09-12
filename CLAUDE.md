@@ -91,8 +91,14 @@ Probieren, ohne etwas umzustellen:
 ## Das Kommandozeilenwerkzeug
 
 `mqtttc002` liest die Einrichtung der App (`Einstellungen` im Kern) und
-schreibt sie nie. Es reist im Bündel mit (`Contents/MacOS/mqtttc002`) und wird
-über einen Verweis benutzt. Zwei Fallen, beide schon zugeschnappt:
+schreibt sie **nie** — zwei Schreiber auf denselben Schlüsseln wären ein
+Wettlauf. Das Slotgedächtnis (`Slotgedaechtnis` im Kern, eine eigene Datei je
+Uhr unter `Application Support/MQTT-TC002/Slots`) ist davon ausdrücklich
+ausgenommen: Dorthin schreibt das Werkzeug nach jeder erfolgreichen Sendung,
+wie App und Kurzbefehle auch — es ist eben keine Einstellung, sondern eine
+eigens dafür gebaute Datei mit mehreren Schreibern. Es reist im Bündel mit
+(`Contents/MacOS/mqtttc002`) und wird über einen Verweis benutzt. Zwei Fallen,
+beide schon zugeschnappt:
 
 - **`Bundle.main` ist über einen Verweis nicht das App-Bündel**, sondern der
   Ordner des Verweises. Fassungsnummer, Schriften und Übersetzungen fehlen dann

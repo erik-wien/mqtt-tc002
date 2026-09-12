@@ -33,6 +33,7 @@
 "verbunden" = "connected";
 "nicht verbunden" = "not connected";
 "an %@ gesendet: %@" = "sent to %@: %@";
+"%@: Regler für Slot %d nicht gemerkt" = "%@: controls for slot %d not remembered";
 "auf %@ gelöscht: %@" = "deleted on %@: %@";
 "%@ meldet: %@" = "%@ reports: %@";
 "keine Anzeige" = "no display";

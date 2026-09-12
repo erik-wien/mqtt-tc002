@@ -699,7 +699,11 @@ struct SendeniOS: View {
         do {
             let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon,
                                                 sammlung: sammlung, vorberechnet: laufschriftURI)
-            await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz))
+            // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
+            // am Mac (SendenView.senden()).
+            let slotOptionen = optionen
+            await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz), slotOptionen: slotOptionen,
+                                 slotDauer: slotOptionen.dauer, slotIcon: gewaehltesIcon?.nummer, slotPlatz: platz)
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }

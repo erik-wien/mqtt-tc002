@@ -64,8 +64,13 @@ struct MeldungSendenIntent: AppIntent {
             icon = gefunden
         }
 
-        let name = Meldungsplatz.name(fuer: platz ?? 1)
+        let slotPlatz = platz ?? 1
+        let name = Meldungsplatz.name(fuer: slotPlatz)
         let rahmen = try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung)
+        // Momentaufnahme fuer das Slotgedaechtnis (siehe unten): `optionen`
+        // ist ab hier nicht mehr veraendert.
+        let slotOptionen = optionen
+        let slotIcon = icon?.nummer
 
         // Blockierende Netzarbeit gehört nicht auf den Hauptthread, auch nicht
         // im Intent — dort wartet sonst das System auf uns.
@@ -77,6 +82,12 @@ struct MeldungSendenIntent: AppIntent {
                 try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
                     .zeigen(rahmen, auf: name)
                 erledigt.append(ziel.name)
+                // Erfolgreich gesendet: das Gedaechtnis merkt sich die Regler
+                // fuer diesen Platz auf dieser Uhr. Schlaegt das Schreiben
+                // fehl, bleibt die Sendung trotzdem erfolgreich — Kurzbefehle
+                // haben kein Protokoll, in das eine Zeile koennte.
+                Slotgedaechtnis().merken(slotOptionen, dauer: slotOptionen.dauer, icon: slotIcon,
+                                         fuer: ziel.id, platz: slotPlatz)
             }
             return erledigt
         }.value

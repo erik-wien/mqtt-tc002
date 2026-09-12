@@ -266,4 +266,13 @@ public enum Meldungsbau {
 public enum Meldungsplatz {
     public static let anzahl = 5
     public static func name(fuer platz: Int) -> String { "meldung\(platz)" }
+
+    /// Die Kehrseite von `name(fuer:)`: welcher der fuenf Plaetze (falls
+    /// einer) sich hinter einem Anzeigenamen verbirgt. `nil` fuer jeden
+    /// anderen Namen — etwa eine frei gewaehlte Anzeige des
+    /// Kommandozeilenwerkzeugs (Vorgabe „cli"), fuer die es keinen Platz
+    /// gibt, den sich das Slotgedaechtnis merken koennte.
+    public static func platz(fuerName name: String) -> Int? {
+        (1...anzahl).first { Self.name(fuer: $0) == name }
+    }
 }
