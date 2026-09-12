@@ -23,6 +23,68 @@ sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
   wären sie beim nächsten Bau weg, und unter `/Applications` ist der Ordner
   nicht beschreibbar.
 
+## Sprachen
+
+Deutsch ist die Entwicklungssprache: Der deutsche Wortlaut steht im Quelltext
+und ist zugleich der Schlüssel. Eine fehlende Übersetzung fällt damit auf den
+deutschen Satz zurück, nicht auf einen Schlüsselnamen.
+
+- Was SwiftUI als `LocalizedStringKey` bekommt (`Text`, `Button`, `Label`,
+  `.help` …), schlägt es selbst nach. Nichts zu tun.
+- Alles, was als gewöhnliches `String` weitergereicht wird — Fehlertexte,
+  Meldungen, Protokollzeilen, die Hilfebausteine, das Kommandozeilenwerkzeug —
+  muss durch `lok(…)` bzw. `lokf(…, %@)`. Sonst bleibt es deutsch, ohne dass
+  irgendetwas darauf hinweist.
+- **Keine Werte in den Schlüssel einsetzen.** `Text("Rand \(rand)")` trägt zur
+  Laufzeit den Schlüssel `Rand %lld`, im Quelltext steht aber `Rand \(rand)` —
+  gesucht wird dann etwas, das es nicht gibt. Stattdessen `lokf("Rand %d", rand)`.
+
+Geprüft wird das nicht von Hand:
+
+    python3 scripts/texte-sammeln.py --pruefen
+
+meldet jeden sichtbaren Text ohne Übersetzung und jeden Eintrag, den es nicht
+mehr gibt. Vor einer Veröffentlichung muss die Zeile `0 ohne Uebersetzung`
+lauten; `cli.hilfe` steht dort zu Recht als überzählig, weil dieser eine
+Schlüssel erfunden ist.
+
+Texte, die über eine Variable nachgeschlagen werden (`lok(a.rawValue)`), kann
+der Sammler nicht sehen. Sie stehen als `DYNAMISCH` von Hand im Skript.
+
+Eine neue Sprache ist ein Ordner `Resources/Sprachen/<code>.lproj` mit einer
+`Localizable.strings`; `build.sh` nimmt jeden solchen Ordner mit. Die
+Gerätereferenz ist ein durchgehendes Dokument und wird am Stück übersetzt
+(`docs/en/tc002-protocol.md`), nicht Satz für Satz.
+
+Probieren, ohne etwas umzustellen:
+
+    /Applications/MQTT-TC002.app/Contents/MacOS/TC002App -AppleLanguages '(en)'
+    mqtttc002 -AppleLanguages '(en)' hilfe
+
+## Das Kommandozeilenwerkzeug
+
+`mqtttc002` liest die Einrichtung der App (`Einstellungen` im Kern) und
+schreibt sie nie. Es reist im Bündel mit (`Contents/MacOS/mqtttc002`) und wird
+über einen Verweis benutzt. Zwei Fallen, beide schon zugeschnappt:
+
+- **`Bundle.main` ist über einen Verweis nicht das App-Bündel**, sondern der
+  Ordner des Verweises. Fassungsnummer, Schriften und Übersetzungen fehlen dann
+  still. Deshalb `Programmbuendel.eigenes`, nie `Bundle.main`.
+- **`UserDefaults(suiteName:)` mit der eigenen Kennung liefert nichts.** Genau
+  das passiert, wenn das Werkzeug unmittelbar im Bündel aufgerufen wird. Dort
+  ist `.standard` das Richtige — siehe `Einstellungen.ablage`.
+
+Die `Codable`-Form von `Uhr` ist ein Dateiformat: Die App schreibt sie, das
+Werkzeug liest sie. Feldnamen ändern macht die Einstellungen einer laufenden
+Installation unlesbar (`EinstellungenTests` hält das fest).
+
+## Fassungsnummer
+
+Nicht im Quelltext eintragen. `build.sh` nimmt sie aus `TC002_VERSION` oder vom
+jüngsten Tag, die Baunummer ist die Zahl der Commits. `release.sh <fassung>`
+setzt die Variable, bricht bei geändertem Arbeitsbaum ab und prüft hinterher
+die Info.plist gegen sein Argument.
+
 ## Nach /Applications installieren
 
 **Nicht** mit `rm -rf` und `cp` ersetzen. Die Freigabe „Lokales Netzwerk" haengt

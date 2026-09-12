@@ -116,6 +116,23 @@ Zu lange Texte laufen von selbst als GIF durch, genau wie in der App.
 ein Broker-Kennwort gefunden wurde. Beim ersten Lauf fragt macOS einmal, ob das
 Werkzeug an den Schlüsselbundeintrag der App darf.
 
+## Sprachen
+
+Die App gibt es auf Deutsch und Englisch und folgt der Sprache des Systems.
+Einzeln umstellen lässt sie sich in den Systemeinstellungen unter Allgemein →
+Sprache & Region bei „Programme“. Einmalig zum Probieren:
+
+```bash
+/Applications/MQTT-TC002.app/Contents/MacOS/TC002App -AppleLanguages '(en)'
+mqtttc002 -AppleLanguages '(en)' hilfe
+```
+
+Deutsch ist die Entwicklungssprache: Der deutsche Wortlaut steht im Quelltext
+und ist zugleich der Schlüssel, eine fehlende Übersetzung fällt also auf den
+deutschen Satz zurück. `python3 scripts/texte-sammeln.py --pruefen` meldet jeden
+sichtbaren Text ohne Übersetzung. Eine weitere Sprache ist ein Ordner
+`Resources/Sprachen/<code>.lproj` mit einer `Localizable.strings`.
+
 ## Tests
 
 `swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr

@@ -117,6 +117,23 @@ Text that is too long scrolls by itself as a GIF, exactly as in the app.
 broker password was found. On the first run, macOS asks once whether the tool
 may read the app's Keychain entry.
 
+## Languages
+
+The app comes in German and English and follows the system language. To switch
+just this app, use System Settings → General → Language & Region under
+"Applications". To try it once:
+
+```bash
+/Applications/MQTT-TC002.app/Contents/MacOS/TC002App -AppleLanguages '(en)'
+mqtttc002 -AppleLanguages '(en)' help
+```
+
+German is the development language: the German wording sits in the source and is
+also the lookup key, so a missing translation falls back to the German sentence.
+`python3 scripts/texte-sammeln.py --pruefen` reports every visible text without a
+translation. Another language is a folder `Resources/Sprachen/<code>.lproj` with a
+`Localizable.strings` in it.
+
 ## Tests
 
 `swift test` runs without network and without a real device: HTTP calls to the
