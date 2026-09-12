@@ -1,0 +1,4 @@
+/* MQTT-TC002 — Deutsch, die Entwicklungssprache. Der Wortlaut steht schon im
+   Quelltext, darum bleibt diese Datei leer — sie existiert nur, damit der
+   Ordner de.lproj im Buendel liegt: An seiner Anwesenheit erkennt iOS, dass
+   die App Deutsch anbietet (siehe build.sh, derselbe Trick fuer den Mac). */

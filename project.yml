@@ -27,6 +27,13 @@ targets:
       # englische Fassung waere stillschweigend wirkungslos.
       - path: Resources/Sprachen/en.lproj
         buildPhase: resources
+      # Deutsch ist die Entwicklungssprache und braucht keine
+      # Localizable.strings — aber ohne einen eigenen .lproj-Ordner im
+      # Buendel gilt fuer iOS nur Englisch als angebotene Sprache, und ein
+      # deutsches Telefon bekaeme die App auf Englisch. Derselbe Trick wie
+      # fuer den Mac in build.sh.
+      - path: Resources/Sprachen/de.lproj
+        buildPhase: resources
       - path: Resources/AppIconiOS.xcassets
         buildPhase: resources
     dependencies:
