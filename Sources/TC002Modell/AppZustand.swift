@@ -258,10 +258,17 @@ public final class AppZustand {
         abfragen(neue.id)
     }
 
-    public func uhrEntfernen(_ id: UUID) {
+    /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
+    /// Ablage unter Application Support greifen muessen — die Oberflaeche
+    /// ruft wie bisher `uhrEntfernen(id)`.
+    public func uhrEntfernen(_ id: UUID, gedaechtnis: Slotgedaechtnis = Slotgedaechtnis()) {
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
+        // Auch die Datei auf der Platte: Die Kennung einer entfernten Uhr
+        // kommt nicht zurueck, ihre `Slots/<uuid>.json` laege sonst fuer
+        // immer da, ohne dass sie noch jemand liest.
+        gedaechtnis.vergessen(fuer: id)
         zielIDs.remove(id)
         // War `id` die einzige gewaehlte Uhr, faellt zielIDs sonst leer —
         // und leer bedeutet fuer Einstellungen.ziele() "alle", fuer
@@ -478,8 +485,8 @@ public final class AppZustand {
             anzeigeGemerkt(name, fuer: uhr.id)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
             if let slotOptionen, let slotPlatz {
-                let gemerkt = Slotgedaechtnis().merken(slotOptionen, dauer: slotOptionen.dauer,
-                                                       icon: slotIcon, fuer: uhr.id, platz: slotPlatz)
+                let gemerkt = Slotgedaechtnis().merken(slotOptionen, icon: slotIcon,
+                                                       fuer: uhr.id, platz: slotPlatz)
                 if !gemerkt {
                     log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))
                 }
@@ -612,19 +619,21 @@ public final class AppZustand {
             geraetOnline[id] = online
             log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
         default:
-            // `custom/#` liefert auch fremde Anzeigen (z. B. aus „Malen") — nur
-            // unsere fuenf Slotnamen (`meldung1`…`meldung5`) betreffen `slotInhalt`.
+            // `custom/#` liefert jede Anzeige auf dieser Uhr, gleich von wem —
+            // auch unter Namen, die diese App nie vergibt (ein fremder Absender,
+            // `mqtttc002 senden --name wetter`). Nur unsere fuenf Slotnamen
+            // (`meldung1`…`meldung5`) betreffen `slotInhalt`; „Malen" schickt
+            // ebenfalls an genau die (`MalenView.senden`).
             let vorsilbe = "\(uhr.praefix)/custom/"
             guard thema.hasPrefix(vorsilbe) else { return }
             let name = String(thema.dropFirst(vorsilbe.count))
-            guard let platz = (1...Meldungsplatz.anzahl).first(where: { Meldungsplatz.name(fuer: $0) == name })
-            else { return }
+            guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
             if nutzlast.isEmpty {
                 // Leere Nutzlast loescht die Anzeige auf der Uhr (`Anzeigen.loeschen`) —
                 // der Slot ist also wieder leer.
                 slotInhalt[id]?[platz] = nil
             } else if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
-                slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel, zeitpunkt: Date())
+                slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel)
             }
             // Sonst: nicht zerlegbare Nutzlast (Bild-Weg oder Geraeteschrift-Weg) —
             // der zuletzt bekannte Inhalt bleibt stehen, statt ihn durch nichts zu ersetzen.

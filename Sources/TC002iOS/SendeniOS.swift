@@ -299,11 +299,11 @@ struct SendeniOS: View {
         )
     }
 
-    /// Die fuenf Bloecke zeigen, was auf der aktiven Uhr liegt (`referenzUhr`)
-    /// — Antippen waehlt den Platz und stellt, wenn belegbar, die Regler
-    /// wieder her (siehe `slotWaehlen`). Dieselbe Logik wie am Mac
-    /// (`SendenView.swift`), nur ohne die dortige Ziffernreihe, die es hier
-    /// nie gab. Block und Papierkorb sind auf 44×44 fixiert statt nur auf das
+    /// Die fuenf Bloecke zeigen, was auf der aktiven Uhr liegt
+    /// (`AppZustand.referenzUhr`) — Antippen waehlt den Platz und stellt,
+    /// wenn belegbar, die Regler wieder her (siehe `slotWaehlen`). Was ein
+    /// Block zeigt, rechnet `AppZustand.slotzustand` fuer alle Oberflaechen
+    /// gleich. Block und Papierkorb sind auf 44×44 fixiert statt nur auf das
     /// `minWidth`/`minHeight` aus `Slotblock` selbst — das macht die Breite
     /// der Zeile berechenbar (siehe Bericht zur Breitenrechnung) statt vom
     /// verfuegbaren Platz abhaengig.

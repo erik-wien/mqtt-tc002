@@ -133,6 +133,12 @@ public struct Slotgedaechtnis: Sendable {
 
     /// Merkt sich die Regler, mit denen `platz` gerade gesendet wurde.
     ///
+    /// Die Dauer kommt aus `optionen`, nicht als eigener Parameter: Alle
+    /// Aufrufer reichten dort ohnehin `optionen.dauer` herein, und ein zweiter,
+    /// unabhaengig gefuellter Wert wuerde nie auffallen — die Pruefsumme deckt
+    /// die Pixel ab, nicht die Dauer. Dieselbe Streichung wie eine Ebene hoeher
+    /// in `AppZustand.senden`.
+    ///
     /// Liest die vorhandene Datei, ersetzt darin nur `platz` und schreibt sie
     /// atomar zurueck (`.atomic`) — die andern vier Slots und ein zeitgleicher
     /// zweiter Schreiber auf einem anderen Platz derselben Uhr sollen dabei
@@ -147,7 +153,7 @@ public struct Slotgedaechtnis: Sendable {
     /// `@discardableResult`, weil ein Aufrufer ohne eigenes Protokoll
     /// (Werkzeug, Kurzbefehle) den Rueckgabewert nicht braucht.
     @discardableResult
-    public func merken(_ optionen: Meldungsoptionen, dauer: Int?, icon: String?,
+    public func merken(_ optionen: Meldungsoptionen, icon: String?,
                        fuer uhr: UUID, platz: Int) -> Bool {
         let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil).punkteRoh
         let stand = Slotstand(
@@ -166,7 +172,7 @@ public struct Slotgedaechtnis: Sendable {
             tempo: optionen.tempo.rawValue,
             iconLaeuftMit: optionen.iconLaeuftMit,
             icon: icon,
-            dauer: dauer,
+            dauer: optionen.dauer,
             pruefsumme: Self.pruefsumme(pixel: pixel))
         var neu = alle(fuer: uhr).filter { $0.platz != platz }
         neu.append(stand)
@@ -176,17 +182,37 @@ public struct Slotgedaechtnis: Sendable {
         return true
     }
 
+    /// Wirft die Datei einer Uhr weg — aufzurufen, wenn die Uhr selbst
+    /// verschwindet (`AppZustand.uhrEntfernen`). Sonst bliebe je entfernter
+    /// Uhr eine `<uuid>.json` unter Application Support liegen, die nie
+    /// wieder jemand liest: Die Kennung einer geloeschten Uhr kommt nicht
+    /// zurueck, eine neu eingetragene bekommt eine neue.
+    ///
+    /// Eine fehlende Datei ist kein Fehler — entfernt werden darf auch eine
+    /// Uhr, auf die nie etwas gesendet wurde.
+    public func vergessen(fuer uhr: UUID) {
+        try? FileManager.default.removeItem(at: datei(fuer: uhr))
+    }
+
     /// Der Fingerabdruck eines Pixelfelds — dieselbe Form, in der
     /// `Anzeigen.pixelAusCustomNutzlast` eine mitgelesene Nutzlast zurueckgibt
     /// (`[String?]`, `nil` heisst aus), damit sich beide Seiten ohne Umweg
     /// vergleichen lassen.
     ///
     /// Deckt damit denselben Ausschnitt ab, den auch der Mitleser aus dem
-    /// Broker gewinnen kann: die stehenden Pixel des Textes. Ein Icon-Bild
-    /// oder ein Lauf-GIF stecken in einem eigenen Teil der Nutzlast
-    /// (`image` statt `draw`), den weder der Mitleser noch dieses
-    /// Gedaechtnis aus den blossen Reglern zurueckrechnen — beide bleiben in
-    /// diesem Fall bei „nicht nachpruefbar", nicht bei einer Behauptung.
+    /// Broker gewinnen kann: die stehenden Pixel des Textes. Ein Lauf-GIF
+    /// (`image`) und der Weg „als Text" (`text`) stehen in einem anderen Teil
+    /// der Nutzlast, den der Mitleser gar nicht erst zerlegt — dort gibt es
+    /// keine Pixel, gegen die zu pruefen waere, und der Vergleich findet
+    /// nicht statt.
+    ///
+    /// Ein **Icon** dagegen faellt auf beiden Seiten gleich heraus: `merken`
+    /// hasht `Meldungsbau.feld(o, mitIcon: true)`, und der Mitleser liest nur
+    /// `draw` — das Icon liegt in `frame.bilder` und geht hier wie dort
+    /// verloren. Die Pruefsumme passt also, und die Regler werden
+    /// wiederhergestellt. Die Nebenfolge, ehrlich benannt: Ein fremder
+    /// Absender mit gleichem Text, aber anderem Icon kommt durch die Pruefung
+    /// und bekommt beim Antippen unser gemerktes Icon zurueckgesetzt.
     public static func pruefsumme(pixel: [String?]) -> String {
         let text = pixel.map { $0 ?? "-" }.joined(separator: "\u{1}")
         let digest = SHA256.hash(data: Data(text.utf8))

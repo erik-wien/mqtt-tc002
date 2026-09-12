@@ -76,10 +76,8 @@ extension Anzeigen {
 /// Inhalt selbst nicht, siehe `namenAusCustomList`).
 public struct Slotbild: Equatable, Sendable {
     public var pixel: [String?]
-    public var zeitpunkt: Date
-    public init(pixel: [String?], zeitpunkt: Date) {
+    public init(pixel: [String?]) {
         self.pixel = pixel
-        self.zeitpunkt = zeitpunkt
     }
 }
 

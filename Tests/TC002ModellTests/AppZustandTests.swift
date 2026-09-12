@@ -87,7 +87,7 @@ final class AppZustandTests: XCTestCase {
         zustand.uhren = [a, b]
         zustand.zielIDs = [a.id, b.id]
 
-        zustand.uhrEntfernen(a.id)
+        zustand.uhrEntfernen(a.id, gedaechtnis: Slotgedaechtnis(ordner: temp()))
 
         XCTAssertFalse(zustand.zielIDs.contains(a.id))
         XCTAssertEqual(zustand.ziele(), [b])
@@ -122,7 +122,7 @@ final class AppZustandTests: XCTestCase {
         zustand.uhren = [a, b]
         zustand.zielIDs = [a.id]
 
-        zustand.uhrEntfernen(a.id)
+        zustand.uhrEntfernen(a.id, gedaechtnis: Slotgedaechtnis(ordner: temp()))
 
         XCTAssertFalse(zustand.zielIDs.isEmpty)
         XCTAssertEqual(zustand.zielIDs, [b.id])
@@ -167,7 +167,7 @@ final class AppZustandTests: XCTestCase {
         d.set(uhr.id.uuidString, forKey: "aktiveID")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, dauer: nil, icon: nil, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(optionen, icon: nil, fuer: uhr.id, platz: 2)
 
         let zustand = AppZustand()
 
@@ -189,9 +189,31 @@ final class AppZustandTests: XCTestCase {
         let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), mitIcon: false).punkteRoh
 
         let zustand = AppZustand()
-        zustand.slotInhalt[a.id] = [1: Slotbild(pixel: pixel, zeitpunkt: Date())]
+        zustand.slotInhalt[a.id] = [1: Slotbild(pixel: pixel)]
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
                        "Das Bild der ersten Uhr darf nicht für die aktive Uhr einstehen.")
+    }
+
+    /// Mit der Uhr geht auch ihre Slotdatei. Die Kennung einer entfernten Uhr
+    /// kommt nicht zurueck — die Datei laege sonst fuer immer unter
+    /// Application Support, ohne dass sie noch jemand liest.
+    func testEntfernteUhrVerliertIhreSlotdatei() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let zustand = AppZustand()
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
+        zustand.uhren = [a, b]
+        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, fuer: a.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, fuer: b.id, platz: 1)
+
+        zustand.uhrEntfernen(a.id, gedaechtnis: gedaechtnis)
+
+        XCTAssertNil(gedaechtnis.gemerkt(fuer: a.id, platz: 1))
+        XCTAssertNotNil(gedaechtnis.gemerkt(fuer: b.id, platz: 1),
+                        "Nur die Datei der entfernten Uhr darf verschwinden.")
     }
 }

@@ -191,7 +191,7 @@ func lauf() throws {
             // haelt es trotzdem fest — das Werkzeug hat kein Protokoll wie
             // die App, aber stderr verunreinigt die eigentliche Ausgabe nicht.
             if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
-                let gemerkt = Slotgedaechtnis().merken(m, dauer: m.dauer, icon: icon?.nummer,
+                let gemerkt = Slotgedaechtnis().merken(m, icon: icon?.nummer,
                                                        fuer: uhr.id, platz: platz)
                 if !gemerkt {
                     fehlerAusgeben(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, platz))
