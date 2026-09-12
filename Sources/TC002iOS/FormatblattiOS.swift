@@ -3,15 +3,12 @@ import TC002Core
 
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
-/// gestapelt verdeckte es die Vorschau. Schriftart, Ausrichtung (waagrecht und
-/// senkrecht), Rand und Abstand sitzen inzwischen in der Formatpille ueber dem
-/// Eingabefeld (SendeniOS.swift) — hier bleibt, was selten genug gebraucht
-/// wird, um ein eigenes Blatt zu rechtfertigen.
+/// gestapelt verdeckte es die Vorschau. Schriftart, beide Ausrichtungen,
+/// Größe, Fett, Großbuchstaben, Rand und Abstand sitzen inzwischen in der
+/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben nur noch
+/// Weg und Laufschrift.
 struct FormatblattiOS: View {
     @Binding var weg: SendeWeg
-    @Binding var groesse: Double
-    @Binding var fett: Bool
-    @Binding var grossbuchstaben: Bool
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Environment(\.dismiss) private var schliessen
@@ -32,11 +29,6 @@ struct FormatblattiOS: View {
                         Text("Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                }
-                Section("Schrift") {
-                    Stepper(lokf("Größe %d", Int(groesse)), value: $groesse, in: 6...16, step: 1)
-                    Toggle("Fett", isOn: $fett).disabled(weg == .text)
-                    Toggle("Großbuchstaben", isOn: $grossbuchstaben)
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {

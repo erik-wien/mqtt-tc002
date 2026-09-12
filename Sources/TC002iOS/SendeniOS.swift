@@ -95,6 +95,13 @@ struct SendeniOS: View {
                 set: { farbeHex = $0.hexWert })
     }
 
+    /// `groesse` ist am Sendeweg als `Double` verdrahtet (Meldungsoptionen),
+    /// der Groessen-Knopf in der Pille bietet aber ganze Stufen wie am Mac —
+    /// dieselbe Umrechnung, wie sie `farbe` oben fuer die Farbe macht.
+    private var groesseInt: Binding<Int> {
+        Binding(get: { Int(groesse) }, set: { groesse = Double($0) })
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -140,9 +147,7 @@ struct SendeniOS: View {
             }
         }
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(weg: $weg, groesse: $groesse, fett: $fett,
-                           grossbuchstaben: $grossbuchstaben, tempo: $tempo,
-                           iconLaeuftMit: $iconLaeuftMit)
+            FormatblattiOS(weg: $weg, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)
@@ -221,14 +226,13 @@ struct SendeniOS: View {
         return pilleInhaltsbreite > pilleSichtbareBreite + 1 && rest > 1
     }
 
-    /// Was man ständig ändert, direkt erreichbar. Alles Übrige hinter dem
-    /// Pinsel. Eine Pille wie in Pages: gleichwertige, einfarbige Symbole
-    /// nebeneinander. Acht Stueck passen nicht immer nebeneinander auf ein
-    /// Telefon, deshalb schiebbar — die ersten fuenf (Icon, waagrecht,
-    /// senkrecht, Farbe, Pinsel) muessen dafuer ohne Schieben sichtbar
-    /// bleiben, siehe Bericht zur Breitenrechnung. Farbe steht bewusst nicht
-    /// neben Icon: beide sind bunt und rund, nebeneinander leicht verwechselt;
-    /// mit dem Pinsel dazwischen nicht mehr.
+    /// Was man ständig ändert, direkt erreichbar. Elf gleichwertige Symbole
+    /// wie in Pages, nichts hinter einer Sammelstelle. Sie passen nicht alle
+    /// nebeneinander auf ein Telefon, deshalb schiebbar — die ersten fuenf
+    /// (Icon, waagrecht, senkrecht, Farbe, Pinsel) muessen dafuer ohne
+    /// Schieben sichtbar bleiben, siehe Bericht zur Breitenrechnung. Farbe
+    /// steht bewusst nicht neben Icon: beide sind bunt und rund, nebeneinander
+    /// leicht verwechselt; mit dem Pinsel dazwischen nicht mehr.
     private var formatleiste: some View {
         ZStack(alignment: .trailing) {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -284,6 +288,28 @@ struct SendeniOS: View {
                         Text(schrift)
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    Menu {
+                        Picker("Größe", selection: groesseInt) {
+                            ForEach(6...16, id: \.self) { n in Text(String(n)).tag(n) }
+                        }
+                    } label: {
+                        Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
+                    Button { fett.toggle() } label: {
+                        Image(systemName: "bold")
+                    }
+                    .frame(width: 44, height: 44)
+                    .foregroundStyle(fett ? Color.accentColor : Color.secondary)
+                    .disabled(weg == .text)
+                    .accessibilityLabel("Fett")
+                    Button { grossbuchstaben.toggle() } label: {
+                        Image(systemName: "capslock")
+                    }
+                    .frame(width: 44, height: 44)
+                    .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
+                    .accessibilityLabel("Großbuchstaben")
                     Menu {
                         Picker("Rand", selection: $rand) {
                             ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }

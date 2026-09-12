@@ -421,7 +421,6 @@
 
 /* TC002iOS/FormatblattiOS.swift */
 "Format" = "Format";
-"Schrift" = "Font";
 "Größe %d" = "Size %d";
 "Großbuchstaben" = "Capital letters";
 "Laufschrift" = "Scrolling";
