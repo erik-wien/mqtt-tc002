@@ -64,6 +64,9 @@ struct IconauswahliOS: View {
     @State private var meldung: String?
     @State private var einzelansicht: Icon?
     @State private var rasterBreite: CGFloat = 340
+    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
+    /// dem Nummernfeld nur durch Tippen daneben heraus.
+    @FocusState private var lametricFokus: Bool
 
     private static let spalten = 8
     private static let zwischenraum = 6.0
@@ -87,6 +90,13 @@ struct IconauswahliOS: View {
                     HStack {
                         TextField("LaMetric-Nummer", text: $lametricNummer)
                             .keyboardType(.numberPad)
+                            .focused($lametricFokus)
+                            .toolbar {
+                                ToolbarItemGroup(placement: .keyboard) {
+                                    Spacer()
+                                    Button("Fertig") { lametricFokus = false }
+                                }
+                            }
                         Button("Nachladen") { nachladen() }
                             .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
                     }

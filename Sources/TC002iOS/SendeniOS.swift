@@ -52,6 +52,9 @@ struct SendeniOS: View {
     @State private var zeigeIcons = false
     @State private var zeigeEinstellungen = false
     @State private var zeigeVerlauf = false
+    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
+    /// dem Dauer-Feld nur durch Tippen daneben heraus.
+    @FocusState private var dauerFokus: Bool
 
     // Misst die schiebbare Formatpille, um den Pfeil nur zu zeigen, solange
     // rechts wirklich noch etwas liegt (siehe `zeigtPfeil` unten).
@@ -265,9 +268,16 @@ struct SendeniOS: View {
             TextField("Uhr entscheidet", text: $dauerText)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
+                .focused($dauerFokus)
             Text("s")
         }
         .font(.callout)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Fertig") { dauerFokus = false }
+            }
+        }
     }
 
     /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus Slot-

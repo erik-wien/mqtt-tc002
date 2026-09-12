@@ -9,6 +9,9 @@ struct VerbindungiOS: View {
     @Bindable var zustand: AppZustand
     @State private var neueAdresse = ""
     @Environment(\.dismiss) private var schliessen
+    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
+    /// dem Port-Feld nur durch Tippen daneben heraus.
+    @FocusState private var portFokus: Bool
 
     var body: some View {
         NavigationStack {
@@ -64,6 +67,7 @@ struct VerbindungiOS: View {
                 TextField("Adresse einer weiteren Uhr", text: $neueAdresse)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .onSubmit { hinzufuegen() }
                 Button("Hinzufügen") { hinzufuegen() }
                     .disabled(neueAdresse.trimmingCharacters(in: .whitespaces).isEmpty)
             }
@@ -84,6 +88,13 @@ struct VerbindungiOS: View {
                 TextField("Port", text: $zustand.brokerPort)
                     .multilineTextAlignment(.trailing)
                     .keyboardType(.numberPad)
+                    .focused($portFokus)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Fertig") { portFokus = false }
+                        }
+                    }
             }
             LabeledContent("Benutzer") {
                 TextField("Benutzer", text: $zustand.benutzer)
