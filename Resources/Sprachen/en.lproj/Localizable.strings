@@ -333,6 +333,9 @@
 "prüfe…" = "checking…";
 "Der Broker nimmt die Anmeldung an." = "The broker accepts the login.";
 "%@ auf %@ gesetzt" = "%@ set to %@";
+/* VerbindungiOS.swift */
+"wird geprüft …" = "checking …";
+"angenommen" = "accepted";
 /* VorschauView.swift */
 "Vorschau der Anzeige, 52 mal 16 Pixel" = "Preview of the display, 52 by 16 pixels";
 /* ZielauswahlView.swift */
