@@ -21,6 +21,10 @@ struct VerbindungiOS: View {
             .navigationTitle("Einstellungen")
         }
         .presentationDragIndicator(.visible)
+        // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
+        // ein eben erst eingetipptes Kennwort sonst verloren — es stünde nur im
+        // Speicher, nicht im Schlüsselbund. Dasselbe Netz wie am Mac.
+        .onDisappear { zustand.kennwortSichern() }
     }
 
     private var uhrenAbschnitt: some View {
@@ -83,6 +87,7 @@ struct VerbindungiOS: View {
             LabeledContent("Kennwort") {
                 SecureField("Kennwort", text: $zustand.kennwort)
                     .multilineTextAlignment(.trailing)
+                    .onSubmit { zustand.kennwortSichern() }
             }
             Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
             standText
