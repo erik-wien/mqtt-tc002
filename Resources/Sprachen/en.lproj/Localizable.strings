@@ -413,6 +413,17 @@
 "Kein Icon" = "No icon";
 "%@ geholt." = "%@ fetched.";
 
+/* TC002iOS/FormatblattiOS.swift */
+"Format" = "Format";
+"Schrift" = "Font";
+"Größe %d" = "Size %d";
+"Großbuchstaben" = "Capital letters";
+"Lage" = "Position";
+"Laufschrift" = "Scrolling";
+"Die App rastert selbst. Umlaute gehen, die Schrift ist frei wählbar." = "The app rasterizes it itself. Umlauts work, and the font is freely selectable.";
+"Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute." = "The clock sets it itself, with its built-in font. It knows no umlauts.";
+"Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
+
 /* Bereichsnamen der Seitenleiste und Abschnitte der Hilfe. Sie stehen als
    rawValue in einem enum und werden ueber lok(…) nachgeschlagen — der
    Sammler findet sie deshalb nicht im Quelltext, sie sind in ihm als
