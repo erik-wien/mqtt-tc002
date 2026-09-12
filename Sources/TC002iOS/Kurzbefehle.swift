@@ -167,6 +167,12 @@ struct MeldungLoeschenIntent: AppIntent {
                     clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
                 try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
                     .loeschen(name)
+                // Erst nach der Sendung und je Uhr: Wer einen Platz raeumt,
+                // wirft die Erinnerung an ihn weg — sonst rechnete ein Block
+                // in der App daraus weiter den Text, der hier gerade von der
+                // Uhr genommen wurde. Kein Protokoll hier; der Kurzbefehl hat
+                // keines, und ein Fehlschlag darf die Loeschung nicht kippen.
+                Slotgedaechtnis.gemeinsam.vergessen(fuer: ziel.id, platz: platz)
             }
         }.value
         return .result(dialog: IntentDialog(stringLiteral: lokf("Slot %d entfernt.", platz)))

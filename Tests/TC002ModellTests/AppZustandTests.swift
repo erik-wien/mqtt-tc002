@@ -234,6 +234,97 @@ final class AppZustandTests: XCTestCase {
                        "Ohne gemerkten Stand bleibt nur „belegt, Inhalt unbekannt“.")
     }
 
+    // MARK: Löschen wirft die Erinnerung weg
+
+    /// Wer einen Platz raeumt, wirft die Erinnerung an ihn weg. Ohne das laege
+    /// nach dem Loeschen weiter der Stand der letzten eigenen Textsendung da,
+    /// und `slotzustand` rechnete daraus wieder ein Bild — den Text, der seit
+    /// dem Loeschen nicht mehr auf dem Platz steht.
+    func testLoeschenWirftDieErinnerungAnDenPlatzWeg() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, fuer: uhr.id, platz: 2)
+        let zustand = AppZustand()
+        zustand.bekannteAnzeigen[uhr.id] = ["meldung1", "meldung2"]
+
+        zustand.anzeigeGeloescht("meldung1", fuer: uhr, gedaechtnis: gedaechtnis)
+
+        XCTAssertNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1),
+                     "Ein geräumter Platz darf keine Erinnerung zurücklassen.")
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
+                       "Wird der Platz später von fremder Hand belegt, bleibt nur „Inhalt unbekannt“.")
+        XCTAssertNotNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 2),
+                        "Nur der gelöschte Platz verliert seine Erinnerung.")
+        XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), ["meldung2"])
+    }
+
+    /// Nur die fuenf Meldungsplaetze haben ueberhaupt eine Erinnerung. Ein frei
+    /// gewaehlter Anzeigename — die Vorgabe des Werkzeugs ist „cli" — ist kein
+    /// Platz; eine Loeschung unter diesem Namen darf die Erinnerung an Platz 1
+    /// nicht mitreissen.
+    func testLoeschenEinesFremdenNamensRuehrtDieErinnerungNichtAn() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        zustand.bekannteAnzeigen[uhr.id] = ["cli", "meldung1"]
+
+        zustand.anzeigeGeloescht("cli", fuer: uhr, gedaechtnis: gedaechtnis)
+
+        XCTAssertNotNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1),
+                        "„cli“ ist kein Platz — es gibt dort nichts zu vergessen.")
+        XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), ["meldung1"])
+    }
+
+    /// Eine leere Nutzlast ist die unmittelbare Auskunft der Uhr, dass die
+    /// Anzeige entfernt wurde — gleich von wem. Bliebe der Name in der
+    /// Belegung stehen, zeigte der Block die Erinnerung an einen leeren Platz.
+    func testLeereNutzlastGibtDenPlatzFreiUndVergisstIhn() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
+        zustand.gemeldeteAnzeigen[uhr.id] = ["meldung1"]
+        let gemalt = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: gemalt, fuer: uhr.id,
+                         gedaechtnis: gedaechtnis)
+
+        // Was `Anzeigen.loeschen` schickt: genau null Bytes (§3.2).
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: Data(), fuer: uhr.id,
+                         gedaechtnis: gedaechtnis)
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), [],
+                       "Die leere Nutzlast sagt: der Platz ist wieder leer.")
+        XCTAssertEqual(zustand.bekannteAnzeigen[uhr.id], [],
+                       "Auch die eigene Buchführung, sonst käme der Name nach dem Abriss zurück.")
+        XCTAssertNil(zustand.slotInhalt[uhr.id]?[1])
+        XCTAssertNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1),
+                     "Ein geräumter Platz darf keine Erinnerung zurücklassen.")
+    }
+
+    /// Die Gegenprobe zur leeren Nutzlast: Eine nicht zerlegbare sagt nur, dass
+    /// dort etwas Unlesbares liegt — der Platz bleibt belegt, und die
+    /// Erinnerung bleibt stehen. Wer beide Faelle in einen Zweig faltet,
+    /// meldete hier einen freien Platz, obwohl ein Lauf-GIF darauf laeuft.
+    func testUnzerlegbareNutzlastLaesstBelegungUndErinnerungStehen() throws {
+        let uhr = try buehne()
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
+        let zustand = AppZustand()
+        zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
+
+        let laufschrift = Data("{\"image\":\"data:image/gif;base64,R0lGODlh\"}".utf8)
+        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: laufschrift, fuer: uhr.id,
+                         gedaechtnis: gedaechtnis)
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), ["meldung1"],
+                       "Auf dem Platz liegt etwas — er ist nicht frei.")
+        XCTAssertNotNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1),
+                        "Nur ein geräumter Platz verliert seine Erinnerung, kein überschriebener.")
+    }
+
     // MARK: Zwischenspeicher der gerechneten Pixel
 
     /// Nach einer eigenen Sendung: `senden` merkt den neuen Stand, und der

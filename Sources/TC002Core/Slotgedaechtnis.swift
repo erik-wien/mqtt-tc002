@@ -207,9 +207,11 @@ public struct Slotgedaechtnis: Sendable {
     }
 
     /// Wirft die Erinnerung an **einen** Platz weg — aufzurufen, wenn dieser
-    /// Platz mit etwas ueberschrieben wird, das sich nicht merken laesst: Ein
-    /// gemaltes Bild hat keine Regler (`MalenView`, und damit `AppZustand.senden`
-    /// mit `slotPlatz`, aber ohne `slotOptionen`).
+    /// Platz geraeumt oder mit etwas ueberschrieben wird, das sich nicht merken
+    /// laesst: Ein gemaltes Bild hat keine Regler (`MalenView`, und damit
+    /// `AppZustand.senden` mit `slotPlatz`, aber ohne `slotOptionen`), und eine
+    /// Loeschung laesst gar nichts mehr zurueck (`AppZustand.anzeigeGeloescht`,
+    /// und der Kurzbefehl „Meldung nehmen").
     ///
     /// Ohne das bliebe der Stand der letzten Textsendung liegen, und
     /// `AppZustand.slotzustand` rechnete beim naechsten Start ohne Broker

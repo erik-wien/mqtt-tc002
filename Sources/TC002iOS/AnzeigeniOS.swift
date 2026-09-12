@@ -104,7 +104,8 @@ struct AnzeigeniOS: View {
             do {
                 try a.loeschen(name)
                 await MainActor.run {
-                    zustand.anzeigeVergessen(name, fuer: uhr.id)
+                    // Nur bei der aktiven Uhr: die leere Nutzlast ging auch nur dorthin.
+                    zustand.anzeigeGeloescht(name, fuer: uhr)
                     zustand.log(lokf("gelöscht: %@", name))
                 }
             } catch {

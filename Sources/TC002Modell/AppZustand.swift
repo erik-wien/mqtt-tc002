@@ -197,6 +197,31 @@ public final class AppZustand {
         gemeldeteAnzeigen[id]?.removeAll { $0 == name }
     }
 
+    /// Was nach einer **erfolgreichen** Loeschung auf einer Uhr zu buchen ist:
+    /// Der Name verschwindet von dieser Uhr, und die Erinnerung an den Platz
+    /// wird weggeworfen. Derselbe Grundsatz wie beim Malen (`senden` ohne
+    /// `slotOptionen`): Wer einen Platz raeumt, darf dort nicht den vorherigen
+    /// Text zuruecklassen — sonst faellt `slotzustand` auf das Gedaechtnis
+    /// zurueck und zeigt, was laengst zweifach ueberholt ist, sobald ein
+    /// fremder Absender den Platz wieder mit etwas Unlesbarem belegt.
+    ///
+    /// Nur die fuenf Meldungsplaetze haben ueberhaupt eine Erinnerung; ein frei
+    /// gewaehlter Anzeigename (Vorgabe des Werkzeugs: „cli") hat nichts zu
+    /// vergessen. Je Uhr, weil die leere Nutzlast auch nur an eine ging.
+    /// Schlaegt das Vergessen fehl, bleibt die Loeschung gueltig — nur eine
+    /// Protokollzeile haelt es fest, wie in `senden`.
+    ///
+    /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
+    /// Ablage unter Application Support greifen muessen.
+    public func anzeigeGeloescht(_ name: String, fuer uhr: Uhr,
+                                 gedaechtnis: Slotgedaechtnis = .gemeinsam) {
+        anzeigeVergessen(name, fuer: uhr.id)
+        guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
+        if !gedaechtnis.vergessen(fuer: uhr.id, platz: platz) {
+            log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, platz))
+        }
+    }
+
     public var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
 
     /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
@@ -543,9 +568,9 @@ public final class AppZustand {
 
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
     /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
-    public func loeschen(_ name: String) async {
+    public func loeschen(_ name: String, gedaechtnis: Slotgedaechtnis = .gemeinsam) async {
         await anZiele({ try $0.loeschen(name) }) { uhr in
-            anzeigeVergessen(name, fuer: uhr.id)
+            anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
             log(lokf("auf %@ gelöscht: %@", uhr.name, name))
         }
     }
@@ -652,7 +677,8 @@ public final class AppZustand {
     /// eintreffende Nachricht mit `slotInhalt` macht, ist die einzige Stelle,
     /// an der ein Block behaupten könnte, etwas zu zeigen, das längst
     /// überschrieben ist — dafür gibt es sonst keine Naht.
-    func gemeldet(thema: String, nutzlast: Data, fuer id: UUID) {
+    func gemeldet(thema: String, nutzlast: Data, fuer id: UUID,
+                  gedaechtnis: Slotgedaechtnis = .gemeinsam) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         switch thema {
         case "\(uhr.praefix)/customList":
@@ -682,16 +708,28 @@ public final class AppZustand {
             guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
             if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
                 slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel)
+            } else if nutzlast.isEmpty {
+                // Die verlaesslichste Auskunft, die es hier ueberhaupt gibt: Genau
+                // null Bytes auf dem Thema loeschen die Anzeige auf der Uhr
+                // (`Anzeigen.loeschen`, §3.2) — gleich, wer sie geschickt hat,
+                // diese App, das Werkzeug, ein Kurzbefehl oder ein fremdes
+                // Werkzeug. Der Platz ist damit wieder leer, und das ist mehr als
+                // „Inhalt unbekannt": Der Name gehoert aus der Belegung heraus und
+                // die Erinnerung weggeworfen, sonst zeigte der Block eine
+                // Erinnerung an einen leeren Platz. Ob die Uhr ihre `customList`
+                // danach von selbst erneut veroeffentlicht, ist nicht belegt
+                // (siehe `anzeigeVergessen`) — also nicht darauf warten.
+                slotInhalt[id]?[platz] = nil
+                anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
             } else {
-                // Zwei Faelle, eine Folge. Eine leere Nutzlast loescht die Anzeige
-                // auf der Uhr (`Anzeigen.loeschen`) — der Platz ist wieder leer.
-                // Eine nicht zerlegbare (Lauf-GIF oder Geraeteschrift, siehe
+                // Nicht zerlegbar (Lauf-GIF oder Geraeteschrift, siehe
                 // `pixelAusCustomNutzlast`) sagt zweierlei: Dort liegt etwas
                 // Neues, und wir kennen es nicht. Den alten Eintrag
                 // stehenzulassen hiesse, einen Stand zu behaupten, den der Block
-                // nachweislich nicht mehr hat. Geloescht greift von selbst die
-                // naechste Stufe von `slotzustand`: fuer eigene Sendungen das
-                // Gedaechtnis, fuer fremde „unbekannt".
+                // nachweislich nicht mehr hat. Die Belegung bleibt dagegen
+                // stehen — auf dem Platz liegt ja etwas. Geloescht greift von
+                // selbst die naechste Stufe von `slotzustand`: fuer eigene
+                // Sendungen das Gedaechtnis, fuer fremde „unbekannt".
                 slotInhalt[id]?[platz] = nil
             }
         }

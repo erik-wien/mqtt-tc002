@@ -85,7 +85,7 @@ struct AnzeigenView: View {
                 try a.loeschen(name)
                 await MainActor.run {
                     // Nur bei der aktiven Uhr: die leere Nutzlast ging auch nur dorthin.
-                    zustand.anzeigeVergessen(name, fuer: uhr.id)
+                    zustand.anzeigeGeloescht(name, fuer: uhr)
                     zustand.log(lokf("gelöscht: %@", name))
                 }
             } catch { await MainActor.run { zustand.melde(error, uhr: uhr) } }
