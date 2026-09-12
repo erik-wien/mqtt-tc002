@@ -201,26 +201,45 @@ struct SendeniOS: View {
         )
     }
 
-    private var platzUndDauer: some View {
-        HStack(spacing: 12) {
-            Picker("Slot", selection: $platz) {
-                ForEach(1...Meldungsplatz.anzahl, id: \.self) { Text(String($0)).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 200)
-            HStack(spacing: 4) {
-                Text("Dauer")
-                // Ohne feste Breite: Bei "Uhr entscheidet" als Platzhalter
-                // schnitt 64pt auf dem Telefon den Text ab (auf dem breiteren
-                // Mac-Fenster passte dieselbe Breite noch).
-                TextField("Uhr entscheidet", text: $dauerText)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                Text("s")
-            }
-            .font(.callout)
+    private var platzPicker: some View {
+        Picker("Slot", selection: $platz) {
+            ForEach(1...Meldungsplatz.anzahl, id: \.self) { Text(String($0)).tag($0) }
         }
-        .padding(.horizontal)
+        .pickerStyle(.segmented)
+        .frame(maxWidth: 200)
+    }
+
+    private var dauerFeld: some View {
+        HStack(spacing: 4) {
+            Text("Dauer")
+            // Ohne feste Breite: Bei "Uhr entscheidet" als Platzhalter
+            // schnitt 64pt auf dem Telefon den Text ab (auf dem breiteren
+            // Mac-Fenster passte dieselbe Breite noch).
+            TextField("Uhr entscheidet", text: $dauerText)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+            Text("s")
+        }
+        .font(.callout)
+    }
+
+    /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus Slot-
+    /// Picker und Dauerfeld nicht mehr nebeneinander in die Bildschirmbreite.
+    /// `ViewThatFits` probiert zuerst die gewohnte Zeile und faellt erst dann
+    /// auf zwei gestapelte Zeilen zurueck, statt am Rand abzuschneiden.
+    private var platzUndDauer: some View {
+        ViewThatFits {
+            HStack(spacing: 12) {
+                platzPicker
+                dauerFeld
+            }
+            .padding(.horizontal)
+            VStack(alignment: .leading, spacing: 8) {
+                platzPicker
+                dauerFeld
+            }
+            .padding(.horizontal)
+        }
     }
 
     /// Symbol fuer den Stand der waagrechten Ausrichtung — kein Ternaer, sonst
@@ -409,7 +428,11 @@ struct SendeniOS: View {
                 )
             }
             .coordinateSpace(.named("pilleRaum"))
-            .frame(height: 60)
+            // Keine feste Hoehe mehr: Bei den groessten Bedienungshilfen-
+            // Schriftgroessen wuchs .body auf rund 53 Punkte Zeilenhoehe, eine
+            // starre 60-Punkte-Pille schnitt den Inhalt dann ab. Ohne Vorgabe
+            // richtet sich die Hoehe nach dem Inhalt — die Kapsel wird dann
+            // hoeher statt etwas abzuschneiden.
             .background(
                 GeometryReader { geo in
                     Color.clear.preference(key: PilleSichtbarKey.self, value: geo.size.width)
