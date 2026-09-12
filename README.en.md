@@ -22,11 +22,13 @@ dependencies; macOS 14 or newer is required.
   "Query" determines the topic prefix and the MAC directly from the clock;
   nothing is entered by hand here.
 - **Send** — assemble text and optionally an icon into a named display and
-  send it off. The preview comes from the same raster as the message that is
-  sent. There are two ways to choose from: **as pixels**, rasterized by the
-  app itself, with umlauts and any font — if the text does not fit, it runs
-  through by itself as scrolling text; or **as text**, set by the device,
-  which scrolls with its own font for that, but does not know umlauts.
+  send it off. Five blocks show the clock's fixed slots, with their content
+  where the app knows it. The preview comes from the same raster as the
+  message that is sent. There are two ways to choose from: **as pixels**,
+  rasterized by the app itself, with umlauts and any font — if the text does
+  not fit, it runs through by itself as scrolling text; or **as text**, set
+  by the device, which scrolls with its own font for that, but does not know
+  umlauts.
 - **Draw** — a free 52×16 canvas, which turns into rectangles instead of
   single pixels when sent.
 - **Icons** — draw your own 8×8 images or fetch them via a LaMetric number.

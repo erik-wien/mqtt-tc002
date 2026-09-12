@@ -23,12 +23,13 @@ vorausgesetzt wird macOS 14 aufwärts.
   „Abfragen“ ermittelt Themen-Präfix und MAC direkt von der Uhr; von Hand
   eingetragen wird hier nichts.
 - **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
-  zusammensetzen und verschicken. Die Vorschau entsteht aus demselben Raster
-  wie die gesendete Nachricht. Zwei Wege stehen zur Wahl: **als Pixel**, von
-  der App selbst gerastert, mit Umlauten und freier Schrift — passt der Text
-  nicht, läuft er von selbst als Laufschrift durch; oder **als Text**, vom
-  Gerät gesetzt, das dafür mit seiner eigenen Schrift scrollt, aber keine
-  Umlaute kennt.
+  zusammensetzen und verschicken. Fünf Blöcke zeigen dabei die festen Plätze
+  der Uhr, samt Inhalt, wo die App ihn kennt. Die Vorschau entsteht aus
+  demselben Raster wie die gesendete Nachricht. Zwei Wege stehen zur Wahl:
+  **als Pixel**, von der App selbst gerastert, mit Umlauten und freier
+  Schrift — passt der Text nicht, läuft er von selbst als Laufschrift durch;
+  oder **als Text**, vom Gerät gesetzt, das dafür mit seiner eigenen Schrift
+  scrollt, aber keine Umlaute kennt.
 - **Malen** — eine freie 52×16-Zeichenfläche, aus der beim Senden Rechtecke
   statt einzelner Pixel werden.
 - **Icons** — eigene 8×8-Bildchen malen oder über eine LaMetric-Nummer

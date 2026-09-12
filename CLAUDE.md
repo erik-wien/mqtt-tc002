@@ -100,9 +100,13 @@ eigens dafür gebaute Datei mit mehreren Schreibern. Das gilt aber nur, wenn
 `--name` einen der fünf festen Plätze trifft (`meldung1`…`meldung5`); die
 Vorgabe `--name cli` ist keiner davon, und `mqtttc002 senden "…"` ohne
 `--name` schreibt darum **nicht** ins Slotgedächtnis — kein Fehler im
-Schreiber, sondern der fehlende Platzbezug. Es reist im Bündel mit
-(`Contents/MacOS/mqtttc002`) und wird über einen Verweis benutzt. Zwei Fallen,
-beide schon zugeschnappt:
+Schreiber, sondern der fehlende Platzbezug. Gelesen wird die Datei von den
+Slot-Blöcken der Sendeansicht (`TC002Ansichten/Slotblock.swift`) als
+Erinnerung, nicht als Tatsache: Übernommen werden die gemerkten Regler nur,
+wenn ihre Prüfsumme noch zu den tatsächlich gesehenen Pixeln passt — sonst
+hat seither jemand anderes auf den Platz geschrieben (Hilfe → Senden erklärt
+das aus Anwendersicht). Es reist im Bündel mit (`Contents/MacOS/mqtttc002`)
+und wird über einen Verweis benutzt. Zwei Fallen, beide schon zugeschnappt:
 
 - **`Bundle.main` ist über einen Verweis nicht das App-Bündel**, sondern der
   Ordner des Verweises. Fassungsnummer, Schriften und Übersetzungen fehlen dann

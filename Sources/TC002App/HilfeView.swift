@@ -135,8 +135,20 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .senden:
             return [
                 .ueberschrift("Meldung und Platz"),
-                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. „Slot“ ①–⑤ wählt einen von fünf festen Plätzen — der gewählte Platz ist zugleich der Bezeichner, unter dem die Anzeige danach bei „Verlauf“ auftaucht (`meldung1` bis `meldung5`)."),
-                .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen — ein orange umrandeter Platz ist bereits belegt, ein grau umrandeter frei. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt."),
+                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. In der Mitte stehen fünf Blöcke, je einer für einen der fünf festen Plätze der Uhr (`meldung1` bis `meldung5`) — ein Antippen wählt den Platz, unter dem die Anzeige danach bei „Verlauf“ auftaucht."),
+                .absatz("Jeder Block zeigt einen von drei Zuständen, an der Form erkennbar, nicht nur an der Farbe:"),
+                .tabelle([
+                    ("frei", "gestrichelter, leerer Rahmen — kein Name auf diesem Platz."),
+                    ("belegt, Inhalt bekannt", "die tatsächlichen Pixel, verkleinert. Antippen wählt den Platz und stellt, wo möglich, auch Schrift, Größe und die übrigen Regler wieder her, mit denen gesendet wurde."),
+                    ("belegt, Inhalt unbekannt", "grau gefüllter Block mit dem Wort „belegt“, ohne Pixel."),
+                ]),
+                .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt — die Blöcke zeigen dabei immer den Stand der gerade aktiven Uhr."),
+
+                .ueberschrift("Woher die Blöcke wissen, was belegt ist"),
+                .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes (Gerätereferenz, §3.5) — belegt oder frei ist damit gesichert, der Inhalt nicht. Den gewinnt die App stattdessen daraus, dass sie beim Broker jede Sendung an die Uhr mitliest, gleich von wem sie kommt: von dieser App, vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm."),
+                .absatz("Wer die App startet, während gerade nichts Neues gesendet wird, sieht deshalb zunächst „belegt, Inhalt unbekannt“ — auch für Plätze, die kurz zuvor selbst gefüllt wurden: Ohne aufbewahrte (RETAIN-)Nachrichten liefert MQTT einem frisch verbundenen Abonnenten keinen Rückstand, sondern nur, was ab jetzt gesendet wird. Das ist kein Fehler dieser App, sondern die normale Stille von MQTT 3.1.1 (siehe auch „Wenn nichts erscheint“); ein erneutes Senden auf denselben Platz füllt den Block sofort."),
+                .absatz("„Belegt, Inhalt unbekannt“ ist auch sonst meist einer von zwei gewöhnlichen, harmlosen Fällen: die Anzeige stammt von einem anderen Gerät oder einer anderen Installation dieser App, deren Sendung hier nie mitgelesen wurde; oder sie ist eine Laufschrift oder ein von der Uhr selbst gesetzter Text (Weg „als Text“) statt eines stehenden, von dieser App gerasterten Bilds — beides lässt sich aus der Nutzlast nicht in ein Standbild zurückrechnen."),
+                .absatz("Auch ein Block mit bekanntem Inhalt stellt beim Antippen nicht immer die Regler wieder her: Das gelingt nur, wenn diese Installation die Sendung selbst mitgelesen hat und der Platz seither nicht von anderer Stelle überschrieben wurde — sonst wählt das Antippen nur den Platz, ohne die Regler zu verändern."),
 
                 .ueberschrift("Weg: als Pixel oder als Text"),
                 .absatz("Über dem Textfeld liegt die Wahl „Weg“ mit zwei Einträgen: „als Pixel“ (Vorgabe) und „als Text“. Bei „als Pixel“ entscheidet die App selbst, ob der Text stehenbleibt oder durchläuft — es gibt dafür keinen eigenen Schalter."),
