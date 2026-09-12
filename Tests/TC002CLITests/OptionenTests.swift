@@ -88,6 +88,17 @@ final class OptionenTests: XCTestCase {
         XCTAssertEqual(o.befehl, .senden(text: "Hallo"))
     }
 
+    /// Und vor allem: auch **vor** dem Befehlswort. Genau das ging schief —
+    /// `-AppleLanguages` stand an der Stelle des Befehls, also galt alles als
+    /// Text, und `mqtttc002 -AppleLanguages "(en)" uhren` schickte das Wort
+    /// „uhren" an die Uhr, statt die Liste zu zeigen.
+    func testEinstellungsargumentVorDemBefehlswort() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["-AppleLanguages", "(en)", "uhren"]).befehl, .uhren)
+        XCTAssertEqual(try Optionen.zerlegt(["-AppleLanguages", "(en)", "hilfe"]).befehl, .hilfe)
+        XCTAssertEqual(try Optionen.zerlegt(["-AppleLanguages", "(en)", "senden", "Hallo"]).befehl,
+                       .senden(text: "Hallo"))
+    }
+
     /// Ein einzelner Strich mit Kleinbuchstaben ist dagegen keines — das soll
     /// weiterhin als unbekannt auffallen und nicht stillschweigend verschwinden.
     func testEinzelnerStrichKleingeschriebenBleibtText() throws {

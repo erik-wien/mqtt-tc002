@@ -42,6 +42,16 @@ MODIFIKATOREN = ["help", "navigationTitle", "navigationSubtitle", "accessibility
 # Eigene Bausteine der Hilfe und des Werkzeugs.
 EIGENE = ["lok", "lokf", "ueberschrift", "absatz"]
 
+# Texte, die als Variable nachgeschlagen werden — `lok(a.rawValue)` — und
+# deshalb nicht im Quelltext stehen koennen. Sie muessen von Hand hier gefuehrt
+# werden, sonst faellt ihr Fehlen erst dem Anwender auf.
+DYNAMISCH = [
+    # Bereiche der Seitenleiste (App.swift, enum Bereich)
+    "Senden", "Malen", "Anzeigen", "Verbindung", "Icons",
+    # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
+    "Was das Programm tut", "Wenn nichts erscheint",
+]
+
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit
 # nichts halb Gefangenes in die Liste rutscht.
 ZEICHENKETTE = r'"((?:[^"\\]|\\.)*)"'
@@ -72,6 +82,8 @@ def sammeln():
                         if re.fullmatch(r"[a-z0-9.]+", schluessel):
                             continue          # SF-Symbole, Schluesselnamen
                         gesehen.setdefault(schluessel, datei.name)
+    for schluessel in DYNAMISCH:
+        gesehen.setdefault(schluessel, "dynamisch")
     return gesehen
 
 

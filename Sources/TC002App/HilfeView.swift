@@ -12,14 +12,14 @@ struct HilfeView: View {
     var body: some View {
         NavigationSplitView {
             List(Abschnitt.allCases, selection: $abschnitt) { a in
-                Text(a.rawValue).tag(a)
+                Text(lok(a.rawValue)).tag(a)
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 210, max: 260)
         } detail: {
             let a = abschnitt ?? .ueberblick
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text(a.rawValue).font(.title2).fontWeight(.semibold)
+                    Text(lok(a.rawValue)).font(.title2).fontWeight(.semibold)
                     ForEach(Array(a.bausteine.enumerated()), id: \.offset) { _, baustein in
                         bausteinView(baustein)
                     }
@@ -276,7 +276,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("Die App hört deshalb dauerhaft beim Broker mit, sobald eine Uhr ein Präfix hat. Steht neben der Überschrift „von dieser App angelegt“, ist noch nichts gemeldet worden: kein Broker erreichbar, die Uhr aus, oder unter „Verbindung“ noch nicht abgefragt. Reißt die Verbindung ab, fällt die Liste auf die Buchführung zurück und sagt es."),
 
                 .ueberschrift("Anzeigen und Löschen"),
-                .absatz("„Anzeigen“ schaltet auf den Namen um, „Löschen“ entfernt ihn mit leerer Nachricht von der aktiven Uhr. Ging dieselbe Anzeige über die Zielauswahl auch an andere Uhren, steht sie dort weiter und muss bei jeder einzeln gelöscht werden. Eine stehende, gerade gezeigte Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder unter demselben Namen ersetzt wird — das ist der häufigste Grund, warum eine frisch gesendete Anzeige nicht auftaucht."),
+                .absatz("„Zeigen“ schaltet auf den Namen um, „Löschen“ entfernt ihn mit leerer Nachricht von der aktiven Uhr. Ging dieselbe Anzeige über die Zielauswahl auch an andere Uhren, steht sie dort weiter und muss bei jeder einzeln gelöscht werden. Eine stehende, gerade gezeigte Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder unter demselben Namen ersetzt wird — das ist der häufigste Grund, warum eine frisch gesendete Anzeige nicht auftaucht."),
 
                 .ueberschrift("Protokoll"),
                 .absatz("Darunter steht das Protokoll — mit Uhrzeit, älteste Zeile oben, neueste unten. Aufgezeichnet wird:"),

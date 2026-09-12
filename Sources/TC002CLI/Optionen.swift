@@ -74,7 +74,12 @@ struct Optionen {
     }
 
     /// Zerlegt die Argumente **ohne** das Programm selbst (also `dropFirst`).
-    static func zerlegt(_ argumente: [String]) throws -> Optionen {
+    static func zerlegt(_ rohe: [String]) throws -> Optionen {
+        // Zuerst heraus, was Foundation fuer sich beansprucht — sonst stuende
+        // `-AppleLanguages` an der Stelle des Befehlsworts, und aus
+        // `mqtttc002 -AppleLanguages "(en)" uhren` wuerde eine Sendung mit dem
+        // Text „uhren".
+        let argumente = ohneEinstellungsargumente(rohe)
         var o = Optionen()
         guard let erstes = argumente.first else { return o }
 
@@ -104,13 +109,6 @@ struct Optionen {
         var i = 0
         while i < rest.count {
             let arg = rest[i]
-            // `-AppleLanguages "(en)"` und Verwandte: Argumente mit *einem*
-            // Strich und grossem Anfangsbuchstaben nimmt Foundation selbst
-            // entgegen (der Argumentbereich von `UserDefaults`) — damit laesst
-            // sich das Werkzeug einmalig in einer anderen Sprache starten, ohne
-            // etwas umzustellen. Sie duerfen weder als Option noch als Text
-            // durchgehen: samt Wert ueberspringen.
-            if Self.istEinstellungsargument(arg) { i += 2; continue }
             guard arg.hasPrefix("--") else { freie.append(arg); i += 1; continue }
 
             /// Holt den Wert hinter einer Option und schiebt den Zeiger weiter.
@@ -177,11 +175,27 @@ struct Optionen {
         return o
     }
 
-    /// Ein Argument, das Foundation fuer sich beansprucht: ein Strich, dann ein
-    /// Grossbuchstabe (`-AppleLanguages`, `-AppleLocale`, `-NSShowAllViews` …).
-    private static func istEinstellungsargument(_ arg: String) -> Bool {
-        guard arg.count > 1, arg.hasPrefix("-"), !arg.hasPrefix("--") else { return false }
-        return arg.dropFirst().first?.isUppercase == true
+    /// Entfernt die Argumente, die Foundation fuer sich beansprucht, samt ihrem
+    /// Wert: ein Strich, dann ein Grossbuchstabe (`-AppleLanguages "(en)"`,
+    /// `-AppleLocale`, `-NSShowAllViews`). Damit laesst sich das Werkzeug
+    /// einmalig in einer anderen Sprache starten, ohne etwas umzustellen.
+    ///
+    /// Muss vor allem anderen geschehen: Solche Argumente koennen an jeder
+    /// Stelle stehen, auch vor dem Befehlswort.
+    static func ohneEinstellungsargumente(_ argumente: [String]) -> [String] {
+        var ergebnis: [String] = []
+        var i = 0
+        while i < argumente.count {
+            let arg = argumente[i]
+            if arg.count > 1, arg.hasPrefix("-"), !arg.hasPrefix("--"),
+               arg.dropFirst().first?.isUppercase == true {
+                i += 2                                    // Name und Wert
+                continue
+            }
+            ergebnis.append(arg)
+            i += 1
+        }
+        return ergebnis
     }
 
     private static func istFarbe(_ s: String) -> Bool {

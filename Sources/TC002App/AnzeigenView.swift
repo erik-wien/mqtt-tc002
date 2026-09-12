@@ -30,7 +30,7 @@ struct AnzeigenView: View {
                 HStack {
                     Text(name).font(.system(.body, design: .monospaced))
                     Spacer()
-                    Button("Anzeigen") { umschalten(name) }
+                    Button("Zeigen") { umschalten(name) }
                     Button("Löschen", role: .destructive) { loeschen(name) }
                 }
             }

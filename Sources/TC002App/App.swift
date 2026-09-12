@@ -83,7 +83,7 @@ struct TC002App: App {
     private var hauptfenster: some View {
         NavigationSplitView {
             List(Bereich.allCases, selection: $bereich) { b in
-                Label(b.rawValue, systemImage: b.symbol).tag(b)
+                Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
             }
             .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 220)
         } detail: {
