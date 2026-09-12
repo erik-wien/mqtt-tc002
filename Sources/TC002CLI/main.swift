@@ -163,8 +163,9 @@ func lauf() throws {
 
     switch optionen.befehl {
     case .senden(let text):
-        let rahmen = try Meldungsbau.rahmen(text: text, optionen: optionen,
-                                            icon: icon, sammlung: sammlung)
+        var m = optionen.meldung
+        m.text = text
+        let rahmen = try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung)
         let json = rahmen.alsJSON()
         if optionen.trocken {
             // Der Trockenlauf ist auch die Auskunft darueber, womit gesendet

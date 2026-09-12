@@ -1,7 +1,6 @@
 import Foundation
 import XCTest
-import TC002Core
-@testable import TC002App
+@testable import TC002Core
 
 /// Nagelt den Rahmenbau fest. Diese Tests sind nicht dazu da, eine Absicht zu
 /// beschreiben — sie halten fest, was die App **heute** erzeugt, damit das
@@ -141,5 +140,25 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertEqual(Meldungsbau.versatzY(o), 3,
                        "acht Rand wird bei sechs Pixeln Tinte auf fuenf geklammert, versatzY = -2 + 5 = 3")
         XCTAssertLessThan(mitDrei, Meldungsbau.versatzY(o))
+    }
+
+    /// Die `rawValue`-Zeichenketten sind ein Dateiformat: `@AppStorage` legt sie
+    /// so ab. Wer sie ändert, macht die Einstellungen einer laufenden
+    /// Installation unlesbar — die Ansicht fiele wortlos auf ihre Vorgabe
+    /// zurück, und niemand wüsste warum.
+    func testAufzaehlungenBehaltenIhreZeichenketten() {
+        XCTAssertEqual(SendeWeg.allCases.map(\.rawValue), ["pixel", "text"])
+        XCTAssertEqual(SendenHAusrichtung.allCases.map(\.rawValue), ["links", "mittig", "rechts"])
+        XCTAssertEqual(SendenVAusrichtung.allCases.map(\.rawValue), ["oben", "mittig", "unten"])
+        XCTAssertEqual(Lauftempo.allCases.map(\.rawValue), ["langsam", "mittel", "schnell"])
+    }
+
+    /// Der Name des Meldungsplatzes ist der Bezeichner der Anzeige auf dem
+    /// Gerät. Ändert er sich, findet die App ihre alten Anzeigen nicht mehr und
+    /// kann sie auch nicht mehr löschen.
+    func testMeldungsplatzNamenBleiben() {
+        XCTAssertEqual(MeldungsplatzWahl.anzahl, 5)
+        XCTAssertEqual((1...5).map(MeldungsplatzWahl.name(fuer:)),
+                       ["meldung1", "meldung2", "meldung3", "meldung4", "meldung5"])
     }
 }

@@ -2,59 +2,6 @@ import AppKit
 import SwiftUI
 import TC002Core
 
-/// Waagrechte Ausrichtung des Textes innerhalb der verfuegbaren Breite (52 Pixel
-/// ohne Icon, ab Spalte 10 mit Icon).
-enum SendenHAusrichtung: String, CaseIterable, Identifiable {
-    case links, mittig, rechts
-    var id: String { rawValue }
-}
-
-/// Senkrechte Ausrichtung innerhalb der 16 Zeilen, gerechnet ueber die tatsaechlich
-/// gesetzte Hoehe (`Textraster.hoehe`), nicht die Schriftgroesse.
-enum SendenVAusrichtung: String, CaseIterable, Identifiable {
-    case oben, mittig, unten
-    var id: String { rawValue }
-}
-
-/// Der Weg, auf dem der Text zur Uhr kommt. `.pixel` (Vorgabe) rastert die App
-/// selbst — passt der Text, steht er starr, sonst laeuft er als GIF (siehe
-/// `passt`). `.text` schickt ihn stattdessen als `Textblock`, den die Uhr mit
-/// ihrer eigenen Schrift setzt und selbst zum Laufen bringt, wenn er nicht
-/// passt (`docs/tc002-protokoll.md` §4.3, §5.4). Deren Schrift kennt weder
-/// Schriftartwahl noch Fett — deshalb sind genau diese zwei Regler dort
-/// gesperrt, nicht mehr.
-enum SendeWeg: String, CaseIterable, Identifiable {
-    case pixel, text
-    var id: String { rawValue }
-}
-
-/// Wie schnell die Laufschrift durchlaeuft. Ein Regler statt zweier Zahlen:
-/// Schrittweite und Bilddauer rechnet niemand im Kopf in ein Tempo um.
-enum Lauftempo: String, CaseIterable, Identifiable {
-    case langsam, mittel, schnell
-    var id: String { rawValue }
-
-    /// Pixel Versatz je Einzelbild — immer einer.
-    ///
-    /// „Schnell" nahm frueher Zweierschritte, mit der Begruendung, das halte die
-    /// Nutzlast klein. Die Rechnung stimmte nicht: Die Zahl der Einzelbilder
-    /// haengt allein an der Schrittweite, nicht an der Standzeit — Zweierschritte
-    /// halbieren also die Nutzlast, kosten aber die Ruhe im Bild. Und zusammen
-    /// mit der kuerzeren Standzeit ergab das fast das Dreifache von „mittel",
-    /// also einen Sprung statt einer Stufe. Jetzt unterscheidet nur die Standzeit.
-    var schrittweite: Int { 1 }
-
-    /// Standzeit je Einzelbild in Sekunden. Die Stufen liegen rund das
-    /// Anderthalbfache auseinander — gleichmaessig statt sprunghaft.
-    var bilddauer: Double {
-        switch self {
-        case .langsam: return 0.12   //  8 Pixel je Sekunde
-        case .mittel:  return 0.08   // 12
-        case .schnell: return 0.055  // 18
-        }
-    }
-}
-
 struct SendenView: View {
     @Bindable var zustand: AppZustand
 
@@ -126,7 +73,7 @@ struct SendenView: View {
     /// unter „Anzeigen": was die Uhr meldet, sonst was die App sich gemerkt hat.
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
-        return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
+        return Set((1...TC002Core.MeldungsplatzWahl.anzahl).filter { namen.contains(TC002Core.MeldungsplatzWahl.name(fuer: $0)) })
     }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -551,7 +498,7 @@ struct SendenView: View {
             laeuft = false
             return
         }
-        let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
+        let anzeigenName = TC002Core.MeldungsplatzWahl.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
     }
 }

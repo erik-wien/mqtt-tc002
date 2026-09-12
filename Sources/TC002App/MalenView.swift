@@ -42,7 +42,7 @@ struct MalenView: View {
     /// unter „Anzeigen": was die Uhr meldet, sonst was die App sich gemerkt hat.
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
-        return Set((1...MeldungsplatzWahl.anzahl).filter { namen.contains(MeldungsplatzWahl.name(fuer: $0)) })
+        return Set((1...TC002Core.MeldungsplatzWahl.anzahl).filter { namen.contains(TC002Core.MeldungsplatzWahl.name(fuer: $0)) })
     }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -167,7 +167,7 @@ struct MalenView: View {
     private func senden() {
         laeuft = true
         let frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
-        let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
+        let anzeigenName = TC002Core.MeldungsplatzWahl.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
     }
 }

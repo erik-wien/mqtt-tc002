@@ -76,7 +76,7 @@ final class OptionenTests: XCTestCase {
         XCTAssertEqual(o.schrift, "Silkscreen")
         XCTAssertEqual(o.groesse, 8)
         XCTAssertEqual(o.anzeigename, "cli")
-        XCTAssertEqual(o.senkrecht, .mitte)
+        XCTAssertEqual(o.senkrecht, .mittig)
         XCTAssertEqual(o.waagrecht, .links)
     }
 
@@ -116,7 +116,9 @@ final class OptionenTests: XCTestCase {
     /// Kurzer Text steht still: `draw`-Befehle, kein Bild.
     func testKurzerTextWirdGerastert() throws {
         let o = try Optionen.zerlegt(["senden", "Hi"])
-        let rahmen = try Meldungsbau.rahmen(text: "Hi", optionen: o, icon: nil, sammlung: sammlung())
+        var m = o.meldung
+        m.text = "Hi"
+        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
         XCTAssertFalse(rahmen.draw.isEmpty, "gesetzte Pixel als draw-Befehle")
         XCTAssertTrue(rahmen.bilder.isEmpty)
         XCTAssertTrue(rahmen.texte.isEmpty)
@@ -126,7 +128,9 @@ final class OptionenTests: XCTestCase {
     func testLangerTextWirdZurLaufschrift() throws {
         let text = "Dieser Text ist viel zu lang für zweiundfünfzig Pixel"
         let o = try Optionen.zerlegt(["senden", text])
-        let rahmen = try Meldungsbau.rahmen(text: text, optionen: o, icon: nil, sammlung: sammlung())
+        var m = o.meldung
+        m.text = text
+        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
         XCTAssertTrue(rahmen.draw.isEmpty)
         XCTAssertEqual(rahmen.bilder.count, 1)
         XCTAssertTrue(rahmen.bilder[0].datenURI.hasPrefix("data:image/gif;base64,"))
@@ -135,7 +139,9 @@ final class OptionenTests: XCTestCase {
     /// Mit `--geraeteschrift` setzt die Uhr selbst — ein Textblock, kein Raster.
     func testGeraeteschriftErgibtTextblock() throws {
         let o = try Optionen.zerlegt(["senden", "Hallo", "--geraeteschrift", "--rechts", "--unten"])
-        let rahmen = try Meldungsbau.rahmen(text: "Hallo", optionen: o, icon: nil, sammlung: sammlung())
+        var m = o.meldung
+        m.text = "Hallo"
+        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
         XCTAssertTrue(rahmen.draw.isEmpty)
         XCTAssertEqual(rahmen.texte.count, 1)
         XCTAssertEqual(rahmen.texte[0].inhalt, "Hallo")
@@ -145,7 +151,9 @@ final class OptionenTests: XCTestCase {
 
     func testDauerLandetImRahmen() throws {
         let o = try Optionen.zerlegt(["senden", "Hi", "--dauer", "12"])
-        let rahmen = try Meldungsbau.rahmen(text: "Hi", optionen: o, icon: nil, sammlung: sammlung())
+        var m = o.meldung
+        m.text = "Hi"
+        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
         XCTAssertTrue(rahmen.alsJSON().contains("\"duration\":12"))
     }
 
@@ -154,7 +162,9 @@ final class OptionenTests: XCTestCase {
     func testSenkrechteAusrichtungVerschiebtDenText() throws {
         func hoechsteZeile(_ argumente: [String]) throws -> Int {
             let o = try Optionen.zerlegt(argumente)
-            let rahmen = try Meldungsbau.rahmen(text: "Hg", optionen: o, icon: nil, sammlung: sammlung())
+            var m = o.meldung
+            m.text = "Hg"
+            let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
             return rahmen.draw.map(\.y).min() ?? -1
         }
         let oben = try hoechsteZeile(["senden", "Hg", "--oben", "--rand", "0"])

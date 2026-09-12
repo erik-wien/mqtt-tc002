@@ -16,22 +16,6 @@ struct Optionen {
         case fassung
     }
 
-    enum Waagrecht: String { case links, mitte, rechts }
-    enum Senkrecht: String { case oben, mitte, unten }
-
-    /// Standzeit je Einzelbild der Laufschrift, dieselben drei Stufen wie in der
-    /// App — dort erklaert `Lauftempo`, warum die Schrittweite immer 1 ist.
-    enum Tempo: String, CaseIterable {
-        case langsam, mittel, schnell
-        var bilddauer: Double {
-            switch self {
-            case .langsam: 0.12
-            case .mittel:  0.08
-            case .schnell: 0.055
-            }
-        }
-    }
-
     var befehl: Befehl = .hilfe
     var ziele: [String] = []
     var anzeigename = "cli"
@@ -41,13 +25,13 @@ struct Optionen {
     var groesse: Double = 8
     var fett = false
     var grossbuchstaben = false
-    var waagrecht: Waagrecht = .links
-    var senkrecht: Senkrecht = .mitte
+    var waagrecht: SendenHAusrichtung = .links
+    var senkrecht: SendenVAusrichtung = .mittig
     var rand = 1
     var abstand = 1
     var dauer: Int?
     var geraeteschrift = false
-    var tempo: Tempo = .mittel
+    var tempo: Lauftempo = .mittel
     var trocken = false
 
     enum Fehler: Error, LocalizedError {
@@ -142,15 +126,15 @@ struct Optionen {
             case "--trocken", "--dry-run": o.trocken = true
             case "--tempo", "--speed":
                 let w = try wert()
-                guard let t = Tempo(rawValue: w) else {
+                guard let t = Lauftempo(rawValue: w) else {
                     throw Fehler.unbekannteOption("\(arg) \(w)")
                 }
                 o.tempo = t
             case "--oben", "--top":       o.senkrecht = .oben
-            case "--mitte", "--middle":   o.senkrecht = .mitte
+            case "--mitte", "--middle":   o.senkrecht = .mittig
             case "--unten", "--bottom":   o.senkrecht = .unten
             case "--links", "--left":     o.waagrecht = .links
-            case "--zentriert", "--center": o.waagrecht = .mitte
+            case "--zentriert", "--center": o.waagrecht = .mittig
             case "--rechts", "--right":   o.waagrecht = .rechts
             default:
                 throw Fehler.unbekannteOption(arg)
@@ -203,11 +187,20 @@ struct Optionen {
         return UInt32(s.dropFirst(), radix: 16) != nil
     }
 
-    /// `align`/`valign` in den Namen, die das Geraet fuer `text` erwartet (§4.3).
-    var geraeteAusrichtung: String {
-        switch waagrecht { case .links: "left"; case .mitte: "center"; case .rechts: "right" }
-    }
-    var geraeteVertikal: String {
-        switch senkrecht { case .oben: "top"; case .mitte: "middle"; case .unten: "bottom" }
+    /// Die Optionen der Kommandozeile als das, was der Kern versteht.
+    var meldung: Meldungsoptionen {
+        var o = Meldungsoptionen(text: "")
+        o.weg = geraeteschrift ? .text : .pixel
+        o.schrift = schrift
+        o.groesse = groesse
+        o.fett = fett
+        o.farbe = farbe
+        o.waagrecht = waagrecht
+        o.senkrecht = senkrecht
+        o.rand = rand
+        o.abstand = abstand
+        o.tempo = tempo
+        o.dauer = dauer
+        return o
     }
 }
