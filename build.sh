@@ -33,6 +33,33 @@ cp "$BIN_DIR/TC002App" "$APP/Contents/MacOS/TC002App"
 cp "$BIN_DIR/mqtttc002" "$APP/Contents/MacOS/mqtttc002"
 for b in "$BIN_DIR"/*.bundle; do [ -e "$b" ] && cp -R "$b" "$APP/Contents/Resources/"; done
 
+# Ein Ziel mit einem Bildkatalog (z.B. TC002Ansichten) bringt sein eigenes
+# .bundle mit, darin den Katalog aber nur roh kopiert: `swift build` uebersetzt
+# .xcassets ueber die Kommandozeile nicht selbst zu Assets.car — das tut nur
+# Xcode als Bauherr (wie beim iOS-Ziel). Ohne diesen Schritt bliebe
+# Bundle.module fuer benannte Bilder leer und die Vorschau zeigte einen leeren
+# Rahmen, ohne dass der Bau etwas meldet.
+for b in "$APP/Contents/Resources"/*.bundle; do
+    [ -d "$b" ] || continue
+    for katalog in "$b"/*.xcassets; do
+        [ -d "$katalog" ] || continue
+        if ! xcrun --find actool >/dev/null 2>&1; then
+            echo "Warnung: actool fehlt, $katalog bleibt unuebersetzt und seine Bilder fehlen der App." >&2
+            continue
+        fi
+        PARTIAL="$(mktemp)"
+        if xcrun actool "$katalog" --compile "$b" --platform macosx \
+            --minimum-deployment-target 14.0 \
+            --output-partial-info-plist "$PARTIAL" >/dev/null 2>&1 \
+           && [ -f "$b/Assets.car" ]; then
+            rm -rf "$katalog"
+        else
+            echo "Warnung: $katalog konnte nicht uebersetzt werden, seine Bilder fehlen der App." >&2
+        fi
+        rm -f "$PARTIAL"
+    done
+done
+
 # Icon: Das Icon-Composer-Buendel wird mit actool zu Assets.car (Liquid Glass ab macOS 26)
 # plus AppIcon.icns uebersetzt. Ohne actool wird Resources/AppIcon-flach.icns benutzt,
 # falls vorhanden; sonst bleibt die App ohne eigenes Icon.
