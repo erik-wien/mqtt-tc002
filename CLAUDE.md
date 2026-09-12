@@ -113,15 +113,28 @@ Stellen, und der Unterschied zwischen ihnen ist der Kern der Sache:
   passender Prüfsumme, sonst hat seither jemand anderes auf den Platz
   geschrieben (Hilfe → Senden erklärt das aus Anwendersicht).
 
-Geschrieben wird es an zwei Stellen — und an einer davon wird **gelöscht**:
-Wer einen Platz mit etwas Unmerkbarem überschreibt, also ein gemaltes Bild
-sendet (`MalenView` → `AppZustand.senden` mit `slotPlatz`, ohne
-`slotOptionen`), wirft die Erinnerung an diesen Platz weg
-(`Slotgedaechtnis.vergessen(fuer:platz:)`). Bliebe sie liegen, zeigte der Block
-nach dem nächsten Start ohne Broker den Text, der vor dem Malen dort stand.
-Dieselbe Regel gilt beim Mitlesen: Eine Nutzlast, die sich nicht in Pixel
-zerlegen lässt, löscht den Eintrag in `slotInhalt`, statt den alten stehen zu
-lassen.
+Geschrieben wird es an zwei Stellen — **weggeworfen** überall dort, wo ein
+Platz geräumt oder mit etwas Unmerkbarem überschrieben wird
+(`Slotgedaechtnis.vergessen(fuer:platz:)`). Bliebe die Erinnerung liegen,
+zeigte der Block nach dem nächsten Start ohne Broker den Text, der dort längst
+nicht mehr steht:
+
+- ein gemaltes Bild (`MalenView` → `AppZustand.senden` mit `slotPlatz`, aber
+  ohne `slotOptionen`) — es hat keine Regler, die sich merken ließen;
+- eine erfolgreiche Löschung. `AppZustand.anzeigeGeloescht` ist der gemeinsame
+  Rumpf für `AppZustand.loeschen`, `AnzeigenView` und `AnzeigeniOS`; der
+  Kurzbefehl „Meldung nehmen" (`Kurzbefehle.swift`) kommt ohne `AppZustand`
+  aus und ruft deshalb selbst;
+- eine **leere** Nutzlast beim Mitlesen: Genau null Bytes heißen, die Anzeige
+  wurde auf der Uhr entfernt — gleich von wem. Der Platz zählt dann wieder als
+  frei (`anzeigeVergessen`), ohne auf eine erneute `customList` zu warten, die
+  nicht belegt ist.
+
+Gelöscht wird über einen Anzeigennamen; nur die fünf festen Plätze haben
+überhaupt eine Erinnerung (`Meldungsplatz.platz(fuerName:)`), „cli" hat nichts
+zu vergessen. Eine nicht zerlegbare Nutzlast (Lauf-GIF, Gerätschrift) ist der
+Gegenfall: Sie löscht allein den Eintrag in `slotInhalt` und lässt die Belegung
+stehen — dort liegt etwas, wir kennen es nur nicht.
 
 `TC002Ansichten/Slotblock.swift` rührt das Gedächtnis nirgends an: Der Block
 zeigt nur, was ihm gereicht wird. Das Werkzeug reist im Bündel mit
