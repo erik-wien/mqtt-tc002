@@ -71,7 +71,7 @@ final class AppZustand {
     func kennwortSichern() {
         guard kennwort != kennwortGesichert else { return }
         guard Schluesselbund.setzen(kennwort, fuer: "broker") else {
-            fehler = "Das Kennwort ließ sich nicht im Schlüsselbund sichern."
+            fehler = lok("Das Kennwort ließ sich nicht im Schlüsselbund sichern.")
             return
         }
         kennwortGesichert = kennwort
@@ -83,7 +83,7 @@ final class AppZustand {
     func brokerSichernUndPruefen() {
         kennwortSichern()
         guard let zugang else {
-            let meldung = "Broker-Port muss eine Zahl über 0 sein."
+            let meldung = lok("Broker-Port muss eine Zahl über 0 sein.")
             brokerStand = .abgelehnt(meldung)
             log("Broker-Prüfung abgelehnt: \(meldung)")
             return
@@ -359,7 +359,7 @@ final class AppZustand {
                          erledigt: (Uhr) -> Void) async {
         let ziele = ziele()
         guard !ziele.isEmpty else {
-            fehler = "Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen."
+            fehler = lok("Keine Uhr eingerichtet. Unter „Verbindung“ eine eintragen und abfragen.")
             return
         }
         var fehlschlaege: [Sendefehler] = []

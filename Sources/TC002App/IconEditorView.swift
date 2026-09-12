@@ -352,7 +352,7 @@ struct IconEditorView: View {
             // gesicherte Zeit beim naechsten Sichern still.
             if let erste = gelesen.first?.dauer, erste > 0 { verzoegerung = erste }
         } catch {
-            meldung = "Dieses Icon lässt sich nicht öffnen."
+            meldung = lok("Dieses Icon lässt sich nicht öffnen.")
             return
         }
         aktuellesBild = 0
@@ -396,7 +396,7 @@ struct IconEditorView: View {
             let icon = try sammlung.sichern(nummer: n, name: name.isEmpty ? n : name,
                                             bilder: bilder, verzoegerung: verzoegerung)
             vorhandene = sammlung.alle()
-            meldung = "\(icon.name) gesichert."
+            meldung = lokf("%@ gesichert.", icon.name)
             zustand.log("Icon gesichert: \(icon.name)")
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
@@ -417,7 +417,7 @@ struct IconEditorView: View {
                 await MainActor.run {
                     vorhandene = liste
                     lametricNummer = ""
-                    meldung = "\(icon.name) von LaMetric geholt."
+                    meldung = lokf("%@ von LaMetric geholt.", icon.name)
                     laedt = false
                 }
             } catch {
@@ -441,9 +441,9 @@ struct IconEditorView: View {
             vorhandene = sammlung.alle()
             zeigeImportBlatt = false
             if let groesse = importGroesse, groesse != (8, 8) {
-                meldung = "\(icon.name) eingelesen. Das Bild wurde von \(groesse.breite)×\(groesse.hoehe) auf 8×8 gerechnet."
+                meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf 8×8 gerechnet.", icon.name, groesse.breite, groesse.hoehe)
             } else {
-                meldung = "\(icon.name) eingelesen."
+                meldung = lokf("%@ eingelesen.", icon.name)
             }
             zustand.log("Icon eingelesen: \(icon.name)")
         } catch {
@@ -459,8 +459,8 @@ struct IconEditorView: View {
         let anzahl = quelle.mitgelieferteUebernehmen()
         vorhandene = sammlung.alle()
         meldung = anzahl > 0
-            ? "\(anzahl) Icons aus dem Grundschatz wiederhergestellt."
-            : "Nichts zu holen — der Grundschatz ist vollständig da."
+            ? lokf("%d Icons aus dem Grundschatz wiederhergestellt.", anzahl)
+            : lok("Nichts zu holen — der Grundschatz ist vollständig da.")
     }
 
     private func loeschen(_ icon: Icon) {
@@ -474,11 +474,11 @@ struct IconEditorView: View {
                 nummer = ""
                 name = ""
             }
-            meldung = "\(icon.name) gelöscht."
+            meldung = lokf("%@ gelöscht.", icon.name)
         } catch {
             // Hier kommt nur noch ein Dateisystemfehler an — Rechte, Datei schon
             // weg —, keine Herkunftsfrage: die Sammlung kennt nur den eigenen Ordner.
-            meldung = (error as? LocalizedError)?.errorDescription ?? "Das Icon ließ sich nicht löschen."
+            meldung = (error as? LocalizedError)?.errorDescription ?? lok("Das Icon ließ sich nicht löschen.")
         }
     }
 }

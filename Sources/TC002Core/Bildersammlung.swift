@@ -18,9 +18,9 @@ public enum BildersammlungFehler: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .leererName: return "Ein Name wird gebraucht."
-        case .nichtLesbar: return "Das Bild lässt sich nicht lesen."
-        case .nichtSchreibbar: return "Das Bild lässt sich nicht speichern."
+        case .leererName: return lok("Ein Name wird gebraucht.")
+        case .nichtLesbar: return lok("Das Bild lässt sich nicht lesen.")
+        case .nichtSchreibbar: return lok("Das Bild lässt sich nicht speichern.")
         }
     }
 }

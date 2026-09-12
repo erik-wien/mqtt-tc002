@@ -30,9 +30,9 @@ public enum IconFehler: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .nichtLesbar(let n): return "Das Icon \(n) lässt sich nicht lesen."
-        case .nichtGefunden(let n): return "Für die Nummer \(n) gibt es bei LaMetric kein Icon."
-        case .nichtSchreibbar(let n): return "Das Icon \(n) lässt sich nicht speichern."
+        case .nichtLesbar(let n): return lokf("Das Icon %@ lässt sich nicht lesen.", n)
+        case .nichtGefunden(let n): return lokf("Für die Nummer %@ gibt es bei LaMetric kein Icon.", n)
+        case .nichtSchreibbar(let n): return lokf("Das Icon %@ lässt sich nicht speichern.", n)
         }
     }
 }
@@ -211,7 +211,7 @@ public enum BildrasterFehler: Error, LocalizedError {
     case nichtLesbar
 
     public var errorDescription: String? {
-        "Diese Datei lässt sich nicht als Bild lesen."
+        lok("Diese Datei lässt sich nicht als Bild lesen.")
     }
 }
 

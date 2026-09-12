@@ -117,7 +117,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
     private func verbinden() {
         guard laeuft, verbindung == nil else { return }
         guard let port = NWEndpoint.Port(rawValue: zugang.port) else {
-            beiZustand?(false, "Der Broker-Port ist keine gültige Zahl.")
+            beiZustand?(false, lok("Der Broker-Port ist keine gültige Zahl."))
             return
         }
         let v = NWConnection(host: NWEndpoint.Host(zugang.host), port: port, using: .tcp)
@@ -138,7 +138,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
         v.start(queue: warteschlange)
         empfangen(v)
         let frist = DispatchWorkItem { [weak self] in
-            self?.abgerissen("Der Broker hat die Anmeldung nicht bestätigt.")
+            self?.abgerissen(lok("Der Broker hat die Anmeldung nicht bestätigt."))
         }
         anmeldeUhr = frist
         warteschlange.asyncAfter(deadline: .now() + anmeldefrist, execute: frist)
@@ -182,10 +182,10 @@ public final class MQTTAbonnent: @unchecked Sendable {
             guard let self else { return }
             if let daten, !daten.isEmpty {
                 for paket in self.strom.aufnehmen(daten) { self.verarbeiten(paket) }
-                if self.strom.gestoert { self.abgerissen("Der Broker schickt Unlesbares."); return }
+                if self.strom.gestoert { self.abgerissen(lok("Der Broker schickt Unlesbares.")); return }
             }
             if let fehler { self.abgerissen(fehler.localizedDescription); return }
-            if beendet { self.abgerissen("Der Broker hat die Verbindung geschlossen."); return }
+            if beendet { self.abgerissen(lok("Der Broker hat die Verbindung geschlossen.")); return }
             // Nach einem Abbau gehoert diese Verbindung nicht mehr uns: weiterzulesen
             // hielte sie am Leben und liesse ihre Nachrichten noch durch.
             guard self.verbindung === v else { return }
@@ -213,7 +213,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
             beiNachricht?(thema, nutzlast)
         case 0x90:
             if let antwort = MQTTPaket.subackGelesen(paket), !antwort.angenommen {
-                beiZustand?(false, "Der Broker hat das Abonnement abgelehnt.")
+                beiZustand?(false, lok("Der Broker hat das Abonnement abgelehnt."))
             }
         case 0xD0:
             break                                   // PINGRESP — als Lebenszeichen oben verbucht
@@ -242,7 +242,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
             // Erst pruefen, dann pingen: Kam auf den letzten Ping nichts zurueck
             // und auch sonst nichts, ist die Gegenseite weg — egal, was TCP meint.
             if Date().timeIntervalSince(self.letztesLebenszeichen) > 1.5 * self.pingAbstand {
-                self.abgerissen("Der Broker antwortet nicht mehr.")
+                self.abgerissen(lok("Der Broker antwortet nicht mehr."))
                 return
             }
             self.sende(MQTTPaket.pingreq())

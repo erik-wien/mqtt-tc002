@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 /// Die Gerätereferenz: dieselbe Datei wie `docs/tc002-protokoll.md`, von
 /// `build.sh` ins App-Paket kopiert und hier dargestellt. Dafür braucht es
@@ -12,14 +13,28 @@ struct GeraeteReferenzView: View {
     private let abschnitte: [MarkdownAbschnitt]
     private let ladefehler: String?
 
+    /// Die Referenz gibt es in zwei Sprachen, als zwei Dateien — nicht als
+    /// uebersetzte Einzeltexte: ein durchgehendes Dokument gehoert am Stueck
+    /// uebersetzt. Welche gilt, entscheidet dieselbe Wahl, die auch der Rest
+    /// der Oberflaeche trifft; ohne englische Fassung bleibt es bei der
+    /// deutschen.
+    private static var referenzdatei: URL? {
+        let englisch = Bundle.main.preferredLocalizations.first?.hasPrefix("en") == true
+        let namen = englisch ? ["tc002-protocol.md", "tc002-protokoll.md"]
+                             : ["tc002-protokoll.md"]
+        return namen.lazy
+            .compactMap { Bundle.main.resourceURL?.appendingPathComponent($0) }
+            .first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
     init() {
-        if let url = Bundle.main.resourceURL?.appendingPathComponent("tc002-protokoll.md"),
+        if let url = Self.referenzdatei,
            let text = try? String(contentsOf: url, encoding: .utf8) {
             abschnitte = MarkdownDokument.gliedern(MarkdownDokument.parse(text))
             ladefehler = nil
         } else {
             abschnitte = []
-            ladefehler = "Die Gerätereferenz liegt nicht im App-Paket. Das passiert, wenn die App nicht über ./build.sh gebaut, sondern direkt aus Xcode gestartet wurde."
+            ladefehler = lok("Die Gerätereferenz liegt nicht im App-Paket. Das passiert, wenn die App nicht über ./build.sh gebaut, sondern direkt aus Xcode gestartet wurde.")
         }
     }
 

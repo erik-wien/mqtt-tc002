@@ -154,7 +154,7 @@ struct BilderView: View {
             let eintrag = try sammlung.sichern(name: n, feld: feld)
             bilder = sammlung.alle()
             name = ""
-            meldung = "\(eintrag.name) gesichert."
+            meldung = lokf("%@ gesichert.", eintrag.name)
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
@@ -171,9 +171,9 @@ struct BilderView: View {
             bilder = sammlung.alle()
             zeigeImportBlatt = false
             if let groesse = importGroesse, groesse != (Pixelfeld.breiteStandard, Pixelfeld.hoeheStandard) {
-                meldung = "\(eintrag.name) eingelesen. Das Bild wurde von \(groesse.breite)×\(groesse.hoehe) auf \(Pixelfeld.breiteStandard)×\(Pixelfeld.hoeheStandard) gerechnet."
+                meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf %d×%d gerechnet.", eintrag.name, groesse.breite, groesse.hoehe, Pixelfeld.breiteStandard, Pixelfeld.hoeheStandard)
             } else {
-                meldung = "\(eintrag.name) eingelesen."
+                meldung = lokf("%@ eingelesen.", eintrag.name)
             }
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"

@@ -66,11 +66,21 @@ if [ "$ICON_OK" -eq 2 ]; then
 fi
 [ "$ICON_OK" -eq 0 ] && echo "Icon: keines gefunden, App ohne eigenes Icon"
 
+# Die Uebersetzungen. `de` ist die Entwicklungssprache: Dort steht der deutsche
+# Wortlaut schon im Quelltext, deshalb braucht es dafuer keine Localizable.strings.
+# Jeder .lproj-Ordner unter Resources/Sprachen kommt mit — an seiner Anwesenheit
+# erkennt macOS, welche Sprachen die App anbietet.
 mkdir -p "$APP/Contents/Resources/de.lproj"
-cat > "$APP/Contents/Resources/de.lproj/InfoPlist.strings" <<'STRINGS'
+for sprache in Resources/Sprachen/*.lproj; do
+    [ -d "$sprache" ] || continue
+    cp -R "$sprache" "$APP/Contents/Resources/"
+done
+for lproj in "$APP/Contents/Resources"/*.lproj; do
+    cat > "$lproj/InfoPlist.strings" <<'STRINGS'
 CFBundleName = "MQTT-TC002";
 CFBundleDisplayName = "MQTT-TC002";
 STRINGS
+done
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -96,6 +106,8 @@ PLIST
 cp -R Icons "$APP/Contents/Resources/Icons"
 cp -R Resources/Schriften "$APP/Contents/Resources/Schriften"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
+# Die englische Fassung, wenn es sie gibt — die Ansicht waehlt danach.
+[ -f docs/en/tc002-protocol.md ] && cp docs/en/tc002-protocol.md "$APP/Contents/Resources/tc002-protocol.md"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 
 # Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,

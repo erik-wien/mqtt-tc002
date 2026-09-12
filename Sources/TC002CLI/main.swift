@@ -55,7 +55,7 @@ Zu lange Texte laufen von selbst durch; das macht die App genauso.
 func iconSuchen(_ nummer: String?, in sammlung: Iconsammlung) throws -> Icon? {
     guard let nummer else { return nil }
     guard let icon = sammlung.alle().first(where: { $0.nummer == nummer }) else {
-        throw Abbruch(String(format: T.t("Kein Icon mit der Nummer „%@“. „mqtttc002 icons“ zeigt alle."), nummer))
+        throw Abbruch(lokf("Kein Icon mit der Nummer „%@“. „mqtttc002 icons“ zeigt alle.", nummer))
     }
     return icon
 }
@@ -73,7 +73,7 @@ func lauf() throws {
 
     switch optionen.befehl {
     case .hilfe:
-        print(T.t(hilfetext))
+        print(lok("cli.hilfe", vorgabe: hilfetext))
         return
     case .fassung:
         let fassung = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
@@ -94,7 +94,7 @@ func lauf() throws {
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
         let alle = sammlung.alle().sorted { $0.nummer.localizedStandardCompare($1.nummer) == .orderedAscending }
         guard !alle.isEmpty else {
-            print(T.t("Keine Icons. Die App legt beim ersten Start einen Grundschatz an."))
+            print(lok("Keine Icons. Die App legt beim ersten Start einen Grundschatz an."))
             return
         }
         for icon in alle { print("\(icon.nummer)\t\(icon.name)") }
@@ -103,22 +103,22 @@ func lauf() throws {
 
     if case .uhren = optionen.befehl {
         guard !einstellungen.uhren.isEmpty else {
-            throw Abbruch(T.t("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
+            throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
         }
         let ziele = Set(einstellungen.ziele.map(\.id))
         for uhr in einstellungen.uhren {
             let marke = ziele.contains(uhr.id) ? "*" : " "
-            let praefix = uhr.praefix.isEmpty ? T.t("noch nicht abgefragt") : uhr.praefix
+            let praefix = uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix
             print("\(marke) \(uhr.name)\t\(uhr.host)\t\(praefix)")
         }
         print("")
-        print(T.t("* geht ohne „--an“ eine Sendung zu."))
+        print(lok("* geht ohne „--an“ eine Sendung zu."))
         return
     }
 
     // Ab hier wird gesendet, also braucht es einen Broker.
     guard einstellungen.zugang(clientID: "x") != nil else {
-        throw Abbruch(T.t("Kein Broker eingerichtet. In der App unter „Verbindung“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
+        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Verbindung“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
     }
 
     let gewaehlte: [Uhr]
@@ -127,19 +127,18 @@ func lauf() throws {
     } else {
         gewaehlte = try optionen.ziele.map { name in
             guard let uhr = einstellungen.uhr(benannt: name) else {
-                throw Abbruch(String(format: T.t("Keine Uhr namens „%@“. „mqtttc002 uhren“ zeigt alle."), name))
+                throw Abbruch(lokf("Keine Uhr namens „%@“. „mqtttc002 uhren“ zeigt alle.", name))
             }
             return uhr
         }
     }
     guard !gewaehlte.isEmpty else {
-        throw Abbruch(T.t("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
+        throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Verbindung“ eine anlegen."))
     }
 
     let ohnePraefix = gewaehlte.filter { $0.praefix.isEmpty }
     if !ohnePraefix.isEmpty {
-        throw Abbruch(String(format: T.t("Noch nicht abgefragt: %@. In der App unter „Verbindung“ „Abfragen“ drücken — ohne Präfix gibt es kein Thema, an das sich senden liesse."),
-                             ohnePraefix.map(\.name).joined(separator: ", ")))
+        throw Abbruch(lokf("Noch nicht abgefragt: %@. In der App unter „Verbindung“ „Abfragen“ drücken — ohne Präfix gibt es kein Thema, an das sich senden liesse.", ohnePraefix.map(\.name).joined(separator: ", ")))
     }
 
     let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
@@ -154,7 +153,7 @@ func lauf() throws {
             let anzeigen = Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
             do {
                 try tun(anzeigen, uhr)
-                print(String(format: T.t("%@: %@"), uhr.name, was))
+                print(lokf("%@: %@", uhr.name, was))
             } catch {
                 fehler.append("\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
             }
@@ -171,34 +170,33 @@ func lauf() throws {
             // Der Trockenlauf ist auch die Auskunft darueber, womit gesendet
             // wuerde: Ein fehlendes Kennwort faellt sonst nirgends auf — MQTT
             // 3.1.1 hat keinen Rueckkanal fuer eine abgelehnte Sendung.
-            print(String(format: T.t("Broker %@:%d, Konto %@, Kennwort %@"),
-                         einstellungen.brokerHost, Int(einstellungen.brokerPort),
+            print(lokf("Broker %@:%d, Konto %@, Kennwort %@", einstellungen.brokerHost, Int(einstellungen.brokerPort),
                          einstellungen.benutzer ?? "—",
-                         einstellungen.kennwort == nil ? T.t("fehlt") : T.t("vorhanden")))
+                         einstellungen.kennwort == nil ? lok("fehlt") : lok("vorhanden")))
             for uhr in gewaehlte {
                 print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
             }
             print(json)
-            print(String(format: T.t("%d Byte Nutzlast, nichts gesendet (--trocken)."), json.utf8.count))
+            print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))
             return
         }
-        try anAlle(String(format: T.t("gesendet an „%@“ (%d Byte)"), optionen.anzeigename, json.utf8.count)) { anzeigen, _ in
+        try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, _ in
             try anzeigen.zeigen(rahmen, auf: optionen.anzeigename)
         }
 
     case .loeschen(let name):
         if optionen.trocken {
-            print(String(format: T.t("Würde „%@“ löschen."), name)); return
+            print(lokf("Würde „%@“ löschen.", name)); return
         }
-        try anAlle(String(format: T.t("„%@“ gelöscht"), name)) { anzeigen, _ in
+        try anAlle(lokf("„%@“ gelöscht", name)) { anzeigen, _ in
             try anzeigen.loeschen(name)
         }
 
     case .umschalten(let name):
         if optionen.trocken {
-            print(String(format: T.t("Würde auf „%@“ umschalten."), name)); return
+            print(lokf("Würde auf „%@“ umschalten.", name)); return
         }
-        try anAlle(String(format: T.t("auf „%@“ umgeschaltet"), name)) { anzeigen, _ in
+        try anAlle(lokf("auf „%@“ umgeschaltet", name)) { anzeigen, _ in
             try anzeigen.umschalten(auf: name)
         }
 

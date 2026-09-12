@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 /// Die Bedienungshilfe. Eigenes Fenster, Abschnitte links, Text rechts — reines
 /// SwiftUI mit `Text`-Bausteinen, kein Markdown-Zerleger, kein Netzzugriff.

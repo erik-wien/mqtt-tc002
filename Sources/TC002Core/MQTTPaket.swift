@@ -8,18 +8,18 @@ public enum MQTTFehler: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .nichtVerbunden(let grund):
-            return "Der Broker ist nicht erreichbar: \(grund)"
+            return lokf("Der Broker ist nicht erreichbar: %@", grund)
         case .abgelehnt(let code):
             switch code {
-            case 1: return "Der Broker spricht diese Protokollversion nicht."
-            case 2: return "Die Client-Kennung wurde abgelehnt."
-            case 3: return "Der Broker ist gerade nicht verfügbar."
-            case 4: return "Benutzername oder Kennwort stimmen nicht."
-            case 5: return "Dieses Konto darf sich nicht anmelden."
-            default: return "Der Broker hat die Anmeldung abgelehnt (Code \(code))."
+            case 1: return lok("Der Broker spricht diese Protokollversion nicht.")
+            case 2: return lok("Die Client-Kennung wurde abgelehnt.")
+            case 3: return lok("Der Broker ist gerade nicht verfügbar.")
+            case 4: return lok("Benutzername oder Kennwort stimmen nicht.")
+            case 5: return lok("Dieses Konto darf sich nicht anmelden.")
+            default: return lokf("Der Broker hat die Anmeldung abgelehnt (Code %d).", Int(code))
             }
         case .zeitueberschreitung:
-            return "Der Broker hat nicht geantwortet."
+            return lok("Der Broker hat nicht geantwortet.")
         }
     }
 }

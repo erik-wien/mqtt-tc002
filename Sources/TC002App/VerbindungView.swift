@@ -120,7 +120,7 @@ struct VerbindungView: View {
             // Ohne Meldung zeigte der Picker nach einem Fehlschlag faelschlich
             // "kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
             if let meldung = ergebnis.fehler {
-                zustand.fehler = "Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: \(meldung)"
+                zustand.fehler = lokf("Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: %@", meldung)
                 return
             }
             // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
@@ -128,12 +128,12 @@ struct VerbindungView: View {
             if let wert = ergebnis.carousel {
                 if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
             } else {
-                zustand.fehler = "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet."
+                zustand.fehler = lok("Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet.")
             }
             if let wert = ergebnis.scroll {
                 if wert != scrollTempo, !nutzerHatScrollGewaehlt { scrollLadeLauf = true; scrollTempo = wert }
             } else {
-                zustand.fehler = "Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet."
+                zustand.fehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
             }
         }
     }

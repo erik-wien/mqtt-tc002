@@ -60,15 +60,15 @@ struct Optionen {
         var errorDescription: String? {
             switch self {
             case .unbekannteOption(let o):
-                return String(format: T.t("Unbekannte Option „%@“. „mqtttc002 hilfe“ zeigt alle."), o)
+                return lokf("Unbekannte Option „%@“. „mqtttc002 hilfe“ zeigt alle.", o)
             case .fehlenderWert(let o):
-                return String(format: T.t("Zu „%@“ fehlt der Wert."), o)
+                return lokf("Zu „%@“ fehlt der Wert.", o)
             case .keineZahl(let o, let w):
-                return String(format: T.t("„%@“ erwartet eine Zahl, bekam aber „%@“."), o, w)
+                return lokf("„%@“ erwartet eine Zahl, bekam aber „%@“.", o, w)
             case .keineFarbe(let w):
-                return String(format: T.t("„%@“ ist keine Farbe der Form #RRGGBB."), w)
+                return lokf("„%@“ ist keine Farbe der Form #RRGGBB.", w)
             case .fehlenderText:
-                return T.t("Was soll gesendet werden? Text als letztes Wort angeben.")
+                return lok("Was soll gesendet werden? Text als letztes Wort angeben.")
             }
         }
     }

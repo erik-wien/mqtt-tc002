@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TC002Core
 
 /// Das Über-Fenster, ersetzt den Vorgabedialog von macOS
 /// (`CommandGroup(replacing: .appInfo)` in `App.swift`). Fixe Größe, nicht
