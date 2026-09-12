@@ -16,13 +16,11 @@ struct TC002iOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // Keine Reiterleiste: „Senden" ist spaeter die ganze App,
-            // „Verlauf" und „Einstellungen" haengen als Menuepunkte in ihrer
-            // Titelleiste und gehen als Blatt auf. Solange es nur diese eine
-            // Ansicht gibt, ist sie die Wurzel — Aufgabe 7 setzt „Senden"
-            // davor. Jede dieser Ansichten bringt ihren eigenen
+            // Keine Reiterleiste: „Senden" ist die ganze App, „Verlauf" und
+            // „Einstellungen" haengen als Menuepunkte in ihrer Titelleiste und
+            // gehen als Blatt auf. `SendeniOS` bringt ihren eigenen
             // `NavigationStack` mit; hier darf deshalb keiner mehr herum.
-            VerbindungiOS(zustand: zustand)
+            SendeniOS(zustand: zustand)
             .onChange(of: phase) { _, neu in
                 // Eine offene MQTT-Verbindung ueberlebt den Hintergrund nicht.
                 switch neu {

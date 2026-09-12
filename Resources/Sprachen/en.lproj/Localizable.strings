@@ -424,6 +424,15 @@
 "Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute." = "The clock sets it itself, with its built-in font. It knows no umlauts.";
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
 
+/* TC002iOS/ZielauswahliOS.swift */
+"Ziel" = "Target";
+
+/* TC002iOS/SendeniOS.swift */
+"Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
+"Menü" = "Menu";
+"Dauer" = "Duration";
+"Ausrichtung" = "Alignment";
+
 /* Bereichsnamen der Seitenleiste und Abschnitte der Hilfe. Sie stehen als
    rawValue in einem enum und werden ueber lok(…) nachgeschlagen — der
    Sammler findet sie deshalb nicht im Quelltext, sie sind in ihm als
