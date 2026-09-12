@@ -610,7 +610,18 @@ git mv Sources/TC002App/AppZustand.swift Sources/TC002Modell/AppZustand.swift
 git mv Tests/TC002AppTests/AppZustandTests.swift Tests/TC002ModellTests/AppZustandTests.swift
 ```
 
-In `AppZustand.swift`: `final class AppZustand` zu `public final class AppZustand`, alle Eigenschaften und Methoden, die die Oberfläche benutzt, `public`, dazu ein `public init()`. Die verschachtelten Typen `Brokerstand` und `Anzeigenquelle` ebenfalls `public`.
+In `AppZustand.swift`: `final class AppZustand` zu `public final class AppZustand`, dazu ein `public init()`. Die verschachtelten Typen `Brokerstand` und `Anzeigenquelle` ebenfalls `public`, samt ihren Fällen.
+
+**Diese Namen müssen `public` sein** — die iPhone-Oberfläche benutzt jeden davon, und ein vergessener fällt erst drei Aufgaben später als Übersetzungsfehler auf:
+
+`uhren`, `aktiveID`, `aktiveUhr`, `zielIDs`, `verbunden`, `gemeldeteAnzeigen`,
+`geraetOnline`, `brokerHost`, `brokerPort`, `benutzer`, `kennwort`,
+`brokerStand`, `fehler`, `protokoll`, `bekannteAnzeigen`, `kennwortSichern()`,
+`brokerSichernUndPruefen()`, `anzeigeGemerkt(_:fuer:)`, `anzeigenAufUhr(_:)`,
+`anzeigenDerAktivenMitQuelle()`, `anzeigeVergessen(_:fuer:)`, `log(_:)`,
+`uhrHinzufuegen(host:)`, `uhrEntfernen(_:)`, `adresseGeaendert(_:)`,
+`abfragen(_:)`, `anzeigen(fuer:)`, `zugangsmeldung(_:)`, `melde(_:uhr:)`,
+`senden(_:als:)`, `ziele()`.
 
 In `Tests/TC002ModellTests/AppZustandTests.swift`: `@testable import TC002App` zu `@testable import TC002Modell`.
 
@@ -703,7 +714,11 @@ targets:
     resources:
       - path: Icons
       - path: Resources/Schriften
-      - path: Resources/Sprachen
+      # Der `.lproj`-Ordner selbst, nicht sein Elternordner: Xcode behandelt
+      # `.lproj` besonders und legt seinen Inhalt in die Buendelwurzel. Der
+      # Elternordner ergaebe `Sprachen/en.lproj`, und dort sucht niemand — die
+      # englische Fassung waere stillschweigend wirkungslos.
+      - path: Resources/Sprachen/en.lproj
     dependencies:
       - package: TC002
         product: TC002Core
@@ -1085,12 +1100,45 @@ eingetragen). Nachgeladene landen im App-eigenen Ordner. Beides zusammen sieht
 
 **Dateien:**
 - Anlegen: `Sources/TC002iOS/IconauswahliOS.swift`
+- Anlegen: `Sources/TC002iOS/Farbe.swift`
 
 **Schnittstellen:**
 - Verbraucht: `Iconsammlung`, `Iconordner`, `Icon`, `Array<Icon>.gefiltert(nach:)`, `Bildraster.lesen` aus `TC002Core`.
+- Erzeugt zusätzlich: `Color(hex:)` und `Color.hexWert` — die Icon-Vorschau ist ihre erste Verwendung, Aufgabe 7 benutzt sie weiter.
 - Erzeugt: `struct IconauswahliOS: View` mit `init(gewaehlt: Binding<Icon?>)`, und `struct IconbildiOS: View` zum Zeichnen eines 8×8-Icons.
 
-- [ ] **Schritt 1: Das Icon-Bildchen anlegen**
+- [ ] **Schritt 1: Die Farbhilfe anlegen**
+
+`Sources/TC002iOS/Farbe.swift`:
+
+```swift
+import SwiftUI
+
+extension Color {
+    /// Wandelt "#RRGGBB" in eine Farbe. Ungültige Angaben ergeben nil.
+    init?(hex: String) {
+        var s = hex.trimmingCharacters(in: .whitespaces)
+        if s.hasPrefix("#") { s.removeFirst() }
+        guard s.count == 6, let wert = UInt32(s, radix: 16) else { return nil }
+        self.init(red: Double((wert >> 16) & 0xFF) / 255,
+                  green: Double((wert >> 8) & 0xFF) / 255,
+                  blue: Double(wert & 0xFF) / 255)
+    }
+
+    /// "#RRGGBB" aus der Farbe. Über sRGB, damit derselbe Farbwert
+    /// herauskommt, den die Uhr später anzeigt. Die Mac-Fassung
+    /// (`Sources/TC002App/VorschauView.swift:119`) nimmt dafür `NSColor`;
+    /// unter iOS heißt dasselbe `UIColor`, und die Komponenten kommen über
+    /// `getRed(_:green:blue:alpha:)` statt über Eigenschaften.
+    var hexWert: String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+    }
+}
+```
+
+- [ ] **Schritt 2: Das Icon-Bildchen anlegen**
 
 `Sources/TC002iOS/IconauswahliOS.swift`, erster Teil:
 
@@ -1123,7 +1171,7 @@ struct IconbildiOS: View {
 }
 ```
 
-- [ ] **Schritt 2: Das Auswahlblatt anlegen**
+- [ ] **Schritt 3: Das Auswahlblatt anlegen**
 
 Zweiter Teil derselben Datei:
 
@@ -1223,7 +1271,7 @@ struct IconauswahliOS: View {
 }
 ```
 
-- [ ] **Schritt 3: Bauen**
+- [ ] **Schritt 4: Bauen**
 
 ```bash
 xcodegen generate
@@ -1233,17 +1281,15 @@ xcodebuild -project MQTT-TC002-iOS.xcodeproj -scheme MQTT-TC002-iOS \
 
 Erwartet: `** BUILD SUCCEEDED **`.
 
-Schlägt es fehl, weil `Iconsammlung.holen(nummer:)` eine Sitzung verlangt: Die
-Signatur lautet `holen(nummer:sitzung:)` mit `.shared` als Vorgabe — dann genügt
-`try quelle.holen(nummer: nummer)`. Ist die Vorgabe nicht da, wird sie in
-`Sources/TC002Core/Icons.swift` ergänzt, nicht am Aufruf vorbeigearbeitet.
+`Iconsammlung.holen(nummer:sitzung:)` hat `.shared` als Vorgabe für die Sitzung
+(`Sources/TC002Core/Icons.swift:322`), deshalb genügt `try quelle.holen(nummer: nummer)`.
 
-- [ ] **Schritt 4: Übersetzung prüfen**
+- [ ] **Schritt 5: Übersetzung prüfen**
 
 Ausführen: `python3 scripts/texte-sammeln.py --pruefen`
 Erwartet: `0 ohne Uebersetzung`. Fehlende Texte in `Resources/Sprachen/en.lproj/Localizable.strings` ergänzen.
 
-- [ ] **Schritt 5: Einchecken**
+- [ ] **Schritt 6: Einchecken**
 
 ```bash
 git add Sources/TC002iOS Resources/Sprachen
