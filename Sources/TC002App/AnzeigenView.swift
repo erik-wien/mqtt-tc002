@@ -11,19 +11,19 @@ struct AnzeigenView: View {
                 Text("Anzeigen").font(.headline)
                 // Der Unterschied ist die eigentliche Auskunft: das eine ist
                 // Tatsache, das andere Erinnerung.
-                Text(liste.quelle == .geraet ? "vom Gerät gemeldet" : "von dieser App angelegt")
+                Text(liste.quelle == .geraet ? lok("vom Gerät gemeldet") : lok("von dieser App angelegt"))
                     .font(.caption).foregroundStyle(.secondary)
                     .help(liste.quelle == .geraet
                           ? "Die Uhr veröffentlicht selbst, welche Anzeigen auf ihr stehen — auch solche, die ein anderes Werkzeug angelegt hat."
                           : "Solange die Uhr nichts gemeldet hat, zeigt die Liste, was diese App selbst an sie geschickt hat. Was ein anderes Werkzeug angelegt hat, fehlt darin.")
                 if let online = zustand.aktiveID.flatMap({ zustand.geraetOnline[$0] }) {
-                    Text(online ? "· Uhr meldet sich online" : "· Uhr meldet sich offline")
+                    Text(online ? lok("· Uhr meldet sich online") : lok("· Uhr meldet sich offline"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
             if liste.namen.isEmpty {
-                Text(liste.quelle == .geraet ? "Die Uhr meldet gerade keine Anzeige."
-                                             : "Noch nichts an diese Uhr gesendet.")
+                Text(liste.quelle == .geraet ? lok("Die Uhr meldet gerade keine Anzeige.")
+                                             : lok("Noch nichts an diese Uhr gesendet."))
                     .foregroundStyle(.secondary)
             }
             ForEach(liste.namen, id: \.self) { name in
@@ -65,7 +65,7 @@ struct AnzeigenView: View {
             return
         }
         Task.detached {
-            do { try a.umschalten(auf: name); await MainActor.run { zustand.log("umgeschaltet auf \(name)") } }
+            do { try a.umschalten(auf: name); await MainActor.run { zustand.log(lokf("umgeschaltet auf %@", name)) } }
             catch { await MainActor.run { zustand.melde(error, uhr: uhr) } }
         }
     }
@@ -85,7 +85,7 @@ struct AnzeigenView: View {
                 await MainActor.run {
                     // Nur bei der aktiven Uhr: die leere Nutzlast ging auch nur dorthin.
                     zustand.anzeigeVergessen(name, fuer: uhr.id)
-                    zustand.log("gelöscht: \(name)")
+                    zustand.log(lokf("gelöscht: %@", name))
                 }
             } catch { await MainActor.run { zustand.melde(error, uhr: uhr) } }
         }

@@ -32,7 +32,7 @@ struct UeberView: View {
 
             VStack(spacing: 2) {
                 Text("MQTT-TC002").font(.title2).fontWeight(.semibold)
-                Text("Version \(fassung)")
+                Text(lokf("Version %@", fassung))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

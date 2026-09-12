@@ -103,7 +103,7 @@ public struct MQTTSender {
                                                        benutzer: zugang.benutzer,
                                                        kennwort: zugang.kennwort))
             let antwort = try lies(verbindung, mindestens: 4)
-            guard let code = MQTTPaket.connackCode(antwort) else { throw MQTTFehler.nichtVerbunden("keine gültige Antwort") }
+            guard let code = MQTTPaket.connackCode(antwort) else { throw MQTTFehler.nichtVerbunden(lok("keine gültige Antwort")) }
             guard code == 0 else { throw MQTTFehler.abgelehnt(code: code) }
         } catch {
             verbindung.cancel()

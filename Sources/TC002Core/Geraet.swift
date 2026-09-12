@@ -112,7 +112,7 @@ public struct Geraet {
             ergebnis = d; antwort = r; fehler = f; fertig.signal()
         }.resume()
         guard fertig.wait(timeout: .now() + 10) == .success else {
-            throw GeraetFehler.nichtErreichbar("keine Antwort")
+            throw GeraetFehler.nichtErreichbar(lok("keine Antwort"))
         }
         if let fehler { throw GeraetFehler.nichtErreichbar(fehler.localizedDescription) }
         let pfad = anfrage.url?.path ?? ""

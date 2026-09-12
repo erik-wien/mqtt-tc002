@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 /// Waehlt, an welche Uhr oder Uhren gesendet wird. Ein Knopf, der das Ziel
 /// benennt, oeffnet ein Blatt mit einer Zeile je Uhr. Von „Senden“ und „Malen“
@@ -22,12 +23,12 @@ struct ZielauswahlView: View {
         let gewaehlt = gewaehlteIDs
         let anzahlUhren = zustand.uhren.count
         if anzahlUhren > 1, gewaehlt.count == anzahlUhren {
-            return "an alle Uhren (\(anzahlUhren))"
+            return lokf("an alle Uhren (%d)", anzahlUhren)
         }
         if gewaehlt.count == 1, let uhr = zustand.uhren.first(where: { $0.id == gewaehlt.first }) {
-            return "an: \(uhr.name)"
+            return lokf("an: %@", uhr.name)
         }
-        return "an \(gewaehlt.count) Uhren"
+        return lokf("an %d Uhren", gewaehlt.count)
     }
 
     var body: some View {

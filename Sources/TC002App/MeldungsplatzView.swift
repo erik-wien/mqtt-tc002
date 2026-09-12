@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 /// Waehlt einen von fuenf festen Anzeigenplaetzen. Der gewaehlte Platz *ist* der
 /// Anzeigenname ("meldung1" … "meldung5") — das ersetzt ein freies Namensfeld:
@@ -29,8 +30,8 @@ struct MeldungsplatzWahl: View {
                 .overlay(RoundedRectangle(cornerRadius: 5)
                     .stroke(belegt ? Color.orange : Color.secondary.opacity(0.4), lineWidth: belegt ? 2 : 1))
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-                .help(belegt ? "\(Self.name(fuer: i)) ist belegt — Senden ersetzt diese Anzeige."
-                             : "\(Self.name(fuer: i)) ist frei.")
+                .help(belegt ? lokf("%@ ist belegt — Senden ersetzt diese Anzeige.", Self.name(fuer: i))
+                             : lokf("%@ ist frei.", Self.name(fuer: i)))
             }
         }
     }
@@ -60,6 +61,6 @@ struct MeldungLoeschenKnopf: View {
             Image(systemName: "trash")
         }
         .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
-        .help("Meldung \(platz) auf der Uhr löschen")
+        .help(lokf("Meldung %d auf der Uhr löschen", platz))
     }
 }

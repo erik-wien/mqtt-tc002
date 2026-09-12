@@ -82,7 +82,7 @@ struct MalenView: View {
 
             malflaeche
 
-            Text("\(feld.alsDrawBefehle().count) Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.")
+            Text(lokf("%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.", feld.alsDrawBefehle().count))
                 .font(.footnote).foregroundStyle(.secondary)
 
             Divider()

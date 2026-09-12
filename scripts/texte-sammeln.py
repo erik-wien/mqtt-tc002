@@ -35,8 +35,12 @@ ERSTES_ARGUMENT = [
     "Text", "Button", "Label", "Toggle", "Picker", "TextField", "SecureField",
     "Section", "Stepper", "Slider", "Link", "Menu", "DisclosureGroup",
     "confirmationDialog", "alert", "Tab", "GroupBox", "LabeledContent",
-    "NavigationLink", "ProgressView", "ToolbarItem",
+    "NavigationLink", "ProgressView", "ToolbarItem", "ContentUnavailableView",
 ]
+# Aufrufe, die eine *Liste* von Texten bekommen — die Hilfe baut ihre
+# Aufzaehlungen und Tabellen so. Hier steht der Text nicht hinter der Klammer,
+# sondern verteilt auf die Zeilen danach, deshalb die eigene Behandlung.
+LISTEN = ["punkte", "tabelle"]
 # Modifikatoren, deren einziges Argument ein LocalizedStringKey ist.
 MODIFIKATOREN = ["help", "navigationTitle", "navigationSubtitle", "accessibilityLabel"]
 # Eigene Bausteine der Hilfe und des Werkzeugs.
@@ -58,9 +62,46 @@ ZEICHENKETTE = r'"((?:[^"\\]|\\.)*)"'
 
 MUSTER = (
     [re.compile(rf'\b{n}\(\s*{ZEICHENKETTE}') for n in ERSTES_ARGUMENT] +
+    # Beschriftungen in einer Fallunterscheidung: Button(x ? "A" : "B").
+    [re.compile(rf'\b{n}\([^,)"]*\?\s*{ZEICHENKETTE}\s*:\s*{ZEICHENKETTE}')
+     for n in ERSTES_ARGUMENT] +
     [re.compile(rf'\.{n}\(\s*{ZEICHENKETTE}') for n in MODIFIKATOREN] +
     [re.compile(rf'\b{re.escape(n)}\(\s*{ZEICHENKETTE}') for n in EIGENE]
 )
+
+
+def brauchbar(schluessel):
+    """Ist das ein sichtbarer Text — oder ein Symbolname, ein Platzhalter?"""
+    if not schluessel or schluessel.isspace():
+        return False
+    # Bezeichner mit Punkt und ohne Leerzeichen sind Symbolnamen oder
+    # Schluesselnamen, keine Texte. Ein einzelnes Wort dagegen schon:
+    # „langsam" ist eine Beschriftung.
+    return not re.fullmatch(r"[a-z0-9]+(\.[a-z0-9]+)+", schluessel)
+
+
+def aus_listen(text):
+    """Texte aus `punkte([...])` und `tabelle([...])`.
+
+    Gesucht wird ab der oeffnenden Klammer bis zur passenden schliessenden;
+    alles dazwischen an Zeichenketten gehoert dazu. Ueber den ganzen Dateitext,
+    nicht zeilenweise — die Eintraege stehen je auf einer eigenen Zeile.
+    """
+    for name in LISTEN:
+        for anfang in re.finditer(rf'\.{name}\(\[', text):
+            tiefe, i = 1, anfang.end()
+            while i < len(text) and tiefe > 0:
+                if text[i] == '"':                       # Zeichenkette ueberspringen
+                    i += 1
+                    while i < len(text) and text[i] != '"':
+                        i += 2 if text[i] == '\\' else 1
+                elif text[i] in '([':
+                    tiefe += 1
+                elif text[i] in ')]':
+                    tiefe -= 1
+                i += 1
+            for treffer in re.finditer(ZEICHENKETTE, text[anfang.end():i]):
+                yield treffer.group(1)
 
 
 def sammeln():
@@ -75,13 +116,12 @@ def sammeln():
                     continue
                 for muster in MUSTER:
                     for treffer in muster.finditer(zeile):
-                        schluessel = treffer.group(1)
-                        # Systemnamen und Platzhalter sind keine Texte.
-                        if not schluessel or schluessel.isspace():
-                            continue
-                        if re.fullmatch(r"[a-z0-9.]+", schluessel):
-                            continue          # SF-Symbole, Schluesselnamen
-                        gesehen.setdefault(schluessel, datei.name)
+                        for schluessel in treffer.groups():
+                            if schluessel and brauchbar(schluessel):
+                                gesehen.setdefault(schluessel, datei.name)
+            for schluessel in aus_listen(text):
+                if brauchbar(schluessel):
+                    gesehen.setdefault(schluessel, datei.name)
     for schluessel in DYNAMISCH:
         gesehen.setdefault(schluessel, "dynamisch")
     return gesehen

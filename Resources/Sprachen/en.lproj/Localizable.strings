@@ -164,8 +164,8 @@
 "Icon wählen…" = "Choose icon…";
 "Icon entfernen" = "Remove icon";
 "Suchen" = "Search";
-"„\(icon.name)“ löschen" = "Delete \"\(icon.name)\"";
-"Das Icon „\(icon.name)“ wird endgültig entfernt." = "The icon \"\(icon.name)\" will be permanently removed.";
+"„%@“ löschen" = "Delete \"%@\"";
+"Das Icon „%@“ wird endgültig entfernt." = "The icon \"%@\" will be permanently removed.";
 /* IconEditorView.swift */
 "Nummer" = "Number";
 "Icon malen" = "Draw icon";
@@ -196,14 +196,14 @@
 "Das Icon ließ sich nicht löschen." = "The icon could not be deleted.";
 /* MalenView.swift */
 "Radierer" = "Eraser";
-"\(feld.alsDrawBefehle().count) Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst." = "\(feld.alsDrawBefehle().count) rectangles — horizontal runs of the same color are merged.";
+"%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst." = "%d rectangles — horizontal runs of the same color are merged.";
 "Blättert nur zwischen belegten Plätzen, wenn der Seitenwechsel unter „Verbindung“ nicht auf „kein Wechsel“ steht." = "Pages between occupied slots only if the page change under Connection is not set to \"no change\".";
 "Dauer (Sek.)" = "Duration (sec.)";
 "Uhr entscheidet" = "Clock decides";
 "Erst unter „Verbindung“ eine Uhr eintragen und abfragen." = "First enter and query a clock under Connection.";
 /* MeldungsplatzView.swift */
 "Meldung" = "Message";
-"Meldung \(platz) auf der Uhr löschen" = "Delete message \(platz) on the clock";
+"Meldung %d auf der Uhr löschen" = "Delete message %d on the clock";
 /* SendenView.swift */
 "Weg" = "Method";
 "als Pixel" = "as pixels";
@@ -214,23 +214,22 @@
 "Icon mitscrollen" = "Scroll icon along";
 "Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus." = "Off: the icon sits at the left, the text scrolls past to the right of it. On: it sits at the start of the text and travels out with it.";
 "Nur so wenige, weil bei sechzehn Pixeln Höhe kaum eine Schrift sauber aufs Raster fällt." = "Only this few, because at sixteen pixels high hardly any font falls cleanly onto the grid.";
-"\(schrift) ist aufs Pixelraster gezeichnet — nur bei \(groessenText(zulaessig)) fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe." = "\(schrift) is drawn for the pixel grid — only at \(groessenText(zulaessig)) do the strokes fall cleanly on whole pixels, in between there is no clean size.";
+"%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe." = "%@ is drawn for the pixel grid — only at %@ do the strokes fall cleanly on whole pixels, in between there is no clean size.";
 "Text" = "Text";
-"Läuft durch: \(laufschriftFrames.count) Einzelbilder, \(nutzlastText) — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a)." = "Scrolls through: \(laufschriftFrames.count) frames, \(nutzlastText) — where the clock's size limit lies is an open question (Device Reference, §4.2a).";
+"Läuft durch: %d Einzelbilder, %@ — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a)." = "Scrolls through: %d frames, %@ — where the clock's size limit lies is an open question (Device Reference, §4.2a).";
 "Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "A noticeably large payload — only a shorter text makes it smaller, the speed changes nothing.";
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Verbindung“ das Tempo." = "Only an approximation — the clock typesets this text itself and shows it differently. If it scrolls because it does not fit, \"Scroll speed\" under Connection sets the speed.";
-"Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: \(unbekannteZeichenText). „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: \(unbekannteZeichenText). \"as pixels\" can do them.";
-"\(Int(groesse))" = "\(Int(groesse))";
-"Schriftgröße — \(schrift) ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe." = "Font size — \(schrift) is drawn for the pixel grid, in between there is no clean size.";
+"Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: %@. \"as pixels\" can do them.";
+"Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe." = "Font size — %@ is drawn for the pixel grid, in between there is no clean size.";
 "Schriftgröße" = "Font size";
-"Rand \(rand)" = "Margin \(rand)";
+"Rand %d" = "Margin %d";
 "Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht." = "Rows that stay free at \"top\" and \"bottom\" — 0 sets the text flush against the edge. Flush looks different from font to font, because some bring space above the cap height and others do not; a margin of your own makes the impression independent of that. With \"middle\" it has no effect.";
-"Abstand \(luecke)" = "Gap \(luecke)";
+"Abstand %d" = "Gap %d";
 "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar." = "Empty columns between the characters, 0 to 3 — only with the \"as pixels\" method: each character is rasterized on its own and appended by its ink, so the gap is always exactly as large as set here, independent of font, size and character pair.";
 "Farbe" = "Color";
 /* UeberView.swift */
 "MQTT-TC002" = "MQTT-TC002";
-"Version \(fassung)" = "Version \(fassung)";
+"Version %@" = "Version %@";
 "Schickt Text-, Icon- und Bildanzeigen über MQTT an Ulanzi-TC002-Pixeluhren." = "Sends text, icon and image displays to Ulanzi TC002 pixel clocks over MQTT.";
 "Lizenz" = "License";
 "GPL-3.0, weil die App auf Teilen von PixDeck aufbaut, das selbst unter der GPL-3.0 steht." = "GPL-3.0, because the app builds on parts of PixDeck, which is itself under the GPL-3.0.";
@@ -253,8 +252,8 @@
 "Hinzufügen" = "Add";
 "Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse." = "The app determines the prefix itself — it is the one set plus the last four digits of the MAC address.";
 "kein Wechsel" = "no change";
-"alle \($0) Sekunden" = "every \($0) seconds";
-"Scrolltempo: \(scrollTempo)" = "Scroll speed: \(scrollTempo)";
+"alle %d Sekunden" = "every %d seconds";
+"Scrolltempo: %d" = "Scroll speed: %d";
 "Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert." = "Scroll speed for text the clock typesets itself (the \"as text\" method under Send). The valid range of values is not documented.";
 "Port" = "Port";
 "Benutzer" = "User";

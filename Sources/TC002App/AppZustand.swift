@@ -85,7 +85,7 @@ final class AppZustand {
         guard let zugang else {
             let meldung = lok("Broker-Port muss eine Zahl über 0 sein.")
             brokerStand = .abgelehnt(meldung)
-            log("Broker-Prüfung abgelehnt: \(meldung)")
+            log(lokf("Broker-Prüfung abgelehnt: %@", meldung))
             return
         }
         brokerStand = .laeuft
@@ -97,14 +97,14 @@ final class AppZustand {
                 try MQTTSender().pruefen(zugang: pruefZugang)
                 await MainActor.run { [weak self] in
                     self?.brokerStand = .angenommen
-                    self?.log("Broker-Prüfung: angenommen")
+                    self?.log(lok("Broker-Prüfung: angenommen"))
                     self?.horchenAbgleichen()
                 }
             } catch {
                 let meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
                 await MainActor.run { [weak self] in
                     self?.brokerStand = .abgelehnt(meldung)
-                    self?.log("Broker-Prüfung abgelehnt: \(meldung)")
+                    self?.log(lokf("Broker-Prüfung abgelehnt: %@", meldung))
                 }
             }
         }
@@ -235,7 +235,8 @@ final class AppZustand {
                     self.uhren[i].mac = basis.mac
                     if self.uhren[i].name == self.uhren[i].host { self.uhren[i].name = praefix }
                     self.verbunden[id] = steht
-                    self.log("\(self.uhren[i].name): Präfix \(praefix), MQTT \(steht ? "verbunden" : "nicht verbunden")")
+                    self.log(lokf("%@: Präfix %@, MQTT %@", self.uhren[i].name, praefix,
+                                  steht ? lok("verbunden") : lok("nicht verbunden")))
                     // Erst jetzt steht das Praefix — vorher gab es kein Thema, auf das
                     // sich horchen liesse.
                     self.horchenAbgleichen()
@@ -395,7 +396,7 @@ final class AppZustand {
     func senden(_ frame: Frame, als name: String) async {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
             anzeigeGemerkt(name, fuer: uhr.id)
-            log("an \(uhr.name) gesendet: \(name)")
+            log(lokf("an %@ gesendet: %@", uhr.name, name))
         }
     }
 
@@ -404,7 +405,7 @@ final class AppZustand {
     func loeschen(_ name: String) async {
         await anZiele({ try $0.loeschen(name) }) { uhr in
             anzeigeVergessen(name, fuer: uhr.id)
-            log("auf \(uhr.name) gelöscht: \(name)")
+            log(lokf("auf %@ gelöscht: %@", uhr.name, name))
         }
     }
 
@@ -493,14 +494,15 @@ final class AppZustand {
             guard let namen = Anzeigen.namenAusCustomList(nutzlast),
                   gemeldeteAnzeigen[id] != namen else { return }
             gemeldeteAnzeigen[id] = namen
-            log("\(uhr.name) meldet: \(namen.isEmpty ? "keine Anzeige" : namen.joined(separator: ", "))")
+            log(lokf("%@ meldet: %@", uhr.name,
+                     namen.isEmpty ? lok("keine Anzeige") : namen.joined(separator: ", ")))
         case "\(uhr.praefix)/status":
             let text = String(data: nutzlast, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let online = text == "online"
             guard geraetOnline[id] != online else { return }
             geraetOnline[id] = online
-            log("\(uhr.name) meldet sich \(online ? "online" : "offline")")
+            log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
         default:
             break
         }
@@ -513,13 +515,13 @@ final class AppZustand {
         guard let uhr = uhren.first(where: { $0.id == id }), horchtGerade[id] != steht else { return }
         horchtGerade[id] = steht
         if steht {
-            log("hört bei \(uhr.name) mit")
+            log(lokf("hört bei %@ mit", uhr.name))
         } else {
             // Ohne Verbindung ist die gemeldete Liste nur noch Erinnerung — dann
             // soll die Ansicht das auch sagen und auf die eigene Buchführung fallen.
             gemeldeteAnzeigen[id] = nil
             geraetOnline[id] = nil
-            log("hört bei \(uhr.name) nicht mehr mit: \(grund ?? "Verbindung weg")")
+            log(lokf("hört bei %@ nicht mehr mit: %@", uhr.name, grund ?? lok("Verbindung weg")))
         }
     }
 

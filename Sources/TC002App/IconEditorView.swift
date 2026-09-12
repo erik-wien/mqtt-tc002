@@ -182,7 +182,7 @@ struct IconEditorView: View {
                 TextField("", value: $verzoegerung, format: .number)
                     .frame(width: 50)
                 Text("s")
-                Button(spielAb ? "Stopp" : "Abspielen") { abspielenUmschalten() }
+                Button(spielAb ? lok("Stopp") : lok("Abspielen")) { abspielenUmschalten() }
                     .disabled(bilder.count < 2)
                 Spacer()
             }
@@ -273,7 +273,7 @@ struct IconEditorView: View {
                 TextField("LaMetric-Nummer", text: $lametricNummer)
                     .frame(width: 140)
                     .onSubmit { nachladen() }
-                Button(laedt ? "Hole…" : "Nachladen") { nachladen() }
+                Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
                     .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
@@ -307,7 +307,7 @@ struct IconEditorView: View {
                     }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help("„\(icon.name)“ löschen")
+                    .help(lokf("„%@“ löschen", icon.name))
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { oeffnen(icon) }
@@ -330,7 +330,7 @@ struct IconEditorView: View {
         ) { icon in
             Button("Löschen", role: .destructive) { loeschen(icon) }
         } message: { icon in
-            Text("Das Icon „\(icon.name)“ wird endgültig entfernt.")
+            Text(lokf("Das Icon „%@“ wird endgültig entfernt.", icon.name))
         }
     }
 
@@ -359,8 +359,8 @@ struct IconEditorView: View {
         nummer = icon.nummer
         name = icon.name
         meldung = bilder.count > 1
-            ? "\(icon.name) geöffnet (\(bilder.count) Bilder)."
-            : "\(icon.name) geöffnet."
+            ? lokf("%@ geöffnet (%d Bilder).", icon.name, bilder.count)
+            : lokf("%@ geöffnet.", icon.name)
     }
 
     /// Ob der Editor gerade leer ist — Raster, Nummer und Name. „Neu“ fragt

@@ -208,7 +208,7 @@ struct SendenView: View {
         let zahlen = werte.map { String(Int($0)) }
         guard let letzte = zahlen.last else { return "" }
         guard zahlen.count > 1 else { return "\(letzte) Pixeln" }
-        return zahlen.dropLast().joined(separator: ", ") + " und \(letzte) Pixeln"
+        return zahlen.dropLast().joined(separator: ", ") + lokf(" und %d Pixeln", letzte)
     }
 
     private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, luecke: luecke) }
@@ -243,15 +243,15 @@ struct SendenView: View {
     }
 
     private var fettHilfe: String {
-        if weg == .text { return "Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht." }
-        return fettWirkt ? "Fett"
-            : "„\(schrift)“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung."
+        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
+        return fettWirkt ? lok("Fett")
+            : lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift)
     }
 
     private var grossHilfe: String {
         kleinbuchstabenMoeglich
-            ? "Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert."
-            : "„\(schrift)“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung."
+            ? lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
+            : lokf("„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung.", schrift)
     }
 
     private var textY: Int {
@@ -393,7 +393,7 @@ struct SendenView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let zulaessig = zulaessigeGroessen {
-                Text("\(schrift) ist aufs Pixelraster gezeichnet — nur bei \(groessenText(zulaessig)) fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.")
+                Text(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", schrift, groessenText(zulaessig)))
                     .font(.caption).foregroundStyle(.secondary)
             }
             HStack {
@@ -417,7 +417,7 @@ struct SendenView: View {
                         // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
                         // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
                         // der Nutzlastgroesse aussteigt (§4.2a).
-                        Label("Läuft durch: \(laufschriftFrames.count) Einzelbilder, \(nutzlastText) — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).",
+                        Label(lokf("Läuft durch: %d Einzelbilder, %@ — wo die Größengrenze der Uhr liegt, ist offen (Gerätereferenz, §4.2a).", laufschriftFrames.count, nutzlastText),
                               systemImage: "info.circle")
                             .font(.footnote).foregroundStyle(.secondary)
                         if nutzlastBytes > 60_000 {
@@ -435,7 +435,7 @@ struct SendenView: View {
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
                     if !unbekannteZeichen.isEmpty {
-                        Label("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: \(unbekannteZeichenText). „als Pixel“ kann sie.",
+                        Label(lokf("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie.", unbekannteZeichenText),
                               systemImage: "exclamationmark.triangle")
                             .font(.footnote).foregroundStyle(.orange)
                     }
@@ -541,10 +541,10 @@ struct SendenView: View {
 
             if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
                 let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
-                Stepper("\(Int(groesse))", value: $groesse, in: erste...letzte, step: schritt).frame(width: 80)
-                    .help("Schriftgröße — \(schrift) ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.")
+                Stepper(String(Int(groesse)), value: $groesse, in: erste...letzte, step: schritt).frame(width: 80)
+                    .help(lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift))
             } else {
-                Stepper("\(Int(groesse))", value: $groesse, in: 6...16).frame(width: 80)
+                Stepper(String(Int(groesse)), value: $groesse, in: 6...16).frame(width: 80)
                     .help("Schriftgröße")
             }
 
@@ -557,11 +557,11 @@ struct SendenView: View {
 
             Divider().frame(height: 18)
 
-            Stepper("Rand \(rand)", value: $rand, in: 0...3).frame(width: 100)
+            Stepper(lokf("Rand %d", rand), value: $rand, in: 0...3).frame(width: 100)
                 .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
                 .disabled(vertikal == .mittig)
 
-            Stepper("Abstand \(luecke)", value: $luecke, in: 0...3).frame(width: 110)
+            Stepper(lokf("Abstand %d", luecke), value: $luecke, in: 0...3).frame(width: 110)
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
             Divider().frame(height: 18)

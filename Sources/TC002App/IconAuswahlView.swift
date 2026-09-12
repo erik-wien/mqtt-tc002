@@ -87,7 +87,7 @@ struct IconAuswahlView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.borderless)
-                            .help("„\(icon.name)“ löschen")
+                            .help(lokf("„%@“ löschen", icon.name))
                             .offset(x: 2, y: -2)
                         }
                     }
@@ -108,7 +108,7 @@ struct IconAuswahlView: View {
         ) { icon in
             Button("Löschen", role: .destructive) { loeschen(icon) }
         } message: { icon in
-            Text("Das Icon „\(icon.name)“ wird endgültig entfernt.")
+            Text(lokf("Das Icon „%@“ wird endgültig entfernt.", icon.name))
         }
     }
 

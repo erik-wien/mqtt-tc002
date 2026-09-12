@@ -65,14 +65,14 @@ struct VerbindungView: View {
             Section("Einstellungen der aktiven Uhr") {
                 Picker("Seitenwechsel", selection: $seitenwechsel) {
                     Text("kein Wechsel").tag(0)
-                    ForEach([10, 20, 30, 60], id: \.self) { Text("alle \($0) Sekunden").tag($0) }
+                    ForEach([10, 20, 30, 60], id: \.self) { Text(lokf("alle %d Sekunden", $0)).tag($0) }
                 }
                 .onChange(of: seitenwechsel) { _, neu in
                     guard !ladeLauf else { ladeLauf = false; return }
                     nutzerHatGewaehlt = true
                     setzen("carouselSpeed", neu)
                 }
-                Stepper("Scrolltempo: \(scrollTempo)", value: $scrollTempo, in: 0...20)
+                Stepper(lokf("Scrolltempo: %d", scrollTempo), value: $scrollTempo, in: 0...20)
                     .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
                     .onChange(of: scrollTempo) { _, neu in
                         guard !scrollLadeLauf else { scrollLadeLauf = false; return }
@@ -142,7 +142,7 @@ struct VerbindungView: View {
         guard let host = zustand.aktiveUhr?.host else { return }
         Task.detached {
             do { try Geraet(host: host).konfigurationSetzen(feld, wert)
-                 await MainActor.run { zustand.log("\(feld) auf \(wert) gesetzt") } }
+                 await MainActor.run { zustand.log(lokf("%@ auf %@ gesetzt", feld, "\(wert)")) } }
             catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
         }
     }
