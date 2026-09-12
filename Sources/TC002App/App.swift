@@ -23,17 +23,21 @@ struct TC002App: App {
     @Environment(\.openWindow) private var openWindow
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", malen = "Malen", anzeigen = "Anzeigen", verbindung = "Verbindung", icons = "Icons"
+        case senden = "Senden", malen = "Malen", icons = "Icons",
+             verlauf = "Verlauf", einstellungen = "Einstellungen"
         var id: String { rawValue }
         var symbol: String {
             switch self {
             case .senden: return "paperplane"
             case .malen: return "paintbrush"
-            case .anzeigen: return "list.bullet"
-            case .verbindung: return "antenna.radiowaves.left.and.right"
             case .icons: return "paintpalette"
+            case .verlauf: return "list.bullet"
+            case .einstellungen: return "antenna.radiowaves.left.and.right"
             }
         }
+        /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
+        static let oben: [Bereich] = [.senden, .malen, .icons]
+        static let unten: [Bereich] = [.verlauf, .einstellungen]
     }
 
     var body: some Scene {
@@ -83,17 +87,26 @@ struct TC002App: App {
 
     private var hauptfenster: some View {
         NavigationSplitView {
-            List(Bereich.allCases, selection: $bereich) { b in
+            List(Bereich.oben, selection: $bereich) { b in
                 Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+            }
+            // Verlauf und Einstellungen bleiben unten abgesetzt, statt in
+            // derselben Liste mitzulaufen — eine zweite List traegt dieselbe
+            // Auswahl ($bereich) und dieselbe Reihen-Optik wie die obere.
+            .safeAreaInset(edge: .bottom) {
+                List(Bereich.unten, selection: $bereich) { b in
+                    Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+                }
+                .frame(height: 76)
             }
             .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 220)
         } detail: {
             switch bereich ?? .senden {
             case .senden: SendenView(zustand: zustand)
             case .malen: MalenView(zustand: zustand)
-            case .anzeigen: AnzeigenView(zustand: zustand)
-            case .verbindung: VerbindungView(zustand: zustand)
             case .icons: IconEditorView(zustand: zustand)
+            case .verlauf: AnzeigenView(zustand: zustand)
+            case .einstellungen: VerbindungView(zustand: zustand)
             }
         }
         // Mindestgroesse: Seitenleiste (min. 150) plus die 52 Spalten der
