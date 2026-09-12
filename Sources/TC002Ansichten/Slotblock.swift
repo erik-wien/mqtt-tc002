@@ -36,11 +36,35 @@ public struct Slotblock: View {
     private static let eckenradius = 6.0
 
     public var body: some View {
-        inhalt
-            .frame(minWidth: 44, minHeight: 44)
-            .contentShape(Rectangle())
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(beschriftung)
+        VStack(spacing: 2) {
+            inhalt
+            nummer
+        }
+        .frame(minWidth: 44, minHeight: 44)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(beschriftung)
+    }
+
+    /// Die Slotnummer, sichtbar und nicht nur für die Sprachausgabe: Fünf
+    /// gestrichelte Rahmen nebeneinander lassen sich sonst nur abzählen, und
+    /// die Hilfe setzt darauf, dass Block und Gerätebezeichner (`meldung1`
+    /// … `meldung5`) zusammenfinden. Ein Bezeichner, kein Erklärtext —
+    /// erklärt wird in der Hilfe, nicht hier.
+    ///
+    /// **Unter** dem Block, nicht darin: Sie darf das Pixelbild nicht
+    /// verdecken. Und schmaler als er, damit die Zeile am iPhone weiterhin
+    /// 6 × 44pt + 5 × 6pt = 294pt misst — zusätzliche Höhe ist dort frei,
+    /// zusätzliche Breite nicht.
+    ///
+    /// `String(platz)` statt eines Texts mit Platzhalter: An einer bloßen
+    /// Ziffer ist nichts zu übersetzen, und ein `LocalizedStringKey` „%d“
+    /// stünde ohne Not in der Sprachdatei.
+    private var nummer: some View {
+        Text(String(platz))
+            .font(.caption2)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
     }
 
     @ViewBuilder
