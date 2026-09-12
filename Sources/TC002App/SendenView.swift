@@ -172,10 +172,28 @@ struct SendenView: View {
         Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
-    /// Beginn und Breite der Flaeche, in der der Text ausgerichtet wird: ohne Icon
-    /// die volle Displaybreite, mit Icon erst ab der Spalte, an der das Icon endet.
-    private var flaecheX: Int { gewaehltesIcon == nil ? 0 : 10 }
-    private var flaecheBreite: Int { gewaehltesIcon == nil ? Pixelfeld.breiteStandard : Pixelfeld.breiteStandard - 10 }
+    /// Die Optionen dieser Ansicht als Wertetyp — die einzige Stelle, an der
+    /// aus Ansichtszustand ein Auftrag wird.
+    private var optionen: Meldungsoptionen {
+        Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
+                         fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
+                         waagrecht: horizontal, senkrecht: vertikal, rand: rand,
+                         abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
+                         dauer: dauer)
+    }
+
+    private var mitIcon: Bool { gewaehltesIcon != nil }
+    private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon) }
+    private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon) }
+    private var textBreite: Int { Meldungsbau.breite(optionen) }
+    private var flaecheX: Int { Meldungsbau.flaecheX(mitIcon: mitIcon) }
+    private var flaecheBreite: Int { Meldungsbau.flaecheBreite(mitIcon: mitIcon) }
+    private var textPuffer: Pixelfeld { Meldungsbau.puffer(optionen) }
+
+    private func gebauterRahmen() throws -> Frame {
+        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
+                               vorberechnet: laufschriftURI)
+    }
 
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
     /// die einzige Stelle, an der „Großbuchstaben" wirkt. Das Eingabefeld
@@ -211,16 +229,7 @@ struct SendenView: View {
         return zahlen.dropLast().joined(separator: ", ") + lokf(" und %@ Pixeln", letzte)
     }
 
-    private var textBreite: Int { Textraster.breite(gesendeterText, schrift: schrift, groesse: groesse, fett: fett, luecke: luecke) }
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
-
-    private var textX: Int {
-        switch horizontal {
-        case .links: return flaecheX
-        case .mittig: return flaecheX + max(0, (flaecheBreite - textBreite) / 2)
-        case .rechts: return flaecheX + max(0, flaecheBreite - textBreite)
-        }
-    }
 
     /// Wohin der gerasterte Text senkrecht geschoben wird.
     ///
@@ -254,45 +263,6 @@ struct SendenView: View {
             : lokf("„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung.", schrift)
     }
 
-    private var textY: Int {
-        let puffer = textPuffer
-        guard let tinte = Textraster.tintenZeilen(puffer) else { return 0 }
-        let hoehe = tinte.letzte - tinte.erste + 1
-        // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
-        // Abschneiden, und das will niemand.
-        let r = min(rand, max(0, (Pixelfeld.hoeheStandard - hoehe) / 2))
-        switch vertikal {
-        case .oben:   return -tinte.erste + r
-        case .mittig: return (Pixelfeld.hoeheStandard - hoehe) / 2 - tinte.erste
-        case .unten:  return (Pixelfeld.hoeheStandard - hoehe) - tinte.erste - r
-        }
-    }
-
-    /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage fuer `textY`
-    /// und fuer das fertige Feld darunter.
-    private var textPuffer: Pixelfeld {
-        Textraster.rasterPuffer(gesendeterText, schrift: schrift, groesse: groesse,
-                                fett: fett, farbe: farbeHex, luecke: luecke)
-    }
-
-    /// Vorschau und Sendung entstehen aus demselben Feld. Gerastert wird immer in
-    /// derselben Phase, ausgerichtet wird durch Verschieben — sonst saehe dieselbe
-    /// Schrift stehend anders aus als laufend.
-    private var feld: Pixelfeld {
-        var f = Pixelfeld()
-        Textraster.einsetzen(textPuffer, x: textX, y: textY, in: &f)
-        return f
-    }
-
-    /// Die eine Entscheidung, die diese Ansicht faellt: Passt der Text in die
-    /// verfuegbare Breite, steht er still — sonst laeuft er als GIF durch. Kein
-    /// Schalter dafuer; die App weiss es, weil sie die Breite ohnehin ausrechnet.
-    ///
-    /// Gerechnet wird mit der Breite des stehenden Falls (mit Icon 42 Spalten).
-    /// Haenge die Rechnung an „Icon mitscrollen", wuerde das Einschalten den Text
-    /// passend machen, den Schalter verschwinden lassen und ihn wieder umwerfen.
-    private var passt: Bool { textBreite <= flaecheBreite }
-
     /// Die Einzelbilder des gewaehlten Icons, fuer die Laufschrift, die sie
     /// einbaeckt. Leer ohne Icon oder bei unlesbarer Datei — das Senden meldet
     /// den Fehler dann noch einmal richtig.
@@ -307,34 +277,6 @@ struct SendenView: View {
     /// nahekommt — die Zeichenzahl des Textes sieht man selbst, sie half nicht.
     private var nutzlastText: String {
         nutzlastBytes < 1024 ? "unter 1 KB Nutzlast" : "rund \(nutzlastBytes / 1024) KB Nutzlast"
-    }
-
-    /// `align`/`valign` fuer den Weg „als Text" — dieselbe Wahl aus der
-    /// Formatleiste, nur in den Namen, die das Geraet fuer `text` erwartet (§4.3).
-    private var geraeteAusrichtung: String {
-        switch horizontal { case .links: "left"; case .mittig: "center"; case .rechts: "right" }
-    }
-    private var geraeteVertikal: String {
-        switch vertikal { case .oben: "top"; case .mittig: "middle"; case .unten: "bottom" }
-    }
-
-    /// Der Textblock fuer den Weg „als Text": Groesse, Ausrichtung und Farbe aus
-    /// derselben Formatleiste wie beim eigenen Raster — Schriftart und Fett
-    /// gelten hier nicht, die Uhr setzt ihre eigene Schrift. `zeichenabstand`
-    /// bleibt bei seiner eigenen Vorgabe: „Luecke" ist die Zahl leerer Spalten
-    /// zwischen Zeichen, die wir selbst rastern (siehe oben) — eine andere
-    /// Einheit als `charSpacing` fuer die Gerätschrift, die beiden gleichzusetzen
-    /// waere nur zufaellig richtig.
-    private var textblock: Textblock {
-        var t = Textblock(inhalt: gesendeterText)
-        t.schrifthoehe = Int(groesse)
-        t.x = flaecheX
-        t.y = 0
-        t.farbe = farbeHex
-        t.ausrichtung = geraeteAusrichtung
-        t.vertikal = geraeteVertikal
-        t.flaeche = [flaecheX, 0, flaecheBreite, Pixelfeld.hoeheStandard]
-        return t
     }
 
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
@@ -489,19 +431,14 @@ struct SendenView: View {
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
-            let (text, schrift, groesse, fett, farbe) = (gesendeterText, schrift, groesse, fett, farbeHex)
-            let (schrittweite, bilddauer, versatzY) = (tempo.schrittweite, tempo.bilddauer, textY)
-            let (iconBilder, iconLaeuftMit, luecke) = (iconRaster, iconLaeuftMit, luecke)
+            let (o, iconBilder) = (optionen, iconRaster)
             let (frames, uri) = await Task.detached(priority: .userInitiated) {
-                let frames = Textraster.laufschriftEinzelbilder(
-                    text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe,
-                    schrittweite: schrittweite, bilddauer: bilddauer,
-                    versatzY: versatzY, iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
+                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder)
                 // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
                 // einmal gerastert, sonst liefe die Rechnung zweimal.
                 let uri = (try? Bildraster.alsDatenURI(
                     frames.map(\.pixel), breite: Pixelfeld.breiteStandard,
-                    hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)) ?? ""
+                    hoehe: Pixelfeld.hoeheStandard, verzoegerung: o.tempo.bilddauer)) ?? ""
                 return (frames, uri)
             }.value
             guard !Task.isCancelled else { return }
@@ -620,38 +557,5 @@ struct SendenView: View {
         }
         let anzeigenName = MeldungsplatzWahl.name(fuer: platz)
         Task { await zustand.senden(frame, als: anzeigenName); laeuft = false }
-    }
-
-    /// Baut den Rahmen fuer den gewaehlten Weg. Beim Pixel-Weg zwei Faelle, einer
-    /// je Entscheidung von `passt`: ein starrer `draw`-Rahmen mit dem Icon als
-    /// zweitem Bild, oder ein einziges animiertes GIF, in dem das Icon schon
-    /// steckt. Beim Text-Weg ein `Textblock`, den die Uhr selbst setzt — ein
-    /// gewaehltes Icon kommt auch hier als eigenes Bild dazu, aber nie
-    /// mitlaufend: das Laufen macht dort die Uhr, nicht unsere Laufschrift.
-    private func gebauterRahmen() throws -> Frame {
-        switch weg {
-        case .pixel:
-            guard passt else {
-                let uri = laufschriftURI.isEmpty
-                    ? try Textraster.laufschrift(gesendeterText, schrift: schrift, groesse: groesse, fett: fett,
-                                                 farbe: farbeHex, schrittweite: tempo.schrittweite,
-                                                 bilddauer: tempo.bilddauer, versatzY: textY,
-                                                 iconBilder: iconRaster, iconLaeuftMit: iconLaeuftMit,
-                                                 luecke: luecke)
-                    : laufschriftURI
-                return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
-            }
-            var frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
-            if let icon = gewaehltesIcon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
-            }
-            return frame
-        case .text:
-            var frame = Frame(texte: [textblock], dauer: dauer)
-            if let icon = gewaehltesIcon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
-            }
-            return frame
-        }
     }
 }
