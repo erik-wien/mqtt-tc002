@@ -81,7 +81,7 @@ DYNAMISCH = [
     # sich ohne Bauen/Starten der App nicht pruefen — deshalb hier von Hand
     # eingetragen statt ein wackliges Muster zu bauen.
     r"\(\.$text) an die Uhr schicken",
-    r"Meldung \(\.$platz) von der Uhr nehmen",
+    r"Slot \(\.$platz) von der Uhr nehmen",
 ]
 
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit

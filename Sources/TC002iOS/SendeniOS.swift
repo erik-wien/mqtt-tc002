@@ -203,7 +203,7 @@ struct SendeniOS: View {
 
     private var platzUndDauer: some View {
         HStack(spacing: 12) {
-            Picker("Meldung", selection: $platz) {
+            Picker("Slot", selection: $platz) {
                 ForEach(1...Meldungsplatz.anzahl, id: \.self) { Text(String($0)).tag($0) }
             }
             .pickerStyle(.segmented)

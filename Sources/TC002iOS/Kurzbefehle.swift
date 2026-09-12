@@ -33,7 +33,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Dauer in Sekunden")
     var dauer: Int?
 
-    @Parameter(title: "Meldung", description: "Platz 1 bis 5 auf der Uhr.",
+    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int?
 
@@ -114,7 +114,7 @@ struct MeldungLoeschenIntent: AppIntent {
         "Entfernt eine der fünf Meldungen wieder von der Uhr.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "Meldung", description: "Platz 1 bis 5 auf der Uhr.",
+    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int
 
@@ -122,7 +122,7 @@ struct MeldungLoeschenIntent: AppIntent {
     var uhr: String?
 
     static var parameterSummary: some ParameterSummary {
-        Summary("Meldung \(\.$platz) von der Uhr nehmen") { \.$uhr }
+        Summary("Slot \(\.$platz) von der Uhr nehmen") { \.$uhr }
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -145,7 +145,7 @@ struct MeldungLoeschenIntent: AppIntent {
                     .loeschen(name)
             }
         }.value
-        return .result(dialog: IntentDialog(stringLiteral: lokf("Meldung %d entfernt.", platz)))
+        return .result(dialog: IntentDialog(stringLiteral: lokf("Slot %d entfernt.", platz)))
     }
 }
 

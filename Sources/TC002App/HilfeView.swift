@@ -135,7 +135,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .senden:
             return [
                 .ueberschrift("Meldung und Platz"),
-                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. „Meldung“ ①–⑤ wählt einen von fünf festen Plätzen — der gewählte Platz ist zugleich der Bezeichner, unter dem die Anzeige danach bei „Verlauf“ auftaucht (`meldung1` bis `meldung5`)."),
+                .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. „Slot“ ①–⑤ wählt einen von fünf festen Plätzen — der gewählte Platz ist zugleich der Bezeichner, unter dem die Anzeige danach bei „Verlauf“ auftaucht (`meldung1` bis `meldung5`)."),
                 .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen — ein orange umrandeter Platz ist bereits belegt, ein grau umrandeter frei. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt."),
 
                 .ueberschrift("Weg: als Pixel oder als Text"),
@@ -232,7 +232,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .absatz("„Datei einlesen…“ im selben Blatt nimmt eine GIF-, PNG- oder JPEG-Datei in die Sammlung auf, auf 52×16 gerechnet, ohne Glättung. Danach folgt ein Feld für den Namen, mit dem Dateinamen als Vorschlag. Musste die Datei dafür umgerechnet werden, weil sie eine andere Größe hatte, steht das in der Meldung dazu. Ein animiertes GIF zählt hier nur mit seinem ersten Einzelbild — die Bildersammlung kennt, anders als die Icons, keine Animation."),
 
                 .ueberschrift("Senden"),
-                .absatz("„Meldung“, „Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben — auch hier ersetzt ein erneutes Senden auf denselben Platz die vorherige Anzeige, und auch hier ist der Sendeknopf gesperrt, solange keine Uhr fertig eingerichtet ist; der Hinweis dazu steht darunter. Fehler beim Senden meldet dasselbe Hinweisfenster wie unter „Senden“."),
+                .absatz("„Slot“, „Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben — auch hier ersetzt ein erneutes Senden auf denselben Platz die vorherige Anzeige, und auch hier ist der Sendeknopf gesperrt, solange keine Uhr fertig eingerichtet ist; der Hinweis dazu steht darunter. Fehler beim Senden meldet dasselbe Hinweisfenster wie unter „Senden“."),
                 .absatz("Der Hinweis unter der Malfläche zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Das ändert am Ergebnis nichts, nur an der Größe der Nachricht."),
             ]
         case .icons:

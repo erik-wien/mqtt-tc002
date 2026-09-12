@@ -15,7 +15,7 @@ struct MeldungsplatzWahl: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text("Meldung").font(.caption).foregroundStyle(.secondary)
+            Text("Slot").font(.caption).foregroundStyle(.secondary)
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                 let belegt = belegtePlaetze.contains(i)
                 Button { platz = i } label: {
@@ -58,6 +58,6 @@ struct MeldungLoeschenKnopf: View {
             Image(systemName: "trash")
         }
         .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
-        .help(lokf("Meldung %d auf der Uhr löschen", platz))
+        .help(lokf("Slot %d auf der Uhr löschen", platz))
     }
 }
