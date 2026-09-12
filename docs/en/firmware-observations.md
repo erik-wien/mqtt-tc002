@@ -29,6 +29,7 @@ reference needs changing, and possibly something in the app.
 | 5 | no HTTP route for switching displays | look for an HTTP equivalent of `switchDiyApp` | ❌ |
 | 6 | `customList` over MQTT only | `GET /customList` | ❌ |
 | 7 | built-in font has no umlauts | send `"content":"Grüße"` | ❌ |
+| 8 | clock drops off the network until power-cycled | `curl http://<address>/getBase` | ❌ |
 
 ---
 
@@ -140,6 +141,33 @@ works around it by rasterizing text itself and sending it as pixels. That costs
 payload and rules out the device's own text features.
 
 **Check.** Send `"content":"Grüße"`.
+
+---
+
+## 8. The clock drops off the network and only power cycling brings it back
+
+**Observed on 2026-09-12.** The clock stopped answering any HTTP request — not
+from the app, not from Safari on another device. It became reachable again
+only after being unplugged and restarted. The broker was perfectly reachable
+at the same time, so it was not the network.
+
+**Why it matters, and why it is so hard to see.** In this state the broker
+still accepts publishes and reports success — the clock no longer subscribes
+to anything, and a publish to a topic with no subscriber stays silent in MQTT
+3.1.1 (§3). A sending app therefore sees **no difference between "delivered"
+and "went nowhere"**. We spent an hour looking at the network: local network
+permission, WLAN client isolation, separate subnets, a VPN. None of them was
+it.
+
+**Check.** `curl -s --max-time 3 http://<address>/getBase`. If nothing comes
+back while the broker answers, this is the case. HTTP is the reliable test
+here because it addresses the clock directly instead of going through the
+broker.
+
+**Still open.** Whether the clock falls off the WLAN entirely or only its HTTP
+service hangs is unresolved, as is whether it is still connected to the broker
+in that state. Next time, first check whether the router still lists it as
+connected and whether `customList` still reports anything.
 
 ---
 

@@ -30,6 +30,7 @@ geändert — und womöglich etwas in der App.
 | 5 | kein HTTP-Weg zum Umschalten | HTTP-Entsprechung zu `switchDiyApp` suchen | ❌ |
 | 6 | `customList` nur über MQTT | `GET /customList` | ❌ |
 | 7 | Schrift ohne Umlaute | `"content":"Grüße"` schicken | ❌ |
+| 8 | Uhr wird unerreichbar, bis sie stromlos war | `curl http://<adresse>/getBase` | ❌ |
 
 ---
 
@@ -148,6 +149,33 @@ Pixel schickt; das kostet Nutzlast und schließt die Gerätefunktionen für Text
 aus.
 
 **Prüfung.** `"content":"Grüße"` schicken.
+
+---
+
+## 8. Die Uhr verschwindet aus dem Netz und kommt nur über den Strom zurück
+
+**Am 12.09.2026 beobachtet.** Die Uhr antwortete auf keine HTTP-Anfrage mehr —
+weder aus der App noch aus Safari auf einem anderen Gerät. Erreichbar war sie
+erst wieder, nachdem sie vom Strom getrennt und neu gestartet wurde. Der
+Broker war zur selben Zeit einwandfrei erreichbar, es lag also nicht am Netz.
+
+**Warum das zählt, und warum es so schwer zu sehen ist.** In diesem Zustand
+nimmt der Broker Sendungen weiterhin an und meldet Erfolg — die Uhr abonniert
+ja nichts mehr, und eine Veröffentlichung an ein Thema ohne Abonnenten bleibt
+in MQTT 3.1.1 stumm (§3). Eine sendende App sieht also **keinen Unterschied
+zwischen „angekommen" und „ins Leere gegangen"**. Wir haben eine Stunde im
+Netz gesucht: Freigabe für das lokale Netzwerk, WLAN-Client-Isolation,
+getrennte Teilnetze, ein VPN. Keines davon war es.
+
+**Prüfung.** `curl -s --max-time 3 http://<adresse>/getBase`. Kommt nichts und
+antwortet der Broker gleichzeitig, ist es dieser Fall. HTTP ist dafür der
+verlässliche Test, weil es die Uhr unmittelbar anspricht statt über den
+Broker.
+
+**Was noch offen ist.** Ob die Uhr dabei ganz aus dem WLAN fällt oder nur ihr
+HTTP-Dienst hängt, ist ungeklärt — ebenso, ob sie in diesem Zustand noch am
+Broker angemeldet ist. Beim nächsten Mal zuerst nachsehen, ob sie im Router
+noch als verbunden geführt wird und ob `customList` noch etwas meldet.
 
 ---
 
