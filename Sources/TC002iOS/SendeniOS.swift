@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 import TC002Modell
 
@@ -78,6 +79,94 @@ struct SendeniOS: View {
     private var dauer: Int? {
         guard let n = Int(dauerText.trimmingCharacters(in: .whitespaces)), n > 0 else { return nil }
         return n
+    }
+
+    /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt —
+    /// dieselbe Grundlage wie am Mac (`SendenView.belegtePlaetze`).
+    private var belegtePlaetze: Set<Int> {
+        let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
+        return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
+    }
+
+    /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
+    /// ein Block geprueft wird: die aktive Uhr — dieselbe, die das
+    /// Titelmenue oben zeigt. Nicht `zustand.ziele().first`: das waere bei
+    /// mehreren Zieluhren willkuerlich (dieselbe Korrektur wie in
+    /// `SendenView.swift`, Mac).
+    private var referenzUhr: Uhr? { zustand.aktiveUhr }
+
+    /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
+    /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
+    private var gedaechtnis: Slotgedaechtnis { Slotgedaechtnis() }
+
+    /// Baut aus einem gemerkten Slotstand wieder vollstaendige Optionen —
+    /// oder nil, wenn eine der Kennungen (Weg, Ausrichtung, Tempo) nicht mehr
+    /// zu einem bekannten Fall passt. Dieselbe Rechnung wie am Mac
+    /// (`SendenView.meldungsoptionen(aus:)`).
+    private func meldungsoptionen(aus stand: Slotstand) -> Meldungsoptionen? {
+        guard let weg = SendeWeg(rawValue: stand.weg),
+              let waagrecht = SendenHAusrichtung(rawValue: stand.waagrecht),
+              let senkrecht = SendenVAusrichtung(rawValue: stand.senkrecht),
+              let tempo = Lauftempo(rawValue: stand.tempo) else { return nil }
+        return Meldungsoptionen(text: stand.text, weg: weg, schrift: stand.schrift,
+                                groesse: stand.groesse, fett: stand.fett, farbe: stand.farbe,
+                                grossbuchstaben: stand.grossbuchstaben, waagrecht: waagrecht,
+                                senkrecht: senkrecht, rand: stand.rand, abstand: stand.abstand,
+                                tempo: tempo, iconLaeuftMit: stand.iconLaeuftMit, dauer: stand.dauer)
+    }
+
+    /// Was ein Block zeigt — dieselben drei Faelle wie am Mac
+    /// (`SendenView.slotzustand`): frei, wenn kein Name auf dem Platz liegt;
+    /// sonst die mitgelesenen Pixel, wenn welche da sind; sonst, falls das
+    /// Gedaechtnis einen Text fuer diesen Platz hat, dieselben Pixel neu
+    /// gerechnet ueber `Meldungsbau`.
+    private func slotzustand(_ platz: Int) -> Slotzustand {
+        guard belegtePlaetze.contains(platz) else { return .frei }
+        guard let uhr = referenzUhr else { return .unbekannt }
+        if let bild = zustand.slotInhalt[uhr.id]?[platz] {
+            return .bekannt(bild.pixel)
+        }
+        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
+           let optionen = meldungsoptionen(aus: stand) {
+            return .bekannt(Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh)
+        }
+        return .unbekannt
+    }
+
+    /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
+    /// das belegbar ist: Pixel muessen mitgelesen worden sein, und ihre
+    /// Pruefsumme muss zu den gemerkten Reglern passen. Dieselbe Regel wie am
+    /// Mac (`SendenView.slotWaehlen`).
+    private func slotWaehlen(_ i: Int) {
+        platz = i
+        guard let uhr = referenzUhr,
+              let bild = zustand.slotInhalt[uhr.id]?[i],
+              let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
+              Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
+        else { return }
+        reglerUebernehmen(stand)
+    }
+
+    /// Setzt alle Regler auf den gemerkten Stand — dieselben Felder wie am
+    /// Mac (`SendenView.reglerUebernehmen`).
+    private func reglerUebernehmen(_ stand: Slotstand) {
+        guard let o = meldungsoptionen(aus: stand) else { return }
+        text = o.text
+        weg = o.weg
+        schrift = o.schrift
+        groesse = o.groesse
+        fett = o.fett
+        grossbuchstaben = o.grossbuchstaben
+        rand = o.rand
+        luecke = o.abstand
+        horizontal = o.waagrecht
+        vertikal = o.senkrecht
+        farbeHex = o.farbe
+        tempo = o.tempo
+        iconLaeuftMit = o.iconLaeuftMit
+        dauerText = o.dauer.map(String.init) ?? ""
+        // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon?.nummer)`.
+        gewaehltesIcon = stand.icon.flatMap { nummer in sammlung.alle().first { $0.nummer == nummer } }
     }
 
     /// Die einzige Stelle, an der aus Ansichtszustand ein Auftrag wird.
@@ -251,12 +340,26 @@ struct SendeniOS: View {
         )
     }
 
-    private var platzPicker: some View {
-        Picker("Slot", selection: $platz) {
-            ForEach(1...Meldungsplatz.anzahl, id: \.self) { Text(String($0)).tag($0) }
+    /// Die fuenf Bloecke zeigen, was auf der aktiven Uhr liegt (`referenzUhr`)
+    /// — Antippen waehlt den Platz und stellt, wenn belegbar, die Regler
+    /// wieder her (siehe `slotWaehlen`). Dieselbe Logik wie am Mac
+    /// (`SendenView.swift`), nur ohne die dortige Ziffernreihe, die es hier
+    /// nie gab. Block und Papierkorb sind auf 44×44 fixiert statt nur auf das
+    /// `minWidth`/`minHeight` aus `Slotblock` selbst — das macht die Breite
+    /// der Zeile berechenbar (siehe Bericht zur Breitenrechnung) statt vom
+    /// verfuegbaren Platz abhaengig.
+    private var blockZeile: some View {
+        HStack(spacing: 6) {
+            ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
+                Button { slotWaehlen(i) } label: {
+                    Slotblock(platz: i, zustand: slotzustand(i), gewaehlt: platz == i)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+            }
+            MeldungLoeschenKnopf(zustand: zustand, platz: platz,
+                                 belegt: belegtePlaetze.contains(platz))
         }
-        .pickerStyle(.segmented)
-        .frame(maxWidth: 200)
     }
 
     private var dauerFeld: some View {
@@ -279,19 +382,20 @@ struct SendeniOS: View {
         // Tippen daneben heraus.
     }
 
-    /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus Slot-
-    /// Picker und Dauerfeld nicht mehr nebeneinander in die Bildschirmbreite.
-    /// `ViewThatFits` probiert zuerst die gewohnte Zeile und faellt erst dann
-    /// auf zwei gestapelte Zeilen zurueck, statt am Rand abzuschneiden.
+    /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus
+    /// Blockreihe und Dauerfeld nicht mehr nebeneinander in die
+    /// Bildschirmbreite. `ViewThatFits` probiert zuerst die gewohnte Zeile
+    /// und faellt erst dann auf zwei gestapelte Zeilen zurueck, statt am Rand
+    /// abzuschneiden.
     private var platzUndDauer: some View {
         ViewThatFits {
             HStack(spacing: 12) {
-                platzPicker
+                blockZeile
                 dauerFeld
             }
             .padding(.horizontal)
             VStack(alignment: .leading, spacing: 8) {
-                platzPicker
+                blockZeile
                 dauerFeld
             }
             .padding(.horizontal)
@@ -599,6 +703,37 @@ struct SendeniOS: View {
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
+    }
+}
+
+/// Loescht den gewaehlten Meldungsplatz auf den gewaehlten Uhren — dieselbe
+/// Bauart wie `MeldungLoeschenKnopf` in `SendenView.swift` (Mac), als eigene
+/// Kopie: `TC002App` (Mac) und `MQTT-TC002-iOS` sind getrennte ausfuehrbare
+/// Ziele, keins kann Typen vom anderen einbinden. Die 44×44-Trefferflaeche
+/// kommt dazu, wie bei den uebrigen Symbolknoepfen dieser Datei (siehe
+/// `formatleiste`) — am Mac reicht die Knopfgroesse von selbst, ein Zeiger
+/// trifft auch kleine Ziele.
+private struct MeldungLoeschenKnopf: View {
+    @Bindable var zustand: AppZustand
+    let platz: Int
+    /// Ein leerer Platz laesst sich nicht loeschen. Woher das bekannt ist,
+    /// steht bei `belegtePlaetze`: gemeldet schlaegt gemerkt.
+    let belegt: Bool
+
+    @State private var laeuft = false
+
+    var body: some View {
+        Button {
+            laeuft = true
+            let name = Meldungsplatz.name(fuer: platz)
+            Task { await zustand.loeschen(name); laeuft = false }
+        } label: {
+            Image(systemName: "trash")
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
+        .accessibilityLabel(Text(lokf("Slot %d auf der Uhr löschen", platz)))
     }
 }
 

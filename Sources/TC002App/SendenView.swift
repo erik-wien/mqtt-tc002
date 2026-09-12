@@ -86,8 +86,10 @@ struct SendenView: View {
     /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
     /// ein Block geprueft wird. Bei mehreren Zieluhren (siehe `belegtePlaetze`,
     /// das ueber alle summiert) bliebe sonst offen, wessen Slotbild und wessen
-    /// gemerkte Regler gelten sollen — hier zaehlt die erste gewaehlte Uhr.
-    private var referenzUhr: Uhr? { zustand.ziele().first }
+    /// gemerkte Regler gelten sollen — hier zaehlt die aktive Uhr, dieselbe,
+    /// die die Zielauswahl oben und (am iPhone) das Titelmenue zeigen. Nicht
+    /// `zustand.ziele().first`: das waere bei mehreren Zieluhren willkuerlich.
+    private var referenzUhr: Uhr? { zustand.aktiveUhr }
 
     /// Je Uhr eine Datei unter Application Support — wie `sammlung` oben ohne
     /// eigenen gehaltenen Zustand, deshalb bei jedem Zugriff neu gebaut.
