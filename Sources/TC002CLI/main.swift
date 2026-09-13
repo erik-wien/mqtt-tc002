@@ -55,10 +55,15 @@ Zu lange Texte laufen von selbst durch; das macht die App genauso.
 """
 
 /// Das Icon, das gemeint ist — oder eine Meldung, warum es das nicht gibt.
-func iconSuchen(_ nummer: String?, in sammlung: Iconsammlung) throws -> Icon? {
+///
+/// Gesucht wird in **beiden** Bestaenden (`Iconbestaende`); bis heute sah das
+/// Werkzeug nur die 8×8 und meldete „Kein Icon", obwohl es das Icon gab. Ein
+/// 16×16 hat keine LaMetric-Nummer — dort ist der Dateiname der Schluessel,
+/// und darum spricht die Meldung von „Nummer oder Name".
+func iconSuchen(_ nummer: String?, in bestaende: [Iconsammlung]) throws -> Icon? {
     guard let nummer else { return nil }
-    guard let icon = sammlung.alle().first(where: { $0.nummer == nummer }) else {
-        throw Abbruch(lokf("Kein Icon mit der Nummer „%@“. „mqtttc002 icons“ zeigt alle.", nummer))
+    guard let icon = Iconbestaende.suchen(nummer, in: bestaende) else {
+        throw Abbruch(lokf("Kein Icon mit der Nummer oder dem Namen „%@“. „mqtttc002 icons“ zeigt alle.", nummer))
     }
     return icon
 }
@@ -94,13 +99,18 @@ func lauf() throws {
     let einstellungen = Einstellungen.gelesen()
 
     if case .icons = optionen.befehl {
-        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
-        let alle = sammlung.alle().sorted { $0.nummer.localizedStandardCompare($1.nummer) == .orderedAscending }
+        let alle = Iconbestaende.alle().flatMap { $0.alle() }
+            .sorted { $0.nummer.localizedStandardCompare($1.nummer) == .orderedAscending }
         guard !alle.isEmpty else {
             print(lok("Keine Icons. Die App legt beim ersten Start einen Grundschatz an."))
             return
         }
-        for icon in alle { print("\(icon.nummer)\t\(icon.name)") }
+        // Dritte Spalte, weil die Liste jetzt zwei Bestaende zeigt: Ohne sie
+        // waere nicht zu sehen, welches der Eintraege ein LaMetric-Icon mit
+        // Nummer ist und welcher ein eigenes 16×16 mit Dateinamen. Angehaengt,
+        // nicht dazwischengeschoben — wer bisher Spalte 1 und 2 auswertet,
+        // liest weiter dasselbe.
+        for icon in alle { print("\(icon.nummer)\t\(icon.name)\t\(icon.kante)×\(icon.kante)") }
         return
     }
 
@@ -161,7 +171,7 @@ func lauf() throws {
     }
 
     let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
-    let icon = try iconSuchen(optionen.iconNummer, in: sammlung)
+    let icon = try iconSuchen(optionen.iconNummer, in: Iconbestaende.alle())
 
     /// Fuehrt eine Sendung an jede gewaehlte Uhr aus und zaehlt, was schiefging.
     func anAlle(_ was: String, _ tun: (Anzeigen, Uhr) throws -> Void) throws {

@@ -366,7 +366,7 @@
 "„%@“ ist keine Farbe der Form #RRGGBB." = "\"%@\" is not a color of the form #RRGGBB.";
 "Was soll gesendet werden? Text als letztes Wort angeben." = "What should be sent? Give the text as the last word.";
 /* main.swift */
-"Kein Icon mit der Nummer „%@“. „mqtttc002 icons“ zeigt alle." = "No icon with the number \"%@\". \"mqtttc002 icons\" shows them all.";
+"Kein Icon mit der Nummer oder dem Namen „%@“. „mqtttc002 icons“ zeigt alle." = "No icon with the number or name \"%@\". \"mqtttc002 icons\" shows them all.";
 "Keine Icons. Die App legt beim ersten Start einen Grundschatz an." = "No icons. The app creates a starter set on first launch.";
 "Keine Uhr eingerichtet. In der App unter „Einstellungen“ eine anlegen." = "No clock set up. Create one in the app under Settings.";
 "noch nicht abgefragt" = "not queried yet";
@@ -485,7 +485,7 @@
 "Entfernt eine der fünf Meldungen wieder von der Uhr." = "Removes one of the five messages from the clock.";
 "Meldung schicken" = "Send message";
 "Meldung nehmen" = "Remove message";
-"Kein Icon mit der Nummer %@. In der App unter „Icon“ nachsehen." = "No icon with the number %@. Check under “Icon” in the app.";
+"Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen." = "No icon with the number or name %@. Check under “Icon” in the app.";
 "An %@ geschickt." = "Sent to %@.";
 "Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“." = "No clock set up yet. That's done in the app under “Settings”.";
 "Keine Uhr namens %@." = "No clock named %@.";

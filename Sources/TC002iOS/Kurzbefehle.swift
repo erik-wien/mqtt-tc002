@@ -133,10 +133,26 @@ struct MeldungSendenIntent: AppIntent {
 
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])
+        // **Beide Bestaende.** Die App durchsucht seit jeher die kanonischen
+        // 8×8 *und* die eigenen 16×16 (`SendenView.sammlungen`); der Kurzbefehl
+        // sah bis heute nur den ersten und meldete „Kein Icon", obwohl es das
+        // Icon gab. Fuer `Meldungsbau.rahmen` bleibt `sammlung` die richtige:
+        // Der liest daraus nur die Daten-URI der Datei, und die haengt am Icon
+        // (`Icon.datei`, `Icon.kante`), nicht am Ordner.
         var icon: Icon?
         if let nummer = iconNummer?.trimmingCharacters(in: .whitespaces), !nummer.isEmpty {
-            guard let gefunden = sammlung.alle().first(where: { $0.nummer == nummer }) else {
-                throw $iconNummer.needsValueError(IntentDialog(stringLiteral: lokf("Kein Icon mit der Nummer %@. In der App unter „Icon“ nachsehen.", nummer)))
+            // Ein 16×16 hat keine LaMetric-Nummer; dort ist der Dateiname der
+            // Schluessel. Darum sucht beides ueber dasselbe Feld, und die
+            // Rueckfrage spricht von „Nummer oder Name".
+            // `sammlung` statt `Iconbestaende.alle()`: Der Kurzbefehl liest
+            // zusaetzlich `Iconordner.mitgeliefert` mit, die App tut das nicht.
+            // Der Unterschied wird hier nicht angetastet — er gehoert nicht zu
+            // dieser Aenderung, und ihn beilaeufig einzuebnen hiesse, ueber
+            // geloeschte Grundschatz-Icons zu entscheiden, ohne gefragt zu sein.
+            guard let gefunden = Iconbestaende.suchen(
+                nummer, in: [sammlung, Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
+            ) else {
+                throw $iconNummer.needsValueError(IntentDialog(stringLiteral: lokf("Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen.", nummer)))
             }
             icon = gefunden
         }
