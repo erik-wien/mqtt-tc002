@@ -31,9 +31,20 @@ geschickt werden, sondern **einmal zusammengerechnet**.
 
 ## Was vorher zu klaeren ist
 
-- **Wo der Text dann steht.** Ein Rahmen nimmt Zeilen und Spalten weg; `rand`
-  und `abstand` muessten sich danach richten, sonst schreibt der Text ueber den
-  Rahmen. **Das ist der eigentliche Entwurf**, nicht das Zeichnen.
+- **Wo der Text dann steht — und der Auftraggeber hat es bereits geloest:**
+  *„Damit sollten wir gut zurechtkommen, wenn wir 8×8-Grafiken und
+  <12px-Schriften verwenden. Das einzig Spezielle ist, dass das Icon ein
+  bisschen nach rechts ruecken muesste. Der Rest ist Standard."*
+
+  Ein Rahmen ist damit **ein Einzug**, kein neuer Satzspiegel: Alles wird in das
+  um die Rahmenstaerke verkleinerte Feld gerechnet, statt in die volle Anzeige.
+  `Meldungsbau` hat die Stellen schon — `flaecheX`, `flaecheBreite`,
+  `iconY(kante:)`, `iconBreite(kante:)`; sie bekommen den Einzug hereingereicht,
+  statt von 0 und 52 auszugehen.
+
+  Gilt bei 8×8-Icons und Schriften unter 12 Pixeln. **Was bei groesseren
+  geschieht, gehoert entschieden** — sperren, warnen, oder den Rahmen
+  ausschliessen.
 - **Animierte Rahmen** treffen Firmwarebeobachtung 3: Die Uhr setzt
   GIF-Verfahren 1 („nur den geaenderten Ausschnitt") nicht um. Ein Laufrahmen
   um stehenden Text braeuchte also je Einzelbild das **ganze** Feld — und das
