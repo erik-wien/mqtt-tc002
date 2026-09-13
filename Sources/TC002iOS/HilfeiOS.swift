@@ -47,6 +47,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case verbindung = "Einstellungen"
     case senden = "Senden"
     case anzeigen = "Verlauf"
+    case kurzbefehle = "Kurzbefehle"
     case fehlersuche = "Wenn nichts erscheint"
 
     var id: String { rawValue }
@@ -143,6 +144,26 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.verlaufLoeschen
                 + HilfeInhalt.protokollListe
                 + HilfeInhalt.protokollLeeren
+        case .kurzbefehle:
+            return [
+                .absatz("Die App bringt zwei Kurzbefehle mit: „Meldung schicken“ und „Meldung nehmen“. Beide stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
+
+                .ueberschrift("Meldung schicken"),
+                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
+                .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
+
+                .ueberschrift("Die Formatangaben"),
+                .absatz("Weg, Schriftart, Farbe, die beiden Ausrichtungen und das Tempo sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett, Großbuchstaben und „Icon mitscrollen“ sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier."),
+                .absatz("Die Farbe ist eine Liste aus zehn Tönen, kein Farbrad: In einem Kurzbefehl bliebe nur ein Feld für einen Hexwert, und ein Tippfehler darin fiele niemandem auf. Wer einen anderen Ton braucht, stellt ihn in der App ein und gibt im Kurzbefehl keine Farbe an."),
+
+                .ueberschrift("Größe im Kurzbefehl"),
+                .absatz("Angeboten werden nur die Größen, die die App zu dieser Schriftart anbietet. Steht die verlangte nicht darauf, sendet der Kurzbefehl nicht, sondern fragt noch einmal und nennt die möglichen. Stillschweigend die nächstbeste zu nehmen hieße, etwas anderes zu senden, als im Kurzbefehl steht — und niemand sähe es."),
+                .absatz("Wer nur die Schriftart wechselt und keine Größe angibt, bekommt die nächstgelegene ihrer Liste — genau wie beim Umschalten der Schriftart in der App."),
+
+                .ueberschrift("Meldung nehmen"),
+                .absatz("Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten."),
+                .absatz("Beide Kurzbefehle schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
+            ]
         case .fehlersuche:
             return HilfeInhalt.fehlerStille
                 + [
