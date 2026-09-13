@@ -274,7 +274,8 @@ public struct SendenView: View {
     /// Die Zahl, an der man merkt, ob man der ungeklaerten Grenze der Uhr
     /// nahekommt — die Zeichenzahl des Textes sieht man selbst, sie half nicht.
     private var nutzlastText: String {
-        nutzlastBytes < 1024 ? "unter 1 KB Nutzlast" : "rund \(nutzlastBytes / 1024) KB Nutzlast"
+        nutzlastBytes < 1024 ? lok("unter 1 KB Nutzlast")
+                             : lokf("rund %d KB Nutzlast", nutzlastBytes / 1024)
     }
 
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
@@ -538,8 +539,8 @@ public struct SendenView: View {
                 }
                 .pickerStyle(.segmented).labelsHidden()
                 .disabled(!(weg == .pixel && !passt))
-                .help(weg == .pixel && !passt ? "Wie schnell der Text durchläuft."
-                                              : "Gilt nur, wenn der Text nicht ins Display passt.")
+                .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft.")
+                                              : lok("Gilt nur, wenn der Text nicht ins Display passt."))
             }
 
             Section("Icon") {
@@ -568,8 +569,8 @@ public struct SendenView: View {
                     }
                 }
                 .disabled(weg == .text)
-                .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
-                                   : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+                .help(weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
+                                   : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                 // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                 // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -723,8 +724,13 @@ public struct SendenView: View {
     /// Die **eine** Haupthandlung dieser Ansicht. Gesperrt bleibt sie
     /// sichtbar abgeblendet stehen, nicht verschwunden — wie „Verbinden …"
     /// neben „Fertig" in der Vorlage.
+    /// `lok` in beiden Zweigen: Ein Ternaer mit zwei blanken `String`-Zweigen
+    /// zwingt SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt
+    /// nichts nach — beide Woerter stuenden in `en.lproj` und blieben auf
+    /// einem englischen Geraet trotzdem deutsch. `--pruefen` sieht das nicht,
+    /// weil die Schluessel ja da sind (so wie es der Editor schon macht).
     private var sendeKnopf: some View {
-        Button(laeuft ? "Sende…" : "Senden") { senden() }
+        Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
             .knopfHaupthandlung()
             .keyboardShortcut(.defaultAction)
             .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
