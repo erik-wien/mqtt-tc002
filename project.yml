@@ -72,6 +72,23 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_ASSET_PATHS: ""
+        # **Erst eintragen, wenn der Behaelter im Entwicklerkonto steht.**
+        # Nachgemessen am 14.09.2026: Ein Simulatorbau gelingt auch mit dieser
+        # Zeile — dort wird ad hoc signiert und kein Profil geprueft. Ein Bau
+        # **aufs Geraet** braucht ein Bereitstellungsprofil, das den Behaelter
+        # `iCloud.cloud.eriks.mqtt-tc002` enthaelt; gibt es ihn im Konto nicht,
+        # schlaegt das Signieren fehl. Bis dahin bleibt die Zeile
+        # auskommentiert, und die App arbeitet oertlich
+        # (`Ablageort.behaelterErmitteln` liefert `nil` — der vorgesehene
+        # Normalfall, kein Fehler).
+        #
+        # **Und sie gehoert hierher, nicht in Xcode.** Wer die Faehigkeit
+        # „iCloud" im Xcode-Blatt „Signing & Capabilities" einschaltet,
+        # schreibt in die `.xcodeproj` — die ist nicht eingecheckt und wird
+        # beim naechsten `xcodegen generate` ueberschrieben. Xcode ist der Weg,
+        # den Behaelter im **Konto** anzulegen; eingetragen wird er hier.
+        #
+        #   CODE_SIGN_ENTITLEMENTS: Resources/MQTT-TC002.entitlements
     info:
       # NICHT nach build/ — das ist das Ausgabeverzeichnis der Mac-App, und
       # `release.sh` raeumt es mit `rm -rf` ab. Diese Datei ist aber eine
@@ -102,3 +119,13 @@ targets:
         # dem Mac.
         NSLocalNetworkUsageDescription: >-
           Die App spricht die Pixeluhr und den MQTT-Broker in Ihrem Heimnetz an.
+        # Damit der Behaelter in „Dateien" und in iCloud Drive auftaucht, statt
+        # unsichtbar zu bleiben: Icons und Bilder werden als GIF gesichert,
+        # gerade damit man sie auch ausserhalb der App sieht — im Behaelter
+        # soll das so bleiben. Der Schluessel schadet nichts, solange es den
+        # Behaelter nicht gibt; er beschreibt nur, wie er heissen soll.
+        NSUbiquitousContainers:
+          iCloud.cloud.eriks.mqtt-tc002:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: MQTT-TC002
+            NSUbiquitousContainerSupportedFolderLevels: Any

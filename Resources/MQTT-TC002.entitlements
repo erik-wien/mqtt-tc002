@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Die Berechtigungen fuer den iCloud-Abgleich. Sie liegen hier als Datei,
+	  weil sie ohne Entwicklerkonto nicht wirksam werden koennen: Der Behaelter
+	  „iCloud.cloud.eriks.mqtt-tc002" muss im Konto angelegt und in einem
+	  Bereitstellungsprofil enthalten sein. Ohne das liefert
+	  FileManager.url(forUbiquityContainerIdentifier:) `nil` — und die App
+	  arbeitet weiter oertlich, ohne Fehler.
+
+	  Der Wert von ubiquity-kvstore-identifier ist die Teamkennung vor der
+	  Buendelkennung. Xcode setzt dort dieselben Platzhalter ein; hier stehen
+	  sie ausgeschrieben, damit die Datei auch ausserhalb von Xcode taugt
+	  (build.sh signiert damit).
+	-->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.cloud.eriks.mqtt-tc002</string>
+	</array>
+	<key>com.apple.developer.ubiquity-container-identifiers</key>
+	<array>
+		<string>iCloud.cloud.eriks.mqtt-tc002</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudDocuments</string>
+	</array>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>25ZK4SS655.cloud.eriks.mqtt-tc002</string>
+</dict>
+</plist>

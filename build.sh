@@ -153,6 +153,21 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSLocalNetworkUsageDescription</key><string>Die App spricht die Pixeluhr und den MQTT-Broker in Ihrem Heimnetz an.</string>
+    <!-- Derselbe Eintrag wie in project.yml fuer iOS: Damit der iCloud-Behaelter
+         in iCloud Drive auftaucht und einen Namen hat, statt unsichtbar zu
+         bleiben. Icons und Bilder werden als GIF gesichert, gerade damit man
+         sie auch ausserhalb der App sieht — im Behaelter soll das so bleiben.
+         Ohne registrierten Behaelter beschreibt der Schluessel nur etwas, das
+         es nicht gibt, und schadet nichts. -->
+    <key>NSUbiquitousContainers</key>
+    <dict>
+        <key>iCloud.cloud.eriks.mqtt-tc002</key>
+        <dict>
+            <key>NSUbiquitousContainerIsDocumentScopePublic</key><true/>
+            <key>NSUbiquitousContainerName</key><string>MQTT-TC002</string>
+            <key>NSUbiquitousContainerSupportedFolderLevels</key><string>Any</string>
+        </dict>
+    </dict>
 ${ICON_EINTRAEGE}
 </dict>
 </plist>
@@ -177,6 +192,34 @@ cp LICENSE "$APP/Contents/Resources/LICENSE"
 # Bevorzugt die Developer ID, weil release.sh dieselbe nimmt. Zwei verschiedene
 # Identitaeten waeren fuer den Schluesselbund zwei verschiedene Programme, und er
 # fragt bei jedem Wechsel erneut nach dem Broker-Kennwort.
+# Die Berechtigungen fuer den iCloud-Abgleich — **nur auf Verlangen**.
+#
+# `Resources/MQTT-TC002.entitlements` liegt im Baum, wird aber nicht von selbst
+# benutzt: `com.apple.developer.icloud-*` sind eingeschraenkte Berechtigungen,
+# die Apple nur ueber ein Bereitstellungsprofil erteilt. Ohne Profil signiert
+# codesign entweder gar nicht oder das System ignoriert sie stillschweigend —
+# und dann gaebe es einen Bau, der laut Signatur iCloud kann und es doch nicht
+# tut. Solange TC002_ENTITLEMENTS leer ist, bleibt alles wie bisher; die App
+# arbeitet dann oertlich, was der vorgesehene Normalfall ist.
+#
+#   TC002_PROFIL=~/Downloads/MQTT_TC002.provisionprofile \
+#   TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements ./build.sh
+#
+# **Auch das Werkzeug bekommt sie.** `mqtttc002` faehrt im Buendel mit und
+# liest denselben Bestand; ohne dieselben Berechtigungen saehe es den
+# iCloud-Behaelter nicht und schriebe seine Slots weiter auf die Platte —
+# ein Werkzeug, das andere Meldungen sieht als die App.
+BERECHTIGUNGEN="${TC002_ENTITLEMENTS:-}"
+if [ -n "$BERECHTIGUNGEN" ] && [ ! -f "$BERECHTIGUNGEN" ]; then
+    echo "Fehler: TC002_ENTITLEMENTS zeigt auf keine Datei: $BERECHTIGUNGEN" >&2
+    exit 1
+fi
+# Ein Bereitstellungsprofil gehoert ins Buendel, sonst erteilt macOS die
+# eingeschraenkten Berechtigungen nicht — und zwar **vor** dem Signieren.
+if [ -n "${TC002_PROFIL:-}" ]; then
+    cp "$TC002_PROFIL" "$APP/Contents/embedded.provisionprofile"
+fi
+
 SIGNATUR="${TC002_SIGNATUR:-}"
 if [ -z "$SIGNATUR" ]; then
     SIGNATUR=$(security find-identity -v -p codesigning \
@@ -187,10 +230,14 @@ if [ -z "$SIGNATUR" ] && security find-certificate -c "MQTT-TC002" >/dev/null 2>
 fi
 # Das mitreisende Werkzeug ist eine eigene Mach-O-Datei und muss vor dem
 # Buendel signiert werden — danach besiegelt die Signatur des Buendels es mit.
+BERECHTIGUNGSARGUMENT=""
+[ -n "$BERECHTIGUNGEN" ] && BERECHTIGUNGSARGUMENT="--entitlements $BERECHTIGUNGEN"
 if [ -n "$SIGNATUR" ]; then
-    codesign --force -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
+    # shellcheck disable=SC2086
+    codesign --force $BERECHTIGUNGSARGUMENT -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
 fi
-if [ -n "$SIGNATUR" ] && codesign --force -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
+# shellcheck disable=SC2086
+if [ -n "$SIGNATUR" ] && codesign --force $BERECHTIGUNGSARGUMENT -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
     echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
 else
     echo "Hinweis: keine Signieridentitaet gefunden, die App bleibt ad hoc signiert." >&2
