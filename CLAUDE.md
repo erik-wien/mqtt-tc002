@@ -29,6 +29,16 @@ ist und bei einem Update nachzuprüfen wäre, in
   iPhone-Fassung nicht ein, und sie warnt vor unbekannten Zeichen nicht.
   Ein zweiter Satz mit derselben Aussage wäre ein zweiter
   Übersetzungsschlüssel; deshalb Konstanten statt zweimal geschrieben.
+- **Das Repo ist öffentlich.** Vor jedem Commit läuft
+  `scripts/private-spuren.sh` als Haken (`core.hooksPath=.githooks`) und sucht
+  in den vorgemerkten Zeilen nach Hausnetzangaben und Geheimnissen. Zweimal sind
+  solche Angaben über Planpapiere unter `docs/superpowers/` hereingekommen —
+  einmal zwei Adressen, einmal ein wörtlicher Geräteabzug mit MAC und
+  WLAN-Namen. Das ist die Bauart, nicht ein Versehen: Wer misst, schreibt auf,
+  was er sieht. **Messwerte gehören in die Doku, Kennungen nicht** — Adressen,
+  MAC, Host- und Netznamen durch Platzhalter ersetzen.
+  Ein frisch geklonter Baum hat den Haken nicht; einmalig
+  `git config core.hooksPath .githooks`.
 - Das echte Gerät und der Broker im Hausnetz sind in Tests tabu — ebenso in
   jeder Arbeit, die ein Agent ausführt. Ihre Adressen stehen in den
   Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
