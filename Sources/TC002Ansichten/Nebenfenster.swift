@@ -15,7 +15,12 @@ import TC002Core
 /// `allCases` auf. Ein fünftes Dokument kommt damit auf beiden Geräten an oder
 /// auf keinem.
 public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
-    case ueber = "Über MQTT-TC002"
+    /// Nur „Über", nicht „Über MQTT-TC002": Der Name steht gleich darunter im
+    /// Inhalt noch einmal — am iPad in der Kopfzeile über der Einblendung, am
+    /// Mac in der Titelleiste unmittelbar über derselben Überschrift. Der
+    /// Menüeintrag im Programmmenü heißt weiterhin „Über MQTT-TC002", wie es
+    /// am Mac üblich ist; er steht als eigener Wortlaut in `App.swift`.
+    case ueber = "Über"
     case hilfe = "Hilfe"
     case geraetereferenz = "Gerätereferenz"
     case schriftprobe = "Schriftprobe"

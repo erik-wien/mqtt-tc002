@@ -18,6 +18,8 @@
 "gelöscht: %@" = "deleted: %@";
 /* App.swift */
 "Über MQTT-TC002" = "About MQTT-TC002";
+/* Nebenfenster.swift — Titel des Ueber-Fensters (Mac) bzw. seiner Kopfzeile (iPad) */
+"Über" = "About";
 "MQTT-TC002-Hilfe" = "MQTT-TC002 Help";
 "Gerätereferenz" = "Device Reference";
 "Eigene Icons im Finder zeigen" = "Show My Icons in Finder";

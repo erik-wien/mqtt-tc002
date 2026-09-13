@@ -72,7 +72,7 @@ DYNAMISCH = [
     # Literal in einem Menueeintrag oder Knopf — verlassen darf sich darauf
     # niemand: Faellt der Knopf weg, faende der Sammler den Schluessel nicht
     # mehr, und das Fenster hiesse auf einem englischen Geraet deutsch.
-    "Über MQTT-TC002", "Hilfe", "Gerätereferenz", "Schriftprobe",
+    "Über", "Hilfe", "Gerätereferenz", "Schriftprobe",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
