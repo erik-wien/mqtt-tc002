@@ -155,6 +155,12 @@ public struct UeberView: View {
     /// Ein Knopf, der wie ein Verweis aussieht — den Stil `.link` gibt es nur
     /// unter macOS; am Telefon ist die Vorgabe schon ein blauer Text.
     ///
+    /// **Bleibt auch nach dem Knopfdurchgang ein Verweis.** „Lizenztext…"
+    /// steht mitten in einer Zeile neben echten Verweisen („Micro 5",
+    /// „Silkscreen", „Tiny5"); ein grauer Kasten mitten im Satz risse die
+    /// Zeile auf. Ausdruecklich `.automatic` statt gar nichts, damit die
+    /// Entscheidung im Quelltext steht und nicht bloss in diesem Absatz.
+    ///
     /// Die Beschriftung kommt schon übersetzt herein (`lok(…)`): Ein `String`
     /// an `Button` trifft die Überladung, die nichts nachschlägt, und der
     /// Textsammler fände eine Zeichenkette in diesem eigenen Aufruf ohnehin
@@ -164,7 +170,7 @@ public struct UeberView: View {
         #if canImport(AppKit)
         Button(titel, action: aktion).buttonStyle(.link)
         #else
-        Button(titel, action: aktion)
+        Button(titel, action: aktion).buttonStyle(.automatic)
         #endif
     }
 
@@ -206,6 +212,7 @@ private struct LizenztextView: View {
             HStack {
                 Spacer()
                 Button("Fertig", action: dismiss)
+                    .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
             }
             .padding(12)

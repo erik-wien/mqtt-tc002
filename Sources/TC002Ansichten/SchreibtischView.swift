@@ -204,7 +204,14 @@ private struct NebenfensterSchirm: View {
                 // `verbatim`, sonst würde ein zweites Mal nachgeschlagen.
                 Text(verbatim: fenster.titel).font(.headline)
                 Spacer()
-                Button("Fertig") { schliessen() }.fontWeight(.semibold)
+                // Das „Fertig" einer Navigationsleiste, nur von Hand
+                // gezeichnet (warum, steht oben) — deshalb der Kanon der
+                // Leiste und nicht der eines Befehlsknopfs: blosse Schrift,
+                // halbfett. Ausdruecklich `.automatic`, damit die
+                // Entscheidung im Quelltext steht.
+                Button("Fertig") { schliessen() }
+                    .buttonStyle(.automatic)
+                    .fontWeight(.semibold)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
