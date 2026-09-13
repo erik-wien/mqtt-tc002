@@ -129,6 +129,18 @@ if [ ! -s "$APP/LICENSE" ]; then
     fehlt=1
 fi
 
+# Die Geraetereferenz in beiden Sprachen — dieselbe Pflicht wie am Mac.
+# `GeraeteReferenzView` sucht sie ueber `Bundle.main.resourceURL` in der
+# Buendelwurzel; fehlt sie, steht statt des Dokuments ein Fehlerschirm, der
+# aufs Bauen mit ./build.sh verweist und damit am iPhone in die falsche
+# Richtung zeigt. Ein gruener Bau sagt darueber nichts.
+for dok in tc002-protokoll.md tc002-protocol.md; do
+    if [ ! -s "$APP/$dok" ]; then
+        echo "fehlt   $dok"
+        fehlt=1
+    fi
+done
+
 for ofl in OFL-Micro5.txt OFL-Silkscreen.txt OFL-Tiny5.txt; do
     if [ ! -s "$APP/Schriften/$ofl" ]; then
         echo "fehlt   Schriften/$ofl"

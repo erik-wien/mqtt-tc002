@@ -43,6 +43,17 @@ targets:
       # braucht deshalb ihre eigene Zeile. Am Mac tut dasselbe `build.sh`.
       - path: LICENSE
         buildPhase: resources
+      # Die Geraetereferenz, beide Sprachen. `GeraeteReferenzView` liegt seit
+      # dem Umzug in `TC002Ansichten` und wird damit auch fuers iPhone
+      # uebersetzt; sie sucht das Dokument in der Buendelwurzel und zeigt sonst
+      # einen Fehlerschirm, der aufs Bauen mit ./build.sh verweist — am iPhone
+      # eine Begruendung in die falsche Richtung. Einzelne Dateien, kein
+      # `type: folder`: Sie sollen in der Wurzel liegen, nicht in `docs/`. Am
+      # Mac kopiert `build.sh` dieselben zwei.
+      - path: docs/tc002-protokoll.md
+        buildPhase: resources
+      - path: docs/en/tc002-protocol.md
+        buildPhase: resources
     dependencies:
       - package: TC002
         product: TC002Core
