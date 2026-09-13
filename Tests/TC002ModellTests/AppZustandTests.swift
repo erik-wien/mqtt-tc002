@@ -199,6 +199,61 @@ final class AppZustandTests: XCTestCase {
                        "Das Bild der ersten Uhr darf nicht für die aktive Uhr einstehen.")
     }
 
+    /// Der eine Griff des iPhone-Titelmenues: Umschalten wechselt die
+    /// angesehene Uhr **und** das Sendeziel. Setzte es nur `zielIDs` — so war
+    /// es —, zeigten die fuenf Bloecke weiter den Stand der vorigen Uhr,
+    /// waehrend an die neue gesendet wird.
+    func testUmschaltenNimmtBloeckeUndZielMit() throws {
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(a.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let aufA = Meldungsbau.feld(Meldungsoptionen(text: "auf a"), mitIcon: false).punkteRoh
+        let aufB = Meldungsbau.feld(Meldungsoptionen(text: "auf b"), mitIcon: false).punkteRoh
+        XCTAssertNotEqual(aufA, aufB, "Sonst könnte der Test gar nicht unterscheiden.")
+
+        let zustand = AppZustand()
+        zustand.slotInhalt[a.id] = [1: Slotbild(pixel: aufA)]
+        zustand.slotInhalt[b.id] = [1: Slotbild(pixel: aufB)]
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufA))
+
+        zustand.uhrAnsehen(b.id)
+
+        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufB),
+                       "Die Blöcke müssen der angesehenen Uhr folgen, nicht der vorher angesehenen.")
+        XCTAssertEqual(zustand.ziele(), [b],
+                       "Wer am Telefon umschaltet, sendet auch dorthin.")
+    }
+
+    /// Beim Senden an mehrere Uhren laesst das Umschalten die Zielmenge
+    /// stehen — sonst schruempfte „an alle“ beim blossen Nachsehen unbemerkt
+    /// auf eine Uhr zusammen. Angesehen wird trotzdem die neue, und das
+    /// Abschalten faellt auf genau sie zurueck, nie auf eine leere Menge.
+    func testUmschaltenLaesstMehrereZieleStehen() throws {
+        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(a.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
+
+        let zustand = AppZustand()
+        XCTAssertFalse(zustand.anMehrereUhren)
+        zustand.anMehrereUhren = true
+        XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
+
+        zustand.uhrAnsehen(b.id)
+
+        XCTAssertEqual(zustand.aktiveID, b.id)
+        XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]),
+                       "Nachsehen darf die Zielmenge nicht zusammenstreichen.")
+
+        zustand.anMehrereUhren = false
+        XCTAssertEqual(zustand.zielIDs, [b.id],
+                       "Abschalten fällt auf die angesehene Uhr zurück, nicht auf die vorige.")
+    }
+
     /// Eine Uhr, eine Zieluhr, sie selbst aktiv — die uebliche Buehne fuer die
     /// Bloecke. Sie steht in den Einstellungen des Testprozesses, weil
     /// `AppZustand.init` von dort liest; `zielIDs` ausdruecklich, damit kein

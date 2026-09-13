@@ -238,6 +238,50 @@ public final class AppZustand {
     /// ein Block die Pixel der einen und stellt die Regler der anderen her.
     public var referenzUhr: Uhr? { aktiveUhr }
 
+    /// Wechselt die angesehene Uhr — und mit ihr das Sendeziel, solange nicht
+    /// an mehrere gesendet wird.
+    ///
+    /// Fuer das Titelmenue der iPhone-Fassung, die **einen** Griff dafuer hat:
+    /// Auf 393 Punkten Breite waeren eine Ziel- und eine Ansichtsauswahl
+    /// nebeneinander nicht unterzubringen, und eine Uhr anzusehen, an die man
+    /// gerade nicht sendet, ist am Telefon kein Fall, den jemand braucht.
+    /// Ansehen und Senden sind dort deshalb dieselbe Entscheidung.
+    ///
+    /// Ausgenommen ist das Senden an mehrere Uhren: Dort bleibt die Zielmenge
+    /// stehen, denn die fuenf Bloecke und der Verlauf koennen nur den Stand
+    /// **einer** Uhr zeigen — welcher das ist, sagt der Titel.
+    ///
+    /// Am Mac aendert das nichts: Dort bleiben Zielauswahl und aktive Uhr zwei
+    /// Bedienelemente, weil dort Platz fuer beide ist.
+    public func uhrAnsehen(_ id: UUID) {
+        aktiveID = id
+        if !anMehrereUhren { zielIDs = [id] }
+    }
+
+    /// Ob an mehr als die angesehene Uhr gesendet wird.
+    ///
+    /// Kein eigener gesicherter Zustand: Er waere eine zweite Wahrheit neben
+    /// `zielIDs` und koennte ihr widersprechen. Das Setzen schreibt darum
+    /// `zielIDs` selbst — beim Einschalten alle eingerichteten Uhren, beim
+    /// Abschalten die angesehene, damit keine leere Menge entsteht, die
+    /// `ziele()` und `Einstellungen.ziele()` verschieden lesen.
+    ///
+    /// Gelesen wird „mehr als eine", nicht „genau alle": Eine Installation von
+    /// vor dem Titelmenue kann eine gemischte Teilmenge stehen haben, und die
+    /// gehoert nicht als „eine Uhr" ausgegeben. Wie viele es wirklich sind,
+    /// sagt der Titel; der naechste Griff an dieses Menue macht daraus wieder
+    /// eine der beiden sauberen Mengen.
+    public var anMehrereUhren: Bool {
+        get { zielIDs.count > 1 }
+        set {
+            if newValue {
+                zielIDs = Set(uhren.map(\.id))
+            } else if let aktiveID {
+                zielIDs = [aktiveID]
+            }
+        }
+    }
+
     /// Was ein Slot-Block zeigt — drei ehrliche Faelle (siehe `Slotzustand`):
     /// frei, wenn kein Name auf dem Platz liegt; sonst die mitgelesenen
     /// Pixel, wenn welche da sind; sonst, falls das Gedaechtnis einen Stand
