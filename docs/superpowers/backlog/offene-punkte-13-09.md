@@ -1,5 +1,31 @@
 # Offene Punkte, Stand 13.09.2026 abends
 
+**Stand am Abend des 13.09. — was erledigt ist:** A1, A3 (Editorfehler), B1
+(Schaltflaechen- und Feldstil durchgaengig), B2, B3, B4, A4, C1, C2 (Editor),
+F1 (Schluesselbund aus den Tests), F5 (Eingabetaste), F6 (Ternaere), B6
+(Nutzlastwarnung), dazu Umbenennen in der Bestandsliste, das geladene Bild auf
+der Leinwand samt Rueckfrage, und die Ulanzi-Werknummer fuer 16×52.
+**443 Tests gruen.**
+
+**Zuletzt in Arbeit:** Abschnitt D, die Betriebsart HTTP/MQTT je Uhr — Kern,
+Werkzeug und Kurzbefehle sind committet, die Ansichten waren noch offen.
+
+**Reihenfolge danach, vom Auftraggeber bestaetigt:** iCloud (E1) → AWTRIX NG
+(E2/E2a). Begruendung fuer das Vorziehen der Betriebsart: AWTRIX braucht
+dieselbe Verzweigung im Sendeweg; andersherum baut man sie zweimal.
+
+**Offen geblieben:** B5 (`.help` am iPad unsichtbar), A5 (16×16 stellt die
+Regler nicht her), F2 (Werkzeug sieht nur 8×8), F1a (zwei Tests am echten
+Schluesselbund), F3 (vermischter Commit), dazu **zwei Stellen mit demselben
+unuebersetzten Wortpaar** „Am Broker angemeldet" (`VerbindungView:55`,
+`ZielauswahlView:85`). Spaeter: MQTT 5, Rahmengrafiken.
+
+**Eine Prozesslehre des Tages:** Zwei Agenten haben mit `commit -a` den Index
+eines Parallelagenten eingesammelt. Kuenftig **nur `git add <datei>`** — das
+stand im Auftrag, wurde aber zweimal missachtet.
+
+---
+
 Zusammengefuehrt aus der Liste des Auftraggebers und dem, was aus den
 Durchgaengen des Tages offen geblieben ist.
 
