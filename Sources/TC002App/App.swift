@@ -22,6 +22,7 @@ struct TC002App: App {
     @State private var zustand = AppZustand()
     @State private var bereich: Bereich? = .senden
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.scenePhase) private var phase
 
     enum Bereich: String, CaseIterable, Identifiable {
         case senden = "Senden", malen = "Malen", icons = "Icons",
@@ -141,8 +142,19 @@ struct TC002App: App {
         } message: { Text(zustand.fehler ?? "") }
         // ⌘Q verlaesst das Fokusfeld nicht — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort verloren, das noch nicht im Schluesselbund steht.
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-            zustand.kennwortSichern()
+        //
+        // `scenePhase` statt `willTerminate`: Auf dem iPad gibt es dazu keine
+        // gleichwertige Benachrichtigung. Sie feuert dafuer oefter — das ist
+        // hier folgenlos, weil `kennwortSichern()` bei unveraendertem Wert
+        // nichts tut.
+        //
+        // Und weil beim harten Abschuss gar nichts feuert, haengt das Kennwort
+        // nicht allein an dieser Zeile: `VerbindungView` sichert es schon beim
+        // Verlassen des Feldes, bei der Eingabetaste und beim Ansichtswechsel.
+        // Enger geht es nicht — jeder Tastendruck wuerde den Schluesselbund-
+        // Eintrag loeschen und neu anlegen (siehe `AppZustand.kennwort`).
+        .onChange(of: phase) { _, neu in
+            if neu != .active { zustand.kennwortSichern() }
         }
         .onAppear {
             Netzfreigabe.anfragen()

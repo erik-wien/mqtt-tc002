@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import TC002Ansichten
 import TC002Core
@@ -17,6 +16,7 @@ struct MalenView: View {
     @AppStorage("malen.meldungsplatz") private var platz = 1
     @AppStorage("malen.dauer") private var dauerText = ""
     @State private var laeuft = false
+    @Environment(\.scenePhase) private var phase
 
     init(zustand: AppZustand) {
         self.zustand = zustand
@@ -130,8 +130,14 @@ struct MalenView: View {
         // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben erst
         // gemalter, noch ungesicherter Strich verloren, wenn beim Beenden gerade
         // diese Ansicht offen ist. Denselben Kniff nutzt App.swift fuer das Kennwort.
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-            pixelfeldSichern()
+        //
+        // `scenePhase` statt `willTerminate`: Auf dem iPad gibt es dazu keine
+        // gleichwertige Benachrichtigung. Beim harten Abschuss feuert sie gar
+        // nicht — deshalb sichert jede Aenderung ohnehin schon fuer sich
+        // (Strichende, Leeren, Icon einfuegen, geladenes Bild), und diese Zeile
+        // ist nur noch das Netz darunter.
+        .onChange(of: phase) { _, neu in
+            if neu != .active { pixelfeldSichern() }
         }
     }
 
@@ -176,6 +182,7 @@ struct MalenView: View {
                     feld.setzen(x: x, y: 4 + y, farbe: farbe)
                 }
             }
+            pixelfeldSichern()
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
