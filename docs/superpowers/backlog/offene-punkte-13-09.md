@@ -113,11 +113,36 @@ Die Betriebsart braucht deshalb ein anderes Wort — **„Betriebsart"**, nicht
 
 ## E — Groesseres, eigene Durchgaenge
 
-**E1. Icons ueber iCloud abgleichen**, als Option in den Einstellungen.
-*(Neu gemeldet.)* **Zu klaeren:** nur Icons oder auch Bilder und Einstellungen;
-und dass die Bestaende heute unter `Application Support` liegen — ein Abgleich
-heisst Umzug in einen iCloud-Behaelter, also ein Formatumzug mit Risiko fuer
-vorhandene Sammlungen.
+**E1. Ueber iCloud abgleichen — „ja alles":** Icons (8×8 und 16×16), Bilder,
+**und die Einstellungen.** Als Option in den Einstellungen.
+
+**Die schoene Nebenwirkung, die den Aufwand mittraegt:** Wandert auch das
+**Slotgedaechtnis** mit, weiss das Telefon, was der Mac geschickt hat. Genau
+darueber hat der Auftraggeber am Anfang dieses Vorhabens geklagt: *„wenn ich im
+Buero bin kriegt mein handy nicht mit was in der Zwischenzeit auf die Uhr
+daheim geschickt wird."* Das war der Anlass fuer den Mitleser und das
+Slotgedaechtnis — ein Abgleich loest es an der Wurzel.
+
+**Vier Entscheidungen, die daran haengen:**
+
+1. **Was womit abgeglichen wird.** Dateien (Icons, Bilder, Slots) gehoeren in
+   einen iCloud-Behaelter; Einstellungen liegen in `UserDefaults` und braeuchten
+   `NSUbiquitousKeyValueStore` (1 MB, 1024 Schluessel). Zwei Mechanismen, nicht
+   einer.
+2. **Das Werkzeug liest die Einstellungen mit** (`mqtttc002`, `Einstellungen`
+   im Kern, ausdruecklich nur lesend). Es laeuft ausserhalb der App — folgt es
+   dem Abgleich, oder bleibt es auf dem oertlichen Bestand?
+3. **Das Brokerkennwort liegt im Schluesselbund.** Ein Abgleich hiesse
+   iCloud-Schluesselbund (`kSecAttrSynchronizable`) — ein eigener Mechanismus
+   und eine eigene Entscheidung.
+4. **Widerspruch zweier Geraete.** Zwei Installationen aendern dasselbe Icon:
+   letzter gewinnt, oder Konfliktkopie?
+
+**Das Risiko, das ernst zu nehmen ist:** Die Bestaende liegen heute unter
+`Application Support`. Ein Abgleich heisst Umzug — und in diesem Projekt hat
+ein Formatwechsel schon einmal beinahe alle Einstellungen unlesbar gemacht
+(`EinstellungenTests.testUhrBleibtLesbar` ist seither das Netz). **Der Umzug
+braucht einen Rueckweg**, nicht nur einen Hinweg.
 
 **E2. AWTRIX NG.** Erhebung liegt (`~1000 Zeilen Textweg`). **Offen: neben oder
 statt der TC002?** Bei gemischten Zielen kann die Vorschau nur eine von zwei
