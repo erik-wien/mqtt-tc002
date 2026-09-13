@@ -160,8 +160,14 @@ extension Ablageort {
     }
 
     /// Ermittelt losgeloest vom Hauptthread vor, damit die erste Ansicht nicht
-    /// darauf wartet. Ohne gewaehlten Abgleich ist das ohnehin umsonst.
+    /// darauf wartet.
+    ///
+    /// **Ohne gewaehlten Abgleich geschieht hier gar nichts** — es gaebe nichts
+    /// vorzuwaermen, und ein losgeloester Task bei jedem Bauen von
+    /// `AppZustand` waere Unruhe ohne Gegenwert (in den Tests wird dieser Typ
+    /// hundertfach gebaut).
     public static func vorbereiten() {
+        guard gewaehlt() else { return }
         Task.detached(priority: .utility) { _ = Ablageort.gemeinsam }
     }
 
