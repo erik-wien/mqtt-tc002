@@ -948,7 +948,23 @@ public struct EditorBereichView: View {
     private var sendeKnopf: some View {
         Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
             .knopfBefehl()
-            .disabled(laeuft || zustand.ziele().isEmpty)
+            .disabled(laeuft || zustand.ziele().isEmpty || keineNimmtGemaltes)
+            .help(keineNimmtGemaltes
+                  ? lok("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück.")
+                  : lok("Auf die Uhr senden"))
+    }
+
+    /// **Keine** der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf
+    /// gesperrt, statt ins Leere zu senden.
+    ///
+    /// Absichtlich „keine" und nicht „eine": Sind mehrere Uhren gewählt und ist
+    /// nur eine davon eine AWTRIX, geht die Sendung an die übrigen und meldet
+    /// für diese eine den Fehler — das ist mehr Auskunft als ein gesperrter
+    /// Knopf, der auch die tauglichen Ziele mitsperrte. Ohne gewählte Uhr
+    /// greift schon `zustand.ziele().isEmpty` davor.
+    private var keineNimmtGemaltes: Bool {
+        let ziele = zustand.ziele()
+        return !ziele.isEmpty && !ziele.contains { $0.gattung.nimmtGemaltes }
     }
 
     // MARK: - Blatt „Oeffnen"

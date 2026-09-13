@@ -280,13 +280,19 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     ///
     /// **Mutationsprobe** (13.09.2026): ein zusätzliches
     /// `.help("Testweise")` am Ende von `bestandszeile` eingefügt → 11 gegen
-    /// erwartete 10, durchgefallen; wieder entfernt → grün.
+    /// erwartete 10, durchgefallen; wieder entfernt → grün. Kurz darauf hat
+    /// dieser Test einen echten Zuwachs gefangen: den Einblendtext am
+    /// Sendeknopf, der begründet, warum eine AWTRIX kein gemaltes Bild nimmt.
+    /// Der Knopf trägt eine sichtbare Beschriftung („Senden“) und braucht
+    /// darum kein `.namensichtbarAmIPad()`; unsichtbar bleibt am iPad allein
+    /// der **Grund** seiner Sperre — dieselbe offene Stelle wie bei den
+    /// übrigen zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 10,
+        XCTAssertEqual(anzahl(text, ".help("), 11,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
                        + "die Werkzeugleiste (3), die beiden Kontextmenü-Zeilen (2 + 2), das "
-                       + "Abspielsymbol (1), das Verschiebekreuz (1) und das Nummernfeld (1) — eine "
-                       + "neue Stelle ist keinem der Tests oben bekannt")
+                       + "Abspielsymbol (1), das Verschiebekreuz (1), das Nummernfeld (1) und der "
+                       + "Sendeknopf (1) — eine neue Stelle ist keinem der Tests oben bekannt")
     }
 }

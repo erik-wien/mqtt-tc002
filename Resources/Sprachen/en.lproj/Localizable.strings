@@ -800,3 +800,5 @@
 "Seitenwechsel und Scrolltempo sind Einstellungen der Ulanzi-Werksfirmware. Die aktive Uhr ist eine AWTRIX NG; sie führt beides anders und nicht an dieser Stelle." = "Page change and scroll speed are settings of the Ulanzi factory firmware. The active clock is an AWTRIX NG; it handles both differently and not here.";
 "Senkrecht ausrichten" = "Vertical alignment";
 "Gerät" = "Device";
+"Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück." = "Only the stock firmware accepts a drawn image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image, and sending it would come back as silence.";
+"Auf die Uhr senden" = "Send to the clock";
