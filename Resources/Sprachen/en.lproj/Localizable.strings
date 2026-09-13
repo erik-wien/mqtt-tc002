@@ -486,6 +486,10 @@
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";
 
+/* Formatangaben.swift — die Regel, an der eine Groesse aus einem Kurzbefehl
+   scheitert (Sources/TC002Core/Formatangaben.swift) */
+"„%@“ wird in %d Pixeln nicht angeboten. Möglich sind: %@." = "“%@” is not offered at %d pixels. Available sizes: %@.";
+
 /* TC002iOS/Kurzbefehle.swift */
 "Meldung an die Uhr schicken" = "Send a message to the clock";
 "Meldung von der Uhr nehmen" = "Remove a message from the clock";
@@ -507,6 +511,38 @@
 "Platz 1 bis 5 auf der Uhr." = "Slot 1 to 5 on the clock.";
 "${text} an die Uhr schicken" = "Send ${text} to the clock";
 "Slot ${platz} von der Uhr nehmen" = "Remove slot ${platz} from the clock";
+"„als Pixel“ rastert die App selbst und kann Umlaute. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt weder Umlaute noch eine Auswahl." = "“As pixels” means the app rasterizes the text itself and can do umlauts. “As text” leaves the typesetting to the clock, whose font knows neither umlauts nor a choice of typeface.";
+"Gilt nur auf dem Weg „als Pixel“." = "Only applies with the method “as pixels”.";
+"Größe in Pixeln" = "Size in pixels";
+"Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; die Meldung nennt die möglichen." = "Only the sizes the app offers for this typeface. Any other is refused, and the message names the ones available.";
+"Nicht jede Schrift hat bei jeder Größe einen fetten Schnitt; wo keiner ist, bleibt es ohne Wirkung." = "Not every font has a bold cut at every size; where there is none, this has no effect.";
+"Wandelt den Text vor dem Senden um; aus „ß“ wird dabei „SS“." = "Converts the text before sending; “ß” becomes “SS” in the process.";
+"Ausrichtung waagrecht" = "Horizontal alignment";
+"Ausrichtung senkrecht" = "Vertical alignment";
+"Zeilen, die bei „oben“ und „unten“ frei bleiben, 0 bis 3. Bei „mittig“ ohne Wirkung." = "Rows left free at “top” and “bottom”, 0 to 3. No effect at “middle”.";
+"Leere Spalten zwischen den Zeichen, 0 bis 3 — nur auf dem Weg „als Pixel“." = "Empty columns between characters, 0 to 3 — only with the method “as pixels”.";
+
+/* TC002iOS/KurzbefehleAuswahl.swift — die Auswahllisten der Kurzbefehle.
+   Die Anzeigenamen stehen wortgleich im gebauten Buendel
+   (Metadata.appintents/extract.actionsdata) und werden von dort
+   nachgeschlagen. Die fuenf Systemschriften sind Eigennamen und stehen
+   deshalb unveraendert da — wie die drei mitgelieferten weiter oben. */
+"Geneva" = "Geneva";
+"Monaco" = "Monaco";
+"Andale Mono" = "Andale Mono";
+"Menlo" = "Menlo";
+"PT Mono" = "PT Mono";
+"Weiß" = "White";
+"Rot" = "Red";
+"Orange" = "Orange";
+"Gelb" = "Yellow";
+"Grün" = "Green";
+"Türkis" = "Cyan";
+"Blau" = "Blue";
+"Violett" = "Violet";
+"Magenta" = "Magenta";
+"Rosa" = "Pink";
+
 /* Slotblock.swift */
 "belegt" = "occupied";
 "Slot %d, frei" = "Slot %d, free";

@@ -10,9 +10,12 @@ import TC002Core
 /// Oberfläche — und derselbe Weg trägt auf der Apple Watch, wo Kurzbefehle
 /// ohne eigene App laufen.
 ///
-/// Schrift, Größe, Ausrichtung und Rand kommen aus dem, was zuletzt unter
-/// „Senden" eingestellt war. Ein Kurzbefehl, der zwölf Fragen stellt, benutzt
-/// niemand.
+/// Jede Formatangabe ist wahlfrei, und was fehlt, kommt aus dem, was zuletzt
+/// unter „Senden" eingestellt war (`Meldungsoptionen.ausAblage`) — nicht aus
+/// einer hier erfundenen Vorgabe. Ein Kurzbefehl, der zwölf Fragen stellt,
+/// benutzt niemand; einer, der zwölf Fragen stellen *darf*, wenn man sie
+/// braucht, schon. In der Kurzbefehle-App steht deshalb nur `text` im Satz,
+/// alles Weitere unter „Details anzeigen".
 struct MeldungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Meldung an die Uhr schicken"
     static let description = IntentDescription(
@@ -37,12 +40,76 @@ struct MeldungSendenIntent: AppIntent {
                inclusiveRange: (1, 5))
     var platz: Int?
 
+    // Ab hier das Format. Alles wahlfrei: Ein Kurzbefehl, der keine dieser
+    // Angaben setzt, sendet genau wie bisher.
+
+    @Parameter(title: "Weg", description: "„als Pixel“ rastert die App selbst und kann Umlaute. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt weder Umlaute noch eine Auswahl.")
+    var weg: WegAuswahl?
+
+    @Parameter(title: "Schriftart", description: "Gilt nur auf dem Weg „als Pixel“.")
+    var schriftart: SchriftAuswahl?
+
+    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; die Meldung nennt die möglichen.")
+    var groesse: Int?
+
+    @Parameter(title: "Fett", description: "Nicht jede Schrift hat bei jeder Größe einen fetten Schnitt; wo keiner ist, bleibt es ohne Wirkung.")
+    var fett: Bool?
+
+    @Parameter(title: "Großbuchstaben", description: "Wandelt den Text vor dem Senden um; aus „ß“ wird dabei „SS“.")
+    var grossbuchstaben: Bool?
+
+    @Parameter(title: "Farbe")
+    var farbe: FarbAuswahl?
+
+    @Parameter(title: "Ausrichtung waagrecht")
+    var waagrecht: WaagrechtAuswahl?
+
+    @Parameter(title: "Ausrichtung senkrecht")
+    var senkrecht: SenkrechtAuswahl?
+
+    @Parameter(title: "Rand", description: "Zeilen, die bei „oben“ und „unten“ frei bleiben, 0 bis 3. Bei „mittig“ ohne Wirkung.", inclusiveRange: (0, 3))
+    var rand: Int?
+
+    @Parameter(title: "Abstand", description: "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur auf dem Weg „als Pixel“.", inclusiveRange: (0, 3))
+    var abstand: Int?
+
+    @Parameter(title: "Tempo", description: "Gilt nur, wenn der Text nicht ins Display passt.")
+    var tempo: TempoAuswahl?
+
+    @Parameter(title: "Icon mitscrollen", description: "Gilt nur, wenn der Text nicht ins Display passt.")
+    var iconLaeuftMit: Bool?
+
+    /// Die Formatangaben als das, was der Kern versteht. Die Regeln — was eine
+    /// nicht angebotene Größe bedeutet, was ein Schriftwechsel mit ihr macht —
+    /// stehen in `Formatangaben`, nicht hier: Sie sind eine Rechnung über
+    /// `Meldungsoptionen` und werden dort geprüft.
+    private var angaben: Formatangaben {
+        Formatangaben(weg: weg?.kern, schrift: schriftart?.kern,
+                      groesse: groesse.map(Double.init), fett: fett,
+                      grossbuchstaben: grossbuchstaben, farbe: farbe?.kern,
+                      waagrecht: waagrecht?.kern, senkrecht: senkrecht?.kern,
+                      rand: rand, abstand: abstand, tempo: tempo?.kern,
+                      iconLaeuftMit: iconLaeuftMit)
+    }
+
     static var parameterSummary: some ParameterSummary {
         Summary("\(\.$text) an die Uhr schicken") {
             \.$uhr
             \.$iconNummer
             \.$dauer
             \.$platz
+            \.$weg
+            \.$schriftart
+            \.$groesse
+            \.$fett
+            \.$grossbuchstaben
+            \.$farbe
+            \.$waagrecht
+            \.$senkrecht
+            \.$rand
+            \.$abstand
+            \.$tempo
+            \.$iconLaeuftMit
         }
     }
 
@@ -50,7 +117,17 @@ struct MeldungSendenIntent: AppIntent {
         let einstellungen = Einstellungen.gelesen()
         let ziele = try zieleBestimmen(einstellungen)
 
-        var optionen = Meldungsoptionen.ausAblage(.standard)
+        // Die Formatangaben legen sich über das, was zuletzt unter „Senden“
+        // eingestellt war. Eine verlangte Größe, die es zu dieser Schrift nicht
+        // gibt, kommt hier als Fehler zurück — und wird zur Rückfrage an genau
+        // dem Feld, das sie ausgelöst hat, statt zu einem abgebrochenen
+        // Kurzbefehl ohne Hinweis, woran es lag.
+        var optionen: Meldungsoptionen
+        do {
+            optionen = try angaben.angewendet(auf: Meldungsoptionen.ausAblage(.standard))
+        } catch let fehler as Formatangaben.Fehler {
+            throw $groesse.needsValueError(IntentDialog(stringLiteral: fehler.localizedDescription))
+        }
         optionen.text = text
         if let dauer, dauer > 0 { optionen.dauer = dauer }
 

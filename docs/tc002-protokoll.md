@@ -128,10 +128,15 @@ Dieses Thema steht in **keiner** Hersteller-Doku. Belegt ist es daraus, dass das
 Gerät es beim Broker abonniert, und daraus, dass Umschalten damit funktioniert.
 
 Dasselbe geht ohne Broker: `POST /api/switchDiyApp?name=<name>` (§5.8). Der
-HTTP-Weg antwortet dabei, dieser hier nicht.
+HTTP-Weg antwortet dabei, dieser hier nicht — und über ihn ist auch belegt, dass
+die Uhr wirklich auf die genannte Anzeige springt.
 
-❓ Offen: ob `switchDiyApp` auch greift, wenn die genannte Anzeige gar nicht
-existiert oder nicht in der DIY-Liste des Geräts steht.
+✅ **Eine Anzeige, die es nicht gibt, wird abgewiesen** — über HTTP mit
+`{"code":404,"message":"custom app not found"}` (§5.8). Der Aufruf prüft also,
+statt still nichts zu tun.
+
+❓ Offen bleibt, wie sich **dieses** Thema in dem Fall verhält: Es antwortet
+nicht.
 
 ### 3.4 `<präfix>/status` — meldet die Uhr sich selbst
 
@@ -456,6 +461,10 @@ curl -s -X POST 'http://192.168.1.20/api/custom?name=notiz' \
   -d '{"draw":[{"df":[0,0,4,4,"#00FF66"]}]}'
 ```
 
+✅ **Die neue Anzeige erscheint sofort**, ohne Umschalten. Steht allerdings
+schon eine andere, bleibt die stehen — dann führt nur `switchDiyApp` (§5.8)
+weiter.
+
 ✅ **Löschen geht hierüber auch — mit dem Rumpf `{}`.** Am 13.09.2026 gemessen,
 gegen `GET /api/customList` (§5.7) geprüft:
 
@@ -507,7 +516,8 @@ hierüber nicht — belegt oder frei ist damit gesichert, der Inhalt nicht.
 
 ### 5.8 `POST /api/switchDiyApp?name=<name>` — umschalten ohne Broker
 
-✅ Der Aufruf wird angenommen und antwortet. Am 13.09.2026 gemessen:
+✅ Der Aufruf wird angenommen, antwortet — und die Uhr springt darauf wirklich
+auf die genannte Anzeige. Am 13.09.2026 gemessen:
 
 ```bash
 curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
@@ -517,13 +527,45 @@ curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
 Das ist das Gegenstück zum MQTT-Thema aus §3.3 — und auskunftsfreudiger: Dort
 gibt es überhaupt keine Antwort, hier eine mit Namen und einer Zahl.
 
-> ❓ **Belegt ist die Antwort, nicht die Wirkung.** „app switch **requested**"
-> heißt angefordert, nicht erledigt. Ob die Uhr daraufhin wirklich auf die
-> genannte Anzeige springt, hat niemand nachgesehen. Prüfung: umschalten und
-> auf das Display schauen.
+✅ **Die Wirkung ist gesehen, nicht bloß gemeldet.** „app switch **requested**"
+ist die Wortwahl der Antwort, kein Vorbehalt. Gemessen am 13.09.2026 mit
+abgeschaltetem Seitenwechsel (`carouselSpeed` `0`, §5.4), damit das Gerät nicht
+von selbst weiterblättert — je Schritt am Display nachgesehen:
 
-> ❓ **`index` ist ungedeutet.** Warum dort `100` steht, wissen wir nicht — die
-> Zahl ist hier abgeschrieben, nicht erklärt.
+```bash
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,52,16,"#FF0000"]}]}'
+# {"code":200,"message":"ok"}
+curl -s http://192.168.1.20/api/customList
+# {"apps":["probe"],"count":1}            → die Uhr zeigt die rote Fläche sofort
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe2' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,52,16,"#00FF00"]}]}'
+# {"code":200,"message":"ok"}
+curl -s http://192.168.1.20/api/customList
+# {"apps":["probe","probe2"],"count":2}   → die Uhr bleibt auf Rot
+
+curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=probe2'
+# {"code":200,"message":"app switch requested","data":{"name":"probe2","index":111}}
+#                                         → die Uhr wird grün
+```
+
+> ✅ **Eine neu angelegte Anzeige erscheint sofort**, ohne Umschalten.
+>
+> ✅ **Eine zweite übernimmt nicht.** Die erste bleibt stehen; wer die zweite
+> sehen will, schaltet um. Für ein Nacheinander über HTTP heißt das:
+> `switchDiyApp` schicken oder immer dieselbe Anzeige beschreiben (§5.6).
+
+❓ Beides ist bei **abgeschaltetem** Seitenwechsel gemessen. Wie es sich
+verhält, wenn die Uhr von selbst durch die Anzeigen blättert, ist unbelegt.
+
+> ✅ **Eine Anzeige, die es nicht gibt, wird abgewiesen:**
+> `{"code":404,"message":"custom app not found"}`. Der Endpunkt prüft den Namen
+> und meldet einen echten Fehler.
+
+> ❓ **`index` ist ungedeutet.** Beobachtet sind `100` und `111` — fest ist die
+> Zahl also nicht. Was sie bedeutet, wissen wir nicht; sie ist hier
+> abgeschrieben, nicht erklärt.
 
 ---
 
@@ -553,9 +595,13 @@ erneut zu prüfen wäre, steht gesammelt in
 [`firmware-beobachtungen.md`](firmware-beobachtungen.md).
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
-- ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
-- ❓ Ob `POST /api/switchDiyApp` die Uhr wirklich umschaltet — die Antwort sagt
-  „requested", gesehen hat es niemand — und was `index` darin bedeutet (§5.8).
+- ❓ Wie sich das **MQTT**-Thema `switchDiyApp` bei einer nicht vorhandenen
+  Anzeige verhält (§3.3) — über HTTP ist es belegt: `404 custom app not found`
+  (§5.8).
+- ❓ Was `index` in der Antwort von `POST /api/switchDiyApp` bedeutet.
+  Beobachtet sind `100` und `111` (§5.8).
+- ❓ Ob eine neu angelegte Anzeige auch bei **eingeschaltetem** Seitenwechsel
+  sofort erscheint und eine zweite auch dann nicht übernimmt (§5.8).
 - ❓ Ob die Gerätschrift Großbuchstaben kennt (§1).
 - ❓ Ob `status` und `customList` aufbewahrt veröffentlicht werden (§3.5).
 - ❓ Wie **groß** eine Nutzlast sein darf. Belegt ist, dass rund **14 KB**

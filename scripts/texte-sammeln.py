@@ -60,6 +60,15 @@ EIGENE = ["lok", "lokf", "ueberschrift", "absatz"]
 # Klammer — deshalb eine eigene Suche nach dem Schluesselwort statt nach dem
 # Aufrufnamen.
 PARAMETER_SCHLUESSEL = ["title", "description"]
+# Die Anzeigenamen der Auswahllisten in den Kurzbefehlen (`AppEnum`, siehe
+# TC002iOS/KurzbefehleAuswahl.swift): `DisplayRepresentation(title: "…")` je
+# Fall, `TypeDisplayRepresentation(name: "…")` fuer die Liste selbst. Beide
+# nehmen ein `LocalizedStringResource`; genau dieser Wortlaut landet als
+# Schluessel im gebauten Buendel (`Metadata.appintents/extract.actionsdata`,
+# `enums[].cases[].displayRepresentation.title.key`) und wird dort zur Laufzeit
+# nachgeschlagen. Ohne diese Suche bliebe die Kurzbefehle-App deutsch, ohne
+# dass irgendetwas darauf hinwiese.
+ANZEIGENAMEN = [("DisplayRepresentation", "title"), ("TypeDisplayRepresentation", "name")]
 
 # Texte, die als Variable nachgeschlagen werden — `lok(a.rawValue)` — und
 # deshalb nicht im Quelltext stehen koennen. Sie muessen von Hand hier gefuehrt
@@ -111,7 +120,8 @@ MUSTER = (
     [re.compile(rf'\b{re.escape(n)}\(\s*{ZEICHENKETTE}') for n in EIGENE] +
     # title:/description: von @Parameter(...) — beide auf derselben Zeile wie
     # die oeffnende Klammer, wie in Kurzbefehle.swift durchgehend der Fall.
-    [re.compile(rf'@Parameter\([^\n]*?\b{n}:\s*{ZEICHENKETTE}') for n in PARAMETER_SCHLUESSEL]
+    [re.compile(rf'@Parameter\([^\n]*?\b{n}:\s*{ZEICHENKETTE}') for n in PARAMETER_SCHLUESSEL] +
+    [re.compile(rf'\b{typ}\([^\n]*?\b{n}:\s*{ZEICHENKETTE}') for typ, n in ANZEIGENAMEN]
 )
 
 # Modifikatoren mit einer Fallunterscheidung: .help(x ? "A" : "B"). Die

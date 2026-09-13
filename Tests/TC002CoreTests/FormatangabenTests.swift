@@ -114,6 +114,18 @@ final class FormatangabenTests: XCTestCase {
             .angewendet(auf: vorgabe()))
     }
 
+    /// Die Auswahlliste der Kurzbefehle (`SchriftAuswahl` in
+    /// `TC002iOS/KurzbefehleAuswahl.swift`) muss dieselben acht Namen führen —
+    /// ein `AppEnum` braucht feste Fälle und kann keine Liste lesen. Das
+    /// iOS-Ziel hat kein Testziel (SwiftPM baut es nicht), deshalb wird hier
+    /// die Quelle festgenagelt: Wer sie ändert, kommt an diesem Test nicht
+    /// vorbei und denkt an die zweite Stelle.
+    func testDieAchtSchriftnamenStehenFest() {
+        XCTAssertEqual(Schriften.auswahl,
+                       ["Micro 5", "Silkscreen", "Tiny5",
+                        "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"])
+    }
+
     /// Rand und Abstand kommen aus einem Feld mit Bereichsangabe; eine
     /// Variable kann das umgehen. Geklemmt wie der Stepper, nicht abgewiesen.
     func testRandUndAbstandWerdenGeklemmt() throws {
