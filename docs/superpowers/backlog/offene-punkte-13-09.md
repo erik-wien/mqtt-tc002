@@ -211,6 +211,14 @@ anderes Seitenverhaeltnis, nicht nur andere Zahlen. Die Vorschau richtet den
 Inhalt heute an der Feldhoehe aus und zentriert waagrecht; **pruefen, ob das
 bei 4:1 noch traegt.**
 
+**Die Pixel sind groesser und eckiger.** Groesser ergibt sich von selbst —
+dieselbe Panelbreite durch 32 statt 52 macht jedes Pixel rund anderthalbmal so
+breit. Eckiger ist eine Entscheidung: `Rasterbild` zeichnet heute schlichte
+Rechtecke ohne Rundung und ohne Fuge; **such, wo die Vorschau im Geraeterahmen
+ihre Pixel zeichnet**, und pruef, ob dort gerundet oder mit Abstand gezeichnet
+wird. Am Vorbild sind es deutlich abgesetzte Quadrate mit sichtbarer Fuge —
+das kommt daher, dass man bei 32 Spalten die einzelne Leuchtdiode sieht.
+
 **E3. MQTT 5.** Gemessen, Bericht liegt, vom Auftraggeber auf spaeter gelegt.
 Gewinn auf dem Hauptweg vom eigenen Mitleser aufgefressen; `0x10` traegt nur
 dort, wo die App selbst nicht abonniert.
