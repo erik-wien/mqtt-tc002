@@ -324,6 +324,57 @@ final class IconsTests: XCTestCase {
         XCTAssertNotNil(sammlung.alle().first { $0.nummer == "kopie" })
     }
 
+    /// `Bildraster` ist seit dem Wegfall von `Bildladen` der einzige Leseweg der
+    /// Mac-Ansichten. Ein animiertes Icon darf dabei keine Einzelbilder
+    /// verlieren: Der Icon-Editor baut aus ihnen wieder ein animiertes GIF, und
+    /// was hier fehlt, ist beim naechsten Sichern endgueltig weg.
+    ///
+    /// Fuenf Bilder, nicht zwei — so faellt auch auf, wer nur das erste und das
+    /// letzte durchlaesst.
+    func testAnimiertesGifBehaeltAlleEinzelbilder() throws {
+        let datei = temp().appendingPathExtension("gif")
+        let bilder: [[String?]] = (0..<5).map { i in
+            var p = [String?](repeating: nil, count: 64); p[i] = "#FF0000"; return p
+        }
+        let uri = try Bildraster.alsDatenURI(bilder, breite: 8, hoehe: 8, verzoegerung: 0.1)
+        let daten = try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst("data:image/gif;base64,".count))))
+        try daten.write(to: datei)
+
+        let gelesen = try Bildraster.lesen(datei, breite: 8, hoehe: 8)
+        XCTAssertEqual(gelesen.count, 5, "alle fuenf Einzelbilder")
+        for i in 0..<5 {
+            XCTAssertEqual(gelesen[i][i], "#FF0000", "Einzelbild \(i) in seiner Reihenfolge")
+        }
+    }
+
+    /// Der einzige Daseinsgrund des entfallenen `Bildladen`: `NSImage(contentsOf:)`
+    /// merkt sich Bilder am Pfad, ein im Editor geaendertes Icon saehe anderswo
+    /// weiter alt aus. `Bildraster` liest ueber `CGImageSource` **aus der Datei**
+    /// und kennt keinen Zwischenspeicher — hier festgehalten, damit niemand den
+    /// Leseweg gegen einen zwischenspeichernden tauscht.
+    ///
+    /// Derselbe Pfad, zweimal beschrieben: Ein Zwischenspeicher am Pfad haette
+    /// beim zweiten Lesen noch das rote Pixel.
+    func testGeaendertesIconWirdFrischGelesen() throws {
+        let datei = temp().appendingPathExtension("gif")
+
+        var rot = [String?](repeating: nil, count: 64); rot[0] = "#FF0000"
+        try schreibeRaster(rot, nach: datei)
+        XCTAssertEqual(try Bildraster.lesen(datei, breite: 8, hoehe: 8)[0][0], "#FF0000")
+
+        var gruen = [String?](repeating: nil, count: 64); gruen[0] = "#00FF66"
+        try schreibeRaster(gruen, nach: datei)
+        XCTAssertEqual(try Bildraster.lesen(datei, breite: 8, hoehe: 8)[0][0], "#00FF66",
+                       "dieselbe Datei, neuer Inhalt — nichts darf aus einem Zwischenspeicher kommen")
+    }
+
+    /// Schreibt ein einzelnes 8×8-Raster als GIF an die gegebene Stelle.
+    private func schreibeRaster(_ pixel: [String?], nach datei: URL) throws {
+        let uri = try Bildraster.alsDatenURI([pixel], breite: 8, hoehe: 8, verzoegerung: 0.1)
+        let daten = try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst("data:image/gif;base64,".count))))
+        try daten.write(to: datei)
+    }
+
     func testKeineBilddateiWirdAbgelehnt() throws {
         let kaputt = temp().appendingPathExtension("gif")
         try Data("kein Bild".utf8).write(to: kaputt)

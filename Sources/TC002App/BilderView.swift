@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import TC002Core
 import UniformTypeIdentifiers
@@ -55,12 +54,11 @@ struct BilderView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104))], spacing: 10) {
                     ForEach(bilder, id: \.datei) { bild in
                         VStack(spacing: 4) {
-                            if let vorschau = Bildladen.frisch(bild.datei) {
-                                Image(nsImage: vorschau).interpolation(.none)
-                                    .resizable().aspectRatio(contentMode: .fit)
-                                    .frame(width: 88, height: 27)
-                                    .background(Color.black)
-                            }
+                            Rasterbild(datei: bild.datei,
+                                       breite: Pixelfeld.breiteStandard,
+                                       hoehe: Pixelfeld.hoeheStandard,
+                                       kante: 88 / Double(Pixelfeld.breiteStandard))
+                                .background(Color.black)
                             Text(bild.name).font(.caption).lineLimit(1)
                             Button("Löschen", role: .destructive) { loeschen(bild) }
                                 .font(.caption2)

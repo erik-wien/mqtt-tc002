@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import TC002Core
 
@@ -34,9 +33,8 @@ struct IconAuswahlView: View {
         HStack(spacing: 4) {
             Button { zeigeBlatt = true } label: {
                 HStack(spacing: 6) {
-                    if let icon = gewaehltesIcon, let bild = Bildladen.frisch(icon.datei) {
-                        Image(nsImage: bild).interpolation(.none)
-                            .resizable().frame(width: 16, height: 16)
+                    if let icon = gewaehltesIcon {
+                        Rasterbild(datei: icon.datei, kante: 2)
                         Text(icon.name)
                     } else {
                         Image(systemName: "photo")
@@ -70,10 +68,7 @@ struct IconAuswahlView: View {
                         ZStack(alignment: .topTrailing) {
                             Button { gewaehltesIcon = icon } label: {
                                 VStack(spacing: 2) {
-                                    if let bild = Bildladen.frisch(icon.datei) {
-                                        Image(nsImage: bild).interpolation(.none)
-                                            .resizable().frame(width: 36, height: 36)
-                                    }
+                                    Rasterbild(datei: icon.datei, kante: 4.5)
                                     Text(icon.name).font(.system(size: 9)).lineLimit(1)
                                 }
                             }

@@ -295,10 +295,7 @@ struct IconEditorView: View {
                 .textFieldStyle(.roundedBorder)
             List(gefilterte, id: \.nummer) { icon in
                 HStack {
-                    if let bild = Bildladen.frisch(icon.datei) {
-                        Image(nsImage: bild).interpolation(.none)
-                            .resizable().frame(width: 24, height: 24)
-                    }
+                    Rasterbild(datei: icon.datei, kante: 3)
                     VStack(alignment: .leading) {
                         Text(icon.name)
                         Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
