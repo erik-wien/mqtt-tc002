@@ -51,25 +51,46 @@ public struct Geraetezeichnung: Equatable, Sendable {
                      farbe: String, rechtsbuendig: Bool)
     }
 
-    /// Wie ein einzelnes Displaypixel gezeichnet wird — beides als Anteil der
-    /// Kantenlaenge einer Rasterzelle, nicht in Punkten: Sonst sieht dieselbe
-    /// Vorschau am Mac (Kante 8) und am Telefon (Kante 6) verschieden aus.
+    /// Wie ein einzelnes Displaypixel gezeichnet wird — mit **zwei** Lesarten
+    /// fuer die Luecke zwischen zwei Punkten, weil eine von beiden nicht reicht.
     public struct Pixelstil: Equatable, Sendable {
-        /// Wieviel der Zelle frei bleibt. Gross = kleine, einzeln stehende
-        /// Punkte; klein = grosse, fast zusammenhaengende.
-        public var lueckeAnteil: Double
+
+        /// Wieviel zwischen zwei Punkten frei bleibt. Es gibt beide Formen,
+        /// und der Unterschied ist keine Geschmacksfrage:
+        ///
+        /// - `.punkte` ist eine **Haarlinie fester Breite**, unabhaengig von
+        ///   der Zellenkante. Das ist, was die Werksfirmware-Vorschau immer
+        ///   gezeichnet hat (`kantenlaenge - 1`), und was sie weiter zeichnen
+        ///   soll: Am Mac laeuft die Kante von 4 bis 14 (`SendenView`), und
+        ///   ein Anteil kann dort nicht beides — bei Kante 14 frisst er den
+        ///   Punkt an (0,125 · 14 = 1,75 statt 1 Punkt, die Anzeige wirkt
+        ///   duenner und schwaecher), bei Kante 4 verschwindet die Trennlinie.
+        ///   Der feste Punkt Luft kann es.
+        /// - `.anteil` ist eine Fuge, die **mit** der Zelle waechst. Fuer ein
+        ///   grobes Panel, dessen Punkte schon von Weitem als Kaestchen zu
+        ///   erkennen sein sollen, ist das die richtige Angabe — die Fuge soll
+        ///   dort im Verhaeltnis stehen, nicht in Punkten.
+        public enum Luecke: Equatable, Sendable {
+            case punkte(Double)
+            case anteil(Double)
+        }
+
+        public var luecke: Luecke
         /// Eckenradius des Punktes, als Anteil seiner eigenen Kante.
         /// 0 = hart eckig.
         public var eckenAnteil: Double
 
-        public init(lueckeAnteil: Double, eckenAnteil: Double) {
-            self.lueckeAnteil = lueckeAnteil
+        public init(luecke: Luecke, eckenAnteil: Double) {
+            self.luecke = luecke
             self.eckenAnteil = eckenAnteil
         }
 
         /// Kantenlaenge des gezeichneten Punktes bei gegebener Zellenkante.
         public func punktKante(zelle: Double) -> Double {
-            max(0, zelle * (1 - lueckeAnteil))
+            switch luecke {
+            case let .punkte(p): return max(0, zelle - p)
+            case let .anteil(a): return max(0, zelle * (1 - a))
+            }
         }
 
         /// Eckenradius des gezeichneten Punktes bei gegebener Zellenkante.
@@ -80,8 +101,13 @@ public struct Geraetezeichnung: Equatable, Sendable {
         /// Das Kaestchen eines einzelnen Punktes — **mittig** in seiner Zelle,
         /// nicht links oben angeschlagen: Sonst liegt die ganze Luecke rechts
         /// und unten, und das Raster sitzt um einen halben Punkt schief im
-        /// Feld. Beide Vorschauen zeichnen darueber, damit die Punkte am Mac
-        /// und am Telefon gleich aussehen.
+        /// Feld.
+        ///
+        /// Das ist die **eine bewusst behaltene Abweichung** vom Stand vor der
+        /// Ablösung der SVG; alles andere am Punktstil der Werksfirmware ist
+        /// buchstaeblich der alte. Bei `.punkte(1)` geht es um einen halben
+        /// Punkt Versatz, und dafuer sitzt das ganze Raster mittig statt
+        /// links oben angeschlagen im Feld.
         public func kaestchen(spalte: Int, zeile: Int, zelle: Double) -> CGRect {
             let kante = punktKante(zelle: zelle)
             let rand = (zelle - kante) / 2
@@ -248,10 +274,10 @@ public struct Geraetezeichnung: Equatable, Sendable {
                 .schrift("Pixbar", x: 628, grundlinie: 285, groesse: 12,
                          farbe: "#77777B", rechtsbuendig: true),
             ],
-            // Die 52×16 der Werksfirmware auf einem kleinen Feld: viele kleine
-            // Punkte. Ein Achtel Luecke ergibt bei Kante 8 genau den einen
-            // Punkt Abstand, den beide Vorschauen bisher gezeichnet haben.
-            pixelstil: Pixelstil(lueckeAnteil: 0.125, eckenAnteil: 0.25))
+            // Buchstaeblich der Stand vor der Ablösung der SVG: ein hartes
+            // Quadrat mit genau einem Punkt Luft, bei **jeder** Kantenlaenge.
+            // Siehe `Luecke` — ein Anteil taete es hier nicht.
+            pixelstil: Pixelstil(luecke: .punkte(1), eckenAnteil: 0))
     }()
 
     // MARK: - Die Ulanzi TC001 mit AWTRIX NG
@@ -294,8 +320,8 @@ public struct Geraetezeichnung: Equatable, Sendable {
                          farbe: "#85858D", rechtsbuendig: false),
             ],
             // 32×8 auf derselben Scheibe: jede Zelle ist rund anderthalbmal so
-            // gross wie bei der Werksfirmware. Kleinere Luecke und harte Ecken
-            // — so sieht ein grobes Panel aus der Naehe aus.
-            pixelstil: Pixelstil(lueckeAnteil: 0.05, eckenAnteil: 0))
+            // gross wie bei der Werksfirmware. Eine mitwachsende Fuge und
+            // harte Ecken — so sieht ein grobes Panel aus der Naehe aus.
+            pixelstil: Pixelstil(luecke: .anteil(0.05), eckenAnteil: 0))
     }()
 }

@@ -125,32 +125,66 @@ final class GeraeterahmenTests: XCTestCase {
                              "die AWTRIX-Front hat keine runderen Ecken als die TC002")
     }
 
-    /// „Die Pixel sind auch groesser und eckiger." Beides als Anteil der
-    /// Zellenkante, damit es an jeder Kantenlaenge gilt.
+    /// **Der Punktstil der Werksfirmware ist buchstaeblich der alte** — ein
+    /// hartes Quadrat mit genau einem Punkt Luft, bei **jeder** Kantenlaenge.
+    ///
+    /// Diese Zusicherung fehlte, und genau darum ist der alte Stand einmal
+    /// verlorengegangen, ohne dass etwas gemeldet haette: Ein Anteil von 0,125
+    /// trifft bei Kante 8 zufaellig denselben Punkt Luft und weicht ueberall
+    /// sonst ab — bei Kante 14 auf 1,75 Punkte, und die Anzeige wirkt duenner
+    /// und schwaecher als zuvor. Am Mac laeuft die Kante von 4 bis 14
+    /// (`SendenView`, `min(14, …)`), deshalb stehen hier drei Werte und nicht
+    /// einer.
+    func testWerksfirmwareZeichnetWeiterHarteQuadrateMitEinemPunktLuft() {
+        let tc = Geraetezeichnung.tc002.pixelstil
+        for zelle in [4.0, 8, 14] {
+            XCTAssertEqual(tc.punktKante(zelle: zelle), zelle - 1, accuracy: 0.0001,
+                           "bei Kante \(zelle) ist die Luft nicht mehr genau ein Punkt")
+            XCTAssertEqual(tc.punktRadius(zelle: zelle), 0, accuracy: 0.0001,
+                           "bei Kante \(zelle) sind die Punkte nicht mehr hart eckig")
+        }
+    }
+
+    /// „Die Pixel sind auch groesser und eckiger" — das galt der AWTRIX, nicht
+    /// der TC002. Gemessen also als Vergleich, und zwar an mehreren
+    /// Kantenlaengen, weil die beiden Lesarten von `Luecke` verschieden
+    /// mitwachsen.
     func testAwtrixZeichnetGroessereUndEckigerePunkte() {
         let tc = Geraetezeichnung.tc002.pixelstil
         let ng = Geraetezeichnung.awtrixNG.pixelstil
 
-        XCTAssertGreaterThan(ng.punktKante(zelle: 8), tc.punktKante(zelle: 8),
-                             "die AWTRIX-Punkte sind nicht groesser")
-        XCTAssertLessThan(ng.punktRadius(zelle: 8), tc.punktRadius(zelle: 8),
-                          "die AWTRIX-Punkte sind nicht eckiger")
-        XCTAssertEqual(ng.punktRadius(zelle: 8), 0, accuracy: 0.0001,
-                       "eckig heisst Radius null")
-
-        // Der Punkt sitzt mittig in seiner Zelle, nicht links oben
-        // angeschlagen — sonst liegt die ganze Luecke rechts und unten und das
-        // Raster sitzt schief im Feld.
-        for stil in [tc, ng] {
-            let kasten = stil.kaestchen(spalte: 3, zeile: 2, zelle: 8)
-            XCTAssertEqual(kasten.midX, 3.5 * 8, accuracy: 0.0001)
-            XCTAssertEqual(kasten.midY, 2.5 * 8, accuracy: 0.0001)
+        for zelle in [4.0, 8, 14] {
+            XCTAssertGreaterThan(ng.punktKante(zelle: zelle), tc.punktKante(zelle: zelle),
+                                 "die AWTRIX-Punkte sind bei Kante \(zelle) nicht groesser")
+            XCTAssertLessThanOrEqual(ng.punktRadius(zelle: zelle), tc.punktRadius(zelle: zelle),
+                                     "die AWTRIX-Punkte sind bei Kante \(zelle) nicht eckiger")
+            XCTAssertEqual(ng.punktRadius(zelle: zelle), 0, accuracy: 0.0001,
+                           "eckig heisst Radius null")
         }
 
-        // Bei Kante 8 zeichnet die TC002 genau den einen Punkt Abstand, den
-        // beide Vorschauen bisher hatten — die Ablösung der SVG aendert am
-        // Raster nichts.
-        XCTAssertEqual(tc.punktKante(zelle: 8), 7, accuracy: 0.0001)
+        // Die Fuge der AWTRIX waechst **mit** der Zelle — das ist der
+        // Unterschied zur festen Haarlinie der Werksfirmware, und ohne diese
+        // Zeile ginge der Test auch dann durch, wenn beide dasselbe taeten.
+        let fuge = { (zelle: Double) in zelle - ng.punktKante(zelle: zelle) }
+        XCTAssertGreaterThan(fuge(14), fuge(4) * 2,
+                             "die AWTRIX-Fuge waechst nicht mit der Zelle")
+        let haarlinie = { (zelle: Double) in zelle - tc.punktKante(zelle: zelle) }
+        XCTAssertEqual(haarlinie(14), haarlinie(4), accuracy: 0.0001,
+                       "die Haarlinie der Werksfirmware haengt an der Zelle")
+    }
+
+    /// Der Punkt sitzt mittig in seiner Zelle, nicht links oben angeschlagen —
+    /// die **eine** bewusst behaltene Abweichung vom Stand vor der Ablösung
+    /// der SVG. Vorher lag die ganze Luecke rechts und unten, und das Raster
+    /// sass um einen halben Punkt schief im Feld.
+    func testPunkteSitzenMittigInIhrerZelle() {
+        for z in [Geraetezeichnung.tc002, Geraetezeichnung.awtrixNG] {
+            for zelle in [4.0, 8, 14] {
+                let kasten = z.pixelstil.kaestchen(spalte: 3, zeile: 2, zelle: zelle)
+                XCTAssertEqual(kasten.midX, 3.5 * zelle, accuracy: 0.0001)
+                XCTAssertEqual(kasten.midY, 2.5 * zelle, accuracy: 0.0001)
+            }
+        }
     }
 
     /// Der Aufdruck auf dem Geraet ist eine **Zeichnung**, kein Text der
