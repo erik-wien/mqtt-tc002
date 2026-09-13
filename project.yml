@@ -36,6 +36,13 @@ targets:
         buildPhase: resources
       - path: Resources/AppIconiOS.xcassets
         buildPhase: resources
+      # Die GPL-3.0 gehoert ins Buendel, nicht nur als Verweis: Das Ueber-Blatt
+      # zeigt den Text an, und die Lizenz verlangt, ihn mitzuliefern. Die drei
+      # OFL-Texte der Pixelschriften fahren schon mit, weil `Resources/Schriften`
+      # oben als ganzer Ordner mitgeht — die LICENSE liegt in der Wurzel und
+      # braucht deshalb ihre eigene Zeile. Am Mac tut dasselbe `build.sh`.
+      - path: LICENSE
+        buildPhase: resources
     dependencies:
       - package: TC002
         product: TC002Core

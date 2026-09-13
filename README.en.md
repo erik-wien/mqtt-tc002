@@ -146,6 +146,17 @@ through menu items in the title bar instead of a tab bar of their own.
 Deliberately missing: editing icons and the free-form canvas ("Draw"). Both
 stay on the desktop.
 
+At the foot of the settings sit "Help" and "About MQTT-TC002", both as sheets:
+iOS offers no system-provided place for "About", and the established one is
+the end of the app's own settings. The help is not the same as on the Mac —
+what depends on the device (the five slots, the three block states, the
+silence of MQTT 3.1.1, the three pixel fonts, prefix and broker) lives as
+shared text in `TC002Ansichten/HilfeInhalt.swift`, while whatever operates a
+particular button lives in each interface's own help. The About sheet shows
+the version, the GPL-3.0 with its license text, and the acknowledgements; the
+`LICENSE` rides along into the bundle via `project.yml`, as it does on the Mac
+via `build.sh`.
+
 Built with
 
 ```bash
@@ -155,8 +166,9 @@ open MQTT-TC002-iOS.xcodeproj
 
 then pick a target in Xcode and run. `xcodegen` generates the project from
 `project.yml`; the project itself is not checked in. A successful build says
-nothing about whether fonts, icons, the app icon, and translations actually
-ended up in the bundle — `scripts/buendel-pruefen.sh` checks that.
+nothing about whether fonts, icons, the app icon, translations, and the
+`LICENSE` actually ended up in the bundle — `scripts/buendel-pruefen.sh`
+checks that.
 
 ## Tests
 

@@ -144,6 +144,17 @@ beides über Menüpunkte in der Titelleiste erreichbar statt über eine eigene
 Reiterleiste. Bewusst fehlen Icons bearbeiten und die freie Zeichenfläche
 („Malen“): Beides bleibt dem Schreibtisch vorbehalten.
 
+Am Fuß der Einstellungen stehen „Hilfe“ und „Über MQTT-TC002“, beide als
+Blatt: iOS hat für „Über“ keine vom System gestellte Stelle, und die
+eingebürgerte ist das Ende der App-eigenen Einstellungen. Die Hilfe ist nicht
+dieselbe wie am Mac — was am Gerät hängt (die fünf Plätze, die drei
+Blockzustände, die Stille von MQTT 3.1.1, die drei Pixelschriften, Präfix und
+Broker) steht als geteilter Text in `TC002Ansichten/HilfeInhalt.swift`, was
+einen bestimmten Knopf bedient, in der Hilfe der jeweiligen Oberfläche. Das
+Über-Blatt zeigt Fassung, GPL-3.0 mit Lizenztext und die Danksagungen; die
+`LICENSE` fährt dafür über `project.yml` mit ins Bündel, wie am Mac über
+`build.sh`.
+
 Gebaut wird mit
 
 ```bash
@@ -153,8 +164,8 @@ open MQTT-TC002-iOS.xcodeproj
 
 und dann in Xcode Ziel wählen und starten. `xcodegen` erzeugt das Projekt aus
 `project.yml`; das Projekt selbst ist nicht eingecheckt. Ein erfolgreicher Bau
-sagt nichts darüber, ob Schriften, Icons, App-Symbol und Übersetzungen im
-Bündel gelandet sind — das prüft `scripts/buendel-pruefen.sh`.
+sagt nichts darüber, ob Schriften, Icons, App-Symbol, Übersetzungen und die
+`LICENSE` im Bündel gelandet sind — das prüft `scripts/buendel-pruefen.sh`.
 
 ## Tests
 

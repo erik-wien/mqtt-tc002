@@ -19,6 +19,16 @@ ist und bei einem Update nachzuprüfen wäre, in
   (Senden als Wurzel, Titelmenü, schiebbare Formatpille, Blätter). Mac und —
   sobald es sie gibt — die iPad-Fassung teilen sich die Desktop-Oberfläche mit
   Seitenleiste. Was auf dem Telefon richtig ist, ist es dort selten.
+- **Die Hilfe ist zweigeteilt.** Die Darstellung (`TC002Ansichten/Hilfe.swift`)
+  und die Absätze, die vom Gerät unabhängig sind
+  (`TC002Ansichten/HilfeInhalt.swift`), gelten für beide; `HilfeView` (Mac) und
+  `HilfeiOS` (iPhone) setzen ihr Dokument daraus und aus eigenen Absätzen
+  zusammen. Ein Absatz gehört nur dann nach `HilfeInhalt`, wenn er für **beide**
+  Oberflächen wahr ist — Fenster, Seitenleiste, Inspektor, Finder, Malen und der
+  Icon-Editor gibt es nur am Mac, Seitenwechsel und Scrolltempo stellt die
+  iPhone-Fassung nicht ein, und sie warnt vor unbekannten Zeichen nicht.
+  Ein zweiter Satz mit derselben Aussage wäre ein zweiter
+  Übersetzungsschlüssel; deshalb Konstanten statt zweimal geschrieben.
 - Das echte Gerät und der Broker im Hausnetz sind in Tests tabu — ebenso in
   jeder Arbeit, die ein Agent ausführt. Ihre Adressen stehen in den
   Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
@@ -167,7 +177,8 @@ Installation unlesbar (`EinstellungenTests` hält das fest).
 ## Ein grüner Bau beweist nichts über das Bündel
 
 `** BUILD SUCCEEDED **` sagt, dass übersetzt wurde — nicht, dass Schriften,
-Icons, das App-Symbol und die Übersetzungen im Programm gelandet sind. Am
+Icons, das App-Symbol, die Übersetzungen und die `LICENSE` im Programm gelandet
+sind. Am
 12.09.2026 fehlte im iOS-Bündel **jede einzelne** Ressource, weil `project.yml`
 sie unter einem Schlüssel führte, den XcodeGen nicht kennt und stillschweigend
 überliest. Neun Aufgaben und ebenso viele Durchsichten haben das nicht

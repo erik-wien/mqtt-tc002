@@ -103,6 +103,24 @@ if [ ! -f "$APP/en.lproj/Localizable.strings" ]; then
     fehlt=1
 fi
 
+# Die GPL-3.0 im Klartext. Das Ueber-Blatt liest sie ueber
+# `Programmbuendel.eigenes.resourceURL` aus der Buendelwurzel; fehlt sie, steht
+# dort statt des Lizenztextes eine Entschuldigung — und die Lizenz verlangt,
+# den Text mitzuliefern, nicht nur einen Verweis darauf. Die drei OFL-Texte
+# der Pixelschriften liegen mit den Schriften im Ordner `Schriften` und sind
+# oben schon abgedeckt.
+if [ ! -s "$APP/LICENSE" ]; then
+    echo "fehlt   LICENSE"
+    fehlt=1
+fi
+
+for ofl in OFL-Micro5.txt OFL-Silkscreen.txt OFL-Tiny5.txt; do
+    if [ ! -s "$APP/Schriften/$ofl" ]; then
+        echo "fehlt   Schriften/$ofl"
+        fehlt=1
+    fi
+done
+
 if [ "$fehlt" -eq 1 ]; then
     echo "Buendel unvollstaendig: $APP" >&2
     exit 1
