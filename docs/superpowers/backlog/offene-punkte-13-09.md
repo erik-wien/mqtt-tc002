@@ -196,10 +196,20 @@ Damit ist es mehr als eine Beschriftung: Die beiden Geraete sind auch ohne
 Lesen auseinanderzuhalten. Der Schriftzug ist trotzdem noetig — frontal bleibt
 ein schwarzes Feld mit hellem Rand fuer beide.
 
+**Ebenfalls gezeichnet, im selben Stil** — kein Foto, keine zweite Bildsprache.
+Der TC002-Rahmen ist heute reines SwiftUI; der AWTRIX-Rahmen wird es auch.
+
+Und **eine** Zeichnung mit Geraetemassen, nicht zwei nebeneinander:
+`GeraeteRahmen` rechnet heute mit festen Werten aus **einer** viewBox
+(680×356, Feld x=48 y=93, 584×177). Die muessen zur Eigenschaft werden, nicht
+zur Konstante — sonst steht bald dieselbe Zeichnung zweimal da und laeuft
+auseinander. **Das ist in diesem Projekt schon passiert** (`slotzustand` gab es
+dreimal, zweimal gleich und einmal abweichend — die abweichende war falsch).
+
 Zu bedenken: Das Feld ist **32×8, also 4:1** gegenueber 52:16 = 3,25 — ein
-anderes Seitenverhaeltnis, nicht nur eine andere Zeichnung. `GeraeteRahmen`
-rechnet heute mit festen Massen aus **einer** viewBox; er braucht die Masse als
-Eigenschaft, nicht als Konstante.
+anderes Seitenverhaeltnis, nicht nur andere Zahlen. Die Vorschau richtet den
+Inhalt heute an der Feldhoehe aus und zentriert waagrecht; **pruefen, ob das
+bei 4:1 noch traegt.**
 
 **E3. MQTT 5.** Gemessen, Bericht liegt, vom Auftraggeber auf spaeter gelegt.
 Gewinn auf dem Hauptweg vom eigenen Mitleser aufgefressen; `0x10` traegt nur
