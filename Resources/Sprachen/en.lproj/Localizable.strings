@@ -347,7 +347,7 @@
 "Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse." = "The app determines the prefix itself — it is the one set plus the last four digits of the MAC address.";
 "kein Wechsel" = "no change";
 "alle %d Sekunden" = "every %d seconds";
-"Scrolltempo: %d" = "Scroll speed: %d";
+"Scrolltempo" = "Scroll speed";
 "Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert." = "Scroll speed for text the clock typesets itself (the \"as text\" method under Send). The valid range of values is not documented.";
 "Port" = "Port";
 "Benutzer" = "User";

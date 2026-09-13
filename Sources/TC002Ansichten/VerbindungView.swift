@@ -52,7 +52,9 @@ public struct VerbindungView: View {
                         }
                         Spacer()
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
+                            .knopfBefehl()
                         Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
+                            .knopfZerstoerend()
                     }
                 }
                 HStack {
@@ -64,6 +66,7 @@ public struct VerbindungView: View {
                         .frame(minWidth: 220)
                         .onSubmit { uhrHinzufuegen() }
                     Button("Hinzufügen") { uhrHinzufuegen() }
+                        .knopfBefehl()
                 }
                 Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -78,13 +81,15 @@ public struct VerbindungView: View {
                     nutzerHatGewaehlt = true
                     setzen("carouselSpeed", neu)
                 }
-                Stepper(lokf("Scrolltempo: %d", scrollTempo), value: $scrollTempo, in: 0...20)
-                    .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
-                    .onChange(of: scrollTempo) { _, neu in
-                        guard !scrollLadeLauf else { scrollLadeLauf = false; return }
-                        nutzerHatScrollGewaehlt = true
-                        setzen("scrollSpeed", neu)
-                    }
+                LabeledContent("Scrolltempo") {
+                    Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
+                }
+                .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
+                .onChange(of: scrollTempo) { _, neu in
+                    guard !scrollLadeLauf else { scrollLadeLauf = false; return }
+                    nutzerHatScrollGewaehlt = true
+                    setzen("scrollSpeed", neu)
+                }
             }
             Section("Broker") {
                 // `LabeledContent` statt der Beschriftung, die `TextField`
@@ -113,6 +118,7 @@ public struct VerbindungView: View {
                     .font(.footnote).foregroundStyle(.secondary)
                 HStack {
                     Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
+                        .knopfBefehl()
                         .disabled(zustand.brokerStand == .laeuft)
                     brokerStandAnzeige
                 }

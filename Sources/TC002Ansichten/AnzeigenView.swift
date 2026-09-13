@@ -34,7 +34,9 @@ public struct AnzeigenView: View {
                     Text(name).font(.system(.body, design: .monospaced))
                     Spacer()
                     Button("Zeigen") { umschalten(name) }
+                        .knopfBefehl()
                     Button("Löschen", role: .destructive) { loeschen(name) }
+                        .knopfZerstoerend()
                 }
             }
 
@@ -42,7 +44,8 @@ public struct AnzeigenView: View {
             HStack {
                 Text("Protokoll").font(.headline)
                 Spacer()
-                Button("Leeren") { zustand.protokoll.removeAll() }
+                Button("Leeren", role: .destructive) { zustand.protokoll.removeAll() }
+                    .knopfZerstoerend()
                     .disabled(zustand.protokoll.isEmpty)
             }
             ScrollView {
