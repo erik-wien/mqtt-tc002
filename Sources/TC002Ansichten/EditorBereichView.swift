@@ -69,7 +69,7 @@ public struct EditorBereichView: View {
     @State private var zuLoeschen: Editoreintrag?
     @State private var zeigeNeuBestaetigung = false
 
-    /// „Datei einlesen…": erst die Dateiauswahl, danach ein Blatt fuer Nummer
+    /// „Oeffnen…": erst die Dateiauswahl, danach ein Blatt fuer Nummer
     /// und Namen mit dem Dateinamen als Vorschlag.
     ///
     /// Gemerkt wird der **Inhalt**, nicht die URL — warum, steht bei
@@ -502,7 +502,7 @@ public struct EditorBereichView: View {
                 .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
             Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
                 .font(.caption)
-            Button("Datei einlesen…") { zeigeDateiImport = true }
+            Button("Öffnen…") { zeigeDateiImport = true }
                 .knopfBefehl()
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
@@ -751,11 +751,11 @@ public struct EditorBereichView: View {
             .disabled(laeuft || zustand.ziele().isEmpty)
     }
 
-    // MARK: - Blatt „Datei einlesen"
+    // MARK: - Blatt „Oeffnen"
 
     private var importBlatt: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Datei einlesen").font(.headline)
+            Text("Öffnen").font(.headline)
             if groesse.mitNummer {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nummer").font(.caption).foregroundStyle(.secondary)
@@ -773,7 +773,7 @@ public struct EditorBereichView: View {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
                     .knopfBefehl()
-                Button("Einlesen") { einlesen() }
+                Button("Öffnen") { einlesen() }
                     .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
                     .disabled(importSchluessel.isEmpty)
