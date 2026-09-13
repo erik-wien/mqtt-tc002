@@ -1,5 +1,4 @@
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 
 /// Die Bedienungshilfe der Mac-Fassung. Eigenes Fenster, Abschnitte links,
@@ -11,10 +10,12 @@ import TC002Core
 /// Was das Gerät kann, steht in der Gerätereferenz (Hilfe -> Gerätereferenz,
 /// aus docs/tc002-protokoll.md, siehe GeraeteReferenzView.swift); hier steht
 /// nur, was man in der App klickt.
-struct HilfeView: View {
+public struct HilfeView: View {
     @State private var abschnitt: Abschnitt? = .ueberblick
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         NavigationSplitView {
             List(Abschnitt.allCases, selection: $abschnitt) { a in
                 Text(lok(a.rawValue)).tag(a)

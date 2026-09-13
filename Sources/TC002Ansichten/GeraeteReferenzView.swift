@@ -7,7 +7,7 @@ import TC002Core
 /// und die Datei kommt ausschließlich aus unserer eigenen Hand, die darin
 /// vorkommenden Formen sind also bekannt und eng begrenzt (siehe
 /// `MarkdownDokument.parse` unten für die Liste).
-struct GeraeteReferenzView: View {
+public struct GeraeteReferenzView: View {
     @State private var ausgewaehlt: MarkdownAbschnitt.ID?
 
     private let abschnitte: [MarkdownAbschnitt]
@@ -27,7 +27,7 @@ struct GeraeteReferenzView: View {
             .first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
-    init() {
+    public init() {
         if let url = Self.referenzdatei,
            let text = try? String(contentsOf: url, encoding: .utf8) {
             abschnitte = MarkdownDokument.gliedern(MarkdownDokument.parse(text))
@@ -38,7 +38,7 @@ struct GeraeteReferenzView: View {
         }
     }
 
-    var body: some View {
+    public var body: some View {
         Group {
             if let ladefehler {
                 ContentUnavailableView(
