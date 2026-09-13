@@ -215,7 +215,7 @@ struct SendeniOS: View {
                 formatleiste
                 eingabe
             }
-            .navigationTitle(zustand.uhren.count > 1 ? zielName : lok("Senden"))
+            .navigationTitle(titel)
             // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
             // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
             // von noetigen rund 265 Punkten fuer den Inhalt, die Slot-Zeile
@@ -224,12 +224,13 @@ struct SendeniOS: View {
             // funktioniert dort genauso — Dateien und Notizen machen es so.
             .navigationBarTitleDisplayMode(.inline)
             .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
-                Picker("Ziel", selection: zielAuswahl) {
+                Picker("Angesehene Uhr", selection: angesehene) {
                     ForEach(zustand.uhren) { uhr in
                         Text(uhr.name).tag(Optional(uhr.id))
                     }
-                    Text("Alle Uhren").tag(UUID?.none)
                 }
+                .pickerStyle(.inline)
+                Toggle("An alle Uhren senden", isOn: $zustand.anMehrereUhren)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -269,36 +270,24 @@ struct SendeniOS: View {
         .task(id: laufschriftSchluessel) { await laufschriftRechnen() }
     }
 
-    private var zielName: String {
-        let ziele = zustand.ziele()
-        if ziele.count == 1 { return ziele[0].name }
-        return lokf("an %d Uhren", ziele.count)
+    /// Der Titel nennt die **angesehene** Uhr — dieselbe, deren Stand die
+    /// fuenf Bloecke und der Verlauf zeigen. Geht die Sendung darueber hinaus,
+    /// sagt er zusaetzlich, an wie viele Uhren; sonst stuende hier ein einzelner
+    /// Name, waehrend anderswohin gesendet wird. Bei nur einer eingerichteten
+    /// Uhr gibt es nichts zu waehlen und nichts zu benennen.
+    private var titel: String {
+        guard zustand.uhren.count > 1, let uhr = zustand.aktiveUhr else { return lok("Senden") }
+        guard zustand.zielIDs.count > 1 else { return uhr.name }
+        return lokf("%@ · an %d Uhren", uhr.name, zustand.zielIDs.count)
     }
 
-    /// Bildet `zustand.zielIDs` auf die Zeile im Titelmenue ab: eine Uhr-ID
-    /// fuer eine bestimmte Uhr, `nil` fuer „Alle Uhren“. Leer heisst nach
-    /// `AppZustand.ziele()` „die aktive Uhr“ — das zeigt hier folgerichtig
-    /// deren Zeile an, statt keine.
-    private var zielAuswahl: Binding<UUID?> {
-        Binding(
-            get: {
-                let alle = Set(zustand.uhren.map(\.id))
-                if zustand.zielIDs.isEmpty { return zustand.aktiveID }
-                if zustand.zielIDs == alle { return nil }
-                if zustand.zielIDs.count == 1 { return zustand.zielIDs.first }
-                // Altlast aus der frueheren Einzelauswahl-Liste: eine
-                // gemischte Teilmenge, die es in diesem Menue nicht mehr
-                // gibt. „Alle Uhren“ ist ihr am naechsten.
-                return nil
-            },
-            set: { neu in
-                if let neu {
-                    zustand.zielIDs = [neu]
-                } else {
-                    zustand.zielIDs = Set(zustand.uhren.map(\.id))
-                }
-            }
-        )
+    /// Das Titelmenue waehlt, welche Uhr man ansieht. Dass damit auch das
+    /// Sendeziel wechselt, entscheidet `AppZustand.uhrAnsehen` — auf dem
+    /// Telefon sind das dieselbe Wahl, und der Nebenweg „an alle Uhren"
+    /// steht als eigener Schalter darunter im selben Menue.
+    private var angesehene: Binding<UUID?> {
+        Binding(get: { zustand.aktiveID },
+                set: { neu in if let neu { zustand.uhrAnsehen(neu) } })
     }
 
     /// Die fuenf Bloecke zeigen, was auf der aktiven Uhr liegt

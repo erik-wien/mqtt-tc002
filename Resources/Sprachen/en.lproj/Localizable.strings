@@ -428,8 +428,9 @@
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
 
 /* TC002iOS/SendeniOS.swift */
-"Ziel" = "Target";
-"Alle Uhren" = "All clocks";
+"Angesehene Uhr" = "Clock shown";
+"An alle Uhren senden" = "Send to all clocks";
+"%@ · an %d Uhren" = "%@ · to %d clocks";
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Dauer" = "Duration";
 "Ausrichtung" = "Alignment";
