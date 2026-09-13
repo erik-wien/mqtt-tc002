@@ -88,6 +88,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Gesichert wird es, sobald man die Eingabetaste drückt, „Sichern und prüfen“ drückt oder das Blatt schließt — nicht bei jedem Tastendruck."),
                 ]
                 + HilfeInhalt.brokerPruefen
+                + HilfeInhalt.wolkenabgleich
         case .senden:
             return [.ueberschrift("Meldung und Platz")]
                 + HilfeInhalt.fuenfPlaetze

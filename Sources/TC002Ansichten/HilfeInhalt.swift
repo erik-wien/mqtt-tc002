@@ -83,6 +83,23 @@ public enum HilfeInhalt {
         .absatz("Eine angenommene Anmeldung heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Verlauf“."),
     ]
 
+    /// Der iCloud-Abgleich. Gehoert hierher und nicht in die Oberflaeche:
+    /// Dort stehen ein Schalter und eine Zeile, die sagt, was gilt — warum es
+    /// so gilt, steht hier. Jeder Satz ist auf beiden Geraeten wahr, der
+    /// Abschnitt sieht auf Mac und Telefon gleich aus (`Wolkenabschnitt`).
+    public static let wolkenabgleich: [Hilfebaustein] = [
+        .ueberschrift("Über iCloud abgleichen"),
+        .absatz("Ist der Schalter an, liegen die eigenen Icons (8×8 und 16×16), die gemalten Bilder, die Einstellungen und das Gedächtnis der fünf Plätze nicht mehr auf diesem Gerät, sondern in iCloud — und damit auf jedem Gerät, auf dem die App mit demselben Konto läuft."),
+        .absatz("Der letzte Punkt ist der eigentliche Gewinn: Weil auch das Gedächtnis der fünf Plätze mitwandert, zeigt das Telefon, was der Mac zuletzt an die Uhr geschickt hat, ohne dass es dafür am Broker mithören müsste."),
+        .absatz("**Zwei Dinge gehen nicht mit.** Das Brokerkennwort bleibt im Schlüsselbund und wird auf jedem Gerät einmal eingetragen; ein abgeglichener Schlüsselbund wäre ein eigener Mechanismus mit eigener Rückfrage. Und der Text, an dem man gerade unter „Senden“ schreibt, bleibt ebenfalls hier — zwei Geräte, die einander den halben Satz aus dem Feld ziehen, wären keine Verbesserung."),
+        .absatz("Steht dort „Auf diesem Gerät steht der Abgleich nicht bereit“, fehlt die Berechtigung oder das iCloud-Konto. Dann bleibt alles örtlich liegen und die App arbeitet genau wie zuvor — es ist kein halber Zustand und kein Fehler."),
+        .ueberschrift("Ein- und wieder ausschalten"),
+        .absatz("Einschalten **kopiert** den vorhandenen Bestand hinauf und lässt ihn liegen, wo er war. Was in iCloud schon steht, bleibt unangetastet — dort kann der Bestand des anderen Geräts liegen, und den zu überschreiben wäre das Gegenteil eines Abgleichs."),
+        .absatz("Ausschalten kopiert zurück. Man behält dabei alles, auch das, was erst seit dem Einschalten dazugekommen ist. Der Preis dafür, dass nie etwas verlorengeht: Eine Datei, die in iCloud gelöscht wurde, liegt hier noch und taucht beim Ausschalten wieder auf."),
+        .ueberschrift("Wenn zwei Geräte dasselbe ändern"),
+        .absatz("Bei Dateien gewinnt, wer zuletzt geschrieben hat; iCloud hebt die unterlegene Fassung als Konfliktversion auf, die App zeigt sie nicht an. Bei den Einstellungen wird **je Uhr** zusammengeführt statt am Stück: Wer hier eine Uhr einträgt, während dort eine umgestellt wird, verliert keine der beiden Änderungen. Nur wenn beide Geräte dieselbe Uhr ändern, gewinnt die zuletzt eingetroffene Fassung — eine Konfliktkopie wäre eine zweite Uhr mit derselben Adresse."),
+    ]
+
     /// Die fuenf festen Plaetze und die drei Blockzustaende. Was ein Block zeigt,
     /// rechnet `AppZustand.slotzustand` fuer alle Oberflaechen gleich, und
     /// `Slotblock` (TC002Ansichten) zeichnet es fuer alle gleich — der Absatz
