@@ -5,9 +5,14 @@ import UniformTypeIdentifiers
 /// Ein gesichertes 52×16-Bild in der Sammlung.
 public struct Gemaltes: Equatable, Sendable {
     public var name: String
+    /// Die Ulanzi-Werknummer, falls es eine gibt — **wahlfrei**, und anders als
+    /// beim Icon **nicht** der Dateiname: Die Datei heisst weiter nach dem
+    /// Namen, die Nummer steht daneben in `names.json`. Alte Dateien ohne
+    /// diesen Eintrag bleiben lesbar, sie haben eben keine.
+    public var nummer: String?
     public var datei: URL
-    public init(name: String, datei: URL) {
-        self.name = name; self.datei = datei
+    public init(name: String, nummer: String? = nil, datei: URL) {
+        self.name = name; self.nummer = nummer; self.datei = datei
     }
 }
 
@@ -44,7 +49,9 @@ public struct Bildersammlung {
             .filter { $0.pathExtension.lowercased() == "gif" }
             .map { datei -> Gemaltes in
                 let schluessel = datei.deletingPathExtension().lastPathComponent
-                return Gemaltes(name: namen[schluessel] ?? schluessel, datei: datei)
+                let eintrag = namen[schluessel]
+                return Gemaltes(name: eintrag?.name ?? schluessel, nummer: eintrag?.nummer,
+                                datei: datei)
             }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -66,7 +73,8 @@ public struct Bildersammlung {
     /// wurde, und nur durchsichtige Einzelbilder laufen auf der Uhr sauber
     /// (Geraetereferenz, §4.2a).
     @discardableResult
-    public func sichern(name: String, bilder: [[String?]], verzoegerung: Double) throws -> Gemaltes {
+    public func sichern(name: String, bilder: [[String?]], verzoegerung: Double,
+                        nummer: String? = nil) throws -> Gemaltes {
         let bereinigt = name.trimmingCharacters(in: .whitespaces)
         guard !bereinigt.isEmpty else { throw BildersammlungFehler.leererName }
         let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
@@ -95,8 +103,11 @@ public struct Bildersammlung {
         }
         guard CGImageDestinationFinalize(senke) else { throw BildersammlungFehler.nichtSchreibbar }
 
-        namenErgaenzen(schluessel: schluessel, name: bereinigt)
-        return Gemaltes(name: bereinigt, datei: ziel)
+        let werknummer = nummer?.trimmingCharacters(in: .whitespaces)
+        namenErgaenzen(schluessel: schluessel, name: bereinigt,
+                       nummer: (werknummer?.isEmpty ?? true) ? nil : werknummer)
+        return Gemaltes(name: bereinigt, nummer: (werknummer?.isEmpty ?? true) ? nil : werknummer,
+                        datei: ziel)
     }
 
     /// Liest ein gesichertes Bild als Pixelfeld zurueck, zeilenweise von oben
@@ -132,25 +143,26 @@ public struct Bildersammlung {
     /// Nimmt eine Bilddatei (GIF, PNG, JPEG) in die Sammlung auf, auf 52×16
     /// gerechnet. Ein animiertes GIF behaelt alle seine Einzelbilder.
     @discardableResult
-    public func einfuegen(datei: URL, name: String) throws -> Gemaltes {
+    public func einfuegen(datei: URL, name: String, nummer: String? = nil) throws -> Gemaltes {
         let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
         return try einfuegen(gelesen: try Bildraster.lesenMitZeiten(datei, breite: breite, hoehe: hoehe),
-                             name: name)
+                             name: name, nummer: nummer)
     }
 
     /// Dasselbe aus schon gelesenen Daten — der Weg des Dateiwaehlers, dessen
     /// URL nur waehrend des Zugriffs gilt (siehe `Bildraster.lesen(_ daten:…)`).
     @discardableResult
-    public func einfuegen(daten: Data, name: String) throws -> Gemaltes {
+    public func einfuegen(daten: Data, name: String, nummer: String? = nil) throws -> Gemaltes {
         let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
         return try einfuegen(gelesen: try Bildraster.lesenMitZeiten(daten, breite: breite, hoehe: hoehe),
-                             name: name)
+                             name: name, nummer: nummer)
     }
 
-    private func einfuegen(gelesen: [Bildraster.Einzelbild], name: String) throws -> Gemaltes {
+    private func einfuegen(gelesen: [Bildraster.Einzelbild], name: String,
+                           nummer: String?) throws -> Gemaltes {
         guard let erstes = gelesen.first else { throw BildersammlungFehler.nichtLesbar }
         return try sichern(name: name, bilder: gelesen.map(\.pixel),
-                           verzoegerung: erstes.dauer)
+                           verzoegerung: erstes.dauer, nummer: nummer)
     }
 
     public func loeschen(_ gemaltes: Gemaltes) throws {
@@ -160,24 +172,33 @@ public struct Bildersammlung {
 
     private func namenDatei() -> URL { ordner.appendingPathComponent("names.json") }
 
-    private func geladeneNamen() -> [String: String] {
+    /// `names.json` traegt je Datei den Namen und — seit dem 14.09.2026 —
+    /// wahlfrei die Werknummer. Ein Eintrag ohne sie ist kein Fehler, sondern
+    /// der Normalfall aller bis dahin gesicherten Bilder.
+    private func geladeneNamen() -> [String: (name: String, nummer: String?)] {
         guard let daten = try? Data(contentsOf: namenDatei()),
               let liste = try? JSONSerialization.jsonObject(with: daten) as? [[String: String]]
         else { return [:] }
-        var tabelle: [String: String] = [:]
+        var tabelle: [String: (name: String, nummer: String?)] = [:]
         for e in liste {
-            if let schluessel = e["datei"] { tabelle[schluessel] = e["name"] ?? schluessel }
+            if let schluessel = e["datei"] {
+                tabelle[schluessel] = (e["name"] ?? schluessel, e["nummer"])
+            }
         }
         return tabelle
     }
 
-    private func namenErgaenzen(schluessel: String, name: String) {
+    private func namenErgaenzen(schluessel: String, name: String, nummer: String?) {
         var liste: [[String: String]] = []
         if let daten = try? Data(contentsOf: namenDatei()),
            let vorhanden = try? JSONSerialization.jsonObject(with: daten) as? [[String: String]] {
             liste = vorhanden.filter { $0["datei"] != schluessel }
         }
-        liste.append(["datei": schluessel, "name": name])
+        var eintrag = ["datei": schluessel, "name": name]
+        // Nur schreiben, was es gibt: Ein leeres Feld saehe in der Datei aus
+        // wie eine Nummer, die zufaellig nichts enthaelt.
+        if let nummer, !nummer.isEmpty { eintrag["nummer"] = nummer }
+        liste.append(eintrag)
         if let daten = try? JSONSerialization.data(withJSONObject: liste, options: [.prettyPrinted]) {
             try? daten.write(to: namenDatei())
         }

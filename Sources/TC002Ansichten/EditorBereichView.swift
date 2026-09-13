@@ -198,9 +198,13 @@ public struct EditorBereichView: View {
 
     /// Unter welchem Schluessel gesichert wird — bei 8×8 die Nummer, sonst der
     /// Name. Leer heisst: „Sichern" bleibt gesperrt.
+    ///
+    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 hat seit dem
+    /// 14.09.2026 eine Werknummer, heisst aber weiter nach seinem Namen — mit
+    /// `mitNummer` liesse es sich ohne Nummer gar nicht mehr sichern.
     private var schluessel: String {
-        groesse.mitNummer ? nummer.trimmingCharacters(in: .whitespaces)
-                          : name.trimmingCharacters(in: .whitespaces)
+        groesse.nummerIstDateiname ? nummer.trimmingCharacters(in: .whitespaces)
+                                   : name.trimmingCharacters(in: .whitespaces)
     }
 
     /// **Ob auf der Leinwand etwas steht, das nirgends liegt.** Die eine Frage
@@ -538,7 +542,12 @@ public struct EditorBereichView: View {
             }
             if groesse.mitNummer {
                 LabeledContent("Nummer") {
-                    TextField("Nummer", text: $nummer).labelsHidden().eingabefeld()
+                    TextField("Nummer", text: $nummer)
+                        .labelsHidden()
+                        .eingabefeld()
+                        .help(groesse.nummerIstDateiname
+                              ? lok("Die LaMetric-Nummer — zugleich der Dateiname.")
+                              : lok("Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt."))
                 }
             }
             // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
@@ -567,7 +576,7 @@ public struct EditorBereichView: View {
         } header: {
             Text("Diese Bildgruppe")
         } footer: {
-            Text(groesse.mitNummer
+            Text(groesse.nummerIstDateiname
                  ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
                  : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
         }
@@ -877,7 +886,7 @@ public struct EditorBereichView: View {
                     // in einem Bestand, in dem niemand ihn sucht.
                     Text(lokf("Wird aufgenommen als %@", importZielname))
                 } footer: {
-                    Text(importMitNummer
+                    Text(importNummerIstDateiname
                          ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
                          : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
                 }
@@ -916,6 +925,11 @@ public struct EditorBereichView: View {
     /// Wonach das Blatt fragt, haengt an der Groesse **der Datei** — nicht an
     /// der des Editors. Bei 16×16 und 16×52 gibt es keine Nummer.
     private var importMitNummer: Bool { importZiel?.mitNummer ?? false }
+
+    /// Und ob sie zugleich der Dateiname ist — nur beim 8×8. Davon haengt der
+    /// Fuss des Blattes ab und nichts sonst: Ob ueberhaupt gefragt wird, sagt
+    /// `importMitNummer`.
+    private var importNummerIstDateiname: Bool { importZiel?.nummerIstDateiname ?? false }
 
     /// Wie die Groesse heisst, in der aufgenommen wird. Leer, solange keine
     /// Datei gewaehlt ist — dann steht auch das Blatt nicht.

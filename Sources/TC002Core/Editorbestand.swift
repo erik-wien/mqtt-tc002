@@ -94,7 +94,8 @@ public struct Editorbestand {
                 }
             case .anzeige:
                 ergebnis += bilder.alle().map {
-                    Editoreintrag(groesse: groesse, name: $0.name, nummer: nil, datei: $0.datei)
+                    Editoreintrag(groesse: groesse, name: $0.name, nummer: $0.nummer,
+                                  datei: $0.datei)
                 }
             }
         }
@@ -128,9 +129,13 @@ public struct Editorbestand {
     /// und die Frage, ob dort schon etwas liegt. Liefen sie auseinander,
     /// warnte das Blatt vor einer Belegung, die es nicht gibt — oder schwiege
     /// zu einer, die es gibt.
+    /// **`nummerIstDateiname`, nicht `mitNummer`:** Ein 16×52 *hat* seit dem
+    /// 14.09.2026 eine Nummer, *heisst* aber weiter nach seinem Namen — sonst
+    /// laege jede bestehende Bildersammlung unter neuen Schluesseln.
     public static func schluessel(groesse: Leinwandgroesse,
                                   nummer: String, name: String) -> String {
-        groesse.mitNummer ? nummer.trimmingCharacters(in: .whitespaces) : Dateiname.aus(name)
+        groesse.nummerIstDateiname ? nummer.trimmingCharacters(in: .whitespaces)
+                                   : Dateiname.aus(name)
     }
 
     /// Was unter diesem Schluessel schon liegt — der Eintrag, den ein Sichern
@@ -202,8 +207,9 @@ public struct Editorbestand {
             let sauber = name.trimmingCharacters(in: .whitespaces)
             guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
             let eintrag = try bilder.sichern(name: sauber, bilder: leinwand.bilder,
-                                             verzoegerung: leinwand.verzoegerung)
-            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: nil,
+                                             verzoegerung: leinwand.verzoegerung,
+                                             nummer: nummer)
+            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: eintrag.nummer,
                                  datei: eintrag.datei)
         }
     }
@@ -283,8 +289,8 @@ public struct Editorbestand {
         case .anzeige:
             let sauber = name.trimmingCharacters(in: .whitespaces)
             guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
-            let eintrag = try bilder.einfuegen(daten: daten, name: sauber)
-            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: nil,
+            let eintrag = try bilder.einfuegen(daten: daten, name: sauber, nummer: nummer)
+            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: eintrag.nummer,
                                  datei: eintrag.datei)
         }
     }

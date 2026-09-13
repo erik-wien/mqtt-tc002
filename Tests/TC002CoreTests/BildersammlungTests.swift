@@ -111,4 +111,47 @@ final class BildersammlungTests: XCTestCase {
         XCTAssertEqual(try sammlung.laden(eintrag).farbe(x: 3, y: 4), "#123456")
     }
 
+
+    /// **Eine `names.json` ohne Nummernfeld bleibt lesbar** — so sieht jede
+    /// Sammlung aus, die vor dem 14.09.2026 gesichert wurde. Der Name kommt
+    /// weiter von dort, die Nummer gibt es eben nicht.
+    ///
+    /// In diesem Projekt hat ein Formatwechsel schon einmal beinahe alle
+    /// Einstellungen unlesbar gemacht; dies ist derselbe Fall im Kleinen.
+    ///
+    /// Mutation: in `geladeneNamen` die Nummer verlangen
+    /// (`let schluessel = e["datei"], let nummer = e["nummer"]`) — dann faellt
+    /// der Name auf den Dateinamen zurueck, und „Mario/Luigi" heisst wieder
+    /// „Mario-Luigi".
+    func testEineAlteNamensdateiOhneNummerBleibtLesbar() throws {
+        let ordner = temp()
+        let sammlung = Bildersammlung(ordner: ordner)
+        // Ein Name, den der Dateiname **nicht** hergibt: „/" wird zu „-".
+        // Nur so haengt der Name wirklich an der Namensdatei und nicht am
+        // Dateinamen — sonst ginge dieser Test auch ohne sie durch.
+        _ = try sammlung.sichern(name: "Mario/Luigi", feld: Pixelfeld())
+
+        // Die Namensdatei auf den Stand vor der Werknummer zuruecksetzen.
+        let alt = [["datei": "Mario-Luigi", "name": "Mario/Luigi"]]
+        try JSONSerialization.data(withJSONObject: alt)
+            .write(to: ordner.appendingPathComponent("names.json"))
+
+        let gelesen = try XCTUnwrap(sammlung.alle().first)
+        XCTAssertEqual(gelesen.name, "Mario/Luigi")
+        XCTAssertNil(gelesen.nummer)
+    }
+
+    /// Die Werknummer steht **neben** dem Namen, nicht an seiner Stelle: Die
+    /// Datei heisst weiter nach dem Namen.
+    ///
+    /// Mutation: in `sichern` `ordner.appendingPathComponent("\(nummer).gif")`
+    /// — dann ersetzt die Nummer den Dateinamen, und wer sie aendert,
+    /// verliert das Bild.
+    func testDieWerknummerAendertDenDateinamenNicht() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        let eintrag = try sammlung.sichern(name: "Mario", bilder: [Pixelfeld().punkteRoh],
+                                           verzoegerung: 0.2, nummer: "318")
+        XCTAssertEqual(eintrag.datei.lastPathComponent, "Mario.gif")
+        XCTAssertEqual(sammlung.alle().first?.nummer, "318")
+    }
 }

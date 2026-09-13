@@ -10,11 +10,11 @@ import Foundation
 /// Damit die Unterschiede, die es wirklich gibt, nicht als Sonderfaelle durch
 /// die Oberflaeche wandern, stehen sie hier **abgeleitet** und an einer Stelle:
 ///
-/// | Groesse | Was es ist              | Nummer | Senden |
-/// |---------|-------------------------|--------|--------|
-/// | 8×8     | kanonisches LaMetric-Icon | ja   | nein   |
-/// | 16×16   | Icon ohne Nummer        | nein   | nein   |
-/// | 16×52   | die ganze Anzeige       | nein   | ja     |
+/// | Groesse | Was es ist              | Nummer | heisst nach | Senden |
+/// |---------|-------------------------|--------|-------------|--------|
+/// | 8×8     | kanonisches LaMetric-Icon | ja   | der Nummer  | nein   |
+/// | 16×16   | Icon ohne Nummer        | nein   | dem Namen   | nein   |
+/// | 16×52   | die ganze Anzeige       | ja     | dem Namen   | ja     |
 public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     case icon8, icon16, anzeige
 
@@ -56,9 +56,36 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
         breite == Pixelfeld.breiteStandard && hoehe == Pixelfeld.hoeheStandard
     }
 
-    /// Nur das kanonische 8×8 hat eine LaMetric-Nummer. Bei den anderen beiden
-    /// ist der Name der Dateiname.
-    public var mitNummer: Bool { breite == 8 && hoehe == 8 }
+    /// Ob es zu dieser Groesse ueberhaupt eine Nummer gibt — und das ist eine
+    /// Tatsache ueber die Welt, keine ueber die Masse: **nicht ableitbar**,
+    /// deshalb aufgezaehlt.
+    ///
+    /// | Groesse | Nummer | woher |
+    /// |---------|--------|-------|
+    /// | 8×8     | ja     | die LaMetric-Iconnummer |
+    /// | 16×16   | nein   | nicht kanonisch, von uns eingefuehrt |
+    /// | 16×52   | ja     | die Ulanzi-Werknummer (`ugc.ulanzistudio.com`, Kategorie „Pixel Art 16×52") |
+    ///
+    /// Bis zum 14.09.2026 stand hier `breite == 8 && hoehe == 8` — damit war
+    /// die Anzeige nummernlos, obwohl Ulanzi auch dort Nummern vergibt.
+    public var mitNummer: Bool {
+        switch self {
+        case .icon8: return true
+        case .icon16: return false
+        case .anzeige: return true
+        }
+    }
+
+    /// Ob die Nummer zugleich der **Dateiname** ist. Nur beim 8×8: Dort ist sie
+    /// der Schluessel, unter dem das Icon liegt, und muss deshalb eindeutig
+    /// sein und da sein.
+    ///
+    /// Bei 16×52 traegt die Datei weiter den Namen, die Nummer steht daneben in
+    /// `names.json`. **Das ist der Unterschied zwischen „hat eine Nummer" und
+    /// „heisst nach der Nummer"**, und er entscheidet ueber bestehende
+    /// Sammlungen: Wer dort den Dateinamen umstellte, machte jede vorhandene
+    /// Bildersammlung unlesbar.
+    public var nummerIstDateiname: Bool { breite == 8 && hoehe == 8 }
 
     /// Welche Groessen sich in eine Leinwand dieser Groesse setzen lassen:
     /// nur **kleinere oder gleich grosse**.

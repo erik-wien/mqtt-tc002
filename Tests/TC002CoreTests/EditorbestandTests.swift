@@ -153,6 +153,41 @@ final class EditorbestandTests: XCTestCase {
                      "eine fremde Kante ist keine der drei Groessen")
     }
 
+    /// **Ulanzi vergibt auch fuer 16×52 Nummern** — eine Anzeige hat also eine,
+    /// *heisst* aber weiter nach ihrem Namen. Die Nummer steht daneben in
+    /// `names.json`; der Dateiname bleibt unberuehrt, sonst laege jede
+    /// bestehende Bildersammlung unter neuen Schluesseln.
+    ///
+    /// Mutation: in `Editorbestand.sichern` die Nummer nicht mehr an
+    /// `bilder.sichern` durchreichen — dann ist die Werknummer nach dem
+    /// naechsten Sichern weg, ohne dass jemand sie geloescht haette.
+    /// (Dass der **Dateiname** von der Nummer unberuehrt bleibt, haelt
+    /// `BildersammlungTests.testDieWerknummerAendertDenDateinamenNicht` fest,
+    /// und dass `schluessel` weiter den Namen liefert,
+    /// `LeinwandgroesseTests.testNurDasAchtmalAchtHeisstNachSeinerNummer`.)
+    func testDieAnzeigeHatEineNummerHeisstAberNachIhremNamen() throws {
+        let eintrag = try bestand.sichern(gemalt(.anzeige), name: "Mario", nummer: "318")
+        XCTAssertEqual(eintrag.datei.lastPathComponent, "Mario.gif",
+                       "die Anzeige liegt unter ihrer Nummer statt unter ihrem Namen")
+        XCTAssertEqual(eintrag.nummer, "318")
+
+        let gelesen = try XCTUnwrap(bestand.alle().first { $0.groesse == .anzeige })
+        XCTAssertEqual(gelesen.name, "Mario")
+        XCTAssertEqual(gelesen.nummer, "318", "die Werknummer überlebt das Zurücklesen nicht")
+    }
+
+    /// Die Nummer ist bei 16×52 **wahlfrei**: Ohne sie laesst sich sichern,
+    /// und dann steht auch keine da — nicht eine leere.
+    ///
+    /// Mutation: in `Bildersammlung.sichern` die Nummer ungeprueft
+    /// weiterreichen (`namenErgaenzen(… nummer: nummer)`) — dann traegt jedes
+    /// ohne Nummer gesicherte Bild eine leere, und `nummer` ist „" statt nil.
+    func testOhneWerknummerLaesstSichEineAnzeigeSichern() throws {
+        let eintrag = try bestand.sichern(gemalt(.anzeige), name: "Ohne", nummer: "  ")
+        XCTAssertNil(eintrag.nummer)
+        XCTAssertNil(try XCTUnwrap(bestand.alle().first { $0.groesse == .anzeige }).nummer)
+    }
+
     /// Eine Leinwand, die keine der drei Groessen hat, wird abgelehnt statt
     /// stillschweigend im naechstbesten Ordner zu landen.
     func testEineFremdeGroesseWirdAbgelehnt() {

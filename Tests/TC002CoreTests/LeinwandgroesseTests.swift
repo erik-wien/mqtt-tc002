@@ -19,11 +19,34 @@ final class LeinwandgroesseTests: XCTestCase {
         XCTAssertTrue(Leinwandgroesse.anzeige.sendbar)
     }
 
-    /// Und die Nummer gibt es nur beim kanonischen LaMetric-Icon.
-    func testNurDasAchtmalAchtHatEineNummer() {
+    /// Eine Nummer gibt es beim 8×8 (LaMetric) **und** beim 16×52 (Ulanzi
+    /// vergibt sie fuer seine „Pixel Art 16×52"), nicht aber beim 16×16 —
+    /// diese Groesse ist nicht kanonisch, sie stammt von uns.
+    ///
+    /// Mutation: `mitNummer` zurueck auf `breite == 8 && hoehe == 8` — dann
+    /// gibt es fuer eine Anzeige nirgends ein Nummernfeld.
+    func testNummerGibtEsBeimAchterUndBeiDerAnzeige() {
         XCTAssertTrue(Leinwandgroesse.icon8.mitNummer)
         XCTAssertFalse(Leinwandgroesse.icon16.mitNummer)
-        XCTAssertFalse(Leinwandgroesse.anzeige.mitNummer)
+        XCTAssertTrue(Leinwandgroesse.anzeige.mitNummer)
+    }
+
+    /// **Eine Nummer haben und nach ihr heissen ist zweierlei.** Nur das 8×8
+    /// liegt unter seiner Nummer; die Anzeige heisst weiter nach ihrem Namen,
+    /// sonst waere jede bestehende Bildersammlung unlesbar.
+    ///
+    /// Mutation: `nummerIstDateiname` gleich `mitNummer` setzen — dann sucht
+    /// der Bestand ein 16×52 unter seiner Nummer, und ohne Nummer laesst es
+    /// sich gar nicht mehr sichern.
+    func testNurDasAchtmalAchtHeisstNachSeinerNummer() {
+        XCTAssertTrue(Leinwandgroesse.icon8.nummerIstDateiname)
+        XCTAssertFalse(Leinwandgroesse.icon16.nummerIstDateiname)
+        XCTAssertFalse(Leinwandgroesse.anzeige.nummerIstDateiname)
+
+        XCTAssertEqual(Editorbestand.schluessel(groesse: .anzeige, nummer: "318", name: "Mario"),
+                       "Mario", "die Anzeige liegt wieder unter ihrer Nummer")
+        XCTAssertEqual(Editorbestand.schluessel(groesse: .icon8, nummer: "4711", name: "Wetter"),
+                       "4711")
     }
 
     func testEineLeinwandFindetIhreGroesse() {
