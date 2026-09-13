@@ -39,8 +39,12 @@ public struct VerbindungView: View {
                         .buttonStyle(.plain)
                         .help("Diese Uhr ist das Ziel beim Senden")
 
-                        TextField("Name", text: $uhr.name).frame(width: 140)
-                        TextField("Adresse", text: $uhr.host).frame(width: 130)
+                        TextField("Name", text: $uhr.name)
+                            .eingabefeld()
+                            .frame(width: 140)
+                        TextField("Adresse", text: $uhr.host)
+                            .eingabefeld()
+                            .frame(width: 130)
                             .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
                         Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
                             .font(.system(.callout, design: .monospaced))
@@ -62,7 +66,7 @@ public struct VerbindungView: View {
                     // sofort, dass eine IP-Adresse gemeint ist und nicht ein
                     // Name.
                     TextField("z. B. 192.168.0.10", text: $neuerHost)
-                        .textFieldStyle(.roundedBorder)
+                        .eingabefeld()
                         .frame(minWidth: 220)
                         .onSubmit { uhrHinzufuegen() }
                     Button("Hinzufügen") { uhrHinzufuegen() }
@@ -99,17 +103,21 @@ public struct VerbindungView: View {
                 // Beschriftung waren das Ergebnis. Die Beschriftung kommt
                 // deshalb von aussen, das Feld traegt nur noch das Beispiel.
                 LabeledContent("Adresse") {
-                    TextField("z. B. 192.168.0.20", text: $zustand.brokerHost).labelsHidden()
+                    TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
+                        .labelsHidden().eingabefeld()
                 }
                 LabeledContent("Port") {
-                    TextField("Port", text: $zustand.brokerPort).labelsHidden()
+                    TextField("Port", text: $zustand.brokerPort)
+                        .labelsHidden().eingabefeld()
                 }
                 LabeledContent("Benutzer") {
-                    TextField("z. B. pixdeck", text: $zustand.benutzer).labelsHidden()
+                    TextField("z. B. pixdeck", text: $zustand.benutzer)
+                        .labelsHidden().eingabefeld()
                 }
                 LabeledContent("Kennwort") {
                     SecureField("Kennwort", text: $zustand.kennwort)
                         .labelsHidden()
+                        .eingabefeld()
                         .focused($kennwortFokus)
                         .onSubmit { zustand.kennwortSichern() }
                         .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }

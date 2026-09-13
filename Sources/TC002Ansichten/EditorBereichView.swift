@@ -413,6 +413,7 @@ public struct EditorBereichView: View {
             LabeledContent("Verzögerung") {
                 HStack(spacing: 4) {
                     TextField("", value: $leinwand.verzoegerung, format: .number)
+                        .eingabefeld()
                         .frame(width: 60)
                     Text("s").foregroundStyle(.secondary)
                 }
@@ -430,9 +431,13 @@ public struct EditorBereichView: View {
     @ViewBuilder
     private var sichernAbschnitte: some View {
         Section {
-            LabeledContent("Name") { TextField("Name", text: $name).labelsHidden() }
+            LabeledContent("Name") {
+                TextField("Name", text: $name).labelsHidden().eingabefeld()
+            }
             if groesse.mitNummer {
-                LabeledContent("Nummer") { TextField("Nummer", text: $nummer).labelsHidden() }
+                LabeledContent("Nummer") {
+                    TextField("Nummer", text: $nummer).labelsHidden().eingabefeld()
+                }
             }
             // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
             // die Trefferflaeche.** Eine Zeile einer `Form` ist selbst das
@@ -472,17 +477,22 @@ public struct EditorBereichView: View {
         // auf 16×16 stand, fand die LaMetric-Wahl nicht mehr und konnte
         // nicht erraten, warum.
         Section("Hinzufügen") {
+            // Beschriftung links, gefasstes Feld rechts — wie „Zeilen 18" bei
+            // Numbers. Bis 13.09.2026 stand „Nachladen" mit im rechten Teil
+            // der Zeile; Feld und Knopf zusammen waren breiter als die
+            // Inspektorspalte, SwiftUI stapelte sie deshalb **unter** die
+            // Beschriftung, und die stand dann allein da wie eine
+            // Ueberschrift. Der Knopf hat jetzt seine eigene Zeile.
             LabeledContent("LaMetric-Nummer") {
-                HStack(spacing: 4) {
-                    TextField("Nummer", text: $lametricNummer)
-                        .labelsHidden()
-                        .frame(width: 90)
-                        .onSubmit { nachladen() }
-                    Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
-                        .knopfBefehl()
-                        .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
+                TextField("Nummer", text: $lametricNummer)
+                    .labelsHidden()
+                    .eingabefeld()
+                    .frame(width: 90)
+                    .onSubmit { nachladen() }
             }
+            Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
+                .knopfBefehl()
+                .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
             Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
                 .font(.caption)
             Button("Datei einlesen…") { zeigeDateiImport = true }
@@ -506,6 +516,7 @@ public struct EditorBereichView: View {
 
         Section("Vorhandene") {
             TextField("Suchen", text: $suche)
+                .eingabefeld()
             // Gesucht wird in der schon gelesenen Liste (`vorhandene`), nicht
             // bei jedem Tastendruck neu im Dateisystem.
             ForEach(vorhandene.gefiltert(nach: suche)) { eintrag in
@@ -717,7 +728,9 @@ public struct EditorBereichView: View {
     private var dauerFeld: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
-            TextField("Uhr entscheidet", text: $dauerText).frame(width: 100)
+            TextField("Uhr entscheidet", text: $dauerText)
+                .eingabefeld()
+                .frame(width: 100)
         }
     }
 
@@ -739,12 +752,12 @@ public struct EditorBereichView: View {
             if groesse.mitNummer {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nummer").font(.caption).foregroundStyle(.secondary)
-                    TextField("Nummer", text: $importNummer)
+                    TextField("Nummer", text: $importNummer).eingabefeld()
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("Name").font(.caption).foregroundStyle(.secondary)
-                TextField("Name", text: $importName)
+                TextField("Name", text: $importName).eingabefeld()
             }
             if let importMeldung {
                 Text(importMeldung).font(.callout).foregroundStyle(.orange)

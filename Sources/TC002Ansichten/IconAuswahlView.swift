@@ -67,7 +67,7 @@ struct IconAuswahlView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Icon wählen").font(.headline)
             TextField("Suchen", text: $suche)
-                .textFieldStyle(.roundedBorder)
+                .eingabefeld()
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
                     Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }

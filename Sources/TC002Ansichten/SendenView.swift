@@ -696,18 +696,17 @@ public struct SendenView: View {
     /// mit, eine Zahl in Punkt taete das nicht. Nur dieses eine Feld; „Dauer“
     /// und der Inspektor bleiben bei der Systemgroesse.
     ///
-    /// **Rahmen:** nur ausserhalb von macOS. Am Mac zeichnet die Vorgabe schon
-    /// einen, und `.roundedBorder` saehe dort anders aus als das abgenommene
-    /// Fenster. Unter iPadOS zeichnet die Vorgabe gar nichts — dort stand das
-    /// Feld unsichtbar in der Flaeche (iPad-Rueckmeldung vom 13.09.2026, S2).
-    /// Das iPhone hat den Rahmen laengst, es setzt ihn in `SendeniOS` selbst.
-    @ViewBuilder private var textFeld: some View {
-        let feld = TextField("Text", text: $text).font(.title2)
-        #if os(macOS)
-        feld
-        #else
-        feld.textFieldStyle(.roundedBorder)
-        #endif
+    /// **Rahmen:** fuer beide Desktop-Oberflaechen derselbe. Bis 13.09.2026
+    /// stand er hinter `#if os(macOS)` — der Mac sollte bei seiner Vorgabe
+    /// bleiben, weil die einen Rahmen zeichnet. Am abgenommenen Bildschirmfoto
+    /// war zu sehen, dass sie das in dieser Flaeche eben nicht tut: Das Feld
+    /// stand dort so unsichtbar wie unter iPadOS. Der Zweig ist damit
+    /// hinfaellig (siehe `Eingabefeld.swift`). Das iPhone setzt seinen Rahmen
+    /// weiterhin in `SendeniOS` selbst.
+    private var textFeld: some View {
+        TextField("Text", text: $text)
+            .font(.title2)
+            .eingabefeld()
     }
 
     /// Beschriftung links, Wert rechts, Einheit dahinter — nicht eine
@@ -715,7 +714,9 @@ public struct SendenView: View {
     private var dauerFeld: some View {
         LabeledContent("Dauer") {
             HStack(spacing: 4) {
-                TextField("Uhr entscheidet", text: $dauerText).frame(width: 90)
+                TextField("Uhr entscheidet", text: $dauerText)
+                    .eingabefeld()
+                    .frame(width: 90)
                 Text("s").foregroundStyle(.secondary)
             }
         }

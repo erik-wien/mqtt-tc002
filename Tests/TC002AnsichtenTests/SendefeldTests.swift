@@ -92,32 +92,41 @@ final class SendefeldTests: XCTestCase {
                       "das Eingabefeld ist wieder auf die Systemgröße zurückgefallen")
     }
 
-    /// S2: Der Rahmen. Am Mac zeichnet die Vorgabe schon einen — dort wuerde
-    /// `.roundedBorder` das abgenommene Fenster veraendern, ohne dass jemand
-    /// danach gefragt haette. Unter iPadOS zeichnet sie keinen, und genau das
-    /// war der Mangel.
-    func testDerRahmenStehtNurAusserhalbVonMacOS() throws {
+    /// S2, zweite Fassung: Der Rahmen gilt **beiden** Schreibtischen.
+    ///
+    /// Bis 13.09.2026 stand er hinter `#if os(macOS)` — die Annahme war, die
+    /// Mac-Vorgabe zeichne ohnehin einen. Am abgenommenen Bildschirmfoto war
+    /// zu sehen, dass sie es in dieser Fläche nicht tut: Das Feld stand dort
+    /// so unsichtbar wie am iPad. Seither ein Aufruf für beide
+    /// (`Eingabefeld.swift`).
+    ///
+    /// Geprüft wird darum beides — dass die Fassung da ist, und dass sie in
+    /// **keinem** Plattformzweig steht. Der zweite Teil ist der eigentliche:
+    /// Ein Zweig übersetzt auf beiden Geräten und fällt auf dem falschen
+    /// stumm aus.
+    func testDerRahmenGiltFuerBeideSchreibtische() throws {
         let roh = try String(contentsOf: Self.wurzel
             .appendingPathComponent("Sources/TC002Ansichten/SendenView.swift"), encoding: .utf8)
-        var nurMac = false
+        var nurEinZweig = false
         var treffer: [Bool] = []
         for zeile in roh.split(separator: "\n", omittingEmptySubsequences: false) {
             let nackt = zeile.trimmingCharacters(in: .whitespaces)
-            if nackt == "#if os(macOS)" { nurMac = true; continue }
-            if nackt == "#else" { nurMac.toggle(); continue }
-            if nackt == "#endif" { nurMac = false; continue }
+            if nackt.hasPrefix("#if ") { nurEinZweig = true; continue }
+            if nackt == "#else" { continue }
+            if nackt == "#endif" { nurEinZweig = false; continue }
             let ohneKommentar: String
             if let strich = zeile.range(of: "//") {
                 ohneKommentar = String(zeile[zeile.startIndex..<strich.lowerBound])
             } else {
                 ohneKommentar = String(zeile)
             }
-            if ohneKommentar.contains(".textFieldStyle(.roundedBorder)") { treffer.append(nurMac) }
+            if ohneKommentar.contains(".eingabefeld()") { treffer.append(nurEinZweig) }
         }
-        XCTAssertEqual(treffer.count, 1,
-                       ".textFieldStyle(.roundedBorder) kommt in SendenView.swift nicht genau einmal vor")
-        XCTAssertEqual(treffer.first, false,
-                       "der Rahmen steht im macOS-Zweig — dort verändert er das abgenommene Fenster")
+        XCTAssertEqual(treffer.count, 2,
+                       ".eingabefeld() kommt in SendenView.swift nicht genau zweimal vor "
+                       + "(Meldungsfeld und Dauer) — eines der beiden steht wieder ohne Fassung da")
+        XCTAssertFalse(treffer.contains(true),
+                       "die Fassung steht wieder in einem Plattformzweig — sie gilt beiden Schreibtischen")
     }
 
     /// Warum S2 nur das iPad traf: Das Telefon setzt seinen Rahmen selbst.
