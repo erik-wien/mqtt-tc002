@@ -198,7 +198,7 @@ public enum HilfeInhalt {
     /// Die verfuegbare Breite und was die Ausrichtung darin tut.
     public static let breiteUndAusrichtung: [Hilfebaustein] = [
         .ueberschrift("Breite und Ausrichtung"),
-        .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays, mit Icon 42, weil das Icon die ersten zehn Spalten belegt — daran hängt auch die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
+        .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays, mit einem 8×8-Icon 42, weil es die ersten zehn Spalten belegt — daran hängt auch die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
     ]
 
     /// Wie das Icon in der Vorschau und in der Laufschrift behandelt wird.

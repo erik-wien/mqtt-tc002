@@ -71,6 +71,11 @@ public struct IconEditorView: View {
         kanonisch ? nummer.trimmingCharacters(in: .whitespaces) : Dateiname.aus(name)
     }
 
+    /// Dasselbe fuer das Blatt „Datei einlesen".
+    private var importSchluessel: String {
+        kanonisch ? importNummer.trimmingCharacters(in: .whitespaces) : Dateiname.aus(importName)
+    }
+
     public var body: some View {
         // `HSplitView` — die vom Nutzer verschiebbare Trennlinie — gibt es nur
         // am Mac. Unter iOS bleibt die Aufteilung dieselbe, nur ohne Griff.
@@ -93,14 +98,16 @@ public struct IconEditorView: View {
     private var importBlatt: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Datei einlesen").font(.headline)
-            nummerFeldImport
+            // Bei 16×16 gibt es keine Nummer — dort ist der Name der
+            // Dateiname, genau wie beim Sichern aus dem Editor.
+            if kanonisch { nummerFeldImport }
             nameFeldImport
             HStack {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
                 Button("Einlesen") { einlesen() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(importNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(importSchluessel.isEmpty)
             }
         }
         .padding()
@@ -406,7 +413,7 @@ public struct IconEditorView: View {
     /// nennt die Originalgroesse nur, wenn tatsaechlich gerechnet wurde.
     private func einlesen() {
         guard let datei = importDatei else { return }
-        let n = importNummer.trimmingCharacters(in: .whitespaces)
+        let n = importSchluessel
         let name = importName.trimmingCharacters(in: .whitespaces)
         do {
             let icon = try sammlung.einfuegen(datei: datei, nummer: n, name: name.isEmpty ? n : name)
