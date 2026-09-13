@@ -109,4 +109,77 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertTrue(text.contains("case .failure(let fehler):"),
                       "ein fehlgeschlagener Dateiwähler tut wieder stillschweigend nichts")
     }
+
+    /// Der Ausschnitt zwischen zwei Marken — ohne Kommentare, wie oben. Fehlt
+    /// eine der Marken, ist das ein Fehlschlag und kein übergangener Test:
+    /// Sonst ginge dieser Test still durch, sobald jemand die Stelle umbaut.
+    private func ausschnitt(_ text: String, von: String, bis: String) -> String {
+        guard let anfang = text.range(of: von) else {
+            XCTFail("„\(von)“ gibt es im Quelltext nicht mehr")
+            return ""
+        }
+        let rest = text[anfang.lowerBound...]
+        guard let ende = rest.range(of: bis) else {
+            XCTFail("„\(bis)“ steht nicht mehr hinter „\(von)“")
+            return ""
+        }
+        return String(rest[rest.startIndex..<ende.lowerBound])
+    }
+
+    /// Zählt Aufrufe von `name()` — die Deklaration (`func name()`) zählt nicht
+    /// mit, und `nameAnfragen()` ist ein anderer Name und wird nicht getroffen.
+    private func aufrufe(_ name: String, in text: String) -> Int {
+        var anzahl = 0
+        var rest = Substring(text)
+        while let treffer = rest.range(of: "\(name)()") {
+            let vorher = rest[rest.startIndex..<treffer.lowerBound]
+            let vorzeichen = vorher.last
+            if !vorher.hasSuffix("func "), !(vorzeichen?.isLetter ?? false) {
+                anzahl += 1
+            }
+            rest = rest[treffer.upperBound...]
+        }
+        return anzahl
+    }
+
+    /// **A1.** „Sichern" und „Neu" stehen in **einer** Zeile der `Form`, und
+    /// eine Formularzeile ist selbst das Bedienelement: Ein Knopf mit dem
+    /// vorgegebenen Stil bekommt darin die Trefferfläche der ganzen Zeile.
+    /// Zwei davon teilen sich dieselbe Fläche — der Druck auf „Sichern"
+    /// landete bei „Neu", und weil die Zeile auch bei gesperrtem „Sichern"
+    /// antippbar bleibt, traf es dann zwangsläufig den zerstörenden Knopf.
+    ///
+    /// Geprüft wird der Quelltext, nicht die Wirkung: Ein Übersetzer hat zur
+    /// Trefferfläche nichts zu sagen, und ohne Gerät sieht das niemand.
+    func testSichernUndNeuTeilenSichKeineTrefferflaeche() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let zeile = ausschnitt(text, von: "Button(\"Sichern\")", bis: "} header:")
+        XCTAssertTrue(zeile.contains("Button(\"Neu\")"),
+                      "„Neu“ steht nicht mehr neben „Sichern“ — dann prüft dieser Test die falsche Zeile")
+        XCTAssertTrue(zeile.contains(".buttonStyle("),
+                      "die beiden Knöpfe haben wieder den vorgegebenen Stil und damit dieselbe Trefferfläche: „Sichern“ löst „Neu“ aus")
+    }
+
+    /// **A1, die zweite Hälfte.** „Neu" ist zerstörend — es leert Leinwand,
+    /// Einzelbilder, Name und Nummer und wirft den Verlauf weg. Es darf
+    /// deshalb **nur** über die Rückfrage erreichbar sein: der Knopf ruft
+    /// `neuAnfragen()`, und `neu()` selbst steht genau an zwei Stellen — im
+    /// Zweig „da ist nichts zu verlieren" und hinter der Bestätigung.
+    func testNeuIstNurUeberDieRueckfrageErreichbar() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let zeile = ausschnitt(text, von: "Button(\"Sichern\")", bis: "} header:")
+        XCTAssertTrue(zeile.contains("Button(\"Neu\") { neuAnfragen() }"),
+                      "der Knopf „Neu“ räumt wieder unmittelbar auf, statt vorher zu fragen")
+
+        XCTAssertTrue(text.contains("alert(\"Neu anfangen?\", isPresented: $zeigeNeuBestaetigung)"),
+                      "die Rückfrage vor dem Aufräumen gibt es nicht mehr")
+        XCTAssertTrue(text.contains("Button(\"Neu anfangen\", role: .destructive) { neu() }"),
+                      "die Rückfrage führt nicht mehr auf „Neu“ — oder sie ist nicht mehr als zerstörend gekennzeichnet")
+        XCTAssertTrue(text.contains("if istLeer { neu() } else { zeigeNeuBestaetigung = true }"),
+                      "ohne diesen Zweig fragt „Neu“ entweder immer oder nie")
+
+        let anzahl = aufrufe("neu", in: text)
+        XCTAssertEqual(anzahl, 2,
+                       "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
+    }
 }

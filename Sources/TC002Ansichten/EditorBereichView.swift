@@ -398,6 +398,21 @@ public struct EditorBereichView: View {
             if groesse.mitNummer {
                 LabeledContent("Nummer") { TextField("Nummer", text: $nummer).labelsHidden() }
             }
+            // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
+            // die Trefferflaeche.** Eine Zeile einer `Form` ist selbst das
+            // Bedienelement: Ein Knopf mit dem vorgegebenen Stil bekommt
+            // darin die Flaeche der **ganzen Zeile**. Stehen zwei darin,
+            // teilen sie sich dieselbe — ein Druck auf „Sichern" landete bei
+            // „Neu". Und weil eine Zeile antippbar bleibt, auch wenn der
+            // Knopf darin gesperrt ist, traf es bei noch leerer Nummer
+            // zwangslaeufig „Neu", also den zerstoerenden von beiden.
+            // Derselbe Grund wie beim Einzelbildstreifen und in der
+            // Bestandszeile, wo der Stil deshalb schon steht.
+            //
+            // Am Mac zeichnet die Vorgabe in einer `Form` ohnehin einen
+            // gerahmten Knopf — dort sieht nichts anders aus als vorher. Die
+            // drei Abstufungen (gewoehnlich, Haupthandlung, zerstoerend) sind
+            // ein eigener Durchgang und hier noch nicht getroffen.
             HStack {
                 Button("Sichern") { sichern() }
                     .keyboardShortcut(.defaultAction)
@@ -405,6 +420,7 @@ public struct EditorBereichView: View {
                 Button("Neu") { neuAnfragen() }
                     .help("Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert.")
             }
+            .buttonStyle(.bordered)
         } header: {
             Text("Diese Bildgruppe")
         } footer: {
