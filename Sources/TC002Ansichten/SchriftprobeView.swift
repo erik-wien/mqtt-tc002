@@ -104,7 +104,10 @@ public struct SchriftprobeView: View {
             } else {
                 Text("Diese Zeichen rastern zu demselben Bild:")
                     .font(.callout).foregroundStyle(.secondary)
-                gruppenreihe(messung)
+                // Untereinander, jede Gruppe fuer sich: nebeneinander waeren
+                // die groessten Gruppen (zehn Zeichen bei 16 px) breiter als
+                // das Fenster, und abgesetzt gehoeren sie ohnehin.
+                ForEach(messung.gruppen) { g in beschriftet(g.text, bild: g.bild) }
                 if !messung.weitereGruppen.isEmpty {
                     Text(lokf("und %d weitere Gruppen: %@", messung.weitereGruppen.count,
                               messung.weitereGruppen.joined(separator: ", ")))
@@ -130,28 +133,23 @@ public struct SchriftprobeView: View {
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private func gruppenreihe(_ messung: Schriftprobe.Messung) -> some View {
-        // Umbrechend statt scrollend: Bei vier Gruppen passt es fast immer in
-        // eine Zeile, am Telefon in zwei.
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: 16) {
-                ForEach(messung.gruppen) { g in beschriftet(g.text, bild: g.bild) }
-            }
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(messung.gruppen) { g in beschriftet(g.text, bild: g.bild) }
-            }
-        }
-    }
-
     /// Ein Pixelbild mit der Zeichenfolge darüber. `Text(verbatim:)`, weil hier
     /// Zeichen stehen und kein Satz: „H=K=X“ ist nichts, was übersetzt werden
     /// könnte, und als Schlüssel stünde es sinnlos in der Sprachdatei.
+    ///
+    /// Waagrecht scrollbar: Das breiteste Raster misst 112 Spalten
+    /// („Fußgängerzone“ in Silkscreen 16) und wäre auf einem Telefon und im
+    /// schmalsten Fenster sonst abgeschnitten — und ein abgeschnittenes
+    /// Pixelbild beantwortet genau die Frage nicht, für die es da ist.
     private func beschriftet(_ text: String, bild: Pixelfeld) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(verbatim: text)
                 .font(.caption.monospaced())
                 .foregroundStyle(.secondary)
-            Pixelgitter(feld: bild)
+            ScrollView(.horizontal) {
+                Pixelgitter(feld: bild)
+            }
+            .scrollIndicators(.automatic)
         }
     }
 }
@@ -163,9 +161,9 @@ struct Pixelgitter: View {
     let feld: Pixelfeld
 
     /// Kantenlänge eines Punktes. Groß genug, dass man einzelne Pixel
-    /// unterscheidet, klein genug, dass eine Gruppe aus zehn Zeichen noch in
-    /// die Breite passt.
-    private static let kante = 4.0
+    /// unterscheidet, klein genug, dass auch das breiteste Raster — 112
+    /// Spalten, also 448 pt — in ein Fenster von 560 pt passt.
+    private static let kante = 3.0
     private static let fuge = 1.0
 
     var body: some View {
