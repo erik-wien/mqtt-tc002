@@ -581,10 +581,12 @@ public struct EditorBereichView: View {
     /// Ternaer mit `String`-Zweig schlaegt selbst nichts mehr nach.
     private var abspielknopf: some View {
         Button { abspielenUmschalten() } label: {
-            Image(systemName: spielAb ? "stop.fill" : "play.fill")
+            Label(spielAb ? lok("Stopp") : lok("Abspielen"), systemImage: spielAb ? "stop.fill" : "play.fill")
         }
+        .namensichtbarAmIPad()
         .knopfBefehl()
         .disabled(leinwand.bilder.count < 2)
+        .help(spielAb ? lok("Stopp") : lok("Abspielen"))
         .accessibilityLabel(Text(spielAb ? lok("Stopp") : lok("Abspielen")))
     }
 
@@ -599,6 +601,9 @@ public struct EditorBereichView: View {
                     TextField("Nummer", text: $nummer)
                         .labelsHidden()
                         .eingabefeld()
+                        .help(groesse.nummerIstDateiname
+                              ? lok("Die LaMetric-Nummer — zugleich der Dateiname.")
+                              : lok("Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt."))
                 }
             }
             // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
@@ -692,34 +697,41 @@ public struct EditorBereichView: View {
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             GridRow {
                 Color.clear.frame(width: 1, height: 1)
-                pfeil("arrow.up", dx: 0, dy: -1).accessibilityLabel("Nach oben schieben")
+                pfeil("arrow.up", name: lok("Nach oben schieben"), dx: 0, dy: -1)
                 Color.clear.frame(width: 1, height: 1)
             }
             GridRow {
-                pfeil("arrow.left", dx: -1, dy: 0).accessibilityLabel("Nach links schieben")
+                pfeil("arrow.left", name: lok("Nach links schieben"), dx: -1, dy: 0)
                 Color.clear.frame(width: 1, height: 1)
-                pfeil("arrow.right", dx: 1, dy: 0).accessibilityLabel("Nach rechts schieben")
+                pfeil("arrow.right", name: lok("Nach rechts schieben"), dx: 1, dy: 0)
             }
             GridRow {
                 Color.clear.frame(width: 1, height: 1)
-                pfeil("arrow.down", dx: 0, dy: 1).accessibilityLabel("Nach unten schieben")
+                pfeil("arrow.down", name: lok("Nach unten schieben"), dx: 0, dy: 1)
                 Color.clear.frame(width: 1, height: 1)
             }
         }
     }
 
-    /// Die Beschriftung fuer VoiceOver setzt der Aufrufer, nicht diese
-    /// Funktion: Ein Text, der als Argument durchgereicht wird, steht fuer
-    /// `scripts/texte-sammeln.py` nicht mehr an einer Stelle, die es kennt.
-    private func pfeil(_ symbol: String, dx: Int, dy: Int) -> some View {
+    /// Der Name kommt als `lok(...)`-Aufruf beim Aufrufer an, nicht als
+    /// literale Zeichenkette in dieser Funktion — sonst saehe
+    /// `scripts/texte-sammeln.py` ihn nicht mehr: Was in einer Variablen
+    /// steht, bevor es angezeigt wird, findet der Sammler nicht. Der Name
+    /// dient gleich dreifach: Beschriftung fuer VoiceOver, Einblendtext am
+    /// Mac (`namensichtbarAmIPad()` blendet ihn dort aus) und sichtbarer Name
+    /// am iPad, wo es kein Verweilen gibt.
+    private func pfeil(_ symbol: String, name: String, dx: Int, dy: Int) -> some View {
         Button {
             schritt()
             leinwand.verschieben(dx: dx, dy: dy)
             arbeitsstandSichern()
         } label: {
-            Image(systemName: symbol).frame(width: 18, height: 18)
+            Label(name, systemImage: symbol).frame(width: 18, height: 18)
         }
+        .namensichtbarAmIPad()
         .knopfBefehl()
+        .help(name)
+        .accessibilityLabel(name)
     }
 
     /// Die Leiste der Einzelbilder. „Verdoppeln" und „Entfernen" stehen **am

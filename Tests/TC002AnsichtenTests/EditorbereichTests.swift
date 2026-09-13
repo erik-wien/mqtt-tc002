@@ -308,18 +308,21 @@ final class EditorbereichTests: XCTestCase {
         }
         XCTAssertTrue(knopf.contains(".accessibilityLabel("),
                       "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
-        // Seit 13.09.2026 kein `.help(...)` mehr daneben: Was „Abspielen“ und
-        // „Stopp“ bedeuten, steht in der Hilfe (Editor, Abschnitt
-        // „Einzelbilder"); der Einblendtext war fürs iPad ohnehin unsichtbar.
-        // `.accessibilityLabel` bleibt die eine Stelle, die beide Zustände
-        // benennt.
+        // Seit 13.09.2026 wieder mit `.help(...)`: Ein reiner Symbolknopf ohne
+        // Einblendtext ist am Mac ein Verstoß gegen die HIG. Am iPad zeigt
+        // `namensichtbarAmIPad()` denselben Namen sichtbar an, statt ihn im
+        // unsichtbaren Verweilen zu verstecken — beides, nicht entweder-oder.
+        // Beide Zustände stehen deshalb dreifach da: Beschriftung, Einblendtext,
+        // Sprachausgabe.
         for wort in ["lok(\"Stopp\")", "lok(\"Abspielen\")"] {
-            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 1,
-                           "\(wort) steht nicht (mehr) in der Beschriftung — "
+            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 3,
+                           "\(wort) steht nicht in Beschriftung, Einblendtext **und** Sprachausgabe — "
                            + "oder ein Zweig ist ohne `lok` geschrieben und übersetzt damit nicht")
         }
-        XCTAssertFalse(knopf.contains(".help("),
-                       "das Symbol hat wieder einen Einblendtext — der ist am iPad unsichtbar, die Erklärung steht in der Hilfe")
+        XCTAssertTrue(knopf.contains(".help("),
+                      "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
+        XCTAssertTrue(knopf.contains(".namensichtbarAmIPad()"),
+                      "das Symbol zeigt seinen Namen am iPad nicht mehr sichtbar an")
         XCTAssertTrue(knopf.contains("leinwand.bilder.count < 2"),
                       "das Symbol ist bei einem einzigen Einzelbild nicht mehr gesperrt")
     }

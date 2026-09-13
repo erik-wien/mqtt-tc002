@@ -221,6 +221,11 @@ public struct SendenView: View {
         Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
     }
 
+    /// Hat die gewaehlte Schrift eine durchgesehene Liste? Nur dann sagt der
+    /// Einblendtext etwas ueber das Pixelraster; jede Systemschrift bekommt den
+    /// vollen Bereich und keine Begruendung, die es nicht gibt.
+    private var eigenesRaster: Bool { Pixelgroessen.abgesegnet[schrift] != nil }
+
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     /// Wohin der gerasterte Text senkrecht geschoben wird.
@@ -241,6 +246,18 @@ public struct SendenView: View {
     /// in Versalien — dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
         weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+    }
+
+    private var fettHilfe: String {
+        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
+        return fettWirkt ? lok("Fett")
+            : lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift)
+    }
+
+    private var grossHilfe: String {
+        kleinbuchstabenMoeglich
+            ? lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
+            : lokf("„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung.", schrift)
     }
 
     /// Die Einzelbilder des gewaehlten Icons, fuer die Laufschrift, die sie
@@ -513,6 +530,8 @@ public struct SendenView: View {
                 }
                 .pickerStyle(.segmented).labelsHidden()
                 .disabled(!(weg == .pixel && !passt))
+                .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft.")
+                                              : lok("Gilt nur, wenn der Text nicht ins Display passt."))
             }
 
             Section("Icon") {
@@ -540,6 +559,8 @@ public struct SendenView: View {
                     }
                 }
                 .disabled(weg == .text)
+                .help(weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
+                                   : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                 // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                 // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -549,6 +570,9 @@ public struct SendenView: View {
                         Text(lokf("%d px", Int(g))).tag(g)
                     }
                 }
+                .help(eigenesRaster
+                      ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
+                      : lok("Schriftgröße"))
 
                 // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
                 // samt Textfarbe bei Pages — nicht je eine volle Zeile fuer ein
@@ -560,10 +584,12 @@ public struct SendenView: View {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
                             .toggleStyle(.button)
                             .disabled(!fettWirkt)
+                            .help(fettHilfe)
                             .accessibilityLabel(Text("Fett"))
                         Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
                             .toggleStyle(.button)
                             .disabled(!kleinbuchstabenMoeglich)
+                            .help(grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
                         // `labelsHidden` nimmt nur die sichtbare Beschriftung;
                         // fuer VoiceOver bleibt „Farbe“ die des Waehlers.

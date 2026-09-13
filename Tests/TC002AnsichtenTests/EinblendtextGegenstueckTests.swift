@@ -66,9 +66,15 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// „Icon entfernen“-Knopf in `IconAuswahlView.swift` entfernt → dieser
     /// Test fällt für genau diese Datei durch (1 `.help` gegen 0
     /// Gegenstücke); wieder eingesetzt → grün.
+    ///
+    /// `SendenView.swift` steht seit 13.09.2026 **nicht** mehr in dieser
+    /// Liste: Sein Inspektor hat fünf Regler mit zustandsabhängigem
+    /// Einblendtext, die keinen Symbolknopf zeigen und darum kein
+    /// `.namensichtbarAmIPad()` brauchen (siehe die drei Tests weiter unten,
+    /// „MARK: - SendenView“). Eine blanke 1:1-Zählung über die ganze Datei
+    /// verlangte für die von ihnen fälschlich ein Gegenstück.
     func testSchlichteAnsichtenZeigenJedenEinblendtextAuchAmIPad() throws {
         for datei in ["Sources/TC002Ansichten/Brokerzeichen.swift",
-                      "Sources/TC002Ansichten/SendenView.swift",
                       "Sources/TC002Ansichten/AnzeigenView.swift",
                       "Sources/TC002Ansichten/IconAuswahlView.swift"] {
             let text = try quelltext(datei)
@@ -79,6 +85,67 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                            + "`.namensichtbarAmIPad()` — mindestens einer steht ohne Gegenstück da "
                            + "und ist damit am iPad unsichtbar")
         }
+    }
+
+    // MARK: - SendenView: Regler in einer Form zeigen ihren Zustand als
+    // Text — kein `.namensichtbarAmIPad()` nötig (siehe Symbolbeschriftung.
+    // swift: „Gilt nur für Knöpfe, die für sich allein stehen … Ein Regler
+    // in einer Form zeigt seinen Wert ohnehin als Text“). Die zwei
+    // Symbolknöpfe für sich allein — „Formatierung ein-/ausblenden“ und der
+    // Papierkorb bei `MeldungLoeschenKnopf` — tragen ihr Gegenstück weiter.
+
+    /// Fünf Regler im Inspektor (Laufschrift-Tempo, Schriftart, Schriftgröße,
+    /// Fett, Großbuchstaben) erklären, warum sie bei der aktuellen Schrift,
+    /// Größe oder dem aktuellen Weg gerade nichts bewirken — das kann weder
+    /// die Beschriftung noch die Hilfe sagen, die den Zustand nicht kennt.
+    ///
+    /// **Mutationsprobe** (13.09.2026): `.help(fettHilfe)` beim
+    /// „Fett“-Schalter entfernt → 4 gegen erwartete 5, durchgefallen; wieder
+    /// eingesetzt → grün.
+    func testSendenViewInspektorReglerHabenZustandsabhaengigenEinblendtext() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
+        XCTAssertEqual(anzahl(inspektor, ".help("), 5,
+                       "der Inspektor hat nicht mehr fünf Regler mit zustandsabhängigem Einblendtext — "
+                       + "dieser Test prüft die falsche Stelle")
+        XCTAssertEqual(anzahl(inspektor, ".namensichtbarAmIPad()"), 0,
+                       "ein Regler im Inspektor trägt `.namensichtbarAmIPad()` — das gilt nur für "
+                       + "Symbolknöpfe für sich allein, ein Regler in einer Form zeigt seinen Wert "
+                       + "ohnehin als Text")
+    }
+
+    /// Außerhalb des Inspektors bleiben nur die beiden Symbolknöpfe für sich
+    /// allein — „Formatierung ein-/ausblenden“ und der Papierkorb bei
+    /// `MeldungLoeschenKnopf` —, und die tragen wie bisher ihr Gegenstück.
+    ///
+    /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` bei
+    /// `MeldungLoeschenKnopf` entfernt → 2 `.help` gegen 1 Gegenstück,
+    /// durchgefallen; wieder eingesetzt → grün.
+    func testSendenViewStandaloneKnoepfeZeigenNamenAuchAmIPad() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
+        let help = anzahl(text, ".help(") - anzahl(inspektor, ".help(")
+        let gegenstueck = anzahl(text, ".namensichtbarAmIPad()") - anzahl(inspektor, ".namensichtbarAmIPad()")
+        XCTAssertEqual(help, 2,
+                       "außerhalb des Inspektors sind es nicht mehr zwei Symbolknöpfe für sich allein")
+        XCTAssertEqual(help, gegenstueck,
+                       "\(help) `.help(...)` außerhalb des Inspektors, aber nur \(gegenstueck) "
+                       + "`.namensichtbarAmIPad()` — ein Symbolknopf zeigt seinen Namen am iPad nicht "
+                       + "mehr")
+    }
+
+    /// Hält die Gesamtzahl fest, damit eine neue, keinem der beiden Tests
+    /// oben bekannte Stelle nicht still durchrutscht.
+    ///
+    /// **Mutationsprobe** (13.09.2026): ein zusätzliches
+    /// `.help("Testweise")` am Ende der Datei eingefügt → 8 gegen erwartete
+    /// 7, durchgefallen; wieder entfernt → grün.
+    func testSendenViewHatKeineUnbeobachteteEinblendtextstelle() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        XCTAssertEqual(anzahl(text, ".help("), 7,
+                       "SendenView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als die fünf "
+                       + "Regler im Inspektor plus die zwei Symbolknöpfe für sich allein — eine neue "
+                       + "Stelle ist keinem der Tests oben bekannt")
     }
 
     // MARK: - Die Werkzeugleiste des Editors
@@ -137,21 +204,77 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                       + "„Löschen“ dann nirgends mehr benannt")
     }
 
-    // MARK: - Vollständigkeit: keine vierte, unbeobachtete Stelle
+    // MARK: - Zwei weitere Symbolknöpfe für sich allein: Abspielsymbol und
+    // das geteilte Verschiebekreuz.
 
-    /// Die drei vorigen Tests decken zusammen jedes `.help(...)`, das in
-    /// `EditorBereichView.swift` noch steht. Diese Summe hält das fest, damit
-    /// ein neues, viertes `.help(...)` anderswo in der Datei nicht still
+    /// Das Abspielsymbol schaltet um (Abspielen/Stopp) und steht für sich
+    /// allein, ohne Beschriftung daneben — ein Symbolknopf braucht das
+    /// Gegenstück.
+    ///
+    /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` beim
+    /// Abspielsymbol entfernt → 1 `.help` gegen 0 Gegenstücke,
+    /// durchgefallen; wieder eingesetzt → grün.
+    func testAbspielsymbolZeigtNamenAuchAmIPad() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
+        XCTAssertEqual(anzahl(knopf, ".help("), 1,
+                       "das Abspielsymbol hat nicht mehr genau einen Einblendtext")
+        XCTAssertEqual(anzahl(knopf, ".namensichtbarAmIPad()"), 1,
+                       "das Abspielsymbol zeigt seinen Namen am iPad nicht mehr sichtbar an")
+    }
+
+    /// Die vier Pfeile des Verschiebekreuzes teilen sich eine Funktion
+    /// (`pfeil`) — Einblendtext und Gegenstück stehen deshalb nur einmal im
+    /// Quelltext, nicht viermal.
+    ///
+    /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` aus `pfeil`
+    /// entfernt → 1 `.help` gegen 0 Gegenstücke, durchgefallen; wieder
+    /// eingesetzt → grün.
+    func testVerschiebekreuzZeigtNamenAuchAmIPad() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let funktion = ausschnitt(text, von: "private func pfeil(", bis: "\n    }")
+        XCTAssertEqual(anzahl(funktion, ".help("), 1,
+                       "die geteilte Pfeilfunktion hat nicht mehr genau einen Einblendtext")
+        XCTAssertEqual(anzahl(funktion, ".namensichtbarAmIPad()"), 1,
+                       "die geteilte Pfeilfunktion zeigt ihren Namen am iPad nicht mehr sichtbar an")
+    }
+
+    /// Das Nummernfeld erklärt, was die aktuelle Größe gerade aus ihm macht
+    /// — LaMetric-Nummer oder Ulanzi-Werknummer —, ein zustandsabhängiger
+    /// Text, den weder die Beschriftung (überall nur „Nummer") noch die
+    /// Hilfe sagen kann. Kein Symbolknopf, darum kein
+    /// `.namensichtbarAmIPad()` nötig — das Textfeld zeigt seinen Wert
+    /// ohnehin als Text.
+    ///
+    /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()`
+    /// versuchsweise beim Nummernfeld ergänzt → 1 gegen erwartete 0,
+    /// durchgefallen; wieder entfernt → grün.
+    func testNummernfeldHatZustandsabhaengigenEinblendtextOhneGegenstueck() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let feld = ausschnitt(text, von: "TextField(\"Nummer\", text: $nummer)", bis: "\n                }")
+        XCTAssertEqual(anzahl(feld, ".help("), 1,
+                       "das Nummernfeld hat seinen zustandsabhängigen Einblendtext verloren")
+        XCTAssertEqual(anzahl(feld, ".namensichtbarAmIPad()"), 0,
+                       "das Nummernfeld trägt `.namensichtbarAmIPad()` — das gilt nur für Symbolknöpfe "
+                       + "für sich allein, ein Textfeld zeigt seinen Wert ohnehin als Text")
+    }
+
+    // MARK: - Vollständigkeit: keine unbeobachtete Stelle
+
+    /// Die sechs vorigen Tests decken zusammen jedes `.help(...)`, das in
+    /// `EditorBereichView.swift` noch steht. Diese Summe hält das fest,
+    /// damit ein neues `.help(...)` anderswo in der Datei nicht still
     /// durchrutscht, ohne dass einer der Tests oben es sieht.
     ///
     /// **Mutationsprobe** (13.09.2026): ein zusätzliches
-    /// `.help("Testweise")` am Ende von `bestandszeile` eingefügt → 8 gegen
-    /// erwartete 7, durchgefallen; wieder entfernt → grün.
-    func testEditorBereichViewHatKeineVierteUnbeobachteteStelle() throws {
+    /// `.help("Testweise")` am Ende von `bestandszeile` eingefügt → 11 gegen
+    /// erwartete 10, durchgefallen; wieder entfernt → grün.
+    func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 7,
-                       "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen "
-                       + "als die Werkzeugleiste (3) plus die beiden Kontextmenü-Zeilen (2 + 2) — "
-                       + "eine neue Stelle ist keinem der Tests oben bekannt")
+        XCTAssertEqual(anzahl(text, ".help("), 10,
+                       "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
+                       + "die Werkzeugleiste (3), die beiden Kontextmenü-Zeilen (2 + 2), das "
+                       + "Abspielsymbol (1), das Verschiebekreuz (1) und das Nummernfeld (1) — eine "
+                       + "neue Stelle ist keinem der Tests oben bekannt")
     }
 }
