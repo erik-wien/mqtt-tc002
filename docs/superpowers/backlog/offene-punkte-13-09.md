@@ -167,9 +167,31 @@ ein Formatwechsel schon einmal beinahe alle Einstellungen unlesbar gemacht
 (`EinstellungenTests.testUhrBleibtLesbar` ist seither das Netz). **Der Umzug
 braucht einen Rueckweg**, nicht nur einen Hinweg.
 
-**E2. AWTRIX NG.** Erhebung liegt (`~1000 Zeilen Textweg`). **Offen: neben oder
-statt der TC002?** Bei gemischten Zielen kann die Vorschau nur eine von zwei
-Darstellungen zeigen.
+**E2. AWTRIX NG — entschieden: „statt", nicht „neben".** Eine Uhr ist entweder
+eine TC002 oder eine AWTRIX; gemischte Ziele gibt es nicht. **Damit faellt die
+schwerste Frage der Erhebung weg** — die Vorschau muss nie zwei Darstellungen
+zugleich zeigen, und `ziele()` bleibt, wie es ist. Zuschnitt: Textweg (~1000
+Zeilen, `.superpowers/sdd/awtrix/aufwand.md`).
+
+**E2a. Ein eigener Geraeterahmen fuer die AWTRIX (32×8).**
+Der heutige Rahmen ist gezeichnet, nicht fotografiert: `GeraeteRahmen.swift`
+(66 Zeilen) haelt eine viewBox 680×356 mit dem schwarzen Feld bei x=48 y=93,
+584×177, dazu die Schriftzuege „U-Clock TC002" und „Pixbar".
+
+Vorlage des Auftraggebers: ein Bild der **Ulanzi TC001** — schwarzes Feld,
+heller Kunststoffkoerper, duenner Rand ringsum. **Ausdruecklich frontal, nicht
+schraeg.**
+
+Seine eigene Einschaetzung, und sie stimmt: *„Mir ist klar, dass es dann
+eigentlich nur ein duenner weisser Rand ist. Ich schlage vor zu schummeln und
+wie beim jetzigen Simulator links unten ‚Ulanzi TC001' hinzuschreiben."*
+→ **Ohne Schriftzug waeren die beiden Geraete kaum zu unterscheiden.** Der
+Schriftzug ist hier keine Zierde, sondern die Auskunft.
+
+Zu bedenken: Das Feld ist **32×8, also 4:1** gegenueber 52:16 = 3,25 — ein
+anderes Seitenverhaeltnis, nicht nur eine andere Zeichnung. `GeraeteRahmen`
+rechnet heute mit festen Massen aus **einer** viewBox; er braucht die Masse als
+Eigenschaft, nicht als Konstante.
 
 **E3. MQTT 5.** Gemessen, Bericht liegt, vom Auftraggeber auf spaeter gelegt.
 Gewinn auf dem Hauptweg vom eigenen Mitleser aufgefressen; `0x10` traegt nur
