@@ -77,8 +77,13 @@ langes Laufbild kann zu gross werden, und wo die Uhr aussteigt, weiss niemand
 ## C — Editor: Groessen und Import
 
 **C1. Import behaelt die Quellgroesse**, statt auf die eingestellte zu rechnen.
-**Offen: was bei einer Fremdgroesse geschieht** (32×32, 104×32) — rechnen oder
-ablehnen? *(Eigener Eintrag: `editor-groessen-und-import.md`.)*
+**Eine Fremdgroesse (32×32, 104×32) wird abgelehnt** — entschieden am
+13.09.2026. Also: 8×8, 16×16 und 16×52 werden aufgenommen, alles andere weist
+die App **mit Begruendung** zurueck („Das Bild ist 32×32. Aufgenommen werden
+8×8, 16×16 und 16×52."), statt stillschweigend zu rechnen.
+Grund: Herunterrechnen zerstoert, und es geschah bisher unsichtbar — genau
+daran ist der Auftraggeber mit seinen `maze`-GIFs haengengeblieben.
+*(Eigener Eintrag: `editor-groessen-und-import.md`.)*
 
 **C2. Hochrechnen 8×8 → 16×16 als eigene Funktion**, und zwar **bei „Icon
 einfuegen"** — praezisiert gegenueber dem ersten Eintrag.
