@@ -1,0 +1,199 @@
+import Foundation
+
+/// Ein Eintrag in der Liste der vorhandenen Zeichnungen — gleich aus welchem
+/// der drei Bestaende. Die Groesse ist sein Merkmal, nicht die Liste, in der er
+/// steht.
+public struct Editoreintrag: Equatable, Sendable, Identifiable {
+    public var groesse: Leinwandgroesse
+    public var name: String
+    /// Die LaMetric-Nummer — nur beim kanonischen 8×8, sonst `nil`.
+    public var nummer: String?
+    public var datei: URL
+
+    public init(groesse: Leinwandgroesse, name: String, nummer: String?, datei: URL) {
+        self.groesse = groesse
+        self.name = name
+        self.nummer = nummer
+        self.datei = datei
+    }
+
+    /// Datei und Groesse zusammen: Ein 8×8 und ein 16×16 duerfen denselben
+    /// Namen tragen, und tun es.
+    public var id: String { "\(groesse.rawValue)/\(datei.path)" }
+}
+
+/// Die drei Bestaende unter einem Dach.
+///
+/// **Sie bleiben, wie sie sind** — `Icons`, `Icons16` und `Bilder`, jeder mit
+/// seinem eigenen Ordner und seiner eigenen `names.json`. Bestehende Dateien
+/// muessen lesbar bleiben; in diesem Projekt hat ein Formatwechsel schon
+/// einmal beinahe alle Einstellungen unlesbar gemacht. Zusammengefasst wird
+/// allein die **Anzeige**: eine Liste, die Groesse am Eintrag.
+///
+/// Wohin etwas gehoert, entscheidet die Groesse — nirgends sonst.
+public struct Editorbestand {
+    private let icons8: Iconsammlung
+    private let icons16: Iconsammlung
+    private let bilder: Bildersammlung
+
+    public init(icons8: Iconsammlung, icons16: Iconsammlung, bilder: Bildersammlung) {
+        self.icons8 = icons8
+        self.icons16 = icons16
+        self.bilder = bilder
+    }
+
+    /// Die Bestaende dieser Installation.
+    public static var eigene: Editorbestand {
+        Editorbestand(icons8: Iconsammlung(schreibordner: Iconordner.eigene),
+                      icons16: Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16),
+                      bilder: Bildersammlung(ordner: Bilderordner.eigene))
+    }
+
+    /// Die Sammlung, in der eine Groesse zu Hause ist. `nil` fuer die Anzeige —
+    /// die liegt in `Bildersammlung`, nicht in einer `Iconsammlung`.
+    public func iconsammlung(fuer groesse: Leinwandgroesse) -> Iconsammlung? {
+        switch groesse {
+        case .icon8: return icons8
+        case .icon16: return icons16
+        case .anzeige: return nil
+        }
+    }
+
+    /// Alles, sortiert nach Groesse und darin nach Namen. Die Sortierung ist
+    /// Teil des Versprechens: Eine Liste, in der 8×8 und 16×16 durcheinander
+    /// stehen, macht das Merkmal am Eintrag zur Suchaufgabe.
+    public func alle() -> [Editoreintrag] {
+        var ergebnis: [Editoreintrag] = []
+        for groesse in Leinwandgroesse.allCases {
+            switch groesse {
+            case .icon8, .icon16:
+                let sammlung = groesse == .icon8 ? icons8 : icons16
+                ergebnis += sammlung.alle().map {
+                    Editoreintrag(groesse: groesse, name: $0.name,
+                                  nummer: groesse.mitNummer ? $0.nummer : nil,
+                                  datei: $0.datei)
+                }
+            case .anzeige:
+                ergebnis += bilder.alle().map {
+                    Editoreintrag(groesse: groesse, name: $0.name, nummer: nil, datei: $0.datei)
+                }
+            }
+        }
+        return ergebnis
+    }
+
+    /// Nach Name und Nummer, unabhaengig von Gross- und Kleinschreibung. Eine
+    /// leere Suche laesst die Liste unveraendert.
+    public func gefiltert(nach suche: String) -> [Editoreintrag] {
+        let s = suche.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return alle() }
+        return alle().filter {
+            $0.name.localizedCaseInsensitiveContains(s)
+                || ($0.nummer?.localizedCaseInsensitiveContains(s) ?? false)
+        }
+    }
+
+    /// Legt ab, was gerade gemalt ist. `nummer` gilt nur beim 8×8 — bei den
+    /// anderen beiden ist der Name der Dateiname.
+    @discardableResult
+    public func sichern(_ leinwand: Leinwand, name: String, nummer: String) throws -> Editoreintrag {
+        guard let groesse = Leinwandgroesse.fuer(leinwand) else {
+            throw EditorbestandFehler.unbekannteGroesse
+        }
+        switch groesse {
+        case .icon8, .icon16:
+            let sammlung = groesse == .icon8 ? icons8 : icons16
+            let schluessel = groesse.mitNummer
+                ? nummer.trimmingCharacters(in: .whitespaces)
+                : Dateiname.aus(name)
+            guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
+            let sauber = name.trimmingCharacters(in: .whitespaces)
+            let icon = try sammlung.sichern(nummer: schluessel,
+                                            name: sauber.isEmpty ? schluessel : sauber,
+                                            bilder: leinwand.bilder,
+                                            verzoegerung: leinwand.verzoegerung)
+            return Editoreintrag(groesse: groesse, name: icon.name,
+                                 nummer: groesse.mitNummer ? icon.nummer : nil,
+                                 datei: icon.datei)
+        case .anzeige:
+            let sauber = name.trimmingCharacters(in: .whitespaces)
+            guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
+            let eintrag = try bilder.sichern(name: sauber, bilder: leinwand.bilder,
+                                             verzoegerung: leinwand.verzoegerung)
+            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: nil,
+                                 datei: eintrag.datei)
+        }
+    }
+
+    /// Liest einen Eintrag zurueck auf die Leinwand — alle Einzelbilder, nicht
+    /// nur das erste, und mit der Standzeit aus der Datei statt mit dem
+    /// Anfangswert: sonst ueberschriebe das naechste Sichern sie still.
+    public func oeffnen(_ eintrag: Editoreintrag) throws -> Leinwand {
+        let gelesen = try Bildraster.lesenMitZeiten(eintrag.datei,
+                                                    breite: eintrag.groesse.breite,
+                                                    hoehe: eintrag.groesse.hoehe)
+        let zeit = gelesen.first.map { $0.dauer > 0 ? $0.dauer : 0.2 } ?? 0.2
+        guard let leinwand = Leinwand(breite: eintrag.groesse.breite,
+                                      hoehe: eintrag.groesse.hoehe,
+                                      bilder: gelesen.map(\.pixel), verzoegerung: zeit) else {
+            throw EditorbestandFehler.nichtLesbar
+        }
+        return leinwand
+    }
+
+    public func loeschen(_ eintrag: Editoreintrag) throws {
+        switch eintrag.groesse {
+        case .icon8, .icon16:
+            let sammlung = eintrag.groesse == .icon8 ? icons8 : icons16
+            try sammlung.loeschen(Icon(nummer: eintrag.nummer
+                                        ?? eintrag.datei.deletingPathExtension().lastPathComponent,
+                                       name: eintrag.name, kategorie: "",
+                                       datei: eintrag.datei,
+                                       kante: eintrag.groesse.breite))
+        case .anzeige:
+            try bilder.loeschen(Gemaltes(name: eintrag.name, datei: eintrag.datei))
+        }
+    }
+
+    /// Liest eine Datei von der Platte in den Bestand der angegebenen Groesse.
+    @discardableResult
+    public func einlesen(datei: URL, groesse: Leinwandgroesse,
+                         nummer: String, name: String) throws -> Editoreintrag {
+        switch groesse {
+        case .icon8, .icon16:
+            let sammlung = groesse == .icon8 ? icons8 : icons16
+            let schluessel = groesse.mitNummer
+                ? nummer.trimmingCharacters(in: .whitespaces)
+                : Dateiname.aus(name)
+            guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
+            let sauber = name.trimmingCharacters(in: .whitespaces)
+            let icon = try sammlung.einfuegen(datei: datei, nummer: schluessel,
+                                              name: sauber.isEmpty ? schluessel : sauber)
+            return Editoreintrag(groesse: groesse, name: icon.name,
+                                 nummer: groesse.mitNummer ? icon.nummer : nil,
+                                 datei: icon.datei)
+        case .anzeige:
+            let sauber = name.trimmingCharacters(in: .whitespaces)
+            guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
+            let eintrag = try bilder.einfuegen(datei: datei, name: sauber)
+            return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: nil,
+                                 datei: eintrag.datei)
+        }
+    }
+}
+
+public enum EditorbestandFehler: Error, LocalizedError {
+    /// Eine Leinwand, die keine der drei Groessen hat — von Hand verbogen oder
+    /// aus einer Fassung, die es noch nicht gibt.
+    case unbekannteGroesse
+    case leererName
+    case nichtLesbar
+
+    public var errorDescription: String? {
+        switch self {
+        case .unbekannteGroesse: return lok("Diese Größe lässt sich nicht sichern.")
+        case .leererName: return lok("Ohne Namen lässt sich nichts sichern.")
+        case .nichtLesbar: return lok("Das lässt sich nicht öffnen.")
+        }
+    }
+}

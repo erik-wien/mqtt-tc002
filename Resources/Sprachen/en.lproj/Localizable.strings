@@ -170,6 +170,7 @@
 "Zwischen den Größen wird nichts umgerechnet — das gemalte Icon geht dabei verloren." = "Nothing is converted between the sizes — the drawn icon is lost in the process.";
 "8 × 8" = "8 × 8";
 "16 × 16" = "16 × 16";
+"16 × 52" = "16 × 52";
 "8×8 sind die kanonischen LaMetric-Icons mit Nummer. Ein 16×16 hat keine, füllt auf der Uhr die volle Höhe und belegt achtzehn statt zehn Spalten." = "8×8 are the canonical LaMetric icons with a number. A 16×16 has none, fills the full height on the clock and occupies eighteen instead of ten columns.";
 "Leert das gerade bearbeitete Einzelbild." = "Empties the frame currently being edited.";
 "Nach oben schieben" = "Shift up";
@@ -404,6 +405,10 @@
 "Ein Name wird gebraucht." = "A name is required.";
 "Das Bild lässt sich nicht lesen." = "The image cannot be read.";
 "Das Bild lässt sich nicht speichern." = "The image cannot be saved.";
+/* Editorbestand.swift */
+"Diese Größe lässt sich nicht sichern." = "This size cannot be saved.";
+"Ohne Namen lässt sich nichts sichern." = "Nothing can be saved without a name.";
+"Das lässt sich nicht öffnen." = "That cannot be opened.";
 /* Geraet.swift */
 "Die Uhr ist nicht erreichbar: %@ Kam dabei gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen." = "The clock is not reachable: %@ If the question about local network access just came up, please allow it and then query again.";
 "Die Uhr hat unerwartet geantwortet: %@" = "The clock gave an unexpected answer: %@";

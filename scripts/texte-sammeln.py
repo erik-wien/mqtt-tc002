@@ -73,6 +73,9 @@ DYNAMISCH = [
     # niemand: Faellt der Knopf weg, faende der Sammler den Schluessel nicht
     # mehr, und das Fenster hiesse auf einem englischen Geraet deutsch.
     "Über", "Hilfe", "Gerätereferenz", "Schriftprobe",
+    # Die drei Leinwandgroessen (Leinwandgroesse.beschriftung im Kern,
+    # nachgeschlagen ueber lok(groesse.beschriftung)).
+    "8 × 8", "16 × 16", "16 × 52",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
