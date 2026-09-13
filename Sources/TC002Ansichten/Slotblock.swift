@@ -136,19 +136,3 @@ private struct Slotraster: View {
         }
     }
 }
-
-private extension Color {
-    /// Wandelt "#RRGGBB" in eine Farbe. Ungültige Angaben ergeben nil.
-    ///
-    /// Eigene, kleine Kopie: `TC002App`/`Sources/TC002App/VorschauView.swift`
-    /// und `TC002iOS/Farbe.swift` haben dieselbe, aber `TC002Ansichten` ist ein
-    /// eigenes Modul und teilt mit ihnen keine Typen.
-    init?(hex: String) {
-        var s = hex.trimmingCharacters(in: .whitespaces)
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let wert = UInt32(s, radix: 16) else { return nil }
-        self.init(red: Double((wert >> 16) & 0xFF) / 255,
-                  green: Double((wert >> 8) & 0xFF) / 255,
-                  blue: Double(wert & 0xFF) / 255)
-    }
-}

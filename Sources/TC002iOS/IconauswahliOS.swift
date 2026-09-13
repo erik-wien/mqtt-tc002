@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 
 /// Ein 8×8-Icon als Vorschau. Zeigt das erste Einzelbild; animierte Icons

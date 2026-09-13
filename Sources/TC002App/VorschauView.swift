@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import TC002Ansichten
 import TC002Core
@@ -119,25 +118,5 @@ struct VorschauView: View {
     private static func geladen(_ icon: URL?) -> [Bildraster.Einzelbild] {
         guard let icon else { return [] }
         return (try? Bildraster.lesenMitZeiten(icon, breite: 8, hoehe: 8)) ?? []
-    }
-}
-
-extension Color {
-    /// Wandelt "#RRGGBB" in eine Farbe. Ungültige Angaben ergeben nil.
-    init?(hex: String) {
-        var s = hex.trimmingCharacters(in: .whitespaces)
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let wert = UInt32(s, radix: 16) else { return nil }
-        self.init(red: Double((wert >> 16) & 0xFF) / 255,
-                  green: Double((wert >> 8) & 0xFF) / 255,
-                  blue: Double(wert & 0xFF) / 255)
-    }
-
-    /// "#RRGGBB" aus der Farbe. Ueber sRGB, damit derselbe Farbwert herauskommt,
-    /// den die Uhr spaeter anzeigt.
-    var hexWert: String {
-        let f = NSColor(self).usingColorSpace(.sRGB) ?? .white
-        return String(format: "#%02X%02X%02X",
-                      Int(f.redComponent * 255), Int(f.greenComponent * 255), Int(f.blueComponent * 255))
     }
 }

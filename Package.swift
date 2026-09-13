@@ -36,6 +36,8 @@ let package = Package(
                     swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002ModellTests", dependencies: ["TC002Modell"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
+        .testTarget(name: "TC002AnsichtenTests", dependencies: ["TC002Ansichten"],
+                    swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002AppTests", dependencies: ["TC002App"],
                     swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "TC002CLITests", dependencies: ["TC002CLI"],
