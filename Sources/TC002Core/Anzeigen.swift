@@ -65,9 +65,14 @@ public struct Anzeigen {
         }
     }
 
-    /// Ob dieser Kanal eine Rueckmeldung gibt. Der eine Unterschied, den die
-    /// Oberflaechen kennen muessen: Ueber HTTP heisst „kein Fehler" wirklich
-    /// „angekommen", ueber MQTT heisst es nur „abgeschickt".
+    /// Ob dieser Kanal eine Rueckmeldung gibt — ueber HTTP heisst „kein
+    /// Fehler" wirklich „angekommen", ueber MQTT nur „abgeschickt".
+    ///
+    /// **Nur die Tests fragen das heute**, und sie brauchen es: `kanal` ist
+    /// privat, und ohne diese Naht liesse sich gar nicht nachmessen, ob
+    /// `fuer(_:brokerzugang:)` den richtigen Weg gewaehlt hat. Dieselbe Sorte
+    /// Zugang wie `gedaechtnis:` bei den Slots und `sitzung:` bei den
+    /// HTTP-Wegen.
     public var quittiert: Bool {
         if case .http = kanal { return true }
         return false
