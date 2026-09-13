@@ -40,7 +40,9 @@ dependencies; macOS 14 or newer is required.
 
 How these areas are operated in detail is in the help inside the program
 (⌘?); what the clock itself can do and what its protocol looks like is in
-[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md).
+[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md). What a device running the
+AWTRIX NG firmware can do and what its protocol looks like is alongside it in
+[`docs/en/awtrix-ng-protocol.md`](docs/en/awtrix-ng-protocol.md).
 
 ## Fonts and spacing
 

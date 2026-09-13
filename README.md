@@ -42,7 +42,9 @@ vorausgesetzt wird macOS 14 aufwärts.
 
 Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
 (⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
-[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md).
+[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md). Was ein Gerät mit der
+Firmware AWTRIX NG kann und wie dessen Protokoll aussieht, steht daneben in
+[`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
 
 ## Schriften und Abstand
 
