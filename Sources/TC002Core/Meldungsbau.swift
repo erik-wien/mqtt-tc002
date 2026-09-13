@@ -1,7 +1,7 @@
 import Foundation
 
 /// Waagrechte Ausrichtung des Textes innerhalb der verfuegbaren Breite (52 Pixel
-/// ohne Icon, ab Spalte 10 mit Icon).
+/// ohne Icon, ab Spalte 10 mit einem 8×8-Icon, ab Spalte 18 mit einem 16×16).
 public enum SendenHAusrichtung: String, CaseIterable, Identifiable {
     case links, mittig, rechts
     public var id: String { rawValue }
@@ -123,12 +123,26 @@ public struct Meldungsoptionen {
 /// Wortgetreu aus `SendenView` gelöst. Keine Rechnung wurde dabei geändert;
 /// die Schnappschusstests halten das fest.
 public enum Meldungsbau {
-    /// Wo das Icon endet: acht Pixel breit, zwei Pixel Luft.
-    public static let iconBreite = 10
+    /// Luft zwischen Icon und Text.
+    public static let iconLuecke = 2
 
-    public static func flaecheX(mitIcon: Bool) -> Int { mitIcon ? iconBreite : 0 }
-    public static func flaecheBreite(mitIcon: Bool) -> Int {
-        Pixelfeld.breiteStandard - flaecheX(mitIcon: mitIcon)
+    /// Wo das Icon endet: seine Kante plus die Luft. Bei 8×8 zehn Spalten wie
+    /// bisher, bei 16×16 achtzehn.
+    public static func iconBreite(kante: Int = 8) -> Int { kante + iconLuecke }
+
+    /// Auf welcher Zeile das Icon sitzt: senkrecht mittig in den sechzehn
+    /// Zeilen. Bei 8×8 ergibt das die bekannte 4, bei 16×16 die 0 — ein
+    /// 16×16 fuellt die volle Hoehe und schwimmt nicht.
+    public static func iconY(kante: Int = 8) -> Int { (Pixelfeld.hoeheStandard - kante) / 2 }
+
+    /// `iconKante` hat ueberall eine Vorgabe: Jede Stelle, die frueher nur
+    /// „Icon ja/nein" wusste, meinte damit ein 8×8 und rechnet unveraendert
+    /// weiter.
+    public static func flaecheX(mitIcon: Bool, iconKante: Int = 8) -> Int {
+        mitIcon ? iconBreite(kante: iconKante) : 0
+    }
+    public static func flaecheBreite(mitIcon: Bool, iconKante: Int = 8) -> Int {
+        Pixelfeld.breiteStandard - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
     }
 
     /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage für `versatzY`
@@ -148,8 +162,8 @@ public enum Meldungsbau {
     /// Icon 42 Spalten). Hinge die Rechnung an „Icon mitscrollen", würde das
     /// Einschalten den Text passend machen, den Schalter verschwinden lassen
     /// und ihn wieder umwerfen.
-    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool) -> Bool {
-        breite(o) <= flaecheBreite(mitIcon: mitIcon)
+    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Bool {
+        breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante)
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
@@ -168,8 +182,9 @@ public enum Meldungsbau {
         }
     }
 
-    public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool) -> Int {
-        let x = flaecheX(mitIcon: mitIcon), b = flaecheBreite(mitIcon: mitIcon)
+    public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Int {
+        let x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
+        let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante)
         switch o.waagrecht {
         case .links:  return x
         case .mittig: return x + max(0, (b - breite(o)) / 2)
@@ -180,9 +195,9 @@ public enum Meldungsbau {
     /// Vorschau und Sendung entstehen aus demselben Feld. Gerastert wird immer
     /// in derselben Phase, ausgerichtet wird durch Verschieben — sonst sähe
     /// dieselbe Schrift stehend anders aus als laufend.
-    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool) -> Pixelfeld {
+    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Pixelfeld {
         var f = Pixelfeld()
-        Textraster.einsetzen(puffer(o), x: versatzX(o, mitIcon: mitIcon),
+        Textraster.einsetzen(puffer(o), x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante),
                              y: versatzY(o), in: &f)
         return f
     }
@@ -191,24 +206,25 @@ public enum Meldungsbau {
     /// Vorschau sie zum Abspielen braucht, während `rahmen` sie bereits zu
     /// einem GIF verpackt hat.
     public static func laufschriftBilder(_ o: Meldungsoptionen,
-                                  iconBilder: [[String?]]) -> [Bildraster.Einzelbild] {
+                                  iconBilder: [[String?]],
+                                  iconKante: Int = 8) -> [Bildraster.Einzelbild] {
         Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
-            versatzY: versatzY(o), iconBilder: iconBilder,
+            versatzY: versatzY(o), iconBilder: iconBilder, iconKante: iconKante,
             iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
     }
 
-    public static func textblock(_ o: Meldungsoptionen, mitIcon: Bool) -> Textblock {
+    public static func textblock(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Textblock {
         var t = Textblock(inhalt: o.gesendeterText)
         t.schrifthoehe = Int(o.groesse)
-        t.x = flaecheX(mitIcon: mitIcon)
+        t.x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
         t.y = 0
         t.farbe = o.farbe
         t.ausrichtung = o.geraeteAusrichtung
         t.vertikal = o.geraeteVertikal
-        t.flaeche = [flaecheX(mitIcon: mitIcon), 0,
-                     flaecheBreite(mitIcon: mitIcon), Pixelfeld.hoeheStandard]
+        t.flaeche = [flaecheX(mitIcon: mitIcon, iconKante: iconKante), 0,
+                     flaecheBreite(mitIcon: mitIcon, iconKante: iconKante), Pixelfeld.hoeheStandard]
         return t
     }
 
@@ -223,9 +239,12 @@ public enum Meldungsbau {
     public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
                        vorberechnet: String? = nil) throws -> Frame {
         let mitIcon = icon != nil
+        // Die einzige Stelle, an der die Groesse des Icons wirklich entschieden
+        // wird: Alles darunter rechnet mit ihr weiter, statt 8 anzunehmen.
+        let kante = icon?.kante ?? 8
         switch o.weg {
         case .pixel:
-            guard passt(o, mitIcon: mitIcon) else {
+            guard passt(o, mitIcon: mitIcon, iconKante: kante) else {
                 let uri: String
                 if let fertig = vorberechnet, !fertig.isEmpty {
                     uri = fertig
@@ -233,25 +252,29 @@ public enum Meldungsbau {
                     // Erst hier lesen: Liegt das GIF schon vor, waere das
                     // Oeffnen der Icondatei bei jedem Senden umsonst.
                     let iconBilder = icon.flatMap { i -> [[String?]]? in
-                        try? Bildraster.lesenMitZeiten(i.datei, breite: 8, hoehe: 8).map(\.pixel)
+                        try? Bildraster.lesenMitZeiten(i.datei, breite: kante, hoehe: kante).map(\.pixel)
                     } ?? []
                     uri = try Textraster.laufschrift(
                         o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
                         farbe: o.farbe, schrittweite: o.tempo.schrittweite,
                         bilddauer: o.tempo.bilddauer, versatzY: versatzY(o),
-                        iconBilder: iconBilder, iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
+                        iconBilder: iconBilder, iconKante: kante,
+                        iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
                 }
                 return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: o.dauer)
             }
-            var frame = Frame(draw: feld(o, mitIcon: mitIcon).alsDrawBefehle(), dauer: o.dauer)
+            var frame = Frame(draw: feld(o, mitIcon: mitIcon, iconKante: kante).alsDrawBefehle(),
+                              dauer: o.dauer)
             if let icon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
+                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon),
+                                         x: 0, y: iconY(kante: kante)))
             }
             return frame
         case .text:
-            var frame = Frame(texte: [textblock(o, mitIcon: mitIcon)], dauer: o.dauer)
+            var frame = Frame(texte: [textblock(o, mitIcon: mitIcon, iconKante: kante)], dauer: o.dauer)
             if let icon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon), x: 0, y: 4))
+                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon),
+                                         x: 0, y: iconY(kante: kante)))
             }
             return frame
         }

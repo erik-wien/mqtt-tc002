@@ -63,4 +63,52 @@ final class BildersammlungTests: XCTestCase {
         try Data("kein Bild".utf8).write(to: kaputt)
         XCTAssertThrowsError(try sammlung.einfuegen(datei: kaputt, name: "x"))
     }
+
+    /// Ein Laufbild behaelt beim Rundlauf durch die Sammlung alle seine
+    /// Einzelbilder und ihre Standzeit — sonst waere aus der Animation beim
+    /// Sichern ein Standbild geworden.
+    func testLaufbildBehaeltSeineEinzelbilder() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        let leer = [String?](repeating: nil, count: Pixelfeld.breiteStandard * Pixelfeld.hoeheStandard)
+        var erstes = leer, zweites = leer
+        erstes[0] = "#FF0000"
+        zweites[Pixelfeld.breiteStandard * Pixelfeld.hoeheStandard - 1] = "#00FF66"
+
+        let eintrag = try sammlung.sichern(name: "Lauf", bilder: [erstes, zweites], verzoegerung: 0.4)
+        let zurueck = try sammlung.einzelbilder(eintrag)
+        // Erst die Zahl, dann erst zugreifen: Bei einem Rueckfall auf ein
+        // einzelnes Bild soll der Test melden, nicht abstuerzen.
+        guard zurueck.count == 2 else {
+            return XCTFail("erwartet: zwei Einzelbilder, bekommen: \(zurueck.count)")
+        }
+        XCTAssertEqual(zurueck[0].pixel[0], "#FF0000")
+        XCTAssertEqual(zurueck[1].pixel.last ?? nil, "#00FF66")
+        XCTAssertEqual(zurueck[0].dauer, 0.4, accuracy: 0.001)
+    }
+
+    /// Ein eingelesenes animiertes GIF kommt vollstaendig in die Sammlung,
+    /// nicht nur mit seinem ersten Einzelbild.
+    func testEingelesenesLaufbildBehaeltAlleEinzelbilder() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        let leer = [String?](repeating: nil, count: Pixelfeld.breiteStandard * Pixelfeld.hoeheStandard)
+        var a = leer, b = leer
+        a[0] = "#FF0000"
+        b[1] = "#00FF66"
+        let quelle = try sammlung.sichern(name: "Quelle", bilder: [a, b], verzoegerung: 0.3).datei
+
+        let kopie = try sammlung.einfuegen(datei: quelle, name: "Kopie")
+        XCTAssertEqual(try sammlung.einzelbilder(kopie).count, 2)
+    }
+
+    /// Ein einzelnes Bild kommt weiterhin als eines zurueck — die Dateien
+    /// frueherer Fassungen bleiben lesbar.
+    func testEinzelbildBleibtEinzelbild() throws {
+        let sammlung = Bildersammlung(ordner: temp())
+        var feld = Pixelfeld()
+        feld.setzen(x: 3, y: 4, farbe: "#123456")
+        let eintrag = try sammlung.sichern(name: "Einzeln", feld: feld)
+        XCTAssertEqual(try sammlung.einzelbilder(eintrag).count, 1)
+        XCTAssertEqual(try sammlung.laden(eintrag).farbe(x: 3, y: 4), "#123456")
+    }
+
 }

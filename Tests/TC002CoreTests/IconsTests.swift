@@ -548,4 +548,75 @@ final class IconsTests: XCTestCase {
         XCTAssertNil(zurueck[1])
         XCTAssertNil(zurueck[63])
     }
+
+    // MARK: - Zwei Groessen, zwei Bestaende
+
+    /// Ein 16×16 kommt ungerechnet zurueck — wuerde es wie ein 8×8 gelesen,
+    /// waere jedes zweite Pixel weg.
+    func testSechzehnerRundlauf() throws {
+        let sammlung = Iconsammlung(ordner: temp(), kante: 16)
+        var pixel = [String?](repeating: nil, count: 256)
+        pixel[0] = "#FF0000"
+        pixel[255] = "#00FF66"
+        // Genau die Stelle, die beim Herunterrechnen auf 8×8 verschwaende.
+        pixel[1] = "#0000FF"
+
+        let icon = try sammlung.sichern(nummer: "gross", name: "Groß", pixel: pixel)
+        XCTAssertEqual(icon.kante, 16)
+        let zurueck = try sammlung.pixel(fuer: icon)
+        // Erst die Zahl, dann erst zugreifen: Wird wieder auf 8×8 gelesen,
+        // soll der Test melden, nicht abstuerzen.
+        guard zurueck.count == 256 else {
+            return XCTFail("erwartet: 256 Pixel, bekommen: \(zurueck.count)")
+        }
+        XCTAssertEqual(zurueck[0], "#FF0000")
+        XCTAssertEqual(zurueck[1], "#0000FF")
+        XCTAssertEqual(zurueck[255], "#00FF66")
+        XCTAssertEqual(sammlung.alle().map(\.kante), [16])
+    }
+
+    /// Ein 16×16-Raster gehoert nicht in einen 8×8-Bestand.
+    func testAchterSammlungLehntSechzehnerRasterAb() {
+        let sammlung = Iconsammlung(ordner: temp())
+        let pixel = [String?](repeating: "#FFFFFF", count: 256)
+        XCTAssertThrowsError(try sammlung.sichern(nummer: "gross", name: "Groß", pixel: pixel))
+    }
+
+    /// Ohne Angabe bleibt eine Sammlung, was sie war: 8×8.
+    func testOhneAngabeBleibtEsBeiAchtMalAcht() throws {
+        let sammlung = Iconsammlung(ordner: temp())
+        let icon = try sammlung.sichern(nummer: "klein", name: "Klein",
+                                        pixel: [String?](repeating: "#FFFFFF", count: 64))
+        XCTAssertEqual(icon.kante, 8)
+        XCTAssertEqual(try sammlung.pixel(fuer: icon).count, 64)
+    }
+
+    /// Die Kennung trennt, was die Nummer nicht trennt: Beide Bestaende
+    /// duerfen denselben Namen tragen.
+    func testKennungTrenntDieBestaende() {
+        let datei = URL(fileURLWithPath: "/dev/null")
+        let a = Icon(nummer: "stern", name: "Stern", kategorie: "", datei: datei)
+        let b = Icon(nummer: "stern", name: "Stern", kategorie: "", datei: datei, kante: 16)
+        XCTAssertEqual(a.nummer, b.nummer)
+        XCTAssertNotEqual(a.kennung, b.kennung)
+    }
+
+
+    /// Eine 16×16-Datei, in den 16er-Bestand eingelesen, wird nicht auf 8×8
+    /// heruntergerechnet — dieselbe Datei im 8er-Bestand dagegen schon.
+    func testEinlesenBleibtInDerGroesseDesBestands() throws {
+        let sechzehner = Iconsammlung(ordner: temp(), kante: 16)
+        var pixel = [String?](repeating: nil, count: 256)
+        pixel[1] = "#0000FF"     // geht beim Herunterrechnen verloren
+        let quelle = try sechzehner.sichern(nummer: "vorlage", name: "Vorlage", pixel: pixel).datei
+
+        let kopie = try sechzehner.einfuegen(datei: quelle, nummer: "kopie", name: "Kopie")
+        XCTAssertEqual(kopie.kante, 16)
+        XCTAssertEqual(try sechzehner.pixel(fuer: kopie).count, 256)
+
+        let achter = Iconsammlung(ordner: temp())
+        let klein = try achter.einfuegen(datei: quelle, nummer: "klein", name: "Klein")
+        XCTAssertEqual(try achter.pixel(fuer: klein).count, 64)
+    }
+
 }

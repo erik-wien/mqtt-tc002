@@ -12,7 +12,11 @@ import TC002Core
 /// nicht in der Sendezeile.
 struct IconAuswahlView: View {
     @Binding var gewaehltesIcon: Icon?
-    let sammlung: Iconsammlung
+    /// Alle Bestaende, aus denen gewaehlt werden darf — heute die 8×8 und die
+    /// 16×16. Sie stehen im selben Raster nebeneinander: Beim Waehlen zaehlt,
+    /// wie das Icon aussieht, nicht in welchem Ordner es liegt. Woher es
+    /// stammt, weiss es selbst (`Icon.kante`), und das Loeschen fragt danach.
+    let sammlungen: [Iconsammlung]
 
     @State private var zeigeBlatt = false
     @State private var suche = ""
@@ -26,7 +30,9 @@ struct IconAuswahlView: View {
 
     private var gefilterte: [Icon] {
         _ = aktualisierung
-        return sammlung.alle().gefiltert(nach: suche)
+        return sammlungen.flatMap { $0.alle() }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .gefiltert(nach: suche)
     }
 
     var body: some View {
@@ -34,7 +40,8 @@ struct IconAuswahlView: View {
             Button { zeigeBlatt = true } label: {
                 HStack(spacing: 6) {
                     if let icon = gewaehltesIcon {
-                        Rasterbild(datei: icon.datei, kante: 2)
+                        Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                                   kante: 16 / Double(icon.kante))
                         Text(icon.name)
                     } else {
                         Image(systemName: "photo")
@@ -64,17 +71,21 @@ struct IconAuswahlView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
                     Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
                         .buttonStyle(.bordered)
-                    ForEach(gefilterte, id: \.nummer) { icon in
+                    ForEach(gefilterte, id: \.kennung) { icon in
                         ZStack(alignment: .topTrailing) {
                             Button { gewaehltesIcon = icon } label: {
                                 VStack(spacing: 2) {
-                                    Rasterbild(datei: icon.datei, kante: 4.5)
+                                    // Beide Groessen gleich gross zeigen: Ein
+                                    // 16×16 ist nicht das doppelt so grosse
+                                    // Bild, sondern das feinere.
+                                    Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                                               kante: 36 / Double(icon.kante))
                                     Text(icon.name).font(.system(size: 9)).lineLimit(1)
                                 }
                             }
                             .buttonStyle(.plain)
                             .padding(4)
-                            .background(gewaehltesIcon?.nummer == icon.nummer ? Color.accentColor.opacity(0.25) : .clear)
+                            .background(gewaehltesIcon?.kennung == icon.kennung ? Color.accentColor.opacity(0.25) : .clear)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
 
                             Button { zuLoeschen = icon } label: {
@@ -109,10 +120,13 @@ struct IconAuswahlView: View {
     }
 
     private func loeschen(_ icon: Icon) {
-        guard (try? sammlung.loeschen(icon)) != nil else { return }
+        // Jede Sammlung raeumt nur ihren eigenen Ordner (`istEigen`) — welche
+        // es ist, entscheidet also sie selbst und nicht diese Ansicht.
+        guard let heimat = sammlungen.first(where: { $0.istEigen(icon) }),
+              (try? heimat.loeschen(icon)) != nil else { return }
         // War das geloeschte Icon gerade gewaehlt, faellt die Wahl auf „ohne"
         // zurueck — es gibt danach schlicht nichts mehr, worauf sie zeigen koennte.
-        if gewaehltesIcon?.nummer == icon.nummer { gewaehltesIcon = nil }
+        if gewaehltesIcon?.kennung == icon.kennung { gewaehltesIcon = nil }
         aktualisierung += 1
     }
 }

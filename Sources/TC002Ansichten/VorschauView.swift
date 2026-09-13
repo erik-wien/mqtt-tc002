@@ -16,7 +16,10 @@ struct VorschauView: View {
     /// spaeter zeichnet — sonst zeigt die Vorschau etwas anderes als das Geraet.
     var icon: URL? = nil
     var iconX: Int = 0
-    var iconY: Int = 4
+    /// Kantenlaenge des Icons — 8 oder 16. `iconY` folgt ihr, damit die
+    /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
+    var iconKante: Int = 8
+    var iconY: Int { Meldungsbau.iconY(kante: iconKante) }
     /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
     /// ueberlagern — fuer die Laufschrift, die selbst schon das ganze Display
     /// belegt. Ein Aufrufer setzt entweder das hier oder verlaesst sich auf
@@ -56,7 +59,7 @@ struct VorschauView: View {
             .clipShape(RoundedRectangle(cornerRadius: 4))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
             .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
-            .task(id: icon) { einzelbilder = Self.geladen(icon) }
+            .task(id: icon) { einzelbilder = Self.geladen(icon, kante: iconKante) }
         }
     }
 
@@ -70,10 +73,10 @@ struct VorschauView: View {
                     kontext.fill(Path(kaestchen), with: .color(farbe))
                 }
             }
-            guard let iconBild else { return }
-            for y in 0..<8 {
-                for x in 0..<8 {
-                    guard let hex = iconBild.pixel[y * 8 + x], let farbe = Color(hex: hex) else { continue }
+            guard let iconBild, iconBild.pixel.count == iconKante * iconKante else { return }
+            for y in 0..<iconKante {
+                for x in 0..<iconKante {
+                    guard let hex = iconBild.pixel[y * iconKante + x], let farbe = Color(hex: hex) else { continue }
                     let px = iconX + x, py = iconY + y
                     guard px >= 0, py >= 0, px < feld.breite, py < feld.hoehe else { continue }
                     let kaestchen = CGRect(x: Double(px) * kantenlaenge, y: Double(py) * kantenlaenge,
@@ -114,8 +117,8 @@ struct VorschauView: View {
         return liste.last
     }
 
-    private static func geladen(_ icon: URL?) -> [Bildraster.Einzelbild] {
+    private static func geladen(_ icon: URL?, kante: Int) -> [Bildraster.Einzelbild] {
         guard let icon else { return [] }
-        return (try? Bildraster.lesenMitZeiten(icon, breite: 8, hoehe: 8)) ?? []
+        return (try? Bildraster.lesenMitZeiten(icon, breite: kante, hoehe: kante)) ?? []
     }
 }

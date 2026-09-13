@@ -5,9 +5,25 @@ import UniformTypeIdentifiers
 public struct Icon: Equatable, Sendable {
     public var nummer: String, name: String, kategorie: String
     public var datei: URL
-    public init(nummer: String, name: String, kategorie: String, datei: URL) {
-        self.nummer = nummer; self.name = name; self.kategorie = kategorie; self.datei = datei
+    /// Kantenlaenge in Pixeln: 8 fuer ein kanonisches LaMetric-Icon, 16 fuer
+    /// eines aus dem eigenen 16×16-Bestand. Steht am Icon und nicht an der
+    /// Sammlung, weil jede Stelle, die eines zeichnet oder verschickt, es
+    /// wissen muss — ein 16×16 fuellt die volle Anzeigenhoehe und ist doppelt
+    /// so breit.
+    ///
+    /// Vorgabe 8: Jede Stelle, die vorher ein Icon baute, meinte ein 8×8, und
+    /// soll unveraendert weiterlaufen.
+    public var kante: Int
+    public init(nummer: String, name: String, kategorie: String, datei: URL, kante: Int = 8) {
+        self.nummer = nummer; self.name = name; self.kategorie = kategorie
+        self.datei = datei; self.kante = kante
     }
+
+    /// Eindeutig ueber beide Bestaende hinweg. Die Nummer allein ist es nicht:
+    /// Ein 8×8 „stern" und ein 16×16 „stern" liegen in verschiedenen Ordnern
+    /// und duerfen beide so heissen. Wo Icons beider Groessen nebeneinander
+    /// stehen (Auswahlraster, gemerkte Wahl), zaehlt diese Kennung.
+    public var kennung: String { "\(kante)/\(nummer)" }
 }
 
 public extension Array where Element == Icon {
@@ -20,6 +36,17 @@ public extension Array where Element == Icon {
         return filter {
             $0.name.localizedCaseInsensitiveContains(s) || $0.nummer.localizedCaseInsensitiveContains(s)
         }
+    }
+}
+
+/// Macht aus einem frei gewaehlten Namen einen Dateinamen. Gebraucht ueberall
+/// dort, wo der Name zugleich der Dateiname ist — bei den 16×16-Icons und in
+/// der Bildersammlung.
+public enum Dateiname {
+    public static func aus(_ name: String) -> String {
+        var ergebnis = name.trimmingCharacters(in: .whitespaces)
+        for zeichen in ["/", ":"] { ergebnis = ergebnis.replacingOccurrences(of: zeichen, with: "-") }
+        return ergebnis
     }
 }
 
@@ -215,22 +242,33 @@ public enum BildrasterFehler: Error, LocalizedError {
     }
 }
 
-/// Die 8×8-Icons. Mitgeliefert im Ordner `Icons/`, erweiterbar ueber LaMetric-Nummern
-/// und eigene Zeichnungen.
+/// Eine Sammlung quadratischer Icons. Mitgeliefert im Ordner `Icons/`,
+/// erweiterbar ueber LaMetric-Nummern und eigene Zeichnungen.
+///
+/// `kante` sagt, welche Groesse in diesem Ordner liegt — 8 fuer die
+/// kanonischen LaMetric-Icons, 16 fuer die eigenen 16×16. **Je Groesse ein
+/// eigener Ordner** (`Iconordner.eigene`, `Iconordner.eigene16`): Ein 16×16
+/// ist kein LaMetric-Icon, hat keine Nummer und gehoerte nie in denselben
+/// Bestand. Und — der eigentliche Grund — der vorhandene Ordner bleibt so, wie
+/// er ist: Wer eine aeltere Fassung startet, findet dort genau seine Icons
+/// vor, keines mehr und keines weniger.
 public struct Iconsammlung {
     /// Nimmt neue und nachgeladene Icons auf.
     private let schreibordner: URL
     /// Zusaetzliche Quellen, die nur gelesen werden — die mitgelieferten.
     private let leseordner: [URL]
+    /// Kantenlaenge der Icons in diesem Bestand.
+    private let kante: Int
 
-    public init(schreibordner: URL, leseordner: [URL] = []) {
+    public init(schreibordner: URL, leseordner: [URL] = [], kante: Int = 8) {
         self.schreibordner = schreibordner
         self.leseordner = leseordner
+        self.kante = kante
     }
 
     /// Ein Ordner, aus dem gelesen und in den geschrieben wird.
-    public init(ordner: URL) {
-        self.init(schreibordner: ordner)
+    public init(ordner: URL, kante: Int = 8) {
+        self.init(schreibordner: ordner, kante: kante)
     }
 
     public func alle() -> [Icon] {
@@ -246,7 +284,8 @@ public struct Iconsammlung {
                 gefunden[nummer] = Icon(nummer: nummer,
                                         name: eintrag?.0 ?? nummer,
                                         kategorie: eintrag?.1 ?? "",
-                                        datei: datei)
+                                        datei: datei,
+                                        kante: kante)
             }
         }
         return gefunden.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
@@ -265,13 +304,14 @@ public struct Iconsammlung {
         return "data:\(typ);base64," + daten.base64EncodedString()
     }
 
-    /// Liest ein Icon als 8×8-Raster, zeilenweise von oben links. `nil` heisst aus:
+    /// Liest ein Icon als Raster in der Groesse dieser Sammlung, zeilenweise von
+    /// oben links. `nil` heisst aus:
     /// bei selbst gesicherten Icons kommt das praktisch nie vor, da `sichern` keine
     /// Durchsichtigkeit kennt — mitgelieferte oder von LaMetric geholte Icons koennen
     /// aber echte durchsichtige Pixel tragen.
     public func pixel(fuer icon: Icon) throws -> [String?] {
         do {
-            guard let erstes = try Bildraster.lesen(icon.datei, breite: 8, hoehe: 8).first else {
+            guard let erstes = try Bildraster.lesen(icon.datei, breite: kante, hoehe: kante).first else {
                 throw IconFehler.nichtLesbar(icon.nummer)
             }
             return erstes
@@ -286,7 +326,7 @@ public struct Iconsammlung {
     /// waere die eingestellte Zeit still ueberschrieben.
     public func einzelbilder(fuer icon: Icon) throws -> [Bildraster.Einzelbild] {
         do {
-            let bilder = try Bildraster.lesenMitZeiten(icon.datei, breite: 8, hoehe: 8)
+            let bilder = try Bildraster.lesenMitZeiten(icon.datei, breite: kante, hoehe: kante)
             guard !bilder.isEmpty else { throw IconFehler.nichtLesbar(icon.nummer) }
             return bilder
         } catch {
@@ -298,7 +338,7 @@ public struct Iconsammlung {
     /// eines, bei einem animierten GIF jedes Frame in gespeicherter Reihenfolge.
     public func bilder(fuer icon: Icon) throws -> [[String?]] {
         do {
-            let raster = try Bildraster.lesen(icon.datei, breite: 8, hoehe: 8)
+            let raster = try Bildraster.lesen(icon.datei, breite: kante, hoehe: kante)
             guard !raster.isEmpty else { throw IconFehler.nichtLesbar(icon.nummer) }
             return raster
         } catch {
@@ -306,13 +346,14 @@ public struct Iconsammlung {
         }
     }
 
-    /// Nimmt eine Bilddatei (GIF, PNG, JPEG) in die Sammlung auf, auf 8×8
-    /// gerechnet. Animierte GIFs behalten ihre Einzelbilder. Die Quelldatei wird
-    /// nicht kopiert, sondern ueber `sichern` neu geschrieben, damit in der
-    /// Sammlung ausschliesslich Dateien in der richtigen Groesse liegen.
+    /// Nimmt eine Bilddatei (GIF, PNG, JPEG) in die Sammlung auf, auf ihre
+    /// Groesse gerechnet. Animierte GIFs behalten ihre Einzelbilder. Die
+    /// Quelldatei wird nicht kopiert, sondern ueber `sichern` neu geschrieben,
+    /// damit in der Sammlung ausschliesslich Dateien in der richtigen Groesse
+    /// liegen.
     @discardableResult
     public func einfuegen(datei: URL, nummer: String, name: String) throws -> Icon {
-        let raster = try Bildraster.lesen(datei, breite: 8, hoehe: 8)
+        let raster = try Bildraster.lesen(datei, breite: kante, hoehe: kante)
         return try sichern(nummer: nummer, name: name, bilder: raster, verzoegerung: 0.2)
     }
 
@@ -337,10 +378,10 @@ public struct Iconsammlung {
             kategorie = objekt["category_name"] as? String ?? ""
         }
         namenErgaenzen(nummer: nummer, name: name, kategorie: kategorie)
-        return Icon(nummer: nummer, name: name, kategorie: kategorie, datei: ziel)
+        return Icon(nummer: nummer, name: name, kategorie: kategorie, datei: ziel, kante: kante)
     }
 
-    /// Legt ein selbst gemaltes 8×8-Icon als GIF ab. `pixel` ist zeilenweise von oben
+    /// Legt ein selbst gemaltes Icon als GIF ab. `pixel` ist zeilenweise von oben
     /// links, `nil` heisst aus. GIF kennt nur volle Durchsichtigkeit und die Uhr hat
     /// ohnehin einen schwarzen Grund — aus wird deshalb zu Schwarz. Abkuerzung auf
     /// ein einzelnes Bild.
@@ -349,13 +390,13 @@ public struct Iconsammlung {
         try sichern(nummer: nummer, name: name, bilder: [pixel], verzoegerung: 0.2)
     }
 
-    /// Legt ein selbst gemaltes Icon aus einem oder mehreren 8×8-Einzelbildern als
+    /// Legt ein selbst gemaltes Icon aus einem oder mehreren gleich grossen Einzelbildern als
     /// GIF ab — mehrere ergeben ein animiertes GIF, das in Schleife laeuft.
     /// `verzoegerung` gilt je Einzelbild, in Sekunden.
     @discardableResult
     public func sichern(nummer: String, name: String,
                         bilder: [[String?]], verzoegerung: Double) throws -> Icon {
-        guard !bilder.isEmpty, bilder.allSatisfy({ $0.count == 64 }) else {
+        guard !bilder.isEmpty, bilder.allSatisfy({ $0.count == kante * kante }) else {
             throw IconFehler.nichtSchreibbar(nummer)
         }
         try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
@@ -371,7 +412,7 @@ public struct Iconsammlung {
             kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFUnclampedDelayTime: verzoegerung]
         ] as CFDictionary
         for pixel in bilder {
-            guard let bild = try? Bildraster.cgBild(aus: pixel, breite: 8, hoehe: 8) else {
+            guard let bild = try? Bildraster.cgBild(aus: pixel, breite: kante, hoehe: kante) else {
                 throw IconFehler.nichtSchreibbar(nummer)
             }
             CGImageDestinationAddImage(senke, bild, jeBild)
@@ -379,7 +420,7 @@ public struct Iconsammlung {
         guard CGImageDestinationFinalize(senke) else { throw IconFehler.nichtSchreibbar(nummer) }
 
         namenErgaenzen(nummer: nummer, name: name, kategorie: "eigen")
-        return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel)
+        return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel, kante: kante)
     }
 
     /// Entfernt ein Icon aus dem Schreibordner. Alles ausserhalb — etwa der

@@ -12,6 +12,11 @@ import UniformTypeIdentifiers
 /// App zum ersten Mal sah, hielt „Malen" und „Icons" fuer zwei Ausgaben
 /// derselben Sache und fand die Sammlung gar nicht erst.
 ///
+/// Gemalt wird seither mit demselben Editor (`PixelEditor`), und damit erbt die
+/// grosse Leinwand, was bisher nur der Icon-Editor konnte: mehrere
+/// Einzelbilder, Verzoegerung, Abspielen. Ein Laufbild ueber die ganze Anzeige
+/// ist damit malbar.
+///
 /// Eigenstaendig bleibt der Bereich trotzdem: Was hier entsteht, ist eine ganze
 /// Anzeige und bekommt keine LaMetric-Nummer — es geht von hier unmittelbar auf
 /// einen der fuenf Plaetze, waehrend ein Icon unter „Senden" neben einem Text
@@ -19,18 +24,20 @@ import UniformTypeIdentifiers
 public struct BilderBereichView: View {
     @Bindable var zustand: AppZustand
 
-    /// Das zuletzt gemalte Feld ueberlebt den Neustart — der Arbeitsstand.
-    /// `pixelfeldSichern()` schreibt es weg. Die Sammlung mehrerer benannter
-    /// Bilder steht daneben in der rechten Spalte.
-    @State private var feld = Pixelfeld()
+    /// Der Arbeitsstand ueberlebt den Neustart.
+    ///
+    /// Gesichert unter `bilder.arbeitsstand` als `Leinwand` — mit Bildleiste
+    /// und Verzoegerung, die der alte Schluessel `malen.feld` (ein einzelnes
+    /// Raster) nicht kannte. Der alte wird beim ersten Start noch gelesen und
+    /// danach nicht mehr angefasst: Er bleibt als Ruecksprungstelle liegen,
+    /// falls jemand eine aeltere Fassung startet.
+    @State private var leinwand: Leinwand
     /// Als "#RRGGBB" gesichert wie in SendenView: @AppStorage kennt keine Color.
     ///
     /// Die Schluessel heissen weiter `malen.*`, obwohl der Bereich jetzt
     /// „Bilder" heisst: Sie sind ein Dateiformat. Wer sie umbenennt, wirft bei
-    /// jeder laufenden Installation Farbe, Platzwahl, Dauer und das zuletzt
-    /// gemalte Bild weg.
+    /// jeder laufenden Installation Farbe, Platzwahl und Dauer weg.
     @AppStorage("malen.farbe") private var farbeHex = "#00FF66"
-    @State private var radierer = false
     @AppStorage("malen.meldungsplatz") private var platz = 1
     @AppStorage("malen.dauer") private var dauerText = ""
     @State private var laeuft = false
@@ -51,19 +58,37 @@ public struct BilderBereichView: View {
     @State private var importName = ""
     @State private var importGroesse: (breite: Int, hoehe: Int)?
 
+    static let arbeitsstandSchluessel = "bilder.arbeitsstand"
+
     public init(zustand: AppZustand) {
         self.zustand = zustand
-        let punkte = try? JSONDecoder().decode([String?].self,
-                        from: UserDefaults.standard.data(forKey: "malen.feld") ?? Data())
-        _feld = State(initialValue: punkte.flatMap { Pixelfeld(punkte: $0) } ?? Pixelfeld())
+        _leinwand = State(initialValue: Self.gelesenerArbeitsstand())
+    }
+
+    /// Der gemerkte Arbeitsstand: erst der neue Schluessel, ersatzweise das
+    /// einzelne Raster der Fassungen bis 13.09.2026, sonst leer.
+    private static func gelesenerArbeitsstand() -> Leinwand {
+        let ablage = UserDefaults.standard
+        if let daten = ablage.data(forKey: arbeitsstandSchluessel),
+           let gelesen = try? JSONDecoder().decode(Leinwand.self, from: daten),
+           gelesen.breite == Pixelfeld.breiteStandard, gelesen.hoehe == Pixelfeld.hoeheStandard {
+            return gelesen
+        }
+        if let daten = ablage.data(forKey: "malen.feld"),
+           let punkte = try? JSONDecoder().decode([String?].self, from: daten),
+           let alt = Leinwand(breite: Pixelfeld.breiteStandard, hoehe: Pixelfeld.hoeheStandard,
+                              bilder: [punkte]) {
+            return alt
+        }
+        return Leinwand(breite: Pixelfeld.breiteStandard, hoehe: Pixelfeld.hoeheStandard)
     }
 
     /// Nicht bei jedem einzelnen Pixel waehrend des Ziehens — das waeren hunderte
     /// Schreibvorgaenge je Strich —, sondern beim Loslassen, beim Verlassen der
     /// Ansicht und beim Beenden des Programms.
-    private func pixelfeldSichern() {
-        guard let daten = try? JSONEncoder().encode(feld.punkteRoh) else { return }
-        UserDefaults.standard.set(daten, forKey: "malen.feld")
+    private func arbeitsstandSichern() {
+        guard let daten = try? JSONEncoder().encode(leinwand) else { return }
+        UserDefaults.standard.set(daten, forKey: Self.arbeitsstandSchluessel)
     }
 
     /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
@@ -87,15 +112,6 @@ public struct BilderBereichView: View {
         return n
     }
 
-    /// Die verfuegbare Breite der Malflaeche, von einem GeometryReader in ihrem
-    /// Hintergrund gemessen — daraus ergibt sich die Kantenlaenge. Ohne das liefe die
-    /// Flaeche bei ihrer festen Breite in einem schmalen Fenster rechts aus dem Bild.
-    @State private var flaechenBreite: Double = Double(Pixelfeld.breiteStandard) * 14
-
-    private var kante: Double {
-        min(14, max(6, flaechenBreite / Double(feld.breite)))
-    }
-
     private var iconsammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene)
     }
@@ -104,8 +120,11 @@ public struct BilderBereichView: View {
         Bildersammlung(ordner: Bilderordner.eigene)
     }
 
-    private var feldIstLeer: Bool {
-        feld.punkteRoh.allSatisfy { $0 == nil }
+    /// Das gerade bearbeitete Bild als Pixelfeld — fuer die Rechteckzahl und
+    /// fuer die Sendung eines unbewegten Bildes.
+    private var feld: Pixelfeld {
+        Pixelfeld(breite: leinwand.breite, hoehe: leinwand.hoehe, punkte: leinwand.bild)
+            ?? Pixelfeld()
     }
 
     public var body: some View {
@@ -126,7 +145,7 @@ public struct BilderBereichView: View {
             }
             #endif
         }
-        .onDisappear { pixelfeldSichern() }
+        .onDisappear { arbeitsstandSichern() }
         // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben erst
         // gemalter, noch ungesicherter Strich verloren, wenn beim Beenden gerade
         // diese Ansicht offen ist. Denselben Kniff nutzt App.swift fuer das Kennwort.
@@ -134,10 +153,10 @@ public struct BilderBereichView: View {
         // `scenePhase` statt `willTerminate`: Auf dem iPad gibt es dazu keine
         // gleichwertige Benachrichtigung. Beim harten Abschuss feuert sie gar
         // nicht — deshalb sichert jede Aenderung ohnehin schon fuer sich
-        // (Strichende, Leeren, Icon einfuegen, geladenes Bild), und diese Zeile
-        // ist nur noch das Netz darunter.
+        // (Strichende, Leeren, Bildleiste, Icon einfuegen, geladenes Bild), und
+        // diese Zeile ist nur noch das Netz darunter.
         .onChange(of: phase) { _, neu in
-            if neu != .active { pixelfeldSichern() }
+            if neu != .active { arbeitsstandSichern() }
         }
         .sheet(isPresented: $zeigeImportBlatt) { importBlatt }
     }
@@ -145,23 +164,17 @@ public struct BilderBereichView: View {
     // MARK: - Editor
 
     private var editor: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Bild malen").font(.headline)
 
-            HStack {
-                ColorPicker("Farbe", selection: farbe)
-                Toggle("Radierer", isOn: $radierer).toggleStyle(.button)
-                Button("Leeren") { feld.alleLoeschen(); pixelfeldSichern() }
+            PixelEditor(leinwand: $leinwand, farbe: farbe, nachAenderung: arbeitsstandSichern) {
                 Menu("Icon einfügen") {
                     ForEach(iconsammlung.alle(), id: \.nummer) { icon in
                         Button(icon.name) { iconEinfuegen(icon) }
                     }
                 }
                 .disabled(iconsammlung.alle().isEmpty)
-                Spacer()
             }
-
-            malflaeche
 
             Text(lokf("%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.", feld.alsDrawBefehle().count))
                 .font(.footnote).foregroundStyle(.secondary)
@@ -214,35 +227,6 @@ public struct BilderBereichView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(laeuft || zustand.ziele().isEmpty)
         }
-    }
-
-    private var malflaeche: some View {
-        Canvas { kontext, _ in
-            for y in 0..<feld.hoehe {
-                for x in 0..<feld.breite {
-                    let r = CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                   width: kante - 1, height: kante - 1)
-                    let f = feld.farbe(x: x, y: y).flatMap(Color.init(hex:)) ?? Color(white: 0.12)
-                    kontext.fill(Path(r), with: .color(f))
-                }
-            }
-        }
-        .frame(width: Double(feld.breite) * kante, height: Double(feld.hoehe) * kante)
-        .background(Color.black)
-        .gesture(DragGesture(minimumDistance: 0)
-            .onChanged { wert in
-                let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-                if radierer { feld.loeschen(x: x, y: y) } else { feld.setzen(x: x, y: y, farbe: farbeHex) }
-            }
-            .onEnded { _ in pixelfeldSichern() })
-        .frame(maxWidth: .infinity, alignment: .center)
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .onAppear { flaechenBreite = geo.size.width }
-                    .onChange(of: geo.size.width) { _, neu in flaechenBreite = neu }
-            }
-        )
     }
 
     // MARK: - Sammlung
@@ -342,14 +326,26 @@ public struct BilderBereichView: View {
     // MARK: - Handlungen
 
     private func anklicken(_ bild: Gemaltes) {
-        if feldIstLeer { laden(bild) } else { zuLaden = bild }
+        if leinwand.istLeer { laden(bild) } else { zuLaden = bild }
     }
 
     private func laden(_ bild: Gemaltes) {
         do {
-            feld = try sammlung.laden(bild)
-            pixelfeldSichern()
-            meldung = lokf("%@ geöffnet.", bild.name)
+            let gelesen = try sammlung.einzelbilder(bild)
+            // Die Standzeit kommt aus der Datei, nicht aus dem Anfangswert —
+            // sonst ueberschriebe das naechste Sichern die gesicherte still.
+            let zeit = gelesen.first.map { $0.dauer > 0 ? $0.dauer : leinwand.verzoegerung }
+                ?? leinwand.verzoegerung
+            guard let neue = Leinwand(breite: Pixelfeld.breiteStandard, hoehe: Pixelfeld.hoeheStandard,
+                                      bilder: gelesen.map(\.pixel), verzoegerung: zeit) else {
+                meldung = lok("Das Bild lässt sich nicht lesen.")
+                return
+            }
+            leinwand = neue
+            arbeitsstandSichern()
+            meldung = neue.bilder.count > 1
+                ? lokf("%@ geöffnet (%d Bilder).", bild.name, neue.bilder.count)
+                : lokf("%@ geöffnet.", bild.name)
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
@@ -358,7 +354,8 @@ public struct BilderBereichView: View {
     private func sichern() {
         let n = name.trimmingCharacters(in: .whitespaces)
         do {
-            let eintrag = try sammlung.sichern(name: n, feld: feld)
+            let eintrag = try sammlung.sichern(name: n, bilder: leinwand.bilder,
+                                               verzoegerung: leinwand.verzoegerung)
             bilder = sammlung.alle()
             name = ""
             meldung = lokf("%@ gesichert.", eintrag.name)
@@ -406,10 +403,10 @@ public struct BilderBereichView: View {
             for y in 0..<8 {
                 for x in 0..<8 {
                     guard let farbe = pixel[y * 8 + x] else { continue }
-                    feld.setzen(x: x, y: 4 + y, farbe: farbe)
+                    leinwand.setzen(x: x, y: 4 + y, farbe: farbe)
                 }
             }
-            pixelfeldSichern()
+            arbeitsstandSichern()
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
@@ -420,9 +417,25 @@ public struct BilderBereichView: View {
     /// Platz vorher eine Textsendung, liegt dazu ein gemerkter Stand, und der
     /// Block rechnete daraus beim naechsten Start ohne Broker weiter den alten
     /// Text. `AppZustand.senden` wirft ihn deshalb je erreichter Uhr weg.
+    ///
+    /// Ein einzelnes Bild geht als `draw` hinaus — klein und exakt. Mehrere
+    /// gehen als ein animiertes GIF: Rechtecke kennen keine Zeit.
     private func senden() {
+        let frame: Frame
+        if leinwand.bilder.count > 1 {
+            do {
+                let uri = try Bildraster.alsDatenURI(leinwand.bilder,
+                                                     breite: leinwand.breite, hoehe: leinwand.hoehe,
+                                                     verzoegerung: leinwand.verzoegerung)
+                frame = Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+            } catch {
+                zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                return
+            }
+        } else {
+            frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        }
         laeuft = true
-        let frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
         let anzeigenName = Meldungsplatz.name(fuer: platz)
         // Momentaufnahme wie in `SendenView.senden`: der Task soll den Platz
         // von jetzt sehen, nicht den beim spaeteren Ausfuehren.

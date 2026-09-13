@@ -3,23 +3,33 @@ import TC002Core
 import TC002Modell
 import UniformTypeIdentifiers
 
-/// 8×8-Editor fuer eigene Icons. Dasselbe Malprinzip wie der grosse Editor, nur
-/// kleiner und mit Ablage: was hier gesichert wird, steht unter „Senden" zur Wahl.
+/// Der Bereich „Icons": Bildchen malen, die unter „Senden" neben dem Text
+/// stehen. Editor links, die vorhandenen Icons als Liste rechts.
+///
+/// Gemalt wird mit demselben Editor wie im Bereich „Bilder" (`PixelEditor`) —
+/// dasselbe Malprinzip, dieselbe Bildleiste, dieselbe Verzoegerung. Hier steht
+/// nur, was den Icons eigen ist: Nummer und Name, die Ablage, LaMetric.
+///
+/// **Zwei Groessen, zwei Bestaende.** 8×8 sind die kanonischen LaMetric-Icons
+/// mit Nummer; 16×16 sind es nicht — sie haben nur einen Namen, lassen sich
+/// nicht nachladen, liegen in einem eigenen Ordner und gehen ungerechnet auf
+/// die Uhr, wo sie die volle Hoehe fuellen. Umgerechnet wird zwischen den
+/// beiden nichts.
 public struct IconEditorView: View {
     @Bindable var zustand: AppZustand
 
     public init(zustand: AppZustand) { self.zustand = zustand }
 
-    /// Ein oder mehrere Einzelbilder — mehrere ergeben beim Sichern ein animiertes
-    /// GIF. Gemalt wird immer auf `bilder[aktuellesBild]`.
-    @State private var bilder: [[String?]] = [[String?](repeating: nil, count: 64)]
-    @State private var aktuellesBild = 0
-    /// Verzoegerung je Einzelbild in Sekunden, gemeinsam fuer die ganze Animation.
-    @State private var verzoegerung: Double = 0.2
-    @State private var spielAb = false
-    @State private var spielTask: Task<Void, Never>?
+    /// Welche Groesse gerade bearbeitet wird — 8 oder 16. Ueberlebt den
+    /// Neustart, damit wer 16×16 malt nicht bei jedem Start umschalten muss.
+    @AppStorage("icons.kante") private var kante = 8
+    /// Ein oder mehrere Einzelbilder in der Groesse `kante` — mehrere ergeben
+    /// beim Sichern ein animiertes GIF.
+    @State private var leinwand = Leinwand(breite: 8, hoehe: 8)
+    /// Die Groesse, auf die gewechselt werden soll, solange die Rueckfrage
+    /// steht — `nil` heisst keine.
+    @State private var zuWechseln: Int?
     @State private var farbe = Color(red: 1, green: 1, blue: 1)
-    @State private var radiert = false
     @State private var nummer = ""
     @State private var name = ""
     @State private var vorhandene: [Icon] = []
@@ -43,30 +53,40 @@ public struct IconEditorView: View {
     @State private var importName = ""
     @State private var importGroesse: (breite: Int, hoehe: Int)?
 
-    private let kante: Double = 28
+    /// Je Groesse ein eigener Ordner — siehe `Iconordner.eigene16`.
+    private var sammlung: Iconsammlung { Self.sammlung(kante: kante) }
 
-    private var sammlung: Iconsammlung {
-        Iconsammlung(schreibordner: Iconordner.eigene)
+    private static func sammlung(kante: Int) -> Iconsammlung {
+        Iconsammlung(schreibordner: kante == 16 ? Iconordner.eigene16 : Iconordner.eigene,
+                     kante: kante)
+    }
+
+    /// Ein 16×16 ist kein LaMetric-Icon: keine Nummer, kein Nachladen, kein
+    /// Grundschatz. Der Name ist dort zugleich der Dateiname.
+    private var kanonisch: Bool { kante == 8 }
+
+    /// Unter welchem Dateinamen gesichert wird. Bei 8×8 die eingetragene
+    /// Nummer, bei 16×16 der Name — dort gibt es keine Nummer.
+    private var schluessel: String {
+        kanonisch ? nummer.trimmingCharacters(in: .whitespaces) : Dateiname.aus(name)
     }
 
     public var body: some View {
         // `HSplitView` — die vom Nutzer verschiebbare Trennlinie — gibt es nur
-        // am Mac. Unter iOS bleibt die Aufteilung dieselbe, nur ohne Griff;
-        // wie sie auf dem iPad aussehen soll, ist noch nicht entschieden.
+        // am Mac. Unter iOS bleibt die Aufteilung dieselbe, nur ohne Griff.
         Group {
             #if os(macOS)
             HSplitView {
-                malflaeche
+                editor
                 seitenleiste
             }
             #else
             HStack(spacing: 0) {
-                malflaeche
+                editor
                 seitenleiste
             }
             #endif
         }
-        .onDisappear { stoppeAbspielen() }
         .sheet(isPresented: $zeigeImportBlatt) { importBlatt }
     }
 
@@ -101,53 +121,33 @@ public struct IconEditorView: View {
         }
     }
 
-    private var malflaeche: some View {
+    private var editor: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Icon malen").font(.headline)
-
-            Canvas { kontext, _ in
-                for y in 0..<8 {
-                    for x in 0..<8 {
-                        let feld = CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                          width: kante - 1, height: kante - 1)
-                        let p = bilder[aktuellesBild][y * 8 + x]
-                        kontext.fill(Path(feld), with: .color(p.flatMap(Color.init(hex:)) ?? .black))
-                    }
-                }
-            }
-            .frame(width: kante * 8, height: kante * 8)
-            .background(Color.black)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
-            .gesture(DragGesture(minimumDistance: 0).onChanged { wert in
-                let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-                guard (0..<8).contains(x), (0..<8).contains(y) else { return }
-                bilder[aktuellesBild][y * 8 + x] = radiert ? nil : farbe.hexWert
-            })
-
-            bildleiste
-
             HStack {
-                ColorPicker("Farbe", selection: $farbe)
-                Toggle("Radieren", isOn: $radiert).toggleStyle(.button)
-                Button("Alles löschen") { bilder[aktuellesBild] = [String?](repeating: nil, count: 64) }
+                Text("Icon malen").font(.headline)
+                Spacer()
+                groessenwahl
+            }
+
+            PixelEditor(leinwand: $leinwand, farbe: $farbe) {
                 Button("Neu") { neuAnfragen() }
                     .help("Beginnt ein neues Icon: Raster, Nummer und Name werden geleert.")
-                Spacer()
             }
 
             ViewThatFits(in: .horizontal) {
                 HStack {
-                    nummerFeld
+                    if kanonisch { nummerFeld }
                     nameFeld
                     sichernKnopf
                 }
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack { nummerFeld; nameFeld }
+                    HStack { if kanonisch { nummerFeld }; nameFeld }
                     sichernKnopf
                 }
             }
-            Text("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
+            Text(kanonisch
+                 ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
+                 : lok("Ein 16×16 bekommt keine LaMetric-Nummer; der Name ist hier der Dateiname und muss eindeutig sein."))
                 .font(.caption2).foregroundStyle(.secondary)
 
             if let meldung {
@@ -162,99 +162,44 @@ public struct IconEditorView: View {
         } message: {
             Text("Das gemalte Icon ist nicht gesichert und geht dabei verloren.")
         }
-    }
-
-    /// Die waagrechte Leiste der Einzelbilder — mehrere ergeben beim Sichern ein
-    /// animiertes GIF. Das gerade bearbeitete ist hervorgehoben.
-    private var bildleiste: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(bilder.indices, id: \.self) { i in
-                            bildVorschau(i)
-                        }
-                    }
-                }
-                Button("+") {
-                    bilder.append([String?](repeating: nil, count: 64))
-                    aktuellesBild = bilder.count - 1
-                }
-                .help("Leeres Bild anhängen")
-                Button("Verdoppeln") {
-                    bilder.insert(bilder[aktuellesBild], at: aktuellesBild + 1)
-                    aktuellesBild += 1
-                }
-                Button("Entfernen", role: .destructive) { bildEntfernen() }
-                    .disabled(bilder.count <= 1)
+        .alert("Größe wechseln?",
+               isPresented: Binding(get: { zuWechseln != nil }, set: { if !$0 { zuWechseln = nil } })) {
+            Button("Abbrechen", role: .cancel) { zuWechseln = nil }
+            Button("Wechseln", role: .destructive) {
+                if let neue = zuWechseln { kanteSetzen(neue) }
+                zuWechseln = nil
             }
-            HStack {
-                Button { verschieben(-1) } label: { Image(systemName: "arrow.left") }
-                    .disabled(aktuellesBild == 0)
-                Button { verschieben(1) } label: { Image(systemName: "arrow.right") }
-                    .disabled(aktuellesBild == bilder.count - 1)
-                Text("Verzögerung")
-                TextField("", value: $verzoegerung, format: .number)
-                    .frame(width: 50)
-                Text("s")
-                Button(spielAb ? lok("Stopp") : lok("Abspielen")) { abspielenUmschalten() }
-                    .disabled(bilder.count < 2)
-                Spacer()
-            }
+        } message: {
+            Text("Zwischen den Größen wird nichts umgerechnet — das gemalte Icon geht dabei verloren.")
         }
     }
 
-    private func bildVorschau(_ i: Int) -> some View {
-        Canvas { kontext, groesse in
-            let kante = groesse.width / 8
-            for y in 0..<8 {
-                for x in 0..<8 {
-                    let feld = CGRect(x: Double(x) * kante, y: Double(y) * kante, width: kante, height: kante)
-                    let p = bilder[i][y * 8 + x]
-                    kontext.fill(Path(feld), with: .color(p.flatMap(Color.init(hex:)) ?? .black))
-                }
-            }
+    /// Die Wahl zwischen den beiden Groessen. Umgerechnet wird nichts: Ein
+    /// Wechsel beginnt ein neues Icon und fragt vorher nach, wenn im Raster
+    /// noch etwas Ungesichertes steht.
+    private var groessenwahl: some View {
+        Picker("Größe", selection: Binding(get: { kante }, set: { kanteWechseln($0) })) {
+            Text("8 × 8").tag(8)
+            Text("16 × 16").tag(16)
         }
-        .frame(width: 28, height: 28)
-        .background(Color.black)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-        .overlay(RoundedRectangle(cornerRadius: 3)
-            .stroke(aktuellesBild == i ? Color.accentColor : Color.secondary.opacity(0.4),
-                    lineWidth: aktuellesBild == i ? 2 : 1))
-        .onTapGesture { stoppeAbspielen(); aktuellesBild = i }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: 160)
+        .help("8×8 sind die kanonischen LaMetric-Icons mit Nummer. Ein 16×16 hat keine, füllt auf der Uhr die volle Höhe und belegt achtzehn statt zehn Spalten.")
     }
 
-    private func bildEntfernen() {
-        guard bilder.count > 1 else { return }
-        bilder.remove(at: aktuellesBild)
-        aktuellesBild = min(aktuellesBild, bilder.count - 1)
+    private func kanteWechseln(_ neue: Int) {
+        guard neue != kante else { return }
+        if istLeer { kanteSetzen(neue) } else { zuWechseln = neue }
     }
 
-    private func verschieben(_ richtung: Int) {
-        let ziel = aktuellesBild + richtung
-        guard bilder.indices.contains(ziel) else { return }
-        bilder.swapAt(aktuellesBild, ziel)
-        aktuellesBild = ziel
-    }
-
-    /// Laeuft die Leiste in Schleife durch, solange „Abspielen" gedrueckt ist —
-    /// nur zur Ansicht, ohne dass vorher gesichert werden muss.
-    private func abspielenUmschalten() {
-        guard !spielAb else { stoppeAbspielen(); return }
-        spielAb = true
-        spielTask = Task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(max(0.05, verzoegerung)))
-                guard !Task.isCancelled, bilder.count > 1 else { continue }
-                await MainActor.run { aktuellesBild = (aktuellesBild + 1) % bilder.count }
-            }
-        }
-    }
-
-    private func stoppeAbspielen() {
-        spielAb = false
-        spielTask?.cancel()
-        spielTask = nil
+    private func kanteSetzen(_ neue: Int) {
+        kante = neue
+        leinwand = Leinwand(breite: neue, hoehe: neue)
+        nummer = ""
+        name = ""
+        meldung = nil
+        vorhandene = Self.sammlung(kante: neue).alle()
     }
 
     private var nummerFeld: some View {
@@ -274,7 +219,7 @@ public struct IconEditorView: View {
     private var sichernKnopf: some View {
         Button("Sichern") { sichern() }
             .keyboardShortcut(.defaultAction)
-            .disabled(nummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(schluessel.isEmpty)
     }
 
     private var gefilterte: [Icon] { vorhandene.gefiltert(nach: suche) }
@@ -282,17 +227,19 @@ public struct IconEditorView: View {
     private var seitenleiste: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Vorhandene Icons").font(.headline)
-            Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
-                .font(.caption)
-            HStack {
-                TextField("LaMetric-Nummer", text: $lametricNummer)
-                    .frame(width: 140)
-                    .onSubmit { nachladen() }
-                Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
-                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            if kanonisch {
+                Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
+                    .font(.caption)
+                HStack {
+                    TextField("LaMetric-Nummer", text: $lametricNummer)
+                        .frame(width: 140)
+                        .onSubmit { nachladen() }
+                    Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
+                        .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
-            Text("Nummer von developer.lametric.com — das Icon landet bei den eigenen.")
-                .font(.caption).foregroundStyle(.secondary)
             Button("Datei einlesen…") { zeigeDateiImport = true }
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
@@ -308,7 +255,8 @@ public struct IconEditorView: View {
                 .textFieldStyle(.roundedBorder)
             List(gefilterte, id: \.nummer) { icon in
                 HStack {
-                    Rasterbild(datei: icon.datei, kante: 3)
+                    Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                               kante: 24 / Double(icon.kante))
                     VStack(alignment: .leading) {
                         Text(icon.name)
                         Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
@@ -328,13 +276,15 @@ public struct IconEditorView: View {
                     Button("Löschen", role: .destructive) { zuLoeschen = icon }
                 }
             }
-            Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
-                .font(.caption)
-                .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
+            if kanonisch {
+                Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
+                    .font(.caption)
+                    .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
+            }
         }
         .padding()
         .frame(minWidth: 240)
-        .onAppear { vorhandene = sammlung.alle() }
+        .onAppear { groesseUebernehmen(); vorhandene = sammlung.alle() }
         .confirmationDialog(
             "„\(zuLoeschen?.name ?? "")“ löschen?",
             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
@@ -346,11 +296,10 @@ public struct IconEditorView: View {
         }
     }
 
-    /// Laedt ein Icon zurueck ins Raster — bei einem animierten alle Einzelbilder,
-    /// nicht nur das erste. Groesseres wird auf 8×8 gerechnet — die Uhr zeigt
-    /// ohnehin nur 8×8.
+    /// Laedt ein Icon zurueck ins Raster — bei einem animierten alle
+    /// Einzelbilder, nicht nur das erste, und in der Groesse, in der es in
+    /// seinem Bestand liegt.
     private func oeffnen(_ icon: Icon) {
-        stoppeAbspielen()
         do {
             // Schwarz bleibt Schwarz. Beim Sichern wird „aus“ zu Schwarz, weil GIF hier
             // keine Durchsichtigkeit traegt und die Uhr ohnehin schwarzen Grund hat —
@@ -358,20 +307,26 @@ public struct IconEditorView: View {
             // nicht mehr auseinanderzuhalten. Ein schwarzes Pixel hier zu leeren waere
             // kein Rueckweg, sondern Verlust: was schwarz gemalt war, waere weg.
             let gelesen = try sammlung.einzelbilder(fuer: icon)
-            bilder = gelesen.map(\.pixel)
+            let kante = icon.kante
             // Die Standzeit kommt aus der Datei, nicht aus dem Anfangswert —
             // sonst zeigt das Feld beim Oeffnen immer 0,2 und ueberschreibt die
             // gesicherte Zeit beim naechsten Sichern still.
-            if let erste = gelesen.first?.dauer, erste > 0 { verzoegerung = erste }
+            let zeit = gelesen.first.map { $0.dauer > 0 ? $0.dauer : leinwand.verzoegerung }
+                ?? leinwand.verzoegerung
+            guard let neue = Leinwand(breite: kante, hoehe: kante,
+                                      bilder: gelesen.map(\.pixel), verzoegerung: zeit) else {
+                meldung = lok("Dieses Icon lässt sich nicht öffnen.")
+                return
+            }
+            leinwand = neue
         } catch {
             meldung = lok("Dieses Icon lässt sich nicht öffnen.")
             return
         }
-        aktuellesBild = 0
         nummer = icon.nummer
         name = icon.name
-        meldung = bilder.count > 1
-            ? lokf("%@ geöffnet (%d Bilder).", icon.name, bilder.count)
+        meldung = leinwand.bilder.count > 1
+            ? lokf("%@ geöffnet (%d Bilder).", icon.name, leinwand.bilder.count)
             : lokf("%@ geöffnet.", icon.name)
     }
 
@@ -380,8 +335,14 @@ public struct IconEditorView: View {
     private var istLeer: Bool {
         nummer.trimmingCharacters(in: .whitespaces).isEmpty
             && name.trimmingCharacters(in: .whitespaces).isEmpty
-            && bilder.count == 1
-            && bilder[0].allSatisfy { $0 == nil }
+            && leinwand.istLeer
+    }
+
+    /// Der Editor soll beim ersten Aufbau die gemerkte Groesse zeigen, nicht
+    /// die 8×8 des Anfangswerts von `leinwand`.
+    private func groesseUebernehmen() {
+        guard leinwand.breite != kante else { return }
+        leinwand = Leinwand(breite: kante, hoehe: kante)
     }
 
     private func neuAnfragen() {
@@ -393,20 +354,19 @@ public struct IconEditorView: View {
     /// Anfangswert. Der bisherige Trick — Raster leeren und Nummer/Name von
     /// Hand ueberschreiben — ist damit nicht mehr noetig.
     private func neu() {
-        stoppeAbspielen()
-        bilder = [[String?](repeating: nil, count: 64)]
-        aktuellesBild = 0
-        verzoegerung = 0.2
+        leinwand.zuruecksetzen()
+        zuWechseln = nil
         nummer = ""
         name = ""
         meldung = nil
     }
 
     private func sichern() {
-        let n = nummer.trimmingCharacters(in: .whitespaces)
+        let n = schluessel
         do {
             let icon = try sammlung.sichern(nummer: n, name: name.isEmpty ? n : name,
-                                            bilder: bilder, verzoegerung: verzoegerung)
+                                            bilder: leinwand.bilder,
+                                            verzoegerung: leinwand.verzoegerung)
             vorhandene = sammlung.alle()
             meldung = lokf("%@ gesichert.", icon.name)
             zustand.log("Icon gesichert: \(icon.name)")
@@ -452,8 +412,8 @@ public struct IconEditorView: View {
             let icon = try sammlung.einfuegen(datei: datei, nummer: n, name: name.isEmpty ? n : name)
             vorhandene = sammlung.alle()
             zeigeImportBlatt = false
-            if let groesse = importGroesse, groesse != (8, 8) {
-                meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf 8×8 gerechnet.", icon.name, groesse.breite, groesse.hoehe)
+            if let groesse = importGroesse, groesse != (kante, kante) {
+                meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf %d×%d gerechnet.", icon.name, groesse.breite, groesse.hoehe, kante, kante)
             } else {
                 meldung = lokf("%@ eingelesen.", icon.name)
             }
@@ -479,7 +439,7 @@ public struct IconEditorView: View {
         do {
             try sammlung.loeschen(icon)
             vorhandene = sammlung.alle()
-            if nummer == icon.nummer {
+            if schluessel == icon.nummer {
                 // War das geloeschte Icon gerade geoeffnet, bleibt das Bild im
                 // Raster stehen, aber Nummer und Name werden geleert — sonst
                 // sichert man aus Versehen wieder unter demselben Namen.

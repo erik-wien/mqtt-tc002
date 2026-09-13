@@ -121,7 +121,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Icon wählen"),
                     .absatz("Ganz links in der Formatpille sitzt der Icon-Knopf: ohne Wahl ein Smiley, mit Wahl das gewählte Icon. Ein Druck öffnet ein Blatt mit Suchfeld und Raster; ein Antippen zeigt ein Icon groß — bei einem animierten auch laufend —, „Übernehmen“ wählt es. „Kein Icon“ ganz oben nimmt die Wahl zurück, „Abbrechen“ schließt ohne Änderung."),
-                    .absatz("Über dem Raster lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen; das Icon steht danach bei den eigenen. Gemalt wird hier nicht — eigene Icons entstehen in der Mac-Fassung, ein 8×8-Raster mit dem Finger wäre keine Arbeitsfläche."),
+                    .absatz("Über dem Raster lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen; das Icon steht danach bei den eigenen. Gemalt wird hier nicht — eigene Icons entstehen am Mac und auf dem iPad, wo ein Editor daneben Platz hat. Zur Wahl stehen hier die 8×8-Icons; die größeren, die dort entstehen können, bleiben dem Schreibtisch vorbehalten."),
                 ]
                 + HilfeInhalt.iconImLauf
                 + [

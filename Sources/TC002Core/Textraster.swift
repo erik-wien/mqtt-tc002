@@ -239,11 +239,12 @@ public enum Textraster {
         }
     }
 
-    /// Lage eines Icons im Bild: acht mal acht Punkte, senkrecht mittig, dahinter
-    /// zwei Spalten Luft, bevor der Text beginnt.
-    static let iconKante = 8
-    static let iconY = 4
+    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig, dahinter zwei
+    /// Spalten Luft, bevor der Text beginnt. Die Kante ist ein Parameter, kein
+    /// fester Wert — bei 8×8 sitzt es auf Zeile 4, bei 16×16 auf Zeile 0 und
+    /// fuellt die volle Hoehe.
     static let iconLuecke = 2
+    static func iconY(kante: Int) -> Int { (Pixelfeld.hoeheStandard - kante) / 2 }
 
     /// Laesst ein 52×16-Fenster ueber den gerasterten Text wandern — ein
     /// Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig vor dem Text
@@ -254,8 +255,8 @@ public enum Textraster {
     /// `versatzY` verschiebt den Text senkrecht, genau wie im stehenden Weg — die
     /// Ausrichtung der Formatleiste gilt also auch hier.
     ///
-    /// `iconBilder` sind die Einzelbilder eines 8×8-Icons (je 64 Eintraege,
-    /// zeilenweise von oben links) oder leer. Sie werden **eingebacken**, statt
+    /// `iconBilder` sind die Einzelbilder eines Icons (je `iconKante` im Quadrat
+    /// Eintraege, zeilenweise von oben links) oder leer. Sie werden **eingebacken**, statt
     /// als zweites `image` neben dem Lauf-GIF im Rahmen zu stehen: ob die Uhr
     /// zwei Bilder nebeneinander zeichnet oder das zweite das erste ersetzt, hat
     /// niemand geprueft. Ein animiertes Icon laeuft dabei mit, Bild fuer Bild.
@@ -268,10 +269,11 @@ public enum Textraster {
     public static func laufschriftEinzelbilder(_ text: String, schrift: String, groesse: Double,
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
-                                               iconBilder: [[String?]] = [],
+                                               iconBilder: [[String?]] = [], iconKante: Int = 8,
                                                iconLaeuftMit: Bool = false, luecke: Int = 0) -> [Bildraster.Einzelbild] {
         let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, luecke: luecke)
         let hatIcon = !iconBilder.isEmpty
+        let iconY = iconY(kante: iconKante)
         let festesIcon = hatIcon && !iconLaeuftMit
         let fensterBreite = Pixelfeld.breiteStandard
         // Wo im Fenster der Text beginnt (feststehendes Icon) und wo er im
@@ -294,7 +296,8 @@ public enum Textraster {
                 for zeile in 0..<Pixelfeld.hoeheStandard {
                     guard let punkt = bandpunkt(bandSpalte, zeile, puffer: puffer, versatzY: versatzY,
                                                 bandTextAb: bandTextAb, iconLaeuftMit: iconLaeuftMit,
-                                                iconBild: iconBild) else { continue }
+                                                iconBild: iconBild, iconKante: iconKante,
+                                                iconY: iconY) else { continue }
                     fenster[zeile * fensterBreite + spalte] = punkt
                 }
             }
@@ -315,7 +318,7 @@ public enum Textraster {
     /// der gerasterte Text. Ausserhalb ist nichts — dort bleibt das Bild schwarz.
     private static func bandpunkt(_ spalte: Int, _ zeile: Int, puffer: Pixelfeld, versatzY: Int,
                                   bandTextAb: Int, iconLaeuftMit: Bool,
-                                  iconBild: [String?]?) -> String? {
+                                  iconBild: [String?]?, iconKante: Int, iconY: Int) -> String? {
         if iconLaeuftMit, spalte < iconKante {
             guard spalte >= 0, let iconBild else { return nil }
             let y = zeile - iconY
@@ -334,12 +337,13 @@ public enum Textraster {
     public static func laufschrift(_ text: String, schrift: String, groesse: Double,
                                    fett: Bool, farbe: String, schrittweite: Int,
                                    bilddauer: Double, versatzY: Int = 0,
-                                   iconBilder: [[String?]] = [],
+                                   iconBilder: [[String?]] = [], iconKante: Int = 8,
                                    iconLaeuftMit: Bool = false, luecke: Int = 0) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,
-                                             iconBilder: iconBilder, iconLaeuftMit: iconLaeuftMit, luecke: luecke)
+                                             iconBilder: iconBilder, iconKante: iconKante,
+                                             iconLaeuftMit: iconLaeuftMit, luecke: luecke)
         return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
                                           hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
     }

@@ -47,6 +47,11 @@ public struct SendenView: View {
     /// einmalig beim Start nachgeschlagen; eine verschwundene Nummer ergibt
     /// kommentarlos „kein Icon“.
     @AppStorage("senden.icon") private var iconNummer = ""
+    /// Dazu die Kantenlaenge des gewaehlten Icons — die Nummer allein trifft
+    /// seit den 16×16 nicht mehr eindeutig: Beide Bestaende duerfen denselben
+    /// Namen tragen. Vorgabe 8, damit eine vorhandene Einstellung ohne diesen
+    /// Schluessel weiter auf dasselbe Icon zeigt wie bisher.
+    @AppStorage("senden.iconkante") private var iconKanteGemerkt = 8
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     /// Die Einzelbilder der Laufschrift — einmal je Aenderung an Text oder
@@ -65,8 +70,9 @@ public struct SendenView: View {
     public init(zustand: AppZustand) {
         self.zustand = zustand
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
-        let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
-        _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil : sammlung.alle().first { $0.nummer == nummer })
+        let kante = UserDefaults.standard.object(forKey: "senden.iconkante") as? Int ?? 8
+        _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil
+            : Self.sammlungen.flatMap { $0.alle() }.first { $0.nummer == nummer && $0.kante == kante })
     }
 
     /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
@@ -126,7 +132,9 @@ public struct SendenView: View {
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon)`.
-        gewaehltesIcon = stand.icon.flatMap { nummer in sammlung.alle().first { $0.nummer == nummer } }
+        gewaehltesIcon = stand.icon.flatMap { nummer in
+            Self.sammlungen.flatMap { $0.alle() }.first { $0.nummer == nummer }
+        }
     }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -164,6 +172,14 @@ public struct SendenView: View {
         return CTFontCopyFamilyName(f) as String
     }
 
+    /// Beide Bestaende: die kanonischen 8×8 und die eigenen 16×16. Der Erste
+    /// ist zugleich der, den `Meldungsbau.rahmen` bekommt — der liest daraus
+    /// nur die Daten-URI der Datei, und die haengt am Icon, nicht am Ordner.
+    private static var sammlungen: [Iconsammlung] {
+        [Iconsammlung(schreibordner: Iconordner.eigene),
+         Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
+    }
+
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene)
     }
@@ -179,8 +195,10 @@ public struct SendenView: View {
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
-    private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon) }
-    private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon) }
+    /// Acht ohne Icon — der Wert zaehlt dann ohnehin nicht.
+    private var iconKante: Int { gewaehltesIcon?.kante ?? 8 }
+    private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon, iconKante: iconKante) }
+    private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon, iconKante: iconKante) }
 
     private func gebauterRahmen() throws -> Frame {
         try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
@@ -246,8 +264,9 @@ public struct SendenView: View {
     /// einbaeckt. Leer ohne Icon oder bei unlesbarer Datei — das Senden meldet
     /// den Fehler dann noch einmal richtig.
     private var iconRaster: [[String?]] {
-        guard let datei = gewaehltesIcon?.datei else { return [] }
-        return ((try? Bildraster.lesenMitZeiten(datei, breite: 8, hoehe: 8)) ?? []).map(\.pixel)
+        guard let icon = gewaehltesIcon else { return [] }
+        return ((try? Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)) ?? [])
+            .map(\.pixel)
     }
 
     private var nutzlastBytes: Int { laufschriftURI.utf8.count }
@@ -319,6 +338,7 @@ public struct SendenView: View {
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
                     VorschauView(feld: feld, kantenlaenge: kante,
                                 icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
+                                iconKante: iconKante,
                                 laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
@@ -428,14 +448,18 @@ public struct SendenView: View {
             }
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
-        .onChange(of: gewaehltesIcon) { _, neu in iconNummer = neu?.nummer ?? "" }
+        .onChange(of: gewaehltesIcon) { _, neu in
+            iconNummer = neu?.nummer ?? ""
+            iconKanteGemerkt = neu?.kante ?? 8
+        }
         .onAppear {
             // Nach einem Besuch im Icon-Editor kann das gewaehlte Icon geaendert,
             // umbenannt oder geloescht sein. Deshalb hier neu nachschlagen statt
             // dem gemerkten Wert zu glauben — ist es weg, faellt die Wahl auf
             // „ohne", statt auf eine Datei zu zeigen, die es nicht mehr gibt.
             guard !iconNummer.isEmpty else { return }
-            gewaehltesIcon = sammlung.alle().first { $0.nummer == iconNummer }
+            gewaehltesIcon = Self.sammlungen.flatMap { $0.alle() }
+                .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
         }
         .onChange(of: schrift) { _, neu in
             // Nach dem Wechsel gilt die Liste der neuen Schrift. Steht die
@@ -451,9 +475,9 @@ public struct SendenView: View {
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
-            let (o, iconBilder) = (optionen, iconRaster)
+            let (o, iconBilder, iconKante) = (optionen, iconRaster, iconKante)
             let (frames, uri) = await Task.detached(priority: .userInitiated) {
-                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder)
+                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder, iconKante: iconKante)
                 // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
                 // einmal gerastert, sonst liefe die Rechnung zweimal.
                 let uri = (try? Bildraster.alsDatenURI(
@@ -472,7 +496,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -519,7 +543,7 @@ public struct SendenView: View {
             }
 
             Section("Icon") {
-                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlung: sammlung)
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen)
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
                 // beim Laufen tut.
                 Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)

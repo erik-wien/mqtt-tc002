@@ -171,4 +171,83 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertNil(Meldungsplatz.platz(fuerName: "cli"))
         XCTAssertNil(Meldungsplatz.platz(fuerName: "meldung6"))
     }
+
+    // MARK: - 16×16-Icons
+
+    /// Legt ein Icon der Groesse `kante` in einem frischen Ordner an.
+    private func sammlungMitIcon(kante: Int) throws -> (Iconsammlung, Icon) {
+        let ordner = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString)
+        let sammlung = Iconsammlung(ordner: ordner, kante: kante)
+        var pixel = [String?](repeating: nil, count: kante * kante)
+        pixel[0] = "#FF0000"
+        pixel[kante * kante - 1] = "#00FF66"
+        let icon = try sammlung.sichern(nummer: "pruef", name: "Prüf", pixel: pixel)
+        return (sammlung, icon)
+    }
+
+    /// Ein 16×16 belegt achtzehn Spalten statt zehn und sitzt auf Zeile 0 —
+    /// es fuellt die volle Hoehe, statt wie ein 8×8 mittig zu schwimmen.
+    func testSechzehnerIconBelegtAchtzehnSpaltenUndSitztOben() {
+        XCTAssertEqual(Meldungsbau.iconY(kante: 8), 4)
+        XCTAssertEqual(Meldungsbau.iconY(kante: 16), 0)
+        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true, iconKante: 16), 18)
+        XCTAssertEqual(Meldungsbau.flaecheBreite(mitIcon: true, iconKante: 16), 34)
+
+        var o = Meldungsoptionen(text: "Hallo")
+        o.waagrecht = .links
+        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true, iconKante: 16), 18)
+        XCTAssertEqual(Meldungsbau.textblock(o, mitIcon: true, iconKante: 16).flaeche, [18, 0, 34, 16])
+    }
+
+    /// Ohne ausdrueckliche Kante rechnet alles wie vorher — jede Stelle, die
+    /// nur „Icon ja/nein" weiss, meint ein 8×8.
+    func testOhneAngabeBleibtEsBeimAchterIcon() {
+        var o = Meldungsoptionen(text: "Hallo")
+        o.waagrecht = .links
+        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true), Meldungsbau.flaecheX(mitIcon: true, iconKante: 8))
+        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 10)
+    }
+
+    /// Der fertige Rahmen nimmt die Groesse vom Icon selbst: ein 16×16 landet
+    /// auf `position` [0,0], ein 8×8 weiterhin auf [0,4].
+    func testRahmenSetztDasIconNachSeinerGroesse() throws {
+        let (achter, iconA) = try sammlungMitIcon(kante: 8)
+        let (sechzehner, iconS) = try sammlungMitIcon(kante: 16)
+        XCTAssertEqual(iconA.kante, 8)
+        XCTAssertEqual(iconS.kante, 16)
+
+        let o = Meldungsoptionen(text: "Hi")
+        let mitAchter = try Meldungsbau.rahmen(o, icon: iconA, sammlung: achter).alsJSON()
+        let mitSechzehner = try Meldungsbau.rahmen(o, icon: iconS, sammlung: sechzehner).alsJSON()
+        XCTAssertTrue(mitAchter.contains(#""position":[0,4]"#), mitAchter)
+        XCTAssertTrue(mitSechzehner.contains(#""position":[0,0]"#), mitSechzehner)
+    }
+
+    /// Der Text beginnt hinter dem Icon — bei einem 16×16 also ab Spalte 18.
+    func testTextBeginntHinterDemSechzehnerIcon() throws {
+        let (sechzehner, icon) = try sammlungMitIcon(kante: 16)
+        var o = Meldungsoptionen(text: "Hi")
+        o.waagrecht = .links
+        let rahmen = try Meldungsbau.rahmen(o, icon: icon, sammlung: sechzehner)
+        let ersteSpalte = rahmen.draw.map(\.x).min()
+        XCTAssertEqual(ersteSpalte, 18, "der Text darf nicht unter dem Icon anfangen")
+    }
+
+    /// Das Lauf-GIF backt ein 16×16 ueber die volle Hoehe ein — die oberste
+    /// Zeile der ersten Spalte ist bei einem 8×8 leer und bei einem 16×16 nicht.
+    func testLaufschriftBaecktDasSechzehnerIconUeberDieVolleHoeheEin() {
+        let kante = 16
+        let bild = [String?](repeating: "#FF0000", count: kante * kante)
+        let o = Meldungsoptionen(text: "Ein ziemlich langer Text, der nicht passt")
+        let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [bild], iconKante: kante)
+        guard let erstes = bilder.first else { return XCTFail("keine Einzelbilder") }
+        XCTAssertEqual(erstes.pixel[0], "#FF0000", "Zeile 0, Spalte 0 gehört dem 16×16-Icon")
+        XCTAssertEqual(erstes.pixel[15 * Pixelfeld.breiteStandard], "#FF0000", "und Zeile 15 auch")
+
+        let achter = [String?](repeating: "#FF0000", count: 64)
+        let mitAchter = Meldungsbau.laufschriftBilder(o, iconBilder: [achter])
+        XCTAssertNil(mitAchter.first?.pixel[0] ?? nil, "ein 8×8 lässt Zeile 0 frei")
+    }
+
 }
