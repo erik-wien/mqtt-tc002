@@ -880,13 +880,26 @@ public struct EditorBereichView: View {
         }
     }
 
+    /// **Ohne `.defaultAction`** — die Eingabetaste gehoert „Sichern".
+    ///
+    /// Beide standen bis zum 14.09.2026 darauf, und welcher von zweien SwiftUI
+    /// dann nimmt, ist nicht festgelegt. Genau so ein Gleichstand hat kurz
+    /// zuvor „Sichern" das zerstoerende „Neu" ausloesen lassen.
+    ///
+    /// „Sichern" bekommt sie aus drei Gruenden: Es ist die **eine**
+    /// Haupthandlung des Editors (`knopfHaupthandlung`, dieser hier ist ein
+    /// Befehl unter mehreren). Es gibt es bei **jeder** Leinwandgroesse,
+    /// diese Zeile nur bei 16×52 — eine Taste, die je nach Leinwand etwas
+    /// anderes tut, waere schlimmer als keine. Und es steht in einem Formular
+    /// mit Name und Nummer, wo die Eingabetaste ohnehin „uebernehmen" heisst,
+    /// waehrend hier der irreversible Weg auf die Uhr begaenne.
+    ///
+    /// `lok` in beiden Zweigen: Ein Ternaer mit einem `String`-Zweig zwingt
+    /// SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
+    /// nach — der Eintrag staende in `en.lproj` und wuerde nie gefunden.
     private var sendeKnopf: some View {
-        // `lok` in beiden Zweigen: Ein Ternaer mit einem `String`-Zweig zwingt
-        // SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
-        // nach — der Eintrag staende in `en.lproj` und wuerde nie gefunden.
         Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
             .knopfBefehl()
-            .keyboardShortcut(.defaultAction)
             .disabled(laeuft || zustand.ziele().isEmpty)
     }
 

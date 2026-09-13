@@ -553,4 +553,34 @@ final class EditorbereichTests: XCTestCase {
                           "„\(modus)“ fehlt in der Segmentwahl — oder das Kennzeichen sitzt nicht mehr ganz außen")
         }
     }
+
+    /// **F5.** Im Fenster gibt es genau **einen** Anwaerter auf die Eingabetaste.
+    ///
+    /// „Sichern" und „Senden" trugen bis zum 14.09.2026 beide
+    /// `.keyboardShortcut(.defaultAction)`. Welchen von zweien SwiftUI dann
+    /// nimmt, ist nicht festgelegt — und genau so ein Gleichstand hat kurz
+    /// zuvor „Sichern" das zerstoerende „Neu" ausloesen lassen. Der Uebersetzer
+    /// hat dazu nichts zu sagen: Zwei Vorgabetasten uebersetzen anstandslos.
+    ///
+    /// Gezaehlt wird nur, was im **Fenster** steht. Die beiden Blaetter
+    /// dahinter („Oeffnen", „Umbenennen") sind eigene, modale Zusammenhaenge
+    /// und haben ihre Vorgabetaste zu Recht.
+    func testImFensterGibtEsGenauEinenAnwaerterAufDieEingabetaste() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let fenster = ausschnitt(text, von: "public var body", bis: "private var importBlatt")
+        let anwaerter = fenster.components(separatedBy: ".keyboardShortcut(.defaultAction)").count - 1
+        XCTAssertEqual(anwaerter, 1,
+                       "im Editorfenster stehen \(anwaerter) Knöpfe auf der Eingabetaste — "
+                       + "welcher gewinnt, ist Zufall")
+
+        XCTAssertTrue(ausschnitt(text, von: "private var sichernAbschnitte", bis: "private var pfeilkreuz")
+                        .contains(".keyboardShortcut(.defaultAction)"),
+                      "„Sichern“ hat die Eingabetaste nicht mehr — sie gehört der einen Haupthandlung, "
+                      + "und die gibt es bei jeder Leinwandgröße")
+
+        XCTAssertFalse(ausschnitt(text, von: "private var sendeKnopf", bis: "private var importBlatt")
+                        .contains(".keyboardShortcut(.defaultAction)"),
+                       "„Senden“ hat die Eingabetaste wieder — diese Zeile gibt es nur bei 16×52, "
+                       + "die Taste täte dann je nach Leinwand etwas anderes")
+    }
 }
