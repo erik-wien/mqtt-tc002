@@ -38,9 +38,27 @@ extension Anzeigen {
     /// Liste, die sehr wohl eine Aussage ist: auf der Uhr steht gerade nichts.
     public static func namenAusCustomList(_ daten: Data) -> [String]? {
         guard let objekt = try? JSONSerialization.jsonObject(with: daten),
-              let woerterbuch = objekt as? [String: Any],
-              let apps = woerterbuch["apps"] as? [[String: Any]] else { return nil }
-        return apps.compactMap { $0["appName"] as? String }
+              let woerterbuch = objekt as? [String: Any] else { return nil }
+        return namenAusAppsFeld(woerterbuch["apps"])
+    }
+
+    /// Das Feld `apps` — in **zwei** Schreibweisen, denn dieselbe Liste kommt
+    /// ueber die beiden Wege verschieden herein (§3.5, §5.7):
+    ///
+    ///   - MQTT: `[{"appName":"scrolltest"}]`
+    ///   - HTTP: `["meldung2","meldung5"]`
+    ///
+    /// Ein Leser fuer beide, weil es dieselbe Auskunft ist. Ein zweiter neben
+    /// diesem waere eine zweite Stelle, an der sich die Form aendern koennte.
+    ///
+    /// nil heisst „das war keine lesbare Liste"; die leere Liste heisst „auf der
+    /// Uhr steht gerade nichts".
+    static func namenAusAppsFeld(_ feld: Any?) -> [String]? {
+        if let namen = feld as? [String] { return namen }
+        if let eintraege = feld as? [[String: Any]] {
+            return eintraege.compactMap { $0["appName"] as? String }
+        }
+        return nil
     }
 
     /// Zerlegt eine mitgelesene `custom`-Nutzlast (unser eigenes Format,

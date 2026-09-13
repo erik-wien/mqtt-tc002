@@ -111,4 +111,18 @@ extension AnzeigenTests {
         XCTAssertNil(Anzeigen.namenAusCustomList(Data()))
         XCTAssertNil(Anzeigen.namenAusCustomList(Data(#"{"count":0}"#.utf8)))
     }
+
+    /// Dieselbe Liste, zwei Schreibweisen: Ueber MQTT kommen Objekte mit
+    /// `appName`, ueber `GET /api/customList` blosse Zeichenketten. Am
+    /// 13.09.2026 am Geraet belegt. Ein Leser fuer beide — ein zweiter daneben
+    /// waere eine zweite Stelle, an der sich die Form aendern koennte.
+    func testBeideSchreibweisenDesAppsFeldes() {
+        XCTAssertEqual(Anzeigen.namenAusAppsFeld(["meldung2", "meldung5", "meldung3"]),
+                       ["meldung2", "meldung5", "meldung3"], "die Form ueber HTTP")
+        XCTAssertEqual(Anzeigen.namenAusAppsFeld([["appName": "scrolltest"]]),
+                       ["scrolltest"], "die Form ueber MQTT")
+        XCTAssertEqual(Anzeigen.namenAusAppsFeld([]), [], "leer heisst: auf der Uhr steht nichts")
+        XCTAssertNil(Anzeigen.namenAusAppsFeld(nil))
+        XCTAssertNil(Anzeigen.namenAusAppsFeld(42))
+    }
 }

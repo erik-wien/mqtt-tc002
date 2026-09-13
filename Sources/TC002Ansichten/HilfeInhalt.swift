@@ -214,16 +214,20 @@ public enum HilfeInhalt {
     /// schlaegt gemerkt — `AppZustand.anzeigenDerAktivenMitQuelle` fuer beide.
     public static let verlaufHerkunft: [Hilfebaustein] = [
         .ueberschrift("Herkunft der Liste"),
-        .absatz("„Verlauf“ listet, was auf der aktiven Uhr steht. Über der Liste steht, woher sie kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Uhr selbst hat sie veröffentlicht; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen."),
+        .absatz("„Verlauf“ listet, was auf der aktiven Uhr steht. Über der Liste steht, woher sie kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Auskunft stammt von der Uhr selbst; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen."),
         .absatz("„von dieser App angelegt“ heißt dagegen, es ist nur die eigene Buchführung — das eine ist Tatsache, das andere Erinnerung."),
     ]
 
-    /// Wie die Liste zustande kommt: die Uhr veroeffentlicht, die App hoert mit.
-    /// Abfragen laesst sich das nicht.
+    /// Wie die Liste zustande kommt: die Uhr veroeffentlicht, die App hoert mit —
+    /// und fragt zusaetzlich selbst nach. Beides ist dieselbe Auskunft derselben
+    /// Quelle; der Inhalt eines Platzes gehoert ausdruecklich **nicht** dazu.
     public static let verlaufEntstehung: [Hilfebaustein] = [
         .ueberschrift("Wie die Liste entsteht"),
-        .absatz("Die Uhr veröffentlicht ihre Anzeigenliste von sich aus über das MQTT-Thema `<präfix>/customList`, und über `<präfix>/status`, ob sie gerade am Broker hängt (Gerätereferenz, §3.4 und §3.5). Abfragen lässt sich beides nicht — es kommt, wenn die Uhr es schickt."),
-        .absatz("Die App hört deshalb dauerhaft beim Broker mit, sobald eine Uhr ein Präfix hat. Steht über der Liste „von dieser App angelegt“, ist noch nichts gemeldet worden: kein Broker erreichbar, die Uhr aus, oder unter „Einstellungen“ noch nicht abgefragt. Reißt die Verbindung ab, fällt die Liste auf die Buchführung zurück und sagt es."),
+        .absatz("Auf zwei Wegen, und beide führen zur Uhr selbst. Sie veröffentlicht ihre Anzeigenliste von sich aus über das MQTT-Thema `<präfix>/customList`, und die App hört dort dauerhaft mit, sobald eine Uhr ein Präfix hat (Gerätereferenz, §3.5)."),
+        .absatz("Dazu fragt die App die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/customList`, Gerätereferenz §5.7) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Dafür braucht es keinen Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),
+        .absatz("Gefragt wird dabei nur, **welche** Anzeigen es gibt. Was auf einem Platz steht, verrät die Uhr auf keinem der beiden Wege; belegt oder frei ist damit Tatsache, der Inhalt bleibt geraten."),
+        .absatz("Steht über der Liste „von dieser App angelegt“, hat keiner der beiden Wege etwas ergeben: die Uhr aus oder nicht erreichbar, und nichts mitgehört. Dann zeigt die Liste die eigene Buchführung und sagt es — was die Uhr selbst gesagt hat, wird nicht mit dem Alter zur Tatsache."),
+        .absatz("Ob die Uhr gerade am Broker hängt, meldet sie über `<präfix>/status` (Gerätereferenz, §3.4). Das lässt sich nicht abfragen — es kommt, wenn die Uhr es schickt."),
     ]
 
     /// Was ein Loeschen erreicht und was nicht — dieselbe leere Nutzlast, dieselbe

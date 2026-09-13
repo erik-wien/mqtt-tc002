@@ -76,6 +76,24 @@ public struct Geraet {
 
     public func konfiguration() throws -> [String: Any] { try hole("/getConfig") }
 
+    /// Welche benannten Anzeigen gerade auf der Uhr stehen (§5.7):
+    /// `{"apps":["meldung2","meldung5","meldung3"],"count":3}`.
+    ///
+    /// Der Pfad ist `/api/customList`, **nicht** `/customList` — letzterer
+    /// liefert nichts, und das hat uns lange wie ein Mangel der Firmware
+    /// ausgesehen.
+    ///
+    /// Es sind **nur Namen**. Was auf einem Platz steht, verraet die Uhr auch
+    /// hierueber nicht; belegt oder frei ist damit Tatsache, der Inhalt bleibt
+    /// geraten.
+    public func anzeigennamen() throws -> [String] {
+        let d = try hole("/api/customList")
+        guard let namen = Anzeigen.namenAusAppsFeld(d["apps"]) else {
+            throw GeraetFehler.unerwarteteAntwort("/api/customList")
+        }
+        return namen
+    }
+
     /// Liest die vollstaendige Konfiguration, aendert ein Feld und schickt alles
     /// zurueck — die Uhr erwartet das ganze Objekt, nicht nur die Aenderung.
     public func konfigurationSetzen(_ feld: String, _ wert: Any) throws {

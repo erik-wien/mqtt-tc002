@@ -24,11 +24,11 @@ geändert — und womöglich etwas in der App.
 | # | Mangel | Prüfung | Stand 1.0.17 |
 |---|---|---|---|
 | 1 | `text` läuft nicht durch | langen Text als `text` schicken | ❌ |
-| 2 | leerer HTTP-Rumpf löscht nicht | `POST /api/custom?name=x` mit leerem Rumpf | ❌ |
+| 2 | leerer HTTP-Rumpf löscht nicht | `POST /api/custom?name=x` mit `{}` statt leerem Rumpf | ⚠️ Verdacht |
 | 3 | GIF-Verfahren 1 wird nicht umgesetzt | deckendes Lauf-GIF schicken | ❌ |
 | 4 | Platzhalter im Präfix macht das Gerät unbrauchbar | `#` als Präfix eintragen | ❌ |
-| 5 | kein HTTP-Weg zum Umschalten | HTTP-Entsprechung zu `switchDiyApp` suchen | ❌ |
-| 6 | `customList` nur über MQTT | `GET /customList` | ❌ |
+| 5 | kein HTTP-Weg zum Umschalten | `POST /api/switchDiyApp` | ⚠️ Verdacht |
+| 6 | Anzeigenliste nur über MQTT — **kein Mangel**, falscher Pfad | `GET /api/customList` | ✅ geht |
 | 7 | Schrift ohne Umlaute | `"content":"Grüße"` schicken | ❌ |
 | 8 | Uhr wird unerreichbar, bis sie stromlos war | `curl http://<adresse>/getBase` | ❌ |
 
@@ -58,10 +58,18 @@ mehreren Kilobyte für einen Satz.
 dieselbe leere Nutzlast zuverlässig (§3.2).
 
 **Warum das zählt.** Eine Erfolgsmeldung für etwas, das nicht geschieht, ist
-schlimmer als ein Fehler. Und es ist der Grund, warum HTTP allein nicht als
-Betriebsart taugt: ohne Broker ließe sich keine Anzeige mehr entfernen.
+schlimmer als ein Fehler. Und wenn es dabei bleibt, taugt HTTP allein nicht als
+Betriebsart: ohne Broker ließe sich keine Anzeige mehr entfernen.
 
-**Prüfung.** Anzeige anlegen, leeren Rumpf hinterherschicken, hinsehen.
+> ⚠️ **Unter Verdacht, Prüfung offen.** Ein fremdes Projekt beschreibt an
+> derselben Firmwarefassung das Löschen mit dem Rumpf `{}` statt eines leeren
+> Rumpfes. Geprüft ist hier nur der leere Rumpf. Ist `{}` der richtige Weg, ist
+> das kein Mangel der Firmware, sondern eine Lücke in unserer Kenntnis — wie
+> bei der Anzeigenliste in Punkt 6.
+
+**Prüfung.** Anzeige anlegen, `POST /api/custom?name=x` mit dem Rumpf `{}`
+hinterherschicken, hinsehen. Die Prüfung entfernt eine wirkliche Anzeige und
+gehört deshalb an das Gerät, nicht in einen Test.
 
 ---
 
@@ -118,22 +126,30 @@ irgendwo steht.
 
 ---
 
-## 6. Über HTTP fehlen zwei Dinge ganz
+## 6. Über HTTP fehlt das Umschalten
 
-**Gerätereferenz §3.3 und §3.5.**
+**Gerätereferenz §3.3 und §5.7.**
 
-- Zum Umschalten auf eine Anzeige gibt es nur das MQTT-Thema `switchDiyApp`,
-  keine HTTP-Entsprechung.
-- `customList` ist ein MQTT-Thema; `GET /customList` liefert nichts.
+Zum Umschalten auf eine Anzeige kennen wir nur das MQTT-Thema `switchDiyApp`.
 
-**Warum das zählt.** Beides zusammen mit Punkt 2 verhindert einen reinen
-HTTP-Betrieb. Wer keinen Broker betreiben will — und danach wird gefragt —, kann
-zwar senden, aber weder löschen noch umschalten noch erfahren, was auf der Uhr
-steht.
+> ⚠️ **Unter Verdacht, Prüfung offen.** Ein fremdes Projekt beschreibt an
+> derselben Firmwarefassung `POST /api/switchDiyApp`. Gesucht haben wir danach,
+> gefunden nichts — was nicht dasselbe ist wie „gibt es nicht".
 
-Bemerkenswert ist dabei: Die Uhr meldet über `customList` **auch** Anzeigen, die
-über HTTP entstanden sind (§3.5). Der Zustand ist also da, er wird nur nicht
-über HTTP herausgegeben.
+**Warum das zählt.** Zusammen mit Punkt 2 entscheidet es, ob ein reiner
+HTTP-Betrieb möglich ist. Wer keinen Broker betreiben will — und danach wird
+gefragt —, kann heute senden und erfahren, was auf der Uhr steht, aber nach
+unserem Kenntnisstand weder löschen noch umschalten.
+
+**Die Anzeigenliste gehört nicht mehr hierher.** `GET /api/customList` (§5.7)
+nennt die benannten Anzeigen des Geräts, am 13.09.2026 gemessen. Der Pfad ist
+`/api/customList`; `GET /customList` liefert nichts, und genau das haben wir
+für einen Mangel der Firmware gehalten. Es war unser Pfadfehler.
+
+Die Liste meldet **auch** Anzeigen, die über HTTP entstanden sind (§3.5) — sie
+ist der Zustand des Geräts und nicht die Buchführung eines Senders. Es sind
+aber nur Namen: Was auf einer Anzeige steht, gibt das Gerät auf keinem Weg
+heraus.
 
 ---
 

@@ -45,6 +45,8 @@ final class GeraetTests: XCTestCase {
             "/getMqttStatus": #"{"code":200,"data":{"enabled":true,"connected":true}}"#,
             "/getConfig": #"{"brightness":{"level":"high"},"volume":4,"carouselSpeed":0,"scrollSpeed":7}"#,
             "/setConfig": #"{"code":200,"message":"Settings saved successfully"}"#,
+            // Genau die Antwort, die am 13.09.2026 am Geraet gemessen wurde.
+            "/api/customList": #"{"apps":["meldung2","meldung5","meldung3"],"count":3}"#,
         ]
         Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
@@ -92,6 +94,31 @@ final class GeraetTests: XCTestCase {
         XCTAssertTrue(gesendet.contains("\"carouselSpeed\":10"))
         XCTAssertTrue(gesendet.contains("\"volume\""), "die übrigen Felder müssen mit")
         XCTAssertTrue(gesendet.contains("\"scrollSpeed\""))
+    }
+
+    /// Welche Anzeigen auf der Uhr stehen, sagt sie ueber HTTP — und zwar unter
+    /// `/api/customList`. `/customList` ohne `/api` liefert nichts; dass das ein
+    /// Mangel der Firmware sei, war unser eigener Pfadfehler.
+    func testAnzeigennamenKommenVomApiPfad() throws {
+        XCTAssertEqual(try geraet().anzeigennamen(), ["meldung2", "meldung5", "meldung3"])
+    }
+
+    /// Eine leere Liste ist eine Auskunft — auf der Uhr steht nichts —, kein
+    /// Fehler. Ohne den Unterschied waere „frei" nicht von „nicht gefragt" zu
+    /// trennen.
+    func testLeereAnzeigenlisteIstKeinFehler() throws {
+        Doppelgaenger.antworten["/api/customList"] = #"{"apps":[],"count":0}"#
+        XCTAssertEqual(try geraet().anzeigennamen(), [])
+    }
+
+    /// Eine Antwort ohne `apps` ist keine leere Liste, sondern keine Liste. Sie
+    /// darf nicht als „auf der Uhr steht nichts" durchgehen — das raeumte in
+    /// `AppZustand` die Belegung ab.
+    func testAntwortOhneAppsFeldIstEinFehler() {
+        Doppelgaenger.antworten["/api/customList"] = #"{"code":200}"#
+        XCTAssertThrowsError(try geraet().anzeigennamen()) { fehler in
+            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
+        }
     }
 
     /// Kein gueltiges JSON darf nicht als roher Systemfehler nach aussen dringen.

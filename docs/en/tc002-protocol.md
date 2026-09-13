@@ -145,8 +145,10 @@ the device itself, not from the sender's bookkeeping. If you use several tools
 (this app, Ulanzi Studio, PixDeck, `mosquitto_pub`), this is the only place where
 you learn what is really on the clock.
 
-> ⚠️ **It is an MQTT topic, not an HTTP endpoint.** `GET /customList` returns
-> nothing. It can only be read by subscribing to it at the broker.
+The same answer is available **over HTTP as well**, on request rather than by
+luck: `GET /api/customList` (§5.7). The path `GET /customList` — without
+`/api` — returns nothing; that is the whole difference, and it was long taken
+for a firmware defect.
 
 ✅ **The clock also reports what was created over HTTP.** The `scrolltest`
 display above had been created with `POST /api/custom?name=scrolltest` (§5.6),
@@ -157,8 +159,10 @@ device, not the bookkeeping of one particular sender.
 There is a practical consequence: **sending over HTTP and listening over MQTT
 can be mixed.** If you have a broker, you can send over HTTP — which gives you
 real error codes instead of the silence described in §2 — and still keep the
-feedback channel. Without a broker you lose the feedback channel, and you lose
-deleting (§5.6) and switching (§3.3), both of which only work over MQTT.
+feedback channel. Without a broker, the question of **which** displays exist at
+least remains answerable (§5.7). What is on them and whether the device is
+online only MQTT will say; deleting (§5.6) and switching (§3.3) are under
+suspicion of working over HTTP too — unverified, see defect list items 2 and 5.
 
 Both topics appear in **no** vendor documentation.
 
@@ -447,6 +451,26 @@ works over HTTP. For a device on the same network this is the shorter path; over
 MQTT, by contrast, it works even when sender and clock cannot reach each other
 directly.
 
+### 5.7 `GET /api/customList` — which displays are on the clock
+
+✅ Names the named displays the device currently knows — the same answer as the
+MQTT topic in §3.5, only on request and without a broker. Measured on
+2026-09-13:
+
+```bash
+curl -s http://192.168.1.20/api/customList
+{"apps":["meldung2","meldung5","meldung3"],"count":3}
+```
+
+> ⚠️ **The path is `/api/customList`.** `GET /customList` — without `/api` —
+> returns nothing.
+
+The spelling differs from §3.5: here they are plain strings, there objects with
+`appName`. The same list is meant.
+
+These are **names only**. What is on a display the device does not reveal this
+way either — occupied or free is therefore certain, the content is not.
+
 ---
 
 ## 6. When nothing appears
@@ -459,8 +483,8 @@ In order, from the most common to the rarest:
 3. **Is the account allowed to write to the topic?** The permissions are in the
    broker's permissions file; with Mosquitto the log reports a rejected publish —
    the sender itself learns nothing about it (§2).
-4. **Is an old display still standing?** Delete it first with an empty payload
-   (§3.2).
+4. **Is an old display still standing?** `GET /api/customList` (§5.7) says which
+   ones exist; get rid of them with the empty payload (§3.2).
 5. **Not paging?** `carouselSpeed` is `0` (§5.4).
 6. **Characters missing from the text?** Umlauts and most punctuation marks do
    not exist in the device font — send them as pixels (§1, §4.1).

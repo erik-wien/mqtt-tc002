@@ -17,6 +17,9 @@ final class AppZustandTests: XCTestCase {
     override func setUp() {
         super.setUp()
         sicherung = Dictionary(uniqueKeysWithValues: schluessel.map { ($0, d.object(forKey: $0)) })
+        Belegungsdoppelgaenger.antwort = "{}"
+        Belegungsdoppelgaenger.weitere = [:]
+        Belegungsdoppelgaenger.pfade = []
     }
 
     override func tearDown() {
@@ -544,6 +547,178 @@ final class AppZustandTests: XCTestCase {
                        "das fehlende Präfix schlägt beides")
     }
 
+    // MARK: - Die Uhr nach ihrem Stand fragen
+
+    /// Was die Uhr selbst sagt, schlaegt die eigene Buchfuehrung — auch wenn
+    /// darin ein Name steht, den diese App nie vergeben hat. Genau das war
+    /// vorher in beide Richtungen falsch: ein fremder Absender erschien als
+    /// „frei", eine Loeschung ueber ein anderes Programm als „belegt".
+    func testAuskunftDerUhrSchlaegtDieEigeneBuchfuehrung() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.anzeigeGemerkt("meldung1", fuer: id)
+
+        zustand.belegungGemeldet(["meldung2", "wetter"], fuer: id)
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(id), ["meldung2", "wetter"])
+        let mitQuelle = zustand.anzeigenDerAktivenMitQuelle()
+        XCTAssertEqual(mitQuelle.namen, ["meldung2", "wetter"])
+        XCTAssertEqual(mitQuelle.quelle, .geraet, "die Uhr hat es gesagt, nicht die App")
+    }
+
+    /// Die leere Liste ist eine Auskunft, kein Schweigen: Auf der Uhr steht
+    /// nichts. Ohne diesen Unterschied bliebe eine Loeschung ueber ein fremdes
+    /// Programm als „belegt" stehen.
+    func testLeereAuskunftHeisstFreiUndNichtUnbekannt() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.anzeigeGemerkt("meldung1", fuer: id)
+
+        zustand.belegungGemeldet([], fuer: id)
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(id), [])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
+    }
+
+    /// Keine Antwort ist keine Auskunft. Dann gibt es keine Tatsache mehr, und
+    /// die Ansicht muss sagen, dass sie nur noch die eigene Buchfuehrung zeigt —
+    /// eine stehengelassene alte Auskunft saehe genauso aus wie eine frische.
+    func testOhneAntwortFaelltEsAufDieBuchfuehrungZurueck() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.anzeigeGemerkt("meldung1", fuer: id)
+        zustand.belegungGemeldet(["wetter"], fuer: id)
+
+        zustand.belegungGemeldet(nil, fuer: id)
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(id), ["meldung1"])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .app)
+    }
+
+    /// Der ganze Weg ohne Netz: `belegungAbfragen` fragt `GET /api/customList`
+    /// und traegt die Antwort als Auskunft der Uhr ein. Der Pfad steht mit im
+    /// Test, weil `/customList` ohne `/api` nichts liefert — genau daran lag es.
+    func testBelegungWirdUeberDenApiPfadErfragt() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung2","meldung5"],"count":2}"#
+        Belegungsdoppelgaenger.pfade = []
+
+        zustand.belegungAbfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
+        warteBis { zustand.gemeldeteAnzeigen[id] != nil }
+
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/customList"])
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung2", "meldung5"])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
+    }
+
+    /// Antwortet die Uhr nicht, wird die Auskunft weggeworfen statt alt zu
+    /// werden — und es gibt kein Hinweisfenster, sondern eine Protokollzeile:
+    /// Beim Start sind Uhren aus oder noch nicht im Netz.
+    func testStummeUhrRaeumtDieAuskunftAbUndMeldetNurInsProtokoll() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.belegungGemeldet(["wetter"], fuer: id)
+        Belegungsdoppelgaenger.antwort = "das ist kein JSON"
+
+        zustand.belegungAbfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
+        warteBis { zustand.gemeldeteAnzeigen[id] == nil }
+
+        XCTAssertNil(zustand.gemeldeteAnzeigen[id])
+        XCTAssertNil(zustand.fehler, "kein Hinweisfenster beim Start")
+        XCTAssertTrue(zustand.protokoll.contains { $0.contains("sagt nicht, was auf ihr steht") },
+                      "der Fehlschlag gehört ins Protokoll")
+    }
+
+    /// Eine eingerichtete Uhr ohne Adresse gibt es nicht zu fragen — und der
+    /// Abruf darf ihre Auskunft auch nicht abraeumen.
+    func testOhneAdresseWirdNichtGefragt() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.uhren[0].host = ""
+        zustand.belegungGemeldet(["wetter"], fuer: id)
+        Belegungsdoppelgaenger.pfade = []
+
+        zustand.belegungAbfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
+        // Lange genug, dass ein losgeloester Abruf hier ankaeme, wenn es einen gaebe.
+        warteBis({ !Belegungsdoppelgaenger.pfade.isEmpty }, frist: 0.5)
+
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, [])
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["wetter"])
+    }
+
+    /// Der Fall, um den es geht: Die App startet, ein Broker ist nicht
+    /// eingetragen — also kein Abonnement, kein Mitlesen. Trotzdem steht die
+    /// Belegung sofort da, weil die Uhr selbst gefragt wird. Vorher zeigte die
+    /// App hier ihre eigene Buchfuehrung, und die war in beide Richtungen falsch.
+    func testBeimStartOhneBrokerKommtDieBelegungTrotzdemVonDerUhr() throws {
+        d.removeObject(forKey: "brokerHost")
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        XCTAssertEqual(zustand.brokerHost, "", "ohne Broker: kein Abonnement, kein Netzverkehr")
+        zustand.anzeigeGemerkt("meldung1", fuer: id)
+        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung2"],"count":1}"#
+
+        zustand.horchenStarten(sitzung: Belegungsdoppelgaenger.sitzung())
+        warteBis { zustand.gemeldeteAnzeigen[id] != nil }
+
+        XCTAssertEqual(zustand.anzeigenAufUhr(id), ["meldung2"])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
+    }
+
+    /// Aus dem Hintergrund zurueck: `inDenHintergrund` raeumt das Abonnement und
+    /// mit ihm die Auskunft ab, und in der Zwischenzeit kann jemand anderes auf
+    /// die Uhr geschrieben haben. Also erneut fragen, statt auf eine Meldung zu
+    /// warten, die vielleicht nie kommt.
+    func testAusDemHintergrundWirdDieBelegungErneutErfragt() throws {
+        d.removeObject(forKey: "brokerHost")
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.belegungGemeldet(nil, fuer: id)   // wie nach `inDenHintergrund`
+        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung5"],"count":1}"#
+
+        zustand.ausDemHintergrund(sitzung: Belegungsdoppelgaenger.sitzung())
+        warteBis { zustand.gemeldeteAnzeigen[id] != nil }
+
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung5"])
+    }
+
+    /// „Abfragen" holt seit F nicht mehr nur Praefix und Verbindungsstand,
+    /// sondern im selben Zug auch, was auf der Uhr steht.
+    func testAbfragenHoltAuchDieBelegung() throws {
+        d.removeObject(forKey: "brokerHost")
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        zustand.anzeigeGemerkt("meldung1", fuer: id)
+        Belegungsdoppelgaenger.vollstaendigeUhr()
+        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung3"],"count":1}"#
+
+        zustand.abfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
+        warteBis { zustand.gemeldeteAnzeigen[id] != nil }
+
+        XCTAssertEqual(zustand.uhren[0].praefix, "awtrix_a86b", "das Bisherige muss weiter kommen")
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung3"])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
+    }
+
+    private func zustandMitEinerUhr() throws -> AppZustand {
+        let uhr = Uhr(name: "Küche", host: "10.0.0.5", praefix: "awtrix_a86b")
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.removeObject(forKey: "bekannteAnzeigen")
+        return AppZustand()
+    }
+
+    /// Laesst den Hauptthread laufen, bis die losgeloeste Abfrage
+    /// zurueckgemeldet hat. `MainActor.run` reiht sich in die Hauptwarteschlange
+    /// ein — ein blosses `sleep` kaeme dort nie an.
+    private func warteBis(_ bedingung: () -> Bool, frist: TimeInterval = 5) {
+        let ende = Date().addingTimeInterval(frist)
+        while !bedingung(), Date() < ende {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
+        }
+    }
+
     func testEntfernteUhrVerliertIhreSlotdatei() throws {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
@@ -562,4 +737,43 @@ final class AppZustandTests: XCTestCase {
         XCTAssertNotNil(gedaechtnis.gemerkt(fuer: b.id, platz: 1),
                         "Nur die Datei der entfernten Uhr darf verschwinden.")
     }
+}
+
+/// Faengt die HTTP-Abfragen an die Uhr ab. Kein Netz, keine Uhr.
+final class Belegungsdoppelgaenger: URLProtocol {
+    /// Die Antwort auf `/api/customList` — die Frage, um die es hier geht.
+    nonisolated(unsafe) static var antwort = "{}"
+    /// Die uebrigen Endpunkte, die `abfragen` unterwegs braucht.
+    nonisolated(unsafe) static var weitere: [String: String] = [:]
+    nonisolated(unsafe) static var pfade: [String] = []
+
+    static func sitzung() -> URLSession {
+        let k = URLSessionConfiguration.ephemeral
+        k.protocolClasses = [Belegungsdoppelgaenger.self]
+        return URLSession(configuration: k)
+    }
+
+    /// Was eine Uhr antwortet, die Praefix, MAC und Verbindungsstand kennt.
+    static func vollstaendigeUhr() {
+        weitere = [
+            "/getMqttConfig": #"{"isMqtt":true,"mqtt_prefix":"awtrix"}"#,
+            "/getBase": #"{"mac":"aabbccdda86b","devSn":"TC002","mcuVer":"V1.0.17","appVer":"1.1.1"}"#,
+            "/getMqttStatus": #"{"code":200,"data":{"connected":true}}"#,
+        ]
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for r: URLRequest) -> URLRequest { r }
+
+    override func startLoading() {
+        let pfad = request.url?.path ?? ""
+        Self.pfade.append(pfad)
+        let text = pfad == "/api/customList" ? Self.antwort : (Self.weitere[pfad] ?? "{}")
+        let antwort = HTTPURLResponse(url: request.url!, statusCode: 200,
+                                      httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: antwort, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(text.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
 }

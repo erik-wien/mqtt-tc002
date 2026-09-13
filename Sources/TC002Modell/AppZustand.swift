@@ -22,8 +22,14 @@ public final class AppZustand {
     public var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     public var verbunden: [UUID: Bool] = [:]
-    /// Was die Uhr selbst als ihre Anzeigen meldet (`<praefix>/customList`, §3.5).
-    /// Kein Eintrag heisst: noch nichts empfangen — dann gilt `bekannteAnzeigen`.
+    /// Was die Uhr selbst als ihre Anzeigen nennt — auf **zwei** Wegen, die
+    /// dieselbe Auskunft geben: mitgelesen von `<praefix>/customList` (§3.5)
+    /// und erfragt ueber `GET /api/customList` (§5.7). Beides ist die Uhr
+    /// selbst, also dieselbe Quelle `.geraet`; der Unterschied ist nur, wer
+    /// anfaengt zu reden.
+    ///
+    /// Kein Eintrag heisst: keine Auskunft — dann gilt `bekannteAnzeigen`, und
+    /// die Ansicht sagt, dass sie nur die eigene Buchfuehrung zeigt.
     public var gemeldeteAnzeigen: [UUID: [String]] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
@@ -171,6 +177,67 @@ public final class AppZustand {
         guard !liste.contains(name) else { return }
         liste.append(name)
         bekannteAnzeigen[id] = liste
+    }
+
+    /// Was die Uhr ueber ihre Belegung gesagt hat. Die eine Stelle, an der
+    /// `gemeldeteAnzeigen` gefuellt wird — gleich ob die Auskunft mitgelesen
+    /// (§3.5) oder erfragt (§5.7) wurde.
+    ///
+    /// `nil` heisst: Die Uhr hat **nicht** geantwortet. Dann gibt es keine
+    /// Tatsache mehr, und die Ansicht faellt auf die eigene Buchfuehrung
+    /// zurueck und sagt das auch. Eine unlesbare MQTT-Nutzlast ist etwas
+    /// anderes und kommt hier gar nicht erst an — dort bleibt der letzte Stand
+    /// stehen (siehe `gemeldet`).
+    ///
+    /// Es sind **nur Namen**: belegt oder frei ist damit Tatsache, was auf
+    /// einem Platz steht, bleibt geraten (`slotzustand`).
+    func belegungGemeldet(_ namen: [String]?, fuer id: UUID) {
+        guard let uhr = uhren.first(where: { $0.id == id }),
+              gemeldeteAnzeigen[id] != namen else { return }
+        gemeldeteAnzeigen[id] = namen
+        guard let namen else { return }
+        log(lokf("%@ meldet: %@", uhr.name,
+                 namen.isEmpty ? lok("keine Anzeige") : namen.joined(separator: ", ")))
+    }
+
+    /// Fragt die Uhr selbst, welche Anzeigen auf ihr stehen — ueber HTTP, also
+    /// ohne Broker und ohne auf eine Nachricht zu warten, die vielleicht nie
+    /// kommt.
+    ///
+    /// Damit ist die Belegung beim Start Tatsache statt Erinnerung, und zwar
+    /// auch fuer Anzeigen, die ein fremdes Programm angelegt hat. Die eigene
+    /// Buchfuehrung war hier in **beide** Richtungen falsch: ein fremder
+    /// Absender erschien als „frei", eine Loeschung ueber Ulanzi Studio als
+    /// „belegt".
+    ///
+    /// Der Fehlschlag geht ins Protokoll, nicht in `fehler`: Beim Start sind
+    /// Uhren aus oder noch nicht im Netz, und dafuer gehoert kein
+    /// Hinweisfenster aufgezogen.
+    ///
+    /// `sitzung` ist ein Parameter, damit der Test einen `URLProtocol`
+    /// unterschieben kann — wie `gedaechtnis` bei den Slots. Die Oberflaeche
+    /// ruft wie bisher `belegungAbfragen(id)`.
+    public func belegungAbfragen(_ id: UUID, sitzung: URLSession = .shared) {
+        guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return }
+        let host = uhr.host, name = uhr.name
+        // Blockiert bis zur Antwort der Uhr — nicht auf dem Hauptthread.
+        Task.detached { [weak self] in
+            do {
+                let namen = try Geraet(host: host, sitzung: sitzung).anzeigennamen()
+                await MainActor.run { [weak self] in self?.belegungGemeldet(namen, fuer: id) }
+            } catch {
+                let grund = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                await MainActor.run { [weak self] in
+                    self?.belegungGemeldet(nil, fuer: id)
+                    self?.log(lokf("%@ sagt nicht, was auf ihr steht: %@", name, grund))
+                }
+            }
+        }
+    }
+
+    /// Dasselbe fuer jede eingerichtete Uhr.
+    public func belegungAbfragen(sitzung: URLSession = .shared) {
+        for uhr in uhren { belegungAbfragen(uhr.id, sitzung: sitzung) }
     }
 
     /// Woher die Liste der Anzeigen stammt.
@@ -435,15 +502,22 @@ public final class AppZustand {
     }
 
     /// Holt Praefix, MAC und Verbindungsstand vom Geraet.
-    public func abfragen(_ id: UUID) {
+    ///
+    /// `sitzung` ist wie bei `belegungAbfragen` die Naht fuer den Test —
+    /// die Oberflaeche ruft `abfragen(id)`.
+    public func abfragen(_ id: UUID, sitzung: URLSession = .shared) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
         Task.detached { [weak self] in
             do {
-                let geraet = Geraet(host: host)
+                let geraet = Geraet(host: host, sitzung: sitzung)
                 // In einem Zug: getrennt geholt kaeme /getBase zweimal dran.
                 let (praefix, basis) = try geraet.praefixUndBasis()
                 let steht = try geraet.verbunden()
+                // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
+                // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
+                // Praefix und Verbindungsstand noch lange nicht gescheitert.
+                let namen = try? geraet.anzeigennamen()
                 await MainActor.run { [weak self] in
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
                     self.uhren[i].praefix = praefix
@@ -455,6 +529,11 @@ public final class AppZustand {
                     // Erst jetzt steht das Praefix — vorher gab es kein Thema, auf das
                     // sich horchen liesse.
                     self.horchenAbgleichen()
+                    // Danach, nicht davor: Hat sich das Praefix geaendert, raeumt
+                    // `horchenAbgleichen` das alte Abonnement ab und mit ihm die
+                    // gemeldete Liste — die eben erfragte Auskunft waere gleich
+                    // wieder weg.
+                    if let namen { self.belegungGemeldet(namen, fuer: id) }
                 }
             } catch {
                 await MainActor.run { [weak self] in
@@ -697,9 +776,18 @@ public final class AppZustand {
 
     /// Beginnt zuzuhören. Ausdrücklich und nicht aus `init` heraus: ein AppZustand
     /// allein — etwa im Test — darf keine Verbindung aufbauen.
-    public func horchenStarten() {
+    ///
+    /// `sitzung` reicht nur bis zur HTTP-Abfrage der Belegung durch — dieselbe
+    /// Naht wie bei `belegungAbfragen`, damit der Test den Start ohne Broker
+    /// ohne Netz fuehren kann.
+    public func horchenStarten(sitzung: URLSession = .shared) {
         horchenErlaubt = true
         horchenAbgleichen()
+        // Und die Uhren gleich selbst fragen, was auf ihnen steht: Mitlesen
+        // bringt erst dann etwas, wenn die Uhr von sich aus etwas sagt, und das
+        // kann ausbleiben. Die Auskunft ueber HTTP ist sofort da und braucht
+        // keinen Broker.
+        belegungAbfragen(sitzung: sitzung)
     }
 
     /// Bricht ein einzelnes Abonnement ab und leert seine Buchführung. Gemeinsamer
@@ -778,11 +866,10 @@ public final class AppZustand {
         case "\(uhr.praefix)/customList":
             // nil heißt unlesbar — dann lieber den letzten Stand behalten, als ihn
             // durch eine leere Liste zu ersetzen, die etwas anderes behauptet.
-            guard let namen = Anzeigen.namenAusCustomList(nutzlast),
-                  gemeldeteAnzeigen[id] != namen else { return }
-            gemeldeteAnzeigen[id] = namen
-            log(lokf("%@ meldet: %@", uhr.name,
-                     namen.isEmpty ? lok("keine Anzeige") : namen.joined(separator: ", ")))
+            // Deshalb hier abgefangen und nicht an `belegungGemeldet`
+            // weitergereicht: Dort heißt nil „die Uhr hat nicht geantwortet".
+            guard let namen = Anzeigen.namenAusCustomList(nutzlast) else { return }
+            belegungGemeldet(namen, fuer: id)
         case "\(uhr.praefix)/status":
             let text = String(data: nutzlast, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -838,11 +925,17 @@ public final class AppZustand {
         if steht {
             log(lokf("hört bei %@ mit", uhr.name))
         } else {
-            // Ohne Verbindung ist die gemeldete Liste nur noch Erinnerung — dann
-            // soll die Ansicht das auch sagen und auf die eigene Buchführung fallen.
-            gemeldeteAnzeigen[id] = nil
+            // Ohne Broker ist mitgelesen nichts mehr — der Onlinestand und der
+            // Slotinhalt kommen nur von dort und sind damit weg. Die Belegung
+            // dagegen weiß die Uhr selbst, und die ist über HTTP weiter zu
+            // fragen. Erst wenn auch sie nicht antwortet, wirft
+            // `belegungGemeldet(nil)` die Auskunft weg und die Ansicht fällt auf
+            // die eigene Buchführung — ungefragt wegzuwerfen hieße, beim Start
+            // ohne Broker genau die Erinnerung zu zeigen, die diese Abfrage
+            // ersetzen soll.
             geraetOnline[id] = nil
             slotInhalt[id] = nil
+            belegungAbfragen(id)
             log(lokf("hört bei %@ nicht mehr mit: %@", uhr.name, grund ?? lok("Verbindung weg")))
         }
     }
@@ -883,8 +976,11 @@ public final class AppZustand {
     }
 
     /// Die App kommt zurück. Der Zuhörer wird neu aufgebaut, sofern es etwas
-    /// zum Zuhören gibt.
-    public func ausDemHintergrund() {
+    /// zum Zuhören gibt — und die Belegung wird neu erfragt: `inDenHintergrund`
+    /// hat sie mit dem Abonnement weggeräumt, und in der Zwischenzeit kann
+    /// jemand anderes auf die Uhr geschrieben haben.
+    public func ausDemHintergrund(sitzung: URLSession = .shared) {
         horchenAbgleichen()
+        belegungAbfragen(sitzung: sitzung)
     }
 }

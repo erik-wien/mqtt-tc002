@@ -23,11 +23,11 @@ reference needs changing, and possibly something in the app.
 | # | Defect | Check | As of 1.0.17 |
 |---|---|---|---|
 | 1 | `text` does not scroll | send a long text as `text` | ❌ |
-| 2 | empty HTTP body does not delete | `POST /api/custom?name=x` with an empty body | ❌ |
+| 2 | empty HTTP body does not delete | `POST /api/custom?name=x` with `{}` instead of an empty body | ⚠️ suspected |
 | 3 | GIF disposal method 1 not honored | send an opaque scrolling GIF | ❌ |
 | 4 | a wildcard in the prefix bricks the connection | set `#` as the prefix | ❌ |
-| 5 | no HTTP route for switching displays | look for an HTTP equivalent of `switchDiyApp` | ❌ |
-| 6 | `customList` over MQTT only | `GET /customList` | ❌ |
+| 5 | no HTTP route for switching displays | `POST /api/switchDiyApp` | ⚠️ suspected |
+| 6 | display list over MQTT only — **not a defect**, wrong path | `GET /api/customList` | ✅ works |
 | 7 | built-in font has no umlauts | send `"content":"Grüße"` | ❌ |
 | 8 | clock drops off the network until power-cycled | `curl http://<address>/getBase` | ❌ |
 
@@ -56,10 +56,18 @@ scrolling GIF, and with it several kilobytes of payload for one sentence.
 same empty payload deletes reliably (§3.2).
 
 **Why it matters.** A success response for something that does not happen is
-worse than an error. It is also the reason HTTP alone is not usable as an
-operating mode: without a broker, no display can ever be removed.
+worse than an error. And if it stands, HTTP alone is not usable as an operating
+mode: without a broker, no display can ever be removed.
 
-**Check.** Create a display, send an empty body after it, look at the device.
+> ⚠️ **Suspected, verification open.** Another project describes deleting with
+> the body `{}` instead of an empty body, on the same firmware version. Only the
+> empty body has been checked here. If `{}` is the right route, this is not a
+> firmware defect but a gap in our knowledge — as with the display list in
+> point 6.
+
+**Check.** Create a display, send `POST /api/custom?name=x` with the body `{}`
+after it, look at the device. The check removes a real display and therefore
+belongs on the device, not in a test.
 
 ---
 
@@ -112,21 +120,29 @@ itself instead of letting the user type it.
 
 ---
 
-## 6. Two things are missing over HTTP entirely
+## 6. Switching is missing over HTTP
 
-**Device reference §3.3 and §3.5.**
+**Device reference §3.3 and §5.7.**
 
-- Switching to a display is only possible via the MQTT topic `switchDiyApp`.
-  There is no HTTP equivalent.
-- `customList` is an MQTT topic; `GET /customList` returns nothing.
+For switching to a display we know only the MQTT topic `switchDiyApp`.
 
-**Why it matters.** Together with point 2, this rules out HTTP-only operation.
-Anyone who does not want to run a broker, and people do ask for this, can send
-but can neither delete, nor switch, nor find out what is on the clock.
+> ⚠️ **Suspected, verification open.** Another project describes
+> `POST /api/switchDiyApp` on the same firmware version. We looked for it and
+> found nothing — which is not the same as "it does not exist".
 
-Worth noting: the clock reports displays over `customList` **even when they were
-created over HTTP** (§3.5). So the state is there, it is just not served over
-HTTP.
+**Why it matters.** Together with point 2 it decides whether HTTP-only operation
+is possible. Anyone who does not want to run a broker, and people do ask for
+this, can today send and find out what is on the clock, but as far as we know
+can neither delete nor switch.
+
+**The display list no longer belongs here.** `GET /api/customList` (§5.7) names
+the device's named displays, measured on 2026-09-13. The path is
+`/api/customList`; `GET /customList` returns nothing, and that is exactly what
+we took for a firmware defect. It was our own wrong path.
+
+The list also reports displays that were **created over HTTP** (§3.5) — it is
+the state of the device, not the bookkeeping of one sender. But they are names
+only: what is on a display the device does not hand out by any route.
 
 ---
 

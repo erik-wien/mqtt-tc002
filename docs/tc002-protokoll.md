@@ -146,8 +146,10 @@ Gerät selbst, nicht aus der Buchführung des Senders. Wer mehrere Werkzeuge
 benutzt (diese App, Ulanzi Studio, PixDeck, `mosquitto_pub`), erfährt nur hier,
 was wirklich auf der Uhr steht.
 
-> ⚠️ **Es ist ein MQTT-Thema, kein HTTP-Endpunkt.** `GET /customList` liefert
-> nichts. Lesen lässt es sich nur, indem man es beim Broker abonniert.
+Dieselbe Auskunft gibt es **auch über HTTP**, auf Nachfrage statt auf gut
+Glück: `GET /api/customList` (§5.7). Der Pfad `GET /customList` — ohne `/api` —
+liefert nichts; das ist der ganze Unterschied und lange für einen Mangel der
+Firmware gehalten worden.
 
 ✅ **Die Uhr meldet auch, was über HTTP entstanden ist.** Die Anzeige
 `scrolltest` oben war über `POST /api/custom?name=scrolltest` (§5.6) angelegt
@@ -159,8 +161,10 @@ Buchführung eines einzelnen Senders.
 Daraus folgt etwas Praktisches: **Senden über HTTP und Zuhören über MQTT lässt
 sich mischen.** Wer einen Broker hat, kann über HTTP schicken — dort gibt es
 echte Fehlercodes statt der Stille aus §2 — und den Rückkanal trotzdem
-behalten. Ohne Broker fehlt der Rückkanal, und es fehlen Löschen (§5.6) und
-Umschalten (§3.3), die beide nur über MQTT gehen.
+behalten. Ohne Broker bleibt immerhin die Frage beantwortbar, **welche**
+Anzeigen es gibt (§5.7). Was auf ihnen steht und ob das Gerät online ist,
+sagt nur MQTT; Löschen (§5.6) und Umschalten (§3.3) stehen unter Verdacht,
+auch über HTTP zu gehen — ungeprüft, siehe Mängelliste Punkt 2 und 5.
 
 Beide Themen stehen in **keiner** Hersteller-Doku.
 
@@ -449,6 +453,26 @@ im MQTT-Kapitel der Hersteller-Doku ein Programm empfohlen, das in Wahrheit übe
 HTTP arbeitet. Für ein Gerät im selben Netz ist das der kürzere Weg; über MQTT
 geht es dagegen auch dann, wenn Sender und Uhr einander nicht direkt erreichen.
 
+### 5.7 `GET /api/customList` — welche Anzeigen auf der Uhr stehen
+
+✅ Nennt die benannten Anzeigen, die das Gerät gerade kennt — dieselbe Auskunft
+wie das MQTT-Thema aus §3.5, nur auf Nachfrage und ohne Broker. Am 13.09.2026
+gemessen:
+
+```bash
+curl -s http://192.168.1.20/api/customList
+{"apps":["meldung2","meldung5","meldung3"],"count":3}
+```
+
+> ⚠️ **Der Pfad ist `/api/customList`.** `GET /customList` — ohne `/api` —
+> liefert nichts.
+
+Die Schreibweise weicht von §3.5 ab: Hier stehen bloße Zeichenketten, dort
+Objekte mit `appName`. Gemeint ist dieselbe Liste.
+
+Es sind **nur Namen**. Was auf einer Anzeige steht, verrät das Gerät auch
+hierüber nicht — belegt oder frei ist damit gesichert, der Inhalt nicht.
+
 ---
 
 ## 6. Wenn nichts erscheint
@@ -461,7 +485,8 @@ Der Reihe nach, vom Häufigsten zum Seltensten:
 3. **Darf das Konto auf das Thema schreiben?** Die Rechte stehen in der
    Rechtedatei des Brokers; bei Mosquitto meldet das Protokoll eine abgelehnte
    Veröffentlichung — der Sender selbst erfährt davon nichts (§2).
-4. **Steht noch eine alte Anzeige?** Erst mit leerer Nutzlast löschen (§3.2).
+4. **Steht noch eine alte Anzeige?** Welche es gibt, sagt `GET /api/customList`
+   (§5.7); weg damit über die leere Nutzlast (§3.2).
 5. **Blättert es nicht?** `carouselSpeed` ist `0` (§5.4).
 6. **Fehlen Zeichen im Text?** Umlaute und die meisten Satzzeichen gibt es in der
    Gerätschrift nicht — als Pixel schicken (§1, §4.1).
