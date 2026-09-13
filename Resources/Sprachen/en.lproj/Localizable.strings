@@ -110,7 +110,7 @@
 "Vorgabe ist „Silkscreen“, eine mitgelieferte, eigens fürs 8-Pixel-Raster gezeichnete Schrift — anders als die eingebaute Gerätschrift kann sie Umlaute und „ß“; dasselbe gilt für „Micro 5“ und „Tiny5“, zwei weitere mitgelieferte Pixelschriften. Die drei unterscheiden sich in der Wirkung:" = "The default is \"Silkscreen\", a bundled font drawn specifically for the 8-pixel grid — unlike the device's built-in font it can do umlauts and \"ß\". The same goes for \"Micro 5\" and \"Tiny5\", two more bundled pixel fonts. The three differ in effect:";
 "Eine früher gewählte Schrift, die nicht mehr in dieser Auswahl steht, bleibt gesetzt und wählbar, abgesetzt unten in der Liste, bis man selbst etwas anderes wählt." = "A font chosen earlier that is no longer in this selection stays set and selectable, set apart at the bottom of the list, until you pick something else yourself.";
 "Größe" = "Size";
-"Micro 5 trägt in Größe 12 nur acht Zeilen Tinte und wirkt dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16 füllt sie es." = "At size 12 Micro 5 carries only eight rows of ink and therefore looks lost on a display sixteen rows high; only at 16 does it fill it.";
+"Micro 5 füllt die sechzehn Zeilen des Displays erst bei 16 Pixeln; bei 10 und 14 bleibt oben und unten Platz. Die Größen dazwischen stehen nicht zur Wahl — dort zeigt das Zeichenbild Lücken." = "Micro 5 fills the display's sixteen rows only at 16 pixels; at 10 and 14 there is room left above and below. The sizes in between are not offered — there the letterforms show gaps.";
 "Fett und Großbuchstaben" = "Bold and uppercase";
 "Auch beim Weg „als Pixel“ kann „Fett“ ausgegraut sein, und zwar je nach Schrift: Die App rastert beim Wechsel einmal mit und einmal ohne fetten Schnitt und vergleicht — ändert sich nichts, hat die Schrift bei dieser Größe keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner. Von den angebotenen Schriften trifft das auf die meisten zu; nur Menlo und PT Mono haben einen echten fetten Schnitt." = "With the \"as pixels\" method \"Bold\" can be grayed out too, depending on the font: on a change the app rasterizes once with and once without the bold cut and compares — if nothing changes, the font has none at that size, and a button without effect is worse than no button. Of the fonts offered this applies to most; only Menlo and PT Mono have a real bold cut.";
 "Nach demselben Verfahren ist „Großbuchstaben“ bei Silkscreen gesperrt: Sie kennt überhaupt nur Versalien, der Schalter bliebe folgenlos." = "By the same procedure \"Uppercase\" is disabled for Silkscreen: it knows nothing but capitals, so the switch would have no consequence.";
@@ -501,7 +501,7 @@
 "Alles bis zur Anmeldung am Broker meldet die App dagegen sehr wohl: falsches Kennwort, unerreichbarer Broker, Zeitüberschreitung, fehlende Zugangsdaten." = "Everything up to the login at the broker the app does report: wrong password, unreachable broker, timeout, missing credentials.";
 
 "„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine Liste:" = "\"Size\" does not offer every number, but one list per font:";
-"10, 14 und 15 Pixel" = "10, 14 and 15 pixels";
+"10, 14 und 16 Pixel" = "10, 14 and 16 pixels";
 "7, 8, 9, 10, 12, 14 und 16 Pixel" = "7, 8, 9, 10, 12, 14 and 16 pixels";
 "7, 8, 9, 12, 15 und 16 Pixel" = "7, 8, 9, 12, 15 and 16 pixels";
 "alle anderen Schriften" = "all other fonts";

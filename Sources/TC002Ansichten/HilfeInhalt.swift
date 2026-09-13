@@ -141,7 +141,7 @@ public enum HilfeInhalt {
         .ueberschrift("Größe"),
         .absatz("„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine Liste:"),
         .tabelle([
-            ("Micro 5", "10, 14 und 15 Pixel"),
+            ("Micro 5", "10, 14 und 16 Pixel"),
             ("Silkscreen", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
             ("Tiny5", "7, 8, 9, 12, 15 und 16 Pixel"),
             ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
@@ -152,7 +152,7 @@ public enum HilfeInhalt {
 
     /// Micro 5 bei mittleren Groessen — eine Eigenschaft der Schrift.
     public static let microFuenf: [Hilfebaustein] = [
-        .absatz("Micro 5 trägt in Größe 12 nur acht Zeilen Tinte und wirkt dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16 füllt sie es."),
+        .absatz("Micro 5 füllt die sechzehn Zeilen des Displays erst bei 16 Pixeln; bei 10 und 14 bleibt oben und unten Platz. Die Größen dazwischen stehen nicht zur Wahl — dort zeigt das Zeichenbild Lücken."),
     ]
 
     /// Fett und Grossbuchstaben. Beide Oberflaechen rechnen mit denselben zwei

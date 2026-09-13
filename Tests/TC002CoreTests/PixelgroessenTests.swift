@@ -8,7 +8,7 @@ import XCTest
 /// wieder hinsieht — nicht, weil eine Messung etwas anderes sagt.
 final class PixelgroessenTests: XCTestCase {
     func testAbgesegneteListenStehenFest() {
-        XCTAssertEqual(Pixelgroessen.abgesegnet["Micro 5"], [10, 14, 15])
+        XCTAssertEqual(Pixelgroessen.abgesegnet["Micro 5"], [10, 14, 16])
         XCTAssertEqual(Pixelgroessen.abgesegnet["Silkscreen"], [7, 8, 9, 10, 12, 14, 16])
         XCTAssertEqual(Pixelgroessen.abgesegnet["Tiny5"], [7, 8, 9, 12, 15, 16])
     }
@@ -37,14 +37,16 @@ final class PixelgroessenTests: XCTestCase {
 
     /// Der eigentliche Auftrag: die naechstgelegene, nicht die kleinste.
     func testSchriftwechselNimmtDieNaechstgelegeneGroesse() {
-        // 15 ist bei Micro 5 zu haben und bleibt stehen.
-        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 15, fuer: "Micro 5"), 15)
+        // 14 ist bei Micro 5 zu haben und bleibt stehen.
+        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 14, fuer: "Micro 5"), 14)
+        // 15 hat Micro 5 nicht; 14 und 16 liegen gleich weit, die kleinere gewinnt.
+        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 15, fuer: "Micro 5"), 14)
         // Tiny5 hat 14 nicht; 15 liegt daneben, 7 waere die kleinste.
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 14, fuer: "Tiny5"), 15)
         // Micro 5 faengt erst bei 10 an.
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 6, fuer: "Micro 5"), 10)
-        // Micro 5 hoert bei 15 auf.
-        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 16, fuer: "Micro 5"), 15)
+        // Micro 5 hoert bei 16 auf.
+        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 16, fuer: "Micro 5"), 16)
         // Ohne Liste bleibt jede Groesse des vollen Bereichs stehen.
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 11, fuer: "Menlo"), 11)
     }
@@ -62,8 +64,8 @@ final class PixelgroessenTests: XCTestCase {
     /// an. Eine eingestellte Groesse abseits der Liste — aus einer aelteren
     /// Fassung oder von einem Meldungsplatz — bleibt deshalb waehlbar.
     func testEingestellteGroesseBleibtImMenue() {
-        XCTAssertEqual(Pixelgroessen.auswahl(fuer: "Micro 5", mit: 12), [10, 12, 14, 15])
-        XCTAssertEqual(Pixelgroessen.auswahl(fuer: "Micro 5", mit: 14), [10, 14, 15])
+        XCTAssertEqual(Pixelgroessen.auswahl(fuer: "Micro 5", mit: 12), [10, 12, 14, 16])
+        XCTAssertEqual(Pixelgroessen.auswahl(fuer: "Micro 5", mit: 14), [10, 14, 16])
         XCTAssertEqual(Pixelgroessen.auswahl(fuer: "Menlo", mit: 11), Pixelgroessen.freierBereich)
     }
 
