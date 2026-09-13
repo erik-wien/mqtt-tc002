@@ -230,6 +230,38 @@ public struct Editorbestand {
         return leinwand
     }
 
+    /// Benennt einen Eintrag um — Name und, wo es eine gibt, Nummer.
+    ///
+    /// **Eine Umbenennung benennt eine Datei um**, und deshalb gelten dieselben
+    /// Regeln wie beim Sichern: Wohin es gehoert, entscheidet die Groesse;
+    /// unter welchem Schluessel es liegt, `schluessel(groesse:nummer:name:)`;
+    /// und was dort schon liegt, wird ersetzt statt abgewiesen (die Oberflaeche
+    /// sagt es vorher). Bei 16×52 aendert eine neue Werknummer **nichts** am
+    /// Dateinamen — sie heisst weiter nach ihrem Namen.
+    @discardableResult
+    public func umbenennen(_ eintrag: Editoreintrag, name: String,
+                           nummer: String) throws -> Editoreintrag {
+        switch eintrag.groesse {
+        case .icon8, .icon16:
+            let sammlung = eintrag.groesse == .icon8 ? icons8 : icons16
+            let schluessel = Self.schluessel(groesse: eintrag.groesse, nummer: nummer, name: name)
+            guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
+            // Die Kategorie schlaegt die Sammlung selbst nach; hier ist sie
+            // nicht bekannt, und eine erfundene stuende hinterher in der Datei.
+            let alt = Icon(nummer: eintrag.schluessel, name: eintrag.name, kategorie: "",
+                           datei: eintrag.datei, kante: eintrag.groesse.breite)
+            let icon = try sammlung.umbenennen(alt, nummer: schluessel, name: name)
+            return Editoreintrag(groesse: eintrag.groesse, name: icon.name,
+                                 nummer: eintrag.groesse.mitNummer ? icon.nummer : nil,
+                                 datei: icon.datei)
+        case .anzeige:
+            let alt = Gemaltes(name: eintrag.name, nummer: eintrag.nummer, datei: eintrag.datei)
+            let neu = try bilder.umbenennen(alt, name: name, nummer: nummer)
+            return Editoreintrag(groesse: eintrag.groesse, name: neu.name, nummer: neu.nummer,
+                                 datei: neu.datei)
+        }
+    }
+
     public func loeschen(_ eintrag: Editoreintrag) throws {
         switch eintrag.groesse {
         case .icon8, .icon16:

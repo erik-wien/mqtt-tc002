@@ -188,6 +188,85 @@ final class EditorbestandTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(bestand.alle().first { $0.groesse == .anzeige }).nummer)
     }
 
+    // MARK: - Umbenennen
+
+    /// **Umbenennen benennt eine Datei um.** Beim 8×8 ist die Nummer der
+    /// Dateiname: Eine neue Nummer verschiebt die Datei, ein neuer Name
+    /// alleine nicht.
+    ///
+    /// Mutation: in `Iconsammlung.umbenennen` das Verschieben weglassen (nur
+    /// `namenErgaenzen`) — dann steht die neue Nummer in `names.json`, die
+    /// Datei heisst weiter alt, und das Icon ist unter keiner der beiden
+    /// Nummern mehr vollstaendig da.
+    func testBeimAchterVerschiebtEineNeueNummerDieDatei() throws {
+        try bestand.sichern(gemalt(.icon8), name: "Wetter", nummer: "4711")
+        let vorher = try XCTUnwrap(bestand.alle().first)
+
+        let neu = try bestand.umbenennen(vorher, name: "Sonne", nummer: "1234")
+        XCTAssertEqual(neu.datei.lastPathComponent, "1234.gif")
+        XCTAssertEqual(neu.name, "Sonne")
+        XCTAssertEqual(neu.nummer, "1234")
+
+        let alle = bestand.alle()
+        XCTAssertEqual(alle.count, 1, "die alte Datei liegt noch daneben")
+        XCTAssertEqual(alle.first?.name, "Sonne")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: vorher.datei.path))
+    }
+
+    /// Bei 16×52 heisst die Datei nach dem **Namen**: Ein neuer Name
+    /// verschiebt sie, eine neue Werknummer nicht.
+    ///
+    /// Mutation: in `Bildersammlung.umbenennen` den Schluessel aus der Nummer
+    /// bilden — dann wandert das Bild beim blossen Eintragen einer Nummer in
+    /// eine Datei „318.gif", und der Name ist als Dateiname weg.
+    func testBeiDerAnzeigeVerschiebtNurDerNameUndNichtDieNummer() throws {
+        try bestand.sichern(gemalt(.anzeige), name: "Mario", nummer: "")
+        let vorher = try XCTUnwrap(bestand.alle().first)
+
+        let mitNummer = try bestand.umbenennen(vorher, name: "Mario", nummer: "318")
+        XCTAssertEqual(mitNummer.datei.lastPathComponent, "Mario.gif",
+                       "eine Werknummer hat den Dateinamen angetastet")
+        XCTAssertEqual(mitNummer.nummer, "318")
+
+        let umbenannt = try bestand.umbenennen(mitNummer, name: "Luigi", nummer: "318")
+        XCTAssertEqual(umbenannt.datei.lastPathComponent, "Luigi.gif")
+        XCTAssertEqual(umbenannt.nummer, "318", "die Werknummer ist beim Umbenennen verloren gegangen")
+        XCTAssertEqual(bestand.alle().count, 1)
+    }
+
+    /// Wie beim Sichern und beim Einlesen: Ein belegter Schluessel wird
+    /// **ersetzt**, nicht abgewiesen — sichtbar angekuendigt tut das die
+    /// Oberflaeche.
+    ///
+    /// Mutation: das `try? FileManager.default.removeItem(at: ziel)` vor dem
+    /// Verschieben streichen — dann wirft `moveItem`, und das Umbenennen
+    /// schlaegt mit einer Dateisystemmeldung fehl, statt zu ersetzen.
+    func testEinBelegterSchluesselWirdErsetzt() throws {
+        try bestand.sichern(gemalt(.icon16, "#FF0000"), name: "Alt", nummer: "")
+        try bestand.sichern(gemalt(.icon16, "#00FF00"), name: "Neu", nummer: "")
+        let alt = try XCTUnwrap(bestand.alle().first { $0.name == "Alt" })
+
+        _ = try bestand.umbenennen(alt, name: "Neu", nummer: "")
+        let alle = bestand.alle()
+        XCTAssertEqual(alle.count, 1, "„Neu“ steht zweimal da, oder gar nicht mehr")
+        XCTAssertEqual(alle.first?.name, "Neu")
+    }
+
+    /// Ohne Namen laesst sich nichts umbenennen — es entstuende ein Eintrag,
+    /// den niemand wiederfindet. (Beim 8×8 haelt die Nummer den Schluessel;
+    /// dass der Name dort trotzdem nicht leer sein darf, entscheidet die
+    /// Oberflaeche mit einem gesperrten Knopf.)
+    ///
+    /// Mutation: das `guard !bereinigt.isEmpty` in
+    /// `Bildersammlung.umbenennen` streichen — dann wandert das Bild nach
+    /// „.gif" und ist aus der Liste verschwunden.
+    func testOhneSchluesselWirdNichtUmbenannt() throws {
+        try bestand.sichern(gemalt(.anzeige), name: "Da", nummer: "")
+        let eintrag = try XCTUnwrap(bestand.alle().first)
+        XCTAssertThrowsError(try bestand.umbenennen(eintrag, name: "   ", nummer: ""))
+        XCTAssertEqual(bestand.alle().first?.name, "Da")
+    }
+
     /// Eine Leinwand, die keine der drei Groessen hat, wird abgelehnt statt
     /// stillschweigend im naechstbesten Ordner zu landen.
     func testEineFremdeGroesseWirdAbgelehnt() {

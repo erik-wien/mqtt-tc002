@@ -103,11 +103,9 @@ public struct Bildersammlung {
         }
         guard CGImageDestinationFinalize(senke) else { throw BildersammlungFehler.nichtSchreibbar }
 
-        let werknummer = nummer?.trimmingCharacters(in: .whitespaces)
-        namenErgaenzen(schluessel: schluessel, name: bereinigt,
-                       nummer: (werknummer?.isEmpty ?? true) ? nil : werknummer)
-        return Gemaltes(name: bereinigt, nummer: (werknummer?.isEmpty ?? true) ? nil : werknummer,
-                        datei: ziel)
+        let werk = Self.werknummer(nummer)
+        namenErgaenzen(schluessel: schluessel, name: bereinigt, nummer: werk)
+        return Gemaltes(name: bereinigt, nummer: werk, datei: ziel)
     }
 
     /// Liest ein gesichertes Bild als Pixelfeld zurueck, zeilenweise von oben
@@ -163,6 +161,42 @@ public struct Bildersammlung {
         guard let erstes = gelesen.first else { throw BildersammlungFehler.nichtLesbar }
         return try sichern(name: name, bilder: gelesen.map(\.pixel),
                            verzoegerung: erstes.dauer, nummer: nummer)
+    }
+
+    /// Benennt ein Bild um: neuer Name, neue Werknummer.
+    ///
+    /// **Die Datei wird verschoben, nicht neu geschrieben** — ein Rundlauf
+    /// durch die GIF-Kodierung waere eine Aenderung am Bild, die niemand
+    /// verlangt hat. Die Nummer benennt dabei nichts: Sie steht in
+    /// `names.json`, und wer nur sie aendert, ruehrt die Datei nicht an.
+    ///
+    /// Liegt unter dem neuen Namen schon etwas, wird es **ersetzt** — wie
+    /// beim Sichern. Die Oberflaeche sagt das vorher.
+    @discardableResult
+    public func umbenennen(_ gemaltes: Gemaltes, name: String,
+                           nummer: String?) throws -> Gemaltes {
+        let bereinigt = name.trimmingCharacters(in: .whitespaces)
+        guard !bereinigt.isEmpty else { throw BildersammlungFehler.leererName }
+        let alter = gemaltes.datei.deletingPathExtension().lastPathComponent
+        let schluessel = Dateiname.aus(bereinigt)
+        var ziel = gemaltes.datei
+        if schluessel != alter {
+            ziel = ordner.appendingPathComponent("\(schluessel).\(gemaltes.datei.pathExtension)")
+            try? FileManager.default.removeItem(at: ziel)
+            try FileManager.default.moveItem(at: gemaltes.datei, to: ziel)
+            namenEntfernen(schluessel: alter)
+        }
+        let werk = Self.werknummer(nummer)
+        namenErgaenzen(schluessel: schluessel, name: bereinigt, nummer: werk)
+        return Gemaltes(name: bereinigt, nummer: werk, datei: ziel)
+    }
+
+    /// Eine Werknummer ohne Inhalt ist keine. `nil` statt "" — sonst stuende in
+    /// `names.json` ein Feld, das aussieht wie eine Nummer, die zufaellig leer
+    /// ist.
+    private static func werknummer(_ roh: String?) -> String? {
+        let sauber = roh?.trimmingCharacters(in: .whitespaces)
+        return (sauber?.isEmpty ?? true) ? nil : sauber
     }
 
     public func loeschen(_ gemaltes: Gemaltes) throws {

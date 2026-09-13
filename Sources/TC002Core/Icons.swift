@@ -474,6 +474,41 @@ public struct Iconsammlung {
         return Icon(nummer: nummer, name: name, kategorie: "eigen", datei: ziel, kante: kante)
     }
 
+    /// Benennt ein Icon um: neue Nummer, neuer Name.
+    ///
+    /// **Die Datei wird verschoben, nicht neu geschrieben.** Ein Umbenennen
+    /// ueber Lesen und Sichern liefe durch die GIF-Kodierung — aus
+    /// Durchsichtigem wuerde Schwarz, und das waere eine Aenderung am Bild,
+    /// die niemand verlangt hat. Verschieben laesst die Bytes, wie sie sind,
+    /// und behaelt die Endung: Der Bestand enthaelt auch PNG und JPEG.
+    ///
+    /// Liegt unter der neuen Nummer schon etwas, wird es **ersetzt** — wie
+    /// beim Sichern und beim Einlesen. Die Oberflaeche sagt das vorher.
+    @discardableResult
+    public func umbenennen(_ icon: Icon, nummer: String, name: String) throws -> Icon {
+        guard istEigen(icon) else { throw IconFehler.nichtSchreibbar(icon.nummer) }
+        let schluessel = nummer.trimmingCharacters(in: .whitespaces)
+        guard !schluessel.isEmpty else { throw IconFehler.nichtSchreibbar(icon.nummer) }
+        let sauber = name.trimmingCharacters(in: .whitespaces)
+        // Die Kategorie steht in `names.json` und nicht unbedingt im
+        // uebergebenen Icon — der Editor kennt sie gar nicht. Sie hier
+        // nachzuschlagen statt sie durchzureichen, ist der Unterschied
+        // zwischen „Wetter" und einem Icon, das nach dem Umbenennen aus
+        // keiner Sammlung mehr stammt.
+        let kategorie = geladeneNamen()[icon.nummer]?.1 ?? icon.kategorie
+        var ziel = icon.datei
+        if schluessel != icon.nummer {
+            ziel = schreibordner.appendingPathComponent("\(schluessel).\(icon.datei.pathExtension)")
+            try? FileManager.default.removeItem(at: ziel)
+            try FileManager.default.moveItem(at: icon.datei, to: ziel)
+            namenEntfernen(nummer: icon.nummer)
+        }
+        namenErgaenzen(nummer: schluessel, name: sauber.isEmpty ? schluessel : sauber,
+                       kategorie: kategorie)
+        return Icon(nummer: schluessel, name: sauber.isEmpty ? schluessel : sauber,
+                    kategorie: kategorie, datei: ziel, kante: kante)
+    }
+
     /// Entfernt ein Icon aus dem Schreibordner. Alles ausserhalb — etwa der
     /// Grundschatz im Bundle, falls eine Sammlung ihn als Leseordner fuehrt —
     /// wird abgelehnt, nicht still uebergangen: die Oberflaeche baut ihre

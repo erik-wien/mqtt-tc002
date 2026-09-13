@@ -424,6 +424,101 @@ final class EditorbereichTests: XCTestCase {
         }
     }
 
+    /// **Der Stift neben dem Papierkorb.** Gleiche Bauart, gleiche
+    /// Trefferfläche, eigene Beschriftung für die Sprachausgabe — aber
+    /// **nicht** gefärbt und nicht als zerstörend gekennzeichnet: Der
+    /// Papierkorb wirft weg, Umbenennen nicht.
+    ///
+    /// Nichts davon sieht ein Übersetzer: Ein rot eingefärbter Stift mit
+    /// zerstörender Rolle baut und zeichnet anstandslos.
+    ///
+    /// Mutation: den Stift als `Button(role: .destructive)` schreiben — der
+    /// Test fällt, und am Gerät stünden zwei Warnfarben nebeneinander, von
+    /// denen eine nichts zerstört.
+    func testDieBestandszeileHatEinenStiftNebenDemPapierkorb() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let zeile = ausschnitt(text, von: "private func bestandszeile", bis: "private var sendezeile")
+
+        XCTAssertTrue(zeile.contains("Image(systemName: \"pencil\")"),
+                      "der Stift fehlt — dann gibt es in der Liste keinen Weg zum Umbenennen")
+        XCTAssertTrue(zeile.contains("umbenennenBeginnen(eintrag)"),
+                      "der Stift führt nicht mehr auf das Umbenennen")
+        XCTAssertEqual(zeile.components(separatedBy: ".buttonStyle(.borderless)").count - 1, 2,
+                       "Stift und Papierkorb tragen nicht mehr denselben Stil — dann haben sie "
+                       + "verschiedene Größen und Trefferflächen")
+        XCTAssertTrue(zeile.contains("lokf(\"„%@“ umbenennen\", eintrag.name)"),
+                      "der Stift trägt keine Beschriftung mit dem Namen — zwei gleiche Symbole "
+                      + "untereinander sind sonst nicht auseinanderzuhalten")
+        for faerbung in ["role: .destructive) { umbenennenBeginnen", ".knopfZerstoerend()",
+                         ".foregroundStyle(.red)"] {
+            XCTAssertFalse(zeile.contains(faerbung),
+                           "„\(faerbung)“ steht in der Bestandszeile — Umbenennen zerstört nichts")
+        }
+        XCTAssertTrue(zeile.contains("Button(\"Umbenennen…\") { umbenennenBeginnen(eintrag) }"),
+                      "das Kontextmenü der Zeile bietet kein Umbenennen an")
+    }
+
+    /// **Umbenennen benennt eine Datei um** — also dieselben Fragen wie beim
+    /// Sichern, und dieselbe Antwort wie beim Import: sichtbar ersetzen statt
+    /// abweisen, mit umbenanntem Knopf. Ohne Namen bleibt er gesperrt und
+    /// sichtbar abgeblendet stehen.
+    ///
+    /// Der stille Rückfall ist der gesperrte Knopf: Beim 8×8 trägt die Nummer
+    /// den Schlüssel — ein leerer Name allein ließe ihn dort offen, und das
+    /// Icon hieße hinterher nach seiner Nummer.
+    ///
+    /// Mutation: die zweite Bedingung (`benennName…isEmpty`) streichen — baut,
+    /// übersetzt, und beim 8×8 lässt sich der Name leeren.
+    func testDasUmbenennenblattWarntVorherUndSperrtDenLeerenNamen() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let blatt = ausschnitt(text, von: "private func umbenennenBlatt", bis: "private func benennSchluessel")
+
+        XCTAssertTrue(blatt.contains("if eintrag.groesse.mitNummer {"),
+                      "die Nummer hängt nicht mehr an der abgeleiteten Eigenschaft — "
+                      + "dann fehlt sie beim 16×52 oder steht beim 16×16 da, wo es keine gibt")
+        XCTAssertTrue(blatt.contains("if let vorhanden = benennBelegt(eintrag) {"),
+                      "das Blatt warnt nicht mehr vor einem belegten Schlüssel — "
+                      + "dann merkt man das Ersetzen erst, wenn es geschehen ist")
+        XCTAssertTrue(blatt.contains("lok(\"Ersetzen\")"),
+                      "der Knopf heißt nicht mehr „Ersetzen“, wo er ersetzt")
+        XCTAssertTrue(blatt.contains(".disabled(benennSchluessel(eintrag).isEmpty\n"
+                                     + "                          || benennName.trimmingCharacters(in: .whitespaces).isEmpty)"),
+                      "ohne beide Bedingungen lässt sich der Name leeren oder ein Eintrag ohne Schlüssel anlegen")
+
+        let belegt = ausschnitt(text, von: "private func benennBelegt", bis: "private func schritt()")
+        XCTAssertTrue(belegt.contains("treffer?.id == eintrag.id ? nil : treffer"),
+                      "der Eintrag zählt wieder als sein eigener Ersatz — dann warnt das Blatt, "
+                      + "sobald man nur die Nummer ändert")
+    }
+
+    /// **Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit.**
+    /// Sonst legte das nächste „Sichern“ es unter dem alten Namen ein zweites
+    /// Mal an. Beim Löschen zieht derselbe Vergleich den umgekehrten Schluss —
+    /// dort wird der Bezug geleert; **eine** Rechnung, zwei Folgerungen.
+    ///
+    /// Mutation: `if offen { … }` aus `umbenennen` streichen — baut und
+    /// übersetzt, und wer nach dem Umbenennen sichert, hat sein Bild zweimal.
+    func testDerNameZiehtMitWennDasUmbenannteAufDerLeinwandLiegt() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let handlung = ausschnitt(text, von: "private func umbenennen(_ eintrag", bis: "private func nachladen")
+
+        XCTAssertTrue(handlung.contains("let offen = istGeoeffnet(eintrag)"),
+                      "ob das Umbenannte offen ist, wird nicht mehr **vor** der Umbenennung "
+                      + "festgestellt — danach stimmt der Vergleich nicht mehr")
+        XCTAssertTrue(handlung.contains("if offen {"),
+                      "der Name zieht nicht mehr mit — das nächste „Sichern“ legt das Bild "
+                      + "unter dem alten Namen noch einmal an")
+
+        let loeschen = ausschnitt(text, von: "private func loeschen(_ eintrag", bis: "private func umbenennenBeginnen")
+        XCTAssertTrue(loeschen.contains("if istGeoeffnet(eintrag) {"),
+                      "das Löschen rechnet wieder selbst, ob der Eintrag offen ist")
+
+        let vergleich = ausschnitt(text, von: "private func istGeoeffnet", bis: "private var feld: Pixelfeld")
+        XCTAssertTrue(vergleich.contains("eintrag.schluessel.caseInsensitiveCompare(schluessel)"),
+                      "verglichen werden wieder Namen statt Schlüssel — bei 16×52 geht das daneben, "
+                      + "weil der Dateiname der bereinigte Name ist")
+    }
+
     /// **A3.** Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
     ///
     /// Am Mac gehört die Werkzeugleiste dem **Fenster** (mindestens 1140 Punkte,

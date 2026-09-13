@@ -90,6 +90,13 @@ public struct EditorBereichView: View {
     /// (`blattGeschlossen`). `nil` heisst: abgebrochen.
     @State private var eingelesen: Editoreintrag?
 
+    // Umbenennen. Ein eigenes Blatt, weil es dieselben zwei Felder braucht wie
+    // der Import und dieselbe Frage stellt: Liegt dort schon etwas?
+    @State private var zuBenennen: Editoreintrag?
+    @State private var benennName = ""
+    @State private var benennNummer = ""
+    @State private var benennMeldung: String?
+
     static let arbeitsstandSchluessel = "bilder.arbeitsstand"
 
     public init(zustand: AppZustand) {
@@ -203,8 +210,22 @@ public struct EditorBereichView: View {
     /// 14.09.2026 eine Werknummer, heisst aber weiter nach seinem Namen — mit
     /// `mitNummer` liesse es sich ohne Nummer gar nicht mehr sichern.
     private var schluessel: String {
-        groesse.nummerIstDateiname ? nummer.trimmingCharacters(in: .whitespaces)
-                                   : name.trimmingCharacters(in: .whitespaces)
+        Editorbestand.schluessel(groesse: groesse, nummer: nummer, name: name)
+    }
+
+    /// Ob dieser Eintrag gerade **der** auf der Leinwand ist. Verglichen wird
+    /// der Schluessel, unter dem er liegt, mit dem, unter dem ein „Sichern"
+    /// jetzt ablegen wuerde — nicht Name gegen Name: Bei 16×52 ist der
+    /// Dateiname der bereinigte Name („Mario/Luigi" liegt als „Mario-Luigi"),
+    /// und ein Vergleich der Namen ginge dort daneben.
+    ///
+    /// Zwei Handlungen haengen daran, und sie ziehen entgegengesetzte
+    /// Schluesse: Beim **Loeschen** verliert die Leinwand ihren Bezug (Name
+    /// und Nummer werden geleert, sonst legte das naechste „Sichern" das
+    /// Geloeschte wieder an), beim **Umbenennen** zieht er mit.
+    private func istGeoeffnet(_ eintrag: Editoreintrag) -> Bool {
+        !schluessel.isEmpty && eintrag.groesse == groesse
+            && eintrag.schluessel.caseInsensitiveCompare(schluessel) == .orderedSame
     }
 
     /// **Ob auf der Leinwand etwas steht, das nirgends liegt.** Die eine Frage
@@ -270,6 +291,9 @@ public struct EditorBereichView: View {
         // die im selben Durchlauf aufgeht, in dem das Blatt zugeht,
         // verschluckt SwiftUI — der Knopf haette dann nichts getan.
         .sheet(isPresented: $zeigeImportBlatt, onDismiss: blattGeschlossen) { importBlatt }
+        // Zwei Blaetter an derselben Ansicht, aber nie zwei zugleich: Der
+        // Stift steht in der Liste, und die liegt hinter dem Importblatt.
+        .sheet(item: $zuBenennen) { umbenennenBlatt($0) }
         // Die **eine** Rueckfrage vor allem, was Ungesichertes verwirft
         // (siehe `Rueckfrage`). `titleVisibility: .visible`, weil hier die
         // Frage im Titel steht und nicht bloss ein Name.
@@ -773,6 +797,16 @@ public struct EditorBereichView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
+            // Derselbe Stil wie der Papierkorb daneben — gleiche Groesse,
+            // gleiche Trefferflaeche —, aber **nicht gefaerbt und ohne
+            // zerstoerende Rolle**: Umbenennen wirft nichts weg. Der Name
+            // steht in beiden Beschriftungen, weil zwei gleiche Symbole
+            // untereinander sonst nicht auseinanderzuhalten sind.
+            Button { umbenennenBeginnen(eintrag) } label: { Image(systemName: "pencil") }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help(lokf("„%@“ umbenennen", eintrag.name))
+                .accessibilityLabel(Text(lokf("„%@“ umbenennen", eintrag.name)))
             Button { zuLoeschen = eintrag } label: { Image(systemName: "trash") }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
@@ -783,6 +817,7 @@ public struct EditorBereichView: View {
         .onTapGesture { anklicken(eintrag) }
         .contextMenu {
             Button("Öffnen") { anklicken(eintrag) }
+            Button("Umbenennen…") { umbenennenBeginnen(eintrag) }
             Button("Löschen", role: .destructive) { zuLoeschen = eintrag }
         }
     }
@@ -949,6 +984,82 @@ public struct EditorBereichView: View {
                                         nummer: importNummer, name: importName)
     }
 
+    // MARK: - Blatt „Umbenennen"
+
+    /// Dieselben zwei Felder wie beim Import und dieselbe Frage davor: Liegt
+    /// unter dem neuen Schluessel schon etwas? Nur der Kopf, der Knopf und die
+    /// Handlung sind andere.
+    ///
+    /// Die Nummer steht da, wo es eine gibt (`mitNummer`) — beim 8×8 die
+    /// LaMetric-Nummer, beim 16×52 die Ulanzi-Werknummer. Der Fuss sagt, was
+    /// davon den Dateinamen traegt.
+    private func umbenennenBlatt(_ eintrag: Editoreintrag) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Form {
+                Section {
+                    if eintrag.groesse.mitNummer {
+                        LabeledContent("Nummer") {
+                            TextField("Nummer", text: $benennNummer)
+                                .labelsHidden()
+                                .eingabefeld()
+                                .frame(width: 100)
+                        }
+                    }
+                    LabeledContent("Name") {
+                        TextField("Name", text: $benennName).labelsHidden().eingabefeld()
+                    }
+                } header: {
+                    Text(lokf("„%@“ umbenennen", eintrag.name))
+                } footer: {
+                    Text(eintrag.groesse.nummerIstDateiname
+                         ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
+                         : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
+                }
+
+                // Wie im Importblatt: **vor** dem Bestaetigen, und mit Namen.
+                if let vorhanden = benennBelegt(eintrag) {
+                    Label(lokf("„%@“ liegt dort schon und wird ersetzt.", vorhanden.name),
+                          systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
+                }
+                if let benennMeldung {
+                    Text(benennMeldung).foregroundStyle(.orange)
+                }
+            }
+            .formStyle(.grouped)
+
+            HStack {
+                Spacer()
+                Button("Abbrechen") { zuBenennen = nil }
+                    .knopfBefehl()
+                Button(benennBelegt(eintrag) == nil ? lok("Umbenennen") : lok("Ersetzen")) {
+                    umbenennen(eintrag)
+                }
+                .knopfHaupthandlung()
+                .keyboardShortcut(.defaultAction)
+                .disabled(benennSchluessel(eintrag).isEmpty
+                          || benennName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding()
+        }
+        .frame(minWidth: 360)
+    }
+
+    /// Unter welchem Schluessel der Eintrag hinterher laege.
+    private func benennSchluessel(_ eintrag: Editoreintrag) -> String {
+        Editorbestand.schluessel(groesse: eintrag.groesse,
+                                 nummer: benennNummer, name: benennName)
+    }
+
+    /// Was eine Umbenennung ersetzen wuerde — **er selbst zaehlt nicht**: Wer
+    /// nur die Nummer aendert, ersetzt nichts, und eine Warnung darueber waere
+    /// genau die, die man kuenftig wegklickt.
+    private func benennBelegt(_ eintrag: Editoreintrag) -> Editoreintrag? {
+        let treffer = Editorbestand.belegt(in: vorhandene, groesse: eintrag.groesse,
+                                           nummer: benennNummer, name: benennName)
+        return treffer?.id == eintrag.id ? nil : treffer
+    }
+
     // MARK: - Rueckgaengig
 
     /// Vor jeder Aenderung, die ein Schritt ist. Ein Strich ruft es ueber
@@ -1097,14 +1208,46 @@ public struct EditorBereichView: View {
             // War das Geloeschte gerade geoeffnet, bleibt das Bild stehen, aber
             // Name und Nummer werden geleert — sonst legt ein erneutes
             // „Sichern" es unter demselben Namen wieder an.
-            if eintrag.groesse == groesse
-                && ((eintrag.nummer.map { $0 == nummer } ?? false) || eintrag.name == name) {
+            if istGeoeffnet(eintrag) {
                 nummer = ""
                 name = ""
             }
             meldung = lokf("%@ gelöscht.", eintrag.name)
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        }
+    }
+
+    /// Das Blatt aufmachen — vorbelegt mit dem, was dasteht: Umbenennen heisst
+    /// aendern, nicht neu eintippen.
+    private func umbenennenBeginnen(_ eintrag: Editoreintrag) {
+        benennName = eintrag.name
+        benennNummer = eintrag.nummer ?? ""
+        benennMeldung = nil
+        zuBenennen = eintrag
+    }
+
+    /// **Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit.**
+    /// Das Bild ist dasselbe geblieben, nur sein Name ist ein anderer; bliebe
+    /// der alte in den Feldern stehen, legte das naechste „Sichern" es unter
+    /// dem alten Namen ein zweites Mal an — genau der Fall, den das Leeren
+    /// beim Loeschen verhindert, nur andersherum.
+    private func umbenennen(_ eintrag: Editoreintrag) {
+        let offen = istGeoeffnet(eintrag)
+        do {
+            let neu = try bestand.umbenennen(eintrag, name: benennName, nummer: benennNummer)
+            vorhandene = bestand.alle()
+            if offen {
+                name = neu.name
+                nummer = neu.nummer ?? ""
+            }
+            zuBenennen = nil
+            meldung = lokf("%@ umbenannt.", neu.name)
+            zustand.log("Umbenannt: \(eintrag.name) → \(neu.name)")
+        } catch {
+            // Das Blatt bleibt stehen und sagt hier, woran es lag — eine
+            // Meldung unter der Leinwand laege dahinter.
+            benennMeldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
     }
 
