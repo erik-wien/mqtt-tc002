@@ -70,6 +70,35 @@ mit maschineller Hilfe („mit ios27 ki?"). Das Ziel ist heute iOS 17; eine
 Anhebung ist eine eigene Entscheidung. Eine **einfache** Umrechnung (skalieren,
 beschneiden, zentrieren) ist davon unberuehrt und gehoert dazu.
 
+## F — Die Uhr nach ihrem Stand fragen (am Geraet belegt, 13.09.2026)
+
+`GET http://<uhr>/customList` liefert **nichts**.
+`GET http://<uhr>/api/customList` liefert
+`{"apps":["meldung2","meldung5","meldung3"],"count":3}`.
+
+**Punkt 6 unserer Maengelliste — „`customList` nur ueber MQTT" — ist unser
+eigener Pfadfehler**, kein Mangel der Firmware. Punkt 2 („leerer Rumpf loescht
+nicht") und Punkt 5 („kein HTTP-Weg zum Umschalten") stehen unter demselben
+Verdacht; beide lassen sich nur mit einem `POST` pruefen, der eine Anzeige
+wirklich entfernt — gehoert dem Auftraggeber, nicht diesem Durchgang.
+
+**F1.** `Geraet` lernt `GET /api/customList` (der vorhandene `hole(_:)` traegt
+das). Beim Verbinden und beim Abfragen wird die Belegung damit **Tatsache**
+statt Erinnerung — Quelle `.geraet`, auch fuer Anzeigen fremder Absender.
+Der **Inhalt** bleibt geraten; daran aendert das nichts, und die Hilfe muss
+weiter genau das sagen.
+
+**F2.** `docs/firmware-beobachtungen.md` und `docs/en/firmware-observations.md`:
+Punkt 6 richtigstellen — **beide Sprachen**. Kein Umschreiben der Geschichte,
+sondern: was gilt, und dass `/api` der richtige Pfad ist. Punkt 2 und 5 als
+„unter Verdacht, Pruefung offen" kennzeichnen.
+**`docs/tc002-protokoll.md` §3.5 und `docs/en/tc002-protocol.md`** behaupten
+dasselbe Falsche — mitziehen.
+
+**Der Gewinn gegenueber RETAIN:** kein dauerhafter Zustand beim Broker, keine
+bis zu 115 KB im Speicher haengend, und die Auskunft ist beim Start sofort da,
+statt auf eine Nachricht zu warten, die vielleicht nie kommt.
+
 ---
 
 ## Bindend
@@ -89,8 +118,8 @@ beschneiden, zentrieren) ist davon unberuehrt und gehoert dazu.
 
 ## Reihenfolge
 
-A (Fehler) → B, C, D1, D2 (klein, unabhaengig) → D3 (Grundsatz, beruehrt alles)
-→ E (Umbau).
+A (Fehler) → B, C **und F parallel** (beruehren verschiedene Dateien) →
+D1, D2, D3 (Senden, D3 ist Grundsatz) → E (Umbau).
 
 E zuletzt, weil es die groesste Flaeche anfasst und von D3 abhaengt.
 
@@ -101,8 +130,6 @@ E zuletzt, weil es die groesste Flaeche anfasst und von D3 abhaengt.
 - MQTT 5 — erhoben; Gewinn auf dem Hauptweg vom eigenen Mitleser aufgefressen.
 - RETAIN — unbelegt, und ein aufbewahrtes `customList` braechte nur die
   Belegung, nicht den Inhalt.
-- **Die HTTP-Gegenprobe:** Wir haben `GET /customList` geprueft, **ohne `/api`**.
-  Ein fremdes Projekt dokumentiert an derselben Firmwarefassung
-  `GET /api/customList`, `POST /api/switchDiyApp` und Loeschen mit `{}`. Drei
-  Eintraege unserer Maengelliste koennten eigene Pfadfehler sein. Zwei
-  `curl`-Zeilen am Geraet — gehoert dem Auftraggeber.
+- Der Loeschtest (`POST /api/custom?name=x` mit `{}`) und der Umschalttest
+  (`POST /api/switchDiyApp`) — beide veraendern die Anzeige und gehoeren dem
+  Auftraggeber. Die Lesepruefung ist erledigt, siehe F.
