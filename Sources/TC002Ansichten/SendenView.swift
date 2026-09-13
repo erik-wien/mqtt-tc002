@@ -271,13 +271,6 @@ public struct SendenView: View {
 
     private var nutzlastBytes: Int { laufschriftURI.utf8.count }
 
-    /// Die Zahl, an der man merkt, ob man der ungeklaerten Grenze der Uhr
-    /// nahekommt — die Zeichenzahl des Textes sieht man selbst, sie half nicht.
-    private var nutzlastText: String {
-        nutzlastBytes < 1024 ? lok("unter 1 KB Nutzlast")
-                             : lokf("rund %d KB Nutzlast", nutzlastBytes / 1024)
-    }
-
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
     /// den Satzzeichen nur `%`, `.`, `-`, `:` (Gerätereferenz, §1). Nur fürs
     /// Vorwarnen beim Weg „als Text" gedacht — die Uhr meldet ein fehlendes
@@ -351,14 +344,12 @@ public struct SendenView: View {
                         // der Nutzlastgroesse aussteigt (§4.2a).
                         // Nur der Stand, keine Erklaerung — die steht in der Hilfe
                         // („Senden", Absatz zur Nutzlastgroesse).
-                        Text(lokf("Laufschrift · %d Bilder · %@", laufschriftFrames.count, nutzlastText))
-                            .font(.footnote).foregroundStyle(.secondary)
+                        Nutzlastzeile(
+                            art: lok("Laufschrift"),
+                            bilder: laufschriftFrames.count,
+                            bytes: nutzlastBytes,
+                            rat: lok("nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts."))
                             .frame(maxWidth: .infinity, alignment: .center)
-                        if nutzlastBytes > 60_000 {
-                            Label("Eine auffällig große Nutzlast — nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts.",
-                                  systemImage: "exclamationmark.triangle")
-                                .font(.footnote).foregroundStyle(.orange)
-                        }
                     }
                 case .text:
                     // Zu langer Text ist hier kein Fehler und keine eigene Warnung

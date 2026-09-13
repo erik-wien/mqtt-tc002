@@ -514,6 +514,121 @@ final class AppZustandTests: XCTestCase {
         XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet)
     }
 
+    // MARK: - Betriebsart
+
+    /// **Die Vorgabe steht hier und nirgends sonst.** `Uhr.betriebsart` ist ein
+    /// Optional, und `nil` heisst dort `.mqtt` — das darf es, weil jede neu
+    /// angelegte Uhr `.http` ausdruecklich mitbekommt. Bliebe es hier weg,
+    /// waere `nil` zweideutig: einmal „aus dem Bestand", einmal „eben
+    /// angelegt", und dieselbe Lesart traefe beide falsch.
+    func testNeueUhrBekommtHttpAusdruecklich() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        zustand.uhrHinzufuegen(host: "10.0.0.7", sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertEqual(zustand.uhren.first?.betriebsart, .http,
+                       "der Schlüssel muss in der Datei stehen, nicht bloß gelten")
+        XCTAssertEqual(zustand.uhren.first?.wirksameBetriebsart, .http)
+    }
+
+    /// Fuer eine reine HTTP-Einrichtung ist die Brokerbedingung falsch: Dort
+    /// gibt es keinen Broker und braucht es keinen. Wer eine MQTT-Uhr dabei
+    /// hat, braucht ihn weiterhin — auch wenn daneben HTTP-Uhren stehen.
+    func testDerBrokerGehoertNurZuMqttUhrenZurEinrichtung() throws {
+        d.removeObject(forKey: "brokerHost")
+
+        let http = Uhr(name: "Küche", host: "10.0.0.5", betriebsart: .http)
+        d.set(try JSONEncoder().encode([http]), forKey: "uhren")
+        XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).eingerichtet,
+                      "eine HTTP-Uhr allein ist eine vollständige Einrichtung")
+
+        let mqtt = Uhr(name: "Bad", host: "10.0.0.6", praefix: "p", betriebsart: .mqtt)
+        d.set(try JSONEncoder().encode([mqtt]), forKey: "uhren")
+        XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet)
+
+        d.set(try JSONEncoder().encode([http, mqtt]), forKey: "uhren")
+        XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet,
+                       "eine einzige MQTT-Uhr verlangt den Broker")
+
+        d.set("10.0.0.2", forKey: "brokerHost")
+        XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).eingerichtet)
+    }
+
+    /// Der Praefix-Filter in `ziele()` war fuer eine HTTP-Uhr falsch: Sie wird
+    /// unter ihrer Adresse angesprochen und hat womoeglich nie ein Praefix
+    /// gesehen — uebersprungen wuerde sie **stillschweigend**.
+    func testHttpUhrOhnePraefixBleibtEinZiel() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        let http = Uhr(name: "Küche", host: "10.0.0.1", betriebsart: .http)
+        let mqtt = Uhr(name: "Bad", host: "10.0.0.2", betriebsart: .mqtt)  // nie abgefragt
+        zustand.uhren = [http, mqtt]
+        zustand.zielIDs = [http.id, mqtt.id]
+
+        XCTAssertEqual(zustand.ziele(), [http],
+                       "HTTP braucht kein Präfix, MQTT schon")
+    }
+
+    /// Eine HTTP-Uhr scheitert nie am Broker und nie an einem Praefix. Die
+    /// Meldung, die sie im Fehlerfall bekommt, darf den Leser deshalb nicht
+    /// zu „Abfragen" oder „Sichern und prüfen" schicken.
+    func testDieMeldungEinerHttpUhrRedetWederVomBrokerNochVomPraefix() throws {
+        d.removeObject(forKey: "uhren")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        let ohneAdresse = Uhr(name: "Küche", host: "", betriebsart: .http)
+
+        let meldung = zustand.zugangsmeldung(ohneAdresse)
+
+        XCTAssertTrue(meldung.contains("Küche"), "war: \(meldung)")
+        XCTAssertTrue(meldung.contains("Adresse"), "war: \(meldung)")
+        XCTAssertFalse(meldung.contains("Broker"), "war: \(meldung)")
+        XCTAssertFalse(meldung.contains("Abfragen"), "war: \(meldung)")
+    }
+
+    /// **Was ohne diese Buchung geschaehe:** Ueber MQTT veroeffentlicht die Uhr
+    /// nach einer Aenderung ihre `customList` von selbst, die Auskunft kommt
+    /// also gleich nach. Ueber HTTP reicht sie nichts nach (gemessen) — ein
+    /// eben gefuellter Platz zeigte „frei", solange die alte Auskunft steht.
+    /// Gebucht wird nur, was die Uhr mit `code: 200` quittiert hat.
+    func testEineBestaetigteHttpSendungErgaenztDieAuskunftDerUhr() throws {
+        d.removeObject(forKey: "uhren")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        let http = Uhr(name: "Küche", host: "10.0.0.1", betriebsart: .http)
+        let mqtt = Uhr(name: "Bad", host: "10.0.0.2", praefix: "p", betriebsart: .mqtt)
+        zustand.uhren = [http, mqtt]
+        zustand.belegungGemeldet(["meldung3"], fuer: http.id)
+        zustand.belegungGemeldet(["meldung3"], fuer: mqtt.id)
+
+        zustand.anzeigeBestaetigt("meldung1", fuer: http)
+        zustand.anzeigeBestaetigt("meldung1", fuer: mqtt)
+
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[http.id], ["meldung3", "meldung1"])
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[mqtt.id], ["meldung3"],
+                       "über MQTT sagt es die Uhr selbst — hier wäre es eine Behauptung")
+        XCTAssertEqual(zustand.bekannteAnzeigen[http.id], ["meldung1"])
+        XCTAssertEqual(zustand.bekannteAnzeigen[mqtt.id], ["meldung1"])
+    }
+
+    /// Ohne eine Auskunft der Uhr wird auch keine erfunden: Dann gilt die
+    /// eigene Buchfuehrung, und die Ansicht sagt das auch.
+    func testOhneAuskunftDerUhrWirdKeineAngelegt() throws {
+        d.removeObject(forKey: "uhren")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        let http = Uhr(name: "Küche", host: "10.0.0.1", betriebsart: .http)
+        zustand.uhren = [http]
+        zustand.aktiveID = http.id
+
+        zustand.anzeigeBestaetigt("meldung1", fuer: http)
+
+        XCTAssertNil(zustand.gemeldeteAnzeigen[http.id])
+        XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .app)
+    }
+
     /// Was eine frische Installation in den Feldern stehen hat: nichts. Ein
     /// vorausgefuellter Benutzername oder eine erfundene Brokeradresse sind
     /// schlechter als leere Felder — man sieht ihnen nicht an, ob dort ein

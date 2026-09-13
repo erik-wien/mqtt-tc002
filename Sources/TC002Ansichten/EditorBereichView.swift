@@ -52,6 +52,11 @@ public struct EditorBereichView: View {
     @State private var spielAb = false
     @State private var spielTask: Task<Void, Never>?
     @State private var laeuft = false
+    /// Wie gross das naechste Laufbild wuerde. Gerechnet wird es abseits des
+    /// Hauptthreads (siehe `.task(id:)` im `body`), deshalb ein Zustand und
+    /// keine abgeleitete Groesse: GIF kodieren und Base64 darueber bei jedem
+    /// Strich liesse das Malen stocken.
+    @State private var laufbildBytes = 0
     @Environment(\.scenePhase) private var phase
 
     // Sichern und Bestand.
@@ -254,6 +259,19 @@ public struct EditorBereichView: View {
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt.
     /// Dieselbe Grundlage wie unter „Senden" und „Verlauf": was die Uhr
     /// meldet, sonst was die App sich gemerkt hat.
+    /// Woran die Nutzlast des Laufbilds haengt: die Einzelbilder und ihre
+    /// Standzeit — **nicht** die Auswahl. Zwischen den Bildern zu blaettern
+    /// aendert an dem, was hinausginge, nichts, soll die Rechnung also auch
+    /// nicht noch einmal anstossen.
+    private struct Laufbildstand: Equatable {
+        let bilder: [[String?]]
+        let verzoegerung: Double
+    }
+
+    private var laufbildstand: Laufbildstand {
+        Laufbildstand(bilder: leinwand.bilder, verzoegerung: leinwand.verzoegerung)
+    }
+
     private var belegtePlaetze: Set<Int> {
         let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
         return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
@@ -286,6 +304,20 @@ public struct EditorBereichView: View {
         // `willTerminate`: Auf dem iPad gibt es dazu nichts Gleichwertiges.
         .onChange(of: phase) { _, neu in
             if neu != .active { arbeitsstandSichern() }
+        }
+        // Dieselbe Rechnung wie in `senden()` — die Zahl soll die sein, die
+        // wirklich hinausginge. Abseits des Hauptthreads und nur bei
+        // tatsaechlicher Aenderung, wie die Laufschrift unter „Senden".
+        .task(id: laufbildstand) {
+            guard groesse.sendbar, leinwand.bilder.count > 1 else { laufbildBytes = 0; return }
+            let (bilder, breite, hoehe) = (leinwand.bilder, leinwand.breite, leinwand.hoehe)
+            let verzoegerung = leinwand.verzoegerung
+            let bytes = await Task.detached(priority: .userInitiated) {
+                ((try? Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
+                                              verzoegerung: verzoegerung)) ?? "").utf8.count
+            }.value
+            guard !Task.isCancelled else { return }
+            laufbildBytes = bytes
         }
         // `onDismiss` und nicht unmittelbar in `einlesen()`: Eine Rueckfrage,
         // die im selben Durchlauf aufgeht, in dem das Blatt zugeht,
@@ -828,6 +860,18 @@ public struct EditorBereichView: View {
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
+            // Dieselbe Zeile wie unter „Senden" (`Nutzlastzeile`), nicht eine
+            // zweite daneben — hier ist die Gefahr sogar groesser: Ein
+            // 16×52-Laufbild mit vielen Einzelbildern wird schnell gross.
+            // Nur bei mehreren: Ein einzelnes Bild geht als `draw` hinaus und
+            // ist klein; wie klein, sagt die Rechteckzahl in der Fusszeile.
+            if leinwand.bilder.count > 1 {
+                Nutzlastzeile(
+                    art: lok("Animation"),
+                    bilder: leinwand.bilder.count,
+                    bytes: laufbildBytes,
+                    rat: lok("nur weniger Einzelbilder machen sie kleiner, das Tempo ändert daran nichts."))
+            }
             // Breit: Bloecke und Dauer nebeneinander. Schmal: die Dauer rueckt
             // darunter, statt dass die Zeile rechts abgeschnitten wird.
             ViewThatFits(in: .horizontal) {

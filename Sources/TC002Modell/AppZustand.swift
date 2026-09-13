@@ -264,6 +264,28 @@ public final class AppZustand {
         return (bekannteAnzeigen[id] ?? [], .app)
     }
 
+    /// Was nach einer **bestaetigten** Sendung an Belegung zu buchen ist.
+    ///
+    /// Ueber MQTT genuegte bisher die eigene Buchfuehrung: Die Uhr
+    /// veroeffentlicht ihre `customList` nach einer Aenderung von selbst
+    /// (§3.5), die Auskunft kommt also gleich nach. **Ueber HTTP reicht sie
+    /// nichts nach** — am 13.09.2026 gemessen: 45 Sekunden gehorcht, mit
+    /// einer HTTP-Loeschung mittendrin, und es kam allein `status online`.
+    /// Ohne diese Buchung zeigte ein eben ueber HTTP gefuellter Platz „frei",
+    /// solange `gemeldeteAnzeigen` steht und den Namen nicht kennt.
+    ///
+    /// Es ist dabei keine blosse Vermutung: Die Uhr hat die Sendung mit
+    /// `{"code":200}` quittiert, sonst waere `anZiele` gar nicht hier.
+    /// Ergaenzt wird nur eine **vorhandene** Auskunft — wo keine steht, gilt
+    /// ohnehin die eigene Buchfuehrung, und die schreibt `anzeigeGemerkt`.
+    func anzeigeBestaetigt(_ name: String, fuer uhr: Uhr) {
+        anzeigeGemerkt(name, fuer: uhr.id)
+        guard uhr.wirksameBetriebsart == .http,
+              var gemeldet = gemeldeteAnzeigen[uhr.id], !gemeldet.contains(name) else { return }
+        gemeldet.append(name)
+        gemeldeteAnzeigen[uhr.id] = gemeldet
+    }
+
     public func anzeigeVergessen(_ name: String, fuer id: UUID) {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
         // Auch aus der gemeldeten Liste: ob die Uhr ihre `customList` nach dem
@@ -302,10 +324,16 @@ public final class AppZustand {
     /// Ob ueberhaupt etwas eingerichtet ist. Daran haengt, womit die
     /// Oberflaechen beginnen: mit „Senden" oder mit den Einstellungen.
     ///
-    /// Beides muss stehen — eine Uhr **und** ein eingetragener Broker. Fehlt
-    /// eines davon, ist „Senden" eine Sackgasse: kein Ziel, keine Vorschau,
-    /// ein Sendeknopf, der nirgendwohin fuehrt (`ziele()` ist leer, und
-    /// `anZiele` bricht mit „Keine Uhr eingerichtet" ab).
+    /// Eine Uhr muss stehen — und ein Broker nur dann, wenn wenigstens eine
+    /// dieser Uhren ihn ueberhaupt benutzt (`Einstellungen.brokerNoetig`).
+    /// Fehlt, was gebraucht wird, ist „Senden" eine Sackgasse: kein Ziel,
+    /// keine Vorschau, ein Sendeknopf, der nirgendwohin fuehrt (`ziele()` ist
+    /// leer, und `anZiele` bricht mit „Keine Uhr eingerichtet" ab).
+    ///
+    /// **Fuer eine reine HTTP-Einrichtung waere die Brokerbedingung falsch.**
+    /// Dort gibt es keinen Broker und braucht es keinen; wer nur ueber HTTP
+    /// sendet, stuende sonst beim ersten Start vor einem Formular, das nach
+    /// etwas fragt, das seine Uhren nie anfassen.
     ///
     /// Eine reine Frage an die abgelegte Einrichtung: Sie kostet nichts und
     /// dauert nicht. Ob der Broker gerade **antwortet**, wird hier
@@ -320,7 +348,10 @@ public final class AppZustand {
     /// genau derselben Sackgasse wie beim ersten Start. Ohne Merker stimmt die
     /// Auskunft in beiden Faellen — und sie stimmt auch wieder, sobald
     /// eingetragen ist, was fehlte.
-    public var eingerichtet: Bool { !uhren.isEmpty && brokerEingetragen }
+    public var eingerichtet: Bool {
+        guard !uhren.isEmpty else { return false }
+        return brokerEingetragen || !Einstellungen.brokerNoetig(fuer: uhren)
+    }
 
     /// Ob eine Brokeradresse eingetragen ist.
     ///
@@ -462,15 +493,23 @@ public final class AppZustand {
 
     /// Legt eine Uhr an und fragt sie sofort ab. Der Name kommt aus der Geraetekennung,
     /// laesst sich aber aendern — bei mehreren Uhren ist "Kueche" hilfreicher als eine MAC.
-    public func uhrHinzufuegen(host: String) {
+    ///
+    /// **`.http` wird ausdruecklich eingetragen, nicht weggelassen.** Daran
+    /// haengt die ganze Lesart von `Uhr.betriebsart`: Weil jede von nun an
+    /// angelegte Uhr den Schluessel in der Datei hat, kann `nil` allein
+    /// „aus einer aelteren Fassung" heissen — und dort gilt MQTT.
+    ///
+    /// `sitzung` ist wie bei `abfragen` die Naht fuer den Test — die
+    /// Oberflaeche ruft `uhrHinzufuegen(host:)`.
+    public func uhrHinzufuegen(host: String, sitzung: URLSession = .shared) {
         let erste = uhren.isEmpty
-        let neue = Uhr(name: host, host: host)
+        let neue = Uhr(name: host, host: host, betriebsart: .http)
         uhren.append(neue)
         if aktiveID == nil { aktiveID = neue.id }
         // Nur bei der allerersten Uhr: sonst traete eine spaeter hinzugefuegte
         // Uhr unversehens der bisherigen Auswahl bei, statt aussen vor zu bleiben.
         if erste { zielIDs.insert(neue.id) }
-        abfragen(neue.id)
+        abfragen(neue.id, sitzung: sitzung)
     }
 
     /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
@@ -495,6 +534,19 @@ public final class AppZustand {
         horchenAbgleichen()
     }
 
+    /// Die Betriebsart einer Uhr wurde umgestellt. Der Wechsel wirkt sofort:
+    /// Wer auf HTTP geht, verliert sein Abonnement (und mit ihm den
+    /// Onlinestand und die mitgelesenen Pixel, `abonnementBeenden`); wer auf
+    /// MQTT geht, bekommt eines, sobald Praefix und Broker stehen.
+    ///
+    /// Die Belegung wird danach neu erfragt — sie ist ueber HTTP zu haben,
+    /// gleich in welchem Betrieb, und nach dem Abraeumen des Abonnements
+    /// stuende sonst nichts mehr da.
+    public func betriebsartGeaendert(_ id: UUID, sitzung: URLSession = .shared) {
+        horchenAbgleichen()
+        belegungAbfragen(id, sitzung: sitzung)
+    }
+
     /// Eine geaenderte Adresse zeigt womoeglich auf eine andere Uhr. Praefix und MAC
     /// gehoeren dann noch zur alten — blieben sie stehen, wuerde weiter auf das alte
     /// Thema gesendet, an die alte Uhr oder ins Leere, ohne jeden Hinweis.
@@ -514,12 +566,27 @@ public final class AppZustand {
     public func abfragen(_ id: UUID, sitzung: URLSession = .shared) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
+        let art = uhr.wirksameBetriebsart
         Task.detached { [weak self] in
             do {
                 let geraet = Geraet(host: host, sitzung: sitzung)
                 // In einem Zug: getrennt geholt kaeme /getBase zweimal dran.
-                let (praefix, basis) = try geraet.praefixUndBasis()
-                let steht = try geraet.verbunden()
+                //
+                // Im HTTP-Betrieb ist ein fehlendes Praefix **kein Fehler**:
+                // Dort wird kein Thema gebildet, und „Die Uhr hat kein
+                // MQTT-Präfix eingestellt" schickte den Leser hinter etwas
+                // her, das seine Uhr gar nicht braucht. Dieser eine Zweig
+                // holt /getBase ein zweites Mal — er ist die Ausnahme.
+                let ergebnis: (praefix: String, basis: Basisdaten)
+                do {
+                    ergebnis = try geraet.praefixUndBasis()
+                } catch GeraetFehler.keinPraefix where art == .http {
+                    ergebnis = ("", try geraet.basis())
+                }
+                let praefix = ergebnis.praefix, basis = ergebnis.basis
+                // Ob die Uhr am Broker haengt, ist nur im MQTT-Betrieb eine
+                // Auskunft ueber etwas, das diese App benutzt.
+                let steht = art == .mqtt ? try geraet.verbunden() : nil
                 // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
                 // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
                 // Praefix und Verbindungsstand noch lange nicht gescheitert.
@@ -528,10 +595,17 @@ public final class AppZustand {
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
                     self.uhren[i].praefix = praefix
                     self.uhren[i].mac = basis.mac
-                    if self.uhren[i].name == self.uhren[i].host { self.uhren[i].name = praefix }
+                    // Ohne Praefix bliebe hier ein leerer Name stehen.
+                    if self.uhren[i].name == self.uhren[i].host, !praefix.isEmpty {
+                        self.uhren[i].name = praefix
+                    }
                     self.verbunden[id] = steht
-                    self.log(lokf("%@: Präfix %@, MQTT %@", self.uhren[i].name, praefix,
-                                  steht ? lok("verbunden") : lok("nicht verbunden")))
+                    if let steht {
+                        self.log(lokf("%@: Präfix %@, MQTT %@", self.uhren[i].name, praefix,
+                                      steht ? lok("verbunden") : lok("nicht verbunden")))
+                    } else {
+                        self.log(lokf("%@ hat über HTTP geantwortet", self.uhren[i].name))
+                    }
                     // Erst jetzt steht das Praefix — vorher gab es kein Thema, auf das
                     // sich horchen liesse.
                     self.horchenAbgleichen()
@@ -563,13 +637,15 @@ public final class AppZustand {
                           kennwort: kennwort.isEmpty ? nil : kennwort)
     }
 
+    /// Der Kanal fuer eine Uhr. Welcher es ist, entscheidet `Anzeigen.fuer` —
+    /// dieselbe Stelle, aus der auch Werkzeug und Kurzbefehle ihren Kanal
+    /// holen, damit die drei nicht auseinanderlaufen.
     public func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
-        guard !uhr.praefix.isEmpty, var zugang else { return nil }
         // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
         // dieselbe Kennung erneut verbindet. Mit einer festen Kennung wuerfen sich
         // gleichzeitige Sendungen an mehrere Uhren gegenseitig hinaus.
-        zugang.clientID = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
-        return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
+        let kennung = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
+        return Anzeigen.fuer(uhr, brokerzugang: zugang?.mit(clientID: kennung))
     }
 
     /// Liefert `anzeigen(fuer:)` nichts, fehlt eines von dreien: das Präfix —
@@ -585,6 +661,13 @@ public final class AppZustand {
     /// SwiftUI nie nachgeschlagen — deshalb `lok`/`lokf`, und deshalb der Wert
     /// als Platzhalter statt im Schlüssel.
     public func zugangsmeldung(_ uhr: Uhr) -> String {
+        // Im HTTP-Betrieb gibt es nur eine Bedingung, und der Broker gehoert
+        // nicht dazu: Ohne Adresse gibt es kein Ziel, mit Adresse geht es.
+        // Die drei Saetze darunter naehmen den Leser mit auf eine Suche nach
+        // einem Praefix, das seine Uhr gar nicht braucht.
+        if uhr.wirksameBetriebsart == .http {
+            return lokf("Für %@ ist keine Adresse eingetragen. Unter „Einstellungen“ eine eintragen.", uhr.name)
+        }
         if uhr.praefix.isEmpty {
             return lokf("%@ wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken.", uhr.name)
         }
@@ -642,6 +725,10 @@ public final class AppZustand {
 
     private func zugangsfehler(_ uhr: Uhr) -> Sendefehler {
         let meldung = zugangsmeldung(uhr)
+        // Eine HTTP-Uhr scheitert nie am Broker — ihn hier zu beschuldigen
+        // schickte den Leser an das falsche Ende und faerbte obendrein den
+        // Brokerstand rot, obwohl an ihm nichts falsch ist.
+        guard uhr.wirksameBetriebsart == .mqtt else { return .uhr(meldung) }
         guard !uhr.praefix.isEmpty else { return .uhr(meldung) }
         brokerStand = .abgelehnt(meldung)
         return .broker(meldung)
@@ -730,7 +817,7 @@ public final class AppZustand {
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotPlatz: Int? = nil) async {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
-            anzeigeGemerkt(name, fuer: uhr.id)
+            anzeigeBestaetigt(name, fuer: uhr)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
             guard let slotPlatz else { return }
             if let slotOptionen {
@@ -754,14 +841,18 @@ public final class AppZustand {
         }
     }
 
-    /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ein Praefix haben.
-    /// Ist nichts gewaehlt, ist es die aktive Uhr — sonst liefe ein Sendeversuch
-    /// stillschweigend ins Leere.
+    /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ueberhaupt
+    /// beschickbar sind. Ist nichts gewaehlt, ist es die aktive Uhr — sonst
+    /// liefe ein Sendeversuch stillschweigend ins Leere.
+    ///
+    /// Was „beschickbar" heisst, entscheidet die Betriebsart und nicht mehr
+    /// allein das Praefix (`Uhr.beschickbar`): Eine HTTP-Uhr braucht keines
+    /// und waere unter dem alten Filter stillschweigend uebersprungen worden.
     public func ziele() -> [Uhr] {
         if zielIDs.isEmpty {
-            return [aktiveUhr].compactMap { $0 }.filter { !$0.praefix.isEmpty }
+            return [aktiveUhr].compactMap { $0 }.filter(\.beschickbar)
         }
-        return uhren.filter { zielIDs.contains($0.id) && !$0.praefix.isEmpty }
+        return uhren.filter { zielIDs.contains($0.id) && $0.beschickbar }
     }
 
     // MARK: - Zuhören
@@ -772,6 +863,16 @@ public final class AppZustand {
         let abonnent: MQTTAbonnent
         let praefix: String
         let brokerkennung: String
+    }
+
+    /// Ob diese Uhr ueberhaupt einen Zuhoerer bekommt. Nur MQTT-Uhren: Im
+    /// HTTP-Betrieb gaebe es nichts mitzuhoeren — die Uhr reicht ihre eigenen
+    /// HTTP-Vorgaenge nicht ueber den Broker weiter (gemessen, siehe
+    /// `Betriebsart`), und ein Abonnement auf ihre Themen lieferte allein das
+    /// `status`-Wort. Ein Broker, der „nebenbei als Ohr" diente, ist damit
+    /// widerlegt und nicht bloss ungenutzt.
+    private func gehoertZumHorchen(_ uhr: Uhr) -> Bool {
+        uhr.wirksameBetriebsart == .mqtt && !uhr.praefix.isEmpty
     }
     private var horcher: [UUID: Horcher] = [:]
     private var horchtGerade: [UUID: Bool] = [:]
@@ -824,12 +925,16 @@ public final class AppZustand {
         let kennung = brokerkennung
         for (id, vorhanden) in horcher {
             let uhr = uhren.first { $0.id == id }
-            guard uhr == nil || uhr?.praefix != vorhanden.praefix
+            // Auch eine auf HTTP umgestellte Uhr wird hier ungueltig: Ihr
+            // Abonnement gehoert abgeraeumt, sonst zeigten die Bloecke weiter
+            // mitgelesene Pixel, die mit dem Kanal nichts mehr zu tun haben.
+            guard uhr == nil || !gehoertZumHorchen(uhr!)
+                    || uhr?.praefix != vorhanden.praefix
                     || vorhanden.brokerkennung != kennung else { continue }
             abonnementBeenden(id, vorhanden)
         }
         guard let zugang else { return }
-        for uhr in uhren where !uhr.praefix.isEmpty && horcher[uhr.id] == nil {
+        for uhr in uhren where gehoertZumHorchen(uhr) && horcher[uhr.id] == nil {
             var eigener = zugang
             // Eigene Kennung wie beim Senden: ein Broker trennt die bestehende
             // Sitzung, sobald dieselbe Kennung erneut verbindet — und gesendet wird
