@@ -189,6 +189,45 @@ final class EditorbereichTests: XCTestCase {
                        "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
     }
 
+    /// **B3.** „Abspielen" ist kein eigener Knopf mehr, sondern ein Symbol
+    /// **unmittelbar rechts neben dem Sekundenwert** — so verlangt. Es
+    /// schaltet um und muss deshalb beide Zustände zeigen; und weil ein
+    /// Symbol für sich stumm ist, braucht es in **beiden** eine Beschriftung
+    /// für die Sprachausgabe.
+    ///
+    /// Nichts davon sieht ein Übersetzer, ein Bau oder ein Blick auf den Mac:
+    /// Ein Symbol ohne Beschriftung baut und zeichnet anstandslos.
+    func testDasAbspielsymbolStehtNebenDenSekundenUndNenntBeideZustaende() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        XCTAssertFalse(text.contains("lok(\"Abspielen\")) { abspielenUmschalten() }"),
+                       "„Abspielen“ steht wieder als eigener beschrifteter Knopf da")
+
+        // Bis zum schließenden `}` der Zeile, nicht bis zum Ende des
+        // Abschnitts: Ein Symbol, das wieder eine eigene Zeile darunter
+        // bekommt, stünde sonst immer noch „im Abschnitt“ und fiele nicht auf.
+        let zeile = ausschnitt(text, von: "LabeledContent(\"Verzögerung\")", bis: "\n            }")
+        XCTAssertTrue(zeile.contains("Text(\"s\")"),
+                      "die Sekundenzeile sieht anders aus — dann prüft dieser Test die falsche Stelle")
+        XCTAssertTrue(zeile.contains("abspielknopf"),
+                      "das Wiedergabesymbol steht nicht mehr unmittelbar neben dem Sekundenwert, "
+                      + "sondern wieder in einer Zeile für sich")
+
+        let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
+        for zustand in ["\"play.fill\"", "\"stop.fill\""] {
+            XCTAssertTrue(knopf.contains(zustand),
+                          "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen")
+        }
+        XCTAssertTrue(knopf.contains(".accessibilityLabel("),
+                      "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
+        for wort in ["lok(\"Stopp\")", "lok(\"Abspielen\")"] {
+            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 2,
+                           "\(wort) steht nicht in Hinweis **und** Beschriftung — "
+                           + "oder ein Zweig ist ohne `lok` geschrieben und übersetzt damit nicht")
+        }
+        XCTAssertTrue(knopf.contains("leinwand.bilder.count < 2"),
+                      "das Symbol ist bei einem einzigen Einzelbild nicht mehr gesperrt")
+    }
+
     /// **A3.** Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
     ///
     /// Am Mac gehört die Werkzeugleiste dem **Fenster** (mindestens 1140 Punkte,

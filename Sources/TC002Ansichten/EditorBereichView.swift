@@ -418,21 +418,40 @@ public struct EditorBereichView: View {
 
         Section {
             LabeledContent("Verzögerung") {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     TextField("", value: $leinwand.verzoegerung, format: .number)
                         .eingabefeld()
                         .frame(width: 60)
                     Text("s").foregroundStyle(.secondary)
+                    abspielknopf
                 }
             }
-            Button(spielAb ? lok("Stopp") : lok("Abspielen")) { abspielenUmschalten() }
-                .knopfBefehl()
-                .disabled(leinwand.bilder.count < 2)
         } header: {
             Text("Abspielen")
         } footer: {
             Text("Mehrere Einzelbilder ergeben beim Sichern ein animiertes GIF.")
         }
+    }
+
+    /// **B3.** Kein eigener Knopf „Abspielen" mehr, sondern ein Symbol
+    /// unmittelbar rechts neben dem Sekundenwert — so verlangt. Die Zeit und
+    /// das Probelaufen gehoeren zusammen; zwei Zeilen liessen es wie zweierlei
+    /// aussehen.
+    ///
+    /// Der Knopf **schaltet um**, also muss er beides zeigen: `play.fill`,
+    /// solange es steht, `stop.fill`, solange es laeuft. Ein Symbol allein
+    /// sagt der Sprachausgabe nichts — die Beschriftung steht deshalb in
+    /// **beiden** Zustaenden da, und weil sie durch ein Ternaer kommt, ist
+    /// jeder Zweig schon uebersetzt (`lok`), bevor SwiftUI ihn sieht: Ein
+    /// Ternaer mit `String`-Zweig schlaegt selbst nichts mehr nach.
+    private var abspielknopf: some View {
+        Button { abspielenUmschalten() } label: {
+            Image(systemName: spielAb ? "stop.fill" : "play.fill")
+        }
+        .knopfBefehl()
+        .disabled(leinwand.bilder.count < 2)
+        .help(spielAb ? lok("Stopp") : lok("Abspielen"))
+        .accessibilityLabel(Text(spielAb ? lok("Stopp") : lok("Abspielen")))
     }
 
     @ViewBuilder
