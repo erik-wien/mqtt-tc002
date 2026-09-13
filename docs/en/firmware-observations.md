@@ -6,7 +6,7 @@ Collected while building MQTT-TC002. Two purposes: a checklist to re-test **when
 a new firmware is released**, and a basis for reporting these to the vendor.
 
 **Tested against:** `mcuVer V1.0.17`, `appVer 1.1.1`, read via `GET /getBase`
-(device reference §5.1). All measurements from 2026-09-11.
+(device reference §5.1). Measurements from 2026-09-11 to 2026-09-13.
 
 The evidence for each point is in [`tc002-protocol.md`](tc002-protocol.md). This
 file only says what is wrong with it and how to check in two minutes whether it
@@ -23,13 +23,22 @@ reference needs changing, and possibly something in the app.
 | # | Defect | Check | As of 1.0.17 |
 |---|---|---|---|
 | 1 | `text` does not scroll | send a long text as `text` | ❌ |
-| 2 | empty HTTP body does not delete | `POST /api/custom?name=x` with `{}` instead of an empty body | ⚠️ suspected |
+| 2 | an empty HTTP body reports success without deleting | `POST /api/custom?name=x` with an empty body, then `GET /api/customList` | ❌ |
 | 3 | GIF disposal method 1 not honored | send an opaque scrolling GIF | ❌ |
 | 4 | a wildcard in the prefix bricks the connection | set `#` as the prefix | ❌ |
-| 5 | no HTTP route for switching displays | `POST /api/switchDiyApp` | ⚠️ suspected |
-| 6 | display list over MQTT only — **not a defect**, wrong path | `GET /api/customList` | ✅ works |
+| 5 | no HTTP route for switching displays — **not a defect**, our wrong path | `POST /api/switchDiyApp?name=x` | ✅ works |
+| 6 | display list over MQTT only — **not a defect**, our wrong path | `GET /api/customList` | ✅ works |
 | 7 | built-in font has no umlauts | send `"content":"Grüße"` | ❌ |
 | 8 | clock drops off the network until power-cycled | `curl http://<address>/getBase` | ❌ |
+| 9 | the effective prefix is shown nowhere | look for it in the device's own interface | ❌ |
+
+The numbers are identifiers: they stay put even when a point is no longer a
+defect — other documents refer to them.
+
+**HTTP-only operation is possible.** Creating and deleting (device reference
+§5.6), switching (§5.8) and the display list (§5.7) all work without a broker.
+What only MQTT delivers: the **content** of a display, listened in on `custom`
+(§3.1), and the report of whether the clock is online (§3.4).
 
 ---
 
@@ -49,25 +58,21 @@ scrolling GIF, and with it several kilobytes of payload for one sentence.
 
 ---
 
-## 2. An empty HTTP body reports success and does nothing
+## 2. An empty HTTP body reports success without deleting
 
-**Device reference §5.6.** `POST /api/custom?name=x` with an empty body answers
-`{"code":200,"message":"ok"}`, but the display stays on the clock. Over MQTT the
-same empty payload deletes reliably (§3.2).
+**Device reference §5.6.** `POST /api/custom?name=x` deletes the display if the
+body is `{}`. An **empty** body answers the same `{"code":200,"message":"ok"}`
+but leaves the display standing.
 
 **Why it matters.** A success response for something that does not happen is
-worse than an error. And if it stands, HTTP alone is not usable as an operating
-mode: without a broker, no display can ever be removed.
+worse than an error. And the empty body is exactly the obvious attempt, because
+over MQTT it is the **empty** payload that deletes (§3.2) — same intent, two
+routes, opposite means.
 
-> ⚠️ **Suspected, verification open.** Another project describes deleting with
-> the body `{}` instead of an empty body, on the same firmware version. Only the
-> empty body has been checked here. If `{}` is the right route, this is not a
-> firmware defect but a gap in our knowledge — as with the display list in
-> point 6.
-
-**Check.** Create a display, send `POST /api/custom?name=x` with the body `{}`
-after it, look at the device. The check removes a real display and therefore
-belongs on the device, not in a test.
+**Check.** Create a display, send `POST /api/custom?name=x` with an empty body
+after it, then query `GET /api/customList` (§5.7): if the display is still in the
+list, the defect stands. The check changes a real display and therefore belongs
+on the device, not in a test.
 
 ---
 
@@ -104,41 +109,31 @@ one line of work.
 
 ---
 
-## 5. The effective prefix is shown nowhere
+## 5. No HTTP route for switching — not a defect, our wrong path
 
-**Device reference §2.** The firmware appends the last four digits of the MAC
-address to the configured prefix. `awtrix` becomes `awtrix_a86b`. This full
-prefix never appears in the user interface. It can only be determined over HTTP,
-or from which topics the device subscribes to at the broker.
+**Device reference §5.8.** `POST /api/switchDiyApp?name=<name>` does exist.
+Measured on 2026-09-13:
 
-**Why it matters.** It is by far the most common source of setup failures, and
-with MQTT 3.1.1 it does not announce itself: publishing to a topic nobody
-subscribes to stays silent. This is exactly why our app determines the prefix
-itself instead of letting the user type it.
+```json
+{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+```
 
-**Check.** Look for the full topic anywhere in the device's own interface.
+The endpoint was there; it had been looked for in the wrong place. None of this
+is a firmware defect, and there is nothing here to re-test on the next update.
+
+> ❓ **The effect remains unproven.** "app switch **requested**" means requested,
+> not done; whether the clock really jumps to the display nobody has looked.
+> Equally unproven is what `index: 100` means. Both are listed under "Not
+> verified yet".
 
 ---
 
-## 6. Switching is missing over HTTP
+## 6. Display list over MQTT only — not a defect, our wrong path
 
-**Device reference §3.3 and §5.7.**
-
-For switching to a display we know only the MQTT topic `switchDiyApp`.
-
-> ⚠️ **Suspected, verification open.** Another project describes
-> `POST /api/switchDiyApp` on the same firmware version. We looked for it and
-> found nothing — which is not the same as "it does not exist".
-
-**Why it matters.** Together with point 2 it decides whether HTTP-only operation
-is possible. Anyone who does not want to run a broker, and people do ask for
-this, can today send and find out what is on the clock, but as far as we know
-can neither delete nor switch.
-
-**The display list no longer belongs here.** `GET /api/customList` (§5.7) names
-the device's named displays, measured on 2026-09-13. The path is
-`/api/customList`; `GET /customList` returns nothing, and that is exactly what
-we took for a firmware defect. It was our own wrong path.
+**Device reference §5.7.** `GET /api/customList` names the device's named
+displays, measured on 2026-09-13. The path is `/api/customList`;
+`GET /customList` — without `/api` — returns nothing. That is the whole
+difference.
 
 The list also reports displays that were **created over HTTP** (§3.5) — it is
 the state of the device, not the bookkeeping of one sender. But they are names
@@ -187,6 +182,22 @@ connected and whether `customList` still reports anything.
 
 ---
 
+## 9. The effective prefix is shown nowhere
+
+**Device reference §2.** The firmware appends the last four digits of the MAC
+address to the configured prefix. `awtrix` becomes `awtrix_a86b`. This full
+prefix never appears in the user interface. It can only be determined over HTTP,
+or from which topics the device subscribes to at the broker.
+
+**Why it matters.** It is by far the most common source of setup failures, and
+with MQTT 3.1.1 it does not announce itself: publishing to a topic nobody
+subscribes to stays silent. This is exactly why our app determines the prefix
+itself instead of letting the user type it.
+
+**Check.** Look for the full topic anywhere in the device's own interface.
+
+---
+
 ## Not verified yet
 
 These are not defects but gaps in our knowledge. A new firmware would be a good
@@ -196,6 +207,8 @@ occasion to settle them. The checks are described in device reference §7.
 - Whether `status` and `customList` are published as retained (§3.5). This
   decides whether a fresh subscription gets a state immediately.
 - Whether `switchDiyApp` has any effect on a display that does not exist (§3.3).
+- Whether `POST /api/switchDiyApp` really switches the clock — the answer says
+  "requested", not "done" — and what `index` in it means (§5.8).
 - How `duration` and the device-wide page change interact (§4.4).
 - How large a payload may be. About 14 KB is demonstrated (§4.2a).
 - Whether a partial `POST /setConfig` loses the remaining fields (§5.5).

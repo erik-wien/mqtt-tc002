@@ -7,7 +7,7 @@ sobald eine neue Firmware erscheint**, und eine Grundlage, falls jemand das dem
 Hersteller melden möchte.
 
 **Geprüfter Stand:** `mcuVer V1.0.17`, `appVer 1.1.1`, abgelesen über
-`GET /getBase` (Gerätereferenz §5.1). Alle Messungen vom 11.09.2026.
+`GET /getBase` (Gerätereferenz §5.1). Messungen vom 11. bis 13.09.2026.
 
 Die Belege stehen jeweils in [`tc002-protokoll.md`](tc002-protokoll.md); hier
 steht nur, was daran ein Mangel ist und wie man in zwei Minuten prüft, ob er
@@ -24,13 +24,22 @@ geändert — und womöglich etwas in der App.
 | # | Mangel | Prüfung | Stand 1.0.17 |
 |---|---|---|---|
 | 1 | `text` läuft nicht durch | langen Text als `text` schicken | ❌ |
-| 2 | leerer HTTP-Rumpf löscht nicht | `POST /api/custom?name=x` mit `{}` statt leerem Rumpf | ⚠️ Verdacht |
+| 2 | leerer HTTP-Rumpf meldet Erfolg, ohne zu löschen | `POST /api/custom?name=x` mit leerem Rumpf, danach `GET /api/customList` | ❌ |
 | 3 | GIF-Verfahren 1 wird nicht umgesetzt | deckendes Lauf-GIF schicken | ❌ |
 | 4 | Platzhalter im Präfix macht das Gerät unbrauchbar | `#` als Präfix eintragen | ❌ |
-| 5 | kein HTTP-Weg zum Umschalten | `POST /api/switchDiyApp` | ⚠️ Verdacht |
-| 6 | Anzeigenliste nur über MQTT — **kein Mangel**, falscher Pfad | `GET /api/customList` | ✅ geht |
+| 5 | kein HTTP-Weg zum Umschalten — **kein Mangel**, unser Pfadfehler | `POST /api/switchDiyApp?name=x` | ✅ geht |
+| 6 | Anzeigenliste nur über MQTT — **kein Mangel**, unser Pfadfehler | `GET /api/customList` | ✅ geht |
 | 7 | Schrift ohne Umlaute | `"content":"Grüße"` schicken | ❌ |
 | 8 | Uhr wird unerreichbar, bis sie stromlos war | `curl http://<adresse>/getBase` | ❌ |
+| 9 | das wirksame Präfix steht nirgends | in der Geräteoberfläche nachsehen | ❌ |
+
+Die Nummern sind Bezeichner: Sie bleiben stehen, auch wenn ein Punkt keiner mehr
+ist — andere Dokumente verweisen darauf.
+
+**Ein reiner HTTP-Betrieb ist möglich.** Anlegen und Löschen (Gerätereferenz
+§5.6), Umschalten (§5.8) und die Anzeigenliste (§5.7) gehen ohne Broker. Was
+allein MQTT liefert: den **Inhalt** einer Anzeige, mitgelesen auf `custom`
+(§3.1), und die Meldung, ob die Uhr online ist (§3.4).
 
 ---
 
@@ -51,25 +60,21 @@ mehreren Kilobyte für einen Satz.
 
 ---
 
-## 2. Ein leerer HTTP-Rumpf meldet Erfolg und tut nichts
+## 2. Ein leerer HTTP-Rumpf meldet Erfolg, ohne zu löschen
 
-**Gerätereferenz §5.6.** `POST /api/custom?name=x` mit leerem Rumpf antwortet
-`{"code":200,"message":"ok"}`, die Anzeige bleibt aber stehen. Über MQTT löscht
-dieselbe leere Nutzlast zuverlässig (§3.2).
+**Gerätereferenz §5.6.** `POST /api/custom?name=x` löscht die Anzeige, wenn der
+Rumpf `{}` ist. Ein **leerer** Rumpf antwortet dasselbe
+`{"code":200,"message":"ok"}`, lässt die Anzeige aber stehen.
 
 **Warum das zählt.** Eine Erfolgsmeldung für etwas, das nicht geschieht, ist
-schlimmer als ein Fehler. Und wenn es dabei bleibt, taugt HTTP allein nicht als
-Betriebsart: ohne Broker ließe sich keine Anzeige mehr entfernen.
+schlimmer als ein Fehler. Und der leere Rumpf ist gerade der naheliegende
+Versuch, weil über MQTT genau die **leere** Nutzlast löscht (§3.2) — dieselbe
+Absicht, zwei Wege, gegensätzliche Mittel.
 
-> ⚠️ **Unter Verdacht, Prüfung offen.** Ein fremdes Projekt beschreibt an
-> derselben Firmwarefassung das Löschen mit dem Rumpf `{}` statt eines leeren
-> Rumpfes. Geprüft ist hier nur der leere Rumpf. Ist `{}` der richtige Weg, ist
-> das kein Mangel der Firmware, sondern eine Lücke in unserer Kenntnis — wie
-> bei der Anzeigenliste in Punkt 6.
-
-**Prüfung.** Anzeige anlegen, `POST /api/custom?name=x` mit dem Rumpf `{}`
-hinterherschicken, hinsehen. Die Prüfung entfernt eine wirkliche Anzeige und
-gehört deshalb an das Gerät, nicht in einen Test.
+**Prüfung.** Anzeige anlegen, `POST /api/custom?name=x` mit leerem Rumpf
+hinterherschicken, `GET /api/customList` (§5.7) abfragen: Steht die Anzeige noch
+in der Liste, besteht der Mangel. Die Prüfung verändert eine wirkliche Anzeige
+und gehört deshalb an das Gerät, nicht in einen Test.
 
 ---
 
@@ -109,42 +114,30 @@ zurückstellen.
 
 ---
 
-## 5. Das wirksame Präfix steht nirgends
+## 5. Kein HTTP-Weg zum Umschalten — kein Mangel, unser Pfadfehler
 
-**Gerätereferenz §2.** Die Firmware hängt an das eingetragene Präfix die letzten
-vier Stellen der MAC-Adresse an. Aus `awtrix` wird `awtrix_a86b`. In der
-Bedienoberfläche erscheint dieses vollständige Präfix nicht — ermitteln lässt es
-sich nur über HTTP oder daran, welche Themen das Gerät beim Broker abonniert.
+**Gerätereferenz §5.8.** `POST /api/switchDiyApp?name=<name>` gibt es. Am
+13.09.2026 gemessen:
 
-**Warum das zählt.** Es ist die häufigste Fehlerquelle überhaupt beim Einrichten,
-und sie fällt mit MQTT 3.1.1 nicht auf: Eine Veröffentlichung auf ein Thema, das
-niemand abonniert, bleibt stumm. Genau deshalb ermittelt diese App das Präfix
-selbst, statt es eintragen zu lassen.
+```json
+{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+```
 
-**Prüfung.** In der Geräteoberfläche nachsehen, ob das vollständige Thema
-irgendwo steht.
+Der Endpunkt war da; gesucht worden war an der falschen Stelle. Nichts daran ist
+ein Mangel der Firmware, und beim nächsten Update ist dazu nichts zu prüfen.
+
+> ❓ **Unbelegt bleibt die Wirkung.** „app switch **requested**" heißt
+> angefordert, nicht erledigt; ob die Uhr wirklich auf die Anzeige springt, hat
+> niemand nachgesehen. Ebenso unbelegt, was `index: 100` bedeutet. Beides steht
+> unter „Noch nicht nachgeprüft".
 
 ---
 
-## 6. Über HTTP fehlt das Umschalten
+## 6. Anzeigenliste nur über MQTT — kein Mangel, unser Pfadfehler
 
-**Gerätereferenz §3.3 und §5.7.**
-
-Zum Umschalten auf eine Anzeige kennen wir nur das MQTT-Thema `switchDiyApp`.
-
-> ⚠️ **Unter Verdacht, Prüfung offen.** Ein fremdes Projekt beschreibt an
-> derselben Firmwarefassung `POST /api/switchDiyApp`. Gesucht haben wir danach,
-> gefunden nichts — was nicht dasselbe ist wie „gibt es nicht".
-
-**Warum das zählt.** Zusammen mit Punkt 2 entscheidet es, ob ein reiner
-HTTP-Betrieb möglich ist. Wer keinen Broker betreiben will — und danach wird
-gefragt —, kann heute senden und erfahren, was auf der Uhr steht, aber nach
-unserem Kenntnisstand weder löschen noch umschalten.
-
-**Die Anzeigenliste gehört nicht mehr hierher.** `GET /api/customList` (§5.7)
-nennt die benannten Anzeigen des Geräts, am 13.09.2026 gemessen. Der Pfad ist
-`/api/customList`; `GET /customList` liefert nichts, und genau das haben wir
-für einen Mangel der Firmware gehalten. Es war unser Pfadfehler.
+**Gerätereferenz §5.7.** `GET /api/customList` nennt die benannten Anzeigen des
+Geräts, am 13.09.2026 gemessen. Der Pfad ist `/api/customList`; `GET /customList`
+— ohne `/api` — liefert nichts. Das ist der ganze Unterschied.
 
 Die Liste meldet **auch** Anzeigen, die über HTTP entstanden sind (§3.5) — sie
 ist der Zustand des Geräts und nicht die Buchführung eines Senders. Es sind
@@ -195,6 +188,23 @@ noch als verbunden geführt wird und ob `customList` noch etwas meldet.
 
 ---
 
+## 9. Das wirksame Präfix steht nirgends
+
+**Gerätereferenz §2.** Die Firmware hängt an das eingetragene Präfix die letzten
+vier Stellen der MAC-Adresse an. Aus `awtrix` wird `awtrix_a86b`. In der
+Bedienoberfläche erscheint dieses vollständige Präfix nicht — ermitteln lässt es
+sich nur über HTTP oder daran, welche Themen das Gerät beim Broker abonniert.
+
+**Warum das zählt.** Es ist die häufigste Fehlerquelle überhaupt beim Einrichten,
+und sie fällt mit MQTT 3.1.1 nicht auf: Eine Veröffentlichung auf ein Thema, das
+niemand abonniert, bleibt stumm. Genau deshalb ermittelt diese App das Präfix
+selbst, statt es eintragen zu lassen.
+
+**Prüfung.** In der Geräteoberfläche nachsehen, ob das vollständige Thema
+irgendwo steht.
+
+---
+
 ## Noch nicht nachgeprüft
 
 Diese Punkte sind keine Mängel, sondern Lücken in unserem Wissen. Eine neue
@@ -205,6 +215,8 @@ jeweils in der Gerätereferenz §7.
 - Ob `status` und `customList` aufbewahrt veröffentlicht werden (§3.5). Das
   entscheidet, ob ein frisches Abonnement sofort einen Stand bekommt.
 - Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
+- Ob `POST /api/switchDiyApp` die Uhr wirklich umschaltet — die Antwort sagt
+  „requested", nicht „done" — und was `index` darin bedeutet (§5.8).
 - Wie `duration` und der geräteweite Seitenwechsel zusammenwirken (§4.4).
 - Wie groß eine Nutzlast sein darf. Belegt sind rund 14 KB (§4.2a).
 - Ob eine Teilangabe an `POST /setConfig` die übrigen Felder verliert (§5.5).
