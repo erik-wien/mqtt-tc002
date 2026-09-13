@@ -64,30 +64,27 @@ public struct SchreibtischView: View {
         } detail: {
             bereichsansicht
         }
-        // Mindestgroesse: Seitenleiste (min. 150) plus die 52 Spalten der
-        // Mal-/Vorschaufläche bei ihrer groessten Kantenlaenge (14) plus
-        // Innenabstand — sonst faellt die Flaeche wie im gemeldeten Fall rechts
-        // aus dem Fenster, bevor die reaktive Anpassung ueberhaupt eingreift.
-        // 980 kommt von „Bilder": 52 Spalten bei groesster Kantenlaenge plus
-        // Seitenleiste. Der Inspektor von „Senden" braucht rund 340 Punkte
-        // obendrauf — erzwungen wird das hier aber nicht, sonst waere das
-        // Fenster fuer alle Bereiche so breit wie fuer den einen, der ihn hat,
-        // und wuechse ueber den Bildschirmrand. Die Vorgabegroesse ist breit
-        // genug; ist das Fenster schmaler, hilft der Knopf in der
-        // Werkzeugleiste, der den Inspektor einklappt.
-        // GEMESSEN, nicht gerechnet (12.09.2026, Bildschirmfoto bei 980):
-        // Die Detailspalte des Split-View geht nicht unter rund 600 Punkte,
-        // gleich was ihr Inhalt an Mindestbreite angibt. Mit fester
-        // Seitenleiste (170) und festem Inspektor (340) fehlten bei 980 genau
-        // 128 Punkte — beide Leisten wurden angeschnitten, nicht die Mitte.
-        // 170 + 600 + 340 = 1110, mit Luft 1120. „Bilder" braucht weniger.
+        // Mindestbreite des Fensters. GEMESSEN, nicht gerechnet (12.09.2026,
+        // Bildschirmfoto bei 980): Die Detailspalte des Split-View geht nicht
+        // unter rund 600 Punkte, gleich was ihr Inhalt an Mindestbreite
+        // angibt. Mit fester Seitenleiste und festem Inspektor (340) fehlten
+        // bei 980 genau 128 Punkte — beide Leisten wurden angeschnitten, nicht
+        // die Mitte.
         //
-        // Nur am Mac: Kein iPad erreicht 1120 im Hochformat (das groesste hat
+        // 190 + 600 + 340 = 1130, mit Luft 1140. Die Seitenleiste ist am
+        // 13.09.2026 von 170 auf 190 gewachsen (siehe `Seitenleiste`), die
+        // Forderung deshalb von 1120 auf 1140 — sonst verschoebe sich der
+        // Anschnitt dorthin zurueck, wo er schon einmal war.
+        //
+        // Die Leinwand des Editors fordert nichts mehr: Sie nimmt, was ihre
+        // Spalte hergibt (`Malflaeche`), und rollt bei Enge waagrecht.
+        //
+        // Nur am Mac: Kein iPad erreicht 1140 im Hochformat (das groesste hat
         // 1024), und in geteilter Ansicht bricht es immer. Die Forderung ist am
         // Mac gemessen und gilt fuer ein Fenster, das man ziehen kann — auf dem
         // iPad gibt es nichts zu ziehen, dort schnitte sie nur ab.
         #if os(macOS)
-        .frame(minWidth: 1120, minHeight: 640)
+        .frame(minWidth: 1140, minHeight: 640)
         #endif
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
@@ -122,9 +119,12 @@ public struct SchreibtischView: View {
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
-        // Auf dem iPad zugleich ein Gewinn: 170 statt der dortigen Vorgabe von
+        // Auf dem iPad zugleich ein Gewinn: 190 statt der dortigen Vorgabe von
         // rund 320 laesst quer genug fuer Mitte und Inspektor uebrig.
-        .navigationSplitViewColumnWidth(170)
+        //
+        // Woher die 190 kommen, steht in `Seitenleiste` — gemessen an
+        // „Einstellungen", das bei 170 auf dem iPad umbrach.
+        .navigationSplitViewColumnWidth(Seitenleiste.breite)
         #if !os(macOS)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { nebenfensterMenue } }
         #endif

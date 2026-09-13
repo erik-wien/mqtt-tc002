@@ -2,7 +2,7 @@ import XCTest
 
 /// Die Fensterforderungen der Mac-Fassung sind **gemessen** — an einem Fenster,
 /// das man ziehen kann. Auf dem iPad gibt es nichts zu ziehen: Kein Gerät
-/// erreicht hochkant 1120 Punkte (das größte hat 1024), und in geteilter
+/// erreicht hochkant 1140 Punkte (das größte hat 1024), und in geteilter
 /// Ansicht bleiben schnell 678 oder 320 übrig. Eine Mindestbreite, die dort
 /// nicht aufgeht, verschwindet nicht — sie schneidet ab, lautlos.
 ///
@@ -60,7 +60,7 @@ final class MindestmasseTests: XCTestCase {
     /// Am Mac ist sie gemessen und abgenommen; überall sonst muss sie fehlen.
     func testFensterforderungenStehenNurUnterMacOS() throws {
         let faelle: [(datei: String, mass: String)] = [
-            ("Sources/TC002Ansichten/SchreibtischView.swift", "minWidth: 1120"),
+            ("Sources/TC002Ansichten/SchreibtischView.swift", "minWidth: 1140"),
             ("Sources/TC002Ansichten/GeraeteReferenzView.swift", "minWidth: 880"),
             ("Sources/TC002Ansichten/GeraeteReferenzView.swift", "minWidth: 480"),
             ("Sources/TC002Ansichten/HilfeView.swift", "minWidth: 760"),
