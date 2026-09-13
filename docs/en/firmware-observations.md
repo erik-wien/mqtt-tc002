@@ -36,9 +36,12 @@ The numbers are identifiers: they stay put even when a point is no longer a
 defect — other documents refer to them.
 
 **HTTP-only operation is possible.** Creating and deleting (device reference
-§5.6), switching (§5.8) and the display list (§5.7) all work without a broker.
-What only MQTT delivers: the **content** of a display, listened in on `custom`
-(§3.1), and the report of whether the clock is online (§3.4).
+§5.6), switching (§5.8) and the display list (§5.7) all work without a broker —
+all four measured on the device and watched on the display. Switching really is
+needed: the first display appears immediately, a second one does not take over
+by itself (§5.8). What only MQTT delivers: the **content** of a display,
+listened in on `custom` (§3.1), and the report of whether the clock is online
+(§3.4).
 
 ---
 
@@ -111,20 +114,23 @@ one line of work.
 
 ## 5. No HTTP route for switching — not a defect, our wrong path
 
-**Device reference §5.8.** `POST /api/switchDiyApp?name=<name>` does exist.
-Measured on 2026-09-13:
+**Device reference §5.8.** `POST /api/switchDiyApp?name=<name>` does exist, and
+it works. Measured on 2026-09-13 with the page change switched off ("no change"
+on the device), and watched on the display:
 
 ```json
-{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+{"code":200,"message":"app switch requested","data":{"name":"probe2","index":111}}
 ```
+
+The clock jumped to `probe2`. "requested" is the wording of the answer, not a
+reservation. A name that does not exist is rejected by the endpoint with
+`{"code":404,"message":"custom app not found"}`.
 
 The endpoint was there; it had been looked for in the wrong place. None of this
 is a firmware defect, and there is nothing here to re-test on the next update.
 
-> ❓ **The effect remains unproven.** "app switch **requested**" means requested,
-> not done; whether the clock really jumps to the display nobody has looked.
-> Equally unproven is what `index: 100` means. Both are listed under "Not
-> verified yet".
+> ❓ **What `index` means remains unproven.** Observed values are `100` and
+> `111` — so the number is not fixed. It is listed under "Not verified yet".
 
 ---
 
@@ -206,9 +212,12 @@ occasion to settle them. The checks are described in device reference §7.
 - Whether the built-in font knows uppercase letters (§1).
 - Whether `status` and `customList` are published as retained (§3.5). This
   decides whether a fresh subscription gets a state immediately.
-- Whether `switchDiyApp` has any effect on a display that does not exist (§3.3).
-- Whether `POST /api/switchDiyApp` really switches the clock — the answer says
-  "requested", not "done" — and what `index` in it means (§5.8).
+- How the **MQTT** topic `switchDiyApp` behaves for a display that does not
+  exist (§3.3) — over HTTP it is proven: `404 custom app not found`.
+- What `index` in the answer of `POST /api/switchDiyApp` means; observed values
+  are `100` and `111` (§5.8).
+- Whether a newly created display also appears immediately, and a second one
+  still does not take over, when the page change is switched on (§5.8).
 - How `duration` and the device-wide page change interact (§4.4).
 - How large a payload may be. About 14 KB is demonstrated (§4.2a).
 - Whether a partial `POST /setConfig` loses the remaining fields (§5.5).

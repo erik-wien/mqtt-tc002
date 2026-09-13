@@ -37,9 +37,11 @@ Die Nummern sind Bezeichner: Sie bleiben stehen, auch wenn ein Punkt keiner mehr
 ist — andere Dokumente verweisen darauf.
 
 **Ein reiner HTTP-Betrieb ist möglich.** Anlegen und Löschen (Gerätereferenz
-§5.6), Umschalten (§5.8) und die Anzeigenliste (§5.7) gehen ohne Broker. Was
-allein MQTT liefert: den **Inhalt** einer Anzeige, mitgelesen auf `custom`
-(§3.1), und die Meldung, ob die Uhr online ist (§3.4).
+§5.6), Umschalten (§5.8) und die Anzeigenliste (§5.7) gehen ohne Broker, alle
+vier am Gerät gemessen und am Display nachgesehen. Umgeschaltet werden muss
+dabei wirklich: Die erste Anzeige erscheint sofort, eine zweite übernimmt nicht
+von selbst (§5.8). Was allein MQTT liefert: den **Inhalt** einer Anzeige,
+mitgelesen auf `custom` (§3.1), und die Meldung, ob die Uhr online ist (§3.4).
 
 ---
 
@@ -116,20 +118,23 @@ zurückstellen.
 
 ## 5. Kein HTTP-Weg zum Umschalten — kein Mangel, unser Pfadfehler
 
-**Gerätereferenz §5.8.** `POST /api/switchDiyApp?name=<name>` gibt es. Am
-13.09.2026 gemessen:
+**Gerätereferenz §5.8.** `POST /api/switchDiyApp?name=<name>` gibt es, und es
+wirkt. Am 13.09.2026 gemessen, bei abgeschaltetem Seitenwechsel („kein Wechsel"
+am Gerät), und am Display nachgesehen:
 
 ```json
-{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+{"code":200,"message":"app switch requested","data":{"name":"probe2","index":111}}
 ```
+
+Die Uhr sprang darauf auf `probe2`. „requested" ist die Wortwahl der Antwort,
+kein Vorbehalt. Einen Namen, den es nicht gibt, weist der Endpunkt mit
+`{"code":404,"message":"custom app not found"}` ab.
 
 Der Endpunkt war da; gesucht worden war an der falschen Stelle. Nichts daran ist
 ein Mangel der Firmware, und beim nächsten Update ist dazu nichts zu prüfen.
 
-> ❓ **Unbelegt bleibt die Wirkung.** „app switch **requested**" heißt
-> angefordert, nicht erledigt; ob die Uhr wirklich auf die Anzeige springt, hat
-> niemand nachgesehen. Ebenso unbelegt, was `index: 100` bedeutet. Beides steht
-> unter „Noch nicht nachgeprüft".
+> ❓ **Was `index` bedeutet, bleibt unbelegt.** Beobachtet sind `100` und `111`
+> — fest ist die Zahl also nicht. Sie steht unter „Noch nicht nachgeprüft".
 
 ---
 
@@ -214,9 +219,12 @@ jeweils in der Gerätereferenz §7.
 - Ob die Gerätschrift Großbuchstaben kennt (§1).
 - Ob `status` und `customList` aufbewahrt veröffentlicht werden (§3.5). Das
   entscheidet, ob ein frisches Abonnement sofort einen Stand bekommt.
-- Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
-- Ob `POST /api/switchDiyApp` die Uhr wirklich umschaltet — die Antwort sagt
-  „requested", nicht „done" — und was `index` darin bedeutet (§5.8).
+- Wie sich das **MQTT**-Thema `switchDiyApp` bei einer nicht vorhandenen
+  Anzeige verhält (§3.3) — über HTTP ist es belegt: `404 custom app not found`.
+- Was `index` in der Antwort von `POST /api/switchDiyApp` bedeutet; beobachtet
+  sind `100` und `111` (§5.8).
+- Ob eine neu angelegte Anzeige auch bei eingeschaltetem Seitenwechsel sofort
+  erscheint und eine zweite auch dann nicht übernimmt (§5.8).
 - Wie `duration` und der geräteweite Seitenwechsel zusammenwirken (§4.4).
 - Wie groß eine Nutzlast sein darf. Belegt sind rund 14 KB (§4.2a).
 - Ob eine Teilangabe an `POST /setConfig` die übrigen Felder verliert (§5.5).
