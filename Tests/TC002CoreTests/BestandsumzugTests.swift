@@ -169,3 +169,91 @@ final class BestandsumzugTests: XCTestCase {
         XCTAssertEqual(inhalt(o.oertlicherOrdner(.icons8), "1.gif"), "a")
     }
 }
+
+/// Das Umschalten selbst — gegen Wegwerfverzeichnisse und eine Wegwerf-Ablage,
+/// nie gegen den echten Behaelter und nie gegen die echten Einstellungen.
+final class UmschaltenTests: XCTestCase {
+    private var wurzel = URL(fileURLWithPath: "/")
+    private var bereich = ""
+
+    override func setUp() {
+        super.setUp()
+        wurzel = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("umschalten-\(UUID().uuidString)")
+        bereich = "cloud.eriks.mqtt-tc002.test.\(UUID().uuidString)"
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: wurzel)
+        UserDefaults().removePersistentDomain(forName: bereich)
+        super.tearDown()
+    }
+
+    private var oertlich: URL { wurzel.appendingPathComponent("oertlich") }
+    private var wolke: URL { wurzel.appendingPathComponent("wolke") }
+
+    private func schreiben(_ inhalt: String, _ ordner: URL, _ name: String) {
+        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        try? Data(inhalt.utf8).write(to: ordner.appendingPathComponent(name))
+    }
+
+    private func inhalt(_ ordner: URL, _ name: String) -> String? {
+        (try? Data(contentsOf: ordner.appendingPathComponent(name))).map {
+            String(decoding: $0, as: UTF8.self)
+        }
+    }
+
+    private func umschalten(_ an: Bool, behaelter: URL?) -> Umschaltergebnis {
+        Ablageort.umschalten(an, bereich: bereich, oertlicheWurzel: oertlich,
+                             behaelter: { behaelter })
+    }
+
+    /// Einschalten: kopiert hinauf und merkt sich die Wahl dort, wo auch das
+    /// Werkzeug sie findet.
+    func testEinschaltenZiehtUmUndMerktSichDieWahl() {
+        schreiben("BUS", oertlich.appendingPathComponent("Icons"), "1673.gif")
+        let ergebnis = umschalten(true, behaelter: wolke)
+        XCTAssertEqual(ergebnis, Umschaltergebnis(gewaehlt: true, bereit: true,
+                                                  bilanz: .init(kopiert: 1)))
+        XCTAssertTrue(Ablageort.gewaehlt(bereich: bereich))
+        XCTAssertEqual(inhalt(wolke.appendingPathComponent("Icons"), "1673.gif"), "BUS")
+    }
+
+    /// **Der Normalfall ohne Berechtigung.** Kein Behaelter: Die Wahl bleibt
+    /// aus, statt auf „an" zu stehen und nichts zu tun — und kopiert wird
+    /// nichts.
+    func testOhneBehaelterBleibtDieWahlAus() {
+        schreiben("BUS", oertlich.appendingPathComponent("Icons"), "1673.gif")
+        let ergebnis = umschalten(true, behaelter: nil)
+        XCTAssertEqual(ergebnis, Umschaltergebnis(gewaehlt: false, bereit: false, bilanz: .init()))
+        XCTAssertFalse(Ablageort.gewaehlt(bereich: bereich))
+        XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Icons"), "1673.gif"), "BUS")
+    }
+
+    /// **Der Rueckweg.** Wer abschaltet, behaelt seine Sachen — auch die, die
+    /// erst nach dem Einschalten dazugekommen sind.
+    func testAbschaltenBringtAllesZurueck() {
+        schreiben("alt", oertlich.appendingPathComponent("Bilder"), "nacht.gif")
+        umschalten(true, behaelter: wolke)
+        // Seither in der Wolke gearbeitet: eines geaendert, eines dazu.
+        schreiben("seither bearbeitet", wolke.appendingPathComponent("Bilder"), "nacht.gif")
+        schreiben("am Telefon gemalt", wolke.appendingPathComponent("Bilder"), "tag.gif")
+
+        let ergebnis = umschalten(false, behaelter: wolke)
+        XCTAssertFalse(ergebnis.gewaehlt)
+        XCTAssertFalse(Ablageort.gewaehlt(bereich: bereich))
+        XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Bilder"), "nacht.gif"),
+                       "seither bearbeitet")
+        XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Bilder"), "tag.gif"),
+                       "am Telefon gemalt")
+    }
+
+    /// Auch das Slotgedaechtnis kommt zurueck — sonst wuesste das Geraet nach
+    /// dem Abschalten nicht mehr, was es selbst zuletzt geschickt hat.
+    func testAuchDasSlotgedaechtnisKommtZurueck() {
+        umschalten(true, behaelter: wolke)
+        schreiben("[]", wolke.appendingPathComponent("Slots"), "abc.json")
+        umschalten(false, behaelter: wolke)
+        XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Slots"), "abc.json"), "[]")
+    }
+}

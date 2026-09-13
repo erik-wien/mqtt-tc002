@@ -182,3 +182,53 @@ extension Ablageort {
         }
     }
 }
+
+// MARK: - Umschalten
+
+/// Was beim Umschalten herauskam. `gewaehlt` ist, was **danach** gilt — nicht,
+/// was gewuenscht war: Ohne Behaelter bleibt der Abgleich aus, statt auf „an"
+/// zu stehen und nichts zu tun.
+public struct Umschaltergebnis: Sendable, Equatable {
+    public var gewaehlt: Bool
+    public var bereit: Bool
+    public var bilanz: Bestandsumzug.Bilanz
+
+    public init(gewaehlt: Bool, bereit: Bool, bilanz: Bestandsumzug.Bilanz) {
+        self.gewaehlt = gewaehlt
+        self.bereit = bereit
+        self.bilanz = bilanz
+    }
+}
+
+extension Ablageort {
+    /// Den Abgleich ein- oder ausschalten — mitsamt dem Umzug, der dazugehoert.
+    ///
+    /// **Blockiert** (`behaelterErmitteln`, dann kopieren) und gehoert deshalb
+    /// nicht auf den Hauptthread.
+    ///
+    /// Die Reihenfolge ist beide Male dieselbe: **erst kopieren, dann die Wahl
+    /// schreiben.** Umgekehrt zeigte `Ablageort.gemeinsam` schon auf den neuen
+    /// Ort, waehrend der Umzug noch liefe — und ein Sendevorgang mittendrin
+    /// schriebe in einen halb gefuellten Bestand.
+    ///
+    /// Ohne Behaelter wird **nichts** geschrieben und nichts kopiert. Das ist
+    /// der Normalfall ohne Berechtigung: Die Wahl bleibt aus, die App arbeitet
+    /// weiter oertlich, und niemand steht vor einem halben Zustand.
+    public static func umschalten(_ an: Bool,
+                                  bereich: String = Einstellungen.kennung,
+                                  oertlicheWurzel: URL = oertlicheWurzelStandard,
+                                  behaelter: () -> URL? = { behaelterErmitteln() })
+        -> Umschaltergebnis {
+        guard let fern = behaelter() else {
+            // Kein Behaelter: Auch das Abschalten ist dann nur noch das
+            // Streichen einer Wahl, die ohnehin nie gewirkt hat.
+            if !an { waehlen(false, bereich: bereich) }
+            return Umschaltergebnis(gewaehlt: false, bereit: false, bilanz: Bestandsumzug.Bilanz())
+        }
+        let ort = Ablageort(oertlicheWurzel: oertlicheWurzel, ferneWurzel: fern,
+                            gewuenscht: true).angelegt()
+        let bilanz = an ? Bestandsumzug.hinweg(ort) : Bestandsumzug.rueckweg(ort)
+        waehlen(an, bereich: bereich)
+        return Umschaltergebnis(gewaehlt: an, bereit: true, bilanz: bilanz)
+    }
+}
