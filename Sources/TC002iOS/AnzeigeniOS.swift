@@ -68,13 +68,19 @@ struct AnzeigeniOS: View {
             HStack {
                 Text("Protokoll")
                 Spacer()
-                Button {
+                // Am Mac ist „Leeren" ein rot getoenter Befehlsknopf; hier
+                // steht es im Kopf eines Listenabschnitts, und dort ist auf
+                // dem Telefon blosse Schrift der Kanon (wie „Bearbeiten").
+                // Rot getoent ist es trotzdem — es wirft weg.
+                Button(role: .destructive) {
                     zustand.protokoll.removeAll()
                 } label: {
                     Text("Leeren")
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
+                .buttonStyle(.automatic)
+                .tint(.red)
                 .font(.caption)
             }
         }

@@ -62,10 +62,11 @@ struct VerbindungiOS: View {
                         .foregroundStyle(.secondary)
                     HStack {
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
+                            .knopfBefehl()
                         Spacer()
                         Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
+                            .knopfZerstoerend()
                     }
-                    .buttonStyle(.bordered)
                     .font(.callout)
                 }
             }
@@ -77,6 +78,7 @@ struct VerbindungiOS: View {
                     .autocorrectionDisabled()
                     .onSubmit { hinzufuegen() }
                 Button("Hinzufügen") { hinzufuegen() }
+                    .knopfBefehl()
                     .disabled(neueAdresse.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
@@ -92,8 +94,14 @@ struct VerbindungiOS: View {
     /// kein verbreitetes Muster.
     private var ueberAbschnitt: some View {
         Section {
+            // Zwei Listenzeilen, keine Befehlsknoepfe: Sie fuehren weiter,
+            // statt etwas zu tun, und eine Formularzeile ist auf dem Telefon
+            // selbst schon als antippbar zu erkennen. Ausdruecklich
+            // `.automatic`, damit die Entscheidung im Quelltext steht.
             Button("Hilfe") { zeigeHilfe = true }
+                .buttonStyle(.automatic)
             Button("Über MQTT-TC002") { zeigeUeber = true }
+                .buttonStyle(.automatic)
         }
     }
 
@@ -139,6 +147,7 @@ struct VerbindungiOS: View {
                     .onSubmit { zustand.kennwortSichern() }
             }
             Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
+                .knopfBefehl()
             standText
             Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
                 .font(.caption).foregroundStyle(.secondary)

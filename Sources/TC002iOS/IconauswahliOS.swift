@@ -99,6 +99,7 @@ struct IconauswahliOS: View {
                                 }
                             }
                         Button("Nachladen") { nachladen() }
+                            .knopfBefehl()
                             .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                     if let meldung {
@@ -108,7 +109,11 @@ struct IconauswahliOS: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section {
+                    // Eine Listenzeile wie „Hilfe" in den Einstellungen, kein
+                    // Befehlsknopf — sie steht fuer sich in der Liste und ist
+                    // dort schon als antippbar zu erkennen.
                     Button("Kein Icon") { gewaehlt = nil; schliessen() }
+                        .buttonStyle(.automatic)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {
                         ForEach(vorhandene.gefiltert(nach: suche), id: \.nummer) { icon in
@@ -133,6 +138,10 @@ struct IconauswahliOS: View {
                                 .contentShape(Rectangle())
                             }
                             .padding(-Self.zwischenraum / 2)
+                            // Rasterkachel, kein Befehlsknopf — das Icon ist
+                            // selbst die Flaeche. `.automatic` ausdruecklich,
+                            // damit die Entscheidung im Quelltext steht.
+                            .buttonStyle(.automatic)
                             .tint(.primary)
                             .accessibilityLabel(Text(icon.name))
                             .accessibilityAddTraits(gewaehlt?.nummer == icon.nummer ? [.isSelected] : [])
@@ -228,7 +237,7 @@ private struct IconEinzelansichtiOS: View {
                 }
                 Spacer()
                 Button("Übernehmen", action: uebernehmen)
-                    .buttonStyle(.borderedProminent)
+                    .knopfHaupthandlung()
             }
             .padding()
             .navigationTitle(icon.name)

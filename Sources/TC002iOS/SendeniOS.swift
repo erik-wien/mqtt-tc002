@@ -641,6 +641,13 @@ struct SendeniOS: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
             }
+            // Die Haupthandlung des Telefons — aber nicht als gefuellter
+            // Kasten: Der gefuellte Pfeil **ist** hier die Hervorhebung, wie
+            // in Nachrichten und Mail. Ein `.borderedProminent` darum herum
+            // waere die Antwort des Macs auf die Frage des iPhones.
+            // Ausdruecklich `.automatic`, damit die Entscheidung im
+            // Quelltext steht.
+            .buttonStyle(.automatic)
             .disabled(laeuft || text.trimmingCharacters(in: .whitespaces).isEmpty)
             .accessibilityLabel(Text(sendenWort))
         }
@@ -711,7 +718,10 @@ private struct MeldungLoeschenKnopf: View {
     @State private var laeuft = false
 
     var body: some View {
-        Button {
+        // Rot getoent wie am Mac, aber ohne Fassung: Die Breite dieser Zeile
+        // ist auf 44 Punkte je Platz gerechnet (siehe `blockZeile`), und ein
+        // `.bordered` legte um jedes davon noch seine eigene Polsterung.
+        Button(role: .destructive) {
             laeuft = true
             let name = Meldungsplatz.name(fuer: platz)
             Task { await zustand.loeschen(name); laeuft = false }
@@ -720,6 +730,8 @@ private struct MeldungLoeschenKnopf: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
+        .buttonStyle(.automatic)
+        .tint(.red)
         .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
         .accessibilityLabel(Text(lokf("Slot %d auf der Uhr löschen", platz)))
     }
