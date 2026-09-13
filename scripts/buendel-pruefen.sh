@@ -141,6 +141,31 @@ for dok in tc002-protokoll.md tc002-protocol.md; do
     fi
 done
 
+# Die Lagen. Das iPad zeigt seit S7 die Schreibtischoberflaeche und muss sich
+# drehen duerfen; das iPhone bleibt im Hochformat, weil `SendeniOS` darauf
+# gerechnet ist. Beides haengt an zwei Schluesseln der Info.plist, und der
+# `~ipad`-Schluessel ist genau die Sorte Eintrag, die ein gruener Bau nicht
+# belegt: XcodeGen kann ihn ueberlesen, und Xcodes Plist-Verarbeitung koennte
+# ihn beim Zusammenbau fallen lassen. Geprueft wird deshalb das **gebaute**
+# Buendel, nicht project.yml.
+LAGEN_IPAD=$(plutil -extract 'UISupportedInterfaceOrientations~ipad' xml1 -o - "$APP/Info.plist" 2>/dev/null || true)
+for lage in Portrait PortraitUpsideDown LandscapeLeft LandscapeRight; do
+    case "$LAGEN_IPAD" in
+        *"UIInterfaceOrientation$lage"*) ;;
+        *)
+            echo "fehlt   UISupportedInterfaceOrientations~ipad: UIInterfaceOrientation$lage"
+            fehlt=1
+            ;;
+    esac
+done
+LAGEN_IPHONE=$(plutil -extract 'UISupportedInterfaceOrientations' xml1 -o - "$APP/Info.plist" 2>/dev/null || true)
+case "$LAGEN_IPHONE" in
+    *Landscape*|*UpsideDown*)
+        echo "falsch  UISupportedInterfaceOrientations (iPhone) ist nicht mehr nur Hochformat"
+        fehlt=1
+        ;;
+esac
+
 for ofl in OFL-Micro5.txt OFL-Silkscreen.txt OFL-Tiny5.txt; do
     if [ ! -s "$APP/Schriften/$ofl" ]; then
         echo "fehlt   Schriften/$ofl"

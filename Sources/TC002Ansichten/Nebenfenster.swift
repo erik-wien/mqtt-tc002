@@ -1,0 +1,72 @@
+import SwiftUI
+import TC002Core
+
+/// Die vier Dokumente neben der Hauptansicht: Über, Hilfe, Gerätereferenz,
+/// Schriftprobe.
+///
+/// Am Mac ist jedes ein eigenes Fenster (`Window`-Szene in
+/// `TC002App/App.swift`), auf dem iPad eine ganzflächige Einblendung aus dem
+/// Menü der Seitenleiste (`SchreibtischView`). Der Grund für die zwei Wege:
+/// **`Window` gibt es unter iOS nicht**, und `openWindow(id:)` übersetzt dort
+/// klaglos und tut zur Laufzeit nichts — ein Knopf, der schweigt.
+///
+/// Damit die zwei Wege nicht auseinanderlaufen, liest keine Seite ihre eigene
+/// Liste: Der Mac benennt seine Szenen über `id`, das iPad zählt
+/// `allCases` auf. Ein fünftes Dokument kommt damit auf beiden Geräten an oder
+/// auf keinem.
+public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
+    case ueber = "Über MQTT-TC002"
+    case hilfe = "Hilfe"
+    case geraetereferenz = "Gerätereferenz"
+    case schriftprobe = "Schriftprobe"
+
+    /// Zugleich die Kennung der `Window`-Szene am Mac.
+    public var id: String {
+        switch self {
+        case .ueber: return "ueber"
+        case .hilfe: return "hilfe"
+        case .geraetereferenz: return "geraetereferenz"
+        case .schriftprobe: return "schriftprobe"
+        }
+    }
+
+    /// Schon übersetzt: `rawValue` ist der Schlüssel, nicht der fertige Text.
+    /// Die vier Wortlaute stehen deshalb von Hand in `DYNAMISCH`
+    /// (`scripts/texte-sammeln.py`) — der Sammler sieht `lok(x.rawValue)` nicht.
+    public var titel: String { lok(rawValue) }
+
+    public var symbol: String {
+        switch self {
+        case .ueber: return "info.circle"
+        case .hilfe: return "questionmark.circle"
+        case .geraetereferenz: return "doc.text"
+        case .schriftprobe: return "textformat.size"
+        }
+    }
+
+    /// Bringt die Ansicht ihren eigenen Navigationsrahmen mit?
+    ///
+    /// `HilfeView` und `GeraeteReferenzView` sind zweispaltig
+    /// (`NavigationSplitView`) und tragen eine Werkzeugleiste selbst;
+    /// `UeberView` und `SchriftprobeView` sind nackte `ScrollView`. Ohne diese
+    /// Unterscheidung hätte der Schließknopf dort keine Stelle — und eine
+    /// ganzflächige Einblendung ohne Schließknopf ist eine Sackgasse.
+    public var eigenerRahmen: Bool {
+        switch self {
+        case .hilfe, .geraetereferenz: return true
+        case .ueber, .schriftprobe: return false
+        }
+    }
+
+    @ViewBuilder public var inhalt: some View {
+        switch self {
+        case .ueber: UeberView()
+        case .hilfe: HilfeView()
+        case .geraetereferenz: GeraeteReferenzView()
+        // Die Schriftprobe bekommt die angebotenen Groessen gereicht, statt sie
+        // zu kennen: Die Ansicht zeigt, was gemessen wurde — und daneben, was
+        // die durchgesehene Liste (`Pixelgroessen.abgesegnet`) daraus anbietet.
+        case .schriftprobe: SchriftprobeView(angeboteneGroessen: Pixelgroessen.abgesegnet)
+        }
+    }
+}

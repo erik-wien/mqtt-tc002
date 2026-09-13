@@ -84,6 +84,17 @@ targets:
         CFBundleDisplayName: MQTT-TC002
         CFBundleDevelopmentRegion: de
         UILaunchScreen: {}
+        # Zwei Schluessel, nicht einer: Das iPhone bleibt im Hochformat — die
+        # iPhone-Oberflaeche (`SendeniOS`) ist darauf gerechnet. Das iPad zeigt
+        # den Schreibtisch und dreht sich, quer wie hochkant. Fehlte die
+        # `~ipad`-Fassung, gaelte der Schluessel darunter auch dort, und auf dem
+        # iPad staende eine hochformatgesperrte Schreibtischoberflaeche — ein
+        # Bau, der gelingt, und ein Geraet, das sich nicht drehen laesst.
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         # Ohne diesen Eintrag erreicht die App weder Uhr noch Broker, und die

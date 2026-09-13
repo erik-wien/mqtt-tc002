@@ -65,8 +65,14 @@ PARAMETER_SCHLUESSEL = ["title", "description"]
 # deshalb nicht im Quelltext stehen koennen. Sie muessen von Hand hier gefuehrt
 # werden, sonst faellt ihr Fehlen erst dem Anwender auf.
 DYNAMISCH = [
-    # Bereiche der Seitenleiste (App.swift, enum Bereich)
+    # Bereiche der Seitenleiste (SchreibtischView.swift, enum Bereich)
     "Senden", "Malen", "Icons", "Verlauf", "Einstellungen",
+    # Die vier Nebenfenster (Nebenfenster.swift, `titel` schlaegt ueber
+    # `lok(rawValue)` nach). Drei davon stehen heute zufaellig auch als
+    # Literal in einem Menueeintrag oder Knopf — verlassen darf sich darauf
+    # niemand: Faellt der Knopf weg, faende der Sammler den Schluessel nicht
+    # mehr, und das Fenster hiesse auf einem englischen Geraet deutsch.
+    "Über MQTT-TC002", "Hilfe", "Gerätereferenz", "Schriftprobe",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
