@@ -249,6 +249,89 @@ schwerste Frage der Erhebung weg** — die Vorschau muss nie zwei Darstellungen
 zugleich zeigen, und `ziele()` bleibt, wie es ist. Zuschnitt: Textweg (~1000
 Zeilen, `.superpowers/sdd/awtrix/aufwand.md`).
 
+### E2 — gebaut am 14.09.2026: der Nachrichtenweg steht
+
+Was jetzt geht, wenn eine Uhr als AWTRIX NG eingetragen ist: **Text senden, Icon
+senden, loeschen, umschalten, Belegung lesen, mitlesen** — ueber HTTP wie ueber
+MQTT, auf den Themen und Routen von NG. Die Geraeteart stellt „Abfragen" selbst
+fest (`GET /api/v1/device`, `boardType`) und traegt sie in die Uhr ein; von Hand
+waehlbar ist sie in `VerbindungView` fuer den Fall, dass die Erkennung nicht
+gelingt.
+
+**Die Bauform in einem Satz:** `Meldungsbau.rahmen` haengt an jeden Rahmen seine
+`Meldungsherkunft` (die Regler und das Icon), und `Anzeigen` entscheidet an einer
+Stelle, ob daraus der Pixelrahmen der Werksfirmware oder die Textnutzlast von NG
+wird. Damit koennen **App, Kommandozeilenwerkzeug und Kurzbefehle** an beide
+Gattungen senden, ohne dass eine dieser drei Stellen davon weiss.
+
+**Was NG mehr kann als die Werksfirmware — notiert, nicht gebaut:**
+
+| Kann NG | Warum es hier nicht gebaut ist |
+|---|---|
+| Benachrichtigungen (`cmd/notify`), die die Schleife unterbrechen, mit Ton, `hold` und Warteschlange | Ein eigener Begriff neben den fuenf Plaetzen; danach hat niemand gefragt |
+| Zeichenbefehle (`draw`: Linie, Kreis, Rechteck, Bitmap) unmittelbar in der Anzeige | Waere der Pixelweg auf 32×8 — Zuschnitt (B), ausdruecklich nicht gewaehlt |
+| Balken- und Liniendiagramm, Fortschrittsbalken | Kein Gegenstueck in dieser App |
+| 19 Hintergrundeffekte, 22 Uebergaenge, 6 Overlays, 8 Paletten | Dito; `GET /api/v1/capabilities` nennt sie, wenn es je gebraucht wird |
+| Moodlight, die drei Randindikatoren, Audio (MP3, Melodien, Webradio) | Nichts davon hat die Werksfirmware |
+| Berry-Skripte, Dateiablage, Sicherung, Firmware-Update | Weit ausserhalb |
+| Reihenfolge und Sichtbarkeit der Anzeigen (`cmd/apps/order`) | Die App verwaltet fuenf feste Plaetze, keine Schleife |
+| `cmd/screen/get` — ein Foto des Bildspeichers | Kostet ein sichtbares Umschalten der Uhr **je Block** und liefert ein Standbild aus einer Bewegung. Der Preis ist hoeher als der Gewinn |
+
+**Was auf NG nicht geht, und wie die App es sagt:**
+
+| | Wie es gesagt wird |
+|---|---|
+| Gemaltes Bild, Bild aus der Sammlung | `NGFehler.keinPixelweg` — eine Sendung ohne Regler wird **nicht abgeschickt**, die Meldung nennt 52 × 16 gegen 32 × 8 |
+| 16 × 16-Icon | `NGFehler.iconZuHoch` — auf acht Zeilen kein Platz, und ein zu hohes GIF spielt auf NG **gar nicht** |
+| PNG als Icon | `NGFehler.iconFormat` — NG liest nur GIF und JPEG und faellt sonst still auf „kein Icon" zurueck |
+| Schriftart, Groesse, Fett, Rand, Zeichenabstand, senkrechte Ausrichtung | `Geraetetyp.wirkt(_:)` sagt nein, `Geraetetyp.begruendung(_:)` liefert den Satz fuer den Einblendtext |
+| Rechtsbuendig | `Geraetetyp.waagrechteAusrichtungen` nennt nur `links` und `mittig` |
+| Seitenwechsel, Scrolltempo | `/getConfig` gibt es bei NG nicht; der Abschnitt in `VerbindungView` sagt das, statt eine 404 als Fehler zu melden |
+| Bild eines Slotblocks | `slotzustand` gibt auf NG `.unbekannt` statt eines aus dem Gedaechtnis gerechneten 52×16-Bildes in **unserer** Schrift |
+
+**Die Masse kommen vom Geraet**, nicht aus einer Konstanten: `Uhr.panelbreite`
+wird beim Abfragen aus `panelWidth × panels` geholt (32…128, alles andere gilt
+als nicht beantwortet), die Hoehe ist bei NG fest 8. Wer rechnet, fragt
+`Uhr.anzeigemass` — `Pixelfeld.breiteStandard/hoeheStandard` sind die Masse der
+**Werksfirmware**.
+
+**Was liegengeblieben ist** (fremde Dateien, oder es fehlt das Geraet):
+
+1. **Die Regler in `SendenView`/`SendeniOS` sind noch nicht gesperrt.** Die
+   Tabelle dafuer steht fertig im Kern (`Geraetetyp.wirkt`, `.begruendung`,
+   `.waagrechteAusrichtungen`, `.iconKanten`) und ist mutationsgeprueft; es fehlt
+   allein der Griff in den beiden Sendeansichten. Bis dahin lassen sich auf einer
+   NG-Uhr Regler bewegen, die nichts bewirken.
+2. **Malen und Bildersammlung sperren.** `MalenView`/`BilderBereichView` schicken
+   heute und bekommen `NGFehler.keinPixelweg` zurueck — eine ehrliche Meldung,
+   aber ein gesperrter Knopf waere besser als ein Fehler nach dem Druck.
+3. **Vorschau und Slotblock rechnen weiter mit 52×16.** `Uhr.anzeigemass` liegt
+   bereit; `VorschauView`, `VorschauiOS` und `Slotblock` gehoeren anderen
+   Durchgaengen.
+4. **`docs/awtrix-ng-protokoll.md` ist in keinem Buendel.** Dafuer sind `build.sh`
+   und `project.yml` zu aendern (S12 der Aufwandsschaetzung) — und danach
+   `sh scripts/buendel-pruefen.sh`, nicht der Compiler, ist der Beweis.
+5. **Das Icon „ein bisschen nach rechts".** Der Auftraggeber woertlich: *„Das
+   einzig spezielle ist, dass das Icon ein bisschen nach rechts rücken müsste."*
+   NG reserviert dafuer eine 9-px-Spalte von selbst, und `iconOffsetX` schoebe das
+   Icon **unter** den Text statt neben ihn. Wie viele Pixel richtig sind, laesst
+   sich ohne Blick auf das Geraet nicht sagen — deshalb nicht geraten.
+6. **Basic-Auth.** Steht `authEnabled`, antwortet die ganze Schnittstelle mit
+   `401`; dann ist weder die Geraeteart noch das Praefix zu holen. Die App sagt
+   das (`GeraetFehler.anmeldungNoetig`) und verweist auf die Wahl von Hand — mehr
+   geht ohne Anmeldedaten nicht.
+7. **Ein anderer `webPort`** ist bei NG einstellbar; `Geraet` setzt Port 80
+   voraus. Unveraendert gegenueber der Werksfirmware, aber dort war es keine
+   Einstellung.
+
+**Unbelegt geblieben, weil das Hausnetz tabu war:** dass eine Sendung dieser App
+auf `<P>/cmd/apps/pushed/<name>` das Geraet wirklich erreicht; dass ein Praefix
+mit Schraegstrich als Kommandothema traegt; dass `textCase: "asTyped"` gegen das
+global eingeschaltete `uppercase` gewinnt; wie die Werksfirmware auf
+`/api/v1/device` antwortet (die Erkennung ruht darauf). Das Gegenmittel gegen die
+gefaehrlichste dieser Unbekannten ist eingebaut: **`<P>/…/result` wird
+mitabonniert** — bleibt die Antwort aus, hat das Thema keine Route getroffen.
+
 **E2a. Ein eigener Geraeterahmen fuer die AWTRIX (32×8).**
 Der heutige Rahmen ist gezeichnet, nicht fotografiert: `GeraeteRahmen.swift`
 (66 Zeilen) haelt eine viewBox 680×356 mit dem schwarzen Feld bei x=48 y=93,

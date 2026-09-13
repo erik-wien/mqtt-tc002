@@ -69,6 +69,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
+                + HilfeInhalt.geraeteart
                 + [
                     .absatz("Auf dem Telefon steht die Wahl als Zweierschalter unter der Adresse der Uhr."),
 

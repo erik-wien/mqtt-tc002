@@ -72,6 +72,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
+                + HilfeInhalt.geraeteart
                 + [
                     .absatz("Am Mac und auf dem iPad steht die Wahl als Zweierschalter in der Zeile der Uhr, zwischen Adresse und Präfix."),
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),

@@ -53,6 +53,14 @@ public struct VerbindungView: View {
                         .labelsHidden()
                         .pickerStyle(.segmented)
                         .frame(width: 116)
+                        Picker("Geräteart", selection: geraeteart($uhr)) {
+                            ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
+                                Text(art.beschriftung).tag(art)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 132)
+                        .help("„Abfragen“ stellt die Geräteart selbst fest. Von Hand zu wählen ist sie nur dort, wo das nicht gelingt — etwa wenn die Schnittstelle der AWTRIX eine Anmeldung verlangt.")
                         Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
                             .font(.system(.callout, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -77,27 +85,15 @@ public struct VerbindungView: View {
                 }
                 Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse. Es gehört zum MQTT-Betrieb.")
+                Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Einstellungen der aktiven Uhr") {
-                Picker("Seitenwechsel", selection: $seitenwechsel) {
-                    Text("kein Wechsel").tag(0)
-                    ForEach([10, 20, 30, 60], id: \.self) { Text(lokf("alle %d Sekunden", $0)).tag($0) }
-                }
-                .onChange(of: seitenwechsel) { _, neu in
-                    guard !ladeLauf else { ladeLauf = false; return }
-                    nutzerHatGewaehlt = true
-                    setzen("carouselSpeed", neu)
-                }
-                LabeledContent("Scrolltempo") {
-                    Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
-                }
-                .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
-                .onChange(of: scrollTempo) { _, neu in
-                    guard !scrollLadeLauf else { scrollLadeLauf = false; return }
-                    nutzerHatScrollGewaehlt = true
-                    setzen("scrollSpeed", neu)
+                if nurUlanzi {
+                    ulanziEinstellungen
+                } else {
+                    Text("Seitenwechsel und Scrolltempo sind Einstellungen der Ulanzi-Werksfirmware. Die aktive Uhr ist eine AWTRIX NG; sie führt beides anders und nicht an dieser Stelle.")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Section("Broker") {
@@ -163,7 +159,10 @@ public struct VerbindungView: View {
         .task {
             guard !geladen else { return }
             geladen = true
-            guard let host = zustand.aktiveUhr?.host else { return }
+            // `/getConfig` gibt es nur bei der Werksfirmware. Bei einer AWTRIX
+            // NG holte diese Abfrage eine 404 und meldete sie als Fehler —
+            // fuer eine Einstellung, die dort gar nicht gefragt ist.
+            guard nurUlanzi, let host = zustand.aktiveUhr?.host else { return }
             // .task laeuft auf dem Hauptthread, konfiguration() blockiert bis zur Antwort
             // der Uhr. Ohne den losgeloesten Task steht das Fenster so lange still.
             // Ein Abruf fuer beide Felder statt zweier — sie stehen ohnehin in
@@ -193,6 +192,52 @@ public struct VerbindungView: View {
                 zustand.fehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
             }
         }
+    }
+
+    /// Ob die aktive Uhr die Werksfirmware faehrt. Nur dann sind die beiden
+    /// Regler unten ueberhaupt eine Einstellung **dieser** Uhr: Sie stehen in
+    /// `/getConfig`, und diesen Pfad gibt es bei AWTRIX NG nicht.
+    private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
+
+    /// `carouselSpeed` und `scrollSpeed` — beides Felder der
+    /// Ulanzi-Werksfirmware.
+    @ViewBuilder
+    private var ulanziEinstellungen: some View {
+        Picker("Seitenwechsel", selection: $seitenwechsel) {
+            Text("kein Wechsel").tag(0)
+            ForEach([10, 20, 30, 60], id: \.self) { Text(lokf("alle %d Sekunden", $0)).tag($0) }
+        }
+        .onChange(of: seitenwechsel) { _, neu in
+            guard !ladeLauf else { ladeLauf = false; return }
+            nutzerHatGewaehlt = true
+            setzen("carouselSpeed", neu)
+        }
+        LabeledContent("Scrolltempo") {
+            Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
+        }
+        .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
+        .onChange(of: scrollTempo) { _, neu in
+            guard !scrollLadeLauf else { scrollLadeLauf = false; return }
+            nutzerHatScrollGewaehlt = true
+            setzen("scrollSpeed", neu)
+        }
+    }
+
+    /// Die Geraeteart als nicht-wahlfreie Wahl fuer den Picker — dieselbe
+    /// Bauart wie `betriebsart` darunter und aus demselben Grund: `Uhr.typ` ist
+    /// ein `Optional`, weil es ein Dateiformat ist; die Oberflaeche sieht zwei
+    /// Faelle.
+    ///
+    /// Wer waehlt, schreibt den Wert ausdruecklich — auch „Ulanzi TC002",
+    /// obwohl das ohnehin galt. Danach steht in der Datei eine Entscheidung
+    /// und keine Auslassung mehr.
+    private func geraeteart(_ uhr: Binding<Uhr>) -> Binding<Geraetetyp> {
+        Binding(get: { uhr.wrappedValue.gattung },
+                set: { neu in
+                    guard neu != uhr.wrappedValue.gattung else { return }
+                    uhr.wrappedValue.typ = neu
+                    zustand.geraeteartGeaendert(uhr.wrappedValue.id)
+                })
     }
 
     /// Die Betriebsart als nicht-wahlfreie Wahl fuer den Picker.

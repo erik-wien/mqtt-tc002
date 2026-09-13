@@ -38,6 +38,25 @@ public enum HilfeInhalt {
         .absatz("Für neue Uhren ist HTTP die Vorgabe. Eine Uhr, die vor dieser Fassung eingerichtet wurde, bleibt auf MQTT: Sie wurde so eingerichtet, und ein stiller Wechsel nähme ihr das Mitlesen, ohne dass jemand darum gebeten hätte. Umstellen lässt sich beides jederzeit; der Wechsel wirkt sofort."),
     ]
 
+    /// Die zweite Achse neben der Betriebsart: **was** fuer ein Geraet
+    /// antwortet. Gilt fuer beide Oberflaechen — es ist eine Aussage ueber die
+    /// Uhr, nicht ueber ein Fenster.
+    ///
+    /// Vier Absaetze und keiner mehr: was gewaehlt wird und wer es feststellt,
+    /// was auf einer AWTRIX besser ist, was dort wegfaellt, und was gar nicht
+    /// geht. Alles Weitere steht in der Geraetereferenz.
+    public static let geraeteart: [Hilfebaustein] = [
+        .ueberschrift("Geräteart: Ulanzi TC002 oder AWTRIX NG"),
+        .absatz("Neben der Betriebsart hat jede Uhr eine zweite Wahl: welche Firmware auf ihr läuft. „Abfragen“ stellt das selbst fest und trägt es ein. Von Hand zu wählen ist es nur dort, wo das nicht gelingt — eine AWTRIX kann ihre Schnittstelle hinter eine Anmeldung stellen, und dann antwortet sie auf keine Frage."),
+        .absatz("Der Unterschied ist einer im Grundsatz: Die Werksfirmware bekommt von dieser App **fertige Pixel**, eine AWTRIX NG bekommt den **Text** und setzt ihn mit ihrer eigenen Schrift. Alles Weitere folgt daraus."),
+        .tabelle([
+            ("Besser auf der AWTRIX", "Umlaute, Akzente, das Eurozeichen und Kyrillisch kann ihre Schrift von Haus aus; ein Zeichen, das sie nicht hat, wird zu einem Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst, ohne GIF und ohne Größengrenze. Und sie antwortet auf jede Sendung — eine abgewiesene wird als solche gemeldet, was über MQTT sonst nie vorkommt."),
+            ("Fällt dort weg", "Schriftart, Größe, Fett, Rand und Zeichenabstand steuern unsere eigene Rasterung — wo das Gerät selbst setzt, gibt es daran nichts zu drehen. Senkrecht ausrichten geht nicht, ihre Grundlinie liegt fest; rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen im Einblendtext, warum."),
+            ("Geht dort nicht", "Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides wird abgelehnt statt stillschweigend verschluckt."),
+        ]),
+        .absatz("Und die fünf Blöcke zeigen bei einer AWTRIX kein Bild, sondern nur, ob ein Platz belegt ist. Was darauf steht, wüsste die App nur als Text in ihrer eigenen Schrift auf sechzehn Zeilen — und das ist nicht, was auf einer Anzeige mit acht Zeilen zu sehen wäre. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
+    ]
+
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der
     /// Abschnitt sichtbar und benutzbar bleibt und nur eingeordnet gehoert.
     public static let brokerNurFuerMqtt: [Hilfebaustein] = [

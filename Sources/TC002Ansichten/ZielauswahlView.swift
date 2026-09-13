@@ -95,6 +95,15 @@ struct ZielauswahlView: View {
                                         .font(.system(.caption, design: .monospaced))
                                         .foregroundStyle(.secondary)
                                 }
+                                // Nur die abweichende Gattung steht da. „Ulanzi
+                                // TC002" an jeder Zeile waere eine Angabe, die
+                                // nichts unterscheidet — und die Zeile soll
+                                // sagen, was **diese** Uhr von den anderen
+                                // trennt.
+                                if uhr.gattung != .tc002 {
+                                    Text(uhr.gattung.beschriftung)
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
                                 Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                             }
                         }
