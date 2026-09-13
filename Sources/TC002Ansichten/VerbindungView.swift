@@ -2,8 +2,10 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-struct VerbindungView: View {
+public struct VerbindungView: View {
     @Bindable var zustand: AppZustand
+
+    public init(zustand: AppZustand) { self.zustand = zustand }
     @State private var neuerHost = ""
     /// Das Kennwort wandert beim Verlassen des Feldes in den Schluesselbund, nicht
     /// bei jedem Tastendruck.
@@ -24,7 +26,7 @@ struct VerbindungView: View {
     @State private var scrollLadeLauf = false
     @State private var nutzerHatScrollGewaehlt = false
 
-    var body: some View {
+    public var body: some View {
         Form {
             Section("Uhren") {
                 ForEach($zustand.uhren) { $uhr in

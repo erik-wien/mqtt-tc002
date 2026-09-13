@@ -19,7 +19,7 @@ let package = Package(
         .target(name: "TC002Core", swiftSettings: [.swiftLanguageMode(.v5)]),
         .target(name: "TC002Modell", dependencies: ["TC002Core"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
-        .target(name: "TC002Ansichten", dependencies: ["TC002Core"],
+        .target(name: "TC002Ansichten", dependencies: ["TC002Core", "TC002Modell"],
                 resources: [.process("Resources")],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
         .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell", "TC002Ansichten"],

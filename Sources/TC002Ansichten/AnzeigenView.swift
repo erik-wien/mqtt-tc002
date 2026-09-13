@@ -2,10 +2,12 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-struct AnzeigenView: View {
+public struct AnzeigenView: View {
     @Bindable var zustand: AppZustand
 
-    var body: some View {
+    public init(zustand: AppZustand) { self.zustand = zustand }
+
+    public var body: some View {
         let liste = zustand.anzeigenDerAktivenMitQuelle()
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
