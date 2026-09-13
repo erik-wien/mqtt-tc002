@@ -29,57 +29,19 @@ struct PixelEditor<Zusatz: View>: View {
     @State private var radiert = false
     @State private var spielAb = false
     @State private var spielTask: Task<Void, Never>?
-    /// Die verfuegbare Breite, von einem GeometryReader hinter der Flaeche
-    /// gemessen. Ohne das liefe eine 52 Spalten breite Flaeche bei fester
-    /// Kantenlaenge in einem schmalen Fenster rechts aus dem Bild.
-    @State private var flaechenBreite: Double = 0
-
-    /// Kantenlaenge eines Kaestchens — siehe `Malraster`.
-    private var kante: Double {
-        Malraster.kante(breite: leinwand.breite, hoehe: leinwand.hoehe,
-                        verfuegbareBreite: flaechenBreite)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            malflaeche
+            // Die Flaeche misst sich selbst und nimmt, was die Spalte hergibt
+            // (`Malflaeche`). Die Obergrenze steht hier, weil darunter noch
+            // Werkzeugzeile und Bildleiste ins Fenster passen muessen.
+            Malflaeche(leinwand: $leinwand, farbe: farbe, radiert: radiert,
+                       nachStrich: nachAenderung)
+                .frame(maxHeight: 420)
             werkzeugzeile
             bildleiste
         }
         .onDisappear { stoppeAbspielen() }
-    }
-
-    // MARK: - Die Flaeche
-
-    private var malflaeche: some View {
-        Canvas { kontext, _ in
-            for y in 0..<leinwand.hoehe {
-                for x in 0..<leinwand.breite {
-                    let r = CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                   width: kante - 1, height: kante - 1)
-                    let f = leinwand.farbe(x: x, y: y).flatMap(Color.init(hex:)) ?? Color(white: 0.12)
-                    kontext.fill(Path(r), with: .color(f))
-                }
-            }
-        }
-        .frame(width: Double(leinwand.breite) * kante, height: Double(leinwand.hoehe) * kante)
-        .background(Color.black)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
-        .gesture(DragGesture(minimumDistance: 0)
-            .onChanged { wert in
-                let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-                leinwand.setzen(x: x, y: y, farbe: radiert ? nil : farbe.hexWert)
-            }
-            .onEnded { _ in nachAenderung() })
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .onAppear { flaechenBreite = geo.size.width }
-                    .onChange(of: geo.size.width) { _, neu in flaechenBreite = neu }
-            }
-        )
     }
 
     // MARK: - Werkzeuge

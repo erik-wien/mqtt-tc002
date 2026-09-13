@@ -83,4 +83,26 @@ final class MindestmasseTests: XCTestCase {
             }
         }
     }
+
+    /// Die Leinwand darf ihre Spalte nie breiter machen, als sie ist.
+    ///
+    /// Der gemeldete Fehler war genau das: ein starres `.frame(width:)` ueber
+    /// einer Breite, die aus einem `GeometryReader` **innerhalb** derselben
+    /// Flaeche kam — gemessen wurde damit, was die Flaeche sich schon genommen
+    /// hatte, nicht was die Spalte hergab. Sichtbar wurde es erst am Geraet:
+    /// Bedienzeile unter der Seitenleiste, Slot-Zeile ab Block 3.
+    ///
+    /// Der Uebersetzer sieht davon nichts, beide Fassungen uebersetzen.
+    func testDieLeinwandMisstVonAussenUndRolltStattUeberzulaufen() throws {
+        let zeilen = try zeilenMitZweig("Sources/TC002Ansichten/Malflaeche.swift")
+        let text = zeilen.map(\.text).joined(separator: "\n")
+        XCTAssertTrue(text.contains("GeometryReader { geo in"),
+                      "ohne GeometryReader über der Fläche gibt es kein Maß, an das sie sich hält")
+        XCTAssertTrue(text.contains("verfuegbareBreite: geo.size.width"),
+                      "die Breite kommt nicht mehr von außen")
+        XCTAssertTrue(text.contains("verfuegbareHoehe: geo.size.height"),
+                      "die Höhe kommt nicht mehr von außen")
+        XCTAssertTrue(text.contains("ScrollView(.horizontal)"),
+                      "ohne waagrechtes Rollen läuft die Fläche bei Enge wieder über ihren Bereich hinaus")
+    }
 }
