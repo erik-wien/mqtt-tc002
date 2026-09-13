@@ -19,16 +19,23 @@ struct VorschauiOS: View {
     let icon: URL?
     let laufschriftBilder: [Bildraster.Einzelbild]?
     var kante: Double = 6
+    /// Welche Geraetefront darum liegt und wie die Punkte darin aussehen.
+    /// `Optional` wie `Uhr.typ`: `nil` heisst `.tc002`.
+    var typ: Geraetetyp? = nil
 
     /// Einzelbilder des gewaehlten Icons mit ihren Standzeiten — einmal je
     /// Iconwechsel geladen. Ein unbewegtes Icon hat genau eines.
     @State private var iconBilder: [Bildraster.Einzelbild] = []
 
+    /// Wie ein einzelner Punkt gezeichnet wird — dieselbe Quelle wie der
+    /// Rahmen, damit Mac und Telefon dasselbe Raster zeigen.
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
+
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
         GeraeteRahmen(breite: Double(Pixelfeld.breiteStandard) * kante,
-                      hoehe: Double(Pixelfeld.hoeheStandard) * kante) {
+                      hoehe: Double(Pixelfeld.hoeheStandard) * kante, typ: typ) {
             Group {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {
@@ -57,14 +64,13 @@ struct VorschauiOS: View {
 
     /// Zeichnet ein volles 52×16-Punkteraster.
     private func anzeige(_ punkte: [String?]) -> some View {
-        Canvas { kontext, _ in
+        let stil = pixelstil
+        return Canvas { kontext, _ in
             for y in 0..<Pixelfeld.hoeheStandard {
                 for x in 0..<Pixelfeld.breiteStandard {
                     let farbe = punkte[y * Pixelfeld.breiteStandard + x]
                     guard let farbe, let c = Color(hex: farbe) else { continue }
-                    kontext.fill(Path(CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                             width: kante - 0.5, height: kante - 0.5)),
-                                 with: .color(c))
+                    kontext.fill(stil.pfad(spalte: x, zeile: y, zelle: kante), with: .color(c))
                 }
             }
         }

@@ -12,6 +12,9 @@ import TC002Core
 struct VorschauView: View {
     let feld: Pixelfeld
     var kantenlaenge: Double = 8
+    /// Welche Geraetefront darum liegt und wie die Punkte darin aussehen.
+    /// `Optional` wie `Uhr.typ`: `nil` heisst `.tc002`.
+    var typ: Geraetetyp? = nil
     /// Wird an derselben Stelle und in derselben Groesse gezeigt, an der die Uhr es
     /// spaeter zeichnet — sonst zeigt die Vorschau etwas anderes als das Geraet.
     var icon: URL? = nil
@@ -31,11 +34,15 @@ struct VorschauView: View {
     /// unbewegtes Icon hat genau eines und bleibt stehen.
     @State private var einzelbilder: [Bildraster.Einzelbild] = []
 
+    /// Wie ein einzelner Punkt gezeichnet wird — kommt aus derselben Quelle
+    /// wie der Rahmen, damit grobes Panel und grober Punkt zusammenpassen.
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
+
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
         GeraeteRahmen(breite: Double(feld.breite) * kantenlaenge,
-                      hoehe: Double(feld.hoehe) * kantenlaenge) {
+                      hoehe: Double(feld.hoehe) * kantenlaenge, typ: typ) {
             Group {
                 if let laufschriftBilder, !laufschriftBilder.isEmpty {
                     if laufschriftBilder.count > 1 {
@@ -64,13 +71,12 @@ struct VorschauView: View {
     }
 
     private func rahmen(iconBild: Bildraster.Einzelbild?) -> some View {
-        Canvas { kontext, _ in
+        let stil = pixelstil
+        return Canvas { kontext, _ in
             for y in 0..<feld.hoehe {
                 for x in 0..<feld.breite {
-                    let kaestchen = CGRect(x: Double(x) * kantenlaenge, y: Double(y) * kantenlaenge,
-                                           width: kantenlaenge - 1, height: kantenlaenge - 1)
                     let farbe = feld.farbe(x: x, y: y).flatMap(Color.init(hex:)) ?? Color.black
-                    kontext.fill(Path(kaestchen), with: .color(farbe))
+                    kontext.fill(stil.pfad(spalte: x, zeile: y, zelle: kantenlaenge), with: .color(farbe))
                 }
             }
             guard let iconBild, iconBild.pixel.count == iconKante * iconKante else { return }
@@ -79,9 +85,7 @@ struct VorschauView: View {
                     guard let hex = iconBild.pixel[y * iconKante + x], let farbe = Color(hex: hex) else { continue }
                     let px = iconX + x, py = iconY + y
                     guard px >= 0, py >= 0, px < feld.breite, py < feld.hoehe else { continue }
-                    let kaestchen = CGRect(x: Double(px) * kantenlaenge, y: Double(py) * kantenlaenge,
-                                           width: kantenlaenge - 1, height: kantenlaenge - 1)
-                    kontext.fill(Path(kaestchen), with: .color(farbe))
+                    kontext.fill(stil.pfad(spalte: px, zeile: py, zelle: kantenlaenge), with: .color(farbe))
                 }
             }
         }
@@ -90,14 +94,13 @@ struct VorschauView: View {
     /// Wie `rahmen`, aber das Einzelbild belegt das ganze 52×16-Raster selbst —
     /// fuer die Laufschrift, die kein zusaetzliches `feld` mehr braucht.
     private func vollbild(_ bild: Bildraster.Einzelbild?) -> some View {
-        Canvas { kontext, _ in
+        let stil = pixelstil
+        return Canvas { kontext, _ in
             guard let bild else { return }
             for y in 0..<feld.hoehe {
                 for x in 0..<feld.breite {
                     guard let hex = bild.pixel[y * feld.breite + x], let farbe = Color(hex: hex) else { continue }
-                    let kaestchen = CGRect(x: Double(x) * kantenlaenge, y: Double(y) * kantenlaenge,
-                                           width: kantenlaenge - 1, height: kantenlaenge - 1)
-                    kontext.fill(Path(kaestchen), with: .color(farbe))
+                    kontext.fill(stil.pfad(spalte: x, zeile: y, zelle: kantenlaenge), with: .color(farbe))
                 }
             }
         }
