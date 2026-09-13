@@ -573,6 +573,7 @@
 /* SchriftprobeView.swift — die Schriftprobe im Hilfemenue */
 "Schriftprobe" = "Type Specimen";
 "Die Schriften werden vermessen …" = "Measuring the typefaces …";
+"Auf diesem Gerät nicht installiert — nicht gemessen." = "Not installed on this device — not measured.";
 "Warum eigene Schriften?" = "Why fonts of our own?";
 "Die eingebaute Schrift der Uhr kennt keine Umlaute. Wer „Grüße“ schreiben will, muss den Text selbst in Pixel wandeln — genau das tut diese App auf dem Weg „als Pixel“, mit einer der drei mitgelieferten Pixelschriften." = "The clock's built-in font has no umlauts. To write “Grüße”, the text has to be turned into pixels beforehand — which is exactly what this app does with the \"as pixels\" method, using one of the three bundled pixel fonts.";
 "Warum nicht jede Größe?" = "Why not every size?";

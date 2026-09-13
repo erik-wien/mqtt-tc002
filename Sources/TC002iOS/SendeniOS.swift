@@ -89,13 +89,13 @@ struct SendeniOS: View {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
     }
 
-    /// Dieselbe Auswahl wie auf dem Mac (`geeigneteSchriften` in
-    /// SendenView.swift) — geprueft bei sechzehn Pixeln Hoehe. Eine Liste statt
-    /// zweier: Frueher stand dieselben acht Namen zusätzlich in
-    /// FormatblattiOS, seit die Schriftart in die Formatpille gewandert ist,
-    /// steht sie nur noch hier.
-    private static let schriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva",
-                                    "Monaco", "Andale Mono", "Menlo", "PT Mono"]
+    /// Dieselbe Auswahl wie auf dem Mac — geprueft bei sechzehn Pixeln Hoehe.
+    /// Eine Liste fuer alle: Die acht Namen stehen seit der Schriftprobe ueber
+    /// alle acht Schriften nur noch in `Schriften.auswahl` im Kern.
+    ///
+    /// Ungefiltert, anders als am Mac: Das iPhone bringt Geneva und Andale
+    /// Mono nicht mit, und was daraus folgt, aendert diese Aufgabe nicht.
+    private static let schriften = Schriften.auswahl
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann im Rahmen.
     private var dauer: Int? {

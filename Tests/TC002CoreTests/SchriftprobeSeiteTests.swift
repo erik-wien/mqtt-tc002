@@ -22,16 +22,25 @@ import XCTest
 final class SchriftprobeSeiteTests: XCTestCase {
     func testMusterseiteSchreiben() throws {
         Schriftbuendel.anmelden()
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        // Die mitgelieferten Schriften liegen im Quellbaum — fehlen sie, ist
+        // etwas am Baum faul und die Seite waere wertlos. Die Systemschriften
+        // koennen dagegen von Rechner zu Rechner fehlen; dann steht das auf der
+        // Seite, statt dass ein Ergebnis der Ersatzschrift dort erschiene.
+        for schrift in Schriften.mitgeliefert {
             try XCTSkipUnless(Schriftbuendel.vorhanden(schrift), "Schrift „\(schrift)“ fehlt")
         }
 
         let messungen = Schriftprobe.alleMessungen()
         var koerper = ""
         var erwarteteRaster = 0
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        for schrift in Schriftprobe.schriften {
             koerper += "<h2>\(entschaerft(schrift))</h2>\n"
-            for messung in messungen where messung.schrift == schrift {
+            let eigene = messungen.filter { $0.schrift == schrift }
+            guard !eigene.isEmpty else {
+                koerper += "<p class=\"fehlt\">Auf diesem Rechner nicht installiert — nicht gemessen.</p>\n"
+                continue
+            }
+            for messung in eigene {
                 koerper += Self.block(messung)
                 erwarteteRaster += messung.gruppen.count + (messung.umlautbild == nil ? 0 : 1) + 1
             }
@@ -253,6 +262,9 @@ final class SchriftprobeSeiteTests: XCTestCase {
         ul.gruende { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--warnung); font-size: .85rem; }
         ul.gruende li { margin-bottom: .2rem; overflow-wrap: anywhere; }
         p.frei { margin: .5rem 0 0; color: var(--gut); font-size: .85rem; }
+        /* Eine Schrift, die dieser Rechner nicht hat, ist nicht gemessen —
+           und das steht dort, wo sonst ihre Bloecke staenden. */
+        p.fehlt { margin: .2rem 0 1rem; color: var(--warnung); font-size: .9rem; }
         #ausgabe {
           position: fixed; left: 0; right: 0; bottom: 0; z-index: 2;
           background: var(--karte); border-top: 1px solid var(--kante);

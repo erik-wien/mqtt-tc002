@@ -14,10 +14,28 @@ import Foundation
 /// rastern, die Pixel vergleichen, und aus **gleichen** Pixeln auf eine
 /// verlorene Unterscheidung schliessen.
 public enum Schriftprobe {
-    /// Die drei Pixelschriften, die die App mitbringt, unter ihrem
-    /// registrierten Familiennamen. Micro 5 traegt ein Leerzeichen im Namen —
-    /// im Font-Editor gepruefte Tatsache, kein Tippfehler.
-    public static let mitgelieferteSchriften = ["Micro 5", "Silkscreen", "Tiny5"]
+    /// Gemessen wird, was die Sendeansicht anbietet — alle acht Schriften, die
+    /// mitgelieferten wie die des Systems. Die Liste steht in `Schriften`, an
+    /// einer einzigen Stelle: Wer Menlo bei 6 px waehlen kann, soll auch sehen
+    /// koennen, was das mit den Zeichen macht.
+    public static var schriften: [String] { Schriften.auswahl }
+
+    /// Davon die, die auf diesem Geraet wirklich installiert sind.
+    ///
+    /// Nur sie werden gemessen. Fehlt eine Schrift, rastert CoreText klaglos
+    /// mit einer Ersatzschrift — das Ergebnis waere dann nicht falsch, sondern
+    /// **ueber etwas anderes gemacht als behauptet**, und das ist schlimmer.
+    /// Nicht jedes System bringt jede dieser Schriften mit; iOS etwa kennt
+    /// weder Geneva noch Andale Mono.
+    public static func vorhandeneSchriften() -> [String] {
+        schriften.filter(Schriften.vorhanden)
+    }
+
+    /// Die Gegenliste: hier nicht installiert, also nicht gemessen. Ansicht und
+    /// Musterseite sagen das dazu, statt eine Luecke zu lassen.
+    public static func fehlendeSchriften() -> [String] {
+        schriften.filter { !Schriften.vorhanden($0) }
+    }
 
     /// Gemessen wird in ganzen Pixeln von 6 bis 16 — derselbe Bereich, aus dem
     /// die Sendeansicht waehlt (`Pixelgroessen.freierBereich`). Welche davon sie
@@ -267,17 +285,19 @@ public enum Schriftprobe {
             musterbild: bild(musterwort))
     }
 
-    /// Die ganze Tabelle: jede mitgelieferte Schrift in jeder angebotenen
+    /// Die ganze Tabelle: jede hier vorhandene Schrift in jeder gemessenen
     /// Groesse.
     ///
-    /// Gemerkt, weil sie teuer und deterministisch ist: rund sechs Zehntel
-    /// Sekunden fuer drei Schriften mal elf Groessen mal dreiundsiebzig
-    /// Zeichen. Das ist zu lang fuer einen Fensteraufbau und waere beim
-    /// zweiten Oeffnen genau dieselbe Antwort.
+    /// Gemerkt, weil sie teuer und deterministisch ist: acht Schriften mal elf
+    /// Groessen mal dreiundsiebzig Zeichen kosten in der ausgelieferten Fassung
+    /// rund sechs Zehntelsekunden (gemessen am 13.09.2026; mit den drei
+    /// mitgelieferten Schriften allein waren es zweieinhalb Zehntel, ohne
+    /// Optimierung das Vier- bis Fuenffache). Das ist zu lang fuer einen
+    /// Fensteraufbau und waere beim zweiten Oeffnen genau dieselbe Antwort.
     public static func alleMessungen(abstand: Int = 1) -> [Messung] {
         tabellensperre.lock(); defer { tabellensperre.unlock() }
         if let da = tabelle[abstand] { return da }
-        let ergebnis = mitgelieferteSchriften.flatMap { schrift in
+        let ergebnis = vorhandeneSchriften().flatMap { schrift in
             groessen.map { messen(schrift: schrift, groesse: $0, abstand: abstand) }
         }
         tabelle[abstand] = ergebnis

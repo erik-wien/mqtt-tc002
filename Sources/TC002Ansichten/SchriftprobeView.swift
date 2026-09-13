@@ -1,6 +1,26 @@
 import SwiftUI
 import TC002Core
 
+/// Was die Kopfzeile der Schriftprobe zeigt: alle Schriften oder eine einzige.
+///
+/// Ein eigener Typ und kein `String?`, damit „Alle“ eine Stellung ist und kein
+/// Sonderfall — und damit die Zusicherung geprüft werden kann, ohne eine
+/// SwiftUI-Ansicht zu bauen.
+public enum Schriftwahl: Hashable {
+    case alle
+    case nur(String)
+
+    /// Was zu zeigen ist. **Gefiltert wird nur**: Die Messung liegt fertig vor,
+    /// die Wahl sucht daraus aus und rechnet nichts nach. Eine Schrift, die es
+    /// im Vorrat nicht gibt, ergibt nichts — und nicht sich selbst.
+    public func schriften(aus vorrat: [String]) -> [String] {
+        switch self {
+        case .alle: return vorrat
+        case .nur(let schrift): return vorrat.filter { $0 == schrift }
+        }
+    }
+}
+
 /// Die Schriftprobe: warum das Größenmenü diese Größen anbietet und jene nicht.
 ///
 /// Ein Nachschlagewerk, keine Bedienoberfläche — deshalb steht hier Erklärung.
@@ -20,26 +40,34 @@ public struct SchriftprobeView: View {
 
     @State private var messungen: [Schriftprobe.Messung] = []
 
+    /// Die Wahl aus der Kopfzeile. Sie filtert die fertige Messung und löst
+    /// keine neue aus — deshalb steht sie hier und nicht in `.task`.
+    @State private var wahl: Schriftwahl = .alle
+
     public init(angeboteneGroessen: [String: [Double]] = [:]) {
         self.angeboteneGroessen = angeboteneGroessen
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                einleitung
-                if messungen.isEmpty {
-                    ProgressView(lok("Die Schriften werden vermessen …"))
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 40)
-                } else {
-                    ForEach(Schriftprobe.mitgelieferteSchriften, id: \.self) { schrift in
-                        abschnitt(schrift)
+        VStack(spacing: 0) {
+            kopfzeile
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    einleitung
+                    if messungen.isEmpty {
+                        ProgressView(lok("Die Schriften werden vermessen …"))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 40)
+                    } else {
+                        ForEach(wahl.schriften(aus: Schriftprobe.schriften), id: \.self) { schrift in
+                            abschnitt(schrift)
+                        }
                     }
                 }
+                .frame(maxWidth: 720, alignment: .leading)
+                .padding(24)
             }
-            .frame(maxWidth: 720, alignment: .leading)
-            .padding(24)
         }
         // Nur am Mac. Ganzflaechig auf einem iPad reichen 560 Punkte immer;
         // in Slide Over (rund 320) nicht, und dort schnitte die Forderung die
@@ -47,11 +75,15 @@ public struct SchriftprobeView: View {
         #if os(macOS)
         .frame(minWidth: 560, minHeight: 520)
         #endif
-        // Die Messung rastert dreiundsiebzig Zeichen je Schrift und Groesse und
-        // braucht rund sechs Zehntelsekunden. Im `body` waere das ein
-        // haengendes Fenster, deshalb einmal beim Erscheinen und abseits des
-        // Hauptthreads. `Schriftprobe.alleMessungen` merkt sich das Ergebnis,
-        // ein zweites Oeffnen ist danach sofort da.
+        // Die Messung rastert dreiundsiebzig Zeichen je Schrift und Groesse —
+        // acht Schriften, elf Groessen, rund sechs Zehntelsekunden. Im `body`
+        // waere das ein haengendes Fenster, deshalb einmal beim Erscheinen und
+        // abseits des Hauptthreads. `Schriftprobe.alleMessungen` merkt sich das
+        // Ergebnis, ein zweites Oeffnen ist danach sofort da.
+        //
+        // Ohne `id:`, und das ist der Punkt: Die Schriftwahl oben filtert
+        // dieses fertige Ergebnis, sie stoesst keine zweite Messung an
+        // (`SchriftwahlTests`).
         .task {
             let ergebnis = await Task.detached(priority: .userInitiated) {
                 Schriftprobe.alleMessungen()
@@ -61,6 +93,30 @@ public struct SchriftprobeView: View {
     }
 
     // MARK: - Text
+
+    /// Die Kopfzeile: die Schriftwahl, sonst nichts.
+    ///
+    /// Sie bleibt beim Rollen stehen, weil sie sonst nichts nützte —
+    /// achtundachtzig Blöcke (acht Schriften mal elf Größen) liegen in einem
+    /// durchgehenden Lauf, und wer unten bei Tiny5 steht, findet eine Wahl
+    /// nicht wieder, die oben im Inhalt mitgescrollt ist.
+    ///
+    /// Ein Aufklappmenü und keine segmentierte Wahl: Neun Stellungen nebeneinander
+    /// bekommt weder ein schmales Fenster noch ein geteiltes iPad unter.
+    private var kopfzeile: some View {
+        Picker("Schrift", selection: $wahl) {
+            Text("Alle").tag(Schriftwahl.alle)
+            ForEach(Schriftprobe.schriften, id: \.self) { schrift in
+                Text(verbatim: schrift).tag(Schriftwahl.nur(schrift))
+            }
+        }
+        .pickerStyle(.menu)
+        .fixedSize()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
+        .background(.bar)
+    }
 
     private var einleitung: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -80,9 +136,19 @@ public struct SchriftprobeView: View {
     // MARK: - Bausteine
 
     private func abschnitt(_ schrift: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(schrift).font(.title3.weight(.semibold))
-            ForEach(messungen.filter { $0.schrift == schrift }) { messung in
+        let eigene = messungen.filter { $0.schrift == schrift }
+        return VStack(alignment: .leading, spacing: 12) {
+            // `Text(verbatim:)`: Schriftnamen sind Eigennamen. Als Schlüssel
+            // stünden sie sinnlos in der Sprachdatei und würden übersetzt.
+            Text(verbatim: schrift).font(.title3.weight(.semibold))
+            // Nicht gemessen heißt hier immer: nicht installiert. CoreText
+            // rastert sonst klaglos mit einer Ersatzschrift, und das Ergebnis
+            // gehörte dann einer anderen Schrift.
+            if eigene.isEmpty {
+                Text("Auf diesem Gerät nicht installiert — nicht gemessen.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            ForEach(eigene) { messung in
                 block(messung)
             }
         }

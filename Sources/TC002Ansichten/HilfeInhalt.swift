@@ -129,9 +129,9 @@ public enum HilfeInhalt {
     ]
 
     /// Die Schriftauswahl und die drei mitgelieferten Pixelschriften. Beide
-    /// Oberflaechen bieten dieselben acht Namen an (`SendenView.geeigneteSchriften`,
-    /// `SendeniOS.schriften`), und warum es drei eigene Pixelschriften gibt,
-    /// haengt an der Uhr, nicht am Geraet in der Hand.
+    /// Oberflaechen bieten dieselben acht Namen an (`Schriften.auswahl` im
+    /// Kern), und warum es drei eigene Pixelschriften gibt, haengt an der Uhr,
+    /// nicht am Geraet in der Hand.
     public static let schriftart: [Hilfebaustein] = [
         .ueberschrift("Schriftart"),
         .absatz("Bei „Schriftart“ stehen nicht alle installierten Schriften zur Wahl, sondern eine kurze, geprüfte Auswahl — bei 16 Pixeln Displayhöhe fällt kaum eine Schrift sauber aufs Raster, die meisten proportionalen Schriften wirken bei dieser Größe eher wie ein Brei aus Pixeln."),

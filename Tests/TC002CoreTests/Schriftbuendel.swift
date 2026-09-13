@@ -1,5 +1,6 @@
 import CoreText
 import Foundation
+@testable import TC002Core
 
 /// Die mitgelieferten Pixelschriften fuer die Tests anmelden.
 ///
@@ -31,10 +32,10 @@ enum Schriftbuendel {
         }
     }
 
-    /// Ist die Schrift wirklich da? CoreText liefert sonst klaglos eine
-    /// Ersatzschrift, und die Messung maesse dann etwas ganz anderes.
+    /// Ist die Schrift wirklich da? Dieselbe Frage wie im Kern
+    /// (`Schriften.vorhanden`), hier nur mit der Anmeldung davor.
     static func vorhanden(_ name: String) -> Bool {
         anmelden()
-        return (CTFontCopyFamilyName(CTFontCreateWithName(name as CFString, 12, nil)) as String) == name
+        return Schriften.vorhanden(name)
     }
 }

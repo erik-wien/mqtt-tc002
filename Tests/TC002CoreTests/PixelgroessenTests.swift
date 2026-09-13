@@ -86,7 +86,7 @@ final class PixelgroessenTests: XCTestCase {
     /// jede davon muss es eine Liste geben, sonst stuende dort ueberall „wird
     /// angeboten“, obwohl die Sendeansicht einschraenkt.
     func testJedeMitgelieferteSchriftHatEineListe() {
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        for schrift in Schriften.mitgeliefert {
             XCTAssertNotNil(Pixelgroessen.abgesegnet[schrift], "„\(schrift)“ hat keine Liste")
         }
     }

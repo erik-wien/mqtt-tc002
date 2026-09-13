@@ -138,31 +138,20 @@ public struct SendenView: View {
 
     /// Geprueft bei 16 Pixeln Hoehe: Diese Schriften rastern mit gleichmaessigen
     /// Strichstaerken. Silkscreen ist die Vorgabe — sie ist eigens aufs
-    /// 8-Pixel-Raster gezeichnet (mitgeliefert, siehe unten) und kann, anders
-    /// als die Geraetschrift, Umlaute und das scharfe S. Micro 5 und Tiny5 sind
-    /// ebenfalls mitgelieferte Pixelschriften mit vollem Zeichenumfang (welche
-    /// Groessen sie anbieten, steht in `Pixelgroessen`). Der Familienname von Micro5
-    /// traegt ein Leerzeichen ("Micro 5") — im Font-Editor gepruefte Tatsache,
-    /// nicht Tippfehler. Alle anderen installierten Schriften sind bei dieser
-    /// Groesse unbrauchbar — Courier, SF Mono und Helvetica etwa bekommen
-    /// Loecher in den Staemmen.
-    static let geeigneteSchriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
-
+    /// 8-Pixel-Raster gezeichnet (mitgeliefert) und kann, anders als die
+    /// Geraetschrift, Umlaute und das scharfe S. Alle anderen installierten
+    /// Schriften sind bei dieser Groesse unbrauchbar — Courier, SF Mono und
+    /// Helvetica etwa bekommen Loecher in den Staemmen. Die Namen stehen in
+    /// `Schriften.auswahl` im Kern, an einer Stelle fuer alle Oberflaechen und
+    /// fuer die Schriftprobe.
+    ///
     /// Einmal ermittelt statt bei jedem Neuaufbau — CoreText befragt das System.
     /// Gefiltert auf das, was dieser Rechner tatsaechlich installiert hat; nicht
-    /// jede dieser sechs Schriften bringt jedes System mit. Bleibt danach nichts
+    /// jede dieser acht Schriften bringt jedes System mit. Bleibt danach nichts
     /// uebrig (kaum vorstellbar, aber moeglich), faellt es auf die Systemschrift
     /// zurueck, statt eine leere Auswahl zu zeigen.
     private static let schriftarten: [String] = {
-        // Der Schriftverwalter von AppKit listet Schriften, die nur fuer diesen
-        // Prozess angemeldet sind, NICHT auf — die mitgelieferten fielen
-        // dadurch immer heraus, obwohl CoreText sie kennt. Deshalb CoreText
-        // direkt fragen: Kommt derselbe Familienname zurueck, ist die Schrift
-        // da; sonst liefert es klaglos eine Ersatzschrift.
-        let gefiltert = geeigneteSchriften.filter { name in
-            let f = CTFontCreateWithName(name as CFString, 12, nil)
-            return (CTFontCopyFamilyName(f) as String) == name
-        }
+        let gefiltert = Schriften.auswahl.filter(Schriften.vorhanden)
         return gefiltert.isEmpty ? [systemschrift()] : gefiltert
     }()
 

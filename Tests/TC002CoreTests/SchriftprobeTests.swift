@@ -7,6 +7,13 @@ import XCTest
 /// Der Schnappschuss haelt fest, **was heute gilt** — und ist damit zugleich
 /// der Waechter: Aendert sich eine Schriftdatei oder die Rasterung, faellt es
 /// hier auf, nicht erst am Geraet.
+///
+/// Er bleibt bei den **mitgelieferten** Schriften, obwohl die Schriftprobe seit
+/// dem 13.09.2026 alle acht misst: Die fuenf Systemschriften gehoeren nicht
+/// diesem Baum. Ihre Fassung haengt am Rechner und am Systemstand, sie koennen
+/// ganz fehlen — ein Schnappschuss ueber sie meldete den naechsten
+/// Systemwechsel als Regression und waere damit kein Waechter mehr, sondern
+/// Laerm.
 final class SchriftprobeTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -17,9 +24,43 @@ final class SchriftprobeTests: XCTestCase {
     /// Ersatzschrift — die ganze Tabelle waere dann etwas anderes als
     /// behauptet. Deshalb zuerst diese Frage.
     func testDieMitgeliefertenSchriftenSindDa() {
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        for schrift in Schriften.mitgeliefert {
             XCTAssertTrue(Schriftbuendel.vorhanden(schrift), "Schrift „\(schrift)“ fehlt")
         }
+    }
+
+    /// Gemessen wird, was die Sendeansicht anbietet — alle acht, nicht nur die
+    /// drei mitgelieferten. Sonst waehlt jemand Menlo bei 6 px, bekommt den
+    /// vollen Bereich angeboten, und niemand hat je nachgesehen, was das mit
+    /// den Zeichen macht.
+    func testGemessenWirdDieGanzeAuswahlDerSendeansicht() {
+        XCTAssertEqual(Schriftprobe.schriften, Schriften.auswahl)
+        XCTAssertEqual(Schriften.auswahl.count, 8)
+        for schrift in Schriften.mitgeliefert + Schriften.systemschriften {
+            XCTAssertTrue(Schriftprobe.schriften.contains(schrift), "„\(schrift)“ wird nicht gemessen")
+        }
+    }
+
+    /// Fehlt eine Schrift, liefert CoreText klaglos eine Ersatzschrift — ein
+    /// Ergebnis kaeme also trotzdem, nur gehoerte es einer anderen Schrift.
+    /// Deshalb wird nur gemessen, was wirklich da ist; der Rest steht in der
+    /// Ansicht und auf der Musterseite als „nicht installiert“.
+    func testWasNichtInstalliertIstWirdNichtGemessen() {
+        XCTAssertFalse(Schriften.vorhanden("Diese Schrift Gibt Es Nicht"),
+                       "eine erfundene Familie darf nicht als vorhanden durchgehen")
+        XCTAssertTrue(Schriften.vorhanden("Micro 5"), "die mitgelieferte Schrift ist angemeldet")
+
+        // Vorhandene und fehlende teilen die Liste auf, ohne Ueberschneidung
+        // und ohne Verlust.
+        let vorhandene = Schriftprobe.vorhandeneSchriften()
+        let fehlende = Schriftprobe.fehlendeSchriften()
+        XCTAssertEqual(Set(vorhandene).union(fehlende), Set(Schriftprobe.schriften))
+        XCTAssertTrue(Set(vorhandene).isDisjoint(with: fehlende))
+        for schrift in Schriften.mitgeliefert {
+            XCTAssertTrue(vorhandene.contains(schrift), "„\(schrift)“ liegt im Quellbaum")
+        }
+        // Und gemessen wird genau das Vorhandene — keine Zeile mehr.
+        XCTAssertEqual(Set(Schriftprobe.alleMessungen().map(\.schrift)), Set(vorhandene))
     }
 
     func testTabelleFuerAlleSchriftenUndGroessen() throws {
@@ -31,7 +72,7 @@ final class SchriftprobeTests: XCTestCase {
             "# urteilt nur ein Augenpaar (erzeugt/schriftprobe.html).",
             "",
         ]
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        for schrift in Schriften.mitgeliefert {
             for groesse in Schriftprobe.groessen {
                 let gruende = Schriftprobe.ausschlussgruende(schrift: schrift, groesse: groesse)
                 zeilen.append("\(schrift) \(Int(groesse)) px")
@@ -63,7 +104,7 @@ final class SchriftprobeTests: XCTestCase {
     /// **kein** Umlaut seines Grundbuchstabens verlustig gegangen. Faellt das
     /// eines Tages, ist es das Erste, was man wissen will.
     func testInDenAngebotenenGroessenBleibenDieUmlauteErhalten() {
-        for schrift in Schriftprobe.mitgelieferteSchriften {
+        for schrift in Schriften.mitgeliefert {
             for groesse in Schriftprobe.groessen {
                 for grund in Schriftprobe.ausschlussgruende(schrift: schrift, groesse: groesse) {
                     if case .umlautVerloren(let paare) = grund {
@@ -182,7 +223,7 @@ final class SchriftprobeTests: XCTestCase {
     func testAlleMessungenDeckenDieTabelleAbUndSindGemerkt() {
         let erste = Schriftprobe.alleMessungen()
         XCTAssertEqual(erste.count,
-                       Schriftprobe.mitgelieferteSchriften.count * Schriftprobe.groessen.count)
+                       Schriftprobe.vorhandeneSchriften().count * Schriftprobe.groessen.count)
         let start = Date()
         let zweite = Schriftprobe.alleMessungen()
         XCTAssertEqual(erste, zweite)
