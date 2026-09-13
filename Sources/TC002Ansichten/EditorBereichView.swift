@@ -64,10 +64,10 @@ public struct EditorBereichView: View {
     @State private var laedt = false
 
     // Rueckfragen.
-    @State private var zuWechseln: Leinwandgroesse?
-    @State private var zuLaden: Editoreintrag?
+    /// **Eine** Frage, vier Anlaesse — siehe `Rueckfrage`. Bis zum 14.09.2026
+    /// lagen hier drei `.alert` nebeneinander, jeder mit eigenem Zustand.
+    @State private var rueckfrage: Rueckfrage?
     @State private var zuLoeschen: Editoreintrag?
-    @State private var zeigeNeuBestaetigung = false
 
     /// „Oeffnen…": erst die Dateiauswahl, danach ein Blatt fuer Nummer
     /// und Namen mit dem Dateinamen als Vorschlag.
@@ -86,6 +86,9 @@ public struct EditorBereichView: View {
     /// Was im Blatt steht, wenn das Einlesen nicht klappt. Im Blatt und nicht
     /// unter der Leinwand: Eine Meldung dahinter saehe niemand.
     @State private var importMeldung: String?
+    /// Was das Blatt aufgenommen hat — abzuholen, **sobald es zu ist**
+    /// (`blattGeschlossen`). `nil` heisst: abgebrochen.
+    @State private var eingelesen: Editoreintrag?
 
     static let arbeitsstandSchluessel = "bilder.arbeitsstand"
 
@@ -98,6 +101,51 @@ public struct EditorBereichView: View {
     enum Inspektormodus: String, CaseIterable, Identifiable {
         case malen, animation, sichern
         var id: String { rawValue }
+    }
+
+    /// **Eine Frage, vier Anlaesse.** Sie lautet immer gleich: Auf der Leinwand
+    /// steht etwas, das nicht im Bestand liegt, und der naechste Schritt wuerde
+    /// es verwerfen. Gestellt wird sie nur dann — `ungesichert` entscheidet
+    /// das, und zwar fuer alle vier gleich.
+    ///
+    /// **Warum eine statt vier.** Bis zum 14.09.2026 lagen auf dieser Ansicht
+    /// drei `.alert` und ein `.confirmationDialog` nebeneinander, jeder mit
+    /// eigenem Zustand. Zwei Bedienelemente, die gleichzeitig aufgehen wollen,
+    /// schliessen einander aus: SwiftUI zeigt einen davon und verschluckt den
+    /// anderen stillschweigend — und es faellt nicht auf, weil beide fuer sich
+    /// funktionieren. Ein einziger Zustand kann gar nicht erst zweierlei
+    /// gleichzeitig meinen.
+    enum Rueckfrage {
+        /// „Neu" — Leinwand, Einzelbilder, Name und Nummer von vorn.
+        case neu
+        /// Ein Groessenwechsel. Umgerechnet wird zwischen den Groessen nichts.
+        case groesse(Leinwandgroesse)
+        /// Ein Stueck aus dem Bestand soll auf die Leinwand.
+        case oeffnen(Editoreintrag)
+        /// Ein eben geladenes Stueck — aus einer Datei oder von LaMetric. Es
+        /// **liegt schon** im Bestand; zur Frage steht allein die Leinwand,
+        /// und deshalb hat nur dieser Fall den dritten Weg.
+        case geladen(Editoreintrag)
+
+        var titel: String {
+            switch self {
+            case .neu: return lok("Neu anfangen?")
+            case .groesse: return lok("Größe wechseln?")
+            case .oeffnen, .geladen: return lok("Gemaltes ersetzen?")
+            }
+        }
+
+        var text: String {
+            switch self {
+            case .neu, .oeffnen:
+                return lok("Das Gemalte ist nicht gesichert und geht dabei verloren.")
+            case .groesse:
+                return lok("Zwischen den Größen wird nichts umgerechnet — das Gemalte geht dabei verloren. „Rückgängig“ holt es zurück.")
+            case .geladen(let eintrag):
+                return lokf("„%@“ liegt jetzt im Bestand. Auf die Leinwand kommt es nur, wenn es das Gemalte ersetzt — das ist nicht gesichert.",
+                            eintrag.name)
+            }
+        }
     }
 
     // MARK: - Arbeitsstand
@@ -155,13 +203,21 @@ public struct EditorBereichView: View {
                           : name.trimmingCharacters(in: .whitespaces)
     }
 
-    /// Ob der Editor gerade leer ist. „Neu" und ein Groessenwechsel fragen nur
-    /// nach, wenn hier tatsaechlich etwas stuende, das verloren ginge.
-    private var istLeer: Bool {
-        nummer.trimmingCharacters(in: .whitespaces).isEmpty
-            && name.trimmingCharacters(in: .whitespaces).isEmpty
-            && leinwand.istLeer
-    }
+    /// **Ob auf der Leinwand etwas steht, das nirgends liegt.** Die eine Frage
+    /// vor allem, was sie verwirft — „Neu", ein Groessenwechsel, ein
+    /// geoeffnetes Bild, ein geladenes Icon.
+    ///
+    /// Gerechnet wird sie im Kern (`Leinwandverlauf.weichtAb`), wo auch der
+    /// gesicherte Stand liegt. Bis zum 14.09.2026 stand hier `istLeer`, und
+    /// das war zweimal falsch: Eine gemalte, nie gesicherte Zeichnung ist
+    /// nicht leer — gefragt wurde trotzdem nicht, wenn nur Name oder Nummer
+    /// leer waren; und ein eben geoeffnetes Bild ist nicht ungesichert —
+    /// gefragt wurde trotzdem.
+    ///
+    /// Name und Nummer zaehlen dabei **nicht** mit. Sie stehen in keiner
+    /// Datei, solange nicht gesichert wurde, und ein Name ohne Zeichnung ist
+    /// in zwei Anschlaegen wieder eingetippt.
+    private var ungesichert: Bool { verlauf.weichtAb(leinwand) }
 
     /// Das gerade bearbeitete Bild als Pixelfeld — fuer die Rechteckzahl und
     /// fuer die Sendung eines unbewegten Bildes.
@@ -206,32 +262,36 @@ public struct EditorBereichView: View {
         .onChange(of: phase) { _, neu in
             if neu != .active { arbeitsstandSichern() }
         }
-        .sheet(isPresented: $zeigeImportBlatt) { importBlatt }
-        .alert("Neu anfangen?", isPresented: $zeigeNeuBestaetigung) {
+        // `onDismiss` und nicht unmittelbar in `einlesen()`: Eine Rueckfrage,
+        // die im selben Durchlauf aufgeht, in dem das Blatt zugeht,
+        // verschluckt SwiftUI — der Knopf haette dann nichts getan.
+        .sheet(isPresented: $zeigeImportBlatt, onDismiss: blattGeschlossen) { importBlatt }
+        // Die **eine** Rueckfrage vor allem, was Ungesichertes verwirft
+        // (siehe `Rueckfrage`). `titleVisibility: .visible`, weil hier die
+        // Frage im Titel steht und nicht bloss ein Name.
+        .confirmationDialog(
+            Text(rueckfrage?.titel ?? ""),
+            isPresented: Binding(get: { rueckfrage != nil }, set: { if !$0 { rueckfrage = nil } }),
+            titleVisibility: .visible,
+            presenting: rueckfrage
+        ) { frage in
+            switch frage {
+            case .neu:
+                Button("Neu anfangen", role: .destructive) { neu() }
+            case .groesse(let neue):
+                Button("Wechseln", role: .destructive) { groesseSetzen(neue) }
+            case .oeffnen(let eintrag):
+                Button("Öffnen", role: .destructive) { oeffnen(eintrag) }
+            case .geladen(let eintrag):
+                Button("Ersetzen", role: .destructive) { aufDieLeinwand(eintrag) }
+                // Der zweite Weg, den es nur hier gibt: Das Stueck liegt schon
+                // im Bestand, die Leinwand bleibt stehen.
+                Button("Nur in den Bestand") { imBestandLassen(eintrag) }
+            }
+            // Fuer alle vier: Eine Rueckfrage ohne Ausweg ist keine.
             Button("Abbrechen", role: .cancel) {}
-            Button("Neu anfangen", role: .destructive) { neu() }
-        } message: {
-            Text("Das Gemalte ist nicht gesichert und geht dabei verloren.")
-        }
-        .alert("Größe wechseln?",
-               isPresented: Binding(get: { zuWechseln != nil }, set: { if !$0 { zuWechseln = nil } })) {
-            Button("Abbrechen", role: .cancel) { zuWechseln = nil }
-            Button("Wechseln", role: .destructive) {
-                if let neue = zuWechseln { groesseSetzen(neue) }
-                zuWechseln = nil
-            }
-        } message: {
-            Text("Zwischen den Größen wird nichts umgerechnet — das Gemalte geht dabei verloren. „Rückgängig“ holt es zurück.")
-        }
-        .alert("Gemaltes ersetzen?",
-               isPresented: Binding(get: { zuLaden != nil }, set: { if !$0 { zuLaden = nil } })) {
-            Button("Abbrechen", role: .cancel) { zuLaden = nil }
-            Button("Öffnen", role: .destructive) {
-                if let eintrag = zuLaden { oeffnen(eintrag) }
-                zuLaden = nil
-            }
-        } message: {
-            Text("Das Gemalte ist nicht leer und geht dabei verloren.")
+        } message: { frage in
+            Text(frage.text)
         }
         // `Text(lokf(...))` statt eines eingesetzten Wertes im Schluessel: Eine
         // `LocalizedStringKey` mit Interpolation traegt zur Laufzeit den
@@ -899,7 +959,7 @@ public struct EditorBereichView: View {
 
     private func groesseWechseln(_ neue: Leinwandgroesse) {
         guard neue != groesse else { return }
-        if istLeer { groesseSetzen(neue) } else { zuWechseln = neue }
+        if ungesichert { rueckfrage = .groesse(neue) } else { groesseSetzen(neue) }
     }
 
     /// Umgerechnet wird zwischen den Groessen **nichts**. Der Wechsel ist ein
@@ -912,11 +972,15 @@ public struct EditorBereichView: View {
         nummer = ""
         name = ""
         meldung = nil
+        // Der Verlauf bleibt — „Rueckgaengig" holt die verworfene Leinwand samt
+        // ihrer Groesse zurueck. Der gesicherte Stand nicht: Was jetzt auf dem
+        // Tisch liegt, ist eine leere Flaeche und liegt in keinem Bestand.
+        verlauf.gesichertMerken(nil)
         arbeitsstandSichern()
     }
 
     private func neuAnfragen() {
-        if istLeer { neu() } else { zeigeNeuBestaetigung = true }
+        if ungesichert { rueckfrage = .neu } else { neu() }
     }
 
     /// Von vorn — Leinwand, Einzelbilder, Verzoegerung, Name und Nummer. Der
@@ -933,10 +997,18 @@ public struct EditorBereichView: View {
     }
 
     private func anklicken(_ eintrag: Editoreintrag) {
-        if leinwand.istLeer { oeffnen(eintrag) } else { zuLaden = eintrag }
+        if ungesichert { rueckfrage = .oeffnen(eintrag) } else { oeffnen(eintrag) }
     }
 
-    private func oeffnen(_ eintrag: Editoreintrag) {
+    /// Holt einen Eintrag des Bestands auf die Leinwand. `meldung` sagt, was
+    /// darunter steht — gesetzt vom Aufrufer nur dort, wo mehr geschehen ist
+    /// als ein Oeffnen (`aufDieLeinwand`).
+    ///
+    /// Der Rueckgabewert sagt, ob es geklappt hat: Ein Aufrufer, der hinterher
+    /// etwas meldet, darf einen Fehlschlag nicht mit einer Erfolgsmeldung
+    /// ueberschreiben.
+    @discardableResult
+    private func oeffnen(_ eintrag: Editoreintrag, meldung text: String? = nil) -> Bool {
         do {
             // Schwarz bleibt Schwarz: Beim Sichern wird „aus“ zu Schwarz, weil
             // GIF hier keine Durchsichtigkeit traegt — nach einem Rundlauf sind
@@ -945,21 +1017,57 @@ public struct EditorBereichView: View {
             stoppeAbspielen()
             verlauf.leeren()
             leinwand = neue
+            // Was jetzt auf der Leinwand steht, liegt genau so im Bestand: von
+            // hier an weicht nichts ab, bis jemand etwas malt.
+            verlauf.gesichertMerken(neue)
             nummer = eintrag.nummer ?? ""
             name = eintrag.name
             arbeitsstandSichern()
-            meldung = neue.bilder.count > 1
+            meldung = text ?? (neue.bilder.count > 1
                 ? lokf("%@ geöffnet (%d Bilder).", eintrag.name, neue.bilder.count)
-                : lokf("%@ geöffnet.", eintrag.name)
+                : lokf("%@ geöffnet.", eintrag.name))
+            return true
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return false
         }
+    }
+
+    /// **Ein geladenes Stueck kommt auf die Leinwand** — aus einer Datei wie
+    /// von LaMetric. Im Bestand liegt es da schon; steht auf der Leinwand
+    /// etwas Ungesichertes, entscheidet die Rueckfrage, ob es mitgeht.
+    ///
+    /// Bis zum 14.09.2026 wanderte eine geladene Datei nur in den Bestand und
+    /// war nirgends zu sehen — aus Sorge um genau dieses Gemalte. Die Sorge
+    /// war richtig, das Schweigen die falsche Antwort darauf: Man fragt.
+    private func geladenUebernehmen(_ eintrag: Editoreintrag) {
+        if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }
+    }
+
+    /// Die Meldung nennt beides: den Bestand, in dem es gelandet ist — er kann
+    /// ein anderer sein als der, auf den der Editor eingestellt war —, und
+    /// dass es jetzt auch auf der Leinwand liegt.
+    private func aufDieLeinwand(_ eintrag: Editoreintrag) {
+        oeffnen(eintrag, meldung: lokf("%@ aufgenommen, %@ — und geöffnet.",
+                                       eintrag.name, lok(eintrag.groesse.beschriftung)))
+    }
+
+    /// Der zweite Weg der Rueckfrage: Die Leinwand bleibt, wie sie ist. Zu tun
+    /// ist dabei nichts — das Stueck liegt schon im Bestand; die Meldung sagt,
+    /// in welchem.
+    private func imBestandLassen(_ eintrag: Editoreintrag) {
+        meldung = lokf("%@ aufgenommen, %@.", eintrag.name, lok(eintrag.groesse.beschriftung))
     }
 
     private func sichern() {
         do {
             let eintrag = try bestand.sichern(leinwand, name: name, nummer: nummer)
             vorhandene = bestand.alle()
+            // Von hier an weicht nichts mehr ab. Der Verlauf bleibt stehen:
+            // Rueckgaengig ueber ein Sichern hinweg ist erlaubt — und macht
+            // die Leinwand dann wieder ungesichert, weil sie wieder anders
+            // aussieht als das, was in der Datei liegt.
+            verlauf.gesichertMerken(leinwand)
             name = eintrag.name
             meldung = lokf("%@ gesichert.", eintrag.name)
             zustand.log("Gesichert: \(eintrag.name)")
@@ -999,8 +1107,11 @@ public struct EditorBereichView: View {
                 await MainActor.run {
                     vorhandene = bestand.alle()
                     lametricNummer = ""
-                    meldung = lokf("%@ von LaMetric geholt.", icon.name)
                     laedt = false
+                    // Dasselbe wie nach „Oeffnen…": Ein geholtes Icon will man
+                    // auch sehen. Die Groesse kommt aus dem Icon, nicht aus
+                    // der Annahme, ein LaMetric-Icon sei immer 8×8.
+                    if let eintrag = Editorbestand.eintrag(fuer: icon) { geladenUebernehmen(eintrag) }
                 }
             } catch {
                 await MainActor.run {
@@ -1066,15 +1177,32 @@ public struct EditorBereichView: View {
             let eintrag = try bestand.einlesen(daten: daten,
                                                nummer: importNummer, name: importName)
             vorhandene = bestand.alle()
-            zeigeImportBlatt = false
             importDaten = nil
-            meldung = lokf("%@ aufgenommen, %@.", eintrag.name, lok(eintrag.groesse.beschriftung))
             zustand.log("Eingelesen: \(eintrag.name)")
+            // Weiter geht es erst, wenn das Blatt wirklich zu ist
+            // (`blattGeschlossen`) — vorher gaebe es keine Rueckfrage zu sehen.
+            eingelesen = eintrag
+            zeigeImportBlatt = false
         } catch {
             // Das Blatt bleibt stehen und sagt hier, woran es lag: Eine
             // Meldung unter der Leinwand laege dahinter.
             importMeldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
+    }
+
+    /// Was nach dem Blatt geschieht — und zwar erst, wenn es zu ist.
+    ///
+    /// **Ein Dialog, der im selben Durchlauf aufgeht, in dem ein Blatt zugeht,
+    /// wird verschluckt.** SwiftUI hat dann ein Bedienelement zu schliessen und
+    /// eines zu zeigen und tut nur das erste; die Rueckfrage stuende nirgends,
+    /// und „Öffnen" haette scheinbar nichts getan. `onDismiss` ist der Ort,
+    /// an dem das Blatt nachweislich weg ist.
+    ///
+    /// `nil` heisst abgebrochen — dann ist hier nichts zu tun.
+    private func blattGeschlossen() {
+        guard let eintrag = eingelesen else { return }
+        eingelesen = nil
+        geladenUebernehmen(eintrag)
     }
 
     /// Holt mitgelieferte Icons zurueck, die im Schreibordner fehlen. Vorhandene

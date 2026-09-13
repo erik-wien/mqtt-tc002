@@ -1,6 +1,14 @@
 import Foundation
 
-/// Rueckgaengig und Wiederherstellen fuer den Editor.
+/// Rueckgaengig und Wiederherstellen fuer den Editor — und der Stand, der im
+/// Bestand liegt.
+///
+/// **Beides gehoert zusammen und nicht nebeneinander.** Die Frage „weicht die
+/// Leinwand vom Bestand ab?" stellt sich an denselben Stellen, an denen dieser
+/// Stapel geleert wird, und beide Antworten haengen am selben Stand. Ein
+/// zweites Gedaechtnis daneben liefe frueher oder spaeter auseinander —
+/// `slotzustand` gab es in diesem Projekt schon einmal dreimal, und die
+/// abweichende Fassung war die falsche.
 ///
 /// **Ein Strich ist ein Schritt, nicht ein Pixel.** Wer mit dem Finger ueber
 /// zwanzig Kaestchen faehrt, hat einmal gemalt und will einmal zurueck. Je ein
@@ -35,6 +43,9 @@ public struct Leinwandverlauf: Sendable {
 
     private var rueckwaerts: [Leinwand] = []
     private var vorwaerts: [Leinwand] = []
+    /// Der Stand, der im Bestand liegt — gesetzt beim Sichern und nach dem
+    /// Oeffnen. `nil` heisst: Was auf der Leinwand steht, liegt nirgends.
+    private var gesichert: Leinwand?
 
     public init() {}
 
@@ -42,6 +53,36 @@ public struct Leinwandverlauf: Sendable {
     public var kannVor: Bool { !vorwaerts.isEmpty }
     /// Nur fuer Tests und zum Nachsehen.
     public var tiefe: Int { rueckwaerts.count }
+
+    /// Was jetzt im Bestand liegt — `nil`, wenn es dort nichts gibt, dem die
+    /// Leinwand entspraeche: nach „Neu", nach einem Groessenwechsel und
+    /// solange ueberhaupt nicht gesichert wurde.
+    ///
+    /// Zu rufen ist es genau dort, wo die Leinwand und der Bestand zur Deckung
+    /// kommen (Sichern, Oeffnen) oder auseinanderfallen (Neu, Groessenwechsel)
+    /// — nicht bei jeder Aenderung.
+    public mutating func gesichertMerken(_ stand: Leinwand?) {
+        gesichert = stand
+    }
+
+    /// **Ob die Leinwand vom Bestand abweicht** — die eine Frage vor jedem
+    /// Schritt, der Gemaltes verwirft: „Neu", ein Groessenwechsel, ein
+    /// geoeffnetes Bild, ein geladenes Icon.
+    ///
+    /// Gefragt wird nicht, ob etwas geschehen ist, sondern ob es **jetzt**
+    /// anders aussieht als das, was im Bestand liegt. Daraus folgt dreierlei
+    /// von selbst: Eine geladene und unveraenderte Leinwand weicht nicht ab.
+    /// Eine Aenderung, die wieder rueckgaengig gemacht wurde, zaehlt nicht —
+    /// es ist wieder derselbe Stand. Und wo es keinen gesicherten Stand gibt,
+    /// weicht alles ab, was nicht leer ist.
+    ///
+    /// **Ein gezaehlter Stapel taete das nicht.** `kannZurueck` sagt nur, dass
+    /// jemand etwas getan hat; nach einem Neustart ist der Stapel leer, der
+    /// wiederhergestellte Arbeitsstand aber immer noch ungesichert.
+    public func weichtAb(_ jetzt: Leinwand) -> Bool {
+        guard let gesichert else { return !jetzt.istLeer }
+        return !jetzt.gleichesBild(wie: gesichert)
+    }
 
     /// **Vor** jeder Aenderung zu rufen: Der Stand von jetzt kommt auf den
     /// Stapel. Ein neuer Schritt macht jedes Wiederherstellen hinfaellig —
@@ -72,8 +113,14 @@ public struct Leinwandverlauf: Sendable {
 
     /// Nach „Neu" und nach dem Oeffnen eines vorhandenen Bildes: Der bisherige
     /// Weg fuehrt nicht mehr zu dem, was auf dem Tisch liegt.
+    ///
+    /// Der gesicherte Stand faellt dabei mit weg — wer den Weg wegwirft, hat
+    /// auch ein anderes Blatt vor sich. Wer danach eines oeffnet, sagt mit
+    /// `gesichertMerken` gleich, welches es ist; wer es vergisst, bekommt eine
+    /// Rueckfrage zuviel und nicht eine zuwenig.
     public mutating func leeren() {
         rueckwaerts.removeAll()
         vorwaerts.removeAll()
+        gesichert = nil
     }
 }

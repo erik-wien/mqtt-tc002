@@ -77,6 +77,20 @@ public struct Leinwand: Equatable, Sendable, Codable {
         bilder.count == 1 && bilder[0].allSatisfy { $0 == nil }
     }
 
+    /// Ob hier dasselbe Bild steht wie in `andere`: dieselbe Groesse, dieselben
+    /// Einzelbilder, dieselbe Standzeit — genau das, was beim Sichern in die
+    /// Datei geht.
+    ///
+    /// **Nicht** dasselbe gewaehlte Einzelbild. Welches davon gerade bearbeitet
+    /// wird, steht in keiner Datei, und ein Blick auf Bild drei aendert nichts
+    /// daran, dass die Leinwand dem Bestand entspricht — `==` wuerde ihn als
+    /// Abweichung zaehlen und eine Rueckfrage ausloesen, bei der nichts zu
+    /// verlieren ist.
+    public func gleichesBild(wie andere: Leinwand) -> Bool {
+        breite == andere.breite && hoehe == andere.hoehe
+            && verzoegerung == andere.verzoegerung && bilder == andere.bilder
+    }
+
     public func farbe(x: Int, y: Int) -> String? {
         drin(x, y) ? bilder[aktuell][y * breite + x] : nil
     }

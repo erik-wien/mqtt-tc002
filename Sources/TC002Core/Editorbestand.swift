@@ -101,6 +101,21 @@ public struct Editorbestand {
         return ergebnis
     }
 
+    /// Der Eintrag zu einem Icon einer Sammlung — fuer den Weg, der ein Icon
+    /// holt und es danach auf die Leinwand legen soll.
+    ///
+    /// Die Groesse kommt aus der **Kante des Icons**, nicht aus der Annahme,
+    /// ein geholtes sei immer 8×8: Dieselbe Annahme hat den Import bis zum
+    /// 13.09.2026 auf die eingestellte Leinwandgroesse heruntergerechnet.
+    /// `nil`, wenn die Kante keine der drei Groessen ist.
+    public static func eintrag(fuer icon: Icon) -> Editoreintrag? {
+        guard let groesse = Leinwandgroesse.fuer(breite: icon.kante, hoehe: icon.kante) else {
+            return nil
+        }
+        return Editoreintrag(groesse: groesse, name: icon.name,
+                             nummer: groesse.mitNummer ? icon.nummer : nil, datei: icon.datei)
+    }
+
     /// Nach Name und Nummer, unabhaengig von Gross- und Kleinschreibung.
     public func gefiltert(nach suche: String) -> [Editoreintrag] {
         alle().gefiltert(nach: suche)

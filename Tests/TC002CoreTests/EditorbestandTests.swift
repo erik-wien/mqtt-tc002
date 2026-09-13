@@ -124,6 +124,35 @@ final class EditorbestandTests: XCTestCase {
         XCTAssertTrue(bestand.alle().isEmpty)
     }
 
+    /// Der Weg fuer ein eben geholtes Icon, das auf die Leinwand soll: Die
+    /// Groesse kommt aus der **Kante des Icons**. Ein LaMetric-Icon ist zwar
+    /// immer 8×8, aber dieselbe Annahme hat den Import bis zum 13.09.2026 auf
+    /// die eingestellte Leinwandgroesse heruntergerechnet — sie steht hier
+    /// nirgends mehr.
+    ///
+    /// Mutation: in `eintrag(fuer:)` die Groesse fest auf `.icon8` setzen —
+    /// dann landet ein 16×16 als 8×8 auf der Leinwand und traegt eine Nummer,
+    /// die es bei dieser Groesse gar nicht gibt.
+    func testDerEintragZuEinemIconNimmtDieGroesseAusDerKante() throws {
+        let acht = Icon(nummer: "4711", name: "Acht", kategorie: "",
+                        datei: wurzel.appendingPathComponent("Icons/4711.gif"), kante: 8)
+        let sechzehn = Icon(nummer: "egal", name: "Sechzehn", kategorie: "",
+                            datei: wurzel.appendingPathComponent("Icons16/Sechzehn.gif"), kante: 16)
+
+        let a = try XCTUnwrap(Editorbestand.eintrag(fuer: acht))
+        XCTAssertEqual(a.groesse, .icon8)
+        XCTAssertEqual(a.nummer, "4711")
+        XCTAssertEqual(a.datei, acht.datei)
+
+        let s = try XCTUnwrap(Editorbestand.eintrag(fuer: sechzehn))
+        XCTAssertEqual(s.groesse, .icon16)
+        XCTAssertNil(s.nummer, "bei 16×16 gibt es keine Nummer")
+
+        XCTAssertNil(Editorbestand.eintrag(fuer: Icon(nummer: "1", name: "Fremd", kategorie: "",
+                                                      datei: wurzel, kante: 12)),
+                     "eine fremde Kante ist keine der drei Groessen")
+    }
+
     /// Eine Leinwand, die keine der drei Groessen hat, wird abgelehnt statt
     /// stillschweigend im naechstbesten Ordner zu landen.
     func testEineFremdeGroesseWirdAbgelehnt() {

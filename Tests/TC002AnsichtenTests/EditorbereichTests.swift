@@ -177,11 +177,9 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertTrue(zeile.contains("Button(\"Neu\") { neuAnfragen() }"),
                       "der Knopf „Neu“ räumt wieder unmittelbar auf, statt vorher zu fragen")
 
-        XCTAssertTrue(text.contains("alert(\"Neu anfangen?\", isPresented: $zeigeNeuBestaetigung)"),
-                      "die Rückfrage vor dem Aufräumen gibt es nicht mehr")
         XCTAssertTrue(text.contains("Button(\"Neu anfangen\", role: .destructive) { neu() }"),
                       "die Rückfrage führt nicht mehr auf „Neu“ — oder sie ist nicht mehr als zerstörend gekennzeichnet")
-        XCTAssertTrue(text.contains("if istLeer { neu() } else { zeigeNeuBestaetigung = true }"),
+        XCTAssertTrue(text.contains("if ungesichert { rueckfrage = .neu } else { neu() }"),
                       "ohne diesen Zweig fragt „Neu“ entweder immer oder nie")
 
         let anzahl = aufrufe("neu", in: text)
@@ -317,6 +315,113 @@ final class EditorbereichTests: XCTestCase {
         }
         XCTAssertTrue(knopf.contains("leinwand.bilder.count < 2"),
                       "das Symbol ist bei einem einzigen Einzelbild nicht mehr gesperrt")
+    }
+
+    /// **Ein geladenes Bild will man auch sehen.** Aus einer Datei wie von
+    /// LaMetric: Beide Wege enden bei `geladenUebernehmen`, und der entscheidet
+    /// an **einer** Stelle, ob gefragt wird. Bis zum 14.09.2026 wanderte eine
+    /// eingelesene Datei nur in den Bestand — auf der Leinwand geschah nichts,
+    /// aus Sorge um Ungesichertes. Der Auftraggeber hat das abgelehnt.
+    ///
+    /// Der Rückfall ist still: Ein Weg, der den Eintrag nur ablegt, übersetzt
+    /// und baut anstandslos; dass die Leinwand nicht mitgeht, sieht man nur am
+    /// Gerät.
+    ///
+    /// Mutation: in `nachladen` `geladenUebernehmen(eintrag)` durch eine
+    /// Meldung ersetzen — dann liegt das geholte Icon wieder nur im Bestand.
+    func testEinGeladenesBildKommtAufDieLeinwand() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+
+        let nachladen = ausschnitt(text, von: "private func nachladen()", bis: "private func dateiUebernehmen")
+        XCTAssertTrue(nachladen.contains("geladenUebernehmen(eintrag)"),
+                      "ein von LaMetric geholtes Icon kommt wieder nur in den Bestand")
+        XCTAssertTrue(nachladen.contains("Editorbestand.eintrag(fuer: icon)"),
+                      "die Größe des geholten Icons wird wieder angenommen statt aus ihm gelesen")
+
+        XCTAssertTrue(text.contains("geladenUebernehmen(eintrag)\n    }"),
+                      "der Weg aus dem Blatt führt nicht mehr auf die Leinwand")
+
+        let uebernehmen = ausschnitt(text, von: "private func geladenUebernehmen", bis: "private func aufDieLeinwand")
+        XCTAssertTrue(uebernehmen.contains("if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }"),
+                      "geladen wird wieder ohne Rückfrage ersetzt — oder gar nicht mehr gezeigt")
+
+        let leinwand = ausschnitt(text, von: "private func aufDieLeinwand", bis: "private func imBestandLassen")
+        XCTAssertTrue(leinwand.contains("oeffnen(eintrag"),
+                      "das Geladene kommt auf einem zweiten Weg auf die Leinwand statt über „Öffnen“")
+    }
+
+    /// **Die Rückfrage nach dem Laden hat drei Wege** — so verlangt: ersetzen,
+    /// nur in den Bestand, abbrechen. Sie ist die einzige der vier mit dem
+    /// mittleren Weg: Nur dort liegt das Stück schon im Bestand.
+    ///
+    /// Mutation: `Button("Nur in den Bestand")` aus dem Zweig `.geladen`
+    /// entfernen — dann bleibt nur „ersetzen oder gar nicht“, und wer beides
+    /// will, muss zweimal laden.
+    func testDieRueckfrageNachDemLadenHatDreiWege() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let dialog = ausschnitt(text, von: "presenting: rueckfrage", bis: "} message: { frage in")
+
+        XCTAssertTrue(dialog.contains("Button(\"Ersetzen\", role: .destructive) { aufDieLeinwand(eintrag) }"),
+                      "„Ersetzen“ fehlt — oder es ist nicht mehr als zerstörend gekennzeichnet")
+        XCTAssertTrue(dialog.contains("Button(\"Nur in den Bestand\") { imBestandLassen(eintrag) }"),
+                      "der zweite Weg fehlt: Das Geladene liegt im Bestand, und die Leinwand soll bleiben dürfen")
+        XCTAssertTrue(dialog.contains("Button(\"Abbrechen\", role: .cancel) {}"),
+                      "eine Rückfrage ohne Ausweg ist keine")
+        XCTAssertEqual(dialog.components(separatedBy: "Button(\"Abbrechen\"").count - 1, 1,
+                       "„Abbrechen“ steht mehrfach da — es gilt für alle vier Anlässe gemeinsam")
+    }
+
+    /// **Eine Rückfrage, nicht fünf.** Alle vier Anlässe — „Neu“,
+    /// Größenwechsel, Öffnen, Laden — stellen dieselbe Frage und hängen an
+    /// **einem** Zustand. Zwei Bedienelemente, die gleichzeitig aufgehen
+    /// wollen, schließen einander aus: SwiftUI zeigt eines und verschluckt das
+    /// andere stillschweigend. Genau deshalb steht auch die Frage nach dem
+    /// Blatt in `onDismiss` und nicht im Knopf, der das Blatt schließt.
+    ///
+    /// Mutation: `onDismiss: blattGeschlossen` aus dem `.sheet` entfernen und
+    /// `blattGeschlossen()` am Ende von `einlesen()` rufen — baut, übersetzt,
+    /// und die Rückfrage kommt nie.
+    func testEineRueckfrageFuerAllesWasUngesichertesVerwirft() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+
+        XCTAssertFalse(text.contains(".alert("),
+                       "neben der einen Rückfrage liegt wieder ein Hinweisfenster — zwei davon schließen einander aus")
+        XCTAssertEqual(text.components(separatedBy: "isPresented: Binding(get: { rueckfrage != nil }").count - 1, 1,
+                       "die Rückfrage hängt nicht mehr an genau einem Zustand")
+        XCTAssertTrue(text.contains(".sheet(isPresented: $zeigeImportBlatt, onDismiss: blattGeschlossen)"),
+                      "die Rückfrage nach dem Blatt wird wieder im selben Durchlauf gestellt, in dem das Blatt zugeht — SwiftUI verschluckt sie")
+
+        for zweig in ["if ungesichert { rueckfrage = .groesse(neue) } else { groesseSetzen(neue) }",
+                      "if ungesichert { rueckfrage = .neu } else { neu() }",
+                      "if ungesichert { rueckfrage = .oeffnen(eintrag) } else { oeffnen(eintrag) }",
+                      "if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }"] {
+            XCTAssertTrue(text.contains(zweig), "„\(zweig)“ fehlt — dieser Anlass fragt wieder nach eigener Regel")
+        }
+    }
+
+    /// **Woran „ungesichert“ hängt.** Nicht an „ist die Leinwand leer“ — das
+    /// war zweimal falsch: Eine gemalte, nie gesicherte Zeichnung ist nicht
+    /// leer, und ein eben geöffnetes Bild ist nicht ungesichert. Gerechnet
+    /// wird es im Kern, gegen den Stand, der im Bestand liegt; die Ansicht
+    /// sagt nur, **wann** dieser Stand ein anderer wird.
+    ///
+    /// Mutation: `verlauf.gesichertMerken(leinwand)` aus `sichern()` entfernen
+    /// — dann gilt frisch Gesichertes weiter als ungesichert, und jedes
+    /// „Neu“ danach fragt umsonst.
+    func testUngesichertHaengtAmGesichertenStandUndNichtAnIstLeer() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+
+        XCTAssertTrue(text.contains("private var ungesichert: Bool { verlauf.weichtAb(leinwand) }"),
+                      "die Ansicht rechnet wieder selbst, statt den Kern zu fragen")
+        XCTAssertFalse(text.contains("istLeer"),
+                       "„leer“ steht wieder für „nichts zu verlieren“ — eine gemalte, nie gesicherte Zeichnung ist nicht leer")
+
+        for (stelle, bis) in [("private func groesseSetzen", "private func neuAnfragen"),
+                              ("private func oeffnen(", "private func geladenUebernehmen"),
+                              ("private func sichern()", "private func loeschen(")] {
+            XCTAssertTrue(ausschnitt(text, von: stelle, bis: bis).contains("verlauf.gesichertMerken("),
+                          "„\(stelle)“ sagt nicht mehr, was jetzt im Bestand liegt — der gesicherte Stand läuft weg")
+        }
     }
 
     /// **A3.** Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
