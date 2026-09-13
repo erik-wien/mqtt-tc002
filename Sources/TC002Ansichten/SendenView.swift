@@ -552,18 +552,20 @@ public struct SendenView: View {
             }
 
             Section("Schrift") {
-                LabeledContent("Schriftart") {
-                    Picker("Schriftart", selection: $schrift) {
-                        ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
-                        // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
-                        // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
-                        // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
-                        if !Self.schriftarten.contains(schrift) {
-                            Divider()
-                            Text(schrift).tag(schrift)
-                        }
+                // Blank, ohne `LabeledContent` und ohne `labelsHidden`: Ein
+                // Waehler in einem gruppierten `Form` zeichnet die kanonische
+                // Zeile selbst — Beschriftung links, Wert im grauen Kaestchen
+                // mit Doppelpfeil rechts. Die Umwicklung nahm ihm genau das
+                // und liess unter iPadOS blanken Text mit Doppelpfeil uebrig.
+                Picker("Schriftart", selection: $schrift) {
+                    ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+                    // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
+                    // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
+                    // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
+                    if !Self.schriftarten.contains(schrift) {
+                        Divider()
+                        Text(schrift).tag(schrift)
                     }
-                    .labelsHidden()
                 }
                 .disabled(weg == .text)
                 .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
@@ -572,13 +574,10 @@ public struct SendenView: View {
                 // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                 // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
                 // laesst sich als Schrittweite nicht ausdruecken.
-                LabeledContent("Größe") {
-                    Picker("Größe", selection: $groesse) {
-                        ForEach(angeboteneGroessen, id: \.self) { g in
-                            Text(lokf("%d px", Int(g))).tag(g)
-                        }
+                Picker("Größe", selection: $groesse) {
+                    ForEach(angeboteneGroessen, id: \.self) { g in
+                        Text(lokf("%d px", Int(g))).tag(g)
                     }
-                    .labelsHidden()
                 }
                 .help(eigenesRaster
                       ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
@@ -626,22 +625,21 @@ public struct SendenView: View {
 
                 // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
                 // die Ausrichtung bei Pages.
-                LabeledContent("Waagrecht") {
-                    Picker("Waagrecht", selection: $horizontal) {
-                        Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
-                        Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
-                        Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                // Auch hier blank: Der Segmentschalter bleibt (die Wahl soll
+                // nebeneinander stehen), aber die Beschriftung setzt die
+                // `Form` selbst links daneben.
+                Picker("Waagrecht", selection: $horizontal) {
+                    Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
+                    Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
+                    Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
                 }
-                LabeledContent("Senkrecht") {
-                    Picker("Senkrecht", selection: $vertikal) {
-                        Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
-                        Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)
-                        Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                .pickerStyle(.segmented)
+                Picker("Senkrecht", selection: $vertikal) {
+                    Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
+                    Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)
+                    Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
                 }
+                .pickerStyle(.segmented)
             }
         }
         .formStyle(.grouped)

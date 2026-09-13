@@ -367,15 +367,16 @@ public struct EditorBereichView: View {
 
         Section("Werkzeug") {
             ColorPicker("Farbe", selection: farbe)
-            LabeledContent("Stift") {
-                Picker("Stift", selection: $radiert) {
-                    Image(systemName: "paintbrush.pointed")
-                        .accessibilityLabel("Malen").tag(false)
-                    Image(systemName: "eraser")
-                        .accessibilityLabel("Radieren").tag(true)
-                }
-                .pickerStyle(.segmented).labelsHidden()
+            // Blank: Die `Form` setzt „Stift" links, der Segmentschalter
+            // steht rechts. Die Umwicklung brachte nichts, was das System
+            // nicht selbst tut.
+            Picker("Stift", selection: $radiert) {
+                Image(systemName: "paintbrush.pointed")
+                    .accessibilityLabel("Malen").tag(false)
+                Image(systemName: "eraser")
+                    .accessibilityLabel("Radieren").tag(true)
             }
+            .pickerStyle(.segmented)
             Button("Alles löschen", role: .destructive) { schritt(); leinwand.bildLeeren(); arbeitsstandSichern() }
                 .knopfZerstoerend()
                 .help("Leert das gerade bearbeitete Einzelbild.")
@@ -389,11 +390,17 @@ public struct EditorBereichView: View {
 
         if groesse.iconEinfuegbar {
             Section("Icon einfügen") {
+                // Ein Befehl mit Auswahl, keine Wertzeile: Es bleibt danach
+                // nichts „gewaehlt" stehen, das Icon wird eingefuegt.
+                // Deshalb die Fassung eines Befehlsknopfs — `menuStyle(.button)`
+                // schickt das Menue ueberhaupt erst durch einen Knopfstil.
                 Menu("Icon wählen…") {
                     ForEach(iconsammlung.alle(), id: \.nummer) { icon in
                         Button(icon.name) { iconEinfuegen(icon) }
                     }
                 }
+                .menuStyle(.button)
+                .knopfBefehl()
                 .disabled(iconsammlung.alle().isEmpty)
                 .help("Setzt ein vorhandenes 8×8-Icon senkrecht mittig ins Feld — an derselben Stelle, an der es auch unter „Senden“ läge.")
             }

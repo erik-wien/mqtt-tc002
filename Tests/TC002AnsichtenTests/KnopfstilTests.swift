@@ -187,6 +187,49 @@ final class KnopfstilTests: XCTestCase {
                       + "dem Hineinklicken:\n" + ohneFassung.joined(separator: "\n"))
     }
 
+    /// **Nicht nachbauen, was das System zeichnet.**
+    ///
+    /// Ein blanker `Picker("Schriftart", selection:)` in einem gruppierten
+    /// `Form` zeichnet die kanonische Zeile selbst: Beschriftung links, Wert
+    /// im grauen Kästchen mit Doppelpfeil rechts — auf beiden Geräten, in
+    /// hell und dunkel, bei jeder Textgröße und in jeder Sprache. Wickelt man
+    /// ihn in `LabeledContent` und nimmt ihm mit `labelsHidden()` seine
+    /// Beschriftung, verliert er genau diese Darstellung und fällt unter
+    /// iPadOS auf blanken Text mit Doppelpfeil zurück. So war es bis zum
+    /// 13.09.2026 bei „Schriftart", „Größe", „Seitenwechsel", „Waagrecht",
+    /// „Senkrecht" und „Stift".
+    ///
+    /// Der Fehler ist unsichtbar: Am Mac sieht die Umwicklung fast gleich
+    /// aus, und der Übersetzer hat dazu nichts zu sagen.
+    ///
+    /// Für `TextField` gilt das **nicht** — dort ist die Umwicklung
+    /// begründet: Unter iPadOS macht SwiftUI aus der Beschriftung eines
+    /// Feldes den Platzhalter, und der verschwindet, sobald etwas darin
+    /// steht (siehe `VerbindungView.brokerAbschnitt`). Deshalb prüft dieser
+    /// Test nur Wähler.
+    ///
+    /// **Mutationsprobe** (13.09.2026): „Schriftart" wieder in
+    /// `LabeledContent` gewickelt und `.labelsHidden()` gesetzt → dieser Test
+    /// fällt mit dieser Zeile durch; zurückgenommen → grün.
+    func testKeinWaehlerWirdUmwickeltUndEntwertet() throws {
+        var umwickelt: [String] = []
+        for datei in swiftDateien(unter: "Sources/TC002Ansichten") {
+            let alle = try zeilen(datei)
+            for (i, z) in alle.enumerated() {
+                guard z.nackt.contains("LabeledContent(") else { continue }
+                let block = kette(alle, ab: i)
+                guard block.range(of: #"\bPicker\("#, options: .regularExpression) != nil,
+                      block.contains("labelsHidden()") else { continue }
+                umwickelt.append("\(datei):\(i + 1)  \(z.nackt)")
+            }
+        }
+        XCTAssertTrue(umwickelt.isEmpty,
+                      "Hier ist ein Wähler wieder in `LabeledContent` gewickelt und mit "
+                      + "`labelsHidden()` entwertet. Ein blanker Picker in der `Form` zeichnet "
+                      + "die Zeile selbst — und zwar auf beiden Geräten richtig:\n"
+                      + umwickelt.joined(separator: "\n"))
+    }
+
     /// Die Schrittwahl ist **ein** Element mit Trennstrich, nicht zwei
     /// Knöpfe, und ihr Wert steht in einem eigenen Kästchen. Beides steckt in
     /// `Schrittwahl`; hier steht, dass die drei Stellen sie auch benutzen und

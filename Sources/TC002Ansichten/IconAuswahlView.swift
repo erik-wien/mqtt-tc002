@@ -53,10 +53,22 @@ struct IconAuswahlView: View {
             if gewaehltesIcon != nil {
                 // Entfernt die Wahl, ohne erst das Blatt zu oeffnen — gedaempft,
                 // damit der Hauptknopf (Icon wechseln) im Vordergrund bleibt.
+                //
+                // `.tint(.secondary)` und nicht nur ein graues Symbol: Unter
+                // iPadOS faerbt der randlose Stil die Beschriftung in der
+                // Akzentfarbe, und ein blaues `x` neben einem blauen Namen
+                // las sich als Verweis mit Schliessknopf. Gewaehlt ist aber
+                // ein **Wert**, kein Verweis — der Name steht deshalb dunkel
+                // im grauen Kaestchen des Knopfes daneben (ein Chip, samt
+                // Vorschaubild), und das Entfernen ist das gedaempfte Zeichen
+                // dahinter. Zwei Elemente und nicht ein Chip mit `x` darin:
+                // Wechseln und Entfernen brauchen je eine eigene
+                // Trefferflaeche.
                 Button { gewaehltesIcon = nil } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.borderless)
+                .tint(.secondary)
                 .help("Icon entfernen")
             }
         }
