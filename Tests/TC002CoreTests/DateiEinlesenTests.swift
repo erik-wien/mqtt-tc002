@@ -6,9 +6,11 @@ import XCTest
 /// „Der iPad Icon Editor kann die beiden maze gifs im Download Ordner nicht
 /// importieren" — gemeldet am 13.09.2026.
 ///
-/// Zwei Verdaechtige, und dieser Test trennt sie: Wird ein zu grosses GIF
-/// **abgewiesen** (dann waere es der Kern), oder wird es heruntergerechnet
-/// (dann liegt es an der Oberflaeche und ihrem Zugriff auf die Datei)?
+/// Zwei Verdaechtige — und beide waren schuldig. Die Oberflaeche merkte sich
+/// die URL und las erst spaeter, wenn der Zugriff laengst zu war; der Kern
+/// rechnete jede Datei stillschweigend auf die eingestellte Groesse herunter,
+/// und die beiden GIFs waren 16×16. Seit dem 13.09.2026 nimmt er jede der drei
+/// Groessen in ihrer eigenen auf und lehnt jede andere mit Begruendung ab.
 ///
 /// Geschrieben wird ausschliesslich in ein Wegwerfverzeichnis.
 final class DateiEinlesenTests: XCTestCase {
@@ -54,41 +56,71 @@ final class DateiEinlesenTests: XCTestCase {
         return daten as Data
     }
 
-    // MARK: - Verdacht 1: wird zu Grosses abgewiesen?
+    // MARK: - C1: die Groesse der Datei entscheidet
 
-    /// Nein. Ein 32×32 wird auf die Groesse des Bestands heruntergerechnet,
-    /// ohne Glaettung — so wie die Hilfe es seit jeher sagt. Der Kern ist
-    /// unschuldig.
-    func testEinZuGrossesGifWirdHeruntergerechnetUndNichtAbgewiesen() throws {
-        let daten = try gif(breite: 32, hoehe: 32)
-        let eintrag = try bestand.einlesen(daten: daten, groesse: .icon8,
-                                           nummer: "maze", name: "Maze")
-        XCTAssertEqual(eintrag.groesse, .icon8)
-        let zurueck = try bestand.oeffnen(eintrag)
-        XCTAssertEqual(zurueck.bild.count, 64, "aus 32×32 muss ein 8×8 geworden sein")
-        XCTAssertEqual(zurueck.bild[0], "#FF0000", "oben links bleibt oben links")
-    }
-
-    /// Dasselbe fuer die beiden anderen Groessen — damit nicht eine davon
-    /// stillschweigend eine andere Regel bekommt.
-    func testJedeGroesseNimmtEineFremdeVorlageAn() throws {
-        let faelle: [(Leinwandgroesse, Int, Int)] = [
-            (.icon8, 32, 32), (.icon16, 64, 64), (.anzeige, 104, 32),
-        ]
-        for (groesse, qb, qh) in faelle {
-            let eintrag = try bestand.einlesen(daten: try gif(breite: qb, hoehe: qh),
-                                               groesse: groesse,
-                                               nummer: "q\(qb)", name: "Q\(qb)")
+    /// **C1.** Eine Datei wird in **ihrer eigenen** Groesse aufgenommen — der
+    /// Editor stellt sich auf sie ein, nicht umgekehrt. Bis zum 13.09.2026
+    /// nahm `einlesen` die gewuenschte Groesse als Argument entgegen und
+    /// rechnete alles darauf herunter; genau daran ist der Auftraggeber mit
+    /// zwei 16×16-`maze`-GIFs haengengeblieben, die als 8×8 landeten.
+    ///
+    /// Nachgewiesen an dem, was zurueckkommt, nicht an dem, was der
+    /// Rueckgabewert behauptet.
+    func testJedeDerDreiGroessenWirdInIhrerEigenenAufgenommen() throws {
+        for groesse in Leinwandgroesse.allCases {
+            let daten = try gif(breite: groesse.breite, hoehe: groesse.hoehe)
+            let eintrag = try bestand.einlesen(daten: daten,
+                                               nummer: "n\(groesse.breite)",
+                                               name: "N\(groesse.breite)")
+            XCTAssertEqual(eintrag.groesse, groesse)
             let zurueck = try bestand.oeffnen(eintrag)
-            XCTAssertEqual(zurueck.bild.count, groesse.breite * groesse.hoehe,
-                           "\(qb)×\(qh) → \(groesse.beschriftung)")
+            XCTAssertEqual(zurueck.breite, groesse.breite, "\(groesse.beschriftung): Breite")
+            XCTAssertEqual(zurueck.hoehe, groesse.hoehe, "\(groesse.beschriftung): Höhe")
+            XCTAssertEqual(zurueck.bild[0], "#FF0000", "oben links bleibt oben links")
         }
     }
 
-    /// Und ein animiertes behaelt beim Umrechnen seine Einzelbilder.
+    /// Und eine Fremdgroesse wird **abgelehnt**, statt auf die naechstliegende
+    /// gerechnet zu werden (entschieden am 13.09.2026). Geprueft wird beides:
+    /// dass es wirft — und dass danach **nichts** auf der Platte liegt. Ein
+    /// Fehler, der trotzdem etwas schreibt, waere schlimmer als keiner.
+    func testEineFremdeGroesseWirdAbgelehntUndSchreibtNichts() throws {
+        for (qb, qh) in [(32, 32), (104, 32), (7, 7)] {
+            XCTAssertThrowsError(try bestand.einlesen(daten: try gif(breite: qb, hoehe: qh),
+                                                      nummer: "maze", name: "Maze"),
+                                 "\(qb)×\(qh) wurde angenommen") { fehler in
+                guard case EditorbestandFehler.fremdeGroesse(let b, let h) = fehler else {
+                    return XCTFail("falscher Fehler: \(fehler)")
+                }
+                XCTAssertEqual([b, h], [qb, qh], "die Begründung nennt die falsche Größe")
+            }
+        }
+        for teil in ["Icons", "Icons16", "Bilder"] {
+            let inhalt = (try? FileManager.default.contentsOfDirectory(
+                atPath: wurzel.appendingPathComponent(teil).path)) ?? []
+            XCTAssertEqual(inhalt.filter { $0.hasSuffix(".gif") }, [],
+                           "\(teil) hat trotz Ablehnung etwas bekommen")
+        }
+    }
+
+    /// Die Begruendung nennt beides: **was es ist** und **was ginge**. Eine
+    /// Meldung, die nur „geht nicht" sagt, laesst den Anwender raten, und
+    /// genau darum ging es bei C1.
+    func testDieBegruendungNenntDieGroesseUndDieDreiMoeglichen() {
+        let text = EditorbestandFehler.fremdeGroesse(breite: 32, hoehe: 32).errorDescription ?? ""
+        XCTAssertTrue(text.contains("32×32"), "die Begründung nennt die Größe der Datei nicht: \(text)")
+        for moeglich in ["8×8", "16×16", "16×52"] {
+            XCTAssertTrue(text.contains(moeglich),
+                          "die Begründung nennt \(moeglich) nicht: \(text)")
+        }
+    }
+
+    /// Ein animiertes GIF behaelt seine Einzelbilder — in seiner eigenen
+    /// Groesse.
     func testEinAnimiertesGifBehaeltSeineEinzelbilder() throws {
-        let eintrag = try bestand.einlesen(daten: try gif(breite: 40, hoehe: 40, bilder: 3),
-                                           groesse: .icon16, nummer: "", name: "Lauf")
+        let eintrag = try bestand.einlesen(daten: try gif(breite: 16, hoehe: 16, bilder: 3),
+                                           nummer: "", name: "Lauf")
+        XCTAssertEqual(eintrag.groesse, .icon16)
         XCTAssertEqual(try bestand.oeffnen(eintrag).bilder.count, 3)
     }
 
@@ -119,11 +151,16 @@ final class DateiEinlesenTests: XCTestCase {
     }
 
     /// Was keine Bilddatei ist, muss auffallen — und zwar **bevor** ein Blatt
-    /// aufgeht, das nach einem Namen fragt. `groesse(_ daten:)` ist die Probe,
+    /// aufgeht, das nach einem Namen fragt. `zielgroesse(fuer:)` ist die Probe,
     /// die die Ansicht dafuer benutzt.
     func testWasKeinBildIstWirdErkannt() {
         XCTAssertNil(Bildraster.groesse(Data("kein Bild, nur Text".utf8)))
         XCTAssertNil(Bildraster.groesse(Data()))
         XCTAssertThrowsError(try Bildraster.lesen(Data("kein Bild".utf8), breite: 8, hoehe: 8))
+        XCTAssertThrowsError(try Editorbestand.zielgroesse(fuer: Data("kein Bild".utf8))) { fehler in
+            guard case EditorbestandFehler.keinBild = fehler else {
+                return XCTFail("falscher Fehler: \(fehler)")
+            }
+        }
     }
 }

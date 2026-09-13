@@ -79,7 +79,10 @@ public struct EditorBereichView: View {
     @State private var importDaten: Data?
     @State private var importNummer = ""
     @State private var importName = ""
-    @State private var importGroesse: (breite: Int, hoehe: Int)?
+    /// Die Groesse, in der die gewaehlte Datei aufgenommen wird — **ihre
+    /// eigene**, nicht die des Editors (`Editorbestand.zielgroesse(fuer:)`).
+    /// Daran haengt auch, ob das Blatt nach einer Nummer fragt.
+    @State private var importZiel: Leinwandgroesse?
     /// Was im Blatt steht, wenn das Einlesen nicht klappt. Im Blatt und nicht
     /// unter der Leinwand: Eine Meldung dahinter saehe niemand.
     @State private var importMeldung: String?
@@ -775,7 +778,7 @@ public struct EditorBereichView: View {
     private var importBlatt: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Öffnen").font(.headline)
-            if groesse.mitNummer {
+            if importMitNummer {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nummer").font(.caption).foregroundStyle(.secondary)
                     TextField("Nummer", text: $importNummer).eingabefeld()
@@ -802,9 +805,13 @@ public struct EditorBereichView: View {
         .frame(minWidth: 320)
     }
 
+    /// Wonach das Blatt fragt, haengt an der Groesse **der Datei** — nicht an
+    /// der des Editors. Bei 16×16 und 16×52 gibt es keine Nummer.
+    private var importMitNummer: Bool { importZiel?.mitNummer ?? false }
+
     private var importSchluessel: String {
-        groesse.mitNummer ? importNummer.trimmingCharacters(in: .whitespaces)
-                          : importName.trimmingCharacters(in: .whitespaces)
+        importMitNummer ? importNummer.trimmingCharacters(in: .whitespaces)
+                        : importName.trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - Rueckgaengig
@@ -968,12 +975,18 @@ public struct EditorBereichView: View {
                                   url.lastPathComponent, error.localizedDescription)
             return
         }
-        guard let masse = Bildraster.groesse(daten) else {
-            zustand.fehler = lokf("„%@“ lässt sich nicht als Bild lesen.", url.lastPathComponent)
+        // Die Groesse entscheidet hier und nicht erst beim Bestaetigen:
+        // Wer eine 32×32 gewaehlt hat, soll das erfahren, bevor ein Blatt ihn
+        // nach einem Namen fragt, den niemand braucht.
+        let ziel: Leinwandgroesse
+        do {
+            ziel = try Editorbestand.zielgroesse(fuer: daten)
+        } catch {
+            zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return
         }
         importDaten = daten
-        importGroesse = masse
+        importZiel = ziel
         let basis = url.deletingPathExtension().lastPathComponent
         importNummer = basis
         importName = basis
@@ -981,24 +994,19 @@ public struct EditorBereichView: View {
         zeigeImportBlatt = true
     }
 
-    /// Legt die gelesenen Daten im Bestand der aktuellen Groesse ab —
-    /// heruntergerechnet, ohne Glaettung. Der Hinweis auf eine Umrechnung
-    /// nennt die Originalgroesse nur, wenn tatsaechlich gerechnet wurde.
+    /// Legt die gelesenen Daten im Bestand **ihrer eigenen** Groesse ab. Die
+    /// Meldung nennt sie: Der Eintrag kann in einem anderen Bestand liegen als
+    /// dem, auf den der Editor gerade eingestellt ist, und dann faende ihn
+    /// niemand.
     private func einlesen() {
         guard let daten = importDaten else { return }
         do {
-            let eintrag = try bestand.einlesen(daten: daten, groesse: groesse,
+            let eintrag = try bestand.einlesen(daten: daten,
                                                nummer: importNummer, name: importName)
             vorhandene = bestand.alle()
             zeigeImportBlatt = false
             importDaten = nil
-            if let masse = importGroesse, masse != (groesse.breite, groesse.hoehe) {
-                meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf %d×%d gerechnet.",
-                               eintrag.name, masse.breite, masse.hoehe,
-                               groesse.breite, groesse.hoehe)
-            } else {
-                meldung = lokf("%@ eingelesen.", eintrag.name)
-            }
+            meldung = lokf("%@ aufgenommen, %@.", eintrag.name, lok(eintrag.groesse.beschriftung))
             zustand.log("Eingelesen: \(eintrag.name)")
         } catch {
             // Das Blatt bleibt stehen und sagt hier, woran es lag: Eine

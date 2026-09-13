@@ -189,6 +189,35 @@ final class EditorbereichTests: XCTestCase {
                        "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
     }
 
+    /// **C1.** Der Import richtet sich nach der **Datei**, nicht nach dem
+    /// Editor. Die Größe entscheidet, in welchen Bestand sie geht und ob nach
+    /// einer Nummer gefragt wird — und sie wird geprüft, **bevor** das Blatt
+    /// aufgeht: Wer eine 32×32 gewählt hat, soll das nicht erst erfahren,
+    /// nachdem er einen Namen eingetippt hat.
+    ///
+    /// Der Rückfall in die alte Fassung ist der stumme: `groesse.mitNummer`
+    /// statt `importMitNummer` übersetzt anstandslos und sieht am Mac gleich
+    /// aus — solange der Editor zufällig auf 8×8 steht.
+    func testDerImportRichtetSichNachDerDateiUndNichtNachDemEditor() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        XCTAssertTrue(text.contains("Editorbestand.zielgroesse(fuer: daten)"),
+                      "die Größe der Datei wird nicht mehr geprüft — dann rechnet wieder jemand herunter")
+        XCTAssertFalse(text.contains("importGroesse"),
+                       "die rohen Maße werden wieder aufbewahrt, statt der Größe, in der aufgenommen wird")
+
+        let blatt = ausschnitt(text, von: "private var importBlatt", bis: "private var importMitNummer")
+        XCTAssertTrue(blatt.contains("if importMitNummer {"),
+                      "das Blatt fragt wieder nach der Größe des Editors statt nach der der Datei")
+
+        let abgeleitet = ausschnitt(text, von: "private var importMitNummer", bis: "private var importSchluessel")
+        XCTAssertTrue(abgeleitet.contains("importZiel"),
+                      "„hat eine Nummer“ hängt nicht mehr an der Datei, sondern wieder an der Leinwand")
+
+        let einlesen = ausschnitt(text, von: "private func einlesen()", bis: "private func grundschatz")
+        XCTAssertFalse(einlesen.contains("groesse: groesse"),
+                       "die eingestellte Leinwandgröße wird wieder an den Bestand durchgereicht")
+    }
+
     /// **B3.** „Abspielen" ist kein eigener Knopf mehr, sondern ein Symbol
     /// **unmittelbar rechts neben dem Sekundenwert** — so verlangt. Es
     /// schaltet um und muss deshalb beide Zustände zeigen; und weil ein

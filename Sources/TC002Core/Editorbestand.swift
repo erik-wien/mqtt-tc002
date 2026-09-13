@@ -164,16 +164,37 @@ public struct Editorbestand {
         }
     }
 
-    /// Liest eine schon gelesene Bilddatei in den Bestand der angegebenen
-    /// Groesse — heruntergerechnet, ohne Glaettung (`Bildraster.lesen`).
+    /// In welchem Bestand eine Datei landet: in dem **ihrer eigenen Groesse**.
+    ///
+    /// **Der Editor stellt sich auf die Datei ein, nicht umgekehrt.** Bis zum
+    /// 13.09.2026 wurde jede Datei auf die gerade eingestellte Leinwandgroesse
+    /// heruntergerechnet — ein 16×16-GIF landete als 8×8, wenn der Editor auf
+    /// 8×8 stand, ohne dass jemand danach gefragt haette. Genau daran ist der
+    /// Auftraggeber mit zwei `maze`-GIFs haengengeblieben.
+    ///
+    /// Eine Groesse, die keine der drei ist, wird **abgelehnt** und nicht auf
+    /// die naechstliegende gerechnet (entschieden am 13.09.2026): Verkleinern
+    /// zerstoert, und es geschah bisher unsichtbar.
+    public static func zielgroesse(fuer daten: Data) throws -> Leinwandgroesse {
+        guard let masse = Bildraster.groesse(daten) else {
+            throw EditorbestandFehler.keinBild
+        }
+        guard let groesse = Leinwandgroesse.fuer(breite: masse.breite, hoehe: masse.hoehe) else {
+            throw EditorbestandFehler.fremdeGroesse(breite: masse.breite, hoehe: masse.hoehe)
+        }
+        return groesse
+    }
+
+    /// Liest eine schon gelesene Bilddatei in den Bestand **ihrer eigenen**
+    /// Groesse (siehe `zielgroesse(fuer:)`). Gerechnet wird dabei nichts mehr.
     ///
     /// **`Data`, nicht `URL`.** Eine URL aus dem Dateiwaehler gilt nur zwischen
     /// `startAccessingSecurityScopedResource` und `stop…`; wer sie sich merkt
     /// und hier noch einmal liest, greift am iPad ins Leere. Die Ansicht liest
     /// die Datei deshalb sofort und reicht die Bytes weiter.
     @discardableResult
-    public func einlesen(daten: Data, groesse: Leinwandgroesse,
-                         nummer: String, name: String) throws -> Editoreintrag {
+    public func einlesen(daten: Data, nummer: String, name: String) throws -> Editoreintrag {
+        let groesse = try Self.zielgroesse(fuer: daten)
         switch groesse {
         case .icon8, .icon16:
             let sammlung = groesse == .icon8 ? icons8 : icons16
@@ -203,12 +224,21 @@ public enum EditorbestandFehler: Error, LocalizedError {
     case unbekannteGroesse
     case leererName
     case nichtLesbar
+    /// Die gewaehlte Datei ist gar kein Bild.
+    case keinBild
+    /// Ein Bild, das keine der drei Groessen hat. Es wird abgelehnt, nicht
+    /// gerechnet — und die Begruendung nennt beides: was es ist und was geht.
+    case fremdeGroesse(breite: Int, hoehe: Int)
 
     public var errorDescription: String? {
         switch self {
         case .unbekannteGroesse: return lok("Diese Größe lässt sich nicht sichern.")
         case .leererName: return lok("Ohne Namen lässt sich nichts sichern.")
         case .nichtLesbar: return lok("Das lässt sich nicht öffnen.")
+        case .keinBild: return lok("Das lässt sich nicht als Bild lesen.")
+        case .fremdeGroesse(let breite, let hoehe):
+            return lokf("Das Bild ist %d×%d. Aufgenommen werden 8×8, 16×16 und 16×52.",
+                        breite, hoehe)
         }
     }
 }
