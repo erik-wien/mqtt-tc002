@@ -179,10 +179,21 @@ dort, wo die App selbst nicht abonniert.
 
 ## F — Kleinkram
 
-**F1. Der Schluesselbund in den Tests.** `AppZustand.init` liest ihn; ein
-Testlauf kann einen Dialog aufziehen, und einmal stand ein Kennwort im
-Klartext in der Fehlerausgabe. Naht wie bei `gedaechtnis:` und `sitzung:`.
-*(Zugesagt, noch offen.)*
+**F1. Erledigt:** Der Schluesselbund kommt als `Schluesselbundzugriff` ueber
+ein Vorgabeargument in `AppZustand.init` herein (`1a3c5e5`), die Modelltests
+geben durchweg einen Doppelgaenger mit. Belegt mit einem Stolperdraht:
+`Schluesselbund.lesen/setzen/loeschen` voruebergehend auf `fatalError`
+gesetzt, `swift test` blieb gruen — kein Testweg faehrt den echten mehr an.
+
+**F1a. Zwei Tests fassen den echten Schluesselbund weiter an**, und zwar mit
+Absicht: `SchluesselbundTests` prueft den Wrapper selbst,
+`testKennwortWirdErstBeiBedarfGelesen` die Traegheit von
+`Einstellungen.kennwort`. Beide schreiben ihren Eintrag vorher selbst, unter
+einem Wegwerfkonto — kein Dialog, nie das Kennwort des Nutzers, aber eben
+doch der Schluesselbund des Rechners. Wer das ganz zumachen will, braucht
+einen zweiten Wrapper oder eine Kennzeichnung, die diese beiden vom
+Standardlauf ausnimmt. **Nicht geaendert**: Sie pruefen genau das, was sonst
+niemand prueft.
 
 **F2. Werkzeug und Kurzbefehle sehen nur den 8×8-Bestand.** Ein selbstgemaltes
 16×16 ist von dort nicht erreichbar.
