@@ -10,9 +10,15 @@ Durchgaengen des Tages offen geblieben ist.
 **A1. Icon sichern loest „Neu" aus.** Sichern funktioniert nicht; stattdessen
 faengt der Editor von vorn an. *(Neu gemeldet.)*
 
-**A2. Die 16×52-Leinwand schaltet nicht um.** Der Auftraggeber schreibt
-„16x32" — gemeint ist vermutlich 16×52; **nachfragen**, was genau nicht
-geschieht. *(Neu gemeldet.)*
+**A2. ~~Die 16×52-Leinwand schaltet nicht um.~~ Kein App-Fehler — die Uhr war
+haengengeblieben.** Nachgemessen: `GET /api/customList` antwortete
+`{"apps":[],"count":0}`, also **HTTP lebte und alle Anzeigen waren weg**. Nach
+einem Neustart des Geraets ging es wieder.
+**Das ist eine neue Firmwarebeobachtung** und ein *anderer* Ausfall als Punkt 8
+der Maengelliste, bei dem die Uhr ganz aus dem Netz verschwindet: Hier
+antwortete sie und hatte trotzdem ihren Anzeigenbestand verloren.
+→ Gehoert in `docs/firmware-beobachtungen.md` (beide Sprachen), samt der
+Erkenntnis, dass die App in dem Fall **richtig** „frei" zeigt.
 
 **A3. Die Modusleiste ueberlagert „Seitenleiste schliessen".** Am Mac sitzt es
 gut, am iPad nicht — dort liegt die neue Dreierleiste ueber dem schon
