@@ -5,7 +5,7 @@ import TC002Core
 /// Text rechts. Die Darstellung (`HilfeabschnittView`) und die Absätze, die
 /// auf beiden Geräten gelten (`HilfeInhalt`), liegen in `TC002Ansichten` —
 /// hier steht nur, was diese Oberfläche auszeichnet: Fenster, Seitenleiste,
-/// Menüs, Inspektor, Finder, „Bilder" und der Icon-Editor.
+/// Menüs, Inspektor, Finder und den Editor.
 ///
 /// Was das Gerät kann, steht in der Gerätereferenz (Hilfe -> Gerätereferenz,
 /// aus docs/tc002-protokoll.md, siehe GeraeteReferenzView.swift); hier steht
@@ -42,8 +42,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
     case verbindung = "Einstellungen"
     case senden = "Senden"
-    case bilder = "Bilder"
-    case icons = "Icons"
+    case editor = "Editor"
     case anzeigen = "Verlauf"
     case fehlersuche = "Wenn nichts erscheint"
 
@@ -58,10 +57,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Bereiche"),
                     .tabelle([
                         ("Senden", "Text und Icon verschicken"),
-                        ("Bilder", "ein frei gezeichnetes Bild verschicken"),
+                        ("Editor", "Icons und ganze Anzeigen malen"),
                         ("Verlauf", "bereits verschickte Inhalte und das Protokoll"),
                         ("Einstellungen", "Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr"),
-                        ("Icons", "eigene Bildchen neben dem Text"),
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
@@ -100,7 +98,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fuenfPlaetze
                 + HilfeInhalt.blockwissenAnfang
                 + [
-                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Sendung aus dem Bereich „Bilder“ wirft obendrein weg, was zu diesem Platz gemerkt war."),
+                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Sendung aus dem Bereich „Editor“ wirft obendrein weg, was zu diesem Platz gemerkt war."),
                 ]
                 + HilfeInhalt.blockwissenSchluss
                 + [
@@ -121,7 +119,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.papierkorb
                 + [
-                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“, nur dort, wo man den Platz gerade in der Hand hat. Im Bereich „Bilder“ sitzt er ebenso in der Sendezeile neben den fünf Blöcken; „Leeren“ steht dagegen oben in der Werkzeugzeile. Die beiden meinen Verschiedenes: „Leeren“ macht die Malfläche leer, der Papierkorb löscht die Anzeige auf der Uhr."),
+                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“, nur dort, wo man den Platz gerade in der Hand hat. Im Bereich „Editor“ sitzt er ebenso in der Sendezeile neben den fünf Blöcken. Ihn und „Alles löschen“ im Inspektor nicht verwechseln: „Alles löschen“ leert die Leinwand, der Papierkorb löscht die Anzeige auf der Uhr."),
                 ]
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen
@@ -154,57 +152,40 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Senden auslösen"),
                     .absatz("Die Eingabetaste löst „Senden“ aus, solange der Knopf nicht gesperrt ist. Geht dabei etwas schief — falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert. Bleibt das Fenster aus, ist die Nachricht beim Broker angekommen — was das noch nicht heißt, steht unter „Wenn nichts erscheint“."),
                 ]
-        case .bilder:
+        case .editor:
             return [
-                    .ueberschrift("Zeichnen"),
-                    .absatz("„Bilder“ ist eine 52×16-Fläche zum freien Zeichnen — die ganze Anzeige, nicht ein Bildchen daneben. Der Editor steht links, die Sammlung der gesicherten Bilder als Liste rechts, genau wie im Bereich „Icons“."),
-                    .absatz("Der Systemfarbwähler „Farbe“ stellt die Farbe ein, „Radieren“ schaltet auf Löschen um, „Alles löschen“ leert das gerade bearbeitete Einzelbild. Gemalt wird mit gedrückter Maustaste oder mit dem Finger."),
-                    .absatz("Es ist derselbe Editor wie unter „Icons“ — nur die Größe der Fläche ist eine andere. Was der eine kann, kann seither auch der andere."),
-                    .ueberschrift("Pfeilkreuz"),
-                    .absatz("Das Pfeilkreuz in der Werkzeugzeile schiebt die ganze Grafik um ein Pixel — und zwar alle Einzelbilder zusammen, damit eine Animation nicht gegeneinander verrutscht."),
-                    .absatz("Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein, statt abgeschnitten zu werden. Das ist Absicht: Der Editor kennt kein Rückgängig, und so nimmt der Gegenpfeil jeden Schritt genau zurück. Wer das Hereingelaufene nicht will, radiert es weg — Abgeschnittenes müsste man neu malen."),
-                    .ueberschrift("Laufbilder"),
-                    .absatz("Unter der Fläche liegt die Leiste der Einzelbilder. „+“ hängt ein leeres Bild an, „Verdoppeln“ eine Kopie des aktuellen, „Entfernen“ nimmt das aktuelle wieder heraus und ist gesperrt, wenn nur noch eines übrig ist; die beiden Pfeile tauschen es mit dem Nachbarn. „Verzögerung“ gilt für jedes Einzelbild gleich, in Sekunden, „Abspielen“ läuft die Leiste probeweise in Schleife durch."),
-                    .absatz("Ein einzelnes Bild geht als Rechteckliste an die Uhr — klein und exakt. Mehrere gehen als ein animiertes GIF, das in Schleife läuft: Rechtecke kennen keine Zeit. Ein Laufbild über die ganze Anzeige ist damit malbar, und was dabei an Nutzlast zusammenkommt, gilt wie bei der Laufschrift unter „Senden“ — ein langes Laufbild wird groß, und wo die Grenze der Uhr liegt, weiß niemand."),
-                    .absatz("Die Fläche passt ihre Kästchengröße dem Platz an: Sie nimmt so viel Breite, wie die Spalte hergibt, und wird in einem schmalen Fenster kleiner, statt rechts abgeschnitten zu werden. Nach oben ist sie zweifach begrenzt — kein Kästchen über 44 Punkte und keine Fläche über 420 Punkte Höhe, sonst schöbe ein 16×16 alles andere aus dem Fenster. Das zuletzt gemalte Bild bleibt über einen Neustart der App hinweg erhalten."),
-                    .ueberschrift("Icon einfügen"),
-                    .absatz("„Icon einfügen“ setzt eines der vorhandenen 8×8-Icons als Ausgangspunkt senkrecht mittig ins Feld — an derselben Stelle, an der es auch unter „Senden“ läge. Danach lässt sich frei weitermalen; durchsichtige Stellen im Icon lassen die Fläche dort unverändert."),
-                    .ueberschrift("Gesicherte Bilder"),
-                    .absatz("Rechts steht die Sammlung: benannte 52×16-Bilder zum Wiederverwenden, anders als der eine Arbeitsstand, der ohnehin über Neustarts hinweg erhalten bleibt. Ein Klick auf eine Zeile lädt das Bild ins Feld, mit Rückfrage, wenn die Fläche gerade nicht leer ist; das Papierkorb-Symbol in der Zeile nimmt ein Bild wieder heraus, mit Rückfrage, die den Namen nennt — dasselbe bietet auch „Löschen“ im Kontextmenü der Zeile."),
-                    .absatz("Ein Name und „Sichern“ legen alle Einzelbilder der Leiste ab — derselbe Name ersetzt das vorhandene Bild, denn der Name ist zugleich der Dateiname. Gesichert liegen sie unter `~/Library/Application Support/MQTT-TC002/Bilder`, erreichbar auch über „Ablage → Eigene Bilder im Finder zeigen“."),
-                    .ueberschrift("Datei einlesen"),
-                    .absatz("„Datei einlesen…“ darüber nimmt eine GIF-, PNG- oder JPEG-Datei in die Sammlung auf, auf 52×16 gerechnet, ohne Glättung. Danach folgt ein Feld für den Namen, mit dem Dateinamen als Vorschlag. Musste die Datei dafür umgerechnet werden, weil sie eine andere Größe hatte, steht das in der Meldung dazu. Ein animiertes GIF behält dabei alle seine Einzelbilder."),
-                    .ueberschrift("Senden"),
-                    .absatz("Die fünf Slot-Blöcke stehen auch hier, mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“ — ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App ein gemaltes Bild nicht, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war: Nach einem Neustart ohne Broker zeigt der Block dort „belegt“ ohne Inhalt — nicht mehr den Text, der vor dem Malen auf dem Platz stand."),
-                    .absatz("„Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben — auch hier ersetzt ein erneutes Senden auf denselben Platz die vorherige Anzeige, und auch hier ist der Sendeknopf gesperrt, solange keine Uhr fertig eingerichtet ist; der Hinweis dazu steht darunter. Fehler beim Senden meldet dasselbe Hinweisfenster wie unter „Senden“."),
-                    .absatz("Der Hinweis unter der Malfläche zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Das ändert am Ergebnis nichts, nur an der Größe der Nachricht."),
-                ]
-        case .icons:
-            return [
-                    .ueberschrift("Zeichnen"),
-                    .absatz("Der Bereich „Icons“ malt eigene Bildchen, die danach unter „Senden“ neben dem Text zur Wahl stehen. Der Systemfarbwähler „Farbe“ unter der Malfläche stellt die Farbe ein, „Radieren“ entfernt einzelne Pixel, „Alles löschen“ leert das gerade bearbeitete Einzelbild. Es ist derselbe Editor wie im Bereich „Bilder“, nur mit kleinerer Fläche — samt Bildleiste und Pfeilkreuz, die dort beschrieben sind."),
-                    .ueberschrift("8×8 oder 16×16"),
-                    .absatz("Rechts über der Malfläche steht die Wahl der Größe. 8×8 ist das kanonische LaMetric-Icon: Es bekommt eine Nummer, lässt sich von developer.lametric.com nachladen und sitzt auf der Uhr senkrecht mittig in den sechzehn Zeilen, mit zehn belegten Spalten."),
-                    .absatz("16×16 ist keins. Es hat keine Nummer, nur einen Namen, und der ist zugleich sein Dateiname; nachladen lässt sich dafür nichts. Auf die Uhr geht es ungerechnet: Es füllt die volle Höhe der Anzeige und belegt achtzehn statt zehn Spalten — für den Text bleiben dann 34 statt 42."),
-                    .absatz("Zwischen den beiden Größen wird **nichts** umgerechnet, in keine Richtung. Ein Wechsel der Größe beginnt deshalb ein neues Icon und fragt vorher nach, wenn im Raster noch etwas Ungesichertes steht. Die beiden Bestände liegen getrennt — die 8×8 unter `~/Library/Application Support/MQTT-TC002/Icons`, die 16×16 daneben unter `Icons16` —, und beide dürfen denselben Namen tragen, ohne sich in die Quere zu kommen."),
-                    .ueberschrift("Neu anfangen"),
-                    .absatz("„Neu“ daneben setzt den ganzen Editor zurück, nicht nur das gerade bearbeitete Einzelbild: Malfläche, Bildleiste, „Nummer“ und „Name“ werden geleert und die Verzögerung auf ihren Anfangswert gestellt. Steht noch etwas Ungesichertes im Raster, fragt eine Rückfrage vorher nach, genau wie beim Löschen eines Icons."),
-                    .ueberschrift("Mehrere Einzelbilder (Animation)"),
-                    .absatz("Ein Icon kann aus mehreren Einzelbildern bestehen — das ergibt beim Sichern ein animiertes GIF. Die Leiste unter der Malfläche zeigt alle Einzelbilder, das gerade bearbeitete hervorgehoben; ein Klick auf eines schaltet die Malfläche darauf um. Dieselbe Leiste gibt es im Bereich „Bilder“."),
-                    .absatz("„+“ hängt ein leeres Bild an, „Verdoppeln“ eine Kopie des aktuellen — das ist beim Zeichnen einer Bewegung meist der schnellste Weg. „Entfernen“ nimmt das aktuelle Bild wieder heraus und ist gesperrt, wenn nur noch eines übrig ist; die beiden Pfeile tauschen es mit dem Nachbarn."),
-                    .absatz("„Verzögerung“ gilt für jedes Einzelbild gleich, in Sekunden. „Abspielen“ läuft die Leiste probeweise in Schleife durch, ohne dass vorher gesichert werden muss. Die Uhr spielt animierte GIFs ab, nicht nur deren erstes Einzelbild — am Gerät bestätigt (Hilfe → Gerätereferenz, §4.2)."),
-                    .ueberschrift("Sichern und vorhandene Icons"),
-                    .absatz("„Sichern“ legt das gemalte Icon — ein Einzelbild oder alle Bilder der Leiste — unter der eingetragenen „Nummer“ und dem „Name“ ab — die Nummer ist zugleich der Dateiname und muss deshalb eindeutig sein, der Name ist frei; die Eingabetaste löst „Sichern“ aus. Bei 16×16 entfällt das Nummernfeld, dort ist der Name der Dateiname. Rechts in „Vorhandene Icons“ stehen alle Icons der gewählten Größe, durch das Suchfeld nach Name oder Nummer eingrenzbar; ein Klick lädt eines mit allen seinen Einzelbildern zurück in die Malfläche."),
-                    .absatz("In der Zeile jedes Icons steht zusätzlich ein Papierkorb-Symbol zum Löschen, mit Rückfrage, die den Namen nennt; dasselbe bietet auch „Löschen“ im Kontextmenü der Zeile. War das gelöschte Icon gerade in die Malfläche geladen, bleibt das Bild dort stehen, nur „Nummer“ und „Name“ werden geleert — sonst würde ein erneutes „Sichern“ es unter demselben Namen wieder anlegen."),
+                    .ueberschrift("Eine Tätigkeit, drei Größen"),
+                    .absatz("Der Editor malt Pixel. Was dabei herauskommt, entscheidet allein die Größe der Leinwand: Ein 8×8 ist das kanonische LaMetric-Icon mit Nummer, ein 16×16 ein Icon ohne, und ein 16×52 ist die ganze Anzeige — nur sie lässt sich von hier aus senden. Bis zum 13.09.2026 waren das zwei Bereiche, „Bilder“ und „Icons“; es war aber immer dieselbe Tätigkeit."),
+                    .absatz("Der Aufbau ist dreispaltig: Seitenleiste, Leinwand, Inspektor. Die drei Symbole rechts oben über dem Inspektor schalten um, was er zeigt — Malen, Animation oder Sichern. Daneben liegen „Rückgängig“ und „Wiederherstellen“, und der Knopf ganz rechts blendet den Inspektor ein und aus."),
+                    .absatz("Die Leinwand nimmt den Platz, den ihre Spalte hergibt, und macht sie nie breiter, als sie ist: Bei 8×8 und 16×16 entscheidet die Höhe, bei 16×52 die Breite — dort bleiben die Kästchen zwangsläufig kleiner. Wird es so schmal, dass ein Kästchen unter sechs Punkte fiele, rollt die Leinwand waagrecht, statt über ihren Bereich hinauszulaufen. Das zuletzt Gemalte bleibt über einen Neustart der App hinweg erhalten."),
+                    .ueberschrift("Malen"),
+                    .absatz("Gemalt wird mit gedrückter Maustaste oder mit dem Finger. Im Inspektor stellt „Farbe“ den Systemfarbwähler, „Stift“ schaltet zwischen Malen und Radieren um, und „Alles löschen“ leert das gerade bearbeitete Einzelbild — nicht die anderen."),
+                    .absatz("„Größe“ darüber wechselt zwischen 8×8, 16×16 und 16×52. Umgerechnet wird zwischen ihnen **nichts**, in keine Richtung: Ein Wechsel beginnt eine leere Leinwand und fragt vorher nach, wenn noch etwas Ungesichertes darauf steht. „Rückgängig“ holt sie samt ihrer Größe zurück."),
+                    .absatz("Das Verschiebekreuz schiebt die ganze Grafik um ein Pixel — alle Einzelbilder zusammen, damit eine Animation nicht gegeneinander verrutscht. Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein, statt abgeschnitten zu werden; der Gegenpfeil nimmt damit jeden Schritt genau zurück."),
+                    .absatz("„Icon einfügen“ gibt es nur bei 16×52: Es setzt eines der vorhandenen 8×8-Icons als Ausgangspunkt senkrecht mittig ins Feld — an derselben Stelle, an der es auch unter „Senden“ läge. Danach lässt sich frei weitermalen; durchsichtige Stellen im Icon lassen die Fläche dort unverändert."),
+                    .ueberschrift("Rückgängig"),
+                    .absatz("Ein Strich ist ein Schritt, nicht ein Pixel: Wer mit dem Finger über zwanzig Kästchen fährt, macht ihn mit einem Druck wieder rückgängig. Je ein Schritt sind außerdem „Alles löschen“, jede Bewegung des Verschiebekreuzes, ein Einzelbild anhängen, verdoppeln, entfernen oder umsortieren, und ein Größenwechsel. Farbwahl, Werkzeug, Bildwahl, Verzögerung, Name und Nummer ändern nichts an der Zeichnung und sind deshalb keine Schritte."),
+                    .absatz("Fünfzig Schritte werden gemerkt, in beide Richtungen. Der Stapel überlebt den Programmlauf nicht und wird auch geleert, wenn man mit „Neu“ von vorn anfängt oder ein vorhandenes Bild öffnet — von einem anderen Blatt aus führt der alte Weg nirgendwohin."),
+                    .ueberschrift("Animation"),
+                    .absatz("Ein Bild kann aus mehreren Einzelbildern bestehen; das ergibt beim Sichern ein animiertes GIF, das in Schleife läuft. Der Streifen im Inspektor zeigt alle, das gerade bearbeitete hervorgehoben; ein Klick darauf schaltet die Leinwand um. „Bild anhängen“ hängt ein leeres an."),
+                    .absatz("„Verdoppeln“ und „Entfernen“ stehen unter dem gewählten Einzelbild — an dem Bild also, auf das sie wirken. Dasselbe bietet das Kontextmenü jedes Bildes, dazu „Nach vorn“ und „Nach hinten“ zum Umsortieren. „Entfernen“ ist gesperrt, wenn nur noch ein Bild übrig ist."),
+                    .absatz("„Verzögerung“ gilt für jedes Einzelbild gleich, in Sekunden. „Abspielen“ läuft den Streifen probeweise in Schleife durch, ohne dass vorher gesichert werden muss. Die Uhr spielt animierte GIFs ab, nicht nur deren erstes Einzelbild — am Gerät bestätigt (Hilfe → Gerätereferenz, §4.2)."),
+                    .ueberschrift("Sichern"),
+                    .absatz("„Name“ und „Sichern“ legen alle Einzelbilder auf einmal ab. Bei 8×8 kommt „Nummer“ dazu: Sie ist der Dateiname und zugleich die LaMetric-Nummer und muss eindeutig sein. Bei 16×16 und 16×52 gibt es keine Nummer — dort ist der Name der Dateiname, und derselbe Name ersetzt das Vorhandene."),
+                    .absatz("„Neu“ daneben beginnt von vorn: Leinwand, Einzelbilder, Verzögerung, Name und Nummer. Steht noch etwas Ungesichertes da, fragt eine Rückfrage vorher nach."),
+                    .absatz("Die drei Bestände liegen weiterhin getrennt — 8×8 unter `~/Library/Application Support/MQTT-TC002/Icons`, 16×16 daneben unter `Icons16`, die Anzeigen unter `Bilder`. Gleiche Namen in zwei Beständen kommen sich deshalb nicht in die Quere. Über „Ablage“ öffnet der Finder den Icon- und den Bilderordner."),
+                    .ueberschrift("Hinzufügen"),
+                    .absatz("Bei 8×8 lässt sich eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen — die Eingabetaste im Feld tut dasselbe. Eine unbekannte Nummer ergibt eine verständliche Meldung und macht sonst nichts kaputt. Der Verweis „LaMetric Icon Gallery“ darunter öffnet die Übersicht im Browser. „Grundschatz wiederherstellen“ ergänzt nur, was im eigenen Ordner fehlt, und lässt Vorhandenes unangetastet; die Meldung danach nennt die Anzahl."),
+                    .absatz("„Datei einlesen…“ nimmt eine GIF-, PNG- oder JPEG-Datei von der Platte auf, auf die eingestellte Größe gerechnet, ohne Glättung. Ein Blatt fragt danach nach dem Namen — bei 8×8 auch nach der Nummer —, mit dem Dateinamen als Vorschlag. Wurde umgerechnet, weil die Datei eine andere Größe hatte, steht das in der Meldung. Ein animiertes GIF behält dabei alle seine Einzelbilder."),
+                    .ueberschrift("Vorhandene"),
+                    .absatz("Darunter stehen alle drei Bestände in einer Liste, jeder Eintrag mit seiner Größe als Merkmal und, wo es eine gibt, mit seiner Nummer. Das Suchfeld grenzt nach Name und Nummer ein. Ein Klick auf eine Zeile lädt sie mit allen Einzelbildern zurück auf die Leinwand — mit Rückfrage, wenn dort gerade etwas steht. Das Papierkorb-Symbol in der Zeile löscht, mit Rückfrage, die den Namen nennt; dasselbe bietet „Löschen“ im Kontextmenü."),
+                    .absatz("War das Gelöschte gerade geöffnet, bleibt das Bild auf der Leinwand stehen, nur Name und Nummer werden geleert — sonst legte ein erneutes „Sichern“ es unter demselben Namen wieder an."),
                     .ueberschrift("Zurückladen und Transparenz"),
-                    .absatz("„Aus“ und „schwarz gemalt“ sind zweierlei, auch nach dem Sichern: Ein ausgeschaltetes Pixel wird im GIF durchsichtig abgelegt, ein schwarz gemaltes deckend schwarz. Auf der Uhr sieht beides gleich aus, weil ihr Grund schwarz ist — im Editor kommt ein wieder geöffnetes Icon aber so zurück, wie es gemalt war. Dass „aus“ durchsichtig bleibt, ist nebenbei die Bedingung dafür, dass die Laufschrift auf der Uhr sauber läuft (Gerätereferenz, §4.2a)."),
-                    .ueberschrift("Der Grundschatz"),
-                    .absatz("Rund dreißig 8×8-Icons liegen der App bei. Beim allerersten Start wandern sie einmalig in den eigenen Ordner — von da an sind es ganz normale eigene Icons: löschbar und überschreibbar wie jedes selbst gemalte oder von LaMetric geholte. Ein späterer Start holt sie nicht erneut, sonst käme ein zwischenzeitlich gelöschtes Icon wieder zurück."),
-                    .absatz("Wer zu gründlich aufgeräumt hat, findet unter der Liste „Grundschatz wiederherstellen“: Es ergänzt nur, was im eigenen Ordner fehlt, und lässt Vorhandenes unangetastet — die Meldung danach nennt, wie viele Icons zurückkamen. Alle Icons, Grundschatz wie selbst angelegte, liegen unter `~/Library/Application Support/MQTT-TC002/Icons`, erreichbar auch über „Ablage → Eigene Icons im Finder zeigen“."),
-                    .ueberschrift("Von LaMetric nachladen"),
-                    .absatz("Bei 8×8 lässt sich über der Liste „Vorhandene Icons“ außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen — die Eingabetaste im Feld tut dasselbe. Das Icon landet danach bei den eigenen und steht unter „Senden“ zur Wahl. Eine unbekannte Nummer ergibt eine verständliche Meldung und macht sonst nichts kaputt. Der Verweis „LaMetric Icon Gallery“ darüber öffnet die Übersicht im Browser, um erst eine passende Nummer herauszusuchen und dann hier einzutragen."),
-                    .ueberschrift("Datei einlesen"),
-                    .absatz("„Datei einlesen…“ daneben nimmt stattdessen eine GIF-, PNG- oder JPEG-Datei von der Platte auf, auf die gewählte Größe gerechnet, ohne Glättung. Ein Blatt fragt danach nach Nummer und Name, mit dem Dateinamen als Vorschlag; wurde die Datei umgerechnet, weil sie eine andere Größe hatte, steht das in der Meldung nach dem Einlesen. Ein animiertes GIF behält dabei alle seine Einzelbilder, genau wie beim eigenen Malen mit mehreren Bildern."),
+                    .absatz("„Aus“ und „schwarz gemalt“ sind zweierlei, auch nach dem Sichern: Ein ausgeschaltetes Pixel wird im GIF durchsichtig abgelegt, ein schwarz gemaltes deckend schwarz. Auf der Uhr sieht beides gleich aus, weil ihr Grund schwarz ist — im Editor kommt ein wieder geöffnetes Bild aber so zurück, wie es gemalt war. Dass „aus“ durchsichtig bleibt, ist nebenbei die Bedingung dafür, dass die Laufschrift auf der Uhr sauber läuft (Gerätereferenz, §4.2a)."),
+                    .ueberschrift("Senden"),
+                    .absatz("Die Sendezeile unter der Leinwand gibt es nur bei 16×52 — ein Icon ist für sich keine Anzeige. Die fünf Slot-Blöcke stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App ein gemaltes Bild nicht, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war."),
+                    .absatz("Der Papierkorb daneben löscht die Anzeige auf der Uhr — nicht die Leinwand. „Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist."),
+                    .absatz("Der Hinweis unter der Leinwand zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Ein einzelnes Bild geht so hinaus — klein und exakt. Mehrere gehen als ein animiertes GIF, denn Rechtecke kennen keine Zeit; was dabei an Nutzlast zusammenkommt, gilt wie bei der Laufschrift unter „Senden“ — ein langes Laufbild wird groß, und wo die Grenze der Uhr liegt, weiß niemand."),
                 ]
         case .anzeigen:
             return HilfeInhalt.verlaufHerkunft
@@ -236,7 +217,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Weitere Symptome"),
                     .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es bei „Bilder“ nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es im Editor nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
                 ]
         }
     }

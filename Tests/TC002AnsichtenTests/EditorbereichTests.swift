@@ -72,4 +72,19 @@ final class EditorbereichTests: XCTestCase {
                            "„\(sonderfall)“ ist ein Sonderfall in der Ansicht — er gehört nach Leinwandgroesse")
         }
     }
+
+    /// Die Hilfe zieht mit: Zu jedem Bereich der Seitenleiste muss es einen
+    /// gleichnamigen Abschnitt geben. Beim Zusammenlegen von „Bilder" und
+    /// „Icons" wären sonst zwei Abschnitte über etwas stehen geblieben, das es
+    /// nicht mehr gibt — und die Übersetzungsprüfung merkt davon nichts, sie
+    /// sieht nur, ob ein Eintrag da ist.
+    func testZuJedemBereichGibtEsEinenHilfeabschnitt() throws {
+        let text = try quelltext("Sources/TC002Ansichten/HilfeView.swift")
+        for bereich in SchreibtischView.Bereich.allCases {
+            XCTAssertTrue(text.contains("= \"\(bereich.rawValue)\""),
+                          "die Hilfe hat keinen Abschnitt „\(bereich.rawValue)“")
+        }
+        XCTAssertFalse(text.contains("case bilder"), "der Abschnitt „Bilder“ steht noch da")
+        XCTAssertFalse(text.contains("case icons"), "der Abschnitt „Icons“ steht noch da")
+    }
 }
