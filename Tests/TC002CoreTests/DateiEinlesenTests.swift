@@ -124,6 +124,64 @@ final class DateiEinlesenTests: XCTestCase {
         XCTAssertEqual(try bestand.oeffnen(eintrag).bilder.count, 3)
     }
 
+    // MARK: - A4: was das Blatt vorschlaegt und was es warnt
+
+    /// **A4.** Aus `2981_Severe TStorm` wird die Nummer `2981` und der Titel
+    /// `Severe TStorm`. Bis zum 13.09.2026 stand der **ganze** Dateiname in
+    /// beiden Feldern — bei so einer Datei also die Nummer zweimal falsch.
+    ///
+    /// Geraten wird nur, wo es etwas zu raten gibt: `maze_2` ist keine
+    /// Nummer, und wo keine dasteht, bleibt das Feld leer, statt einen
+    /// Dateinamen als LaMetric-Nummer auszugeben.
+    func testAusNummerUnterstrichTitelWerdenNummerUndTitel() {
+        let faelle: [(String, String, String)] = [
+            ("2981_Severe TStorm", "2981", "Severe TStorm"),
+            ("2981", "2981", "2981"),
+            ("12_34_56", "12", "34_56"),
+            ("2981_  Severe  ", "2981", "Severe"),
+            ("maze", "", "maze"),
+            ("maze_2", "", "maze_2"),
+            ("_foo", "", "_foo"),
+            ("2981_", "", "2981_"),
+        ]
+        for (basis, nummer, name) in faelle {
+            let vorschlag = Editorbestand.vorschlag(fuerDateinamen: basis)
+            XCTAssertEqual(vorschlag.nummer, nummer, "Nummer aus „\(basis)“")
+            XCTAssertEqual(vorschlag.name, name, "Name aus „\(basis)“")
+        }
+    }
+
+    /// Und eine schon vergebene Nummer faellt auf, **bevor** gesichert wird.
+    /// Ersetzt wird sie trotzdem — aber sichtbar: Der Eintrag, den es trifft,
+    /// wird beim Namen genannt.
+    ///
+    /// Bei 8×8 entscheidet die Nummer, bei den anderen beiden der Name; das
+    /// ist dieselbe Rechnung, nach der abgelegt wird
+    /// (`Editorbestand.schluessel`), und darf nicht daneben noch einmal
+    /// stehen.
+    func testEineVergebeneNummerFaelltVorDemSichernAuf() throws {
+        try bestand.einlesen(daten: try gif(breite: 8, hoehe: 8),
+                             nummer: "2981", name: "Severe TStorm")
+        try bestand.einlesen(daten: try gif(breite: 16, hoehe: 16), nummer: "", name: "Maze")
+        let liste = bestand.alle()
+
+        XCTAssertEqual(Editorbestand.belegt(in: liste, groesse: .icon8,
+                                            nummer: "2981", name: "ganz anders")?.name,
+                       "Severe TStorm",
+                       "die vergebene Nummer fällt nicht auf")
+        XCTAssertNil(Editorbestand.belegt(in: liste, groesse: .icon8,
+                                          nummer: "2982", name: "Severe TStorm"),
+                     "bei 8×8 entscheidet die Nummer, nicht der Name")
+        XCTAssertNil(Editorbestand.belegt(in: liste, groesse: .icon16,
+                                          nummer: "2981", name: "etwas Neues"),
+                     "ein 8×8 belegt nichts im 16×16-Bestand")
+        XCTAssertEqual(Editorbestand.belegt(in: liste, groesse: .icon16,
+                                            nummer: "", name: " maze ")?.name, "Maze",
+                       "auf diesen Dateisystemen ersetzt „maze“ sehr wohl „Maze“")
+        XCTAssertNil(Editorbestand.belegt(in: liste, groesse: .icon8, nummer: "", name: ""),
+                     "ohne Schlüssel ist nichts belegt")
+    }
+
     // MARK: - Verdacht 2: der Weg ueber die Daten
 
     /// Der eigentliche Fehler sass in der Ansicht: Sie merkte sich die URL aus

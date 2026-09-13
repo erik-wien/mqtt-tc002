@@ -20,6 +20,10 @@ public struct Editoreintrag: Equatable, Sendable, Identifiable {
     /// Datei und Groesse zusammen: Ein 8×8 und ein 16×16 duerfen denselben
     /// Namen tragen, und tun es.
     public var id: String { "\(groesse.rawValue)/\(datei.path)" }
+
+    /// Der Dateiname ohne Endung — genau der Schluessel, unter dem dieser
+    /// Eintrag liegt (`Editorbestand.schluessel(groesse:nummer:name:)`).
+    public var schluessel: String { datei.deletingPathExtension().lastPathComponent }
 }
 
 public extension Array where Element == Editoreintrag {
@@ -102,6 +106,63 @@ public struct Editorbestand {
         alle().gefiltert(nach: suche)
     }
 
+    /// Unter welchem Namen etwas abgelegt wird: bei 8×8 die Nummer, sonst der
+    /// Name als Dateiname. Leer heisst, dass sich so nichts sichern laesst.
+    ///
+    /// **Eine Stelle, weil drei davon abhaengen:** das Sichern, das Einlesen
+    /// und die Frage, ob dort schon etwas liegt. Liefen sie auseinander,
+    /// warnte das Blatt vor einer Belegung, die es nicht gibt — oder schwiege
+    /// zu einer, die es gibt.
+    public static func schluessel(groesse: Leinwandgroesse,
+                                  nummer: String, name: String) -> String {
+        groesse.mitNummer ? nummer.trimmingCharacters(in: .whitespaces) : Dateiname.aus(name)
+    }
+
+    /// Was unter diesem Schluessel schon liegt — der Eintrag, den ein Sichern
+    /// oder Einlesen **ersetzen** wuerde, sonst `nil`.
+    ///
+    /// Gesucht wird in einer schon gelesenen Liste und nicht im Dateisystem:
+    /// Die Ansicht fragt bei jedem Tastendruck.
+    public static func belegt(in vorhandene: [Editoreintrag], groesse: Leinwandgroesse,
+                              nummer: String, name: String) -> Editoreintrag? {
+        let gesucht = schluessel(groesse: groesse, nummer: nummer, name: name)
+        guard !gesucht.isEmpty else { return nil }
+        // Ohne Ruecksicht auf Gross- und Kleinschreibung: Die Dateisysteme,
+        // auf denen diese App laeuft, unterscheiden sie ueblicherweise nicht
+        // — „maze.gif" ersetzt dort „Maze.gif". Eine Warnung, die das
+        // uebersieht, waere genau der Fehler, gegen den sie steht.
+        return vorhandene.first {
+            $0.groesse == groesse && $0.schluessel.caseInsensitiveCompare(gesucht) == .orderedSame
+        }
+    }
+
+    /// Nummer und Name, aus einem Dateinamen ohne Endung erraten.
+    ///
+    /// LaMetric-Icons heissen ueblicherweise `<Nummer>_<Titel>`: Aus
+    /// `2981_Severe TStorm` wird die Nummer `2981` und der Titel
+    /// `Severe TStorm`. Bis zum 13.09.2026 stand der **ganze** Dateiname in
+    /// beiden Feldern — bei so einer Datei also die Nummer zweimal falsch.
+    ///
+    /// Nur eine reine Ziffernfolge vor dem **ersten** Unterstrich zaehlt;
+    /// `maze_2` ist keine Nummer, sondern ein Name. Besteht der Dateiname aus
+    /// nichts als Ziffern, ist er beides. Und wo nichts zu erraten ist, bleibt
+    /// die Nummer **leer**, statt einen Dateinamen als LaMetric-Nummer
+    /// auszugeben: „Öffnen" bleibt dann gesperrt, bis jemand eine eintraegt.
+    public static func vorschlag(fuerDateinamen basis: String) -> (nummer: String, name: String) {
+        let sauber = basis.trimmingCharacters(in: .whitespaces)
+        func istZiffern(_ s: Substring) -> Bool {
+            !s.isEmpty && s.allSatisfy { $0.isASCII && $0.isNumber }
+        }
+        if istZiffern(Substring(sauber)) { return (sauber, sauber) }
+        if let strich = sauber.firstIndex(of: "_") {
+            let vorn = sauber[sauber.startIndex..<strich]
+            let hinten = sauber[sauber.index(after: strich)...]
+                .trimmingCharacters(in: .whitespaces)
+            if istZiffern(vorn), !hinten.isEmpty { return (String(vorn), hinten) }
+        }
+        return ("", sauber)
+    }
+
     /// Legt ab, was gerade gemalt ist. `nummer` gilt nur beim 8×8 — bei den
     /// anderen beiden ist der Name der Dateiname.
     @discardableResult
@@ -112,9 +173,7 @@ public struct Editorbestand {
         switch groesse {
         case .icon8, .icon16:
             let sammlung = groesse == .icon8 ? icons8 : icons16
-            let schluessel = groesse.mitNummer
-                ? nummer.trimmingCharacters(in: .whitespaces)
-                : Dateiname.aus(name)
+            let schluessel = Self.schluessel(groesse: groesse, nummer: nummer, name: name)
             guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
             let sauber = name.trimmingCharacters(in: .whitespaces)
             let icon = try sammlung.sichern(nummer: schluessel,
@@ -198,9 +257,7 @@ public struct Editorbestand {
         switch groesse {
         case .icon8, .icon16:
             let sammlung = groesse == .icon8 ? icons8 : icons16
-            let schluessel = groesse.mitNummer
-                ? nummer.trimmingCharacters(in: .whitespaces)
-                : Dateiname.aus(name)
+            let schluessel = Self.schluessel(groesse: groesse, nummer: nummer, name: name)
             guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
             let sauber = name.trimmingCharacters(in: .whitespaces)
             let icon = try sammlung.einfuegen(daten: daten, nummer: schluessel,

@@ -218,6 +218,44 @@ final class EditorbereichTests: XCTestCase {
                        "die eingestellte Leinwandgröße wird wieder an den Bestand durchgereicht")
     }
 
+    /// **A4.** Das Blatt hinter „Öffnen…" sagt, was dort einzutragen ist —
+    /// beschriftete Zeilen statt zweier nackter Felder —, es belegt Nummer und
+    /// Titel aus dem Dateinamen vor, und es warnt **vor** dem Sichern, wenn
+    /// der Platz schon belegt ist.
+    ///
+    /// Der Rückfall ist auch hier still: Der ganze Dateiname in beiden Feldern
+    /// übersetzt, baut und sieht am Mac ordentlich aus — nur steht die Nummer
+    /// dann zweimal falsch da.
+    func testDasImportblattBelegtVorUndWarntVorDemErsetzen() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+
+        XCTAssertTrue(text.contains("Editorbestand.vorschlag("),
+                      "der Dateiname wird nicht mehr in Nummer und Titel getrennt")
+        XCTAssertFalse(text.contains("importNummer = basis"),
+                       "der ganze Dateiname steht wieder in beiden Feldern")
+
+        let blatt = ausschnitt(text, von: "private var importBlatt", bis: "private var importMitNummer")
+        for zeile in ["LabeledContent(\"LaMetric-Nummer\")", "LabeledContent(\"Name\")"] {
+            XCTAssertTrue(blatt.contains(zeile),
+                          "\(zeile) fehlt — dann steht wieder nicht da, was einzutragen ist")
+        }
+        XCTAssertTrue(blatt.contains("if let vorhanden = importBelegt {"),
+                      "das Blatt warnt nicht mehr vor einem belegten Platz — "
+                      + "dann merkt man das Ersetzen erst, wenn es geschehen ist")
+        XCTAssertTrue(blatt.contains("lok(\"Ersetzen\")"),
+                      "der Knopf heißt nicht mehr „Ersetzen“, wo er ersetzt")
+
+        // Eine Ansicht, nicht zwei: Was bei 16×16 und 16×52 fehlt, wird
+        // abgeleitet — ein zweites Blatt fiele beim Übersetzen nicht auf.
+        XCTAssertTrue(blatt.contains("if importMitNummer {"),
+                      "die Nummer hängt nicht mehr an einer abgeleiteten Eigenschaft")
+
+        let belegt = ausschnitt(text, von: "private var importBelegt", bis: "private var importSchluessel")
+        XCTAssertTrue(belegt.contains("Editorbestand.belegt(in: vorhandene"),
+                      "die Belegung wird wieder eigens gerechnet oder bei jedem "
+                      + "Tastendruck im Dateisystem gesucht")
+    }
+
     /// **B3.** „Abspielen" ist kein eigener Knopf mehr, sondern ein Symbol
     /// **unmittelbar rechts neben dem Sekundenwert** — so verlangt. Es
     /// schaltet um und muss deshalb beide Zustände zeigen; und weil ein

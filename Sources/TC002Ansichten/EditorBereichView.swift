@@ -775,43 +775,91 @@ public struct EditorBereichView: View {
 
     // MARK: - Blatt „Oeffnen"
 
+    /// **Eine** Ansicht fuer alle drei Groessen, nicht zwei Fassungen: Ob nach
+    /// einer Nummer gefragt wird, leitet sich aus der Groesse **der Datei** ab
+    /// — bei 16×16 und 16×52 gibt es keine.
+    ///
+    /// Gebaut wie der Inspektor: Beschriftung links, gefasstes Feld rechts,
+    /// eine Karte mit Kopf und Fuss. Bis zum 13.09.2026 standen hier zwei
+    /// nackte Felder unter einer kleinen grauen Ueberschrift, und **dass**
+    /// LaMetric-Nummer und Titel gemeint waren, stand nirgends.
     private var importBlatt: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Öffnen").font(.headline)
-            if importMitNummer {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Nummer").font(.caption).foregroundStyle(.secondary)
-                    TextField("Nummer", text: $importNummer).eingabefeld()
+        VStack(alignment: .leading, spacing: 0) {
+            Form {
+                Section {
+                    if importMitNummer {
+                        LabeledContent("LaMetric-Nummer") {
+                            TextField("Nummer", text: $importNummer)
+                                .labelsHidden()
+                                .eingabefeld()
+                                .frame(width: 100)
+                        }
+                    }
+                    LabeledContent("Name") {
+                        TextField("Name", text: $importName).labelsHidden().eingabefeld()
+                    }
+                } header: {
+                    // Nach C1 nimmt die Datei ihre eigene Groesse mit; welche
+                    // das ist, gehoert an den Kopf — der Eintrag landet sonst
+                    // in einem Bestand, in dem niemand ihn sucht.
+                    Text(lokf("Wird aufgenommen als %@", importZielname))
+                } footer: {
+                    Text(importMitNummer
+                         ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
+                         : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
+                }
+
+                // **Vor** dem Sichern, nicht danach: Wer eine vergebene Nummer
+                // eintippt, ersetzt etwas — das soll er wissen, bevor er es
+                // tut, und er soll sehen, was.
+                if let vorhanden = importBelegt {
+                    Label(lokf("„%@“ liegt dort schon und wird ersetzt.", vorhanden.name),
+                          systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
+                }
+                if let importMeldung {
+                    Text(importMeldung).foregroundStyle(.orange)
                 }
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Name").font(.caption).foregroundStyle(.secondary)
-                TextField("Name", text: $importName).eingabefeld()
-            }
-            if let importMeldung {
-                Text(importMeldung).font(.callout).foregroundStyle(.orange)
-            }
+            .formStyle(.grouped)
+
             HStack {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
                     .knopfBefehl()
-                Button("Öffnen") { einlesen() }
+                // Der Knopf sagt, was geschieht: „Ersetzen", wo etwas
+                // ueberschrieben wird. `lok` in beiden Zweigen — ein Ternaer
+                // mit `String`-Zweig schlaegt selbst nichts nach.
+                Button(importBelegt == nil ? lok("Öffnen") : lok("Ersetzen")) { einlesen() }
                     .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
                     .disabled(importSchluessel.isEmpty)
             }
+            .padding()
         }
-        .padding()
-        .frame(minWidth: 320)
+        .frame(minWidth: 360)
     }
 
     /// Wonach das Blatt fragt, haengt an der Groesse **der Datei** — nicht an
     /// der des Editors. Bei 16×16 und 16×52 gibt es keine Nummer.
     private var importMitNummer: Bool { importZiel?.mitNummer ?? false }
 
+    /// Wie die Groesse heisst, in der aufgenommen wird. Leer, solange keine
+    /// Datei gewaehlt ist — dann steht auch das Blatt nicht.
+    private var importZielname: String { importZiel.map { lok($0.beschriftung) } ?? "" }
+
+    /// Der Eintrag, den ein Einlesen ersetzen wuerde. Gesucht wird in der
+    /// schon gelesenen Liste, nicht bei jedem Tastendruck im Dateisystem.
+    private var importBelegt: Editoreintrag? {
+        guard let ziel = importZiel else { return nil }
+        return Editorbestand.belegt(in: vorhandene, groesse: ziel,
+                                    nummer: importNummer, name: importName)
+    }
+
     private var importSchluessel: String {
-        importMitNummer ? importNummer.trimmingCharacters(in: .whitespaces)
-                        : importName.trimmingCharacters(in: .whitespaces)
+        guard let ziel = importZiel else { return "" }
+        return Editorbestand.schluessel(groesse: ziel,
+                                        nummer: importNummer, name: importName)
     }
 
     // MARK: - Rueckgaengig
@@ -987,9 +1035,10 @@ public struct EditorBereichView: View {
         }
         importDaten = daten
         importZiel = ziel
-        let basis = url.deletingPathExtension().lastPathComponent
-        importNummer = basis
-        importName = basis
+        let vorschlag = Editorbestand.vorschlag(
+            fuerDateinamen: url.deletingPathExtension().lastPathComponent)
+        importNummer = vorschlag.nummer
+        importName = vorschlag.name
         importMeldung = nil
         zeigeImportBlatt = true
     }
