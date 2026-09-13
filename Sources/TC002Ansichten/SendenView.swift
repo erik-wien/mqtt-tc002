@@ -203,6 +203,16 @@ public struct SendenView: View {
     /// lesen). `nil` heisst `.tc002`, wie bei `Uhr.typ`: Ohne eingerichtete Uhr
     /// zeigt die Vorschau die Werksfirmware, nicht gar nichts.
     private var geraeteart: Geraetetyp? { zustand.referenzUhr?.typ }
+
+    /// Dieselbe Auskunft, nur ohne `Optional` — die Reglertabelle im Kern
+    /// fragt nach einer Gattung, nicht nach „vielleicht keiner".
+    private var gattung: Geraetetyp { geraeteart ?? .tc002 }
+
+    /// Siehe `.task(id:)` oben.
+    private func ausrichtungPruefen() {
+        guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
+        horizontal = .links
+    }
     private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon, iconKante: iconKante) }
     private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon, iconKante: iconKante) }
 
@@ -454,6 +464,13 @@ public struct SendenView: View {
             }
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
+        // Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
+        // Wechsel **sichtbar** zurueckgestellt. Sie stehen zu lassen hiesse,
+        // im Waehler „rechts" zu zeigen und linksbuendig zu senden — und
+        // gerade weil das niemandem auffiele, geschieht es hier oben und
+        // nicht erst im Sendeweg. `.task` deckt den ersten Aufbau ab, bei dem
+        // `onChange` noch nicht gefeuert hat.
+        .task(id: geraeteart) { ausrichtungPruefen() }
         .onChange(of: gewaehltesIcon) { _, neu in
             iconNummer = neu?.nummer ?? ""
             iconKanteGemerkt = neu?.kante ?? 8
@@ -572,8 +589,9 @@ public struct SendenView: View {
                     }
                 }
                 .disabled(weg == .text)
-                .help(weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
-                                   : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
+                .gattungssperre(.schriftart, gattung,
+                    sonst: weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
+                                        : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                 // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                 // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -583,7 +601,8 @@ public struct SendenView: View {
                         Text(lokf("%d px", Int(g))).tag(g)
                     }
                 }
-                .help(eigenesRaster
+                .gattungssperre(.groesse, gattung,
+                    sonst: eigenesRaster
                       ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
                       : lok("Schriftgröße"))
 
@@ -597,12 +616,12 @@ public struct SendenView: View {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
                             .toggleStyle(.button)
                             .disabled(!fettWirkt)
-                            .help(fettHilfe)
+                            .gattungssperre(.fett, gattung, sonst: fettHilfe)
                             .accessibilityLabel(Text("Fett"))
                         Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
                             .toggleStyle(.button)
                             .disabled(!kleinbuchstabenMoeglich)
-                            .help(grossHilfe)
+                            .gattungssperre(.grossbuchstaben, gattung, sonst: grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
                         // `labelsHidden` nimmt nur die sichtbare Beschriftung;
                         // fuer VoiceOver bleibt „Farbe“ die des Waehlers.
@@ -617,20 +636,32 @@ public struct SendenView: View {
                     Schrittwahl("Rand", wert: $rand, bereich: 0...3)
                 }
                 .disabled(vertikal == .mittig)
+                .gattungssperre(.rand, gattung)
 
                 LabeledContent("Abstand") {
                     Schrittwahl("Abstand", wert: $luecke, bereich: 0...3)
                 }
+                .gattungssperre(.abstand, gattung)
 
                 // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
                 // die Ausrichtung bei Pages.
                 // Auch hier blank: Der Segmentschalter bleibt (die Wahl soll
                 // nebeneinander stehen), aber die Beschriftung setzt die
                 // `Form` selbst links daneben.
+                // **Rechtsbuendig ist hier kein gesperrter Regler, sondern
+                // einer, den es nicht gibt.** Die AWTRIX kennt nur „mittig ja
+                // oder nein"; ein dritter Eintrag wuerde angenommen und dann
+                // als linksbuendig gesendet — die Oberflaeche zeigte etwas
+                // anderes, als auf der Uhr steht. Darum faellt der Eintrag
+                // weg, und ein schon gewaehltes „rechts" wird beim Wechsel
+                // sichtbar auf „links" gestellt (siehe `.onChange` unten),
+                // statt still umgedeutet zu werden.
                 Picker("Waagrecht", selection: $horizontal) {
                     Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
                     Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
-                    Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
+                    if gattung.waagrechteAusrichtungen.contains(.rechts) {
+                        Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
+                    }
                 }
                 .pickerStyle(.segmented)
                 Picker("Senkrecht", selection: $vertikal) {
@@ -639,6 +670,7 @@ public struct SendenView: View {
                     Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
                 }
                 .pickerStyle(.segmented)
+                .gattungssperre(.senkrecht, gattung)
             }
         }
         .formStyle(.grouped)

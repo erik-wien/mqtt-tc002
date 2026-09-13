@@ -183,6 +183,7 @@ struct SendeniOS: View {
     /// `.help`; VoiceOver bekommt denselben Wortlaut wie die Mac-Hilfe
     /// (`SendenView.fettHilfe`) als accessibilityHint mit.
     private var fettHinweis: String {
+        if let grund = gattung.begruendung(.fett) { return grund }
         if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
         if !fettWirkt { return lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift) }
         return lok("Fett")
@@ -190,6 +191,7 @@ struct SendeniOS: View {
 
     /// Wie `fettHinweis`, fuer Grossbuchstaben (`SendenView.grossHilfe`, Mac).
     private var grossHinweis: String {
+        if let grund = gattung.begruendung(.grossbuchstaben) { return grund }
         if kleinbuchstabenMoeglich {
             return lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
         }
@@ -200,8 +202,21 @@ struct SendeniOS: View {
     /// dieselben zwei Saetze wie `.help(...)` an der Schriftart-Auswahl der
     /// Mac-Fassung (SendenView.swift).
     private var schriftartHinweis: String {
+        if let grund = gattung.begruendung(.schriftart) { return grund }
         if weg == .text { return lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.") }
         return lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
+    }
+
+    /// Die Gattung der angesehenen Uhr. `nil` heisst `.tc002`, wie bei
+    /// `Uhr.typ` — ohne eingerichtete Uhr gilt die Werksfirmware.
+    private var gattung: Geraetetyp { zustand.referenzUhr?.typ ?? .tc002 }
+
+    /// Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
+    /// Wechsel **sichtbar** zurueckgestellt — sonst zeigte das Menue
+    /// „rechtsbuendig" und die Uhr setzte linksbuendig.
+    private func ausrichtungPruefen() {
+        guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
+        horizontal = .links
     }
 
     private var farbe: Binding<Color> {
@@ -290,6 +305,11 @@ struct SendeniOS: View {
             }
         }
         .onChange(of: gewaehltesIcon?.nummer) { _, neu in iconNummer = neu ?? "" }
+        // Siehe `ausrichtungPruefen()`. `.task(id:)` statt `.onChange`, damit
+        // auch der erste Aufbau abgedeckt ist, bei dem noch nichts gewechselt
+        // hat — eine seit je gewaehlte Ausrichtung „rechts" traefe sonst auf
+        // eine AWTRIX, die sie nicht kennt.
+        .task(id: zustand.referenzUhr?.typ) { ausrichtungPruefen() }
         // Wie am Mac (`SendenView`): Nach dem Schriftwechsel gilt die Liste der
         // neuen Schrift; steht die eingestellte Groesse nicht darauf, faellt sie
         // auf die naechstgelegene, nicht auf die kleinste.
@@ -471,8 +491,14 @@ struct SendeniOS: View {
                         Button { horizontal = .mittig } label: {
                             Label("Zentriert", systemImage: "text.aligncenter")
                         }
-                        Button { horizontal = .rechts } label: {
-                            Label("Rechtsbündig", systemImage: "text.alignright")
+                        // Nicht gesperrt, sondern nicht vorhanden — dieselbe
+                        // Begruendung wie in SendenView.swift: Ein Eintrag, der
+                        // angenommen und dann als linksbuendig gesendet wuerde,
+                        // zeigte etwas anderes an, als auf der Uhr steht.
+                        if gattung.waagrechteAusrichtungen.contains(.rechts) {
+                            Button { horizontal = .rechts } label: {
+                                Label("Rechtsbündig", systemImage: "text.alignright")
+                            }
                         }
                     } label: {
                         Image(systemName: horizontalSymbol)
@@ -495,7 +521,9 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .disabled(!gattung.wirkt(.senkrecht))
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
+                    .accessibilityHint(Text(gattung.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
                     ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
                         .labelsHidden()
                         .frame(width: 44, height: 44)
@@ -516,6 +544,7 @@ struct SendeniOS: View {
                     }
                     .frame(minWidth: 44, minHeight: 44)
                     .disabled(weg == .text)
+                    .disabled(!gattung.wirkt(.schriftart))
                     .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                     .accessibilityHint(Text(schriftartHinweis))
                     Menu {
@@ -530,7 +559,9 @@ struct SendeniOS: View {
                         Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    .disabled(!gattung.wirkt(.groesse))
                     .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
+                    .accessibilityHint(Text(gattung.begruendung(.groesse) ?? lok("Schriftgröße")))
                     Button { fett.toggle() } label: {
                         Image(systemName: "bold")
                             .frame(width: 44, height: 44)
@@ -549,6 +580,7 @@ struct SendeniOS: View {
                     // auch Schriften/Groessen ohne fetten Schnitt sperren den
                     // Knopf, sonst waere er bedienbar, ohne etwas zu bewirken.
                     .disabled(!fettWirkt)
+                    .disabled(!gattung.wirkt(.fett))
                     .accessibilityLabel("Fett")
                     .accessibilityHint(Text(fettHinweis))
                     .accessibilityAddTraits(fett ? [.isSelected] : [])
@@ -577,8 +609,9 @@ struct SendeniOS: View {
                     // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
                     // Wirkung.
                     .disabled(vertikal == .mittig)
+                    .disabled(!gattung.wirkt(.rand))
                     .accessibilityLabel(Text(lokf("Rand %d", rand)))
-                    .accessibilityHint(Text(lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
+                    .accessibilityHint(Text(gattung.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
                     Menu {
                         Picker("Abstand", selection: $luecke) {
                             ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
@@ -587,6 +620,7 @@ struct SendeniOS: View {
                         Label { Text(String(luecke)) } icon: { Image(systemName: "arrow.left.and.right") }
                     }
                     .frame(minWidth: 44, minHeight: 44)
+                    .disabled(!gattung.wirkt(.abstand))
                     .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
                 }
                 .font(.body)

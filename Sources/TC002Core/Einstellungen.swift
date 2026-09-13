@@ -12,7 +12,7 @@ import Foundation
 /// Installationen, wohl aber an der Rueckwaertsrichtung; das ist der Preis
 /// eines `RawRepresentable`-Enums in einem Dateiformat und hier bewusst
 /// bezahlt, weil eine unbekannte Geraeteart nicht sinnvoll zu raten waere.
-public enum Geraetetyp: String, Codable, Sendable {
+public enum Geraetetyp: String, Codable, CaseIterable, Sendable {
     /// Die Ulanzi-Werksfirmware (TC002). Der Bestand.
     case tc002
     /// AWTRIX NG auf einer TC001/TC002 — eigene Themen, eigene Nutzlast,

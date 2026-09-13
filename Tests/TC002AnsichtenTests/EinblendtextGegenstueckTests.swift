@@ -94,19 +94,31 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     // Symbolknöpfe für sich allein — „Formatierung ein-/ausblenden“ und der
     // Papierkorb bei `MeldungLoeschenKnopf` — tragen ihr Gegenstück weiter.
 
-    /// Fünf Regler im Inspektor (Laufschrift-Tempo, Schriftart, Schriftgröße,
-    /// Fett, Großbuchstaben) erklären, warum sie bei der aktuellen Schrift,
-    /// Größe oder dem aktuellen Weg gerade nichts bewirken — das kann weder
-    /// die Beschriftung noch die Hilfe sagen, die den Zustand nicht kennt.
+    /// Acht Regler im Inspektor erklären, warum sie gerade nichts bewirken —
+    /// das kann weder die Beschriftung noch die Hilfe sagen, die den Zustand
+    /// nicht kennt. Zwei Gründe kommen inzwischen zusammen, und beide zählen
+    /// hier gleich:
+    ///
+    /// - **am Zustand**: Schrift, Größe oder gewählter Weg geben den Regler
+    ///   gerade nicht her — `.help(...)` mit einem Ternär.
+    /// - **an der Geräteart**: die Gattung kennt den Regler überhaupt nicht —
+    ///   `.gattungssperre(...)`, die `Geraetetyp.begruendung` holt und daraus
+    ///   selbst ein `.help(...)` macht.
+    ///
+    /// Der zweite Weg ist der Grund, warum hier nicht nur `.help(` gezählt
+    /// wird: Am 13.09.2026 wurden vier Ternäre durch `.gattungssperre`
+    /// ersetzt, und dieser Test schlug an — zu Recht, denn er zählte eine
+    /// Form und nicht die Sache.
     ///
     /// **Mutationsprobe** (13.09.2026): `.help(fettHilfe)` beim
     /// „Fett“-Schalter entfernt → 4 gegen erwartete 5, durchgefallen; wieder
-    /// eingesetzt → grün.
+    /// eingesetzt → grün. Nach dem Umbau erneut: `.gattungssperre(.abstand,
+    /// gattung)` entfernt → 7 gegen erwartete 8, durchgefallen.
     func testSendenViewInspektorReglerHabenZustandsabhaengigenEinblendtext() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
-        XCTAssertEqual(anzahl(inspektor, ".help("), 5,
-                       "der Inspektor hat nicht mehr fünf Regler mit zustandsabhängigem Einblendtext — "
+        XCTAssertEqual(anzahl(inspektor, ".help(") + anzahl(inspektor, ".gattungssperre("), 8,
+                       "der Inspektor hat nicht mehr acht Regler, die ihre Sperre begründen — "
                        + "dieser Test prüft die falsche Stelle")
         XCTAssertEqual(anzahl(inspektor, ".namensichtbarAmIPad()"), 0,
                        "ein Regler im Inspektor trägt `.namensichtbarAmIPad()` — das gilt nur für "
@@ -142,8 +154,8 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// 7, durchgefallen; wieder entfernt → grün.
     func testSendenViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 7,
-                       "SendenView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als die fünf "
+        XCTAssertEqual(anzahl(text, ".help(") + anzahl(text, ".gattungssperre("), 10,
+                       "SendenView.swift hat jetzt eine andere Anzahl Einblendtextstellen als die acht "
                        + "Regler im Inspektor plus die zwei Symbolknöpfe für sich allein — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")
     }
