@@ -127,10 +127,14 @@ This topic appears in **no** vendor documentation. The evidence for it is that
 the device subscribes to it at the broker, and that switching with it works.
 
 The same works without a broker: `POST /api/switchDiyApp?name=<name>` (§5.8).
-The HTTP route answers, this one does not.
+The HTTP route answers, this one does not — and over that route it is also
+proven that the clock really does jump to the named display.
 
-❓ Open: whether `switchDiyApp` also takes effect when the named display does not
-exist at all or is not in the device's DIY list.
+✅ **A display that does not exist is rejected** — over HTTP with
+`{"code":404,"message":"custom app not found"}` (§5.8). So the call does check,
+rather than silently doing nothing.
+
+❓ Open: how **this** topic behaves in that case. It gives no answer.
 
 ### 3.4 `<prefix>/status` — the clock reporting in
 
@@ -452,6 +456,10 @@ curl -s -X POST 'http://192.168.1.20/api/custom?name=notiz' \
   -d '{"draw":[{"df":[0,0,4,4,"#00FF66"]}]}'
 ```
 
+✅ **The new display appears immediately**, without switching. If another one is
+already standing, however, that one stays — then only `switchDiyApp` (§5.8)
+moves things on.
+
 ✅ **Deleting works this way too — with the body `{}`.** Measured on 2026-09-13
 and checked against `GET /api/customList` (§5.7):
 
@@ -504,7 +512,8 @@ way either — occupied or free is therefore certain, the content is not.
 
 ### 5.8 `POST /api/switchDiyApp?name=<name>` — switching without a broker
 
-✅ The call is accepted and answers. Measured on 2026-09-13:
+✅ The call is accepted, answers — and the clock really does jump to the named
+display. Measured on 2026-09-13:
 
 ```bash
 curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
@@ -514,12 +523,45 @@ curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
 This is the counterpart to the MQTT topic in §3.3 — and more forthcoming: there
 is no answer at all there, here there is one with a name and a number.
 
-> ❓ **What is proven is the answer, not the effect.** "app switch **requested**"
-> means requested, not done. Whether the clock actually jumps to the named
-> display afterwards, nobody has looked. Test: switch and watch the display.
+✅ **The effect has been seen, not merely reported.** "app switch **requested**"
+is the wording of the answer, not a reservation. Measured on 2026-09-13 with the
+page change switched off (`carouselSpeed` `0`, §5.4), so that the device does not
+move on by itself — the display was watched at every step:
 
-> ❓ **`index` is uninterpreted.** Why it says `100` there we do not know — the
-> number is written down here, not explained.
+```bash
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,52,16,"#FF0000"]}]}'
+# {"code":200,"message":"ok"}
+curl -s http://192.168.1.20/api/customList
+# {"apps":["probe"],"count":1}            → the clock shows the red area at once
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe2' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,52,16,"#00FF00"]}]}'
+# {"code":200,"message":"ok"}
+curl -s http://192.168.1.20/api/customList
+# {"apps":["probe","probe2"],"count":2}   → the clock stays on red
+
+curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=probe2'
+# {"code":200,"message":"app switch requested","data":{"name":"probe2","index":111}}
+#                                         → the clock turns green
+```
+
+> ✅ **A newly created display appears immediately**, without switching.
+>
+> ✅ **A second one does not take over.** The first stays; whoever wants to see
+> the second one switches. For showing things one after another over HTTP that
+> means: send `switchDiyApp`, or always write to the same display (§5.6).
+
+❓ Both were measured with the page change switched **off**. How it behaves when
+the clock pages through the displays by itself is unproven.
+
+> ✅ **A display that does not exist is rejected:**
+> `{"code":404,"message":"custom app not found"}`. The endpoint checks the name
+> and reports a real error.
+
+> ❓ **`index` is uninterpreted.** Observed values are `100` and `111` — so the
+> number is not fixed. What it means we do not know; it is written down here,
+> not explained.
 
 ---
 
@@ -547,9 +589,12 @@ In order, from the most common to the rarest:
 Named honestly instead of kept quiet:
 
 - ❓ How `duration` and `carouselSpeed` interact (§4.4).
-- ❓ Whether `switchDiyApp` has an effect on displays that do not exist (§3.3).
-- ❓ Whether `POST /api/switchDiyApp` really switches the clock — the answer says
-  "requested", nobody has seen it happen — and what `index` in it means (§5.8).
+- ❓ How the **MQTT** topic `switchDiyApp` behaves for a display that does not
+  exist (§3.3) — over HTTP it is proven: `404 custom app not found` (§5.8).
+- ❓ What `index` in the answer of `POST /api/switchDiyApp` means. Observed
+  values are `100` and `111` (§5.8).
+- ❓ Whether a newly created display also appears immediately, and a second one
+  still does not take over, when the page change is switched **on** (§5.8).
 - ❓ Whether the device font has uppercase letters (§1).
 - ❓ Whether `status` and `customList` are published retained (§3.5).
 - ❓ How **large** a payload may be. What is proven is that around **14 KB** get
