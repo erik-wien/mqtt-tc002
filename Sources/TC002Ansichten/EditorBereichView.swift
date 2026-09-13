@@ -265,12 +265,16 @@ public struct EditorBereichView: View {
                 .accessibilityLabel("Wiederherstellen")
 
             Picker("Inspektor", selection: $modus) {
-                Image(systemName: "paintbrush").tag(Inspektormodus.malen)
-                    .accessibilityLabel("Malen")
-                Image(systemName: "film").tag(Inspektormodus.animation)
-                    .accessibilityLabel("Animation")
-                Image(systemName: "tray.and.arrow.down").tag(Inspektormodus.sichern)
-                    .accessibilityLabel("Sichern")
+                // `.tag` ganz aussen: Ein Kennzeichen, das noch ein
+                // Modifikator umhuellt, findet die Auswahl nicht mehr
+                // verlaesslich — und ein Segmentschalter, dessen Wahl ins
+                // Leere greift, faellt beim Uebersetzen nicht auf.
+                Image(systemName: "paintbrush")
+                    .accessibilityLabel("Malen").tag(Inspektormodus.malen)
+                Image(systemName: "film")
+                    .accessibilityLabel("Animation").tag(Inspektormodus.animation)
+                Image(systemName: "tray.and.arrow.down")
+                    .accessibilityLabel("Sichern").tag(Inspektormodus.sichern)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -323,10 +327,10 @@ public struct EditorBereichView: View {
             ColorPicker("Farbe", selection: farbe)
             LabeledContent("Stift") {
                 Picker("Stift", selection: $radiert) {
-                    Image(systemName: "paintbrush.pointed").tag(false)
-                        .accessibilityLabel("Malen")
-                    Image(systemName: "eraser").tag(true)
-                        .accessibilityLabel("Radieren")
+                    Image(systemName: "paintbrush.pointed")
+                        .accessibilityLabel("Malen").tag(false)
+                    Image(systemName: "eraser")
+                        .accessibilityLabel("Radieren").tag(true)
                 }
                 .pickerStyle(.segmented).labelsHidden()
             }
