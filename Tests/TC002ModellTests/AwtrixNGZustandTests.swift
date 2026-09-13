@@ -153,7 +153,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "Bus kommt"), icon: nil, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "Bus kommt"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
 
         XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
                        "ein gerechnetes Bild behauptete etwas, das auf einer AWTRIX nie so aussah")
@@ -167,7 +167,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         let zustand = try mitUhr(uhr)
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, icon: nil, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
 
         XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(optionen, mitIcon: false).punkteRoh))

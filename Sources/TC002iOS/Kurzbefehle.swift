@@ -164,6 +164,10 @@ struct MeldungSendenIntent: AppIntent {
         // ist ab hier nicht mehr veraendert.
         let slotOptionen = optionen
         let slotIcon = icon?.nummer
+        // Die Kante muss mit: Ohne sie rechnete das Gedaechtnis die Pruefsumme
+        // mit 8, waehrend ein 16×16 gesendet wurde — und die Regler kaemen nie
+        // zurueck (`Slotstand.iconKante`).
+        let slotIconKante = icon?.kante ?? 8
 
         // Blockierende Netzarbeit gehört nicht auf den Hauptthread, auch nicht
         // im Intent — dort wartet sonst das System auf uns.
@@ -181,6 +185,7 @@ struct MeldungSendenIntent: AppIntent {
                 // fehl, bleibt die Sendung trotzdem erfolgreich — Kurzbefehle
                 // haben kein Protokoll, in das eine Zeile koennte.
                 Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
+                                                 iconKante: slotIconKante,
                                                  fuer: ziel.id, platz: slotPlatz)
             }
             return erledigt

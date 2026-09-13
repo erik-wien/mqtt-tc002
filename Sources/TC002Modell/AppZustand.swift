@@ -529,7 +529,8 @@ public final class AppZustand {
     /// dem Zwischenspeicher darueber.
     private func gerastert(_ stand: Slotstand, _ optionen: Meldungsoptionen) -> [String?] {
         if let fertig = gerastertePixel[stand] { return fertig }
-        let pixel = Meldungsbau.feld(optionen, mitIcon: stand.icon != nil).punkteRoh
+        let pixel = Meldungsbau.feld(optionen, mitIcon: stand.icon != nil,
+                                     iconKante: stand.iconKanteOderAcht).punkteRoh
         // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt
         // fuellt: Jede Sendung legt einen weiteren Stand an, gebraucht werden
         // fuenf je Uhr. Ganz leeren statt einzeln verdraengen — der naechste
@@ -921,13 +922,15 @@ public final class AppZustand {
     /// das Schreiben selbst fehl, bleibt die Sendung trotzdem erfolgreich —
     /// nur eine Protokollzeile hält es fest.
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
-                       slotIcon: String? = nil, slotPlatz: Int? = nil) async {
+                       slotIcon: String? = nil, slotIconKante: Int = 8,
+                       slotPlatz: Int? = nil) async {
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
             anzeigeBestaetigt(name, fuer: uhr)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
             guard let slotPlatz else { return }
             if let slotOptionen {
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
+                                                              iconKante: slotIconKante,
                                                               fuer: uhr.id, platz: slotPlatz)
                 if !gemerkt {
                     log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))

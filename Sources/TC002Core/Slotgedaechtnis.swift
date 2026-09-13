@@ -33,6 +33,30 @@ public struct Slotstand: Codable, Hashable, Sendable {
     public var tempo: String
     public var iconLaeuftMit: Bool
     public var icon: String?
+    /// Die Kantenlaenge des gemerkten Icons — **8 oder 16**, und der Grund,
+    /// warum dieser Typ ueberhaupt ein neues Feld bekommen hat.
+    ///
+    /// Ohne sie rechnete `merken` die Pruefsumme mit der Vorgabe 8
+    /// (`Meldungsbau.feld(_:mitIcon:iconKante:)`), waehrend wirklich ein 16×16
+    /// gesendet wurde. Die gemerkte Pruefsumme passte dann zu keiner
+    /// mitgelesenen Nutzlast, `slotWaehlen` verwarf den Stand als „da hat
+    /// jemand anderer geschrieben", und **die Regler kamen nie zurueck**. Von
+    /// aussen sah es aus wie ein vergessliches Gedaechtnis; in Wahrheit war es
+    /// eine Rechnung mit der falschen Zahl.
+    ///
+    /// **`Optional`, und das aus zwei Gruenden zugleich.** Erstens ist dies
+    /// ein Dateiformat: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// `keyNotFound`, auch mit Vorgabewert, und weil gelesen wird, ohne dass
+    /// ein Fehler irgendwo ankaeme, waere die Folge ein leeres Gedaechtnis
+    /// statt einer Meldung. Zweitens liegt diese Datei seit dem
+    /// iCloud-Abgleich moeglicherweise in einem Behaelter, den auch eine
+    /// aeltere Fassung auf einem anderen Geraet liest — dort muss sie lesbar
+    /// bleiben.
+    ///
+    /// `nil` heisst **8**, nicht „unbekannt": Bis hierher gab es nur
+    /// 8×8-Icons in gemerkten Staenden. `iconKanteOderAcht` sagt das an einer
+    /// Stelle, statt es an dreien zu wiederholen.
+    public var iconKante: Int?
     public var dauer: Int?
     /// Fingerabdruck der Pixel, die diese Regler zum Sendezeitpunkt ergeben
     /// haben (`Slotgedaechtnis.pruefsumme(pixel:)`). Der Kern dieses Typs:
@@ -42,10 +66,13 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// Regler werden nicht angeruehrt.
     public var pruefsumme: String
 
+    /// Die Kante, mit der zu rechnen ist — `nil` heisst 8. Siehe `iconKante`.
+    public var iconKanteOderAcht: Int { iconKante ?? 8 }
+
     public init(platz: Int, text: String, weg: String, schrift: String, groesse: Double,
                 fett: Bool, grossbuchstaben: Bool, rand: Int, abstand: Int, waagrecht: String,
                 senkrecht: String, farbe: String, tempo: String, iconLaeuftMit: Bool,
-                icon: String?, dauer: Int?, pruefsumme: String) {
+                icon: String?, iconKante: Int? = nil, dauer: Int?, pruefsumme: String) {
         self.platz = platz
         self.text = text
         self.weg = weg
@@ -61,6 +88,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
         self.tempo = tempo
         self.iconLaeuftMit = iconLaeuftMit
         self.icon = icon
+        self.iconKante = iconKante
         self.dauer = dauer
         self.pruefsumme = pruefsumme
     }
@@ -184,9 +212,14 @@ public struct Slotgedaechtnis: Sendable {
     /// `@discardableResult`, weil ein Aufrufer ohne eigenes Protokoll
     /// (Werkzeug, Kurzbefehle) den Rueckgabewert nicht braucht.
     @discardableResult
-    public func merken(_ optionen: Meldungsoptionen, icon: String?,
+    /// `iconKante` hat **keine** Vorgabe, und das ist Absicht: Eine Vorgabe von
+    /// 8 waere genau der Fehler, der hier behoben wurde — ein Aufrufer, der sie
+    /// vergisst, bekaeme stillschweigend die falsche Rechnung zurueck. Ohne
+    /// Icon ist der Wert gleichgueltig; uebergib dann, was du hast.
+    public func merken(_ optionen: Meldungsoptionen, icon: String?, iconKante: Int,
                        fuer uhr: UUID, platz: Int) -> Bool {
-        let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil).punkteRoh
+        let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil,
+                                     iconKante: iconKante).punkteRoh
         let stand = Slotstand(
             platz: platz,
             text: optionen.text,
@@ -203,6 +236,15 @@ public struct Slotgedaechtnis: Sendable {
             tempo: optionen.tempo.rawValue,
             iconLaeuftMit: optionen.iconLaeuftMit,
             icon: icon,
+            // **Nur was von der Vorgabe abweicht.** Ohne Icon gibt es keine
+            // Kante zu merken, und eine 8 ist die Vorgabe — beides bleibt
+            // `nil` und faellt damit aus der Datei (`encodeIfPresent`). Ein
+            // gewoehnlicher 8×8-Stand wird so Byte fuer Byte geschrieben wie
+            // bisher; das zaehlt, seit diese Datei im iCloud-Behaelter liegen
+            // kann, wo eine aeltere Fassung auf einem anderen Geraet sie liest.
+            // Nebenbei bleiben zwei sonst gleiche Staende ein einziger
+            // Schluessel im Zwischenspeicher von `AppZustand.gerastert`.
+            iconKante: (icon == nil || iconKante == 8) ? nil : iconKante,
             dauer: optionen.dauer,
             pruefsumme: Self.pruefsumme(pixel: pixel))
         var neu = alle(fuer: uhr).filter { $0.platz != platz }

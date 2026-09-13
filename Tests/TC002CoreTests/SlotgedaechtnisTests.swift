@@ -72,7 +72,7 @@ final class SlotgedaechtnisTests: XCTestCase {
         // dass es je auffiele (die Pruefsumme deckt nur die Pixel ab).
         optionen.dauer = 15
 
-        gedaechtnis.merken(optionen, icon: "1673", fuer: uhr, platz: 2)
+        gedaechtnis.merken(optionen, icon: "1673", iconKante: 8, fuer: uhr, platz: 2)
         let stand = try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 2))
 
         XCTAssertEqual(stand.platz, 2)
@@ -96,8 +96,8 @@ final class SlotgedaechtnisTests: XCTestCase {
     func testPruefsummeUnterscheidetInhalt() throws {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "zwei"), icon: nil, fuer: uhr, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "zwei"), icon: nil, iconKante: 8, fuer: uhr, platz: 2)
         let eins = try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 1))
         let zwei = try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 2))
         XCTAssertNotEqual(eins.pruefsumme, zwei.pruefsumme)
@@ -109,9 +109,9 @@ final class SlotgedaechtnisTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
         let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr, platz: 1)
         let erste = gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.pruefsumme
-        gedaechtnis.merken(optionen, icon: nil, fuer: uhr, platz: 2)
+        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr, platz: 2)
         let zweite = gedaechtnis.gemerkt(fuer: uhr, platz: 2)?.pruefsumme
         XCTAssertEqual(erste, zweite)
     }
@@ -123,8 +123,8 @@ final class SlotgedaechtnisTests: XCTestCase {
         let ordner = temp()
         let gedaechtnis = Slotgedaechtnis(ordner: ordner)
         let a = UUID(), b = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, fuer: a, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, fuer: b, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, iconKante: 8, fuer: a, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, iconKante: 8, fuer: b, platz: 1)
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: a, platz: 1)?.text, "A")
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: b, platz: 1)?.text, "B")
     }
@@ -135,8 +135,8 @@ final class SlotgedaechtnisTests: XCTestCase {
     func testMerkenAufAnderemPlatzLoeschtNichtDenErsten() {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "zwei"), icon: nil, fuer: uhr, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "zwei"), icon: nil, iconKante: 8, fuer: uhr, platz: 2)
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "eins")
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 2)?.text, "zwei")
     }
@@ -146,8 +146,8 @@ final class SlotgedaechtnisTests: XCTestCase {
     func testMerkenDesselbenPlatzesErsetzt() {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "alt"), icon: nil, fuer: uhr, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "neu"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "alt"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "neu"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "neu")
     }
 
@@ -165,7 +165,7 @@ final class SlotgedaechtnisTests: XCTestCase {
 
         // Und ein Schreibvorgang danach funktioniert normal weiter, statt an
         // der verbogenen Datei haengenzubleiben.
-        gedaechtnis.merken(Meldungsoptionen(text: "neu"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "neu"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
         XCTAssertEqual(gedaechtnis.gemerkt(fuer: uhr, platz: 1)?.text, "neu")
     }
 
@@ -176,7 +176,7 @@ final class SlotgedaechtnisTests: XCTestCase {
     /// wissen.
     func testMerkenMeldetErfolgAlsRueckgabewert() {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        XCTAssertTrue(gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil,
+        XCTAssertTrue(gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8,
                                          fuer: UUID(), platz: 1))
     }
 
@@ -188,7 +188,7 @@ final class SlotgedaechtnisTests: XCTestCase {
         let datei = temp()
         try Data().write(to: datei)
         let gedaechtnis = Slotgedaechtnis(ordner: datei.appendingPathComponent("Slots"))
-        XCTAssertFalse(gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil,
+        XCTAssertFalse(gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8,
                                           fuer: UUID(), platz: 1))
     }
 
@@ -206,7 +206,7 @@ final class SlotgedaechtnisTests: XCTestCase {
         let ordner = temp()
         let gedaechtnis = Slotgedaechtnis(ordner: ordner)
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
         let inhalt = try FileManager.default.contentsOfDirectory(at: ordner, includingPropertiesForKeys: nil)
         XCTAssertEqual(inhalt.map(\.lastPathComponent), ["\(uhr.uuidString).json"])
     }
@@ -221,8 +221,8 @@ final class SlotgedaechtnisTests: XCTestCase {
     func testVergessenJePlatzLaesstDieAndernStehen() {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "drei"), icon: nil, fuer: uhr, platz: 3)
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "drei"), icon: nil, iconKante: 8, fuer: uhr, platz: 3)
 
         XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 3))
 
@@ -236,7 +236,7 @@ final class SlotgedaechtnisTests: XCTestCase {
     func testVergessenOhneEintragIstKeinFehler() {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
 
         XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 4))
         XCTAssertTrue(gedaechtnis.vergessen(fuer: UUID(), platz: 1))
@@ -250,11 +250,84 @@ final class SlotgedaechtnisTests: XCTestCase {
         let ordner = temp()
         let gedaechtnis = Slotgedaechtnis(ordner: ordner)
         let uhr = UUID()
-        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "eins"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
 
         XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 1))
 
         let inhalt = try FileManager.default.contentsOfDirectory(at: ordner, includingPropertiesForKeys: nil)
         XCTAssertEqual(inhalt, [])
     }
+
+    // MARK: - Die Kante des Icons
+
+    /// **Der Fehler, der wie Vergesslichkeit aussah.** `merken` rechnete die
+    /// Pruefsumme mit `Meldungsbau.feld(_:mitIcon:)` — und dessen Vorgabe fuer
+    /// `iconKante` ist 8. Wer ein 16×16 sendete, bekam eine Pruefsumme ueber
+    /// ein Bild, das so nie auf der Uhr stand; beim naechsten Tippen auf den
+    /// Block verwarf `slotWaehlen` den Stand als „da hat jemand anderer
+    /// geschrieben", und die Regler kamen nie zurueck.
+    ///
+    /// Geprueft wird deshalb genau die Gleichheit, auf die sich `slotWaehlen`
+    /// stuetzt: die gemerkte Pruefsumme gegen die Pixel, die wirklich gesendet
+    /// wurden.
+    func testPruefsummeEinesSechzehnerIconsPasstZumGesendetenBild() throws {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let uhr = UUID()
+        let optionen = Meldungsoptionen(text: "Post")
+
+        gedaechtnis.merken(optionen, icon: "Sonne", iconKante: 16, fuer: uhr, platz: 1)
+        let stand = try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 1))
+
+        let wirklichGesendet = Meldungsbau.feld(optionen, mitIcon: true, iconKante: 16).punkteRoh
+        XCTAssertEqual(stand.pruefsumme, Slotgedaechtnis.pruefsumme(pixel: wirklichGesendet),
+                       "die gemerkte Pruefsumme gehoert zu einem anderen Bild als dem gesendeten — "
+                       + "genau daran scheiterte das Uebernehmen der Regler")
+    }
+
+    /// Und dass die beiden Kanten ueberhaupt verschiedene Bilder ergeben —
+    /// sonst prueft der Test oben eine Gleichheit, die immer gilt.
+    func testAchtUndSechzehnErgebenVerschiedeneBilder() {
+        let optionen = Meldungsoptionen(text: "Post")
+        let acht = Meldungsbau.feld(optionen, mitIcon: true, iconKante: 8).punkteRoh
+        let sechzehn = Meldungsbau.feld(optionen, mitIcon: true, iconKante: 16).punkteRoh
+        XCTAssertNotEqual(Slotgedaechtnis.pruefsumme(pixel: acht),
+                          Slotgedaechtnis.pruefsumme(pixel: sechzehn))
+    }
+
+    /// Die Kante steht im Stand, damit `AppZustand.gerastert` das Bild eines
+    /// Blocks mit derselben Zahl neu rechnet, mit der es gesendet wurde.
+    func testDieKanteWirdGemerktUndOhneIconNicht() throws {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let uhr = UUID()
+        gedaechtnis.merken(Meldungsoptionen(text: "a"), icon: "Sonne", iconKante: 16, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "b"), icon: nil, iconKante: 16, fuer: uhr, platz: 2)
+
+        XCTAssertEqual(try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 1)).iconKante, 16)
+        XCTAssertNil(try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 2)).iconKante,
+                     "ohne Icon gibt es keine Kante zu merken")
+    }
+
+    /// **Das Dateiformat.** Ein Stand aus einer Fassung vor dieser hat den
+    /// Schluessel gar nicht — er muss lesbar bleiben und als 8 gelten. Ein
+    /// Pflichtfeld wuerde hier `keyNotFound` werfen; gelesen wird mit `try?`,
+    /// die Folge waere also ein leeres Gedaechtnis statt einer Meldung. Seit
+    /// dem iCloud-Abgleich liegt diese Datei ausserdem moeglicherweise in einem
+    /// Behaelter, den auch eine aeltere Fassung auf einem anderen Geraet liest.
+    func testEinStandOhneKanteBleibtLesbarUndGiltAlsAcht() throws {
+        let ordner = temp()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+        let uhr = UUID()
+        gedaechtnis.merken(Meldungsoptionen(text: "alt"), icon: "1673", iconKante: 8, fuer: uhr, platz: 1)
+
+        // Den Schluessel aus der Datei nehmen, als haette ihn nie jemand
+        // geschrieben — naeher an einer alten Datei als jede Nachbildung.
+        let datei = ordner.appendingPathComponent("\(uhr.uuidString).json")
+        let roh = try String(contentsOf: datei, encoding: .utf8)
+        XCTAssertFalse(roh.contains("iconKante"), "8 ist die Vorgabe und gehoert nicht in die Datei")
+
+        let stand = try XCTUnwrap(gedaechtnis.gemerkt(fuer: uhr, platz: 1))
+        XCTAssertNil(stand.iconKante)
+        XCTAssertEqual(stand.iconKanteOderAcht, 8)
+    }
+
 }

@@ -132,8 +132,14 @@ public struct SendenView: View {
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon)`.
+        // **Nummer und Kante**, nicht nur die Nummer. Ein 16×16 traegt seinen
+        // Dateinamen im selben Feld wie ein LaMetric-Icon seine Nummer; ohne
+        // die Kante gewaenne bei gleichem Schluessel der 8×8-Bestand, weil er
+        // vorn steht — und der Block zeigte das falsche Bild. Dieselbe
+        // Bedingung wie in `init`, wo der zuletzt gewaehlte Stand gelesen wird.
         gewaehltesIcon = stand.icon.flatMap { nummer in
-            Self.sammlungen.flatMap { $0.alle() }.first { $0.nummer == nummer }
+            Self.sammlungen.flatMap { $0.alle() }
+                .first { $0.nummer == nummer && $0.kante == stand.iconKanteOderAcht }
         }
     }
 
@@ -787,7 +793,8 @@ public struct SendenView: View {
         let slotIcon = gewaehltesIcon?.nummer
         Task {
             await zustand.senden(frame, als: anzeigenName, slotOptionen: slotOptionen,
-                                 slotIcon: slotIcon, slotPlatz: slotPlatz)
+                                 slotIcon: slotIcon, slotIconKante: iconKante,
+                                 slotPlatz: slotPlatz)
             laeuft = false
         }
     }

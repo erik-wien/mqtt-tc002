@@ -149,7 +149,14 @@ struct SendeniOS: View {
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon?.nummer)`.
-        gewaehltesIcon = stand.icon.flatMap { nummer in sammlung.alle().first { $0.nummer == nummer } }
+        // Nummer **und** Kante: Das Telefon kennt nur den 8×8-Bestand. Ein am
+        // Mac gemerkter Stand mit einem 16×16 findet hier also nichts — und
+        // genau das ist richtig. Ohne den Kantenvergleich wuerde stattdessen
+        // ein 8×8-Icon derselben Nummer eingesetzt, und die Vorschau zeigte
+        // etwas anderes, als auf der Uhr steht.
+        gewaehltesIcon = stand.icon.flatMap { nummer in
+            sammlung.alle().first { $0.nummer == nummer && $0.kante == stand.iconKanteOderAcht }
+        }
     }
 
     /// Die einzige Stelle, an der aus Ansichtszustand ein Auftrag wird.
@@ -736,7 +743,8 @@ struct SendeniOS: View {
             // am Mac (SendenView.senden()).
             let slotOptionen = optionen
             await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz), slotOptionen: slotOptionen,
-                                 slotIcon: gewaehltesIcon?.nummer, slotPlatz: platz)
+                                 slotIcon: gewaehltesIcon?.nummer,
+                                 slotIconKante: gewaehltesIcon?.kante ?? 8, slotPlatz: platz)
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }

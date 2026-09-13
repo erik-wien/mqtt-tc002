@@ -199,7 +199,7 @@ final class AppZustandTests: XCTestCase {
         d.set(uhr.id.uuidString, forKey: "aktiveID")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, icon: nil, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
 
         let zustand = AppZustand(schluesselbund: schluesselbund)
 
@@ -330,8 +330,8 @@ final class AppZustandTests: XCTestCase {
     func testLoeschenWirftDieErinnerungAnDenPlatzWeg() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, fuer: uhr.id, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1", "meldung2"]
 
@@ -353,7 +353,7 @@ final class AppZustandTests: XCTestCase {
     func testLoeschenEinesFremdenNamensRuehrtDieErinnerungNichtAn() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["cli", "meldung1"]
 
@@ -370,7 +370,7 @@ final class AppZustandTests: XCTestCase {
     func testLeereNutzlastGibtDenPlatzFreiUndVergisstIhn() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
         zustand.gemeldeteAnzeigen[uhr.id] = ["meldung1"]
@@ -398,7 +398,7 @@ final class AppZustandTests: XCTestCase {
     func testUnzerlegbareNutzlastLaesstBelegungUndErinnerungStehen() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
 
@@ -422,12 +422,12 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let alt = Meldungsoptionen(text: "alt")
         let neu = Meldungsoptionen(text: "ganz neu")
-        gedaechtnis.merken(alt, icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(alt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(alt, mitIcon: false).punkteRoh))
 
-        gedaechtnis.merken(neu, icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(neu, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(neu, mitIcon: false).punkteRoh),
@@ -441,7 +441,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let gemerkt = Meldungsoptionen(text: "gemerkt")
-        gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(gemerkt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh))
@@ -462,7 +462,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let gemerkt = Meldungsoptionen(text: "gemerkt")
-        gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(gemerkt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
         zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
@@ -871,8 +871,8 @@ final class AppZustandTests: XCTestCase {
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
-        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, fuer: a.id, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, fuer: b.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, iconKante: 8, fuer: a.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, iconKante: 8, fuer: b.id, platz: 1)
 
         zustand.uhrEntfernen(a.id, gedaechtnis: gedaechtnis)
 
