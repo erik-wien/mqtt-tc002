@@ -52,8 +52,26 @@ Braucht ein Feld `iconKante` im `Slotstand` — das ist ein Dateiformat.
 
 **B1. Schaltflaechen muessen als solche erkennbar sein.** Grauer abgerundeter
 Kasten ohne Rahmen, beim Klicken dunkler, beim Ueberfahren hervorgehoben,
-Schrift schwarz. **Das ist eine durchgaengige Stilentscheidung**, nicht eine
-Stelle — sie betrifft Mac und iPad ueberall. *(Neu gemeldet.)*
+**Schrift dunkel, nicht blau**. Vorbild ist der Pages-Inspektor (Bildschirmfoto
+vom 13.09.2026: „Verbinden …" gesperrt neben „Fertig").
+**Das ist eine durchgaengige Entscheidung**, nicht eine Stelle — sie betrifft
+Mac und iPad ueberall. Heute benutzt die App den randlosen Stil: blaue
+Beschriftung ohne Flaeche. Der ist laut Richtlinien fuer Verweise gedacht,
+nicht fuer Befehle; deshalb sieht „Radieren" aus wie ein Link.
+
+**Drei Abstufungen**, sonst wirkt alles gleich wichtig:
+- `.bordered` fuer gewoehnliche Befehle (Radieren, Oeffnen, Verdoppeln, Nachladen)
+- `.borderedProminent` fuer die **eine** Haupthandlung je Ansicht (Senden, Sichern)
+- rot getoent fuer Zerstoerendes (Alles loeschen, Entfernen, Papierkorb)
+
+**Nicht** dorthin gehoeren: echte Verweise (LaMetric-Galerie, Lizenzadresse),
+Symbole in der Werkzeugleiste, Zeilen in einer Liste.
+
+**⚠ Die Falle, die auf einem Geraet richtig und auf dem anderen falsch
+aussieht:** Am Mac faerbt `.bordered` die Beschriftung dunkel — auf iPadOS in
+der **Akzentfarbe**, also blau. Dort braucht es zusaetzlich die Textfarbe,
+sonst trifft es Pages nicht. Ebenso pruefen: wie der **gesperrte** Zustand
+aussieht (im Vorbild sichtbar abgeblendet, nicht verschwunden).
 
 **B2. „Datei einlesen" heisst „Oeffnen".** *(Neu gemeldet.)*
 
