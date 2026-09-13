@@ -1,5 +1,4 @@
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 
 /// Zeigt das 52×16-Feld vergroessert. Weil Vorschau und Sendung aus demselben

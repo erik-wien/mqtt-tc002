@@ -1,10 +1,9 @@
 import CoreText
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-struct SendenView: View {
+public struct SendenView: View {
     @Bindable var zustand: AppZustand
 
     /// Ueberlebt den Neustart — Einstellungen dieser einen Ansicht, kein
@@ -62,7 +61,7 @@ struct SendenView: View {
     /// beim ersten Start ausgesehen, als waeren sie weg.
     @State private var zeigeInspektor = true
 
-    init(zustand: AppZustand) {
+    public init(zustand: AppZustand) {
         self.zustand = zustand
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
@@ -217,7 +216,7 @@ struct SendenView: View {
     /// Silkscreen. Micro 5 traegt in Groesse 12 nur acht Zeilen Tinte und wirkte
     /// dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16
     /// fuellt sie es. Beide stehen deshalb wieder im vollen Bereich.
-    static let sauberePixelgroessen: [String: [Double]] = ["Silkscreen": [8, 16]]
+    public static let sauberePixelgroessen: [String: [Double]] = ["Silkscreen": [8, 16]]
 
     /// Die sauberen Groessen der aktuell gewaehlten Schrift, oder nil, wenn sie
     /// keine Pixelschrift mit eigenem Raster ist.
@@ -297,7 +296,7 @@ struct SendenView: View {
         unbekannteZeichen.map { "„\($0)“" }.joined(separator: ", ")
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Wie ein Nachrichtenfenster: Vorschau oben und sichtbar bleibend
             // (waechst mit dem Fenster, siehe .frame(...) unten), Eingabe und

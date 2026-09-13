@@ -86,7 +86,12 @@ struct ZielauswahlView: View {
                         Spacer()
                     }
                 }
+                // Nur am Mac: `.checkbox` gibt es unter iOS nicht. Dort bleibt
+                // die Vorgabe (der Schalter) — geteilt wird die Ansicht, nicht
+                // der Stil.
+                #if os(macOS)
                 .toggleStyle(.checkbox)
+                #endif
             }
             .frame(minHeight: 160)
 

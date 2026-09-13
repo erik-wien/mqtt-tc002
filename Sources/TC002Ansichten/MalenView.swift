@@ -1,9 +1,8 @@
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-struct MalenView: View {
+public struct MalenView: View {
     @Bindable var zustand: AppZustand
 
     /// Das zuletzt gemalte Feld ueberlebt den Neustart — der Arbeitsstand.
@@ -18,7 +17,7 @@ struct MalenView: View {
     @State private var laeuft = false
     @Environment(\.scenePhase) private var phase
 
-    init(zustand: AppZustand) {
+    public init(zustand: AppZustand) {
         self.zustand = zustand
         let punkte = try? JSONDecoder().decode([String?].self,
                         from: UserDefaults.standard.data(forKey: "malen.feld") ?? Data())
@@ -66,7 +65,7 @@ struct MalenView: View {
         Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 ColorPicker("Farbe", selection: farbe)

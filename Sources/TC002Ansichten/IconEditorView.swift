@@ -1,13 +1,14 @@
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 import TC002Modell
 import UniformTypeIdentifiers
 
 /// 8×8-Editor fuer eigene Icons. Dasselbe Malprinzip wie der grosse Editor, nur
 /// kleiner und mit Ablage: was hier gesichert wird, steht unter „Senden" zur Wahl.
-struct IconEditorView: View {
+public struct IconEditorView: View {
     @Bindable var zustand: AppZustand
+
+    public init(zustand: AppZustand) { self.zustand = zustand }
 
     /// Ein oder mehrere Einzelbilder — mehrere ergeben beim Sichern ein animiertes
     /// GIF. Gemalt wird immer auf `bilder[aktuellesBild]`.
@@ -48,10 +49,22 @@ struct IconEditorView: View {
         Iconsammlung(schreibordner: Iconordner.eigene)
     }
 
-    var body: some View {
-        HSplitView {
-            malflaeche
-            seitenleiste
+    public var body: some View {
+        // `HSplitView` — die vom Nutzer verschiebbare Trennlinie — gibt es nur
+        // am Mac. Unter iOS bleibt die Aufteilung dieselbe, nur ohne Griff;
+        // wie sie auf dem iPad aussehen soll, ist noch nicht entschieden.
+        Group {
+            #if os(macOS)
+            HSplitView {
+                malflaeche
+                seitenleiste
+            }
+            #else
+            HStack(spacing: 0) {
+                malflaeche
+                seitenleiste
+            }
+            #endif
         }
         .onDisappear { stoppeAbspielen() }
         .sheet(isPresented: $zeigeImportBlatt) { importBlatt }

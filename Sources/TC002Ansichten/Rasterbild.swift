@@ -1,5 +1,4 @@
 import SwiftUI
-import TC002Ansichten
 import TC002Core
 
 /// Zeigt eine Bilddatei als Farbraster — die Vorschau von Icons (8×8) und
