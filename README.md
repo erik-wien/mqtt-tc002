@@ -30,10 +30,12 @@ vorausgesetzt wird macOS 14 aufwärts.
   Schrift — passt der Text nicht, läuft er von selbst als Laufschrift durch;
   oder **als Text**, vom Gerät gesetzt, das dafür mit seiner eigenen Schrift
   scrollt, aber keine Umlaute kennt.
-- **Malen** — eine freie 52×16-Zeichenfläche, aus der beim Senden Rechtecke
-  statt einzelner Pixel werden.
-- **Icons** — eigene 8×8-Bildchen malen oder über eine LaMetric-Nummer
-  nachladen.
+- **Editor** — Pixel malen; die Größe der Leinwand entscheidet, was dabei
+  herauskommt: ein 8×8 ist das LaMetric-Icon mit Nummer, ein 16×16 eines
+  ohne, ein 16×52 die ganze Anzeige, die sich von dort aus senden lässt (und
+  aus der beim Senden Rechtecke statt einzelner Pixel werden). Mehrere
+  Einzelbilder ergeben ein animiertes GIF. Icons lassen sich außerdem über
+  eine LaMetric-Nummer nachladen.
 - **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
   umschalten oder löschen, dazu der Seitenwechsel der Uhr. Diese Liste führt
   die App je Uhr getrennt: gelöscht wird immer nur bei der aktiven, und was
@@ -87,8 +89,8 @@ dort wären sie beim nächsten Bau weg, und unter `/Applications` ist der
 Ordner ohnehin nicht beschreibbar. Dorthin kommen sie auf drei Wegen: Ein
 **Grundschatz** von rund dreißig 8×8-Icons wird beim allerersten Start
 einmalig aus dem App-Paket übernommen, danach sind es ganz normale eigene
-Icons — löschbar und überschreibbar. Weitere entstehen im 8×8-Editor unter
-„Icons“ oder lassen sich über ihre Nummer von developer.lametric.com
+Icons — löschbar und überschreibbar. Weitere entstehen unter „Editor“ bei
+Leinwandgröße 8×8 oder lassen sich über ihre Nummer von developer.lametric.com
 nachladen. Wer zu gründlich aufgeräumt hat, holt fehlende Grundschatz-Icons
 mit „Grundschatz wiederherstellen“ zurück; Vorhandenes bleibt dabei
 unangetastet.
@@ -143,8 +145,8 @@ und Zustandsschicht mit der Mac-App. Sie kann Uhren einrichten und abfragen
 („Einstellungen“), Text mit Icon und Format senden („Senden“, die Wurzel der
 App), und zeigen, was auf der aktiven Uhr steht samt Protokoll („Verlauf“) —
 beides über Menüpunkte in der Titelleiste erreichbar statt über eine eigene
-Reiterleiste. Bewusst fehlen Icons bearbeiten und die freie Zeichenfläche
-(„Malen“): Beides bleibt dem Schreibtisch vorbehalten.
+Reiterleiste. Bewusst fehlt der Editor: Malen bleibt dem Schreibtisch
+vorbehalten.
 
 Am Fuß der Einstellungen stehen „Hilfe“ und „Über MQTT-TC002“, beide als
 Blatt: iOS hat für „Über“ keine vom System gestellte Stelle, und die
