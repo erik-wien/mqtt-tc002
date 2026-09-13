@@ -10,7 +10,8 @@ import TC002Core
 @MainActor
 final class AppZustandTests: XCTestCase {
     private let d = UserDefaults.standard
-    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs", "brokerHost"]
+    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
+                              "brokerHost", "brokerPort", "benutzer"]
     private var sicherung: [String: Any?] = [:]
 
     override func setUp() {
@@ -450,10 +451,9 @@ final class AppZustandTests: XCTestCase {
     /// kommt nicht zurueck — die Datei laege sonst fuer immer unter
     /// Application Support, ohne dass sie noch jemand liest.
     /// Woran „noch nichts eingerichtet" haengt: an einer Uhr **und** an einer
-    /// eingetragenen Brokeradresse. Der Wert von `brokerHost` allein taugt
-    /// nicht — er traegt beim allerersten Start die Vorgabe und saehe damit
-    /// eingerichtet aus. Entscheidend ist der abgelegte Schluessel, den erst
-    /// eine Eingabe anlegt.
+    /// eingetragenen Brokeradresse. Seit die Vorgabe leer ist, sagt der Wert
+    /// das selbst — eine frische Installation hat keine Adresse, und nur eine
+    /// Eingabe macht daraus eine.
     func testEingerichtetVerlangtUhrUndEingetragenenBroker() throws {
         let uhr = Uhr(name: "Küche", host: "10.0.0.5")
 
@@ -462,11 +462,11 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "brokerHost")
         XCTAssertFalse(AppZustand().eingerichtet)
 
-        // Uhr da, Broker nur als Vorgabe — das zaehlt nicht als eingetragen.
+        // Uhr da, Broker nur als Vorgabe — und die ist leer.
         d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
         let nurUhr = AppZustand()
-        XCTAssertEqual(nurUhr.brokerHost, Einstellungen.Vorgabe.brokerHost,
-                       "die Vorgabe gilt weiterhin — nur eben nicht als Einrichtung")
+        XCTAssertEqual(nurUhr.brokerHost, "",
+                       "die Vorgabe darf keine Adresse vortaeuschen")
         XCTAssertFalse(nurUhr.eingerichtet)
 
         // Broker eingetragen, aber keine Uhr.
@@ -481,6 +481,67 @@ final class AppZustandTests: XCTestCase {
         // Wer die Adresse spaeter leert, steht wieder in derselben Sackgasse.
         d.set("", forKey: "brokerHost")
         XCTAssertFalse(AppZustand().eingerichtet)
+    }
+
+    /// Was eine frische Installation in den Feldern stehen hat: nichts. Ein
+    /// vorausgefuellter Benutzername oder eine erfundene Brokeradresse sind
+    /// schlechter als leere Felder — man sieht ihnen nicht an, ob dort ein
+    /// echter Wert steht, und muss ueberschreiben statt einzutragen.
+    func testFrischeInstallationHatLeereZugangsfelder() {
+        d.removeObject(forKey: "brokerHost")
+        d.removeObject(forKey: "benutzer")
+        d.removeObject(forKey: "brokerPort")
+
+        let zustand = AppZustand()
+
+        XCTAssertEqual(zustand.brokerHost, "", "keine Adresse, die niemand eingetragen hat")
+        XCTAssertEqual(zustand.benutzer, "", "kein vorausgefuellter Benutzername")
+        XCTAssertEqual(zustand.brokerPort, "1883",
+                       "der Standardport von MQTT bleibt — er sagt nichts ueber diese Installation")
+    }
+
+    /// Die leere Adresse ist seit der leeren Vorgabe der Zustand jeder frischen
+    /// Installation — und damit ein Knopfdruck von „Sichern und pruefen"
+    /// entfernt. Ohne eigenen Zweig nennte die Meldung den Port, an dem nichts
+    /// falsch ist, und `NWEndpoint.Host("")` waere ein Ziel, das es nicht gibt.
+    func testOhneBrokeradresseSagtDiePruefungGenauDas() {
+        d.removeObject(forKey: "brokerHost")
+        let zustand = AppZustand()
+        XCTAssertEqual(zustand.brokerHost, "")
+
+        // Der Zugang selbst faellt weg — es gibt kein Ziel, an das gesendet
+        // werden koennte, auch nicht fuer eine laengst abgefragte Uhr.
+        XCTAssertNil(zustand.anzeigen(fuer: Uhr(name: "Küche", host: "10.0.0.5",
+                                                praefix: "awtrix_a86b")),
+                     "ohne Adresse darf kein Zugang entstehen")
+
+        zustand.brokerSichernUndPruefen()
+
+        XCTAssertEqual(zustand.brokerStand,
+                       .abgelehnt(lok("Es ist keine Brokeradresse eingetragen.")),
+                       "die Meldung darf nicht den Port beschuldigen")
+    }
+
+    /// Dieselbe Unterscheidung beim Senden: Fehlt die Adresse, ist nicht der
+    /// Port schuld. Alle drei Saetze gehen als gewoehnliches `String` weiter und
+    /// werden von SwiftUI nie nachgeschlagen — deshalb `lok`/`lokf`.
+    func testZugangsmeldungNenntDieFehlendeAdresse() {
+        d.removeObject(forKey: "brokerHost")
+        let zustand = AppZustand()
+        let uhr = Uhr(name: "Küche", host: "10.0.0.5", praefix: "awtrix_a86b")
+
+        XCTAssertEqual(zustand.zugangsmeldung(uhr),
+                       lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Sichern und prüfen“ drücken."))
+
+        zustand.brokerHost = "10.0.0.2"
+        zustand.brokerPort = "keine Zahl"
+        XCTAssertEqual(zustand.zugangsmeldung(uhr),
+                       lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken.", "keine Zahl"),
+                       "steht eine Adresse, gilt wieder die Portmeldung")
+
+        XCTAssertEqual(zustand.zugangsmeldung(Uhr(name: "Bad", host: "10.0.0.6")),
+                       lokf("%@ wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken.", "Bad"),
+                       "das fehlende Präfix schlägt beides")
     }
 
     func testEntfernteUhrVerliertIhreSlotdatei() throws {

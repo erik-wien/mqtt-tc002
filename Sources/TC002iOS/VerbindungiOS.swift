@@ -70,7 +70,9 @@ struct VerbindungiOS: View {
                 }
             }
             HStack {
-                TextField("Adresse einer weiteren Uhr", text: $neueAdresse)
+                // Beispiel statt Beschreibung — dieselbe Ueberlegung wie am
+                // Mac: Man sieht sofort, dass eine IP-Adresse gemeint ist.
+                TextField("z. B. 192.168.0.10", text: $neueAdresse)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .onSubmit { hinzufuegen() }
@@ -97,8 +99,12 @@ struct VerbindungiOS: View {
 
     private var brokerAbschnitt: some View {
         Section("Broker") {
+            // Beschriftet waren die vier Felder hier schon; was fehlte, war
+            // der Platzhalter, der nach dem Leeren der Vorgaben sichtbar wird.
+            // Die Beschriftung links sagt, was das Feld ist, das Beispiel
+            // rechts, wie ein Wert darin aussieht.
             LabeledContent("Adresse") {
-                TextField("Adresse", text: $zustand.brokerHost)
+                TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
                     .multilineTextAlignment(.trailing)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -122,7 +128,7 @@ struct VerbindungiOS: View {
                     }
             }
             LabeledContent("Benutzer") {
-                TextField("Benutzer", text: $zustand.benutzer)
+                TextField("z. B. pixdeck", text: $zustand.benutzer)
                     .multilineTextAlignment(.trailing)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

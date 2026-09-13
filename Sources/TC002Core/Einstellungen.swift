@@ -43,10 +43,17 @@ public struct Einstellungen: Sendable {
     /// gar nicht erst ablegt: Wer den Port nie angefasst hat, hat keinen
     /// gespeicherten Port — und das Kommandozeilenwerkzeug saehe dann keinen
     /// Broker, obwohl die App laengst sendet.
+    ///
+    /// **Adresse und Benutzer sind leer, und das ist die Vorgabe.** Ein
+    /// vorausgefuelltes Feld ist schlechter als ein leeres: Man sieht ihm nicht
+    /// an, ob dort ein echter Wert steht, und muss ueberschreiben statt
+    /// einzutragen. Ein Platzhalter im Feld sagt dasselbe, ohne es zu
+    /// behaupten. Nur der Port bleibt belegt — 1883 ist der Standardport von
+    /// MQTT und keine Angabe ueber diese Installation.
     public enum Vorgabe {
-        public static let brokerHost = "192.168.1.10"
+        public static let brokerHost = ""
         public static let brokerPort = "1883"
-        public static let benutzer = "pixdeck"
+        public static let benutzer = ""
     }
 
     public var brokerHost: String

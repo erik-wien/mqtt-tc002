@@ -92,10 +92,31 @@ final class EinstellungenTests: XCTestCase {
 
     /// Die Vorgaben muessen dieselben sein wie in der App — sie legt einen
     /// unveraenderten Wert gar nicht erst ab, und dann gilt hier der Rueckfall.
+    ///
+    /// Adresse und Benutzer sind **leer**, und das ist die Zusicherung: Eine
+    /// erfundene Vorgabe stuende auf einer frischen Installation im Feld, ohne
+    /// dass jemand sie eingetragen haette — und `brokerEingerichtet` waere dort
+    /// wahr, obwohl es keinen Broker gibt. Der Port ist der Gegenfall: 1883 ist
+    /// der Standardport von MQTT und sagt nichts ueber diese Installation.
     func testVorgabenSindGesetzt() {
         XCTAssertEqual(Einstellungen.Vorgabe.brokerPort, "1883")
-        XCTAssertEqual(Einstellungen.Vorgabe.benutzer, "pixdeck")
-        XCTAssertFalse(Einstellungen.Vorgabe.brokerHost.isEmpty)
+        XCTAssertTrue(Einstellungen.Vorgabe.benutzer.isEmpty,
+                      "ein vorausgefuellter Benutzername ist schlechter als ein leeres Feld")
+        XCTAssertTrue(Einstellungen.Vorgabe.brokerHost.isEmpty,
+                      "eine erfundene Brokeradresse taeuscht eine Einrichtung vor")
+    }
+
+    /// Und was daraus folgt: Aus einem leeren Bereich kommt **kein**
+    /// eingerichteter Broker. Das Werkzeug meldet dann, dass keiner eingetragen
+    /// ist, statt an eine Adresse zu senden, die niemand genannt hat.
+    func testFrischeInstallationHatKeinenBroker() {
+        let bereich = "test.mqtt-tc002." + UUID().uuidString
+        let e = Einstellungen.gelesen(bereich: bereich)
+        XCTAssertEqual(e.brokerHost, "")
+        XCTAssertNil(e.benutzer, "ein leerer Benutzername heisst „kein Konto“")
+        XCTAssertFalse(e.brokerEingerichtet)
+        XCTAssertNil(e.zugang(clientID: "x"))
+        UserDefaults.standard.removePersistentDomain(forName: bereich)
     }
 
     /// Aus einem leeren Bereich kommen die Vorgaben, nicht Unsinn: ein Port 0

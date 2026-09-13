@@ -56,7 +56,10 @@ public struct VerbindungView: View {
                     }
                 }
                 HStack {
-                    TextField("Adresse einer weiteren Uhr", text: $neuerHost)
+                    // Ein Beispiel sagt mehr als eine Beschreibung: Man sieht
+                    // sofort, dass eine IP-Adresse gemeint ist und nicht ein
+                    // Name.
+                    TextField("z. B. 192.168.0.10", text: $neuerHost)
                         .textFieldStyle(.roundedBorder)
                         .frame(minWidth: 220)
                         .onSubmit { uhrHinzufuegen() }
@@ -84,13 +87,28 @@ public struct VerbindungView: View {
                     }
             }
             Section("Broker") {
-                TextField("Adresse", text: $zustand.brokerHost)
-                TextField("Port", text: $zustand.brokerPort)
-                TextField("Benutzer", text: $zustand.benutzer)
-                SecureField("Kennwort", text: $zustand.kennwort)
-                    .focused($kennwortFokus)
-                    .onSubmit { zustand.kennwortSichern() }
-                    .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
+                // `LabeledContent` statt der Beschriftung, die `TextField`
+                // selbst mitbringt: Am Mac zeigt SwiftUI die zwar an, auf dem
+                // iPad dagegen ist sie der Platzhalter — und der verschwindet,
+                // sobald etwas im Feld steht. Vier gefuellte Felder ohne jede
+                // Beschriftung waren das Ergebnis. Die Beschriftung kommt
+                // deshalb von aussen, das Feld traegt nur noch das Beispiel.
+                LabeledContent("Adresse") {
+                    TextField("z. B. 192.168.0.20", text: $zustand.brokerHost).labelsHidden()
+                }
+                LabeledContent("Port") {
+                    TextField("Port", text: $zustand.brokerPort).labelsHidden()
+                }
+                LabeledContent("Benutzer") {
+                    TextField("z. B. pixdeck", text: $zustand.benutzer).labelsHidden()
+                }
+                LabeledContent("Kennwort") {
+                    SecureField("Kennwort", text: $zustand.kennwort)
+                        .labelsHidden()
+                        .focused($kennwortFokus)
+                        .onSubmit { zustand.kennwortSichern() }
+                        .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
+                }
                 Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
                     .font(.footnote).foregroundStyle(.secondary)
                 HStack {
@@ -102,6 +120,11 @@ public struct VerbindungView: View {
         }
         .formStyle(.grouped)
         .padding()
+        // `.padding()` legt sich **um** die rollende Flaeche, nicht in sie
+        // hinein: Der Inhalt rollt bis an ihre Kante, und der letzte Abschnitt
+        // endete buendig am Fensterrand. Ein Rand innerhalb der Rollflaeche
+        // endet dagegen mit dem Inhalt.
+        .contentMargins(.bottom, 16, for: .scrollContent)
         // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
         // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort dabei verloren.

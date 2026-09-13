@@ -63,7 +63,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.startOhneEinrichtung
                 + [
                     .ueberschrift("Uhr hinzufügen"),
-                    .absatz("Unter „Einstellungen“ trägt man im Feld „Adresse einer weiteren Uhr“ die Adresse einer Uhr ein und drückt „Hinzufügen“ oder die Eingabetaste. Eine bereits eingetragene Adresse lässt sich hier nicht ändern — dafür die Uhr entfernen und neu eintragen."),
+                    .absatz("Unter „Einstellungen“ trägt man die Adresse einer Uhr in das Feld unter der Liste ein, in dem eine Beispieladresse steht, und drückt „Hinzufügen“ oder die Eingabetaste. Eine bereits eingetragene Adresse lässt sich hier nicht ändern — dafür die Uhr entfernen und neu eintragen."),
                     .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
@@ -77,6 +77,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Broker"),
                     .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
                 ]
+                + HilfeInhalt.brokerFelderLeer
                 + HilfeInhalt.brokerKennwort
                 + [
                     .absatz("Gesichert wird es, sobald man die Eingabetaste drückt, „Sichern und prüfen“ drückt oder das Blatt schließt — nicht bei jedem Tastendruck."),

@@ -37,6 +37,12 @@ public enum HilfeInhalt {
         .absatz("Das Präfix lässt sich absichtlich nicht von Hand eintragen: es ist nicht dasselbe wie das in Ulanzi Studio eingestellte, die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt das wirksame Präfix selbst. Hat die Uhr gar kein Präfix eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
     ]
 
+    /// Womit die vier Brokerfelder beginnen: mit nichts. Gilt fuer beide
+    /// Oberflaechen — dieselben vier Felder, dieselben Beispiele darin.
+    public static let brokerFelderLeer: [Hilfebaustein] = [
+        .absatz("Alle vier Felder beginnen leer; was grau darin steht, ist ein Beispiel und kein Wert. Der Port ist die Ausnahme: 1883 ist der Standardport von MQTT und steht von Anfang an da."),
+    ]
+
     /// Wo das Kennwort liegt — im Schluesselbund, nicht in den App-Einstellungen
     /// (`Einstellungen.kennwort`). Wann es gesichert wird, ist dagegen je
     /// Oberflaeche verschieden und steht dort.

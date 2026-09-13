@@ -94,7 +94,9 @@ public final class AppZustand {
     public func brokerSichernUndPruefen() {
         kennwortSichern()
         guard let zugang else {
-            let meldung = lok("Broker-Port muss eine Zahl über 0 sein.")
+            let meldung = brokerHost.isEmpty
+                ? lok("Es ist keine Brokeradresse eingetragen.")
+                : lok("Broker-Port muss eine Zahl über 0 sein.")
             brokerStand = .abgelehnt(meldung)
             log(lokf("Broker-Prüfung abgelehnt: %@", meldung))
             return
@@ -247,18 +249,15 @@ public final class AppZustand {
     /// eingetragen ist, was fehlte.
     public var eingerichtet: Bool { !uhren.isEmpty && brokerEingetragen }
 
-    /// Ob eine Brokeradresse je eingetragen wurde.
+    /// Ob eine Brokeradresse eingetragen ist.
     ///
-    /// Der Wert allein taugt dafuer nicht: `brokerHost` traegt beim allerersten
-    /// Start `Einstellungen.Vorgabe.brokerHost` und sieht damit eingerichtet
-    /// aus, obwohl niemand etwas eingetippt hat — `brokerEingerichtet` im Kern
-    /// ist aus demselben Grund schon auf einer frischen Installation wahr.
-    /// Der **abgelegte Schluessel** entsteht dagegen erst durch eine Eingabe:
-    /// `merke` schweigt bis `initialisiert`, und der Konstruktor schreibt
-    /// nichts.
-    private var brokerEingetragen: Bool {
-        !brokerHost.isEmpty && UserDefaults.standard.object(forKey: "brokerHost") != nil
-    }
+    /// Der Wert selbst sagt es, seit `Einstellungen.Vorgabe.brokerHost` leer
+    /// ist: Eine frische Installation hat keine Adresse, und nur eine Eingabe
+    /// macht daraus eine. Solange die Vorgabe eine erfundene Adresse war,
+    /// musste stattdessen der **abgelegte Schluessel** herhalten — er entsteht
+    /// erst durch eine Eingabe —, und das war ein Umweg um eine Vorgabe herum,
+    /// die es nicht haette geben sollen. Mit ihr faellt er weg.
+    private var brokerEingetragen: Bool { !brokerHost.isEmpty }
 
     /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
     /// die fuenf Slot-Bloecke geprueft werden: die aktive. Ein Platz zaehlt
@@ -467,9 +466,13 @@ public final class AppZustand {
     }
 
     /// Der Port wird hier geprueft, nicht erst beim Verbinden: NWEndpoint.Port lehnt die 0
-    /// ab und stuerzt bei erzwungenem Auspacken ab.
+    /// ab und stuerzt bei erzwungenem Auspacken ab. Die leere Adresse ebenso —
+    /// seit sie die Vorgabe ist, ist sie der Zustand jeder frischen
+    /// Installation, und `NWEndpoint.Host("")` waere ein Ziel, das es nicht
+    /// gibt. `Einstellungen.brokerEingerichtet` im Kern prueft beides schon
+    /// laenger.
     private var zugang: MQTTZugang? {
-        guard let port = UInt16(brokerPort), port > 0 else { return nil }
+        guard !brokerHost.isEmpty, let port = UInt16(brokerPort), port > 0 else { return nil }
         return MQTTZugang(host: brokerHost, port: port,
                           benutzer: benutzer.isEmpty ? nil : benutzer,
                           kennwort: kennwort.isEmpty ? nil : kennwort)
@@ -484,15 +487,26 @@ public final class AppZustand {
         return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
     }
 
-    /// Liefert `anzeigen(fuer:)` nichts, fehlt entweder das Präfix — die Uhr wurde
-    /// nie abgefragt — oder der Broker-Port ist keine brauchbare Zahl. Zwei
-    /// verschiedene Ursachen, zwei verschiedene Meldungen; eine Meldung überhaupt,
-    /// statt stumm zurückzukehren.
+    /// Liefert `anzeigen(fuer:)` nichts, fehlt eines von dreien: das Präfix —
+    /// die Uhr wurde nie abgefragt —, die Brokeradresse oder ein brauchbarer
+    /// Port. Drei verschiedene Ursachen, drei verschiedene Meldungen; eine
+    /// Meldung überhaupt, statt stumm zurückzukehren.
+    ///
+    /// Die leere Adresse ist der Zustand jeder frischen Installation, seit die
+    /// Vorgabe leer ist. Ohne eigenen Zweig nennte die Meldung hier den Port,
+    /// an dem nichts falsch ist.
+    ///
+    /// Die drei Sätze gehen als gewöhnliches `String` weiter und werden von
+    /// SwiftUI nie nachgeschlagen — deshalb `lok`/`lokf`, und deshalb der Wert
+    /// als Platzhalter statt im Schlüssel.
     public func zugangsmeldung(_ uhr: Uhr) -> String {
         if uhr.praefix.isEmpty {
-            return "\(uhr.name) wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken."
+            return lokf("%@ wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken.", uhr.name)
         }
-        return "Der Broker-Port „\(brokerPort)“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken."
+        if brokerHost.isEmpty {
+            return lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Sichern und prüfen“ drücken.")
+        }
+        return lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken.", brokerPort)
     }
 
     /// Wessen Schuld war es? Ein Brokerfehler träfe jede Uhr gleichermaßen — ihn
