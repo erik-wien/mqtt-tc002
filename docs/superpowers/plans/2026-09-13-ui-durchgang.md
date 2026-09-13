@@ -40,35 +40,55 @@ Nur **„Ueber"**.
 
 **D1.** Farbwaehler in die Zeile zu „Stil" (B / Grossbuchstaben).
 **D2.** Dem Eingabefeld fehlt der Rahmen.
-**D3. Die Schrift ist auf iPad und Mac zu klein.** Das ist keine Zahl, sondern
-eine Grundsatzentscheidung fuer die ganze Desktop-Oberflaeche — einmal
-festlegen und durchziehen, nicht Ansicht fuer Ansicht.
+**D3. Das Eingabefeld fuers Senden ist zu klein.** Nachgefragt und
+eingegrenzt: Es geht **nur um dieses eine Feld**, nicht um die ganze
+Oberflaeche. Sein Wunsch: „so 14pt, also 50%?"
+`TextField("Text", text: $text)` (`SendenView.swift:387/391`) traegt heute
+**gar keine** eigene Schrift, also die Vorgabe — am Mac 13 pt, am iPad 17 pt.
+Die beiden Zahlen des Auftraggebers passen deshalb nicht zusammen (14 pt waeren
+am Mac +8 %, nicht +50 %). **Gemeint ist „deutlich groesser".** Setz eine
+ausdrueckliche Groesse, die auf beiden Geraeten gut liest, und **nenn mir die
+gewaehlten Werte** — lieber einmal nachbessern als eine Zahl treffen, die er
+anders gemeint hat.
 
 ## E — Ein Editor statt zweier (der groesste Brocken)
 
-**E1.** `MalenView` (201 Z.) und `IconEditorView` (496 Z.) sind zwei Editoren
-fuer dieselbe Taetigkeit. Zusammenlegen zu **einem** Editor mit drei
-Leinwandgroessen:
+**E1. „Malen" heisst in der Seitenleiste „Bilder"** und **bleibt ein eigener
+Bereich** — nicht mit „Icons" verschmolzen. Aber er bekommt **denselben Aufbau
+wie Icons**: Editor links, **Sammlung als Liste rechts** statt als eigenes
+Modal hinter dem Knopf „Bilder". Die Sendefunktion bleibt darin.
+
+`MalenView` (201 Z.) und `IconEditorView` (496 Z.) sind heute zwei Editoren fuer
+dieselbe Taetigkeit; **der Editor soll derselbe sein.** Der Icon-Editor kann
+mehrere Einzelbilder, Verzoegerung, Abspielen und Dateiimport, „Malen" nicht —
+nach der Angleichung erbt die grosse Leinwand das, und Laufbilder fuer die
+ganze Anzeige werden malbar.
+
+**Drei Leinwandgroessen:**
 - **8×8** — kanonische LaMetric-Icons, bekommen eine Nummer
-- **16×16** — nicht kanonisch
-- **16×52** — die Anzeige selbst (heute „Malen")
+- **16×16** — nicht kanonisch. **Geht so auf die Uhr**, wird *nicht* auf 8×8
+  heruntergerechnet: „skalieren geht vermutlich nicht schoen, die uhr kanns
+  aber." Ein 16×16-Icon fuellt die volle Hoehe der Anzeige, statt wie 8×8
+  mittig in sechzehn Zeilen zu schwimmen.
+- **16×52** — die Anzeige selbst (heute „Malen"). **52, nicht 58** — die 58 im
+  Bildschirmfoto war die Zahl der zusammengefassten Rechtecke, keine Groesse.
 
-Der Icon-Editor kann heute mehrere Einzelbilder, Verzoegerung, Abspielen und
-Dateiimport; „Malen" kann das nicht. Nach der Zusammenlegung erbt die grosse
-Leinwand das — damit werden Laufbilder fuer die ganze Anzeige malbar.
-
-**Was es schon gibt und nicht neu gebaut wird:** Breite Bilder lassen sich ueber
-„Bilder" (`BilderView`, `Bildersammlung`) speichern und aus Dateien einlesen.
-Sie bekommen nur keine LaMetric-Nummer. Beim Zusammenlegen pruefen, ob das
-auffindbar genug ist.
+**Keine Umrechnung zwischen den Groessen** in diesem Durchgang. Damit entfaellt
+auch die Frage nach maschineller Hilfe („mit ios27 ki?") — das Ziel bleibt
+iOS 17.
 
 **E2.** Malraster deutlich groesser (gilt dann fuer alle drei Groessen).
 **E3.** Pfeilkreuz: verschiebt die ganze Grafik pixelweise.
 
-**Offen, nicht Teil dieses Durchgangs:** die „Umrechnung" zwischen den Groessen
-mit maschineller Hilfe („mit ios27 ki?"). Das Ziel ist heute iOS 17; eine
-Anhebung ist eine eigene Entscheidung. Eine **einfache** Umrechnung (skalieren,
-beschneiden, zentrieren) ist davon unberuehrt und gehoert dazu.
+**G — Das Geraetetyp-Feld, vorgezogen**
+
+**G1.** `struct Uhr: Codable` bekommt `typ: Geraetetyp?` — **optional**, sonst
+nichts. AWTRIX selbst ist ein eigener Durchgang; nur dieses Feld wird
+vorgezogen, weil es heute eine Zeile ist und spaeter teuer: Ein nachtraegliches
+**Pflichtfeld** macht bestehende Einstellungen unlesbar, und weil mit `try?`
+gelesen wird, gaebe es **keinen Fehler, sondern eine leere Uhrenliste** — in App
+**und** Werkzeug, ohne Meldung. `EinstellungenTests.testUhrBleibtLesbar` ist das
+Netz und wird nicht abgeschwaecht.
 
 ## F — Die Uhr nach ihrem Stand fragen (am Geraet belegt, 13.09.2026)
 
@@ -118,18 +138,20 @@ statt auf eine Nachricht zu warten, die vielleicht nie kommt.
 
 ## Reihenfolge
 
-A (Fehler) → B, C **und F parallel** (beruehren verschiedene Dateien) →
-D1, D2, D3 (Senden, D3 ist Grundsatz) → E (Umbau).
+A (Fehler) → B, C, **F und G parallel** (verschiedene Dateien) →
+D1, D2, D3 (Senden) → E (Umbau, groesste Flaeche).
 
 E zuletzt, weil es die groesste Flaeche anfasst und von D3 abhaengt.
 
 ## Was dieser Durchgang NICHT enthaelt
 
-- AWTRIX-NG-Unterstuetzung — erhoben, Empfehlung liegt vor, Entscheidung offen
-  (**neben oder statt der TC002?**).
+- AWTRIX-NG-Unterstuetzung — eigener Durchgang, Erhebung liegt bereit. Offen
+  bleibt: **neben oder statt der TC002?** Bei gemischten Zielen kann die
+  Vorschau nur eine von zwei Darstellungen zeigen. Nur das Datenfeld wird
+  vorgezogen (G).
 - MQTT 5 — erhoben; Gewinn auf dem Hauptweg vom eigenen Mitleser aufgefressen.
-- RETAIN — unbelegt, und ein aufbewahrtes `customList` braechte nur die
-  Belegung, nicht den Inhalt.
+- RETAIN — abgeraten und bestaetigt: kein RETAIN. Mitlesen bleibt, dazu die
+  HTTP-Abfrage (F).
 - Der Loeschtest (`POST /api/custom?name=x` mit `{}`) und der Umschalttest
   (`POST /api/switchDiyApp`) — beide veraendern die Anzeige und gehoeren dem
   Auftraggeber. Die Lesepruefung ist erledigt, siehe F.
