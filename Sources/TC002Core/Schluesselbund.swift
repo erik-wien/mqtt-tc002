@@ -41,3 +41,30 @@ public enum Schluesselbund {
         SecItemDelete(basis(konto, dienst: dienst) as CFDictionary)
     }
 }
+
+/// Damit `AppZustand` gegen einen Doppelgaenger geprueft werden kann — wie
+/// `NachrichtSendend` beim Senden.
+///
+/// Ein Testlauf, der den echten Schluesselbund befragt, zieht auf dem Rechner
+/// eines Menschen einen Dialog auf und hat das Brokerkennwort schon einmal im
+/// Klartext in die Fehlerausgabe getragen. Werkzeug und Kurzbefehle bleiben
+/// davon unberuehrt: dort ist der echte Zugriff der richtige.
+public protocol Schluesselbundzugriff {
+    func lesen(_ konto: String) -> String?
+    @discardableResult
+    func setzen(_ wert: String, fuer konto: String) -> Bool
+}
+
+/// Der Schluesselbund des Nutzers — die Vorgabe ueberall ausser in Tests.
+public struct EchterSchluesselbund: Schluesselbundzugriff {
+    public init() {}
+
+    public func lesen(_ konto: String) -> String? {
+        Schluesselbund.lesen(konto)
+    }
+
+    @discardableResult
+    public func setzen(_ wert: String, fuer konto: String) -> Bool {
+        Schluesselbund.setzen(wert, fuer: konto)
+    }
+}

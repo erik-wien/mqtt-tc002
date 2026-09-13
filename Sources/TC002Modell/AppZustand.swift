@@ -87,7 +87,7 @@ public final class AppZustand {
 
     public func kennwortSichern() {
         guard kennwort != kennwortGesichert else { return }
-        guard Schluesselbund.setzen(kennwort, fuer: "broker") else {
+        guard schluesselbund.setzen(kennwort, fuer: "broker") else {
             fehler = lok("Das Kennwort ließ sich nicht im Schlüsselbund sichern.")
             return
         }
@@ -131,7 +131,13 @@ public final class AppZustand {
 
     private var initialisiert = false
 
-    public init() {
+    /// Der Schluesselbund kommt als Vorgabeargument herein — wie `gedaechtnis:`
+    /// bei den Slots und `sitzung:` bei den HTTP-Wegen. Die App reicht nichts
+    /// mit und bekommt den echten; die Tests geben einen Doppelgaenger.
+    private let schluesselbund: Schluesselbundzugriff
+
+    public init(schluesselbund: Schluesselbundzugriff = EchterSchluesselbund()) {
+        self.schluesselbund = schluesselbund
         let d = UserDefaults.standard
         uhren = (try? JSONDecoder().decode([Uhr].self,
                     from: d.data(forKey: "uhren") ?? Data())) ?? []
@@ -141,7 +147,7 @@ public final class AppZustand {
         brokerHost = d.string(forKey: "brokerHost") ?? Einstellungen.Vorgabe.brokerHost
         brokerPort = d.string(forKey: "brokerPort") ?? Einstellungen.Vorgabe.brokerPort
         benutzer   = d.string(forKey: "benutzer") ?? Einstellungen.Vorgabe.benutzer
-        kennwort   = Schluesselbund.lesen("broker") ?? ""
+        kennwort   = schluesselbund.lesen("broker") ?? ""
         let flach = (try? JSONDecoder().decode([String: [String]].self,
                         from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]
         // uniquingKeysWith statt uniqueKeysWithValues: UUID(uuidString:) ist gegenueber

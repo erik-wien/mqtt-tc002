@@ -3,6 +3,32 @@ import XCTest
 import TC002Core
 @testable import TC002Modell
 
+/// Der Schluesselbund der Tests. Er merkt sich, wonach gefragt und was
+/// geschrieben wurde, und faehrt den echten nie an — der zieht auf dem Rechner
+/// eines Menschen einen Dialog auf, und sein Inhalt gehoert nicht in die
+/// Fehlerausgabe von XCTest.
+final class Schluesselbunddoppelgaenger: Schluesselbundzugriff {
+    var eintraege: [String: String]
+    /// Gelingt das Schreiben nicht, muss `kennwortSichern()` das melden.
+    var gelingt = true
+    private(set) var gelesen: [String] = []
+    private(set) var geschrieben: [(konto: String, wert: String)] = []
+
+    init(_ eintraege: [String: String] = [:]) { self.eintraege = eintraege }
+
+    func lesen(_ konto: String) -> String? {
+        gelesen.append(konto)
+        return eintraege[konto]
+    }
+
+    func setzen(_ wert: String, fuer konto: String) -> Bool {
+        geschrieben.append((konto, wert))
+        guard gelingt else { return false }
+        eintraege[konto] = wert
+        return true
+    }
+}
+
 /// Die Tests fassen nur die Einstellungs-Schluessel `uhren`, `aktiveID`,
 /// `bekannteAnzeigen`, `zielIDs` und `brokerHost` an — nie den Schluesselbund,
 /// nie eine echte Uhr oder einen echten Broker. Vor und nach jedem Test wird
@@ -13,10 +39,12 @@ final class AppZustandTests: XCTestCase {
     private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
                               "brokerHost", "brokerPort", "benutzer"]
     private var sicherung: [String: Any?] = [:]
+    private var schluesselbund = Schluesselbunddoppelgaenger()
 
     override func setUp() {
         super.setUp()
         sicherung = Dictionary(uniqueKeysWithValues: schluessel.map { ($0, d.object(forKey: $0)) })
+        schluesselbund = Schluesselbunddoppelgaenger()
         Belegungsdoppelgaenger.antwort = "{}"
         Belegungsdoppelgaenger.weitere = [:]
         Belegungsdoppelgaenger.pfade = []
@@ -39,7 +67,7 @@ final class AppZustandTests: XCTestCase {
         d.set(id.uuidString, forKey: "aktiveID")
         d.set(["Alt1", "Alt2"], forKey: "bekannteAnzeigen")
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
         XCTAssertEqual(zustand.bekannteAnzeigen[id], ["Alt1", "Alt2"])
         XCTAssertNil(d.stringArray(forKey: "bekannteAnzeigen"),
@@ -56,7 +84,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
 
-        let zustand = AppZustand() // darf nicht abstürzen
+        let zustand = AppZustand(schluesselbund: schluesselbund) // darf nicht abstürzen
 
         let id = try XCTUnwrap(UUID(uuidString: text))
         XCTAssertEqual(zustand.bekannteAnzeigen.count, 1)
@@ -70,7 +98,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
@@ -85,7 +113,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
@@ -103,7 +131,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let a = Uhr(name: "Küche", host: "10.0.0.1") // kein Präfix — nie abgefragt
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
@@ -120,7 +148,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
@@ -145,7 +173,7 @@ final class AppZustandTests: XCTestCase {
         d.set(a.id.uuidString, forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
         XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
         XCTAssertEqual(zustand.ziele(), [a, b])
@@ -173,7 +201,7 @@ final class AppZustandTests: XCTestCase {
         let optionen = Meldungsoptionen(text: "Bus kommt")
         gedaechtnis.merken(optionen, icon: nil, fuer: uhr.id, platz: 2)
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
         XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(optionen, mitIcon: false).punkteRoh))
@@ -196,7 +224,7 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), mitIcon: false).punkteRoh
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.slotInhalt[a.id] = [1: Slotbild(pixel: pixel)]
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
@@ -218,7 +246,7 @@ final class AppZustandTests: XCTestCase {
         let aufB = Meldungsbau.feld(Meldungsoptionen(text: "auf b"), mitIcon: false).punkteRoh
         XCTAssertNotEqual(aufA, aufB, "Sonst könnte der Test gar nicht unterscheiden.")
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.slotInhalt[a.id] = [1: Slotbild(pixel: aufA)]
         zustand.slotInhalt[b.id] = [1: Slotbild(pixel: aufB)]
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufA))
@@ -242,7 +270,7 @@ final class AppZustandTests: XCTestCase {
         d.set(a.id.uuidString, forKey: "aktiveID")
         d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertFalse(zustand.anMehrereUhren)
         zustand.anMehrereUhren = true
         XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
@@ -278,7 +306,7 @@ final class AppZustandTests: XCTestCase {
     func testUnzerlegbareNutzlastLoeschtDenAltenSlotinhalt() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
         let hallo = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
         zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: hallo, fuer: uhr.id)
@@ -304,7 +332,7 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, fuer: uhr.id, platz: 1)
         gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, fuer: uhr.id, platz: 2)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1", "meldung2"]
 
         zustand.anzeigeGeloescht("meldung1", fuer: uhr, gedaechtnis: gedaechtnis)
@@ -326,7 +354,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["cli", "meldung1"]
 
         zustand.anzeigeGeloescht("cli", fuer: uhr, gedaechtnis: gedaechtnis)
@@ -343,7 +371,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
         zustand.gemeldeteAnzeigen[uhr.id] = ["meldung1"]
         let gemalt = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
@@ -371,7 +399,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
 
         let laufschrift = Data("{\"image\":\"data:image/gif;base64,R0lGODlh\"}".utf8)
@@ -395,7 +423,7 @@ final class AppZustandTests: XCTestCase {
         let alt = Meldungsoptionen(text: "alt")
         let neu = Meldungsoptionen(text: "ganz neu")
         gedaechtnis.merken(alt, icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(alt, mitIcon: false).punkteRoh))
 
@@ -414,7 +442,7 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let gemerkt = Meldungsoptionen(text: "gemerkt")
         gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh))
 
@@ -435,7 +463,7 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let gemerkt = Meldungsoptionen(text: "gemerkt")
         gedaechtnis.merken(gemerkt, icon: nil, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
         zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
         let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
@@ -463,11 +491,11 @@ final class AppZustandTests: XCTestCase {
         // Frische Installation: keine Uhr, kein abgelegter Broker.
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "brokerHost")
-        XCTAssertFalse(AppZustand().eingerichtet)
+        XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet)
 
         // Uhr da, Broker nur als Vorgabe — und die ist leer.
         d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
-        let nurUhr = AppZustand()
+        let nurUhr = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(nurUhr.brokerHost, "",
                        "die Vorgabe darf keine Adresse vortaeuschen")
         XCTAssertFalse(nurUhr.eingerichtet)
@@ -475,15 +503,15 @@ final class AppZustandTests: XCTestCase {
         // Broker eingetragen, aber keine Uhr.
         d.removeObject(forKey: "uhren")
         d.set("10.0.0.2", forKey: "brokerHost")
-        XCTAssertFalse(AppZustand().eingerichtet)
+        XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet)
 
         // Beides.
         d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
-        XCTAssertTrue(AppZustand().eingerichtet)
+        XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).eingerichtet)
 
         // Wer die Adresse spaeter leert, steht wieder in derselben Sackgasse.
         d.set("", forKey: "brokerHost")
-        XCTAssertFalse(AppZustand().eingerichtet)
+        XCTAssertFalse(AppZustand(schluesselbund: schluesselbund).eingerichtet)
     }
 
     /// Was eine frische Installation in den Feldern stehen hat: nichts. Ein
@@ -495,7 +523,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "benutzer")
         d.removeObject(forKey: "brokerPort")
 
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
         XCTAssertEqual(zustand.brokerHost, "", "keine Adresse, die niemand eingetragen hat")
         XCTAssertEqual(zustand.benutzer, "", "kein vorausgefuellter Benutzername")
@@ -509,7 +537,7 @@ final class AppZustandTests: XCTestCase {
     /// falsch ist, und `NWEndpoint.Host("")` waere ein Ziel, das es nicht gibt.
     func testOhneBrokeradresseSagtDiePruefungGenauDas() {
         d.removeObject(forKey: "brokerHost")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.brokerHost, "")
 
         // Der Zugang selbst faellt weg — es gibt kein Ziel, an das gesendet
@@ -530,7 +558,7 @@ final class AppZustandTests: XCTestCase {
     /// werden von SwiftUI nie nachgeschlagen — deshalb `lok`/`lokf`.
     func testZugangsmeldungNenntDieFehlendeAdresse() {
         d.removeObject(forKey: "brokerHost")
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let uhr = Uhr(name: "Küche", host: "10.0.0.5", praefix: "awtrix_a86b")
 
         XCTAssertEqual(zustand.zugangsmeldung(uhr),
@@ -706,7 +734,7 @@ final class AppZustandTests: XCTestCase {
         d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
         d.set(uhr.id.uuidString, forKey: "aktiveID")
         d.removeObject(forKey: "bekannteAnzeigen")
-        return AppZustand()
+        return AppZustand(schluesselbund: schluesselbund)
     }
 
     /// Laesst den Hauptthread laufen, bis die losgeloeste Abfrage
@@ -724,7 +752,7 @@ final class AppZustandTests: XCTestCase {
         d.removeObject(forKey: "aktiveID")
         d.removeObject(forKey: "zielIDs")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let zustand = AppZustand()
+        let zustand = AppZustand(schluesselbund: schluesselbund)
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
@@ -737,6 +765,53 @@ final class AppZustandTests: XCTestCase {
         XCTAssertNotNil(gedaechtnis.gemerkt(fuer: b.id, platz: 1),
                         "Nur die Datei der entfernten Uhr darf verschwinden.")
     }
+
+    // MARK: Der Schluesselbund
+
+    /// Der Kern der Naht: Was `AppZustand` beim Erzeugen als Kennwort vorfindet,
+    /// kommt aus dem hereingegebenen Schluesselbund — und nur von dort. Wird das
+    /// Vorgabeargument wieder gegen `Schluesselbund.lesen` getauscht, bleibt
+    /// `gelesen` leer und dieser Test wird rot.
+    func testKennwortKommtAusDemHereingegebenenSchluesselbund() {
+        let doppel = Schluesselbunddoppelgaenger(["broker": "geheim"])
+
+        let zustand = AppZustand(schluesselbund: doppel)
+
+        XCTAssertEqual(zustand.kennwort, "geheim")
+        XCTAssertEqual(doppel.gelesen, ["broker"],
+                       "genau einmal gefragt, und nur nach dem Brokerkennwort")
+    }
+
+    /// Und zurueck: `kennwortSichern()` schreibt in denselben Doppelgaenger,
+    /// nicht in den Schluesselbund des Nutzers. Der zweite Aufruf schreibt nicht
+    /// erneut — sonst haenge an jedem Fokuswechsel ein Loeschen und Neuanlegen.
+    func testKennwortSichernSchreibtInDenHereingegebenenSchluesselbund() {
+        let doppel = Schluesselbunddoppelgaenger(["broker": "alt"])
+        let zustand = AppZustand(schluesselbund: doppel)
+
+        zustand.kennwort = "neu"
+        zustand.kennwortSichern()
+        zustand.kennwortSichern()
+
+        XCTAssertEqual(doppel.eintraege["broker"], "neu")
+        XCTAssertEqual(doppel.geschrieben.count, 1, "unveraendert heisst: nicht noch einmal")
+        XCTAssertEqual(doppel.geschrieben.first?.konto, "broker")
+        XCTAssertNil(zustand.fehler)
+    }
+
+    /// Ein gescheitertes Schreiben muss auffallen — sonst ist das Kennwort erst
+    /// nach dem Neustart weg, und niemand weiss, warum.
+    func testGescheitertesSichernWirdGemeldet() {
+        let doppel = Schluesselbunddoppelgaenger()
+        doppel.gelingt = false
+        let zustand = AppZustand(schluesselbund: doppel)
+
+        zustand.kennwort = "neu"
+        zustand.kennwortSichern()
+
+        XCTAssertEqual(zustand.fehler, lok("Das Kennwort ließ sich nicht im Schlüsselbund sichern."))
+    }
+
 }
 
 /// Faengt die HTTP-Abfragen an die Uhr ab. Kein Netz, keine Uhr.
