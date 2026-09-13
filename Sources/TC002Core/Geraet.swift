@@ -13,6 +13,7 @@ public enum GeraetFehler: Error, LocalizedError {
     case unerwarteteAntwort(String)
     case httpFehler(pfad: String, code: Int)
     case keinPraefix
+    case abgelehnt(name: String, code: Int, meldung: String)
 
     public var errorDescription: String? {
         switch self {
@@ -20,6 +21,8 @@ public enum GeraetFehler: Error, LocalizedError {
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
         case .keinPraefix: return lok("Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen.")
+        case .abgelehnt(let name, let code, let meldung):
+            return lokf("Die Uhr hat „%@“ abgelehnt: %@ (Code %d)", name, meldung, code)
         }
     }
 }
@@ -92,6 +95,64 @@ public struct Geraet {
             throw GeraetFehler.unerwarteteAntwort("/api/customList")
         }
         return namen
+    }
+
+    /// Setzt eine benannte Anzeige — dieselbe Nutzlast wie ueber MQTT (§3.1),
+    /// nur ueber `POST /api/custom?name=<name>` (§5.6). Die Uhr zeigt sie
+    /// sofort und quittiert mit `{"code":200,"message":"ok"}`.
+    public func anzeigeSetzen(_ json: String, name: String) throws {
+        try _ = anAnzeige("/api/custom", name: name, koerper: Data(json.utf8))
+    }
+
+    /// Entfernt eine benannte Anzeige — **mit dem Rumpf `{}`**, nicht mit einem
+    /// leeren (§5.6). Ueber MQTT ist es genau umgekehrt: Dort loescht die
+    /// **leere** Nutzlast, und `{}` richtet nichts aus. Diese Verwechslung
+    /// stand bis zum 13.09.2026 als Firmwaremangel in unserer eigenen Liste.
+    public func anzeigeLoeschen(name: String) throws {
+        try _ = anAnzeige("/api/custom", name: name, koerper: Data("{}".utf8))
+    }
+
+    /// Schaltet auf eine benannte Anzeige um (§5.8). Anders als das
+    /// MQTT-Gegenstueck (§3.3) antwortet dieser Weg — und weist einen Namen,
+    /// den es nicht gibt, mit `{"code":404,"message":"custom app not found"}`
+    /// ab.
+    public func umschalten(auf name: String) throws {
+        try _ = anAnzeige("/api/switchDiyApp", name: name, koerper: nil)
+    }
+
+    /// Der gemeinsame Rumpf der drei: POST auf einen `/api`-Pfad mit dem
+    /// Anzeigenamen in der Abfrage.
+    ///
+    /// **Zwei Fehlerquellen, nicht eine.** Der HTTP-Status faengt `fuehreAus`
+    /// ab; die Uhr meldet aber auch im Rumpf einen eigenen `code` — die
+    /// gemessene 404 fuer einen unbekannten Namen steht genau dort (§5.8).
+    /// Wer nur auf den Status sieht, haelt eine Ablehnung fuer einen Erfolg.
+    @discardableResult
+    private func anAnzeige(_ pfad: String, name: String, koerper: Data?) throws -> [String: Any] {
+        var teile = URLComponents()
+        teile.scheme = "http"
+        teile.host = host
+        teile.path = pfad
+        // Nicht von Hand zusammengesetzt: Ein Anzeigename darf alles
+        // enthalten, was ein Mensch eintippt, und `URLComponents` kodiert es.
+        teile.queryItems = [URLQueryItem(name: "name", value: name)]
+        guard let url = teile.url else { throw GeraetFehler.unerwarteteAntwort(pfad) }
+        var anfrage = URLRequest(url: url)
+        anfrage.httpMethod = "POST"
+        if let koerper {
+            anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            anfrage.httpBody = koerper
+        }
+        let daten = try fuehreAus(anfrage)
+        guard let objekt = try? JSONSerialization.jsonObject(with: daten),
+              let woerterbuch = objekt as? [String: Any] else {
+            throw GeraetFehler.unerwarteteAntwort(pfad)
+        }
+        if let code = woerterbuch["code"] as? Int, code != 200 {
+            let meldung = woerterbuch["message"] as? String ?? lok("ohne Begründung")
+            throw GeraetFehler.abgelehnt(name: name, code: code, meldung: meldung)
+        }
+        return woerterbuch
     }
 
     /// Liest die vollstaendige Konfiguration, aendert ein Feld und schickt alles

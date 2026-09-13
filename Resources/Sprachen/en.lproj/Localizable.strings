@@ -414,7 +414,9 @@
 "Die Uhr hat unerwartet geantwortet: %@" = "The clock gave an unexpected answer: %@";
 "Die Uhr hat einen Fehler gemeldet: %@ (Status %d)" = "The clock reported an error: %@ (status %d)";
 "Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen." = "The clock has no MQTT prefix set. Enter one in Ulanzi Studio under MQTT and then query again.";
+"Die Uhr hat „%@“ abgelehnt: %@ (Code %d)" = "The clock rejected “%@”: %@ (code %d)";
 "keine Antwort" = "no answer";
+"ohne Begründung" = "without a reason";
 /* Icons.swift */
 "Das Icon %@ lässt sich nicht lesen." = "The icon %@ cannot be read.";
 "Für die Nummer %@ gibt es bei LaMetric kein Icon." = "There is no icon at LaMetric for the number %@.";

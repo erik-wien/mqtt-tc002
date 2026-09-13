@@ -1,32 +1,98 @@
 import Foundation
 
-/// Die drei Dinge, die man mit einer benannten Anzeige auf der Uhr tun kann.
+/// Die drei Dinge, die man mit einer benannten Anzeige auf der Uhr tun kann —
+/// auf dem Kanal, den die Uhr eingestellt hat (`Uhr.wirksameBetriebsart`).
+///
+/// **Dieselbe Nutzlast, anderer Kanal.** Der Rahmenbau (`Meldungsbau`) weiss
+/// von dieser Unterscheidung nichts und soll es nicht: Was ueber MQTT auf
+/// `<praefix>/custom/<name>` geht, geht ueber HTTP als Rumpf von
+/// `POST /api/custom?name=<name>` — Byte fuer Byte dasselbe (§3.1, §5.6).
+///
+/// Nur das **Loeschen** faellt auseinander, und zwar gegenlaeufig: Ueber MQTT
+/// loescht die **leere** Nutzlast und `{}` richtet nichts aus, ueber HTTP
+/// loescht `{}` und ein leerer Rumpf richtet nichts aus. Beides ist gemessen;
+/// die Verwechslung hat uns drei Eintraege in der Maengelliste gekostet.
 public struct Anzeigen {
-    private let sender: NachrichtSendend
-    private let zugang: MQTTZugang
-    private let praefix: String
+    /// Wohin die Bytes gehen. Ein Aufzaehlungstyp und nicht zwei Klassen: Die
+    /// drei Taetigkeiten sind auf beiden Wegen dieselben, und jeder Aufrufer
+    /// — App, Werkzeug, Kurzbefehl — soll genau einen Typ kennen.
+    private enum Kanal {
+        case mqtt(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String)
+        case http(Geraet)
+    }
+    private let kanal: Kanal
 
     public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String) {
-        self.sender = sender
-        self.zugang = zugang
         var normalisiert = praefix
         while normalisiert.hasSuffix("/") {
             normalisiert.removeLast()
         }
-        self.praefix = normalisiert
+        kanal = .mqtt(sender: sender, zugang: zugang, praefix: normalisiert)
+    }
+
+    /// Der HTTP-Kanal. Kein Praefix, kein Broker — nur die Adresse der Uhr.
+    public init(geraet: Geraet) {
+        kanal = .http(geraet)
     }
 
     public func zeigen(_ frame: Frame, auf name: String) throws {
-        try sender.senden(Data(frame.alsJSON().utf8), an: "\(praefix)/custom/\(name)", zugang: zugang)
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix):
+            try sender.senden(Data(frame.alsJSON().utf8), an: "\(praefix)/custom/\(name)", zugang: zugang)
+        case .http(let geraet):
+            try geraet.anzeigeSetzen(frame.alsJSON(), name: name)
+        }
     }
 
-    /// Eine leere Nutzlast entfernt die Anzeige vom Geraet.
+    /// Entfernt die Anzeige vom Geraet — ueber MQTT mit einer leeren Nutzlast,
+    /// ueber HTTP mit dem Rumpf `{}`. Siehe oben: Die beiden Wege meinen mit
+    /// „leer" genau das Gegenteil voneinander.
     public func loeschen(_ name: String) throws {
-        try sender.senden(Data(), an: "\(praefix)/custom/\(name)", zugang: zugang)
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix):
+            try sender.senden(Data(), an: "\(praefix)/custom/\(name)", zugang: zugang)
+        case .http(let geraet):
+            try geraet.anzeigeLoeschen(name: name)
+        }
     }
 
     public func umschalten(auf name: String) throws {
-        try sender.senden(Data(name.utf8), an: "\(praefix)/switchDiyApp", zugang: zugang)
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix):
+            try sender.senden(Data(name.utf8), an: "\(praefix)/switchDiyApp", zugang: zugang)
+        case .http(let geraet):
+            try geraet.umschalten(auf: name)
+        }
+    }
+
+    /// Ob dieser Kanal eine Rueckmeldung gibt. Der eine Unterschied, den die
+    /// Oberflaechen kennen muessen: Ueber HTTP heisst „kein Fehler" wirklich
+    /// „angekommen", ueber MQTT heisst es nur „abgeschickt".
+    public var quittiert: Bool {
+        if case .http = kanal { return true }
+        return false
+    }
+
+    /// Der Kanal einer Uhr — **die eine Stelle**, an der aus einer `Uhr` ein
+    /// `Anzeigen` wird. App (`AppZustand.anzeigen(fuer:)`), Werkzeug und
+    /// Kurzbefehle rufen alle hierher: Ein Werkzeug, das anders sendet als die
+    /// App, waere eine Falle, und drei Abschriften derselben Regel liefen
+    /// frueher oder spaeter auseinander.
+    ///
+    /// `nil` heisst „an diese Uhr laesst sich nicht senden": ohne Adresse im
+    /// HTTP-Betrieb, ohne Praefix oder ohne Brokerzugang im MQTT-Betrieb.
+    /// Warum — das sagt der Aufrufer, der den Fall besser kennt
+    /// (`AppZustand.zugangsmeldung`).
+    public static func fuer(_ uhr: Uhr, brokerzugang: MQTTZugang?,
+                            sitzung: URLSession = .shared) -> Anzeigen? {
+        switch uhr.wirksameBetriebsart {
+        case .http:
+            guard !uhr.host.isEmpty else { return nil }
+            return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung))
+        case .mqtt:
+            guard !uhr.praefix.isEmpty, let brokerzugang else { return nil }
+            return Anzeigen(sender: MQTTSender(), zugang: brokerzugang, praefix: uhr.praefix)
+        }
     }
 }
 

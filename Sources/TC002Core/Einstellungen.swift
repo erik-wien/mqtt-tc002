@@ -10,6 +10,33 @@ public enum Geraetetyp: String, Codable, Sendable {
     case tc002
 }
 
+/// Auf welchem Weg eine Uhr beschickt wird. Je Uhr eine Wahl, kein
+/// Programmschalter: In einem Haus kann die eine Uhr unmittelbar erreichbar
+/// sein und die naechste nur ueber den Broker.
+///
+/// **Es ist ein Tausch, kein Gewinn** — beide Wege koennen etwas, das der
+/// andere nicht kann (die Messungen stehen in `docs/tc002-protokoll.md`, §3
+/// und §5):
+///
+/// - `.http` antwortet. Anlegen, Loeschen und Umschalten quittiert die Uhr mit
+///   `{"code":200}`, ein unbekannter Anzeigenname mit `404` — eine gescheiterte
+///   Sendung ist damit als solche zu erkennen. Ein Broker wird nicht gebraucht,
+///   ein Praefix auch nicht.
+/// - `.mqtt` schweigt. MQTT 3.1.1 hat keinen Rueckkanal fuer eine abgelehnte
+///   Veroeffentlichung; dafuer liest die App am Broker **mit**, was *andere*
+///   an dieselbe Uhr schicken, und kann daraus die fuenf Bloecke fuellen.
+///
+/// Ein Mitlesen ueber HTTP gibt es nicht, und zwar nicht aus Bequemlichkeit:
+/// Am 13.09.2026 wurde 45 Sekunden lang auf `<praefix>/custom/#`,
+/// `<praefix>/customList` und `<praefix>/status` gehorcht, mit einer
+/// HTTP-Loeschung mittendrin — es kam eine einzige Nachricht, `status online`.
+/// **Die Uhr reicht HTTP-Vorgaenge nicht ueber MQTT weiter.** Ein zusaetzlich
+/// eingetragener Broker taugt deshalb nicht als Ohr fuer den HTTP-Betrieb.
+public enum Betriebsart: String, Codable, Sendable, CaseIterable {
+    case http
+    case mqtt
+}
+
 /// Eine eingerichtete Uhr. Praefix und MAC ermittelt die App selbst beim
 /// Abfragen — sie werden nie von Hand eingetragen.
 ///
@@ -42,14 +69,57 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// Heute fragt nichts danach, und die Oberflaeche zeigt es nicht.
     public var typ: Geraetetyp?
 
+    /// Der Weg, auf dem diese Uhr beschickt wird — **optional aus demselben
+    /// Grund wie `typ`**: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// `keyNotFound`, und weil beide Leser (`Einstellungen.gelesen`,
+    /// `AppZustand.init`) mit `try?` lesen, waere die Folge keine Meldung,
+    /// sondern eine leere Uhrenliste in App **und** Werkzeug.
+    ///
+    /// **`nil` heisst `.mqtt`, nicht `.http` — und das ist eine Entscheidung
+    /// ueber Bestand, keine ueber Vorgaben.** Die Vorgabe ist sehr wohl HTTP:
+    /// `AppZustand.uhrHinzufuegen` traegt `.http` ausdruecklich ein, jede von
+    /// nun an angelegte Uhr hat den Schluessel also in der Datei. `nil` kommt
+    /// damit **nur** in Dateien vor, die eine Fassung vor dieser geschrieben
+    /// hat — und jede dieser Uhren ist nachweislich fuer MQTT eingerichtet:
+    /// Sie hat ein abgefragtes Praefix, einen eingetragenen Broker und ein
+    /// Kennwort im Schluesselbund, und die App hat bisher ausschliesslich
+    /// darueber gesendet.
+    ///
+    /// Wuerde `nil` als `.http` gelesen, wechselte jede bestehende
+    /// Installation beim ersten Start nach dem Update stillschweigend den
+    /// Kanal: Das Abonnement fiele weg, `slotInhalt` bliebe leer, und alle
+    /// fuenf Bloecke fielen auf Erinnerung oder „unbekannt" zurueck — eine
+    /// sichtbare Verschlechterung, um die niemand gebeten hat. Umgekehrt
+    /// kostet diese Lesart nichts: Wer HTTP will, waehlt es in einem Griff.
+    ///
+    /// Gelesen wird das Feld nirgends unmittelbar, sondern ueber
+    /// `wirksameBetriebsart` — damit die Lesart an genau einer Stelle steht.
+    public var betriebsart: Betriebsart?
+
+    /// Was fuer diese Uhr gilt. Der einzige Leser von `betriebsart`.
+    public var wirksameBetriebsart: Betriebsart { betriebsart ?? .mqtt }
+
+    /// Ob diese Uhr ueberhaupt beschickt werden kann. Die Bedingung ist je
+    /// Betriebsart eine andere, und genau daran ist der alte, einheitliche
+    /// Praefix-Filter falsch geworden: Eine HTTP-Uhr braucht kein Praefix —
+    /// sie wird unter ihrer Adresse angesprochen, nicht unter einem Thema.
+    public var beschickbar: Bool {
+        switch wirksameBetriebsart {
+        case .http: return !host.isEmpty
+        case .mqtt: return !praefix.isEmpty
+        }
+    }
+
     public init(id: UUID = UUID(), name: String, host: String,
-                praefix: String = "", mac: String = "", typ: Geraetetyp? = nil) {
+                praefix: String = "", mac: String = "", typ: Geraetetyp? = nil,
+                betriebsart: Betriebsart? = nil) {
         self.id = id
         self.name = name
         self.host = host
         self.praefix = praefix
         self.mac = mac
         self.typ = typ
+        self.betriebsart = betriebsart
     }
 }
 
@@ -176,6 +246,17 @@ public struct Einstellungen: Sendable {
     /// Reicht, um zu wissen, ob ueberhaupt gesendet werden kann — und kommt
     /// ohne das Kennwort aus.
     public var brokerEingerichtet: Bool { !brokerHost.isEmpty && brokerPort > 0 }
+
+    /// Ob fuer diese Uhren ueberhaupt ein Broker noetig ist.
+    ///
+    /// Nur MQTT-Uhren brauchen einen; wer ausschliesslich ueber HTTP sendet,
+    /// soll nicht an einer Brokerabfrage haengenbleiben, die nichts mit seiner
+    /// Einrichtung zu tun hat. Eine Stelle fuer alle drei Absender — App
+    /// (`AppZustand.eingerichtet`), Werkzeug und Kurzbefehle —, damit die
+    /// Bedingung nicht dreimal etwas anderes heisst.
+    public static func brokerNoetig(fuer uhren: [Uhr]) -> Bool {
+        uhren.contains { $0.wirksameBetriebsart == .mqtt }
+    }
 
     public func zugang(clientID: String) -> MQTTZugang? {
         guard brokerEingerichtet else { return nil }

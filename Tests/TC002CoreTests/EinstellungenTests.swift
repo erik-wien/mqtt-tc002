@@ -140,6 +140,73 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertTrue(String(decoding: mitTyp, as: UTF8.self).contains("\"typ\":\"tc002\""))
     }
 
+    // MARK: - Betriebsart
+
+    /// **Die Entscheidung ueber den Bestand.** Eine Datei ohne `betriebsart`
+    /// hat eine Fassung vor dieser Aenderung geschrieben — und jede dort
+    /// eingerichtete Uhr ist eine MQTT-Uhr: Sie hat ein abgefragtes Praefix,
+    /// einen eingetragenen Broker, ein Kennwort im Schluesselbund, und
+    /// gesendet wurde bisher ausschliesslich darueber.
+    ///
+    /// Wuerde `nil` als `.http` gelesen, verloere jede bestehende Installation
+    /// beim ersten Start nach dem Update stillschweigend das Mitlesen. Die
+    /// Vorgabe HTTP gilt fuer **neue** Uhren, und die traegt
+    /// `AppZustand.uhrHinzufuegen` ausdruecklich ein.
+    func testAlteUhrOhneBetriebsartBleibtBeiMqtt() throws {
+        let uhren = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteZeile.utf8))
+        XCTAssertNil(uhren[0].betriebsart, "in der Datei steht der Schluessel gar nicht")
+        XCTAssertEqual(uhren[0].wirksameBetriebsart, .mqtt,
+                       "eine bestehende Einrichtung sendet weiter ueber den Broker")
+    }
+
+    /// Wie bei `typ`: Solange nichts gewaehlt ist, schreibt der Encoder das
+    /// Feld nicht — eine aeltere Fassung liest die Datei weiterhin. Und eine
+    /// getroffene Wahl uebersteht das Schreiben und Lesen unveraendert.
+    func testDieGewaehlteBetriebsartUeberstehtDieDatei() throws {
+        let ohne = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1")])
+        XCTAssertFalse(String(decoding: ohne, as: UTF8.self).contains("betriebsart"))
+
+        let mit = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1", betriebsart: .http)])
+        XCTAssertTrue(String(decoding: mit, as: UTF8.self).contains("\"betriebsart\":\"http\""))
+        XCTAssertEqual(try JSONDecoder().decode([Uhr].self, from: mit)[0].wirksameBetriebsart, .http)
+    }
+
+    /// Woran eine Uhr beschickbar ist, haengt an ihrer Betriebsart: Die
+    /// HTTP-Uhr wird unter ihrer **Adresse** angesprochen und braucht kein
+    /// Praefix, die MQTT-Uhr unter ihrem **Thema** und braucht eines. Der alte,
+    /// einheitliche Praefix-Filter haette jede HTTP-Uhr stillschweigend
+    /// uebersprungen.
+    func testBeschickbarFragtDieBetriebsart() {
+        let httpOhnePraefix = Uhr(name: "a", host: "10.0.0.1", betriebsart: .http)
+        XCTAssertTrue(httpOhnePraefix.beschickbar, "HTTP braucht kein Präfix")
+
+        let httpOhneAdresse = Uhr(name: "a", host: "", praefix: "p", betriebsart: .http)
+        XCTAssertFalse(httpOhneAdresse.beschickbar, "ohne Adresse gibt es kein Ziel")
+
+        let mqttOhnePraefix = Uhr(name: "a", host: "10.0.0.1", betriebsart: .mqtt)
+        XCTAssertFalse(mqttOhnePraefix.beschickbar, "ohne Präfix gibt es kein Thema")
+
+        let mqttMitPraefix = Uhr(name: "a", host: "", praefix: "p", betriebsart: .mqtt)
+        XCTAssertTrue(mqttMitPraefix.beschickbar)
+    }
+
+    /// Ein Broker ist nur noetig, wenn wenigstens eine Uhr ihn benutzt. Wer
+    /// ausschliesslich ueber HTTP sendet, soll nicht an einer Bedingung
+    /// haengenbleiben, die seine Einrichtung gar nicht betrifft.
+    func testBrokerIstNurFuerMqttUhrenNoetig() {
+        let http = Uhr(name: "a", host: "10.0.0.1", betriebsart: .http)
+        let mqtt = Uhr(name: "b", host: "10.0.0.2", praefix: "p", betriebsart: .mqtt)
+        let alt = Uhr(name: "c", host: "10.0.0.3", praefix: "p")   // ohne Feld: MQTT
+
+        XCTAssertFalse(Einstellungen.brokerNoetig(fuer: []))
+        XCTAssertFalse(Einstellungen.brokerNoetig(fuer: [http]))
+        XCTAssertTrue(Einstellungen.brokerNoetig(fuer: [mqtt]))
+        XCTAssertTrue(Einstellungen.brokerNoetig(fuer: [http, mqtt]),
+                      "eine einzige MQTT-Uhr genügt")
+        XCTAssertTrue(Einstellungen.brokerNoetig(fuer: [alt]),
+                      "eine Uhr aus dem Bestand zählt als MQTT-Uhr")
+    }
+
     /// Die Vorgaben muessen dieselben sein wie in der App — sie legt einen
     /// unveraenderten Wert gar nicht erst ab, und dann gilt hier der Rueckfall.
     ///

@@ -6,12 +6,20 @@ final class Doppelgaenger: URLProtocol {
     nonisolated(unsafe) static var antworten: [String: String] = [:]
     nonisolated(unsafe) static var statusCodes: [String: Int] = [:]
     nonisolated(unsafe) static var gesendeteRuempfe: [String: String] = [:]
+    /// Die Abfrage hinter dem Pfad (`?name=…`) — bei den `/api`-Endpunkten
+    /// steht der Anzeigenname dort und nirgends sonst.
+    nonisolated(unsafe) static var abfragen: [String: String] = [:]
+    nonisolated(unsafe) static var methoden: [String: String] = [:]
+    nonisolated(unsafe) static var pfade: [String] = []
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for r: URLRequest) -> URLRequest { r }
 
     override func startLoading() {
         let pfad = request.url?.path ?? ""
+        Self.pfade.append(pfad)
+        Self.abfragen[pfad] = request.url?.query ?? ""
+        Self.methoden[pfad] = request.httpMethod ?? ""
         if let koerper = request.httpBody ?? request.httpBodyStream.map({ s -> Data in
             s.open(); defer { s.close() }
             var d = Data(); var puffer = [UInt8](repeating: 0, count: 4096)
@@ -50,6 +58,9 @@ final class GeraetTests: XCTestCase {
         ]
         Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
+        Doppelgaenger.abfragen = [:]
+        Doppelgaenger.methoden = [:]
+        Doppelgaenger.pfade = []
     }
 
     /// Der Kern: das tatsaechliche Praefix ist das eingestellte plus die letzten
@@ -119,6 +130,77 @@ final class GeraetTests: XCTestCase {
         XCTAssertThrowsError(try geraet().anzeigennamen()) { fehler in
             XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
         }
+    }
+
+    // MARK: - Der HTTP-Weg fuer Anzeigen (§5.6 und §5.8)
+
+    /// Anlegen geht auf `/api/custom`, der Name steht in der Abfrage, und der
+    /// Rumpf ist der Rahmen selbst — dieselben Bytes, die ueber MQTT auf
+    /// `<praefix>/custom/<name>` gingen.
+    func testAnzeigeSetzenSchicktDenRahmenAnDenApiPfad() throws {
+        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
+        try geraet().anzeigeSetzen(#"{"draw":[]}"#, name: "meldung2")
+
+        XCTAssertEqual(Doppelgaenger.pfade, ["/api/custom"])
+        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=meldung2")
+        XCTAssertEqual(Doppelgaenger.methoden["/api/custom"], "POST")
+        XCTAssertEqual(Doppelgaenger.gesendeteRuempfe["/api/custom"], #"{"draw":[]}"#)
+    }
+
+    /// Ein Anzeigenname mit einem Zeichen, das in einer Abfrage etwas anderes
+    /// bedeutet, darf die Adresse nicht zerlegen.
+    func testAnzeigennameWirdKodiert() throws {
+        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
+        try geraet().anzeigeSetzen("{}", name: "a b&c")
+        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=a%20b%26c")
+    }
+
+    /// **Die Falle.** Ueber HTTP loescht der Rumpf `{}` — ein leerer Rumpf
+    /// antwortet zwar dasselbe `ok`, laesst die Anzeige aber stehen (§5.6).
+    /// Ueber MQTT ist es genau umgekehrt.
+    func testAnzeigeLoeschenSchicktGeschweifteKlammernUndNichtsLeeres() throws {
+        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
+        try geraet().anzeigeLoeschen(name: "meldung2")
+
+        XCTAssertEqual(Doppelgaenger.gesendeteRuempfe["/api/custom"], "{}",
+                       "ein leerer Rumpf loescht ueber HTTP nicht")
+        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=meldung2")
+    }
+
+    func testUmschaltenGehtAufDenApiPfad() throws {
+        Doppelgaenger.antworten["/api/switchDiyApp"] =
+            #"{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":111}}"#
+        try geraet().umschalten(auf: "meldung2")
+
+        XCTAssertEqual(Doppelgaenger.pfade, ["/api/switchDiyApp"])
+        XCTAssertEqual(Doppelgaenger.abfragen["/api/switchDiyApp"], "name=meldung2")
+        XCTAssertEqual(Doppelgaenger.methoden["/api/switchDiyApp"], "POST")
+    }
+
+    /// **Der eigentliche Gewinn des HTTP-Wegs, und die Stelle, an der er zu
+    /// verspielen waere.** Die gemessene Ablehnung steht im **Rumpf**, nicht im
+    /// HTTP-Status: `{"code":404,"message":"custom app not found"}` kommt mit
+    /// Status 200 daher. Wer nur auf den Status sieht, meldet eine Ablehnung
+    /// als Erfolg — und waere damit genauso stumm wie MQTT.
+    func testAblehnungImRumpfWirdErkanntObwohlDerStatusStimmt() {
+        Doppelgaenger.antworten["/api/switchDiyApp"] = #"{"code":404,"message":"custom app not found"}"#
+        Doppelgaenger.statusCodes["/api/switchDiyApp"] = 200
+
+        XCTAssertThrowsError(try geraet().umschalten(auf: "gibtsnicht")) { fehler in
+            guard case GeraetFehler.abgelehnt(let name, let code, let meldung) = fehler else {
+                return XCTFail("war stattdessen \(fehler)")
+            }
+            XCTAssertEqual(name, "gibtsnicht")
+            XCTAssertEqual(code, 404)
+            XCTAssertEqual(meldung, "custom app not found")
+        }
+    }
+
+    /// Die Gegenprobe, damit die Pruefung oben nicht alles abweist: Ein
+    /// quittiertes `code: 200` ist ein Erfolg und wirft nicht.
+    func testQuittierteAnnahmeWirftNicht() throws {
+        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
+        XCTAssertNoThrow(try geraet().anzeigeSetzen("{}", name: "meldung1"))
     }
 
     /// Kein gueltiges JSON darf nicht als roher Systemfehler nach aussen dringen.
