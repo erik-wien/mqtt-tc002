@@ -409,16 +409,19 @@ public struct EditorBereichView: View {
     @ToolbarContentBuilder
     private var werkzeugleiste: some ToolbarContent {
         ToolbarItemGroup {
-            Button { rueckgaengig() } label: { Image(systemName: "arrow.uturn.backward") }
+            Button { rueckgaengig() } label: { Label(lok("Rückgängig"), systemImage: "arrow.uturn.backward") }
+                .namensichtbarAmIPad()
                 .disabled(!verlauf.kannZurueck)
-                .help("Rückgängig")
+                .help(lok("Rückgängig"))
                 .accessibilityLabel("Rückgängig")
-            Button { wiederherstellen() } label: { Image(systemName: "arrow.uturn.forward") }
+            Button { wiederherstellen() } label: { Label(lok("Wiederherstellen"), systemImage: "arrow.uturn.forward") }
+                .namensichtbarAmIPad()
                 .disabled(!verlauf.kannVor)
-                .help("Wiederherstellen")
+                .help(lok("Wiederherstellen"))
                 .accessibilityLabel("Wiederherstellen")
-            Button { zeigeInspektor.toggle() } label: { Image(systemName: "sidebar.trailing") }
-                .help("Inspektor ein- oder ausblenden")
+            Button { zeigeInspektor.toggle() } label: { Label(lok("Inspektor ein- oder ausblenden"), systemImage: "sidebar.trailing") }
+                .namensichtbarAmIPad()
+                .help(lok("Inspektor ein- oder ausblenden"))
                 .accessibilityLabel("Inspektor ein- oder ausblenden")
         }
     }
@@ -489,7 +492,6 @@ public struct EditorBereichView: View {
                 Text("16 × 52").tag(Leinwandgroesse.anzeige)
             }
             .pickerStyle(.segmented).labelsHidden()
-            .help("8×8 ist ein LaMetric-Icon mit Nummer, 16×16 ein Icon ohne, 16×52 die ganze Anzeige — nur sie lässt sich senden.")
         }
 
         Section("Werkzeug") {
@@ -506,7 +508,6 @@ public struct EditorBereichView: View {
             .pickerStyle(.segmented)
             Button("Alles löschen", role: .destructive) { schritt(); leinwand.bildLeeren(); arbeitsstandSichern() }
                 .knopfZerstoerend()
-                .help("Leert das gerade bearbeitete Einzelbild.")
         }
 
         Section {
@@ -538,7 +539,6 @@ public struct EditorBereichView: View {
                 .menuStyle(.button)
                 .knopfBefehl()
                 .disabled(einfuegbare.isEmpty)
-                .help("Setzt ein vorhandenes Icon ins Feld: in ein 16×16 verdoppelt, in die Anzeige in seiner Größe — an derselben Stelle, an der es auch unter „Senden“ läge.")
             }
         }
     }
@@ -549,7 +549,6 @@ public struct EditorBereichView: View {
             einzelbildstreifen
             Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                 .knopfBefehl()
-                .help("Hängt ein leeres Einzelbild an und schaltet darauf um.")
         }
 
         Section {
@@ -586,7 +585,6 @@ public struct EditorBereichView: View {
         }
         .knopfBefehl()
         .disabled(leinwand.bilder.count < 2)
-        .help(spielAb ? lok("Stopp") : lok("Abspielen"))
         .accessibilityLabel(Text(spielAb ? lok("Stopp") : lok("Abspielen")))
     }
 
@@ -601,9 +599,6 @@ public struct EditorBereichView: View {
                     TextField("Nummer", text: $nummer)
                         .labelsHidden()
                         .eingabefeld()
-                        .help(groesse.nummerIstDateiname
-                              ? lok("Die LaMetric-Nummer — zugleich der Dateiname.")
-                              : lok("Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt."))
                 }
             }
             // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
@@ -627,7 +622,6 @@ public struct EditorBereichView: View {
                     .disabled(schluessel.isEmpty)
                 Button("Neu") { neuAnfragen() }
                     .knopfBefehl()
-                    .help("Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert.")
             }
         } header: {
             Text("Diese Bildgruppe")
@@ -678,7 +672,6 @@ public struct EditorBereichView: View {
                 }
             Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
                 .knopfBefehl()
-                .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
         }
 
         Section("Vorhandene") {
@@ -713,7 +706,6 @@ public struct EditorBereichView: View {
                 Color.clear.frame(width: 1, height: 1)
             }
         }
-        .help("Schiebt die ganze Grafik pixelweise. Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
     }
 
     /// Die Beschriftung fuer VoiceOver setzt der Aufrufer, nicht diese

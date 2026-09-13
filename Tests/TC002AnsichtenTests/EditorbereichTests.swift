@@ -308,11 +308,18 @@ final class EditorbereichTests: XCTestCase {
         }
         XCTAssertTrue(knopf.contains(".accessibilityLabel("),
                       "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
+        // Seit 13.09.2026 kein `.help(...)` mehr daneben: Was „Abspielen“ und
+        // „Stopp“ bedeuten, steht in der Hilfe (Editor, Abschnitt
+        // „Einzelbilder"); der Einblendtext war fürs iPad ohnehin unsichtbar.
+        // `.accessibilityLabel` bleibt die eine Stelle, die beide Zustände
+        // benennt.
         for wort in ["lok(\"Stopp\")", "lok(\"Abspielen\")"] {
-            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 2,
-                           "\(wort) steht nicht in Hinweis **und** Beschriftung — "
+            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 1,
+                           "\(wort) steht nicht (mehr) in der Beschriftung — "
                            + "oder ein Zweig ist ohne `lok` geschrieben und übersetzt damit nicht")
         }
+        XCTAssertFalse(knopf.contains(".help("),
+                       "das Symbol hat wieder einen Einblendtext — der ist am iPad unsichtbar, die Erklärung steht in der Hilfe")
         XCTAssertTrue(knopf.contains("leinwand.bilder.count < 2"),
                       "das Symbol ist bei einem einzigen Einzelbild nicht mehr gesperrt")
     }
