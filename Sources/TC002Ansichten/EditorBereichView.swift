@@ -413,21 +413,25 @@ public struct EditorBereichView: View {
                  : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
         }
 
+        // Was hier steht, sind Handlungen am **Bestand**, nicht an der
+        // Leinwand: Ein geholtes LaMetric-Icon ist immer ein 8×8 im
+        // 8×8-Bestand, gleich was gerade auf dem Tisch liegt. Bis zum
+        // 13.09.2026 hing der ganze Abschnitt an `groesse.mitNummer` — wer
+        // auf 16×16 stand, fand die LaMetric-Wahl nicht mehr und konnte
+        // nicht erraten, warum.
         Section("Hinzufügen") {
-            if groesse.mitNummer {
-                LabeledContent("LaMetric-Nummer") {
-                    HStack(spacing: 4) {
-                        TextField("Nummer", text: $lametricNummer)
-                            .labelsHidden()
-                            .frame(width: 90)
-                            .onSubmit { nachladen() }
-                        Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
-                            .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
+            LabeledContent("LaMetric-Nummer") {
+                HStack(spacing: 4) {
+                    TextField("Nummer", text: $lametricNummer)
+                        .labelsHidden()
+                        .frame(width: 90)
+                        .onSubmit { nachladen() }
+                    Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
+                        .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
-                    .font(.caption)
             }
+            Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
+                .font(.caption)
             Button("Datei einlesen…") { zeigeDateiImport = true }
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
@@ -441,10 +445,8 @@ public struct EditorBereichView: View {
                                               fehler.localizedDescription)
                     }
                 }
-            if groesse.mitNummer {
-                Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
-                    .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
-            }
+            Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
+                .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
         }
 
         Section("Vorhandene") {
