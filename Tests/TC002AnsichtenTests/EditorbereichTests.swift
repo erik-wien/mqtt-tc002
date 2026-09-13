@@ -156,8 +156,14 @@ final class EditorbereichTests: XCTestCase {
         let zeile = ausschnitt(text, von: "Button(\"Sichern\")", bis: "} header:")
         XCTAssertTrue(zeile.contains("Button(\"Neu\")"),
                       "„Neu“ steht nicht mehr neben „Sichern“ — dann prüft dieser Test die falsche Zeile")
-        XCTAssertTrue(zeile.contains(".buttonStyle("),
-                      "die beiden Knöpfe haben wieder den vorgegebenen Stil und damit dieselbe Trefferfläche: „Sichern“ löst „Neu“ aus")
+        // `knopfHaupthandlung` und `knopfBefehl` setzen beide ausdrücklich
+        // einen Knopfstil (`Knopfstil.swift`) — und genau das, nicht das
+        // Aussehen, nimmt den beiden die gemeinsame Trefferfläche.
+        for stil in [".knopfHaupthandlung()", ".knopfBefehl()"] {
+            XCTAssertTrue(zeile.contains(stil),
+                          "„Sichern“ und „Neu“ tragen nicht mehr je einen eigenen Knopfstil (\(stil) fehlt) — "
+                          + "ohne ihn bekommen beide die Trefferfläche der ganzen Formularzeile: „Sichern“ löst „Neu“ aus")
+        }
     }
 
     /// **A1, die zweite Hälfte.** „Neu" ist zerstörend — es leert Leinwand,

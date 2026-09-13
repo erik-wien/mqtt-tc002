@@ -376,7 +376,8 @@ public struct EditorBereichView: View {
                 }
                 .pickerStyle(.segmented).labelsHidden()
             }
-            Button("Alles löschen") { schritt(); leinwand.bildLeeren(); arbeitsstandSichern() }
+            Button("Alles löschen", role: .destructive) { schritt(); leinwand.bildLeeren(); arbeitsstandSichern() }
+                .knopfZerstoerend()
                 .help("Leert das gerade bearbeitete Einzelbild.")
         }
 
@@ -404,6 +405,7 @@ public struct EditorBereichView: View {
         Section("Einzelbilder") {
             einzelbildstreifen
             Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
+                .knopfBefehl()
                 .help("Hängt ein leeres Einzelbild an und schaltet darauf um.")
         }
 
@@ -416,6 +418,7 @@ public struct EditorBereichView: View {
                 }
             }
             Button(spielAb ? lok("Stopp") : lok("Abspielen")) { abspielenUmschalten() }
+                .knopfBefehl()
                 .disabled(leinwand.bilder.count < 2)
         } header: {
             Text("Abspielen")
@@ -442,18 +445,18 @@ public struct EditorBereichView: View {
             // Derselbe Grund wie beim Einzelbildstreifen und in der
             // Bestandszeile, wo der Stil deshalb schon steht.
             //
-            // Am Mac zeichnet die Vorgabe in einer `Form` ohnehin einen
-            // gerahmten Knopf — dort sieht nichts anders aus als vorher. Die
-            // drei Abstufungen (gewoehnlich, Haupthandlung, zerstoerend) sind
-            // ein eigener Durchgang und hier noch nicht getroffen.
+            // „Sichern" ist die **eine** Haupthandlung des Editors. Ohne Namen
+            // bleibt es sichtbar abgeblendet stehen statt zu verschwinden —
+            // wie „Verbinden …" neben „Fertig" in der Vorlage.
             HStack {
                 Button("Sichern") { sichern() }
+                    .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
                     .disabled(schluessel.isEmpty)
                 Button("Neu") { neuAnfragen() }
+                    .knopfBefehl()
                     .help("Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert.")
             }
-            .buttonStyle(.bordered)
         } header: {
             Text("Diese Bildgruppe")
         } footer: {
@@ -476,12 +479,14 @@ public struct EditorBereichView: View {
                         .frame(width: 90)
                         .onSubmit { nachladen() }
                     Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
+                        .knopfBefehl()
                         .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
                 .font(.caption)
             Button("Datei einlesen…") { zeigeDateiImport = true }
+                .knopfBefehl()
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
                     switch ergebnis {
@@ -495,6 +500,7 @@ public struct EditorBereichView: View {
                     }
                 }
             Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
+                .knopfBefehl()
                 .help("Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet.")
         }
 
@@ -543,7 +549,7 @@ public struct EditorBereichView: View {
         } label: {
             Image(systemName: symbol).frame(width: 18, height: 18)
         }
-        .buttonStyle(.borderless)
+        .knopfBefehl()
     }
 
     /// Die Leiste der Einzelbilder. „Verdoppeln" und „Entfernen" stehen **am
@@ -563,18 +569,22 @@ public struct EditorBereichView: View {
                                 } label: {
                                     Image(systemName: "plus.square.on.square")
                                 }
+                                .knopfBefehl()
                                 .help("Dieses Einzelbild verdoppeln")
                                 .accessibilityLabel("Verdoppeln")
+                                // Beim letzten Einzelbild gesperrt — sichtbar
+                                // abgeblendet, nicht verschwunden.
                                 Button(role: .destructive) {
                                     schritt(); leinwand.entfernen(); arbeitsstandSichern()
                                 } label: {
                                     Image(systemName: "trash")
                                 }
+                                .knopfZerstoerend()
                                 .disabled(leinwand.bilder.count <= 1)
                                 .help("Dieses Einzelbild entfernen")
                                 .accessibilityLabel("Entfernen")
                             }
-                            .buttonStyle(.borderless)
+                            .controlSize(.small)
                             .font(.caption)
                         }
                     }
@@ -716,6 +726,7 @@ public struct EditorBereichView: View {
         // SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
         // nach — der Eintrag staende in `en.lproj` und wuerde nie gefunden.
         Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
+            .knopfBefehl()
             .keyboardShortcut(.defaultAction)
             .disabled(laeuft || zustand.ziele().isEmpty)
     }
@@ -741,7 +752,9 @@ public struct EditorBereichView: View {
             HStack {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
+                    .knopfBefehl()
                 Button("Einlesen") { einlesen() }
+                    .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
                     .disabled(importSchluessel.isEmpty)
             }
