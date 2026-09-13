@@ -26,6 +26,29 @@ private struct PilleVersatzKey: PreferenceKey {
 struct SendeniOS: View {
     @Bindable var zustand: AppZustand
 
+    /// Solange nichts eingerichtet ist (`AppZustand.eingerichtet`: keine Uhr
+    /// oder keine eingetragene Brokeradresse), geht das Einstellungsblatt beim
+    /// Start von selbst auf. „Senden" waere sonst eine Sackgasse: keine
+    /// Vorschau, kein Ziel, und der einzige Weg zu den Einstellungen ist hier
+    /// ein Zahnrad in der oberen Leiste — keine Seitenleiste wie am Mac.
+    ///
+    /// **Ein Blatt und kein Wurzelwechsel**, obwohl der Schreibtisch dort den
+    /// Bereich wechselt: `VerbindungiOS` bringt „Fertig" und den Greifer mit
+    /// und ist damit auf dem Telefon der eingebuergerte Weg, Fehlendes
+    /// nachzutragen. Als Wurzel gaebe es hinter „Fertig" nichts, und der
+    /// Benutzer sitzt fest — das Gegenteil der Absicht.
+    ///
+    /// Im `init` und nicht in `.onAppear`: Der Anfangswert eines `@State` gilt
+    /// genau einmal je Ansicht. Wer das Blatt wegwischt, ohne etwas
+    /// einzutragen, bekommt es nicht gleich wieder vorgesetzt.
+    @State private var zeigeEinstellungen: Bool
+
+    @MainActor
+    init(zustand: AppZustand) {
+        self.zustand = zustand
+        _zeigeEinstellungen = State(initialValue: !zustand.eingerichtet)
+    }
+
     // Dieselben Schlüssel wie auf dem Mac. Wer sie ändert, verliert die
     // Einstellungen einer laufenden Installation.
     @AppStorage("senden.text") private var text = "Hallo"
@@ -51,7 +74,6 @@ struct SendeniOS: View {
     @State private var laeuft = false
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
-    @State private var zeigeEinstellungen = false
     @State private var zeigeVerlauf = false
     /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
     /// dem Dauer-Feld nur durch Tippen daneben heraus.

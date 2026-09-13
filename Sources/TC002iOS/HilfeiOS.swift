@@ -60,7 +60,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres MQTT-Protokolls. Sie liegt der Mac-Fassung dieser App bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
-            return [
+            return HilfeInhalt.startOhneEinrichtung
+                + [
                     .ueberschrift("Uhr hinzufügen"),
                     .absatz("Unter „Einstellungen“ trägt man im Feld „Adresse einer weiteren Uhr“ die Adresse einer Uhr ein und drückt „Hinzufügen“ oder die Eingabetaste. Eine bereits eingetragene Adresse lässt sich hier nicht ändern — dafür die Uhr entfernen und neu eintragen."),
                     .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),

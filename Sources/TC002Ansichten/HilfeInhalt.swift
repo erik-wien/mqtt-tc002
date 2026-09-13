@@ -19,6 +19,15 @@ public enum HilfeInhalt {
         .absatz("MQTT-TC002 schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Es tut das nicht direkt: alle Nachrichten laufen über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
     ]
 
+    /// Womit die App beginnt, solange nichts eingerichtet ist
+    /// (`AppZustand.eingerichtet`). Der Satz gilt fuer beide Oberflaechen: Am
+    /// Mac und auf dem iPad steht der Bereich „Einstellungen" vorn, auf dem
+    /// Telefon geht sein Blatt von selbst auf. Beide Male ist es derselbe
+    /// Grund und dieselbe Auskunft — deshalb ein Absatz und nicht zwei.
+    public static let startOhneEinrichtung: [Hilfebaustein] = [
+        .absatz("Solange keine Uhr eingetragen ist oder keine Brokeradresse, beginnt die App bei den Einstellungen statt bei „Senden“ — dort gäbe es ohne beides weder eine Vorschau noch ein Ziel. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald beides eingetragen ist, startet sie wieder bei „Senden“."),
+    ]
+
     /// Das Themen-Praefix und woher es kommt. Beide Oberflaechen haben denselben
     /// Knopf, dieselben zwei Symbole und dieselbe Regel: Das Praefix wird
     /// ermittelt, nie eingetippt (`AppZustand.abfragen`).

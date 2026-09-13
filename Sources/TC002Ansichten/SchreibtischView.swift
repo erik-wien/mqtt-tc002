@@ -14,13 +14,19 @@ import TC002Modell
 /// Seitenleiste hochkant hinter einem Knopf verschwindet.
 public struct SchreibtischView: View {
     @Bindable var zustand: AppZustand
-    @State private var bereich: Bereich? = .senden
+    @State private var bereich: Bereich?
     #if !os(macOS)
     @State private var nebenfenster: Nebenfenster?
     #endif
 
+    /// Der Startbereich steht hier fest und nicht an der Eigenschaft: `@State`
+    /// nimmt seinen Anfangswert nur beim ersten Aufbau dieser Ansicht — genau
+    /// einmal, beim Start. Ein spaeterer Aufbau (`.senden` gewaehlt, Uhr
+    /// entfernt) wirft die Wahl des Benutzers damit nicht um.
+    @MainActor
     public init(zustand: AppZustand) {
         self.zustand = zustand
+        _bereich = State(initialValue: Bereich.start(eingerichtet: zustand.eingerichtet))
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
@@ -39,6 +45,17 @@ public struct SchreibtischView: View {
         /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
         static let oben: [Bereich] = [.senden, .malen, .icons]
         static let unten: [Bereich] = [.verlauf, .einstellungen]
+
+        /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und ohne
+        /// eingetragenen Broker (`AppZustand.eingerichtet`) waere „Senden" eine
+        /// Sackgasse — keine Vorschau, kein Ziel, ein Sendeknopf, der
+        /// nirgendwohin fuehrt. Wer eingerichtet ist, beginnt wie bisher.
+        ///
+        /// Gesperrt wird dabei nichts: Die Seitenleiste steht offen, und ein
+        /// Klick fuehrt sofort woandershin.
+        static func start(eingerichtet: Bool) -> Bereich {
+            eingerichtet ? .senden : .einstellungen
+        }
     }
 
     public var body: some View {

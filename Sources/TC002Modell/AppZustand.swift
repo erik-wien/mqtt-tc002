@@ -224,6 +224,42 @@ public final class AppZustand {
 
     public var aktiveUhr: Uhr? { uhren.first { $0.id == aktiveID } }
 
+    /// Ob ueberhaupt etwas eingerichtet ist. Daran haengt, womit die
+    /// Oberflaechen beginnen: mit „Senden" oder mit den Einstellungen.
+    ///
+    /// Beides muss stehen — eine Uhr **und** ein eingetragener Broker. Fehlt
+    /// eines davon, ist „Senden" eine Sackgasse: kein Ziel, keine Vorschau,
+    /// ein Sendeknopf, der nirgendwohin fuehrt (`ziele()` ist leer, und
+    /// `anZiele` bricht mit „Keine Uhr eingerichtet" ab).
+    ///
+    /// Eine reine Frage an die abgelegte Einrichtung: Sie kostet nichts und
+    /// dauert nicht. Ob der Broker gerade **antwortet**, wird hier
+    /// ausdruecklich nicht gefragt — eine Erreichbarkeitspruefung haelt den
+    /// Start genau dann am laengsten auf, wenn niemand antwortet. Dieser Fall
+    /// gehoert auf die Sendeansicht, und dort steht er auch schon
+    /// (`brokerMeldung` nennt Adresse und Port und verweist auf „Sichern und
+    /// pruefen").
+    ///
+    /// Ein Merker „schon einmal gestartet" waere schlechter als gar keiner:
+    /// Wer alle Uhren wieder entfernt oder die Brokeradresse leert, steht in
+    /// genau derselben Sackgasse wie beim ersten Start. Ohne Merker stimmt die
+    /// Auskunft in beiden Faellen — und sie stimmt auch wieder, sobald
+    /// eingetragen ist, was fehlte.
+    public var eingerichtet: Bool { !uhren.isEmpty && brokerEingetragen }
+
+    /// Ob eine Brokeradresse je eingetragen wurde.
+    ///
+    /// Der Wert allein taugt dafuer nicht: `brokerHost` traegt beim allerersten
+    /// Start `Einstellungen.Vorgabe.brokerHost` und sieht damit eingerichtet
+    /// aus, obwohl niemand etwas eingetippt hat — `brokerEingerichtet` im Kern
+    /// ist aus demselben Grund schon auf einer frischen Installation wahr.
+    /// Der **abgelegte Schluessel** entsteht dagegen erst durch eine Eingabe:
+    /// `merke` schweigt bis `initialisiert`, und der Konstruktor schreibt
+    /// nichts.
+    private var brokerEingetragen: Bool {
+        !brokerHost.isEmpty && UserDefaults.standard.object(forKey: "brokerHost") != nil
+    }
+
     /// Die eine Uhr, gegen deren mitgelesenen Slotinhalt und Slotgedaechtnis
     /// die fuenf Slot-Bloecke geprueft werden: die aktive. Ein Platz zaehlt
     /// als belegt, sobald ihn *irgendeine* Zieluhr kennt — welches Bild und

@@ -4,13 +4,13 @@ import TC002Core
 @testable import TC002Modell
 
 /// Die Tests fassen nur die Einstellungs-Schluessel `uhren`, `aktiveID`,
-/// `bekannteAnzeigen` und `zielIDs` an — nie den Schluesselbund, nie eine echte
-/// Uhr oder einen echten Broker. Vor und nach jedem Test wird der Bestand
-/// dieser Schluessel im Testprozess gesichert und wiederhergestellt.
+/// `bekannteAnzeigen`, `zielIDs` und `brokerHost` an — nie den Schluesselbund,
+/// nie eine echte Uhr oder einen echten Broker. Vor und nach jedem Test wird
+/// der Bestand dieser Schluessel im Testprozess gesichert und wiederhergestellt.
 @MainActor
 final class AppZustandTests: XCTestCase {
     private let d = UserDefaults.standard
-    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs"]
+    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs", "brokerHost"]
     private var sicherung: [String: Any?] = [:]
 
     override func setUp() {
@@ -449,6 +449,40 @@ final class AppZustandTests: XCTestCase {
     /// Mit der Uhr geht auch ihre Slotdatei. Die Kennung einer entfernten Uhr
     /// kommt nicht zurueck — die Datei laege sonst fuer immer unter
     /// Application Support, ohne dass sie noch jemand liest.
+    /// Woran „noch nichts eingerichtet" haengt: an einer Uhr **und** an einer
+    /// eingetragenen Brokeradresse. Der Wert von `brokerHost` allein taugt
+    /// nicht — er traegt beim allerersten Start die Vorgabe und saehe damit
+    /// eingerichtet aus. Entscheidend ist der abgelegte Schluessel, den erst
+    /// eine Eingabe anlegt.
+    func testEingerichtetVerlangtUhrUndEingetragenenBroker() throws {
+        let uhr = Uhr(name: "Küche", host: "10.0.0.5")
+
+        // Frische Installation: keine Uhr, kein abgelegter Broker.
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "brokerHost")
+        XCTAssertFalse(AppZustand().eingerichtet)
+
+        // Uhr da, Broker nur als Vorgabe — das zaehlt nicht als eingetragen.
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        let nurUhr = AppZustand()
+        XCTAssertEqual(nurUhr.brokerHost, Einstellungen.Vorgabe.brokerHost,
+                       "die Vorgabe gilt weiterhin — nur eben nicht als Einrichtung")
+        XCTAssertFalse(nurUhr.eingerichtet)
+
+        // Broker eingetragen, aber keine Uhr.
+        d.removeObject(forKey: "uhren")
+        d.set("10.0.0.2", forKey: "brokerHost")
+        XCTAssertFalse(AppZustand().eingerichtet)
+
+        // Beides.
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        XCTAssertTrue(AppZustand().eingerichtet)
+
+        // Wer die Adresse spaeter leert, steht wieder in derselben Sackgasse.
+        d.set("", forKey: "brokerHost")
+        XCTAssertFalse(AppZustand().eingerichtet)
+    }
+
     func testEntfernteUhrVerliertIhreSlotdatei() throws {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
