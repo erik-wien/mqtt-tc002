@@ -4,10 +4,10 @@ import Foundation
 /// Standzeit, die zwischen ihnen gilt. Mehrere ergeben beim Sichern ein
 /// animiertes GIF.
 ///
-/// Das ist die ganze Rechnung hinter dem Editor — Malen, Radieren und die
-/// Bildleiste. Die Ansicht (`PixelEditor`) zeichnet nur, was hier steht;
-/// damit laesst sich jede dieser Handlungen pruefen, ohne eine Oberflaeche zu
-/// bauen.
+/// Das ist die ganze Rechnung hinter dem Editor — Malen, Radieren, die
+/// Bildleiste und das Pfeilkreuz. Die Ansicht (`PixelEditor`) zeichnet nur,
+/// was hier steht; damit laesst sich jede dieser Handlungen pruefen, ohne eine
+/// Oberflaeche zu bauen.
 ///
 /// Ein Raster ist zeilenweise von oben links abgelegt, `nil` heisst aus — die
 /// Form, in der `Bildraster` liest und schreibt. Kein zweites Format daneben.
@@ -135,5 +135,40 @@ public struct Leinwand: Equatable, Sendable, Codable {
         guard bilder.indices.contains(ziel) else { return }
         bilder.swapAt(aktuell, ziel)
         aktuell = ziel
+    }
+
+    /// Schiebt die Grafik um `dx`/`dy` Pixel — das Pfeilkreuz.
+    ///
+    /// **Was am Rand hinausgeschoben wird, kommt auf der anderen Seite wieder
+    /// herein.** Umlaufend, nicht abschneidend, und das ist keine
+    /// Geschmacksfrage: Dieser Editor kennt kein Rueckgaengig. Umlaufend ist
+    /// jeder Schritt durch den Gegenpfeil genau umkehrbar — viermal nach
+    /// rechts und viermal nach links ergeben wieder das Ausgangsbild.
+    /// Abschneidend waere jeder Schritt ein Verlust, den nichts zurueckholt,
+    /// und ein Vertippen auf einem 8×8 kostete ein Achtel der Zeichnung. Wer
+    /// das Hereingelaufene nicht will, radiert es weg; wer Abgeschnittenes
+    /// zurueckwill, muesste es neu malen.
+    ///
+    /// **Alle Einzelbilder zusammen**, nicht nur das sichtbare: Eine
+    /// Animation, deren Bilder gegeneinander verrutschen, waere kaputt, und
+    /// die Bildleiste zeigt zu klein, dass es passiert ist.
+    public mutating func verschieben(dx: Int, dy: Int) {
+        guard breite > 0, hoehe > 0 else { return }
+        // Der Rest-Operator von Swift kann negativ werden, ein Index nicht —
+        // deshalb einmal die Kante dazu, bevor gerechnet wird.
+        let vx = ((dx % breite) + breite) % breite
+        let vy = ((dy % hoehe) + hoehe) % hoehe
+        guard vx != 0 || vy != 0 else { return }
+        for i in bilder.indices {
+            var neu = [String?](repeating: nil, count: breite * hoehe)
+            for y in 0..<hoehe {
+                let zy = (y + vy) % hoehe
+                for x in 0..<breite {
+                    let zx = (x + vx) % breite
+                    neu[zy * breite + zx] = bilder[i][y * breite + x]
+                }
+            }
+            bilder[i] = neu
+        }
     }
 }

@@ -157,4 +157,73 @@ final class LeinwandTests: XCTestCase {
         XCTAssertNil(Leinwand(breite: 8, hoehe: 8, bilder: [[String?](repeating: nil, count: 63)]))
         XCTAssertNotNil(Leinwand(breite: 8, hoehe: 8, bilder: [[String?](repeating: nil, count: 64)]))
     }
+
+    // MARK: - Das Pfeilkreuz
+
+    func testVerschiebenRuecktJedesPixel() {
+        var l = gemalte()                       // 8×8, (1,2) rot
+        l.verschieben(dx: 1, dy: 0)
+        XCTAssertNil(l.farbe(x: 1, y: 2))
+        XCTAssertEqual(l.farbe(x: 2, y: 2), "#FF0000")
+        l.verschieben(dx: 0, dy: 1)
+        XCTAssertEqual(l.farbe(x: 2, y: 3), "#FF0000")
+    }
+
+    /// Der Kern der Entscheidung: umlaufend statt abschneidend. Ohne
+    /// Rueckgaengig waere jeder Schritt sonst ein Verlust.
+    func testWasHinausgeschobenWirdKommtGegenueberHerein() {
+        var l = Leinwand(breite: 8, hoehe: 8)
+        l.setzen(x: 7, y: 0, farbe: "#FF0000")
+        l.verschieben(dx: 1, dy: 0)
+        XCTAssertEqual(l.farbe(x: 0, y: 0), "#FF0000", "rechts hinaus, links herein")
+
+        l.setzen(x: 0, y: 0, farbe: nil)
+        l.setzen(x: 0, y: 7, farbe: "#00FF66")
+        l.verschieben(dx: 0, dy: 1)
+        XCTAssertEqual(l.farbe(x: 0, y: 0), "#00FF66", "unten hinaus, oben herein")
+    }
+
+    /// Und deshalb ist jeder Schritt genau umkehrbar.
+    func testVierMalHinUndVierMalZurueckErgibtDasAusgangsbild() {
+        var l = gemalte()
+        l.setzen(x: 0, y: 0, farbe: "#112233")
+        l.setzen(x: 7, y: 7, farbe: "#445566")
+        let vorher = l.bilder
+        for _ in 0..<4 { l.verschieben(dx: 1, dy: -1) }
+        XCTAssertNotEqual(l.bilder, vorher, "vier Schritte ändern etwas")
+        for _ in 0..<4 { l.verschieben(dx: -1, dy: 1) }
+        XCTAssertEqual(l.bilder, vorher, "und die Gegenrichtung nimmt sie genau zurück")
+    }
+
+    /// Eine Animation, deren Bilder gegeneinander verrutschen, waere kaputt.
+    func testAlleEinzelbilderRueckenGemeinsam() {
+        var l = Leinwand(breite: 8, hoehe: 8)
+        l.setzen(x: 0, y: 0, farbe: "#FF0000")
+        l.anhaengen()
+        l.setzen(x: 0, y: 0, farbe: "#00FF66")
+        l.verschieben(dx: 1, dy: 0)
+        XCTAssertEqual(l.bilder[0][1], "#FF0000")
+        XCTAssertEqual(l.bilder[1][1], "#00FF66")
+        XCTAssertNil(l.bilder[0][0])
+        XCTAssertNil(l.bilder[1][0])
+    }
+
+    /// Auch auf der breiten Leinwand, wo Breite und Hoehe verschieden sind.
+    func testVerschiebenAufDerGanzenAnzeige() {
+        var l = Leinwand(breite: 52, hoehe: 16)
+        l.setzen(x: 51, y: 15, farbe: "#FF0000")
+        l.verschieben(dx: 1, dy: 1)
+        XCTAssertEqual(l.farbe(x: 0, y: 0), "#FF0000")
+    }
+
+    /// Ein Schritt um die volle Kante ist kein Schritt.
+    func testEinVollerUmlaufAendertNichts() {
+        var l = gemalte()
+        let vorher = l.bilder
+        l.verschieben(dx: 8, dy: 8)
+        XCTAssertEqual(l.bilder, vorher)
+        l.verschieben(dx: 0, dy: 0)
+        XCTAssertEqual(l.bilder, vorher)
+    }
+
 }

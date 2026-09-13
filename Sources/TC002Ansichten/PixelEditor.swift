@@ -101,9 +101,51 @@ struct PixelEditor<Zusatz: View>: View {
             Spacer()
         }
         HStack {
+            pfeilkreuz
             zusatz()
             Spacer()
         }
+    }
+
+    /// Vier Pfeile um einen Mittelpunkt — schiebt die ganze Grafik um ein
+    /// Pixel. Was hinausgeschoben wird, kommt gegenueber wieder herein; warum,
+    /// steht bei `Leinwand.verschieben`.
+    ///
+    /// Ein Kreuz und keine vier Knoepfe in einer Reihe: Richtung ist raeumlich,
+    /// und in einer Reihe muesste man jedes Symbol einzeln lesen.
+    private var pfeilkreuz: some View {
+        Grid(horizontalSpacing: 0, verticalSpacing: 0) {
+            GridRow {
+                Color.clear.frame(width: 1, height: 1)
+                pfeil("arrow.up", dx: 0, dy: -1).accessibilityLabel("Nach oben schieben")
+                Color.clear.frame(width: 1, height: 1)
+            }
+            GridRow {
+                pfeil("arrow.left", dx: -1, dy: 0).accessibilityLabel("Nach links schieben")
+                Color.clear.frame(width: 1, height: 1)
+                pfeil("arrow.right", dx: 1, dy: 0).accessibilityLabel("Nach rechts schieben")
+            }
+            GridRow {
+                Color.clear.frame(width: 1, height: 1)
+                pfeil("arrow.down", dx: 0, dy: 1).accessibilityLabel("Nach unten schieben")
+                Color.clear.frame(width: 1, height: 1)
+            }
+        }
+        .help("Schiebt die ganze Grafik pixelweise. Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
+    }
+
+    /// Die Beschriftung fuer VoiceOver setzt der Aufrufer, nicht diese
+    /// Funktion: Ein Text, der als Argument durchgereicht wird, steht fuer
+    /// `scripts/texte-sammeln.py` nicht mehr an einer Stelle, die es kennt —
+    /// er fehlte dann still in `en.lproj`, ohne dass die Pruefung etwas merkt.
+    private func pfeil(_ symbol: String, dx: Int, dy: Int) -> some View {
+        Button {
+            leinwand.verschieben(dx: dx, dy: dy)
+            nachAenderung()
+        } label: {
+            Image(systemName: symbol).frame(width: 18, height: 18)
+        }
+        .buttonStyle(.borderless)
     }
 
     // MARK: - Die Bildleiste
