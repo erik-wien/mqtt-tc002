@@ -197,8 +197,11 @@ struct MeldungSendenIntent: AppIntent {
     }
 }
 
-/// Nimmt eine Meldung wieder von der Uhr. Über HTTP ginge das nicht — nur die
-/// leere MQTT-Nutzlast löscht wirklich (Gerätereferenz §3.2 und §5.6).
+/// Nimmt eine Meldung wieder von der Uhr — über MQTT, wie alles hier, mit
+/// leerer Nutzlast (Gerätereferenz §3.2). Über HTTP ginge es inzwischen auch:
+/// `POST /api/custom?name=…` mit dem Rumpf `{}` löscht, am 13.09.2026
+/// gemessen (§5.6). Ein leerer Rumpf tut es weiterhin nicht — genau diese
+/// Verwechslung stand bis dahin als Firmwaremangel in unserer eigenen Liste.
 struct MeldungLoeschenIntent: AppIntent {
     static let title: LocalizedStringResource = "Meldung von der Uhr nehmen"
     static let description = IntentDescription(
