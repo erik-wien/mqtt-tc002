@@ -384,11 +384,11 @@ public struct SendenView: View {
                     // Ohne Mindestbreite "passt" das Feld immer, weil es sich
                     // beliebig zusammendruecken laesst — dann kaeme die zweite
                     // Variante nie zum Zug.
-                    TextField("Text", text: $text).frame(minWidth: 320)
+                    textFeld.frame(minWidth: 320)
                     sendeKnopf
                 }
                 VStack(alignment: .trailing, spacing: 8) {
-                    TextField("Text", text: $text)
+                    textFeld
                     sendeKnopf
                 }
             }
@@ -660,6 +660,30 @@ public struct SendenView: View {
             MeldungLoeschenKnopf(zustand: zustand, platz: platz,
                                  belegt: belegtePlaetze.contains(platz))
         }
+    }
+
+    /// Das Eingabefeld fuer die Meldung. Einmal geschrieben, weil beide Zweige
+    /// des `ViewThatFits` oben dasselbe Feld zeigen — zweimal getippt liefen
+    /// Schrift und Rahmen frueher oder spaeter auseinander.
+    ///
+    /// **Groesse:** `.title2` statt der Vorgabe — am Mac 17 statt 13 Punkt, auf
+    /// dem iPad 22 statt 17. Ein benannter Schriftstil, kein fester Wert: Auf
+    /// dem iPad waechst das Feld damit weiter mit der eingestellten Textgroesse
+    /// mit, eine Zahl in Punkt taete das nicht. Nur dieses eine Feld; „Dauer“
+    /// und der Inspektor bleiben bei der Systemgroesse.
+    ///
+    /// **Rahmen:** nur ausserhalb von macOS. Am Mac zeichnet die Vorgabe schon
+    /// einen, und `.roundedBorder` saehe dort anders aus als das abgenommene
+    /// Fenster. Unter iPadOS zeichnet die Vorgabe gar nichts — dort stand das
+    /// Feld unsichtbar in der Flaeche (iPad-Rueckmeldung vom 13.09.2026, S2).
+    /// Das iPhone hat den Rahmen laengst, es setzt ihn in `SendeniOS` selbst.
+    @ViewBuilder private var textFeld: some View {
+        let feld = TextField("Text", text: $text).font(.title2)
+        #if os(macOS)
+        feld
+        #else
+        feld.textFieldStyle(.roundedBorder)
+        #endif
     }
 
     /// Beschriftung links, Wert rechts, Einheit dahinter — nicht eine

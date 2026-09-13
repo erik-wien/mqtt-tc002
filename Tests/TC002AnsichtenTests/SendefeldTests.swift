@@ -1,16 +1,19 @@
 import XCTest
 
-/// Der Formatinspektor der Sendeansicht — aus der iPad-Rueckmeldung vom
-/// 13.09.2026 (S1).
+/// Der Formatinspektor und das Eingabefeld der Sendeansicht — beides aus der
+/// iPad-Rueckmeldung vom 13.09.2026 (S1, S2, S3).
 ///
 /// Wie in `MindestmasseTests` und `PlattformwegeTests` wird hier der Quelltext
 /// gelesen, nicht der Uebersetzer befragt: Ein Farbwaehler in einer eigenen
-/// Zeile uebersetzt genauso anstandslos wie einer in der Stil-Zeile. Der
-/// Uebersetzer hat zu dieser Frage nichts zu sagen.
+/// Zeile uebersetzt genauso anstandslos wie einer in der Stil-Zeile, und ein
+/// Eingabefeld ohne Rahmen ebenfalls. Der Uebersetzer hat zu diesen drei Fragen
+/// nichts zu sagen.
 ///
-/// Das iPhone (`SendeniOS`) ist absichtlich nicht mitgeaendert: Fett,
-/// Grossbuchstaben und Farbe liegen dort schon nebeneinander in der
-/// schiebbaren Formatpille — eine Stil-Zeile gibt es gar nicht.
+/// Das iPhone (`SendeniOS`) ist absichtlich nicht mitgeaendert: Es hat weder
+/// eine Stil-Zeile — Fett, Grossbuchstaben und Farbe liegen dort nebeneinander
+/// in der schiebbaren Formatpille — noch ein rahmenloses Feld. Nur der Rahmen
+/// wird hier auch fuers Telefon festgehalten, weil er dort der Grund ist,
+/// warum S2 das iPad traf und nicht beide.
 final class SendefeldTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()   // TC002AnsichtenTests
@@ -19,7 +22,7 @@ final class SendefeldTests: XCTestCase {
 
     /// Quelltext ohne Kommentare — sonst zaehlte jeder Satz mit, der das
     /// Gemeinte bloss erwaehnt, und die Kommentare in `SendenView` erwaehnen
-    /// die Farbe mehrfach.
+    /// sowohl die Farbe als auch `.roundedBorder`.
     private func quelltext(_ pfad: String) throws -> String {
         let url = Self.wurzel.appendingPathComponent(pfad)
         let roh = try String(contentsOf: url, encoding: .utf8)
@@ -65,5 +68,66 @@ final class SendefeldTests: XCTestCase {
                       "„Großbuchstaben“ steht nicht mehr in der Stil-Zeile")
         XCTAssertFalse(text.contains(#"LabeledContent("Farbe")"#),
                        "die Farbe hat wieder eine eigene Zeile bekommen")
+    }
+
+    /// S2/S3: Beide Zweige des `ViewThatFits` zeigen dasselbe Feld. Stuende
+    /// `TextField("Text", …)` zweimal da, koennten Rahmen und Schriftgroesse
+    /// auseinanderlaufen, ohne dass es jemandem auffiele — je nach Fensterbreite
+    /// saehe man mal das eine, mal das andere.
+    func testDasEingabefeldStehtNurEinmalImQuelltext() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        let treffer = text.components(separatedBy: #"TextField("Text", text: $text)"#).count - 1
+        XCTAssertEqual(treffer, 1,
+                       "das Eingabefeld ist wieder mehrfach geschrieben — Rahmen und Größe laufen auseinander")
+    }
+
+    /// S3: Das Feld traegt eine ausdrueckliche Groesse. Ohne sie bekaeme es die
+    /// Systemvorgabe — am Mac 13 Punkt, am iPad 17.
+    func testDasEingabefeldTraegtEineEigeneSchriftgroesse() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        guard let feld = block(nach: "private var textFeld: some View", in: text) else {
+            return XCTFail("das Eingabefeld steht nicht mehr in `textFeld`")
+        }
+        XCTAssertTrue(feld.contains(".font(.title2)"),
+                      "das Eingabefeld ist wieder auf die Systemgröße zurückgefallen")
+    }
+
+    /// S2: Der Rahmen. Am Mac zeichnet die Vorgabe schon einen — dort wuerde
+    /// `.roundedBorder` das abgenommene Fenster veraendern, ohne dass jemand
+    /// danach gefragt haette. Unter iPadOS zeichnet sie keinen, und genau das
+    /// war der Mangel.
+    func testDerRahmenStehtNurAusserhalbVonMacOS() throws {
+        let roh = try String(contentsOf: Self.wurzel
+            .appendingPathComponent("Sources/TC002Ansichten/SendenView.swift"), encoding: .utf8)
+        var nurMac = false
+        var treffer: [Bool] = []
+        for zeile in roh.split(separator: "\n", omittingEmptySubsequences: false) {
+            let nackt = zeile.trimmingCharacters(in: .whitespaces)
+            if nackt == "#if os(macOS)" { nurMac = true; continue }
+            if nackt == "#else" { nurMac.toggle(); continue }
+            if nackt == "#endif" { nurMac = false; continue }
+            let ohneKommentar: String
+            if let strich = zeile.range(of: "//") {
+                ohneKommentar = String(zeile[zeile.startIndex..<strich.lowerBound])
+            } else {
+                ohneKommentar = String(zeile)
+            }
+            if ohneKommentar.contains(".textFieldStyle(.roundedBorder)") { treffer.append(nurMac) }
+        }
+        XCTAssertEqual(treffer.count, 1,
+                       ".textFieldStyle(.roundedBorder) kommt in SendenView.swift nicht genau einmal vor")
+        XCTAssertEqual(treffer.first, false,
+                       "der Rahmen steht im macOS-Zweig — dort verändert er das abgenommene Fenster")
+    }
+
+    /// Warum S2 nur das iPad traf: Das Telefon setzt seinen Rahmen selbst.
+    /// Bleibt das so, bleibt auch die Begruendung oben wahr.
+    func testDasTelefonHatSeinenRahmenSchon() throws {
+        let text = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        guard let eingabe = block(nach: "private var eingabe: some View", in: text) else {
+            return XCTFail("das Eingabefeld des iPhones heißt nicht mehr `eingabe`")
+        }
+        XCTAssertTrue(eingabe.contains(".textFieldStyle(.roundedBorder)"),
+                      "dem iPhone ist der Rahmen seines Eingabefelds abhanden gekommen")
     }
 }
