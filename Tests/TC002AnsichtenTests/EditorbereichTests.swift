@@ -218,6 +218,30 @@ final class EditorbereichTests: XCTestCase {
                        "die eingestellte Leinwandgröße wird wieder an den Bestand durchgereicht")
     }
 
+    /// **C2.** „Icon einfügen" ist der **eine** Weg, auf dem zwischen den
+    /// Größen gerechnet wird — und die Rechnung steht im Kern
+    /// (`Leinwand.iconEinsetzen`), nicht als Schleife in der Ansicht. Die
+    /// Ansicht hatte bis zum 13.09.2026 eine eigene, die fest von 8×8 auf
+    /// Zeile 4 schrieb; ein zweiter Weg daneben wäre nach C1 genau der Fehler,
+    /// den C2 abstellt.
+    func testIconEinfuegenRechnetImKernUndBietetAlleKleinerenAn() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+
+        let einfuegen = ausschnitt(text, von: "private func iconEinfuegen", bis: "private func abspielen")
+        XCTAssertTrue(einfuegen.contains("iconEinsetzen(quelle.bild, groesse: eintrag.groesse)"),
+                      "die Ansicht rechnet wieder selbst, statt den Kern zu fragen")
+        XCTAssertFalse(einfuegen.contains("for y in 0..<8"),
+                       "die feste 8×8-Schleife ist zurück — dann gibt es das Verdoppeln nicht")
+        XCTAssertFalse(einfuegen.contains("y: 4 + y"),
+                       "die Zeile 4 steht wieder fest in der Ansicht statt in `Leinwandgroesse.einsatz`")
+
+        let abschnitt = ausschnitt(text, von: "if groesse.iconEinfuegbar {", bis: "@ViewBuilder")
+        XCTAssertTrue(abschnitt.contains("ForEach(groesse.aufnehmbar)"),
+                      "das Menü bietet nicht mehr alle einsetzbaren Größen an, sondern wieder nur 8×8")
+        XCTAssertFalse(abschnitt.contains("iconsammlung"),
+                       "das Menü liest wieder am Bestand vorbei unmittelbar in der 8×8-Sammlung")
+    }
+
     /// **A4.** Das Blatt hinter „Öffnen…" sagt, was dort einzutragen ist —
     /// beschriftete Zeilen statt zweier nackter Felder —, es belegt Nummer und
     /// Titel aus dem Dateinamen vor, und es warnt **vor** dem Sichern, wenn

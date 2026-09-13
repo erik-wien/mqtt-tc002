@@ -137,6 +137,12 @@ public struct EditorBereichView: View {
 
     private var bestand: Editorbestand { .eigene }
 
+    /// Was sich in die gerade eingestellte Leinwand setzen laesst: kleinere
+    /// Icons aus dem schon gelesenen Bestand, nie Groesseres.
+    private var einfuegbare: [Editoreintrag] {
+        vorhandene.filter { groesse.aufnehmbar.contains($0.groesse) }
+    }
+
     private var farbe: Binding<Color> {
         Binding(get: { Color(hex: farbeHex) ?? Color(red: 0, green: 1, blue: 0.4) },
                 set: { farbeHex = $0.hexWert })
@@ -163,8 +169,6 @@ public struct EditorBereichView: View {
         Pixelfeld(breite: leinwand.breite, hoehe: leinwand.hoehe, punkte: leinwand.bild)
             ?? Pixelfeld()
     }
-
-    private var iconsammlung: Iconsammlung { Iconsammlung(schreibordner: Iconordner.eigene) }
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt.
     /// Dieselbe Grundlage wie unter „Senden" und „Verlauf": was die Uhr
@@ -397,15 +401,24 @@ public struct EditorBereichView: View {
                 // nichts „gewaehlt" stehen, das Icon wird eingefuegt.
                 // Deshalb die Fassung eines Befehlsknopfs — `menuStyle(.button)`
                 // schickt das Menue ueberhaupt erst durch einen Knopfstil.
+                //
+                // Nach Groesse gegliedert: Bei 16×52 stehen beide Icongroessen
+                // zur Wahl, und welche man nimmt, entscheidet, wie viel Platz
+                // daneben bleibt. Eine Liste, in der sie durcheinanderstehen,
+                // machte das Merkmal zur Suchaufgabe.
                 Menu("Icon wählen…") {
-                    ForEach(iconsammlung.alle(), id: \.nummer) { icon in
-                        Button(icon.name) { iconEinfuegen(icon) }
+                    ForEach(groesse.aufnehmbar) { quelle in
+                        Section(lok(quelle.beschriftung)) {
+                            ForEach(einfuegbare.filter { $0.groesse == quelle }) { eintrag in
+                                Button(eintrag.name) { iconEinfuegen(eintrag) }
+                            }
+                        }
                     }
                 }
                 .menuStyle(.button)
                 .knopfBefehl()
-                .disabled(iconsammlung.alle().isEmpty)
-                .help("Setzt ein vorhandenes 8×8-Icon senkrecht mittig ins Feld — an derselben Stelle, an der es auch unter „Senden“ läge.")
+                .disabled(einfuegbare.isEmpty)
+                .help("Setzt ein vorhandenes Icon ins Feld: in ein 16×16 verdoppelt, in die Anzeige in seiner Größe — an derselben Stelle, an der es auch unter „Senden“ läge.")
             }
         }
     }
@@ -1077,19 +1090,21 @@ public struct EditorBereichView: View {
             : lok("Nichts zu holen — der Grundschatz ist vollständig da.")
     }
 
-    /// Setzt ein 8×8-Icon als Ausgangspunkt ins Feld — senkrecht mittig wie
-    /// beim Senden (x: 0, y: 4). Durchsichtige Stellen im Icon lassen das Feld
-    /// dort unberuehrt, statt ein schwarzes Rechteck hineinzuradieren.
-    private func iconEinfuegen(_ icon: Icon) {
+    /// **C2.** „Icon einfuegen" ist der **eine** Weg, auf dem zwischen den
+    /// Groessen gerechnet wird — ein Befehl, den man aufruft, kein stiller
+    /// Nebeneffekt: 8×8 in ein 16×16 verdoppelt, 8×8 und 16×16 in die Anzeige
+    /// eingesetzt. Der umgekehrte Weg kommt nicht vor; Verkleinern zerstoert.
+    ///
+    /// Gerechnet wird im Kern (`Leinwand.iconEinsetzen`), und zwar erst auf
+    /// einer Kopie: Ein Schritt fuer „Rueckgaengig" entsteht nur, wenn
+    /// tatsaechlich etwas geschieht.
+    private func iconEinfuegen(_ eintrag: Editoreintrag) {
         do {
-            let pixel = try iconsammlung.pixel(fuer: icon)
+            let quelle = try bestand.oeffnen(eintrag)
+            var neue = leinwand
+            guard neue.iconEinsetzen(quelle.bild, groesse: eintrag.groesse) else { return }
             schritt()
-            for y in 0..<8 {
-                for x in 0..<8 {
-                    guard let farbe = pixel[y * 8 + x] else { continue }
-                    leinwand.setzen(x: x, y: 4 + y, farbe: farbe)
-                }
-            }
+            leinwand = neue
             arbeitsstandSichern()
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"

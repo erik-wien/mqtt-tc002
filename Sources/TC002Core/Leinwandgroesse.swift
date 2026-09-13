@@ -60,9 +60,34 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// ist der Name der Dateiname.
     public var mitNummer: Bool { breite == 8 && hoehe == 8 }
 
-    /// Ein fertiges 8×8 laesst sich dort als Ausgangspunkt einsetzen, wo eine
-    /// ganze Anzeige entsteht — nicht in ein Icon hinein.
-    public var iconEinfuegbar: Bool { sendbar }
+    /// Welche Groessen sich in eine Leinwand dieser Groesse setzen lassen:
+    /// nur **kleinere oder gleich grosse**.
+    ///
+    /// Der umgekehrte Weg kommt ausdruecklich nicht vor (entschieden am
+    /// 13.09.2026) — Verkleinern zerstoert. Abgeleitet aus den Massen und
+    /// nicht aufgezaehlt: Eine vierte Groesse haette hier nichts zu aendern.
+    public var aufnehmbar: [Leinwandgroesse] {
+        Self.allCases.filter { $0 != self && $0.breite <= breite && $0.hoehe <= hoehe }
+    }
+
+    /// Ob „Icon einfuegen" in dieser Groesse ueberhaupt etwas anzubieten hat.
+    /// Bei 8×8 nichts: Es ist die kleinste.
+    public var iconEinfuegbar: Bool { !aufnehmbar.isEmpty }
+
+    /// Wie ein Icon dieser Groesse in `ziel` gesetzt wird — mit welchem
+    /// Faktor hochgerechnet und mit welcher linken oberen Ecke. `nil`, wenn es
+    /// dort nicht hineingehoert.
+    ///
+    /// **Hochgerechnet wird nur in ein Icon.** 8×8 auf 16×16 heisst: Jedes
+    /// Pixel wird ein Viererblock, das Ergebnis fuellt die Flaeche. In die
+    /// **Anzeige** geht ein Icon dagegen in seiner Groesse — an genau der
+    /// Stelle, an der es auch unter „Senden" laege (`Meldungsbau.iconY`): ein
+    /// 8×8 senkrecht mittig auf Zeile 4, ein 16×16 ueber die volle Hoehe.
+    public func einsatz(in ziel: Leinwandgroesse) -> (faktor: Int, x: Int, y: Int)? {
+        guard ziel.aufnehmbar.contains(self) else { return nil }
+        let faktor = ziel.breite == ziel.hoehe ? ziel.hoehe / hoehe : 1
+        return (faktor, 0, (ziel.hoehe - hoehe * faktor) / 2)
+    }
 
     /// Eine leere Leinwand dieser Groesse.
     public var leereLeinwand: Leinwand { Leinwand(breite: breite, hoehe: hoehe) }

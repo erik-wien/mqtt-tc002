@@ -137,6 +137,40 @@ public struct Leinwand: Equatable, Sendable, Codable {
         aktuell = ziel
     }
 
+    /// „Icon einfuegen": setzt ein fertiges Icon in diese Leinwand.
+    ///
+    /// **Umrechnen ist ein Befehl, den man aufruft**, kein stiller
+    /// Nebeneffekt eines Imports (C2, entschieden am 13.09.2026). Wohin und
+    /// mit welchem Faktor, rechnet `Leinwandgroesse.einsatz(in:)`: 8×8 in ein
+    /// 16×16 verdoppelt, 8×8 und 16×16 in die Anzeige in ihrer Groesse. Der
+    /// umgekehrte Weg ist nicht vorgesehen und liefert `false`.
+    ///
+    /// Durchsichtige Quellpixel lassen die Flaeche unberuehrt, statt ein
+    /// schwarzes Rechteck hineinzuradieren. Betroffen ist nur das gerade
+    /// bearbeitete Einzelbild — eingesetzt wird ein Ausgangspunkt, nicht eine
+    /// Animation.
+    ///
+    /// `false` heisst: Es ist **nichts** geschehen. Die Ansicht merkt sich
+    /// dann auch keinen Schritt fuer „Rueckgaengig".
+    @discardableResult
+    public mutating func iconEinsetzen(_ pixel: [String?], groesse quelle: Leinwandgroesse) -> Bool {
+        guard let ziel = Leinwandgroesse.fuer(breite: breite, hoehe: hoehe),
+              let einsatz = quelle.einsatz(in: ziel),
+              pixel.count == quelle.breite * quelle.hoehe else { return false }
+        for qy in 0..<quelle.hoehe {
+            for qx in 0..<quelle.breite {
+                guard let farbe = pixel[qy * quelle.breite + qx] else { continue }
+                for dy in 0..<einsatz.faktor {
+                    for dx in 0..<einsatz.faktor {
+                        setzen(x: einsatz.x + qx * einsatz.faktor + dx,
+                               y: einsatz.y + qy * einsatz.faktor + dy, farbe: farbe)
+                    }
+                }
+            }
+        }
+        return true
+    }
+
     /// Schiebt die Grafik um `dx`/`dy` Pixel — das Pfeilkreuz.
     ///
     /// **Was am Rand hinausgeschoben wird, kommt auf der anderen Seite wieder

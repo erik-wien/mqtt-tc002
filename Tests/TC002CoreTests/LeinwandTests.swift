@@ -226,4 +226,69 @@ final class LeinwandTests: XCTestCase {
         XCTAssertEqual(l.bilder, vorher)
     }
 
+
+    // MARK: - Icon einsetzen (C2)
+
+    /// **C2.** Hochrechnen ist ein Befehl: Ein 8×8 in einem 16×16 wird
+    /// verdoppelt — jedes Pixel ein Viererblock, und zwar an der richtigen
+    /// Stelle. Ein Faktor, der nur die Zahl vergroessert, aber nicht die
+    /// Ecke mitrechnet, saehe fast richtig aus.
+    func testEinAchterIconWirdImSechzehnerVerdoppelt() {
+        var leinwand = Leinwandgroesse.icon16.leereLeinwand
+        var pixel = [String?](repeating: nil, count: 64)
+        pixel[1] = "#FF0000"          // x = 1, y = 0
+        pixel[8 * 7] = "#00FF00"      // x = 0, y = 7 — die untere Ecke
+
+        XCTAssertTrue(leinwand.iconEinsetzen(pixel, groesse: .icon8))
+        for (x, y) in [(2, 0), (3, 0), (2, 1), (3, 1)] {
+            XCTAssertEqual(leinwand.farbe(x: x, y: y), "#FF0000", "der Viererblock bei \(x)/\(y)")
+        }
+        XCTAssertNil(leinwand.farbe(x: 1, y: 0), "links daneben bleibt frei")
+        XCTAssertNil(leinwand.farbe(x: 4, y: 0), "rechts daneben bleibt frei")
+        XCTAssertEqual(leinwand.farbe(x: 0, y: 14), "#00FF00", "die untere Ecke landet unten")
+        XCTAssertEqual(leinwand.farbe(x: 1, y: 15), "#00FF00")
+    }
+
+    /// In die Anzeige geht ein Icon in seiner Groesse — ein 8×8 senkrecht
+    /// mittig auf Zeile 4, ein 16×16 ueber die volle Hoehe.
+    func testInDieAnzeigeGehtEinIconInSeinerGroesse() {
+        var leinwand = Leinwandgroesse.anzeige.leereLeinwand
+        var acht = [String?](repeating: nil, count: 64)
+        acht[0] = "#FF0000"
+        XCTAssertTrue(leinwand.iconEinsetzen(acht, groesse: .icon8))
+        XCTAssertEqual(leinwand.farbe(x: 0, y: 4), "#FF0000", "ein 8×8 schwimmt senkrecht mittig")
+        XCTAssertNil(leinwand.farbe(x: 1, y: 4), "nicht verdoppelt — sonst frisst es die Breite")
+
+        var sechzehn = [String?](repeating: nil, count: 256)
+        sechzehn[0] = "#0000FF"
+        var zweite = Leinwandgroesse.anzeige.leereLeinwand
+        XCTAssertTrue(zweite.iconEinsetzen(sechzehn, groesse: .icon16))
+        XCTAssertEqual(zweite.farbe(x: 0, y: 0), "#0000FF", "ein 16×16 füllt die volle Höhe")
+    }
+
+    /// Durchsichtige Quellpixel lassen die Flaeche in Ruhe, statt ein
+    /// schwarzes Rechteck hineinzuradieren.
+    func testDurchsichtigeStellenLassenDieFlaecheUnberuehrt() {
+        var leinwand = Leinwandgroesse.anzeige.leereLeinwand
+        leinwand.setzen(x: 3, y: 6, farbe: "#00FF66")
+        XCTAssertTrue(leinwand.iconEinsetzen([String?](repeating: nil, count: 64), groesse: .icon8))
+        XCTAssertEqual(leinwand.farbe(x: 3, y: 6), "#00FF66")
+    }
+
+    /// Und was nicht hineingehoert, richtet **nichts** an: kein halb
+    /// gesetztes Bild, kein Schritt fuer „Rueckgaengig".
+    func testWasNichtHineingehoertVeraendertNichts() {
+        var klein = Leinwandgroesse.icon8.leereLeinwand
+        XCTAssertFalse(klein.iconEinsetzen([String?](repeating: "#FFFFFF", count: 256),
+                                           groesse: .icon16),
+                       "ein 16×16 lässt sich nicht in ein 8×8 quetschen")
+        XCTAssertTrue(klein.istLeer, "eine abgelehnte Einsetzung hat trotzdem gemalt")
+
+        var gross = Leinwandgroesse.anzeige.leereLeinwand
+        XCTAssertFalse(gross.iconEinsetzen([String?](repeating: "#FFFFFF", count: 17),
+                                           groesse: .icon8),
+                       "ein Raster, das nicht zur genannten Größe passt, wird angenommen")
+        XCTAssertTrue(gross.istLeer)
+    }
+
 }

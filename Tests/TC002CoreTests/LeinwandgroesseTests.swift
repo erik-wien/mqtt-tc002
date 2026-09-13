@@ -26,11 +26,6 @@ final class LeinwandgroesseTests: XCTestCase {
         XCTAssertFalse(Leinwandgroesse.anzeige.mitNummer)
     }
 
-    /// „Icon einfuegen" setzt ein 8×8 in eine ganze Anzeige — nicht in ein Icon.
-    func testEinIconLaesstSichNurInDieAnzeigeSetzen() {
-        XCTAssertEqual(Leinwandgroesse.allCases.filter(\.iconEinfuegbar), [.anzeige])
-    }
-
     func testEineLeinwandFindetIhreGroesse() {
         XCTAssertEqual(Leinwandgroesse.fuer(Leinwand(breite: 8, hoehe: 8)), .icon8)
         XCTAssertEqual(Leinwandgroesse.fuer(Leinwand(breite: 16, hoehe: 16)), .icon16)
@@ -47,6 +42,49 @@ final class LeinwandgroesseTests: XCTestCase {
             let leer = groesse.leereLeinwand
             XCTAssertEqual(Leinwandgroesse.fuer(leer), groesse)
             XCTAssertTrue(leer.istLeer)
+        }
+    }
+
+    /// **C2.** Eingesetzt wird nur, was **kleiner oder gleich gross** ist.
+    /// Der umgekehrte Weg ist ausdruecklich nicht gemeint: Verkleinern
+    /// zerstoert, und genau das war der Mangel, den C1 und C2 beheben.
+    func testNurKleineresLaesstSichEinsetzen() {
+        XCTAssertEqual(Leinwandgroesse.icon8.aufnehmbar, [],
+                       "8×8 ist die kleinste — dort gibt es nichts einzusetzen")
+        XCTAssertEqual(Leinwandgroesse.icon16.aufnehmbar, [.icon8])
+        XCTAssertEqual(Leinwandgroesse.anzeige.aufnehmbar, [.icon8, .icon16])
+
+        XCTAssertFalse(Leinwandgroesse.icon8.iconEinfuegbar,
+                       "bei 8×8 darf „Icon einfügen“ nicht dastehen")
+        XCTAssertTrue(Leinwandgroesse.icon16.iconEinfuegbar,
+                      "bei 16×16 fehlt „Icon einfügen“ — dort gehört das Verdoppeln hin")
+        XCTAssertTrue(Leinwandgroesse.anzeige.iconEinfuegbar)
+
+        XCTAssertNil(Leinwandgroesse.anzeige.einsatz(in: .icon8), "verkleinern kommt nicht vor")
+        XCTAssertNil(Leinwandgroesse.icon16.einsatz(in: .icon8), "verkleinern kommt nicht vor")
+        XCTAssertNil(Leinwandgroesse.icon8.einsatz(in: .icon8), "in sich selbst auch nicht")
+    }
+
+    /// Hochgerechnet wird **nur in ein Icon**. In die Anzeige geht ein Icon in
+    /// seiner Groesse, an genau der Stelle, an der es auch unter „Senden"
+    /// laege — dieselbe Rechnung wie `Meldungsbau.iconY`, und nicht daneben
+    /// noch einmal hingeschrieben.
+    func testDerEinsatzVerdoppeltNurInEinIconUndTrifftSonstDieSendestelle() {
+        guard let inIcon = Leinwandgroesse.icon8.einsatz(in: .icon16) else {
+            return XCTFail("8×8 lässt sich nicht in ein 16×16 setzen")
+        }
+        XCTAssertEqual(inIcon.faktor, 2, "8×8 wird in einem 16×16 nicht verdoppelt")
+        XCTAssertEqual([inIcon.x, inIcon.y], [0, 0], "verdoppelt füllt es die ganze Fläche")
+
+        for quelle in [Leinwandgroesse.icon8, .icon16] {
+            guard let inAnzeige = quelle.einsatz(in: .anzeige) else {
+                return XCTFail("\(quelle.beschriftung) lässt sich nicht in die Anzeige setzen")
+            }
+            XCTAssertEqual(inAnzeige.faktor, 1,
+                           "in der Anzeige behält ein Icon seine Größe — sonst frisst es die Breite")
+            XCTAssertEqual(inAnzeige.x, 0)
+            XCTAssertEqual(inAnzeige.y, Meldungsbau.iconY(kante: quelle.hoehe),
+                           "das Icon sitzt nicht dort, wo es beim Senden läge")
         }
     }
 
