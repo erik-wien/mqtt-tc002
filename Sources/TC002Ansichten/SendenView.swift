@@ -614,13 +614,13 @@ public struct SendenView: View {
 
             Section("Lage") {
                 LabeledContent("Rand") {
-                    Stepper(String(rand), value: $rand, in: 0...3)
+                    Schrittwahl("Rand", wert: $rand, bereich: 0...3)
                 }
                 .disabled(vertikal == .mittig)
                 .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
 
                 LabeledContent("Abstand") {
-                    Stepper(String(luecke), value: $luecke, in: 0...3)
+                    Schrittwahl("Abstand", wert: $luecke, bereich: 0...3)
                 }
                 .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
@@ -721,8 +721,12 @@ public struct SendenView: View {
         }
     }
 
+    /// Die **eine** Haupthandlung dieser Ansicht. Gesperrt bleibt sie
+    /// sichtbar abgeblendet stehen, nicht verschwunden — wie „Verbinden …"
+    /// neben „Fertig" in der Vorlage.
     private var sendeKnopf: some View {
         Button(laeuft ? "Sende…" : "Senden") { senden() }
+            .knopfHaupthandlung()
             .keyboardShortcut(.defaultAction)
             .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
     }
@@ -771,13 +775,14 @@ struct MeldungLoeschenKnopf: View {
     @State private var laeuft = false
 
     var body: some View {
-        Button {
+        Button(role: .destructive) {
             laeuft = true
             let name = Meldungsplatz.name(fuer: platz)
             Task { await zustand.loeschen(name); laeuft = false }
         } label: {
             Image(systemName: "trash")
         }
+        .knopfZerstoerend()
         .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
         .help(lokf("Slot %d auf der Uhr löschen", platz))
     }
