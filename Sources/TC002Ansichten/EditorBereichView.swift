@@ -13,8 +13,8 @@ import UniformTypeIdentifiers
 /// `Leinwandgroesse`, nicht als Fallunterscheidung hier.
 ///
 /// **Aufbau nach dem Muster von Pages:** Seitenleiste — Leinwand — Inspektor.
-/// Der Inspektor hat drei Modi (Malen, Animation, Sichern), umgeschaltet ueber
-/// die Symbole rechts oben ueber ihm. Unter der Leinwand steht die Sendezeile —
+/// Der Inspektor hat drei Modi (Malen, Animation, Bestand), umgeschaltet ueber
+/// die Segmentwahl an seinem Kopf. Unter der Leinwand steht die Sendezeile —
 /// **nur bei 16×52**, denn ein Icon ist fuer sich keine Anzeige.
 ///
 /// Eine Ansicht mit Unterschieden, nicht zwei mit Aehnlichkeiten: In diesem
@@ -259,8 +259,26 @@ public struct EditorBereichView: View {
 
     // MARK: - Werkzeugleiste
 
-    /// Rueckgaengig, Wiederherstellen, die drei Modussymbole und der Schalter
-    /// fuer den Inspektor — rechts oben ueber ihm, wie bei Pages.
+    /// Rueckgaengig, Wiederherstellen und der Schalter fuer den Inspektor —
+    /// **drei** Symbole, nicht vier plus eine Segmentleiste.
+    ///
+    /// Die Modi standen bis 13.09.2026 hier mit drin und haben am iPad den
+    /// Knopf „Seitenleiste schliessen" ueberdeckt; „Rueckgaengig" fiel dabei
+    /// ganz aus der Leiste. Der Unterschied zum Mac ist nicht das Zeichnen,
+    /// sondern **wem die Leiste gehoert**: Am Mac ist es die Werkzeugleiste
+    /// des **Fensters** — mindestens 1140 Punkte breit, der Titel steht
+    /// woanders, und was nicht mehr hineinpasst, wandert in ein
+    /// Ueberlaufmenue. Am iPad ist es die Navigationsleiste der
+    /// **Detailspalte**: Fenster minus Seitenleiste minus Inspektor, also im
+    /// Hochformat und in geteilter Ansicht nur ein paar hundert Punkte, mit
+    /// dem Seitenleistenknopf links und dem Titel in der Mitte. Sie laeuft
+    /// nicht ueber, sie schiebt uebereinander — und die Segmentleiste war
+    /// mit Abstand das breiteste Stueck darin.
+    ///
+    /// Die Modi sitzen deshalb jetzt in `modusWahl`, am Kopf des Inspektors.
+    /// Das ist nicht der Notausgang, sondern die Vorlage: Numbers haelt genau
+    /// **eine** Kapsel mit Symbolen (Rueckgaengig, Teilen, Mitarbeit) und
+    /// darunter eine Segmentwahl fuer den Bereich des Inspektors.
     @ToolbarContentBuilder
     private var werkzeugleiste: some ToolbarContent {
         ToolbarItemGroup {
@@ -272,23 +290,6 @@ public struct EditorBereichView: View {
                 .disabled(!verlauf.kannVor)
                 .help("Wiederherstellen")
                 .accessibilityLabel("Wiederherstellen")
-
-            Picker("Inspektor", selection: $modus) {
-                // `.tag` ganz aussen: Ein Kennzeichen, das noch ein
-                // Modifikator umhuellt, findet die Auswahl nicht mehr
-                // verlaesslich — und ein Segmentschalter, dessen Wahl ins
-                // Leere greift, faellt beim Uebersetzen nicht auf.
-                Image(systemName: "paintbrush")
-                    .accessibilityLabel("Malen").tag(Inspektormodus.malen)
-                Image(systemName: "film")
-                    .accessibilityLabel("Animation").tag(Inspektormodus.animation)
-                Image(systemName: "tray.and.arrow.down")
-                    .accessibilityLabel("Bestand").tag(Inspektormodus.sichern)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .help("Was der Inspektor zeigt: Malen, Animation oder Sichern.")
-
             Button { zeigeInspektor.toggle() } label: { Image(systemName: "sidebar.trailing") }
                 .help("Inspektor ein- oder ausblenden")
                 .accessibilityLabel("Inspektor ein- oder ausblenden")
@@ -302,14 +303,18 @@ public struct EditorBereichView: View {
     /// Ueberschrift, Ausrichtung und Zeilenabstand von selbst, und Rollen bei
     /// Bedarf ebenso.
     private var inspektor: some View {
-        Form {
-            switch modus {
-            case .malen: malenAbschnitte
-            case .animation: animationAbschnitte
-            case .sichern: sichernAbschnitte
+        VStack(spacing: 0) {
+            modusWahl
+            Divider()
+            Form {
+                switch modus {
+                case .malen: malenAbschnitte
+                case .animation: animationAbschnitte
+                case .sichern: sichernAbschnitte
+                }
             }
+            .formStyle(.grouped)
         }
-        .formStyle(.grouped)
         // Wie unter „Senden": feste Breite am Mac, nachgebend auf dem iPad —
         // dort bleiben im ungünstigsten Fall 678 Punkte für Mitte und
         // Inspektor zusammen.
@@ -318,6 +323,34 @@ public struct EditorBereichView: View {
         #else
         .inspectorColumnWidth(min: 240, ideal: 330, max: 400)
         #endif
+    }
+
+    /// Die zweite Ebene der Vorlage: eine Segmentwahl fuer den Bereich, am Kopf
+    /// des Inspektors und nicht in der Werkzeugleiste (warum, steht dort).
+    ///
+    /// **Woerter statt Symbolen.** In der Leiste war Platz nur fuer drei
+    /// Zeichen, und `tray.and.arrow.down` fuer „Bestand" hat niemand geraten.
+    /// Hier ist die Spalte mindestens 240 Punkte breit — Numbers beschriftet
+    /// seine Segmentwahl aus demselben Grund („Tabelle · Zelle · Format ·
+    /// Anordnen") und haelt die Symbole der Kapsel vor.
+    ///
+    /// Ist der Inspektor ausgeblendet, ist auch die Wahl weg. Das ist richtig
+    /// und kein Verlust: Sie sagt, was **er** zeigt, und der Knopf, der ihn
+    /// zurueckholt, steht in der Leiste.
+    private var modusWahl: some View {
+        // `.tag` ganz aussen: Ein Kennzeichen, das noch ein Modifikator
+        // umhuellt, findet die Auswahl nicht mehr verlaesslich — und ein
+        // Segmentschalter, dessen Wahl ins Leere greift, faellt beim
+        // Uebersetzen nicht auf.
+        Picker("Inspektor", selection: $modus) {
+            Text("Malen").tag(Inspektormodus.malen)
+            Text("Animation").tag(Inspektormodus.animation)
+            Text("Bestand").tag(Inspektormodus.sichern)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     @ViewBuilder

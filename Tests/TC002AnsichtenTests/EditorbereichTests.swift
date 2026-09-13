@@ -182,4 +182,39 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertEqual(anzahl, 2,
                        "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
     }
+
+    /// **A3.** Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
+    ///
+    /// Am Mac gehört die Werkzeugleiste dem **Fenster** (mindestens 1140 Punkte,
+    /// Titel woanders, Überlaufmenü) — dort passte alles. Am iPad gehört sie der
+    /// Navigationsleiste der **Detailspalte**: Fenster minus Seitenleiste minus
+    /// Inspektor, mit Seitenleistenknopf links und Titel in der Mitte. Sie läuft
+    /// nicht über, sie schiebt übereinander; die Segmentleiste war das breiteste
+    /// Stück darin und hat den Seitenleistenknopf verdeckt, „Rückgängig“ fiel
+    /// ganz heraus. Die drei Modi sitzen deshalb am Kopf des Inspektors.
+    ///
+    /// Der Übersetzer hat dazu nichts zu sagen — beide Fassungen übersetzen.
+    func testDieModuswahlStehtImInspektorUndNichtInDerWerkzeugleiste() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let leiste = ausschnitt(text, von: "private var werkzeugleiste", bis: "private var inspektor")
+
+        XCTAssertFalse(leiste.contains("Picker("),
+                       "die Modusleiste liegt wieder in der Werkzeugleiste — am iPad verdeckt sie dort den Seitenleistenknopf")
+        for knopf in ["rueckgaengig()", "wiederherstellen()", "zeigeInspektor.toggle()"] {
+            XCTAssertTrue(leiste.contains(knopf),
+                          "„\(knopf)“ steht nicht mehr in der Werkzeugleiste — es muss auf beiden Geräten erreichbar bleiben")
+        }
+
+        XCTAssertTrue(ausschnitt(text, von: "private var inspektor", bis: "private var modusWahl")
+                        .contains("modusWahl"),
+                      "der Inspektor trägt die Moduswahl nicht mehr an seinem Kopf — dann gibt es keinen Weg mehr zu den drei Modi")
+
+        let wahl = ausschnitt(text, von: "private var modusWahl", bis: "private var malenAbschnitte")
+        XCTAssertTrue(wahl.contains(".pickerStyle(.segmented)"),
+                      "die Moduswahl ist keine Segmentwahl mehr")
+        for modus in ["Malen", "Animation", "Bestand"] {
+            XCTAssertTrue(wahl.contains("Text(\"\(modus)\").tag("),
+                          "„\(modus)“ fehlt in der Segmentwahl — oder das Kennzeichen sitzt nicht mehr ganz außen")
+        }
+    }
 }
