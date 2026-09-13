@@ -65,11 +65,12 @@ struct IconAuswahlView: View {
                 // Wechseln und Entfernen brauchen je eine eigene
                 // Trefferflaeche.
                 Button { gewaehltesIcon = nil } label: {
-                    Image(systemName: "xmark.circle.fill")
+                    Label(lok("Icon entfernen"), systemImage: "xmark.circle.fill")
                 }
+                .namensichtbarAmIPad()
                 .buttonStyle(.borderless)
                 .tint(.secondary)
-                .help("Icon entfernen")
+                .help(lok("Icon entfernen"))
             }
         }
         .sheet(isPresented: $zeigeBlatt) { blatt }
@@ -107,7 +108,7 @@ struct IconAuswahlView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.borderless)
-                            .help(lokf("„%@“ löschen", icon.name))
+                            .accessibilityLabel(lokf("„%@“ löschen", icon.name))
                             .offset(x: 2, y: -2)
                         }
                     }

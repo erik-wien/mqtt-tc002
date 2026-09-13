@@ -16,9 +16,6 @@ public struct AnzeigenView: View {
                 // Tatsache, das andere Erinnerung.
                 Text(liste.quelle == .geraet ? lok("vom Gerät gemeldet") : lok("von dieser App angelegt"))
                     .font(.caption).foregroundStyle(.secondary)
-                    .help(liste.quelle == .geraet
-                          ? "Die Uhr veröffentlicht selbst, welche Anzeigen auf ihr stehen — auch solche, die ein anderes Werkzeug angelegt hat."
-                          : "Solange die Uhr nichts gemeldet hat, zeigt die Liste, was diese App selbst an sie geschickt hat. Was ein anderes Werkzeug angelegt hat, fehlt darin.")
                 if let online = zustand.aktiveID.flatMap({ zustand.geraetOnline[$0] }) {
                     Text(online ? lok("· Uhr meldet sich online") : lok("· Uhr meldet sich offline"))
                         .font(.caption).foregroundStyle(.secondary)

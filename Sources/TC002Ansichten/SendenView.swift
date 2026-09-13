@@ -221,11 +221,6 @@ public struct SendenView: View {
         Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
     }
 
-    /// Hat die gewaehlte Schrift eine durchgesehene Liste? Nur dann sagt der
-    /// Einblendtext etwas ueber das Pixelraster; jede Systemschrift bekommt den
-    /// vollen Bereich und keine Begruendung, die es nicht gibt.
-    private var eigenesRaster: Bool { Pixelgroessen.abgesegnet[schrift] != nil }
-
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
     /// Wohin der gerasterte Text senkrecht geschoben wird.
@@ -246,18 +241,6 @@ public struct SendenView: View {
     /// in Versalien — dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
         weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
-    }
-
-    private var fettHilfe: String {
-        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
-        return fettWirkt ? lok("Fett")
-            : lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift)
-    }
-
-    private var grossHilfe: String {
-        kleinbuchstabenMoeglich
-            ? lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
-            : lokf("„%@“ kennt nur Großbuchstaben — der Schalter bliebe ohne Wirkung.", schrift)
     }
 
     /// Die Einzelbilder des gewaehlten Icons, fuer die Laufschrift, die sie
@@ -434,9 +417,10 @@ public struct SendenView: View {
                 Button {
                     zeigeInspektor.toggle()
                 } label: {
-                    Image(systemName: "sidebar.trailing")
+                    Label(lok("Formatierung ein- oder ausblenden"), systemImage: "sidebar.trailing")
                 }
-                .help("Formatierung ein- oder ausblenden")
+                .namensichtbarAmIPad()
+                .help(lok("Formatierung ein- oder ausblenden"))
             }
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
@@ -515,7 +499,6 @@ public struct SendenView: View {
                     Text("als Text").tag(SendeWeg.text)
                 }
                 .pickerStyle(.segmented).labelsHidden()
-                .help("„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute.")
             }
 
             // Immer da, gesperrt statt versteckt: Ein Abschnitt, der je nach
@@ -530,8 +513,6 @@ public struct SendenView: View {
                 }
                 .pickerStyle(.segmented).labelsHidden()
                 .disabled(!(weg == .pixel && !passt))
-                .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft.")
-                                              : lok("Gilt nur, wenn der Text nicht ins Display passt."))
             }
 
             Section("Icon") {
@@ -540,7 +521,6 @@ public struct SendenView: View {
                 // beim Laufen tut.
                 Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
                     .disabled(gewaehltesIcon == nil || !(weg == .pixel && !passt))
-                    .help("Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus.")
             }
 
             Section("Schrift") {
@@ -560,8 +540,6 @@ public struct SendenView: View {
                     }
                 }
                 .disabled(weg == .text)
-                .help(weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
-                                   : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                 // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                 // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -571,9 +549,6 @@ public struct SendenView: View {
                         Text(lokf("%d px", Int(g))).tag(g)
                     }
                 }
-                .help(eigenesRaster
-                      ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
-                      : lok("Schriftgröße"))
 
                 // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
                 // samt Textfarbe bei Pages — nicht je eine volle Zeile fuer ein
@@ -585,20 +560,15 @@ public struct SendenView: View {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
                             .toggleStyle(.button)
                             .disabled(!fettWirkt)
-                            .help(fettHilfe)
                             .accessibilityLabel(Text("Fett"))
                         Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
                             .toggleStyle(.button)
                             .disabled(!kleinbuchstabenMoeglich)
-                            .help(grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
                         // `labelsHidden` nimmt nur die sichtbare Beschriftung;
-                        // fuer VoiceOver bleibt „Farbe“ die des Waehlers. Der
-                        // Einblendtext ersetzt das Wort, das die eigene Zeile
-                        // vorher gezeigt hat.
+                        // fuer VoiceOver bleibt „Farbe“ die des Waehlers.
                         ColorPicker("Farbe", selection: farbe)
                             .labelsHidden()
-                            .help("Farbe")
                     }
                 }
             }
@@ -608,12 +578,10 @@ public struct SendenView: View {
                     Schrittwahl("Rand", wert: $rand, bereich: 0...3)
                 }
                 .disabled(vertikal == .mittig)
-                .help("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")
 
                 LabeledContent("Abstand") {
                     Schrittwahl("Abstand", wert: $luecke, bereich: 0...3)
                 }
-                .help("Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar.")
 
                 // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
                 // die Ausrichtung bei Pages.
@@ -776,8 +744,9 @@ struct MeldungLoeschenKnopf: View {
             let name = Meldungsplatz.name(fuer: platz)
             Task { await zustand.loeschen(name); laeuft = false }
         } label: {
-            Image(systemName: "trash")
+            Label(lokf("Slot %d auf der Uhr löschen", platz), systemImage: "trash")
         }
+        .namensichtbarAmIPad()
         .knopfZerstoerend()
         .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
         .help(lokf("Slot %d auf der Uhr löschen", platz))
