@@ -41,6 +41,7 @@ struct ZielauswahlView: View {
                 if zustand.zielIDs.isEmpty { zustand.zielIDs = gewaehlteIDs }
                 zeigeBlatt = true
             }
+            .knopfBefehl()
             .sheet(isPresented: $zeigeBlatt) { blatt }
         }
     }
@@ -51,7 +52,9 @@ struct ZielauswahlView: View {
 
             HStack {
                 Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
+                    .knopfBefehl()
                 Button("Keine") { zustand.zielIDs = [] }
+                    .knopfBefehl()
                 Spacer()
             }
 
@@ -98,6 +101,7 @@ struct ZielauswahlView: View {
             HStack {
                 Spacer()
                 Button("Schließen") { zeigeBlatt = false }
+                    .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
             }
         }

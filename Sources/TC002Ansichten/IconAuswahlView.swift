@@ -49,6 +49,7 @@ struct IconAuswahlView: View {
                     }
                 }
             }
+            .knopfBefehl()
             if gewaehltesIcon != nil {
                 // Entfernt die Wahl, ohne erst das Blatt zu oeffnen — gedaempft,
                 // damit der Hauptknopf (Icon wechseln) im Vordergrund bleibt.
@@ -70,7 +71,7 @@ struct IconAuswahlView: View {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
                     Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
-                        .buttonStyle(.bordered)
+                        .knopfBefehl()
                     ForEach(gefilterte, id: \.kennung) { icon in
                         ZStack(alignment: .topTrailing) {
                             Button { gewaehltesIcon = icon } label: {
@@ -103,6 +104,7 @@ struct IconAuswahlView: View {
             HStack {
                 Spacer()
                 Button("Schließen") { zeigeBlatt = false }
+                    .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
             }
         }
