@@ -1,5 +1,15 @@
 import Foundation
 
+/// Welche Art Geraet hinter einer `Uhr` steckt.
+///
+/// Heute gibt es nur eine Art, und nichts fragt danach — der Typ steht hier,
+/// damit `Uhr.typ` einen hat. Eine zweite Art kommt mit ihrem eigenen
+/// Durchgang und traegt dann ihren eigenen Fall ein; alte Einstellungen bleiben
+/// dabei lesbar, weil sie den Schluessel gar nicht erst enthalten.
+public enum Geraetetyp: String, Codable, Sendable {
+    case tc002
+}
+
 /// Eine eingerichtete Uhr. Praefix und MAC ermittelt die App selbst beim
 /// Abfragen — sie werden nie von Hand eingetragen.
 ///
@@ -13,14 +23,33 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     public var host: String
     public var praefix: String = ""
     public var mac: String = ""
+    /// **Optional, und das ist der ganze Grund, warum es heute schon da ist.**
+    ///
+    /// Ein nachtraeglich hinzugefuegtes **Pflichtfeld** macht bestehende
+    /// Einstellungen unlesbar: Swift setzt beim synthetisierten Decode keine
+    /// Vorgabewerte fuer fehlende Schluessel ein — auch ein Feld *mit*
+    /// Vorgabewert wirft `keyNotFound`. Gelesen wird die Liste an beiden
+    /// Stellen mit `try?` (`Einstellungen.gelesen`, `AppZustand.init`), es
+    /// gaebe also keinen Fehler und keine Meldung, sondern eine **leere
+    /// Uhrenliste** — in der App und im Werkzeug, beim ersten Start nach dem
+    /// Update. Nur ein `Optional` bekommt `decodeIfPresent`.
+    /// `EinstellungenTests` misst beide Richtungen nach.
+    ///
+    /// `nil` heisst „TC002", nicht „unbekannt": Jede bestehende Einrichtung
+    /// ist eine. Beim Schreiben faellt das Feld wieder weg, solange es `nil`
+    /// ist — eine aeltere Fassung liest die Datei damit weiterhin.
+    ///
+    /// Heute fragt nichts danach, und die Oberflaeche zeigt es nicht.
+    public var typ: Geraetetyp?
 
     public init(id: UUID = UUID(), name: String, host: String,
-                praefix: String = "", mac: String = "") {
+                praefix: String = "", mac: String = "", typ: Geraetetyp? = nil) {
         self.id = id
         self.name = name
         self.host = host
         self.praefix = praefix
         self.mac = mac
+        self.typ = typ
     }
 }
 

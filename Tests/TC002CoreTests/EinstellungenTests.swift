@@ -74,20 +74,70 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertNil(ohnePort.zugang(clientID: "x"))
     }
 
+    /// Eine Einstellungszeile, wie eine laufende Installation sie abgelegt hat:
+    /// ohne `typ`, denn den gab es beim Schreiben noch nicht.
+    private static let alteZeile = """
+    [{"id":"0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40","name":"Küche",\
+    "host":"10.0.0.1","praefix":"awtrix_a86b","mac":"AA:BB"}]
+    """
+
     /// Die Codable-Form von `Uhr` ist ein Dateiformat: Die App hat sie
     /// geschrieben, das Werkzeug liest sie. Wer die Feldnamen aendert, macht
     /// die Einstellungen einer laufenden Installation unlesbar.
     func testUhrBleibtLesbar() throws {
-        let json = """
-        [{"id":"0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40","name":"Küche",\
-        "host":"10.0.0.1","praefix":"awtrix_a86b","mac":"AA:BB"}]
-        """
-        let uhren = try JSONDecoder().decode([Uhr].self, from: Data(json.utf8))
+        let uhren = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteZeile.utf8))
         XCTAssertEqual(uhren.count, 1)
         XCTAssertEqual(uhren[0].name, "Küche")
         XCTAssertEqual(uhren[0].host, "10.0.0.1")
         XCTAssertEqual(uhren[0].praefix, "awtrix_a86b")
         XCTAssertEqual(uhren[0].mac, "AA:BB")
+        XCTAssertNil(uhren[0].typ, "kein `typ` in der Datei heisst: TC002, wie bisher")
+    }
+
+    /// Warum `typ` ein `Optional` ist — nachgemessen, nicht geglaubt.
+    ///
+    /// Swift setzt beim synthetisierten Decode **keine** Vorgabewerte fuer
+    /// fehlende Schluessel ein. Ein Pflichtfeld mit Vorgabe wirft deshalb
+    /// genauso `keyNotFound` wie eines ohne. Und weil beide Leser (`gelesen`
+    /// hier, `AppZustand.init` in der App) mit `try?` lesen und auf `?? []`
+    /// fallen, waere die Folge keine Fehlermeldung, sondern eine leere
+    /// Uhrenliste: alle eingerichteten Uhren still weg.
+    func testNurEinOptionalHaeltDieAlteDateiLesbar() throws {
+        /// Dieselbe Uhr, nur mit `typ` als Pflichtfeld **samt Vorgabewert**.
+        struct UhrMitPflichtfeld: Codable {
+            var id = UUID()
+            var name: String
+            var host: String
+            var praefix: String = ""
+            var mac: String = ""
+            var typ: Geraetetyp = .tc002
+        }
+        let alt = Data(Self.alteZeile.utf8)
+
+        XCTAssertThrowsError(try JSONDecoder().decode([UhrMitPflichtfeld].self, from: alt)) { fehler in
+            guard case DecodingError.keyNotFound(let schluessel, _) = fehler else {
+                return XCTFail("war stattdessen \(fehler)")
+            }
+            XCTAssertEqual(schluessel.stringValue, "typ",
+                           "der Vorgabewert traegt nicht — es fehlt der Schluessel")
+        }
+        // Und was die beiden Leser daraus machten: keine Meldung, keine Uhren.
+        XCTAssertNil(try? JSONDecoder().decode([UhrMitPflichtfeld].self, from: alt))
+
+        // Das Optional traegt.
+        XCTAssertEqual(try JSONDecoder().decode([Uhr].self, from: alt).count, 1)
+    }
+
+    /// Die Gegenrichtung: Solange `typ` nil ist, schreibt der Encoder ihn gar
+    /// nicht — `encodeIfPresent` bekommen nur Optionals. Eine aeltere Fassung
+    /// der App liest die Datei damit weiterhin.
+    func testEinLeererTypLandetNichtInDerDatei() throws {
+        let daten = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1")])
+        let text = String(decoding: daten, as: UTF8.self)
+        XCTAssertFalse(text.contains("typ"), "war: \(text)")
+
+        let mitTyp = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1", typ: .tc002)])
+        XCTAssertTrue(String(decoding: mitTyp, as: UTF8.self).contains("\"typ\":\"tc002\""))
     }
 
     /// Die Vorgaben muessen dieselben sein wie in der App — sie legt einen
