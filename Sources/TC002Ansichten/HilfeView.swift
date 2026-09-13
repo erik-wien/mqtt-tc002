@@ -30,7 +30,11 @@ public struct HilfeView: View {
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        // Nur am Mac — siehe GeraeteReferenzView: 760 Punkte hat kein iPad
+        // hochkant ausser dem 13-Zoll-Geraet.
+        #if os(macOS)
         .frame(minWidth: 760, minHeight: 540)
+        #endif
     }
 }
 

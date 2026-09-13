@@ -46,7 +46,13 @@ public struct GeraeteReferenzView: View {
                     systemImage: "doc.questionmark",
                     description: Text(ladefehler)
                 )
+                // Nur am Mac: Am iPad steht der Fehlerschirm in einer
+                // ganzflaechigen Einblendung, die auch 320 Punkte breit sein
+                // kann (Slide Over) — eine Forderung nach 480 schnitte ihn
+                // dort an.
+                #if os(macOS)
                 .frame(minWidth: 480, minHeight: 320)
+                #endif
             } else {
                 NavigationSplitView {
                     List(abschnitte, selection: $ausgewaehlt) { a in
@@ -66,7 +72,16 @@ public struct GeraeteReferenzView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
+                // Nur am Mac, wo das Fenster gezogen werden kann. Kein iPad
+                // erreicht 880 Punkte im Hochformat ausser dem 13-Zoll-Geraet
+                // (1024); mini (744), iPad (820) und Air 11" (834) schnitten
+                // die Referenz an, und in geteilter Ansicht jedes. Die
+                // zweispaltige Gliederung klappt unter iOS von selbst
+                // zusammen, wenn es eng wird — dafuer braucht sie keine
+                // Mindestbreite, sondern deren Abwesenheit.
+                #if os(macOS)
                 .frame(minWidth: 880, minHeight: 620)
+                #endif
                 .onAppear {
                     if ausgewaehlt == nil { ausgewaehlt = abschnitte.first?.id }
                 }

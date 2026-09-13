@@ -367,32 +367,24 @@ public struct SendenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            HStack(alignment: .center, spacing: 20) {
-                // Die fuenf Bloecke zeigen, was auf der Uhr liegt — Antippen
-                // waehlt den Platz und stellt, wenn belegbar, die Regler
-                // wieder her (siehe `slotWaehlen`). Der Papierkorb gehoert
-                // zum gewaehlten Platz und leert ihn — direkt daneben.
-                HStack(spacing: 6) {
-                    ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
-                        Button { slotWaehlen(i) } label: {
-                            Slotblock(platz: i,
-                                      zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                                      gewaehlt: platz == i)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    MeldungLoeschenKnopf(zustand: zustand, platz: platz,
-                                         belegt: belegtePlaetze.contains(platz))
+            // Breit: Bloecke und Dauer nebeneinander. Schmal: die Dauer
+            // rueckt darunter. Die fuenf Bloecke geben nicht nach — sie
+            // bringen ihre 44-Punkt-Trefferflaeche mit —, und mit Papierkorb
+            // und Dauerfeld kommt die Zeile auf rund 420 Punkte Mindestbreite.
+            // Der zweite Zweig ist damit ein Ueberlaufschutz, kein zweites
+            // Aussehen: Er kommt erst, wenn der erste nicht mehr passt. Am Mac
+            // ist das Fenster mindestens 1120 breit — dort kommt er nie, und
+            // nichts sieht anders aus als vorher.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 20) {
+                    slotZeile
+                    dauerFeld
+                    Spacer()
                 }
-                // Beschriftung links, Wert rechts, Einheit dahinter — nicht eine
-                // Ueberschrift ueber dem Feld.
-                LabeledContent("Dauer") {
-                    HStack(spacing: 4) {
-                        TextField("Uhr entscheidet", text: $dauerText).frame(width: 90)
-                        Text("s").foregroundStyle(.secondary)
-                    }
+                VStack(alignment: .leading, spacing: 8) {
+                    slotZeile
+                    dauerFeld
                 }
-                Spacer()
             }
 
             // Breit: Feld und Knopf in einer Zeile. Schmal: der Knopf rueckt
@@ -421,7 +413,16 @@ public struct SendenView: View {
         // Papierkorb, Dauer); das Eingabefeld gibt weiter nach, weil der
         // Sendeknopf bei Enge darunterrueckt. Mit Seitenleiste 170 und
         // Inspektor 340 bleiben bei 980 Fensterbreite 470 — reicht.
+        //
+        // Nur am Mac: Dort steht daneben ein `minWidth: 1120` am Fenster, die
+        // Forderung geht also immer auf. Auf dem iPad gibt es kein Fenster zu
+        // ziehen — in Slide Over sind es rund 320 Punkte, und eine Forderung
+        // nach 420 schnitte die Slot-Zeile rechts ab. Dort traegt stattdessen
+        // der zweite Zweig des `ViewThatFits` oben: „Dauer" rueckt unter die
+        // Bloecke.
+        #if os(macOS)
         .frame(minWidth: 420)
+        #endif
         // Alle Formatierungsregler sitzen im Inspektor rechts (siehe
         // `inspektor` unten) — auf macOS/iPadOS eine Seitenleiste, auf dem
         // iPhone (liefe diese Ansicht dort) ein Blatt von unten, ganz von
@@ -634,7 +635,49 @@ public struct SendenView: View {
         // Feste Breite aus demselben Grund wie bei der Seitenleiste links:
         // Schrumpft das Fenster, soll die Vorschau kleiner werden, nicht der
         // Inspektor. Die Zeilen darin sind auf 340 gerechnet.
+        //
+        // Auf dem iPad muss die Spalte nachgeben, sonst geht die Rechnung
+        // nicht auf: Hochkant verschwindet die Seitenleiste zwar hinter einem
+        // Knopf, aber auf dem kleinsten iPad bleiben 744 Punkte fuer Mitte und
+        // Inspektor zusammen, und in halber geteilter Ansicht auf dem
+        // 13-Zoll-Geraet rund 678. Bei kompakter Breite (Slide Over, Drittel)
+        // macht `.inspector` von selbst ein Blatt daraus — dort wirkt keine
+        // Spaltenbreite mehr.
+        #if os(macOS)
         .inspectorColumnWidth(340)
+        #else
+        .inspectorColumnWidth(min: 240, ideal: 340, max: 400)
+        #endif
+    }
+
+    /// Die fuenf Bloecke zeigen, was auf der Uhr liegt — Antippen waehlt den
+    /// Platz und stellt, wenn belegbar, die Regler wieder her (siehe
+    /// `slotWaehlen`). Der Papierkorb gehoert zum gewaehlten Platz und leert
+    /// ihn — direkt daneben.
+    private var slotZeile: some View {
+        HStack(spacing: 6) {
+            ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
+                Button { slotWaehlen(i) } label: {
+                    Slotblock(platz: i,
+                              zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
+                              gewaehlt: platz == i)
+                }
+                .buttonStyle(.plain)
+            }
+            MeldungLoeschenKnopf(zustand: zustand, platz: platz,
+                                 belegt: belegtePlaetze.contains(platz))
+        }
+    }
+
+    /// Beschriftung links, Wert rechts, Einheit dahinter — nicht eine
+    /// Ueberschrift ueber dem Feld.
+    private var dauerFeld: some View {
+        LabeledContent("Dauer") {
+            HStack(spacing: 4) {
+                TextField("Uhr entscheidet", text: $dauerText).frame(width: 90)
+                Text("s").foregroundStyle(.secondary)
+            }
+        }
     }
 
     private var sendeKnopf: some View {

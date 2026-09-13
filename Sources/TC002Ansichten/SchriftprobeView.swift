@@ -41,7 +41,12 @@ public struct SchriftprobeView: View {
             .frame(maxWidth: 720, alignment: .leading)
             .padding(24)
         }
+        // Nur am Mac. Ganzflaechig auf einem iPad reichen 560 Punkte immer;
+        // in Slide Over (rund 320) nicht, und dort schnitte die Forderung die
+        // Tabellen rechts ab, statt sie rollen zu lassen.
+        #if os(macOS)
         .frame(minWidth: 560, minHeight: 520)
+        #endif
         // Die Messung rastert dreiundsiebzig Zeichen je Schrift und Groesse und
         // braucht rund sechs Zehntelsekunden. Im `body` waere das ein
         // haengendes Fenster, deshalb einmal beim Erscheinen und abseits des
