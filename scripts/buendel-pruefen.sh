@@ -81,7 +81,8 @@ SWIFT
     # die App weiter und bleibt still deutsch; fehlt ein Dokument, zeigt das
     # Fenster einen Fehlerschirm. Beides verdeckt ein gruener Bau.
     mac_fehlt=0
-    for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md LICENSE; do
+    for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md \
+                   awtrix-ng-protokoll.md awtrix-ng-protocol.md LICENSE; do
         if [ ! -s "$RESSOURCEN/$pflicht" ]; then
             echo "fehlt   $pflicht unter $RESSOURCEN" >&2
             mac_fehlt=1
@@ -134,7 +135,7 @@ fi
 # Buendelwurzel; fehlt sie, steht statt des Dokuments ein Fehlerschirm, der
 # aufs Bauen mit ./build.sh verweist und damit am iPhone in die falsche
 # Richtung zeigt. Ein gruener Bau sagt darueber nichts.
-for dok in tc002-protokoll.md tc002-protocol.md; do
+for dok in tc002-protokoll.md tc002-protocol.md awtrix-ng-protokoll.md awtrix-ng-protocol.md; do
     if [ ! -s "$APP/$dok" ]; then
         echo "fehlt   $dok"
         fehlt=1

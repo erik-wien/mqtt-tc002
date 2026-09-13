@@ -54,6 +54,13 @@ targets:
         buildPhase: resources
       - path: docs/en/tc002-protocol.md
         buildPhase: resources
+      # Dieselben zwei fuer AWTRIX NG: Die Referenzansicht laesst zwischen den
+      # Gattungen waehlen, und eine Wahl, hinter der keine Datei liegt, zeigte
+      # den Fehlerschirm.
+      - path: docs/awtrix-ng-protokoll.md
+        buildPhase: resources
+      - path: docs/en/awtrix-ng-protocol.md
+        buildPhase: resources
     dependencies:
       - package: TC002
         product: TC002Core

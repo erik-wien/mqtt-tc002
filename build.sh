@@ -178,6 +178,9 @@ cp -R Resources/Schriften "$APP/Contents/Resources/Schriften"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 # Die englische Fassung, wenn es sie gibt — die Ansicht waehlt danach.
 [ -f docs/en/tc002-protocol.md ] && cp docs/en/tc002-protocol.md "$APP/Contents/Resources/tc002-protocol.md"
+# Dasselbe fuer AWTRIX NG, die zweite Gattung.
+cp docs/awtrix-ng-protokoll.md "$APP/Contents/Resources/awtrix-ng-protokoll.md"
+[ -f docs/en/awtrix-ng-protocol.md ] && cp docs/en/awtrix-ng-protocol.md "$APP/Contents/Resources/awtrix-ng-protocol.md"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 
 # Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,

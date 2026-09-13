@@ -10,32 +10,54 @@ import TC002Core
 public struct GeraeteReferenzView: View {
     @State private var ausgewaehlt: MarkdownAbschnitt.ID?
 
-    private let abschnitte: [MarkdownAbschnitt]
-    private let ladefehler: String?
+    /// **Zwei Geraete, zwei Dokumente.** Welches gilt, waehlt der Leser — nicht
+    /// die eingerichtete Uhr: Die Referenz ist Nachschlagewerk, kein Zustand
+    /// der App, und wer wissen will, was eine AWTRIX kann, hat meist noch
+    /// keine eingetragen.
+    @State private var gattung: Geraetetyp = .tc002
+    @State private var abschnitte: [MarkdownAbschnitt] = []
+    @State private var ladefehler: String?
 
     /// Die Referenz gibt es in zwei Sprachen, als zwei Dateien — nicht als
     /// uebersetzte Einzeltexte: ein durchgehendes Dokument gehoert am Stueck
     /// uebersetzt. Welche gilt, entscheidet dieselbe Wahl, die auch der Rest
     /// der Oberflaeche trifft; ohne englische Fassung bleibt es bei der
     /// deutschen.
-    private static var referenzdatei: URL? {
+    private static func referenzdatei(_ gattung: Geraetetyp) -> URL? {
         let englisch = Bundle.main.preferredLocalizations.first?.hasPrefix("en") == true
-        let namen = englisch ? ["tc002-protocol.md", "tc002-protokoll.md"]
-                             : ["tc002-protokoll.md"]
+        // Die englische Fassung zuerst, die deutsche als Rueckfall — eine
+        // fehlende Uebersetzung soll die Referenz nicht verschwinden lassen.
+        let namen: [String]
+        switch gattung {
+        case .tc002:
+            namen = englisch ? ["tc002-protocol.md", "tc002-protokoll.md"] : ["tc002-protokoll.md"]
+        case .awtrixNG:
+            namen = englisch ? ["awtrix-ng-protocol.md", "awtrix-ng-protokoll.md"]
+                             : ["awtrix-ng-protokoll.md"]
+        }
         return namen.lazy
             .compactMap { Bundle.main.resourceURL?.appendingPathComponent($0) }
             .first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
-    public init() {
-        if let url = Self.referenzdatei,
-           let text = try? String(contentsOf: url, encoding: .utf8) {
-            abschnitte = MarkdownDokument.gliedern(MarkdownDokument.parse(text))
-            ladefehler = nil
-        } else {
+    public init() {}
+
+    /// Gelesen wird beim Erscheinen und bei jedem Wechsel der Gattung
+    /// (`.task(id:)`), nicht im `init`: Die gewaehlte Gattung ist Zustand der
+    /// Ansicht, und ein `init` sieht sie nur einmal.
+    private func laden() {
+        guard let url = Self.referenzdatei(gattung),
+              let text = try? String(contentsOf: url, encoding: .utf8) else {
             abschnitte = []
+            ausgewaehlt = nil
             ladefehler = lok("Die Gerätereferenz liegt nicht im App-Paket. Das passiert, wenn die App nicht über ./build.sh gebaut, sondern direkt aus Xcode gestartet wurde.")
+            return
         }
+        abschnitte = MarkdownDokument.gliedern(MarkdownDokument.parse(text))
+        ladefehler = nil
+        // Beim Wechsel auf das erste Kapitel des neuen Dokuments: Eine Auswahl
+        // aus dem alten zeigte sonst auf nichts, und die rechte Seite bliebe leer.
+        ausgewaehlt = abschnitte.first?.id
     }
 
     public var body: some View {
@@ -55,8 +77,20 @@ public struct GeraeteReferenzView: View {
                 #endif
             } else {
                 NavigationSplitView {
-                    List(abschnitte, selection: $ausgewaehlt) { a in
-                        Text(a.titel).tag(a.id)
+                    VStack(spacing: 0) {
+                        // Zwei Eigennamen, keine uebersetzbaren Saetze —
+                        // deshalb `verbatim` und nicht `lok`.
+                        Picker("Gerät", selection: $gattung) {
+                            ForEach(Geraetetyp.allCases, id: \.self) { art in
+                                Text(verbatim: art.beschriftung).tag(art)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .padding(8)
+                        List(abschnitte, selection: $ausgewaehlt) { a in
+                            Text(a.titel).tag(a.id)
+                        }
                     }
                     .navigationSplitViewColumnWidth(min: 190, ideal: 230, max: 280)
                 } detail: {
@@ -87,6 +121,7 @@ public struct GeraeteReferenzView: View {
                 }
             }
         }
+        .task(id: gattung) { laden() }
     }
 }
 
