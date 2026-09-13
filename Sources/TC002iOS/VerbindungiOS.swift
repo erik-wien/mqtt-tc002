@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 import TC002Modell
 
@@ -12,6 +13,8 @@ struct VerbindungiOS: View {
     /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
     /// dem Port-Feld nur durch Tippen daneben heraus.
     @FocusState private var portFokus: Bool
+    @State private var zeigeHilfe = false
+    @State private var zeigeUeber = false
 
     var body: some View {
         NavigationStack {
@@ -20,6 +23,7 @@ struct VerbindungiOS: View {
                 Form {
                     uhrenAbschnitt
                     brokerAbschnitt
+                    ueberAbschnitt
                 }
             }
             .navigationTitle("Einstellungen")
@@ -31,6 +35,8 @@ struct VerbindungiOS: View {
             } }
         }
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $zeigeHilfe) { HilfeiOS() }
+        .sheet(isPresented: $zeigeUeber) { UeberiOS() }
         // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
         // ein eben erst eingetipptes Kennwort sonst verloren — es stünde nur im
         // Speicher, nicht im Schlüsselbund. Dasselbe Netz wie am Mac.
@@ -73,6 +79,19 @@ struct VerbindungiOS: View {
             }
             Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
                 .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Hilfe und Über am Fuß der Einstellungen. iOS stellt für „Über“ keine
+    /// Stelle bereit — macOS hat das Apple-Menü, hier gibt es nichts
+    /// dergleichen —, und die eingebürgerte Stelle ist das Ende der
+    /// App-eigenen Einstellungen. Die obere Leiste der Sendeansicht bleibt
+    /// bei ihren zwei Symbolen: ein drittes Fragezeichen ist auf dem iPhone
+    /// kein verbreitetes Muster.
+    private var ueberAbschnitt: some View {
+        Section {
+            Button("Hilfe") { zeigeHilfe = true }
+            Button("Über MQTT-TC002") { zeigeUeber = true }
         }
     }
 
