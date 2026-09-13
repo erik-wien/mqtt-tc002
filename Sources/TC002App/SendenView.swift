@@ -1,4 +1,4 @@
-import AppKit
+import CoreText
 import SwiftUI
 import TC002Ansichten
 import TC002Core
@@ -148,14 +148,14 @@ struct SendenView: View {
     /// Loecher in den Staemmen.
     static let geeigneteSchriften = ["Micro 5", "Silkscreen", "Tiny5", "Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
-    /// Einmal ermittelt statt bei jedem Neuaufbau — NSFontManager befragt das System.
-    /// Gefiltert auf das, was dieser Mac tatsaechlich installiert hat; nicht jede
-    /// dieser sechs Schriften bringt jedes macOS mit. Bleibt danach nichts uebrig
-    /// (kaum vorstellbar, aber moeglich), faellt es auf die Systemschrift zurueck,
-    /// statt eine leere Auswahl zu zeigen.
+    /// Einmal ermittelt statt bei jedem Neuaufbau — CoreText befragt das System.
+    /// Gefiltert auf das, was dieser Rechner tatsaechlich installiert hat; nicht
+    /// jede dieser sechs Schriften bringt jedes System mit. Bleibt danach nichts
+    /// uebrig (kaum vorstellbar, aber moeglich), faellt es auf die Systemschrift
+    /// zurueck, statt eine leere Auswahl zu zeigen.
     private static let schriftarten: [String] = {
-        // NSFontManager.availableFontFamilies listet Schriften, die nur fuer
-        // diesen Prozess angemeldet sind, NICHT auf — die mitgelieferten fielen
+        // Der Schriftverwalter von AppKit listet Schriften, die nur fuer diesen
+        // Prozess angemeldet sind, NICHT auf — die mitgelieferten fielen
         // dadurch immer heraus, obwohl CoreText sie kennt. Deshalb CoreText
         // direkt fragen: Kommt derselbe Familienname zurueck, ist die Schrift
         // da; sonst liefert es klaglos eine Ersatzschrift.
@@ -163,10 +163,17 @@ struct SendenView: View {
             let f = CTFontCreateWithName(name as CFString, 12, nil)
             return (CTFontCopyFamilyName(f) as String) == name
         }
-        return gefiltert.isEmpty
-            ? [NSFont.systemFont(ofSize: NSFont.systemFontSize).familyName ?? "Helvetica"]
-            : gefiltert
+        return gefiltert.isEmpty ? [systemschrift()] : gefiltert
     }()
+
+    /// Der Familienname der Systemschrift, ueber CoreText statt ueber AppKit —
+    /// dieselbe Zeile gilt damit auch auf dem iPad. `0` als Groesse heisst
+    /// „Vorgabegroesse"; welche es ist, spielt fuer den Familiennamen keine
+    /// Rolle. Der Rueckfall bleibt "Helvetica".
+    private static func systemschrift() -> String {
+        guard let f = CTFontCreateUIFontForLanguage(.system, 0, nil) else { return "Helvetica" }
+        return CTFontCopyFamilyName(f) as String
+    }
 
     private var sammlung: Iconsammlung {
         Iconsammlung(schreibordner: Iconordner.eigene)
