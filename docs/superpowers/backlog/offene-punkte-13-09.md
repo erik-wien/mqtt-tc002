@@ -2,9 +2,18 @@
 
 ## Stand am Morgen des 14.09.
 
-**597 Tests gruen** (Abend: 443), `0 ohne Uebersetzung`, beide Buendel
-vollstaendig. Nichts gepusht — der Zweig `main` liegt lokal, 13 Commits vor dem
+**598 Tests gruen** (Abend: 443), `0 ohne Uebersetzung`, beide Buendel
+vollstaendig. Nichts gepusht — der Zweig `main` liegt lokal, 15 Commits vor dem
 Stand von gestern abend.
+
+Die Zahl ist an einem sauberen `git archive`-Auschecken gemessen, **zwoelfmal
+hintereinander gruen**. Das Wiederholen hatte einen Grund: Ein voller Lauf fiel
+etwa jeder zehnte ueber `testOhneAdresseWirdNichtGefragt`. Es sah aus wie ein
+Fehler in `AppZustand` und war Testisolation — die Aufzeichnung des
+HTTP-Doppelgaengers ist statisch, die Abrufe laufen losgeloest, und ein
+Nachzuegler aus einem frueheren Test landete in der Aufzeichnung des naechsten,
+nachdem der sie geleert hatte. Sie gehoert jetzt der Probe statt dem Prozess
+(`d24dd64`).
 
 ### Was du selbst tun musst, bevor etwas davon wirkt
 
