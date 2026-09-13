@@ -197,6 +197,12 @@ public struct SendenView: View {
     private var mitIcon: Bool { gewaehltesIcon != nil }
     /// Acht ohne Icon — der Wert zaehlt dann ohnehin nicht.
     private var iconKante: Int { gewaehltesIcon?.kante ?? 8 }
+
+    /// Welche Geraetefront die Vorschau zeigt — die der Uhr, auf die sich die
+    /// Vorschau bezieht (`referenzUhr`, dieselbe, aus der auch die Bloecke
+    /// lesen). `nil` heisst `.tc002`, wie bei `Uhr.typ`: Ohne eingerichtete Uhr
+    /// zeigt die Vorschau die Werksfirmware, nicht gar nichts.
+    private var geraeteart: Geraetetyp? { zustand.referenzUhr?.typ }
     private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon, iconKante: iconKante) }
     private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon, iconKante: iconKante) }
 
@@ -321,16 +327,23 @@ public struct SendenView: View {
                 // nicht und können es nicht zeigen.
                 //
                 // Die Kantenlaenge richtet sich nach dem Platz, nicht nach einer
-                // festen Zahl: Der Geraeterahmen ist 680/584 mal so breit und
-                // 356/177 mal so hoch wie das Pixelfeld darin. Was in Breite und
+                // festen Zahl: Der Geraeterahmen ist um ein festes Verhaeltnis
+                // breiter und hoeher als das Pixelfeld darin. Was in Breite und
                 // Hoehe passt, bestimmt die Groesse; die Uhr steht mittig.
+                //
+                // **Die Faktoren kommen aus der Zeichnung, nicht von Hand.**
+                // Bis hierher standen sie als 680/584 und 356/177 abgeschrieben
+                // da — die Masse der TC002-Front. Seit es eine zweite Geraeteart
+                // gibt, waeren sie fuer diese schlicht falsch, und der Rahmen
+                // wuerde still beschnitten: keine Meldung, nur ein Bild, das
+                // nicht ganz passt.
                 GeometryReader { geo in
-                    let breitenFaktor = 680.0 / 584.0
-                    let hoehenFaktor = 356.0 / 177.0
-                    let nachBreite = (geo.size.width - 24) / (Double(feld.breite) * breitenFaktor)
-                    let nachHoehe = (geo.size.height - 24) / (Double(feld.hoehe) * hoehenFaktor)
+                    let zeichnung = Geraetezeichnung.fuer(geraeteart)
+                    let nachBreite = (geo.size.width - 24) / (Double(feld.breite) * zeichnung.breitenFaktor)
+                    let nachHoehe = (geo.size.height - 24) / (Double(feld.hoehe) * zeichnung.hoehenFaktor)
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
                     VorschauView(feld: feld, kantenlaenge: kante,
+                                typ: geraeteart,
                                 icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
                                 iconKante: iconKante,
                                 laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)

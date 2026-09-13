@@ -224,7 +224,8 @@ struct SendeniOS: View {
                     VStack(spacing: 14) {
                         VorschauiOS(feld: Meldungsbau.feld(optionen, mitIcon: mitIcon),
                                     icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
-                                    laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                                    laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil,
+                                    typ: zustand.referenzUhr?.typ)
                         if weg == .pixel && !passt {
                             Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                                 .font(.caption).foregroundStyle(.secondary)
