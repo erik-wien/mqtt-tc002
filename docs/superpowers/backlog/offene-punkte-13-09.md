@@ -1,29 +1,118 @@
-# Offene Punkte, Stand 13.09.2026 abends
+# Offene Punkte, Stand 14.09.2026 morgens
 
-**Stand am Abend des 13.09. — was erledigt ist:** A1, A3 (Editorfehler), B1
-(Schaltflaechen- und Feldstil durchgaengig), B2, B3, B4, A4, C1, C2 (Editor),
-F1 (Schluesselbund aus den Tests), F5 (Eingabetaste), F6 (Ternaere), B6
-(Nutzlastwarnung), dazu Umbenennen in der Bestandsliste, das geladene Bild auf
-der Leinwand samt Rueckfrage, und die Ulanzi-Werknummer fuer 16×52.
-**443 Tests gruen.**
+## Stand am Morgen des 14.09.
 
-**Zuletzt in Arbeit:** Abschnitt D, die Betriebsart HTTP/MQTT je Uhr — Kern,
-Werkzeug und Kurzbefehle sind committet, die Ansichten waren noch offen.
+**597 Tests gruen** (Abend: 443), `0 ohne Uebersetzung`, beide Buendel
+vollstaendig. Nichts gepusht — der Zweig `main` liegt lokal, 13 Commits vor dem
+Stand von gestern abend.
 
-**Reihenfolge danach, vom Auftraggeber bestaetigt:** iCloud (E1) → AWTRIX NG
-(E2/E2a). Begruendung fuer das Vorziehen der Betriebsart: AWTRIX braucht
-dieselbe Verzweigung im Sendeweg; andersherum baut man sie zweimal.
+### Was du selbst tun musst, bevor etwas davon wirkt
 
-**Offen geblieben:** B5 (`.help` am iPad unsichtbar), A5 (16×16 stellt die
-Regler nicht her), F2 (Werkzeug sieht nur 8×8), F1a (zwei Tests am echten
-Schluesselbund), F3 (vermischter Commit), dazu **zwei Stellen mit demselben
-unuebersetzten Wortpaar** „Am Broker angemeldet" (`VerbindungView:55`,
-`ZielauswahlView:85`). Spaeter: MQTT 5, Rahmengrafiken.
+1. **iCloud in Xcode freischalten.** „Signing & Capabilities" → „+ Capability"
+   → **iCloud**, darin **iCloud Documents** und **Key-value storage**,
+   Behaelter `iCloud.cloud.eriks.mqtt-tc002`. Danach die Aenderung in Xcode
+   **wegwerfen** — sie steht in der `.xcodeproj`, die nicht eingecheckt ist;
+   gebraucht war nur der Eintrag im Konto. Dann in `project.yml` die eine Zeile
+   `CODE_SIGN_ENTITLEMENTS: Resources/MQTT-TC002.entitlements` entkommentieren
+   und `xcodegen generate`. Ein Simulatorbau gelingt auch ohne all das
+   (nachgemessen) und beweist darum nichts — **aufs Geraet bauen**.
+   Mac: Profil als `.provisionprofile` laden, dann
+   `TC002_PROFIL=<pfad> TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements ./build.sh`.
+2. **Ein Schluesselbundeintrag, den ich nicht wegraeumen konnte.** Unter dem
+   Dienst `cloud.eriks.mqtt-tc002` liegt ein Konto `test-<UUID>` mit dem Wert
+   „geheim" — aus einer Mutationsprobe entstanden. Jeder Aufraeumversuch haette
+   einen Schluesselbunddialog auf deinen Bildschirm gezogen, und das war die
+   Regel, die ich nicht brechen wollte. Er stoert nichts (die App sucht
+   Kennwoerter nur unter Broker-Kontonamen); in der Schluesselbundverwaltung
+   ist er in zehn Sekunden geloescht. Dass so etwas nicht wieder entsteht, ist
+   der Inhalt von F1a (unten).
+3. **Das Brokerkennwort `claude-lesen` gehoert gewechselt** — es stand im
+   Gespraechsverlauf.
 
-**Eine Prozesslehre des Tages:** Zwei Agenten haben mit `commit -a` den Index
-eines Parallelagenten eingesammelt. Kuenftig **nur `git add <datei>`** — das
-stand im Auftrag, wurde aber zweimal missachtet.
+### Was diese Nacht entstanden ist
 
+**E1 — iCloud-Abgleich (gebaut, ungefahren).** Icons (8×8 und 16×16), Bilder,
+Slotgedaechtnis und Einstellungen ziehen in einen iCloud-Behaelter um, wenn man
+den Schalter in den Einstellungen umlegt. **Umgezogen wird durch Kopieren**,
+der oertliche Bestand bleibt liegen — der Rueckweg ist damit eingebaut.
+Einstellungen werden **je Uhr** zusammengefuehrt, nicht am Stueck. Das
+Kennwort bleibt draussen. *Ungefahren heisst ungefahren:* Ob
+`NSUbiquitousKeyValueStore` unter der Signatur traegt und wie lange ein Umzug
+mit vollem Bestand dauert, weiss niemand. `Ablageort.herunterladenAnstossen()`
+stoesst an und **wartet nicht** — ein Bestand, der zunaechst unvollstaendig
+aussieht, ist die wahrscheinlichste Ueberraschung.
+
+**E2 — AWTRIX NG als zweite Gattung.** Eine Uhr laesst sich als AWTRIX NG
+fuehren; Themen, Nutzlast, HTTP-Verben und die Belegungsabfrage sind eigene.
+Die gefaehrlichste Abweichung: **das Praefix hat keinen MAC-Anhang**, und NG
+schweigt zu einem Thema ohne Route. Neu und wertvoll: NG antwortet auf
+`<Thema>/result` — eine Abweisung wird damit **sichtbar**, Erfolg bleibt still.
+Was NG nicht kann, sagt die Oberflaeche jetzt auch: Schriftart, Groesse, Fett,
+Rand, Abstand und senkrechte Ausrichtung sind gesperrt und begruenden sich;
+rechtsbuendig wird **gar nicht erst angeboten** (NG naehme es an und setzte
+linksbuendig — die Oberflaeche zeigte etwas anderes als die Uhr); ein gemaltes
+Bild laesst sich nicht mehr an eine Uhr schicken, die keins annimmt.
+
+**E2a — der Geraeterahmen ist gezeichnet, nicht mehr eingesetzt.** Beide
+Fronten aus **einem** `Canvas`, die Maße sind Daten. Die AWTRIX-Front: gerade
+Ansicht, heller Koerper, rundere Ecken (13,9 % gegen 4,8 %), keine Tasten oben,
+unten links „Ulanzi TC001", groessere und hart eckige Punkte. **Die
+AWTRIX-Maße sind entworfen, nicht gemessen** — kein Geraet angesehen.
+
+**A5 erledigt, und es war kein vergessliches Gedaechtnis.** `merken` bildete
+die Pruefsumme ueber ein Bild mit Icon-Kante 8, waehrend ein 16×16 gesendet
+wurde; `slotWaehlen` fand darum nie eine Uebereinstimmung und schloss auf einen
+fremden Absender. `Slotstand.iconKante` haelt die Zahl jetzt fest.
+
+**Weiter erledigt:** F2 (Werkzeug und Kurzbefehle sehen beide Icon-Bestaende),
+F1a (Schluesselbundtests schreiben in einen eigenen Dienst), B5 nachgebessert
+(zustandsabhaengige Einblendtexte und die an reinen Symbolknoepfen sind
+zurueck — sie gehoerten nie weg), die Geraetereferenz kennt beide Gattungen und
+faehrt in beiden Buendeln mit. Die doppelte Wendung „Am Broker angemeldet" hat
+sich unterwegs erledigt: Sie steht nur noch in `Brokerzeichen.swift`.
+
+### Was als naechstes ansteht
+
+1. **`Meldungsbau` auf eine freie Feldgroesse.** Die Vorschau zeigt fuer eine
+   NG-Uhr weiterhin 52×16, obwohl das Geraet 32×8 hat. `Uhr.anzeigemass` liegt
+   bereit, aber `Pixelfeld.breiteStandard`/`hoeheStandard` stecken an **48
+   Stellen** im Quelltext, mitten in der Rasterung, an der die funktionierende
+   TC002 haengt. Das ist ein eigener Durchgang mit eigener Testreihe und nichts
+   fuer nebenbei.
+2. **Der Grund einer Sperre ist am iPad und am iPhone unsichtbar.** Ein
+   gesperrter Regler ohne erkennbaren Anlass — kein neues Loch (es stand schon
+   fuer `fettWirkt` offen), aber es betrifft jetzt deutlich mehr Zeilen. Eine
+   sichtbare Fassung ist eine Entscheidung ueber die Oberflaeche und gehoert
+   dir, nicht mir.
+3. **Das Icon „ein bisschen nach rechts"** auf NG — aus deinen Worten:
+   > „Damit sollten wir gut zurecht kommen, wenn wir 8x8 Grafiken und <12px
+   > Schriften verwenden. Das einzig spezielle ist, dass das Icon ein bisschen
+   > nach rechts ruecken muesste. Der Rest ist Standard."
+
+   Nicht gebaut: Ohne Blick aufs Geraet waere jeder Pixelwert geraten.
+4. **Die verwaiste SVG.** Niemand zeichnet sie mehr; sie haengt noch an
+   `Bilder.swift`, `Package.swift`, dem actool-Schritt in `build.sh` und einem
+   Ladeversuch in `scripts/buendel-pruefen.sh`. Geschlossene Liste, ein
+   Handgriff.
+5. **Eine Schriftprobe fuer acht Zeilen.** `Pixelgroessen.abgesegnet` ist an
+   16 Pixeln durchgesehen und gilt auf NG nicht. Die Beurteilung ist deine.
+6. `abfragen` ueberschreibt eine von Hand gewaehlte Geraeteart. Eine NG hinter
+   Basic-Auth bleibt unbedienbar (kein Praefix zu holen).
+
+### Zwei Anmerkungen zur Arbeitsweise
+
+- **`dc54504` baut fuer sich allein nicht** — `AppZustand` zieht erst in
+  `eba8ece` nach. Nicht korrigiert, weil ein `reset --soft` ueber zwei Commits
+  bei parallel arbeitenden Agenten deren Arbeit mitreisst. Fuer `git bisect`
+  eine Stolperstelle.
+- **Gemeldete Baufehler sind nicht ohne weiteres echt.** Vier Prozesse
+  schrieben zeitweise in denselben Ableitungsordner; ein Linkerfehler
+  verschwand im zweiten Lauf. Jede Zahl in diesem Bericht ist an einem sauberen
+  `git archive`-Auschecken nachgemessen, nicht im Arbeitsbaum.
+
+---
+
+## Stand vom Abend des 13.09. (Verlauf)
 ---
 
 Zusammengefuehrt aus der Liste des Auftraggebers und dem, was aus den
