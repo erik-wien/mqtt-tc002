@@ -90,7 +90,8 @@ public enum HilfeInhalt {
 
     /// Wann ein Text steht und wann er laeuft — `Meldungsbau.passt` entscheidet
     /// das auf beiden Geraeten gleich. Wo die Wahl sitzt, sagt jede Oberflaeche
-    /// selbst: am Mac ueber dem Textfeld, am iPhone im Blatt „Format“.
+    /// selbst: am Mac und am iPad im Inspektor rechts („Senden als“), am
+    /// iPhone im Blatt „Format“.
     public static let wegeRegel: [Hilfebaustein] = [
         .absatz("Bei „als Pixel“ entscheidet die App selbst, ob der Text stehenbleibt oder durchläuft — es gibt dafür keinen eigenen Schalter."),
         .tabelle([

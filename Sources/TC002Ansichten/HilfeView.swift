@@ -104,11 +104,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.blockwissenSchluss
                 + [
                     .ueberschrift("Weg: als Pixel oder als Text"),
-                    .absatz("Über dem Textfeld liegt die Wahl „Weg“ mit zwei Einträgen: „als Pixel“ (Vorgabe) und „als Text“."),
+                    .absatz("Ganz oben im Inspektor rechts steht unter „Senden als“ die Wahl des Wegs, mit zwei Einträgen: „als Pixel“ (Vorgabe) und „als Text“."),
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text beim Weg „als Pixel“, erscheint über der Formatleiste eine Einstellung, die es sonst nicht gibt: „Tempo“ — langsam, mittel oder schnell. Darunter unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
+                    .absatz("Läuft der Text beim Weg „als Pixel“, wird im Inspektor der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da. Unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
                     .absatz("Die Größe ist der Grund für die Angabe: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage). Wird es auffällig groß, sagt ein zusätzlicher Hinweis das."),
                     .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Dafür kann sie etwas, das „als Pixel“ nicht kann: Passt der Text nicht aufs Display, läuft er von selbst durch, ohne dass die App dafür ein GIF bauen muss — wie schnell, stellt „Scrolltempo“ unter „Einstellungen“ bei der aktiven Uhr ein (Gerätereferenz, §5.4). Eine Breitenwarnung gibt es hier deshalb nicht: Laufen ist auf diesem Weg der Normalfall, kein Fehler."),
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
@@ -126,9 +126,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, sagt die App das vor dem Senden: welche Zeichen betroffen sind, und dass „als Pixel“ sie kann. Ohne diese Warnung würde die Uhr die Zeichen wortlos weglassen."),
-                    .ueberschrift("Formatleiste"),
-                    .absatz("Oberhalb des Textfelds sitzt die Formatleiste, wie in einem Textprogramm: Schriftart, Größe, ein Fett- und ein Großbuchstaben-Knopf sowie zwei Gruppen aus je drei Symbolknöpfen für die waagrechte und die senkrechte Ausrichtung — welche Richtung ein Knopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
-                    .absatz("Für den Weg „als Pixel“ gilt die ganze Leiste, auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
+                    .ueberschrift("Formatierung"),
+                    .absatz("Alles Formatierende sitzt rechts im Inspektor, in fünf Abschnitten: „Senden als“ (der Weg), „Laufschrift“ (das Tempo), „Icon“, „Schrift“ (Schriftart, Größe und in der Zeile „Stil“ Fett, Großbuchstaben und die Farbe) und „Lage“ (Rand, Abstand, waagrechte und senkrechte Ausrichtung). Der Knopf rechts in der Werkzeugleiste blendet den Inspektor ein und aus; welche Richtung ein Symbolknopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
+                    .absatz("Für den Weg „als Pixel“ gilt der ganze Inspektor, auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
                 ]
                 + HilfeInhalt.schriftart
                 + [
@@ -141,12 +141,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.breiteUndAusrichtung
                 + [
                     .ueberschrift("Icon wählen"),
-                    .absatz("Neben dem Textfeld steht ein Knopf, der ohne Wahl „Icon wählen…“ heißt und mit Wahl Vorschaubild und Namen des Icons zeigt — in beiden Fällen ein Druck, der ein Blatt mit Suchfeld und Raster öffnet, dazu ein Eintrag „ohne“, um die Wahl im Blatt loszuwerden, und „Schließen“ zum Beenden. Ist ein Icon gewählt, steht daneben ein kleiner Knopf zum Entfernen, ohne das Blatt erst öffnen zu müssen."),
+                    .absatz("Im Abschnitt „Icon“ des Inspektors steht ein Knopf, der ohne Wahl „Icon wählen…“ heißt und mit Wahl Vorschaubild und Namen des Icons zeigt — in beiden Fällen ein Druck, der ein Blatt mit Suchfeld und Raster öffnet, dazu ein Eintrag „ohne“, um die Wahl im Blatt loszuwerden, und „Schließen“ zum Beenden. Ist ein Icon gewählt, steht daneben ein kleiner Knopf zum Entfernen, ohne das Blatt erst öffnen zu müssen."),
                 ]
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Sendeziel"),
-                    .absatz("Rechts vom Sendeknopf steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, Präfix und derselbe Verbindungsstand wie unter „Einstellungen“, dazu ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
+                    .absatz("Oben rechts über der Vorschau steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, Präfix und derselbe Verbindungsstand wie unter „Einstellungen“, dazu ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
                     .absatz("Eine Uhr ohne Präfix ist im Blatt als solche gekennzeichnet — sie kann erst empfangen, sobald sie unter „Einstellungen“ abgefragt wurde, und wird beim Senden stillschweigend übersprungen, solange das nicht geschehen ist. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
                     .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht jede Sendung ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
                     .ueberschrift("Senden auslösen"),
