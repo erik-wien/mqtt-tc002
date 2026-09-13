@@ -26,9 +26,20 @@ vorhandenen Knopf. **Und am iPad fehlt Rueckgaengig ganz.** Zu klaeren: laesst
 sich die vorhandene Leiste erweitern; wenn nicht, die drei Symbole
 **kleiner und in die Seitenleiste**. *(Neu gemeldet.)*
 
-**A4. Der Zwischendialog beim Dateihinzufuegen ist haesslich**, und man erkennt
-nicht, worum es geht. *(Neu gemeldet; der Satz bricht bei „dass hier La…" ab —
-**nachfragen**.)*
+**A4. Der Zwischendialog beim Dateihinzufuegen ist haesslich**, und man
+erkennt nicht, dass dort **LaMetric-Nummer und Titel** einzutragen sind.
+
+**Dazu ein Vorschlag des Auftraggebers, der die Eingabe meist ganz erspart:**
+Beginnt der Dateiname mit `<Nummer>_<Titel>`, wird er automatisch getrennt —
+aus `2981_Severe TStorm.gif` also Nummer `2981`, Titel `Severe TStorm`.
+
+Heute wird der ganze Dateiname **in beide Felder** vorbelegt
+(`EditorBereichView`, `importNummer = basis; importName = basis`) — bei einer
+solchen Datei steht die Nummer also zweimal falsch da.
+
+Zu bedenken: Bei **16×16 und 16×52 gibt es keine Nummer**; der Dialog muss sich
+nach der Groesse richten, nicht nach einer festen Form. Und was geschieht, wenn
+die Nummer schon vergeben ist — sie muss eindeutig sein.
 
 **A5. Ein 16×16-Icon stellt die Regler nicht wieder her.** `Slotgedaechtnis`
 rechnet die Pruefsumme mit Kante 8; bei 16 beginnt der Text erst bei Spalte 18.
