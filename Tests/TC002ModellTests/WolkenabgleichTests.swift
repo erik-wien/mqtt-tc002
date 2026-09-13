@@ -176,3 +176,36 @@ final class WolkenabgleichTests: XCTestCase {
         XCTAssertEqual(z.uhren.map(\.host), ["10.0.0.9"])
     }
 }
+
+/// Wann der Schalter in den Einstellungen anzufassen ist. Reine Logik — die
+/// Ansicht liest sie nur ab (`Wolkenabschnitt`).
+@MainActor
+final class WolkenschalterTests: XCTestCase {
+    private func zustand(gewaehlt: Bool, bereit: Bool?) -> AppZustand {
+        AppZustand(schluesselbund: Schluesselbunddoppelgaenger(),
+                   wolke: Wolkendoppelgaenger(), wolkeGewaehlt: gewaehlt, wolkeBereit: bereit)
+    }
+
+    /// Solange nicht nachgesehen ist, wird nicht umgeschaltet — sonst stuende
+    /// dort ein Schalter, der noch nicht weiss, ob er etwas bewirken kann.
+    func testSolangeNichtNachgesehenIstBleibtErGesperrt() {
+        XCTAssertTrue(zustand(gewaehlt: false, bereit: nil).wolkenschalterGesperrt)
+    }
+
+    /// Kein Behaelter und Abgleich aus: gesperrt. Ein Schalter, der von selbst
+    /// zurueckspringt, erklaert nichts — die Zeile darunter tut es.
+    func testOhneBehaelterLaesstErSichNichtEinschalten() {
+        XCTAssertTrue(zustand(gewaehlt: false, bereit: false).wolkenschalterGesperrt)
+    }
+
+    /// **Der umgekehrte Fall, und er ist die Ausnahme:** Abgleich an, Behaelter
+    /// weg. Waere der Schalter auch dann gesperrt, saesse man darin fest.
+    func testMitAbgleichAberOhneBehaelterKommtManHeraus() {
+        XCTAssertFalse(zustand(gewaehlt: true, bereit: false).wolkenschalterGesperrt)
+    }
+
+    func testMitBehaelterIstErAnzufassen() {
+        XCTAssertFalse(zustand(gewaehlt: false, bereit: true).wolkenschalterGesperrt)
+        XCTAssertFalse(zustand(gewaehlt: true, bereit: true).wolkenschalterGesperrt)
+    }
+}

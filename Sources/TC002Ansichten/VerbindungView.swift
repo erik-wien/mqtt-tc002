@@ -147,6 +147,7 @@ public struct VerbindungView: View {
                     brokerStandAnzeige
                 }
             }
+            Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
         }
         .formStyle(.grouped)
         .padding()

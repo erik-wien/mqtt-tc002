@@ -23,6 +23,7 @@ struct VerbindungiOS: View {
                 Form {
                     uhrenAbschnitt
                     brokerAbschnitt
+                    Wolkenabschnitt(zustand: zustand, fussnote: .caption)
                     ueberAbschnitt
                 }
             }

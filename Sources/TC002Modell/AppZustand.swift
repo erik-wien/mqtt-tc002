@@ -167,10 +167,12 @@ public final class AppZustand {
     /// dafuer die Einstellungen dieser Installation anzufassen.
     public init(schluesselbund: Schluesselbundzugriff = EchterSchluesselbund(),
                 wolke: Wolkenablage = EchteWolkenablage(),
-                wolkeGewaehlt: Bool = Ablageort.gewaehlt()) {
+                wolkeGewaehlt: Bool = Ablageort.gewaehlt(),
+                wolkeBereit: Bool? = nil) {
         self.schluesselbund = schluesselbund
         self.wolke = wolke
         self.wolkeGewaehlt = wolkeGewaehlt
+        self.wolkeBereit = wolkeBereit
         let d = UserDefaults.standard
         uhren = (try? JSONDecoder().decode([Uhr].self,
                     from: d.data(forKey: "uhren") ?? Data())) ?? []
@@ -1228,6 +1230,17 @@ public final class AppZustand {
     private func wolkeNichtMehrHorchen() {
         if let wolkenBeobachter { NotificationCenter.default.removeObserver(wolkenBeobachter) }
         wolkenBeobachter = nil
+    }
+
+    /// Ob der Schalter anzufassen ist.
+    ///
+    /// Gesperrt, solange umgeschaltet oder nachgesehen wird — und dann, wenn
+    /// kein Behaelter da ist und der Abgleich ohnehin aus ist: Ein Schalter,
+    /// der von selbst zurueckspringt, erklaert nichts. **Nicht** gesperrt ist
+    /// der umgekehrte Fall, Abgleich an und Behaelter weg — sonst saesse man
+    /// darin fest.
+    public var wolkenschalterGesperrt: Bool {
+        wolkeLaeuft || wolkeBereit == nil || (wolkeBereit == false && !wolkeGewaehlt)
     }
 
     /// Sieht nach, ob ein Behaelter erreichbar ist. Blockiert, laeuft deshalb

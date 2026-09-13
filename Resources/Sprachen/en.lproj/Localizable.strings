@@ -8,8 +8,6 @@
 "Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen." = "No clock set up. Enter one under Settings and query it.";
 "vom Gerät gemeldet" = "reported by the device";
 "von dieser App angelegt" = "created by this app";
-"Die Uhr veröffentlicht selbst, welche Anzeigen auf ihr stehen — auch solche, die ein anderes Werkzeug angelegt hat." = "The clock reports itself which displays are on it — including ones another tool created.";
-"Solange die Uhr nichts gemeldet hat, zeigt die Liste, was diese App selbst an sie geschickt hat. Was ein anderes Werkzeug angelegt hat, fehlt darin." = "As long as the clock has not reported anything, the list shows what this app itself has sent to it. What another tool has created is missing from it.";
 "· Uhr meldet sich online" = "· clock reports online";
 "· Uhr meldet sich offline" = "· clock reports offline";
 "Die Uhr meldet gerade keine Anzeige." = "The clock is currently reporting no display.";
@@ -127,12 +125,10 @@
 "8 × 8" = "8 × 8";
 "16 × 16" = "16 × 16";
 "16 × 52" = "16 × 52";
-"Leert das gerade bearbeitete Einzelbild." = "Empties the frame currently being edited.";
 "Nach oben schieben" = "Shift up";
 "Nach unten schieben" = "Shift down";
 "Nach links schieben" = "Shift left";
 "Nach rechts schieben" = "Shift right";
-"Schiebt die ganze Grafik pixelweise. Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein." = "Shifts the whole graphic pixel by pixel. Whatever is pushed off one edge comes back in on the opposite one.";
 "Neu anfangen" = "Starting over";
 "Zurückladen und Transparenz" = "Loading back and transparency";
 "Herkunft der Liste" = "Where the list comes from";
@@ -197,7 +193,6 @@
 "Wird aufgenommen als %@" = "Taken in as %@";
 "„%@“ liegt dort schon und wird ersetzt." = "\"%@\" is already there and will be replaced.";
 "Grundschatz wiederherstellen" = "Restore starter set";
-"Holt gelöschte Icons des Grundschatzes zurück — Vorhandenes bleibt unangetastet." = "Brings back deleted icons of the starter set — what is there stays untouched.";
 "%d Icons aus dem Grundschatz wiederhergestellt." = "%d icons restored from the starter set.";
 "Nichts zu holen — der Grundschatz ist vollständig da." = "Nothing to fetch — the starter set is complete.";
 "%@ gelöscht." = "%@ deleted.";
@@ -220,22 +215,18 @@
 "Malen" = "Draw";
 "Animation" = "Animation";
 "Inspektor ein- oder ausblenden" = "Show or hide the inspector";
-"8×8 ist ein LaMetric-Icon mit Nummer, 16×16 ein Icon ohne, 16×52 die ganze Anzeige — nur sie lässt sich senden." = "8×8 is a LaMetric icon with a number, 16×16 an icon without one, 16×52 the whole display — only that one can be sent.";
 "Werkzeug" = "Tool";
 "Stift" = "Pen";
 "Verschieben" = "Shift";
 "Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein." = "Whatever is pushed off one edge comes back in on the opposite one.";
-"Setzt ein vorhandenes Icon ins Feld: in ein 16×16 verdoppelt, in die Anzeige in seiner Größe — an derselben Stelle, an der es auch unter „Senden“ läge." = "Puts an existing icon into the field: doubled into a 16×16, at its own size into the display — in the same place it would sit under Send.";
 "Einzelbilder" = "Frames";
 "Bild anhängen" = "Append frame";
-"Hängt ein leeres Einzelbild an und schaltet darauf um." = "Appends an empty frame and switches to it.";
 "Dieses Einzelbild verdoppeln" = "Duplicate this frame";
 "Dieses Einzelbild entfernen" = "Remove this frame";
 "Nach vorn" = "Forward";
 "Nach hinten" = "Back";
 "Mehrere Einzelbilder ergeben beim Sichern ein animiertes GIF." = "Several frames make an animated GIF when saved.";
 "Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene." = "The name is also the file name — the same name replaces what is there.";
-"Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert." = "Starts over: canvas, frames, name and number are cleared.";
 "Vorhandene" = "Existing";
 "Neu anfangen?" = "Start over?";
 "Das Gemalte ist nicht gesichert und geht dabei verloren." = "What you drew is not saved and will be lost.";
@@ -751,3 +742,13 @@
 "Die Einrichtung ist zu groß für den iCloud-Abgleich." = "The setup is too large for iCloud sync.";
 "iCloud: %d Dateien übernommen" = "iCloud: %d files taken over";
 "%d Dateien ließen sich nicht kopieren." = "%d files could not be copied.";
+
+// Der Abschnitt „iCloud" in den Einstellungen, Mac und Telefon gemeinsam
+// (TC002Ansichten/Wolkenabschnitt.swift, 14.09.2026).
+"iCloud" = "iCloud";
+"Über iCloud abgleichen" = "Sync via iCloud";
+"wird umgestellt …" = "switching over …";
+"Auf diesem Gerät steht der Abgleich nicht bereit." = "Sync is not available on this device.";
+"Icons, Bilder und die zuletzt gesendeten Meldungen liegen in iCloud." = "Icons, images and the most recently sent messages live in iCloud.";
+"Icons, Bilder und die zuletzt gesendeten Meldungen bleiben auf diesem Gerät." = "Icons, images and the most recently sent messages stay on this device.";
+"Das Kennwort bleibt im Schlüsselbund und wird nicht abgeglichen." = "The password stays in the keychain and is not synced.";
