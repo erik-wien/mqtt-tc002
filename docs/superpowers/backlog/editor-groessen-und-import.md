@@ -1,5 +1,9 @@
 # Editor: Import in der Quellgroesse, Umrechnen als eigene Funktion
 
+> **Erledigt am 13.09.2026** — C1 mit `07d8577`, C2 mit `d6bcbb5`. Die offene
+> Frage „Fremdgroesse rechnen oder ablehnen?" ist entschieden: **ablehnen, mit
+> Begruendung.** Was unten steht, ist die Vorgeschichte.
+
 **Entschieden am 13.09.2026.** Woertlich: *„er muss beim importieren icons auch
 in der richtigen breite importieren und nicht in der in der sich der editor
 gerade befindet. Upscaling von 8x8 auf 16x16 ist eine eigene Funktion, ebenso

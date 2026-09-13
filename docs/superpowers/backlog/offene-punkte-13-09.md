@@ -26,20 +26,20 @@ vorhandenen Knopf. **Und am iPad fehlt Rueckgaengig ganz.** Zu klaeren: laesst
 sich die vorhandene Leiste erweitern; wenn nicht, die drei Symbole
 **kleiner und in die Seitenleiste**. *(Neu gemeldet.)*
 
-**A4. Der Zwischendialog beim Dateihinzufuegen ist haesslich**, und man
-erkennt nicht, dass dort **LaMetric-Nummer und Titel** einzutragen sind.
+**A4. Erledigt (`d91b3e5`).** Das Blatt hinter „Oeffnen…" ist gebaut wie der
+Inspektor (beschriftete Zeilen, gefasste Felder, Kopf und Fuss),
+`Editorbestand.vorschlag(fuerDateinamen:)` trennt `<Nummer>_<Titel>` — nur
+eine reine Ziffernfolge vor dem ersten Unterstrich zaehlt, sonst bleibt die
+Nummer leer statt einen Dateinamen vorzutaeuschen. Ob nach einer Nummer
+gefragt wird, leitet **eine** Ansicht aus der Groesse der **Datei** ab.
 
-**Dazu ein Vorschlag des Auftraggebers, der die Eingabe meist ganz erspart:**
-Beginnt der Dateiname mit `<Nummer>_<Titel>`, wird er automatisch getrennt —
-aus `2981_Severe TStorm.gif` also Nummer `2981`, Titel `Severe TStorm`.
-
-Heute wird der ganze Dateiname **in beide Felder** vorbelegt
-(`EditorBereichView`, `importNummer = basis; importName = basis`) — bei einer
-solchen Datei steht die Nummer also zweimal falsch da.
-
-Zu bedenken: Bei **16×16 und 16×52 gibt es keine Nummer**; der Dialog muss sich
-nach der Groesse richten, nicht nach einer festen Form. Und was geschieht, wenn
-die Nummer schon vergeben ist — sie muss eindeutig sein.
+**Zur schon vergebenen Nummer entschieden:** Sie wird **nicht** abgewiesen,
+sondern ersetzt — aber sichtbar. Das Blatt nennt beim Tippen, was dort liegt,
+und der Knopf heisst dann „Ersetzen" statt „Oeffnen". Gruende: Ersetzen ist
+die Semantik des Bestands (Sichern tut es auch, und die Hilfe sagt es),
+dasselbe Icon in besserer Fassung noch einmal zu holen ist der haeufigste
+Fall, und die Eindeutigkeit bleibt ohnehin gewahrt (eine Datei je Nummer).
+Falsch war nicht das Ersetzen, sondern dass man es erst hinterher merkte.
 
 **A5. Ein 16×16-Icon stellt die Regler nicht wieder her.** `Slotgedaechtnis`
 rechnet die Pruefsumme mit Kante 8; bei 16 beginnt der Text erst bei Spalte 18.
@@ -73,10 +73,11 @@ der **Akzentfarbe**, also blau. Dort braucht es zusaetzlich die Textfarbe,
 sonst trifft es Pages nicht. Ebenso pruefen: wie der **gesperrte** Zustand
 aussieht (im Vorbild sichtbar abgeblendet, nicht verschwunden).
 
-**B2. „Datei einlesen" heisst „Oeffnen".** *(Neu gemeldet.)*
+**B2. Erledigt (`76e6fe2`).** Der Knopf heisst „Oeffnen…", das Blatt dahinter
+ebenso. Die Auslassungspunkte bleiben — es folgt ein Dialog.
 
-**B3. „Abspielen" weg, dafuer ein Wiedergabesymbol rechts neben den Sekunden.**
-*(Neu gemeldet.)*
+**B3. Erledigt (`4ed79ec`).** `play.fill`/`stop.fill` unmittelbar rechts vom
+Sekundenwert, in beiden Zustaenden mit Beschriftung fuer die Sprachausgabe.
 
 **B4. Der Modus „Sichern" heisst falsch.** Er ist seit heute der Startmodus und
 zeigt zuerst den Bestand — „Sichern" beschreibt, was man zuletzt tut.
@@ -94,17 +95,15 @@ langes Laufbild kann zu gross werden, und wo die Uhr aussteigt, weiss niemand
 
 ## C — Editor: Groessen und Import
 
-**C1. Import behaelt die Quellgroesse**, statt auf die eingestellte zu rechnen.
-**Eine Fremdgroesse (32×32, 104×32) wird abgelehnt** — entschieden am
-13.09.2026. Also: 8×8, 16×16 und 16×52 werden aufgenommen, alles andere weist
-die App **mit Begruendung** zurueck („Das Bild ist 32×32. Aufgenommen werden
-8×8, 16×16 und 16×52."), statt stillschweigend zu rechnen.
-Grund: Herunterrechnen zerstoert, und es geschah bisher unsichtbar — genau
-daran ist der Auftraggeber mit seinen `maze`-GIFs haengengeblieben.
-*(Eigener Eintrag: `editor-groessen-und-import.md`.)*
+**C1. Erledigt (`07d8577`).** `Editorbestand.zielgroesse(fuer:)` entscheidet,
+`einlesen` nimmt keine Groesse mehr entgegen; eine Fremdgroesse wird mit
+Begruendung abgelehnt, und zwar **bevor** das Blatt aufgeht. Die Hilfe
+behauptete bis dahin das Gegenteil und zieht mit.
 
-**C2. Hochrechnen 8×8 → 16×16 als eigene Funktion**, und zwar **bei „Icon
-einfuegen"** — praezisiert gegenueber dem ersten Eintrag.
+**C2. Erledigt (`d6bcbb5`).** „Icon einfuegen" ist der eine Weg: bei 16×16 die
+8×8-Icons, verdoppelt; bei 16×52 beide Icongroessen in ihrer Groesse, an der
+Sendestelle (`Meldungsbau.iconY`). Gerechnet wird im Kern
+(`Leinwandgroesse.aufnehmbar`/`einsatz(in:)`, `Leinwand.iconEinsetzen`).
 
 **C3. Die Dreier-Umschaltung 8×8 / 16×16 / 16×52 gibt es bereits** seit der
 Zusammenlegung. *(Erledigt — der Auftraggeber hatte den Stand noch nicht.)*
@@ -251,6 +250,17 @@ aber auch die zweite Stufe der Kurzbefehle — ein `commit -a` des
 Parallelagenten hat den fremden Index eingesammelt. Inhalt vollstaendig in
 `main`. **Nicht repariert**: Historie umzuschreiben, waehrend andere auf
 denselben Zweig committen, ist gefaehrlicher als eine schiefe Nachricht.
+
+**F5. Zwei Haupthandlungen im Editor.** „Sichern" **und** „Senden" tragen
+beide `keyboardShortcut(.defaultAction)` (`EditorBereichView`). Bei 16×52
+stehen damit zwei Knoepfe auf der Eingabetaste; welcher gewinnt, entscheidet
+SwiftUI. **Gesehen am 13.09.2026, nicht behoben** — welcher von beiden die
+Eingabetaste bekommen soll, ist eine Entscheidung, keine Ableitung.
+
+**F6. `SendenView.sendeKnopf` uebersetzt nicht.** Dort steht ein Ternaer mit
+zwei blanken `String`-Zweigen; SwiftUI nimmt die `StringProtocol`-Ueberladung,
+und die schlaegt nichts nach. Abhilfe ist `lok(…)` in beiden Zweigen, wie im
+gleichnamigen Knopf des Editors. **Gesehen am 13.09.2026, nicht behoben.**
 
 **F4. Erledigt:** „LaMetric hinzufuegen" war nur bei 8×8 sichtbar und lag im
 Modus „Sichern" — beides behoben (`8c43725`), die Handlungen am Bestand haengen
