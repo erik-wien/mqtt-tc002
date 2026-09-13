@@ -26,9 +26,19 @@ public struct Brokerzeichen: View {
 
     public var body: some View {
         if art == .mqtt, let steht {
-            Image(systemName: steht ? "checkmark.circle" : "exclamationmark.triangle")
-                .foregroundStyle(steht ? Color.green : Color.orange)
-                .help(steht ? lok("Am Broker angemeldet") : lok("Nicht am Broker angemeldet"))
+            // `Label` statt eines blossen `Image`: Am Mac bleibt es beim
+            // Symbol (`.iconOnly`), am iPad steht der Text gleich daneben —
+            // dort gibt es kein Verweilen, das ihn im Einblendtext zeigen
+            // koennte (`namensichtbarAmIPad()`).
+            let text = steht ? lok("Am Broker angemeldet") : lok("Nicht am Broker angemeldet")
+            Label {
+                Text(text)
+            } icon: {
+                Image(systemName: steht ? "checkmark.circle" : "exclamationmark.triangle")
+                    .foregroundStyle(steht ? Color.green : Color.orange)
+            }
+            .namensichtbarAmIPad()
+            .help(text)
         }
     }
 }
