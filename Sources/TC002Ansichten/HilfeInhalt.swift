@@ -134,6 +134,22 @@ public enum HilfeInhalt {
         ]),
     ]
 
+    /// Die Groessenwahl. Seit die durchgesehene Schriftprobe je Schrift eine
+    /// eigene Liste ergibt (`Pixelgroessen.abgesegnet`), gilt dieselbe Regel auf
+    /// beiden Oberflaechen — deshalb hier und nicht zweimal.
+    public static let groesse: [Hilfebaustein] = [
+        .ueberschrift("Größe"),
+        .absatz("„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine Liste:"),
+        .tabelle([
+            ("Micro 5", "10, 14 und 15 Pixel"),
+            ("Silkscreen", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
+            ("Tiny5", "7, 8, 9, 12, 15 und 16 Pixel"),
+            ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
+        ]),
+        .absatz("Die drei Listen haben Lücken, und das ist kein Versehen: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus, und welche Größen das trifft, folgt keiner Schrittweite. Angeboten wird deshalb, was beim Durchsehen der Schriftprobe bestanden hat — mit den Augen entschieden, nicht gerechnet: Die Messung dort kann eine Größe ausschließen, nie eine empfehlen."),
+        .absatz("Für die übrigen Schriften gibt es keine solche Durchsicht; dort bleibt es beim vollen Bereich. Beim Wechsel der Schrift springt eine Größe, die auf der neuen Liste fehlt, auf die nächstgelegene — 15 wird bei Silkscreen zu 14, nicht zu 7. Eine eingestellte Größe, die auf keiner Liste steht, bleibt wählbar, bis man selbst eine andere wählt."),
+    ]
+
     /// Micro 5 bei mittleren Groessen — eine Eigenschaft der Schrift.
     public static let microFuenf: [Hilfebaustein] = [
         .absatz("Micro 5 trägt in Größe 12 nur acht Zeilen Tinte und wirkt dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16 füllt sie es."),

@@ -15,7 +15,8 @@ public struct SendenView: View {
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
     @AppStorage("senden.schriftart") private var schrift = "Silkscreen"
-    /// 8, nicht 11: Vorgabeschrift ist Silkscreen, die nur 8 und 16 sauber traegt.
+    /// 8, nicht 11: Vorgabeschrift ist Silkscreen, und 8 steht auf ihrer Liste
+    /// (`Pixelgroessen.abgesegnet`), 11 nicht.
     @AppStorage("senden.groesse") private var groesse = 8.0
     @AppStorage("senden.fett") private var fett = false
     /// Zahl leerer Spalten zwischen zwei Zeichen, 0 bis 3, Vorgabe 1. Wirkt nur
@@ -139,8 +140,8 @@ public struct SendenView: View {
     /// Strichstaerken. Silkscreen ist die Vorgabe — sie ist eigens aufs
     /// 8-Pixel-Raster gezeichnet (mitgeliefert, siehe unten) und kann, anders
     /// als die Geraetschrift, Umlaute und das scharfe S. Micro 5 und Tiny5 sind
-    /// ebenfalls mitgelieferte Pixelschriften mit vollem Zeichenumfang (siehe
-    /// `sauberePixelgroessen` unten). Der registrierte Familienname von Micro5
+    /// ebenfalls mitgelieferte Pixelschriften mit vollem Zeichenumfang (welche
+    /// Groessen sie anbieten, steht in `Pixelgroessen`). Der Familienname von Micro5
     /// traegt ein Leerzeichen ("Micro 5") — im Font-Editor gepruefte Tatsache,
     /// nicht Tippfehler. Alle anderen installierten Schriften sind bei dieser
     /// Groesse unbrauchbar — Courier, SF Mono und Helvetica etwa bekommen
@@ -206,21 +207,17 @@ public struct SendenView: View {
     /// Umlaute und fehlen dort in jedem Fall.
     private var gesendeterText: String { optionen.gesendeterText }
 
-    /// Silkscreen ist streng aufs 8-Pixel-Raster gezeichnet: Bei 8 und 16 sitzen
-    /// die Striche auf ganzen Pixeln, dazwischen entscheidet ohne Kantenglaettung
-    /// ein Schwellwert willkuerlich — am Bildschirm geprueft und vom Nutzer als
-    /// „hässlich" bestaetigt.
-    ///
-    /// Fuer Micro 5 und Tiny5 galt diese Einschraenkung hier eine Zeit lang
-    /// ebenfalls. Das war eine unbelegte Verallgemeinerung: Geprueft war nur
-    /// Silkscreen. Micro 5 traegt in Groesse 12 nur acht Zeilen Tinte und wirkte
-    /// dadurch verloren auf einem sechzehn Zeilen hohen Display; erst bei 16
-    /// fuellt sie es. Beide stehen deshalb wieder im vollen Bereich.
-    public static let sauberePixelgroessen: [String: [Double]] = ["Silkscreen": [8, 16]]
+    /// Die Eintraege des Groessenmenues. Welche das sind, entscheidet
+    /// `Pixelgroessen` im Kern — die durchgesehene Schriftprobe, nicht diese
+    /// Ansicht und schon gar nicht die Messung.
+    private var angeboteneGroessen: [Double] {
+        Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
+    }
 
-    /// Die sauberen Groessen der aktuell gewaehlten Schrift, oder nil, wenn sie
-    /// keine Pixelschrift mit eigenem Raster ist.
-    private var zulaessigeGroessen: [Double]? { Self.sauberePixelgroessen[schrift] }
+    /// Hat die gewaehlte Schrift eine durchgesehene Liste? Nur dann sagt der
+    /// Einblendtext etwas ueber das Pixelraster; jede Systemschrift bekommt den
+    /// vollen Bereich und keine Begruendung, die es nicht gibt.
+    private var eigenesRaster: Bool { Pixelgroessen.abgesegnet[schrift] != nil }
 
     private var textHoehe: Int { Textraster.hoehe(gesendeterText, schrift: schrift, groesse: groesse, fett: fett) }
 
@@ -451,11 +448,11 @@ public struct SendenView: View {
             gewaehltesIcon = sammlung.alle().first { $0.nummer == iconNummer }
         }
         .onChange(of: schrift) { _, neu in
-            // Wechsel weg von einer Pixelschrift laesst die Groesse stehen —
-            // sie passt ja weiterhin in den allgemeinen Bereich 6...16.
-            if let zulaessig = Self.sauberePixelgroessen[neu], !zulaessig.contains(groesse) {
-                groesse = zulaessig.min() ?? groesse
-            }
+            // Nach dem Wechsel gilt die Liste der neuen Schrift. Steht die
+            // eingestellte Groesse nicht darauf, faellt sie auf die
+            // naechstgelegene — nicht auf die kleinste: Der Sprung von 15 auf 7
+            // waere eine Ueberraschung, wo 16 danebenliegt.
+            groesse = Pixelgroessen.naechstgelegene(zu: groesse, fuer: neu)
         }
         .task(id: laufschriftSchluessel) {
             guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
@@ -558,18 +555,20 @@ public struct SendenView: View {
                 .help(weg == .text ? "Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht."
                                    : "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
 
-                if let zulaessig = zulaessigeGroessen, let erste = zulaessig.first, let letzte = zulaessig.last {
-                    let schritt = zulaessig.count > 1 ? zulaessig[1] - zulaessig[0] : 1
-                    LabeledContent("Größe") {
-                        Stepper(lokf("%d px", Int(groesse)), value: $groesse, in: erste...letzte, step: schritt)
+                // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
+                // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
+                // laesst sich als Schrittweite nicht ausdruecken.
+                LabeledContent("Größe") {
+                    Picker("Größe", selection: $groesse) {
+                        ForEach(angeboteneGroessen, id: \.self) { g in
+                            Text(lokf("%d px", Int(g))).tag(g)
+                        }
                     }
-                    .help(lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift))
-                } else {
-                    LabeledContent("Größe") {
-                        Stepper(lokf("%d px", Int(groesse)), value: $groesse, in: 6...16)
-                    }
-                    .help("Schriftgröße")
+                    .labelsHidden()
                 }
+                .help(eigenesRaster
+                      ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
+                      : lok("Schriftgröße"))
 
                 // Beide Schalter in einer Zeile, wie B I U bei Pages — nicht je
                 // eine volle Zeile fuer ein einsames Symbol rechts.

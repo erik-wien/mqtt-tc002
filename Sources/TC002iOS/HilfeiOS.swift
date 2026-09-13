@@ -111,10 +111,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Über dem Eingabefeld liegt die Formatpille mit elf Bedienelementen: Icon, waagrechte und senkrechte Ausrichtung, Farbe, der Pinsel für das Blatt „Format“, Schriftart, Größe, Fett, Großbuchstaben, Rand und Abstand. Sie passen nicht alle nebeneinander auf ein Telefon — die Pille lässt sich seitwärts schieben, und der Pfeil an ihrem rechten Rand zeigt an, solange dort noch etwas liegt."),
                 ]
                 + HilfeInhalt.schriftart
-                + [
-                    .ueberschrift("Größe"),
-                    .absatz("„Größe“ reicht von 6 bis 16 Pixeln, für jede Schrift gleich. Silkscreen ist allerdings streng aufs 8-Pixel-Raster gezeichnet und sitzt nur bei 8 und 16 sauber; dazwischen franst sie ohne Kantenglättung aus. Die Mac-Fassung lässt für sie deshalb nur diese beiden Größen zu, diese hier nicht."),
-                ]
+                + HilfeInhalt.groesse
                 + HilfeInhalt.microFuenf
                 + HilfeInhalt.fettUndGross
                 + HilfeInhalt.randUndAbstand

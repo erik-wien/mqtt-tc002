@@ -1,7 +1,7 @@
 import SwiftUI
 import TC002Core
 
-/// Die Schriftprobe: warum der Schieber diese Größen anbietet und jene nicht.
+/// Die Schriftprobe: warum das Größenmenü diese Größen anbietet und jene nicht.
 ///
 /// Ein Nachschlagewerk, keine Bedienoberfläche — deshalb steht hier Erklärung.
 /// Sie **entscheidet nichts**: Gezeigt wird die Messung, und was daraus folgt,
@@ -11,10 +11,11 @@ import TC002Core
 /// AppKit — dieselbe Ansicht taugt später fürs iPad und fürs iPhone, wo es
 /// bisher gar keine Referenz gibt.
 public struct SchriftprobeView: View {
-    /// Welche Größen der Schieber je Schrift anbietet — dieselbe Form wie
-    /// `SendenView.sauberePixelgroessen`: Eine Schrift, die nicht darin steht,
-    /// ist in jeder Größe zu haben. Die Ansicht **kennt die Regel nicht**, sie
-    /// bekommt sie gereicht; entschieden wird darüber in der Sendeansicht.
+    /// Welche Größen das Größenmenü je Schrift anbietet — dieselbe Form wie
+    /// `Pixelgroessen.abgesegnet`: Eine Schrift, die nicht darin steht, ist in
+    /// jeder Größe zu haben. Die Ansicht **kennt die Regel nicht**, sie bekommt
+    /// sie gereicht; entschieden hat darüber ein Augenpaar beim Durchsehen
+    /// dieser Seite, nicht die Messung darunter.
     private let angeboteneGroessen: [String: [Double]]
 
     @State private var messungen: [Schriftprobe.Messung] = []
@@ -82,7 +83,7 @@ public struct SchriftprobeView: View {
         }
     }
 
-    /// Bietet der Schieber diese Größe an? Fehlt die Schrift in der Tabelle,
+    /// Bietet das Größenmenü diese Größe an? Fehlt die Schrift in der Tabelle,
     /// sind alle Größen zu haben.
     private func angeboten(_ messung: Schriftprobe.Messung) -> Bool {
         angeboteneGroessen[messung.schrift].map { $0.contains(messung.groesse) } ?? true

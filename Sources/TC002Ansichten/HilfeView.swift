@@ -122,20 +122,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .absatz("Enthält der Text etwas anderes, sagt die App das vor dem Senden: welche Zeichen betroffen sind, und dass „als Pixel“ sie kann. Ohne diese Warnung würde die Uhr die Zeichen wortlos weglassen."),
                     .ueberschrift("Formatleiste"),
-                    .absatz("Oberhalb des Textfelds sitzt die Formatleiste, wie in einem Textprogramm: Schriftart, Größe (6 bis 16 Pixel), ein Fett- und ein Großbuchstaben-Knopf sowie zwei Gruppen aus je drei Symbolknöpfen für die waagrechte und die senkrechte Ausrichtung — welche Richtung ein Knopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
+                    .absatz("Oberhalb des Textfelds sitzt die Formatleiste, wie in einem Textprogramm: Schriftart, Größe, ein Fett- und ein Großbuchstaben-Knopf sowie zwei Gruppen aus je drei Symbolknöpfen für die waagrechte und die senkrechte Ausrichtung — welche Richtung ein Knopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
                     .absatz("Für den Weg „als Pixel“ gilt die ganze Leiste, auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
                 ]
                 + HilfeInhalt.schriftart
                 + [
                     .absatz("Eine früher gewählte Schrift, die nicht mehr in dieser Auswahl steht, bleibt gesetzt und wählbar, abgesetzt unten in der Liste, bis man selbst etwas anderes wählt."),
-                    .ueberschrift("Größe"),
-                    .tabelle([
-                        ("Silkscreen", "nur 8 oder 16 Pixel"),
-                        ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
-                    ]),
-                    .absatz(lokf("%@ ist aufs Pixelraster gezeichnet — nur bei %@ fallen die Striche sauber auf ganze Pixel, dazwischen gibt es keine saubere Größe.", "Silkscreen", "8 und 16 Pixeln")),
-                    .absatz("Der Grund: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus — geprüft und dafür eingeschränkt ist deshalb nur Silkscreen. Micro 5 und Tiny5 waren eine Zeit lang ebenso eingeschränkt — das war voreilig verallgemeinert, geprüft war nur Silkscreen."),
                 ]
+                + HilfeInhalt.groesse
                 + HilfeInhalt.microFuenf
                 + HilfeInhalt.fettUndGross
                 + HilfeInhalt.randUndAbstand

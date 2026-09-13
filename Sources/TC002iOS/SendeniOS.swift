@@ -187,11 +187,11 @@ struct SendeniOS: View {
                 set: { farbeHex = $0.hexWert })
     }
 
-    /// `groesse` ist am Sendeweg als `Double` verdrahtet (Meldungsoptionen),
-    /// der Groessen-Knopf in der Pille bietet aber ganze Stufen wie am Mac —
-    /// dieselbe Umrechnung, wie sie `farbe` oben fuer die Farbe macht.
-    private var groesseInt: Binding<Int> {
-        Binding(get: { Int(groesse) }, set: { groesse = Double($0) })
+    /// Die Eintraege des Groessenmenues — dieselbe Liste wie am Mac, aus
+    /// `Pixelgroessen` im Kern: die durchgesehene Schriftprobe, nicht die
+    /// Messung.
+    private var angeboteneGroessen: [Double] {
+        Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
     }
 
     var body: some View {
@@ -267,6 +267,12 @@ struct SendeniOS: View {
             }
         }
         .onChange(of: gewaehltesIcon?.nummer) { _, neu in iconNummer = neu ?? "" }
+        // Wie am Mac (`SendenView`): Nach dem Schriftwechsel gilt die Liste der
+        // neuen Schrift; steht die eingestellte Groesse nicht darauf, faellt sie
+        // auf die naechstgelegene, nicht auf die kleinste.
+        .onChange(of: schrift) { _, neu in
+            groesse = Pixelgroessen.naechstgelegene(zu: groesse, fuer: neu)
+        }
         .task(id: laufschriftSchluessel) { await laufschriftRechnen() }
     }
 
@@ -485,8 +491,12 @@ struct SendeniOS: View {
                     .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                     .accessibilityHint(Text(schriftartHinweis))
                     Menu {
-                        Picker("Größe", selection: groesseInt) {
-                            ForEach(6...16, id: \.self) { n in Text(String(n)).tag(n) }
+                        // Eine Liste, keine Folge: Die durchgesehenen Groessen
+                        // haben Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16.
+                        Picker("Größe", selection: $groesse) {
+                            ForEach(angeboteneGroessen, id: \.self) { g in
+                                Text(String(Int(g))).tag(g)
+                            }
                         }
                     } label: {
                         Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }

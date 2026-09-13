@@ -88,10 +88,10 @@ struct TC002App: App {
         .windowResizability(.contentSize)
 
         // Die Schriftprobe bekommt die angebotenen Groessen gereicht, statt sie
-        // zu kennen: Die Regel gehoert der Sendeansicht, die Ansicht zeigt nur,
-        // was gemessen wurde — und daneben, was der Schieber daraus macht.
+        // zu kennen: Die Ansicht zeigt, was gemessen wurde — und daneben, was
+        // die durchgesehene Liste (`Pixelgroessen.abgesegnet`) daraus anbietet.
         Window("Schriftprobe", id: "schriftprobe") {
-            SchriftprobeView(angeboteneGroessen: SendenView.sauberePixelgroessen)
+            SchriftprobeView(angeboteneGroessen: Pixelgroessen.abgesegnet)
         }
         .windowResizability(.contentSize)
     }
