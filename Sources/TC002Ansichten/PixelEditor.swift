@@ -34,15 +34,11 @@ struct PixelEditor<Zusatz: View>: View {
     /// Kantenlaenge in einem schmalen Fenster rechts aus dem Bild.
     @State private var flaechenBreite: Double = 0
 
-    /// Kantenlaenge eines Kaestchens. Klein genug, dass die Flaeche in die
-    /// Spalte passt, sonst so gross wie erlaubt.
+    /// Kantenlaenge eines Kaestchens — siehe `Malraster`.
     private var kante: Double {
-        let nachBreite = flaechenBreite > 0 ? flaechenBreite / Double(leinwand.breite) : Self.kanteMax
-        return min(Self.kanteMax, max(Self.kanteMin, nachBreite.rounded(.down)))
+        Malraster.kante(breite: leinwand.breite, hoehe: leinwand.hoehe,
+                        verfuegbareBreite: flaechenBreite)
     }
-
-    private static var kanteMin: Double { 6 }
-    private static var kanteMax: Double { 14 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
