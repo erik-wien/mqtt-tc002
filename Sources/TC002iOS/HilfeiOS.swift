@@ -70,8 +70,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ in der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
 
-                    .ueberschrift("Die aktive Uhr"),
-                    .absatz("Die Slot-Blöcke und der „Verlauf“ zeigen immer den Stand der aktiven Uhr. Welche das ist, legt diese Fassung selbst fest: die erste in der Liste. Das Menü im Titel der Sendeansicht wählt nur, wohin gesendet wird."),
+                    .ueberschrift("Einstellungen der Uhr selbst"),
                     .absatz("Seitenwechsel und Scrolltempo der Uhr stellt diese Fassung nicht ein; beides sind Einstellungen des Geräts und betreffen nichts, was diese App sendet."),
 
                     .ueberschrift("Broker"),
@@ -127,8 +126,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.iconImLauf
                 + [
-                    .ueberschrift("Sendeziel"),
-                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü: Er nennt das aktuelle Ziel und lässt eine einzelne Uhr oder „Alle Uhren“ wählen. Bei nur einer Uhr geht jede Sendung ohne weitere Wahl an sie."),
+                    .ueberschrift("Uhr wählen"),
+                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü. Es wählt, welche Uhr man ansieht: Ihr Name steht im Titel, und die fünf Blöcke und der „Verlauf“ zeigen ihren Stand. Gesendet wird an dieselbe Uhr — am Telefon ist das eine Entscheidung und nicht zwei. Bei nur einer Uhr gibt es nichts zu wählen."),
+                    .absatz("„An alle Uhren senden“ im selben Menü trennt beides wieder: Jede Sendung geht dann an alle eingerichteten Uhren, während Titel, Blöcke und „Verlauf“ bei der angesehenen bleiben — wie viele Uhren beliefert werden, sagt der Titel hinter ihrem Namen."),
                     .absatz("Eine Uhr ohne Präfix wird beim Senden stillschweigend übersprungen — sie kann erst empfangen, sobald sie unter „Einstellungen“ abgefragt wurde."),
 
                     .ueberschrift("Senden auslösen"),
