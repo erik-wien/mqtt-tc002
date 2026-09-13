@@ -458,6 +458,10 @@ struct SendeniOS: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                     }
+                    // Symbol in einer Leiste, kein Befehlsknopf: Diese
+                    // Pille ist die Werkzeugleiste des Telefons. Gilt fuer
+                    // alle vier Knoepfe darin.
+                    .buttonStyle(.automatic)
                     .accessibilityLabel("Icon")
                     Menu {
                         Button { horizontal = .links } label: {
@@ -500,6 +504,7 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .buttonStyle(.automatic)
                     .accessibilityLabel("Format")
                     Menu {
                         Picker("Schriftart", selection: $schrift) {
@@ -530,6 +535,7 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .buttonStyle(.automatic)
                     .foregroundStyle(fett ? Color.accentColor : Color.secondary)
                     // Nicht allein die Farbe traegt den Zustand — sonst hiesse
                     // Blau zugleich "tippbar" (wie bei den Menueknoepfen daneben)
@@ -550,6 +556,7 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .buttonStyle(.automatic)
                     .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
                     .background(grossbuchstaben ? Color.accentColor.opacity(0.3) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
