@@ -43,7 +43,10 @@ public struct EditorBereichView: View {
     @AppStorage("malen.meldungsplatz") private var platz = 1
     @AppStorage("malen.dauer") private var dauerText = ""
 
-    @State private var modus = Inspektormodus.malen
+    /// Der Bestand steht am Anfang, nicht die Werkzeuge: Wer den Editor
+    /// oeffnet, will meist etwas Vorhandenes weiterbearbeiten, nicht auf einer
+    /// leeren Flaeche beginnen. Erst waehlen, dann malen.
+    @State private var modus = Inspektormodus.sichern
     @State private var zeigeInspektor = true
     @State private var radiert = false
     @State private var spielAb = false
