@@ -185,8 +185,16 @@ schraeg.**
 Seine eigene Einschaetzung, und sie stimmt: *„Mir ist klar, dass es dann
 eigentlich nur ein duenner weisser Rand ist. Ich schlage vor zu schummeln und
 wie beim jetzigen Simulator links unten ‚Ulanzi TC001' hinzuschreiben."*
-→ **Ohne Schriftzug waeren die beiden Geraete kaum zu unterscheiden.** Der
-Schriftzug ist hier keine Zierde, sondern die Auskunft.
+
+**Drei Unterschiede zum TC002-Rahmen, die es wirklich gibt:**
+1. **Rundere Ecken.**
+2. **Keine Tasten oben** — der rote Knopf und die schwarze Leiste des
+   TC002-Rahmens fallen weg.
+3. Der Schriftzug „Ulanzi TC001" links unten.
+
+Damit ist es mehr als eine Beschriftung: Die beiden Geraete sind auch ohne
+Lesen auseinanderzuhalten. Der Schriftzug ist trotzdem noetig — frontal bleibt
+ein schwarzes Feld mit hellem Rand fuer beide.
 
 Zu bedenken: Das Feld ist **32×8, also 4:1** gegenueber 52:16 = 3,25 — ein
 anderes Seitenverhaeltnis, nicht nur eine andere Zeichnung. `GeraeteRahmen`
