@@ -176,30 +176,44 @@ public struct SchreibtischView: View {
 /// Der Rahmen, den ein Nebenfenster auf dem iPad braucht. Am Mac gibt ihm die
 /// Fensterverwaltung einen Schließknopf; hier muss er mitkommen, sonst ist die
 /// ganzflächige Einblendung eine Sackgasse.
+///
+/// **Gezeichnet, nicht angemeldet.** Bis 13.09.2026 hing der Knopf an einer
+/// `.toolbar`, und die fand bei Hilfe und Gerätereferenz keine Stelle: Beide
+/// bringen eine eigene `NavigationSplitView` mit, und eine Werkzeugleiste, die
+/// von *außen* darauf gelegt wird, hat keinen Navigationsbehälter, der sie
+/// aufnimmt — sie übersetzt klaglos und wird nie gezeichnet. Am Gerät saß der
+/// Benutzer dann in der Hilfe fest und musste die App beenden.
+///
+/// Deshalb eine eigene Kopfzeile, für alle vier gleich und **ohne
+/// Fallunterscheidung**: `safeAreaInset` ist reine Anordnung — sie hängt an
+/// keinem Behälter, den es geben muss, und kann darum nicht still ausfallen.
+/// Die Fallunterscheidung war der Fehler, nicht bloß ihr falscher Zweig; mit
+/// ihr fiele der Schließknopf beim nächsten Dokument mit eigenem Rahmen
+/// wieder weg. `PlattformwegeTests` hält beides fest.
 private struct NebenfensterSchirm: View {
     let fenster: Nebenfenster
     @Environment(\.dismiss) private var schliessen
 
     var body: some View {
-        if fenster.eigenerRahmen {
-            // Bringt seine eigene `NavigationSplitView` mit — ein
-            // `NavigationStack` darum waere einer zu viel, und die
-            // Werkzeugleiste findet dort von selbst ihre Stelle.
-            fenster.inhalt.toolbar { fertig }
-        } else {
-            NavigationStack {
-                fenster.inhalt
-                    .navigationTitle(fenster.titel)
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar { fertig }
-            }
-        }
+        fenster.inhalt
+            .safeAreaInset(edge: .top, spacing: 0) { kopfzeile }
     }
 
-    private var fertig: some ToolbarContent {
-        ToolbarItem(placement: .confirmationAction) {
-            Button("Fertig") { schliessen() }
+    private var kopfzeile: some View {
+        VStack(spacing: 0) {
+            HStack {
+                // `Nebenfenster.titel` ist schon übersetzt — deshalb
+                // `verbatim`, sonst würde ein zweites Mal nachgeschlagen.
+                Text(verbatim: fenster.titel).font(.headline)
+                Spacer()
+                Button("Fertig") { schliessen() }.fontWeight(.semibold)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            Divider()
         }
+        // Bis unter die Statusleiste: Ohne das stünde dort der Inhalt durch.
+        .background(.bar, ignoresSafeAreaEdges: .top)
     }
 }
 #endif

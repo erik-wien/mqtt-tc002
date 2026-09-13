@@ -70,6 +70,39 @@ final class PlattformwegeTests: XCTestCase {
                        "Mac-Szenen und Nebenfenster-Fälle laufen auseinander")
     }
 
+    /// Die ganzflächige Einblendung am iPad muss sich schließen lassen.
+    ///
+    /// Am 13.09.2026 ließ sie es für zwei der vier Dokumente nicht: Der
+    /// Schließknopf hing an einer `.toolbar`, die von außen auf
+    /// `fenster.inhalt` gelegt wurde. Hilfe und Gerätereferenz bringen ihre
+    /// eigene `NavigationSplitView` mit — dort fand die Werkzeugleiste keinen
+    /// Behälter, der sie aufnimmt, übersetzte klaglos und wurde nie
+    /// gezeichnet. Der Benutzer saß in der Hilfe fest und musste die App
+    /// beenden.
+    ///
+    /// Geprüft wird darum dreierlei am Quelltext — der Übersetzer hat auch zu
+    /// dieser Frage nichts zu sagen: Es gibt einen Schließweg, er hängt an
+    /// **keiner** Werkzeugleiste, und er hängt an **keiner**
+    /// Fallunterscheidung über das Dokument. Der letzte Punkt ist der
+    /// eigentliche: Nicht der falsche Zweig war der Fehler, sondern dass es
+    /// Zweige gab.
+    func testDieEinblendungTraegtIhrenSchliessknopfSelbst() throws {
+        let text = try quelltext("Sources/TC002Ansichten/SchreibtischView.swift")
+        guard let anfang = text.range(of: "struct NebenfensterSchirm") else {
+            return XCTFail("NebenfensterSchirm gibt es nicht mehr — was schließt die Einblendung dann?")
+        }
+        let schirm = String(text[anfang.lowerBound...])
+
+        XCTAssertTrue(schirm.contains("schliessen()"),
+                      "der Einblendung fehlt der Schließweg — am iPad sitzt man dann fest")
+        XCTAssertFalse(schirm.contains("toolbar"),
+                       "der Schließknopf hängt wieder an einer Werkzeugleiste; ohne Navigationsbehälter wird die nie gezeichnet")
+        for zweig in ["if fenster", "switch fenster"] {
+            XCTAssertFalse(schirm.contains(zweig),
+                           "der Rahmen hängt wieder an einer Fallunterscheidung (\(zweig)) — genau die war für zwei der vier Dokumente falsch")
+        }
+    }
+
     /// Das eigentliche Ziel dieses Schritts: Auf dem iPad steht der
     /// Schreibtisch, auf dem iPhone `SendeniOS` — entschieden am Idiom, nicht
     /// an der Größenklasse (die wechselt in der geteilten Ansicht).

@@ -44,20 +44,6 @@ public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Bringt die Ansicht ihren eigenen Navigationsrahmen mit?
-    ///
-    /// `HilfeView` und `GeraeteReferenzView` sind zweispaltig
-    /// (`NavigationSplitView`) und tragen eine Werkzeugleiste selbst;
-    /// `UeberView` und `SchriftprobeView` sind nackte `ScrollView`. Ohne diese
-    /// Unterscheidung hätte der Schließknopf dort keine Stelle — und eine
-    /// ganzflächige Einblendung ohne Schließknopf ist eine Sackgasse.
-    public var eigenerRahmen: Bool {
-        switch self {
-        case .hilfe, .geraetereferenz: return true
-        case .ueber, .schriftprobe: return false
-        }
-    }
-
     @ViewBuilder public var inhalt: some View {
         switch self {
         case .ueber: UeberView()
