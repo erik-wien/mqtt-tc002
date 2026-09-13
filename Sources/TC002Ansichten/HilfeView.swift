@@ -53,7 +53,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .ueberblick:
             return HilfeInhalt.wasEsTut
                 + [
-                    .absatz("Nur für ein paar Abfragen und Einstellungen spricht die App eine Uhr selbst per HTTP an — das steht unten bei „Einstellungen“."),
+                    .absatz("Welcher Weg für eine Uhr gilt, steht unten bei „Einstellungen“ unter „Betriebsart“. Unabhängig davon spricht die App eine Uhr für ein paar Abfragen und Einstellungen immer selbst per HTTP an."),
                     .ueberschrift("Bereiche"),
                     .tabelle([
                         ("Senden", "Text und Icon verschicken"),
@@ -71,7 +71,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Beim allerersten Start fragt macOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und die allererste „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt — einfach erlauben und erneut abfragen. Zurücknehmen lässt sich die Freigabe später unter Systemeinstellungen → Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
+                + HilfeInhalt.betriebsart
                 + [
+                    .absatz("Am Mac und auf dem iPad steht die Wahl als Zweierschalter in der Zeile der Uhr, zwischen Adresse und Präfix."),
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
@@ -85,6 +87,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Broker"),
                     .absatz("Darunter steht der Broker: Adresse, Port, Benutzer und Kennwort."),
                 ]
+                + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
                 + HilfeInhalt.brokerKennwort
                 + [
@@ -146,11 +149,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Sendeziel"),
-                    .absatz("Oben rechts über der Vorschau steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, Präfix und derselbe Verbindungsstand wie unter „Einstellungen“, dazu ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
-                    .absatz("Eine Uhr ohne Präfix ist im Blatt als solche gekennzeichnet — sie kann erst empfangen, sobald sie unter „Einstellungen“ abgefragt wurde, und wird beim Senden stillschweigend übersprungen, solange das nicht geschehen ist. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
+                    .absatz("Oben rechts über der Vorschau steht ein Knopf, der das aktuelle Sendeziel nennt — etwa „an: Küche“, „an alle Uhren (3)“ oder „an 2 Uhren“. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, darunter das Präfix oder „HTTP“, bei MQTT-Uhren dazu derselbe Verbindungsstand wie unter „Einstellungen“, und ein Haken zum An- und Abwählen; „Alle“ und „Keine“ wählen mit einem Klick, „Schließen“ beendet die Auswahl."),
+                    .absatz("Eine Uhr, die nichts empfangen kann, ist im Blatt als solche gekennzeichnet, und der Hinweis nennt, woran es liegt: einer MQTT-Uhr fehlt das Präfix — dann erst unter „Einstellungen“ „Abfragen“ —, einer HTTP-Uhr die Adresse. Beim Senden wird sie stillschweigend übersprungen, solange das so bleibt. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
                     .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht jede Sendung ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
                     .ueberschrift("Senden auslösen"),
-                    .absatz("Die Eingabetaste löst „Senden“ aus, solange der Knopf nicht gesperrt ist. Geht dabei etwas schief — falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert. Bleibt das Fenster aus, ist die Nachricht beim Broker angekommen — was das noch nicht heißt, steht unter „Wenn nichts erscheint“."),
+                    .absatz("Die Eingabetaste löst „Senden“ aus, solange der Knopf nicht gesperrt ist. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
+                    .absatz("Was es heißt, wenn das Fenster ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .editor:
             return [

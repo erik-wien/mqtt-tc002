@@ -68,7 +68,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
+                + HilfeInhalt.betriebsart
                 + [
+                    .absatz("Auf dem Telefon steht die Wahl als Zweierschalter unter der Adresse der Uhr."),
+
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ in der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
 
@@ -78,6 +81,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Broker"),
                     .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
                 ]
+                + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
                 + HilfeInhalt.brokerKennwort
                 + [
@@ -129,10 +133,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Uhr wählen"),
                     .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü. Es wählt, welche Uhr man ansieht: Ihr Name steht im Titel, und die fünf Blöcke und der „Verlauf“ zeigen ihren Stand. Gesendet wird an dieselbe Uhr — am Telefon ist das eine Entscheidung und nicht zwei. Bei nur einer Uhr gibt es nichts zu wählen."),
                     .absatz("„An alle Uhren senden“ im selben Menü trennt beides wieder: Jede Sendung geht dann an alle eingerichteten Uhren, während Titel, Blöcke und „Verlauf“ bei der angesehenen bleiben — wie viele Uhren beliefert werden, sagt der Titel hinter ihrem Namen."),
-                    .absatz("Eine Uhr ohne Präfix wird beim Senden stillschweigend übersprungen — sie kann erst empfangen, sobald sie unter „Einstellungen“ abgefragt wurde."),
+                    .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),
-                    .absatz("Der Pfeilknopf rechts neben dem Eingabefeld schickt die Anzeige; er ist gesperrt, solange das Textfeld leer ist oder eine Sendung läuft. Geht dabei etwas schief — falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert. Bleibt sie aus, ist die Nachricht beim Broker angekommen — was das noch nicht heißt, steht unter „Wenn nichts erscheint“."),
+                    .absatz("Der Pfeilknopf rechts neben dem Eingabefeld schickt die Anzeige; er ist gesperrt, solange das Textfeld leer ist oder eine Sendung läuft. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
+                    .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .anzeigen:
             return HilfeInhalt.verlaufHerkunft
@@ -163,6 +168,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 .ueberschrift("Meldung nehmen"),
                 .absatz("Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten."),
                 .absatz("Beide Kurzbefehle schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
+                .absatz("Und beide folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung."),
             ]
         case .fehlersuche:
             return HilfeInhalt.fehlerStille

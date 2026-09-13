@@ -39,6 +39,30 @@ final class BetriebsartTests: XCTestCase {
         }
     }
 
+    /// **Diese Ansicht war in diesem Vorhaben schon dreimal falsch**, und die
+    /// Hilfe hat sie jedes Mal mitgetragen. Zwei Sätze halten fest, was heute
+    /// gemessen ist:
+    ///
+    /// Der eine darf nicht mehr dastehen — „alle Nachrichten laufen über den
+    /// MQTT-Broker" gilt seit dem HTTP-Betrieb nicht mehr, und ein Satz, der
+    /// den Leser den falschen Weg suchen lässt, ist schlimmer als keiner.
+    ///
+    /// Der andere muss dastehen: Ein Broker hört HTTP-Sendungen **nicht**
+    /// nebenbei mit. Das war die Hoffnung, an der der ganze Zuschnitt hing,
+    /// und sie ist widerlegt — 45 Sekunden gehorcht, eine einzige Nachricht.
+    /// Bliebe die Hilfe dabei vage, richtete sich jemand einen Broker ein,
+    /// der ihm nichts bringt.
+    func testDieHilfeBehauptetDenBrokerWederAlsUmwegNochAlsOhr() throws {
+        let text = try quelle("Sources/TC002Ansichten/HilfeInhalt.swift")
+
+        XCTAssertFalse(text.contains("Es tut das nicht direkt: alle Nachrichten laufen über den MQTT-Broker"),
+                       "die Hilfe behauptet noch, jede Sendung gehe über den Broker")
+        XCTAssertTrue(text.contains("Die Uhr reicht ihre HTTP-Vorgänge nicht über MQTT weiter."),
+                      "die Hilfe sagt nicht, dass ein Broker HTTP-Sendungen nicht mithört")
+        XCTAssertTrue(text.contains("Steht die Uhr auf HTTP, gibt es kein Mitlesen"),
+                      "die Hilfe sagt nicht, dass die Blöcke im HTTP-Betrieb nichts mitlesen")
+    }
+
     /// Der Unterschied ist ein **Tausch**, und beide Hälften davon stehen
     /// nebeneinander in derselben Zeile: was HTTP kann und was MQTT kann.
     /// Nur eine Hälfte zu nennen wäre eine Empfehlung, keine Auskunft — und
