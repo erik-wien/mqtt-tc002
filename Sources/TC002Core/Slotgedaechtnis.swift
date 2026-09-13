@@ -99,14 +99,15 @@ public struct Slotstand: Codable, Hashable, Sendable {
 public struct Slotgedaechtnis: Sendable {
     private let ordner: URL
 
-    /// `Application Support/MQTT-TC002/Slots` — neben Icons und Bildern, aber
-    /// eigener Unterordner. Tests geben eine eigene, wegwerfbare `ordner`
-    /// hinein, statt hier zu landen.
-    public static var eigenerOrdner: URL {
-        FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("MQTT-TC002/Slots")
-    }
+    /// `Slots` — neben Icons und Bildern, aber eigener Unterordner. Wo das
+    /// „neben" liegt, entscheidet `Ablageort`: oertlich unter
+    /// `Application Support/MQTT-TC002` oder im iCloud-Behaelter. Tests geben
+    /// eine eigene, wegwerfbare `ordner` hinein, statt hier zu landen.
+    ///
+    /// **Hier haengt die Nebenwirkung, die den ganzen Abgleich traegt.** Zieht
+    /// dieser Ordner mit, weiss das Telefon, was der Mac an die Uhr geschickt
+    /// hat — und umgekehrt.
+    public static var eigenerOrdner: URL { Ablageort.gemeinsam.ordner(.slots) }
 
     /// Eine gehaltene Fassung fuer die Oberflaeche. `init` legt den Ordner an,
     /// und `AppZustand.slotzustand` laeuft fuenfmal je Neuzeichnen — in
@@ -118,7 +119,25 @@ public struct Slotgedaechtnis: Sendable {
     /// Eine gehaltene Fassung verhaelt sich Zeichen fuer Zeichen wie eine
     /// frisch gebaute — jeder Lesezugriff geht ohnehin auf die Platte. Tests
     /// reichen weiterhin ihren eigenen, wegwerfbaren Ordner herein.
-    public static let gemeinsam = Slotgedaechtnis()
+    ///
+    /// **Gehalten, aber nicht fuer immer:** Seit der Ordner ueber `Ablageort`
+    /// kommt, kann er sich im Lauf einer Sitzung aendern — wer den
+    /// iCloud-Abgleich umschaltet, aendert ihn. Ein `static let` zeigte danach
+    /// weiter auf den alten Ort und merkte Sendungen still am falschen Platz.
+    /// Deshalb haelt der Zwischenspeicher den Pfad mit und baut neu, sobald er
+    /// ein anderer ist.
+    public static var gemeinsam: Slotgedaechtnis {
+        let ordner = eigenerOrdner
+        haltesperre.lock()
+        defer { haltesperre.unlock() }
+        if let gehaltenes, gehaltenes.ordner == ordner { return gehaltenes.gedaechtnis }
+        let neu = Slotgedaechtnis(ordner: ordner)
+        gehaltenes = (ordner, neu)
+        return neu
+    }
+
+    private static let haltesperre = NSLock()
+    nonisolated(unsafe) private static var gehaltenes: (ordner: URL, gedaechtnis: Slotgedaechtnis)?
 
     public init(ordner: URL = Slotgedaechtnis.eigenerOrdner) {
         self.ordner = ordner

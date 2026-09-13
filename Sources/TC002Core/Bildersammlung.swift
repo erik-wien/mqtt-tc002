@@ -250,12 +250,7 @@ public struct Bildersammlung {
 }
 
 /// Wo die Bildersammlung liegt — neben den eigenen Icons, eigener Unterordner.
+/// Oertlich oder im iCloud-Behaelter, je nach `Ablageort`.
 public enum Bilderordner {
-    public static var eigene: URL {
-        let ordner = FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("MQTT-TC002/Bilder")
-        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
-        return ordner
-    }
+    public static var eigene: URL { Ablageort.gemeinsam.ordner(.bilder) }
 }

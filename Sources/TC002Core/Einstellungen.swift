@@ -207,7 +207,10 @@ public struct Einstellungen: Sendable {
     /// eigenen* ansieht — nur damit kann `suiteName` zusammenstossen. Deshalb
     /// steht hier `Bundle.main` und nicht `Programmbuendel`, obwohl beide
     /// sonst dasselbe Buendel meinen.
-    private static func ablage(_ bereich: String) -> UserDefaults? {
+    /// Nicht `private`: `Ablageort` liest und schreibt hier den Schalter fuer
+    /// den iCloud-Abgleich, und zwar ausdruecklich in **derselben** Ablage —
+    /// nur so sieht das Werkzeug denselben Ort wie die App.
+    static func ablage(_ bereich: String) -> UserDefaults? {
         Bundle.main.bundleIdentifier == bereich ? .standard : UserDefaults(suiteName: bereich)
     }
 
