@@ -1,0 +1,76 @@
+# Ausschlussgruende je Schrift und Groesse
+#
+# Erzeugt von SchriftprobeTests.testTabelleFuerAlleSchriftenUndGroessen.
+# Leer heisst „nicht ausgeschlossen“, nicht „brauchbar“ — darueber
+# urteilt nur ein Augenpaar (erzeugt/schriftprobe.html).
+
+Micro 5 6 px
+  Zeichen fallen zusammen: „0“ = „8“, „0“ = „9“, „0“ = „H“, „0“ = „O“, „0“ = „U“, „1“ = „C“, „1“ = „I“, „1“ = „J“, „1“ = „L“, „1“ = „f“, „1“ = „l“, „1“ = „t“, „5“ = „6“, „5“ = „S“, „6“ = „S“, „8“ = „9“, „8“ = „H“, „8“ = „O“, „8“ = „U“, „9“ = „H“, „9“ = „O“, „9“ = „U“, „A“ = „N“, „B“ = „E“, „B“ = „K“, „C“ = „I“, „C“ = „J“, „C“ = „L“, „C“ = „f“, „C“ = „l“, „C“ = „t“, „E“ = „K“, „F“ = „T“, „H“ = „O“, „H“ = „U“, „I“ = „J“, „I“ = „L“, „I“ = „f“, „I“ = „l“, „I“ = „t“, „J“ = „L“, „J“ = „f“, „J“ = „l“, „J“ = „t“, „L“ = „f“, „L“ = „l“, „L“ = „t“, „O“ = „U“, „P“ = „V“, „X“ = „Z“, „f“ = „l“, „f“ = „t“, „l“ = „t“, „x“ = „z“, „Ö“ = „Ü“
+Micro 5 7 px
+  Zeichen fallen zusammen: „0“ = „8“, „0“ = „9“, „0“ = „H“, „0“ = „O“, „0“ = „U“, „1“ = „C“, „1“ = „I“, „1“ = „J“, „1“ = „L“, „1“ = „f“, „1“ = „l“, „1“ = „t“, „5“ = „6“, „5“ = „S“, „6“ = „S“, „8“ = „9“, „8“ = „H“, „8“ = „O“, „8“ = „U“, „9“ = „H“, „9“ = „O“, „9“ = „U“, „A“ = „N“, „B“ = „R“, „C“ = „I“, „C“ = „J“, „C“ = „L“, „C“ = „f“, „C“ = „l“, „C“ = „t“, „E“ = „K“, „F“ = „T“, „H“ = „O“, „H“ = „U“, „I“ = „J“, „I“ = „L“, „I“ = „f“, „I“ = „l“, „I“ = „t“, „J“ = „L“, „J“ = „f“, „J“ = „l“, „J“ = „t“, „L“ = „f“, „L“ = „l“, „L“ = „t“, „O“ = „U“, „P“ = „V“, „f“ = „l“, „f“ = „t“, „l“ = „t“, „s“ = „x“, „Ö“ = „Ü“
+Micro 5 8 px
+  Zeichen fallen zusammen: „0“ = „8“, „0“ = „9“, „0“ = „B“, „0“ = „H“, „0“ = „K“, „0“ = „O“, „0“ = „R“, „0“ = „U“, „0“ = „X“, „1“ = „C“, „1“ = „I“, „1“ = „J“, „1“ = „L“, „1“ = „f“, „1“ = „l“, „1“ = „t“, „5“ = „6“, „5“ = „S“, „6“ = „S“, „8“ = „9“, „8“ = „B“, „8“ = „H“, „8“ = „K“, „8“ = „O“, „8“ = „R“, „8“ = „U“, „8“ = „X“, „9“ = „B“, „9“ = „H“, „9“ = „K“, „9“ = „O“, „9“ = „R“, „9“ = „U“, „9“ = „X“, „A“ = „N“, „A“ = „k“, „B“ = „H“, „B“ = „K“, „B“ = „O“, „B“ = „R“, „B“ = „U“, „B“ = „X“, „C“ = „I“, „C“ = „J“, „C“ = „L“, „C“ = „f“, „C“ = „l“, „C“ = „t“, „F“ = „T“, „H“ = „K“, „H“ = „O“, „H“ = „R“, „H“ = „U“, „H“ = „X“, „I“ = „J“, „I“ = „L“, „I“ = „f“, „I“ = „l“, „I“ = „t“, „J“ = „L“, „J“ = „f“, „J“ = „l“, „J“ = „t“, „K“ = „O“, „K“ = „R“, „K“ = „U“, „K“ = „X“, „L“ = „f“, „L“ = „l“, „L“ = „t“, „N“ = „k“, „O“ = „R“, „O“ = „U“, „O“ = „X“, „P“ = „V“, „R“ = „U“, „R“ = „X“, „U“ = „X“, „f“ = „l“, „f“ = „t“, „l“ = „t“, „Ö“ = „Ü“
+Micro 5 9 px
+  Zeichen fallen zusammen: „0“ = „8“, „0“ = „B“, „0“ = „D“, „0“ = „H“, „0“ = „K“, „0“ = „N“, „0“ = „O“, „0“ = „R“, „0“ = „U“, „1“ = „7“, „1“ = „T“, „4“ = „Y“, „5“ = „S“, „6“ = „G“, „7“ = „T“, „8“ = „B“, „8“ = „D“, „8“ = „H“, „8“ = „K“, „8“ = „N“, „8“ = „O“, „8“ = „R“, „8“ = „U“, „B“ = „D“, „B“ = „H“, „B“ = „K“, „B“ = „N“, „B“ = „O“, „B“ = „R“, „B“ = „U“, „D“ = „H“, „D“ = „K“, „D“ = „N“, „D“ = „O“, „D“ = „R“, „D“ = „U“, „H“ = „K“, „H“ = „N“, „H“ = „O“, „H“ = „R“, „H“ = „U“, „I“ = „l“, „K“ = „N“, „K“ = „O“, „K“ = „R“, „K“ = „U“, „N“ = „O“, „N“ = „R“, „N“ = „U“, „O“ = „R“, „O“ = „U“, „R“ = „U“, „a“ = „o“, „b“ = „h“, „b“ = „k“, „h“ = „k“, „u“ = „v“, „Ö“ = „Ü“, „ä“ = „ö“
+Micro 5 10 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „I“ = „l“
+Micro 5 11 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „I“ = „l“
+Micro 5 12 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „H“ = „K“, „H“ = „X“, „I“ = „l“, „K“ = „X“
+Micro 5 13 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „I“ = „l“
+Micro 5 14 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „H“ = „K“, „H“ = „X“, „I“ = „l“, „K“ = „X“
+Micro 5 15 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „I“ = „l“
+Micro 5 16 px
+  Zeichen fallen zusammen: „0“ = „O“, „5“ = „S“, „I“ = „l“, „a“ = „q“
+  „Grüße“ passt nicht in 16 Zeilen: 1 Zeile(n) unten fehlen
+  „ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ“ passt nicht in 16 Zeilen: 1 Zeile(n) unten fehlen
+Silkscreen 6 px
+  Zeichen fallen zusammen: „0“ = „C“, „0“ = „D“, „0“ = „O“, „0“ = „c“, „0“ = „d“, „0“ = „o“, „1“ = „L“, „1“ = „l“, „5“ = „S“, „5“ = „s“, „8“ = „B“, „8“ = „b“, „8“ = „ß“, „A“ = „a“, „B“ = „b“, „B“ = „ß“, „C“ = „D“, „C“ = „O“, „C“ = „c“, „C“ = „d“, „C“ = „o“, „D“ = „O“, „D“ = „c“, „D“ = „d“, „D“ = „o“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „c“, „O“ = „d“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „b“ = „ß“, „c“ = „d“, „c“ = „o“, „d“ = „o“, „Ä“ = „ä“
+Silkscreen 7 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“, „Ö“ = „ö“, „Ü“ = „ü“
+Silkscreen 8 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 9 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 10 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 11 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 12 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 13 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 14 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+Silkscreen 15 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „o“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „o“, „P“ = „p“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „Ä“ = „ä“
+  „ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ“ passt nicht in 16 Zeilen: 1 Zeile(n) unten fehlen
+Silkscreen 16 px
+  Zeichen fallen zusammen: „0“ = „O“, „0“ = „Q“, „0“ = „o“, „0“ = „q“, „A“ = „a“, „B“ = „b“, „C“ = „c“, „D“ = „d“, „E“ = „e“, „F“ = „f“, „G“ = „g“, „H“ = „h“, „I“ = „i“, „J“ = „j“, „K“ = „k“, „L“ = „l“, „M“ = „m“, „N“ = „n“, „O“ = „Q“, „O“ = „o“, „O“ = „q“, „P“ = „p“, „Q“ = „o“, „Q“ = „q“, „R“ = „r“, „S“ = „s“, „T“ = „t“, „U“ = „u“, „V“ = „v“, „W“ = „w“, „X“ = „x“, „Y“ = „y“, „Z“ = „z“, „o“ = „q“, „Ä“ = „ä“
+  „ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ“ passt nicht in 16 Zeilen: 2 Zeile(n) unten fehlen
+Tiny5 6 px
+  Zeichen fallen zusammen: „0“ = „8“, „2“ = „Z“, „4“ = „J“, „4“ = „d“, „7“ = „T“, „C“ = „O“, „I“ = „l“, „J“ = „d“, „V“ = „Y“, „a“ = „e“, „a“ = „o“, „b“ = „h“, „b“ = „k“, „e“ = „o“, „h“ = „k“, „n“ = „z“, „u“ = „v“, „ä“ = „ö“
+Tiny5 7 px
+  Zeichen fallen zusammen: „I“ = „l“, „M“ = „N“
+Tiny5 8 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 9 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 10 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 11 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 12 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 13 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 14 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 15 px
+  Zeichen fallen zusammen: „I“ = „l“
+Tiny5 16 px
+  Zeichen fallen zusammen: „I“ = „l“, „a“ = „g“, „a“ = „q“, „g“ = „q“, „i“ = „j“
