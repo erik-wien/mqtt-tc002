@@ -63,9 +63,9 @@ ohne Anhang**. Bleibt es leer, tritt die **Geräte-uid** an seine Stelle, also
 die zwölfstellige MAC-Adresse (`a4cf12ab34cd/cmd/notify`). Die MQTT-Client-
 Kennung ist ebenfalls die uid.
 
-🔬 Am gemessenen Gerät steht `"mqttPrefix":"wlmonitor/board"` in `GET
-/api/v1/system`, und das Geräteprotokoll (`GET /api/v1/logs`) führt dieselbe
-Zeichenkette: `mqtt: broker akadbrain.local:1883, prefix wlmonitor/board`. Das
+🔬 Am gemessenen Gerät stand in `GET /api/v1/system` ein `mqttPrefix` mit einem
+Schrägstrich darin, und das Geräteprotokoll (`GET /api/v1/logs`) führte dieselbe
+Zeichenkette in der Form `mqtt: broker <Broker>:1883, prefix <Präfix>`. Das
 Präfix darf also mehrere Themenebenen enthalten.
 
 📄 Zusätzlich veröffentlicht das Gerät sein Präfix unter dem Präfix selbst:
@@ -592,8 +592,8 @@ curl -X PUT http://<awtrix-ip>/api/v1/apps/pushed/art \
 🔬 Am gemessenen Gerät:
 
 ```json
-{"version":"1.1.0","uid":"9015065613e8","boardType":"awtrixng","soc":"esp32",
- "ipAddress":"10.10.11.162","hostname":"awtrix-2","wifiRssi":-75,
+{"version":"1.1.0","uid":"<MAC, 12 Hex>","boardType":"awtrixng","soc":"esp32",
+ "ipAddress":"<IP>","hostname":"<Hostname>","wifiRssi":-75,
  "uptimeSeconds":167,"freeHeapBytes":84160,"minFreeHeapBytes":16016,
  "largestFreeBlockBytes":77812,"scriptingRunning":true,
  "scriptHeapPool":"internal","scriptHeapBudgetBytes":98304,
@@ -603,11 +603,14 @@ curl -X PUT http://<awtrix-ip>/api/v1/apps/pushed/art \
  "humidity":42.8,"matrixPower":true,"currentApp":"Time",
  "indicators":[{"on":false,"color":"#000000","blinkMs":0,"fadeMs":0}, …],
  "messageCount":0,
- "wifi":{"enabled":true,"state":"connected","host":"lazybird", …},
- "mqtt":{"enabled":true,"state":"offline","host":"akadbrain.local",
-         "endpoint":"10.10.11.237:1883","attempts":6,"retryInMs":3871,
+ "wifi":{"enabled":true,"state":"connected","host":"<WLAN>", …},
+ "mqtt":{"enabled":true,"state":"offline","host":"<Broker>",
+         "endpoint":"<Broker>:1883","attempts":6,"retryInMs":3871,
          "connects":0,"error":"badCredentials","lastError":"badCredentials"}}
 ```
+
+Kennungen, Adressen und Namen sind ersetzt; die Zahlenwerte stehen so, wie das
+Geraet sie gemeldet hat.
 
 📄 Ob das Gerät am Broker hängt und warum nicht, steht unter `mqtt` in dieser
 Antwort.

@@ -63,10 +63,9 @@ nothing appended**. Leave it empty and the **device uid** takes its place, that
 is the twelve-character MAC address (`a4cf12ab34cd/cmd/notify`). The MQTT
 client id is the uid as well.
 
-🔬 On the measured device `GET /api/v1/system` reports
-`"mqttPrefix":"wlmonitor/board"`, and the device log (`GET /api/v1/logs`)
-carries the same string: `mqtt: broker akadbrain.local:1883, prefix
-wlmonitor/board`. A prefix may therefore span several topic levels.
+🔬 On the measured device `GET /api/v1/system` reported an `mqttPrefix`
+containing a slash, and the device log (`GET /api/v1/logs`) carried the same
+string in the form `mqtt: broker <broker>:1883, prefix <prefix>`. A prefix may therefore span several topic levels.
 
 📄 The device also publishes its prefix under the prefix itself:
 `<P>/state/prefix` carries `<P>` as a plain string, retained.
@@ -581,8 +580,8 @@ curl -X PUT http://<awtrix-ip>/api/v1/apps/pushed/art \
 🔬 On the measured device:
 
 ```json
-{"version":"1.1.0","uid":"9015065613e8","boardType":"awtrixng","soc":"esp32",
- "ipAddress":"10.10.11.162","hostname":"awtrix-2","wifiRssi":-75,
+{"version":"1.1.0","uid":"<MAC, 12 Hex>","boardType":"awtrixng","soc":"esp32",
+ "ipAddress":"<IP>","hostname":"<Hostname>","wifiRssi":-75,
  "uptimeSeconds":167,"freeHeapBytes":84160,"minFreeHeapBytes":16016,
  "largestFreeBlockBytes":77812,"scriptingRunning":true,
  "scriptHeapPool":"internal","scriptHeapBudgetBytes":98304,
@@ -592,11 +591,14 @@ curl -X PUT http://<awtrix-ip>/api/v1/apps/pushed/art \
  "humidity":42.8,"matrixPower":true,"currentApp":"Time",
  "indicators":[{"on":false,"color":"#000000","blinkMs":0,"fadeMs":0}, …],
  "messageCount":0,
- "wifi":{"enabled":true,"state":"connected","host":"lazybird", …},
- "mqtt":{"enabled":true,"state":"offline","host":"akadbrain.local",
-         "endpoint":"10.10.11.237:1883","attempts":6,"retryInMs":3871,
+ "wifi":{"enabled":true,"state":"connected","host":"<WLAN>", …},
+ "mqtt":{"enabled":true,"state":"offline","host":"<Broker>",
+         "endpoint":"<Broker>:1883","attempts":6,"retryInMs":3871,
          "connects":0,"error":"badCredentials","lastError":"badCredentials"}}
 ```
+
+Identifiers, addresses and names are replaced; the numbers are as the device
+reported them.
 
 📄 Whether the device is connected to the broker, and why not, is reported
 under `mqtt` in this answer.
