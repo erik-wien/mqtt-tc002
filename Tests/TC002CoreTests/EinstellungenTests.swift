@@ -140,6 +140,20 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertTrue(String(decoding: mitTyp, as: UTF8.self).contains("\"typ\":\"tc002\""))
     }
 
+    /// Der Rohwert von `awtrixNG` ist ein **Dateiformat**, kein Bezeichner:
+    /// Ein spaeter umbenannter Fall macht jede Uhr, die schon so eingetragen
+    /// ist, beim Lesen zum Fehler — und weil beide Leser mit `try?` lesen,
+    /// waere die Uhrenliste dann leer statt fehlerhaft. Deshalb hier
+    /// festgenagelt, in beide Richtungen.
+    func testAwtrixNGUeberstehtDenWegDurchDieDatei() throws {
+        let daten = try JSONEncoder().encode([Uhr(name: "Flur", host: "10.0.0.2", typ: .awtrixNG)])
+        XCTAssertTrue(String(decoding: daten, as: UTF8.self).contains("\"typ\":\"awtrixNG\""),
+                      "war: \(String(decoding: daten, as: UTF8.self))")
+
+        let zurueck = try JSONDecoder().decode([Uhr].self, from: daten)
+        XCTAssertEqual(zurueck[0].typ, .awtrixNG)
+    }
+
     // MARK: - Betriebsart
 
     /// **Die Entscheidung ueber den Bestand.** Eine Datei ohne `betriebsart`

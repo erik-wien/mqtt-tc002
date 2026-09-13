@@ -2,12 +2,22 @@ import Foundation
 
 /// Welche Art Geraet hinter einer `Uhr` steckt.
 ///
-/// Heute gibt es nur eine Art, und nichts fragt danach — der Typ steht hier,
-/// damit `Uhr.typ` einen hat. Eine zweite Art kommt mit ihrem eigenen
-/// Durchgang und traegt dann ihren eigenen Fall ein; alte Einstellungen bleiben
-/// dabei lesbar, weil sie den Schluessel gar nicht erst enthalten.
+/// Alte Einstellungen bleiben lesbar, weil sie den Schluessel gar nicht erst
+/// enthalten — `Uhr.typ` ist `Optional`, und `nil` heisst `.tc002`.
+///
+/// **Der umgekehrte Weg traegt nicht.** Eine Datei, in der `awtrixNG` steht,
+/// wirft in einer Fassung vor dieser beim Decode, und weil beide Leser mit
+/// `try?` lesen, waere die Folge eine leere Uhrenliste statt einer Meldung.
+/// Wer also je eine dritte Art eintraegt, aendert damit nichts an heutigen
+/// Installationen, wohl aber an der Rueckwaertsrichtung; das ist der Preis
+/// eines `RawRepresentable`-Enums in einem Dateiformat und hier bewusst
+/// bezahlt, weil eine unbekannte Geraeteart nicht sinnvoll zu raten waere.
 public enum Geraetetyp: String, Codable, Sendable {
+    /// Die Ulanzi-Werksfirmware (TC002). Der Bestand.
     case tc002
+    /// AWTRIX NG auf einer TC001/TC002 — eigene Themen, eigene Nutzlast,
+    /// eigene Geraetezeichnung.
+    case awtrixNG
 }
 
 /// Auf welchem Weg eine Uhr beschickt wird. Je Uhr eine Wahl, kein
