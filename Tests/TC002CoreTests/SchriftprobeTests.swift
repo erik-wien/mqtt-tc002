@@ -1,8 +1,8 @@
 import XCTest
 @testable import TC002Core
 
-/// Die Versuchsreihe: fuer jede mitgelieferte Schrift und jede Groesse, die der
-/// Schieber zulaesst, was dagegen spricht.
+/// Die Versuchsreihe: fuer jede mitgelieferte Schrift und jede gemessene
+/// Groesse, was dagegen spricht.
 ///
 /// Der Schnappschuss haelt fest, **was heute gilt** — und ist damit zugleich
 /// der Waechter: Aendert sich eine Schriftdatei oder die Rasterung, faellt es
@@ -59,7 +59,7 @@ final class SchriftprobeTests: XCTestCase {
         XCTAssertTrue(paare.contains(Schriftprobe.Zeichenpaar("Ö", "O")))
     }
 
-    /// Und die Gegenprobe: In den Groessen, die der Schieber anbietet, ist
+    /// Und die Gegenprobe: In den gemessenen Groessen ist
     /// **kein** Umlaut seines Grundbuchstabens verlustig gegangen. Faellt das
     /// eines Tages, ist es das Erste, was man wissen will.
     func testInDenAngebotenenGroessenBleibenDieUmlauteErhalten() {

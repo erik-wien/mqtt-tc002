@@ -19,8 +19,9 @@ public enum Schriftprobe {
     /// im Font-Editor gepruefte Tatsache, kein Tippfehler.
     public static let mitgelieferteSchriften = ["Micro 5", "Silkscreen", "Tiny5"]
 
-    /// Die Groessen, die der Schieber in der Sendeansicht zulaesst
-    /// (`Stepper(… in: 6...16)`, ein Pixel Schrittweite).
+    /// Gemessen wird in ganzen Pixeln von 6 bis 16 — derselbe Bereich, aus dem
+    /// die Sendeansicht waehlt (`Pixelgroessen.freierBereich`). Welche davon sie
+    /// anbietet, entscheidet sie dort; diese Messung entscheidet nichts.
     public static let groessen: [Double] = Array(stride(from: 6.0, through: 16.0, by: 1.0))
 
     /// Der Zeichenvorrat, den die App auf dem Weg „als Pixel" wirklich schickt.
