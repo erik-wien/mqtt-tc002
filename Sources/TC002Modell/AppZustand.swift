@@ -136,8 +136,41 @@ public final class AppZustand {
     /// mit und bekommt den echten; die Tests geben einen Doppelgaenger.
     private let schluesselbund: Schluesselbundzugriff
 
-    public init(schluesselbund: Schluesselbundzugriff = EchterSchluesselbund()) {
+    // MARK: iCloud-Abgleich
+
+    /// Die Ablage in der Wolke — dasselbe Vorgabeargument-Muster wie beim
+    /// Schluesselbund: Die App bekommt die echte, die Tests einen
+    /// Doppelgaenger. **Kein Test fasst iCloud an.**
+    private let wolke: Wolkenablage
+
+    /// Ob der Abgleich gewaehlt ist. Geschrieben wird er **nur** ueber
+    /// `wolkeUmschalten` — dort haengt der Umzug daran.
+    public private(set) var wolkeGewaehlt: Bool
+    /// Ob ein Behaelter erreichbar ist. `nil` heisst: noch nicht nachgesehen —
+    /// nachgesehen wird erst, wenn die Einstellungen aufgehen, denn die
+    /// Auskunft kostet und wird sonst nirgends gebraucht.
+    public private(set) var wolkeBereit: Bool?
+    /// Waehrend Umzug und Umschalten. Der Schalter bleibt derweil gesperrt:
+    /// Zweimal umschalten, waehrend noch kopiert wird, ergaebe einen halben
+    /// Bestand.
+    public private(set) var wolkeLaeuft = false
+    /// Was zuletzt in die Wolke ging. Verhindert das Echo — ohne den
+    /// Vergleich schriebe jede uebernommene Aenderung sich selbst zurueck.
+    private var zuletztGeschrieben: Data?
+    /// Waehrend `standUebernehmen` laeuft: Die `didSet`-Schreiber sollen in die
+    /// Einstellungen schreiben, aber nicht in die Wolke zurueck.
+    private var uebernimmtGerade = false
+    private var wolkenBeobachter: NSObjectProtocol?
+
+    /// `wolkeGewaehlt` kommt als Vorgabeargument herein wie `schluesselbund`
+    /// und `wolke`: Die App liest die echte Wahl, die Tests setzen sie, ohne
+    /// dafuer die Einstellungen dieser Installation anzufassen.
+    public init(schluesselbund: Schluesselbundzugriff = EchterSchluesselbund(),
+                wolke: Wolkenablage = EchteWolkenablage(),
+                wolkeGewaehlt: Bool = Ablageort.gewaehlt()) {
         self.schluesselbund = schluesselbund
+        self.wolke = wolke
+        self.wolkeGewaehlt = wolkeGewaehlt
         let d = UserDefaults.standard
         uhren = (try? JSONDecoder().decode([Uhr].self,
                     from: d.data(forKey: "uhren") ?? Data())) ?? []
@@ -176,6 +209,10 @@ public final class AppZustand {
         }
         kennwortGesichert = kennwort
         initialisiert = true
+        // Nur wenn der Abgleich gewaehlt ist, wird der Behaelter ueberhaupt
+        // gesucht — und dann losgeloest, weil die Suche blockiert.
+        Ablageort.vorbereiten()
+        wolkeHorchen()
     }
 
     public func anzeigeGemerkt(_ name: String, fuer id: UUID) {
@@ -1060,11 +1097,13 @@ public final class AppZustand {
     private func uhrenSichern() {
         guard initialisiert, let daten = try? JSONEncoder().encode(uhren) else { return }
         UserDefaults.standard.set(daten, forKey: "uhren")
+        wolkeSchreiben()
     }
 
     private func zielIDsSichern() {
         guard initialisiert, let daten = try? JSONEncoder().encode(zielIDs) else { return }
         UserDefaults.standard.set(daten, forKey: "zielIDs")
+        wolkeSchreiben()
     }
 
     /// UserDefaults kennt keine UUID-Schluessel — deshalb als JSON ueber die
@@ -1075,11 +1114,13 @@ public final class AppZustand {
             bekannteAnzeigen.map { ($0.key.uuidString, $0.value) })
         guard let daten = try? JSONEncoder().encode(flach) else { return }
         UserDefaults.standard.set(daten, forKey: "bekannteAnzeigen")
+        wolkeSchreiben()
     }
 
     private func merke(_ wert: String?, _ schluessel: String) {
         guard initialisiert else { return }
         UserDefaults.standard.set(wert, forKey: schluessel)
+        wolkeSchreiben()
     }
 
     /// Die App geht in den Hintergrund. Unter iOS überlebt eine offene
@@ -1099,5 +1140,133 @@ public final class AppZustand {
     public func ausDemHintergrund(sitzung: URLSession = .shared) {
         horchenAbgleichen()
         belegungAbfragen(sitzung: sitzung)
+    }
+
+    // MARK: - iCloud-Abgleich
+
+    /// Die eigene Einrichtung als ein Stueck.
+    public var eigenerStand: Einrichtungsstand {
+        Einrichtungsstand(
+            uhren: uhren,
+            zielIDs: uhren.map(\.id).filter { zielIDs.contains($0) },
+            brokerHost: brokerHost, brokerPort: brokerPort, benutzer: benutzer,
+            bekannteAnzeigen: Dictionary(
+                bekannteAnzeigen.map { ($0.key.uuidString, $0.value) },
+                uniquingKeysWith: { erster, _ in erster }))
+    }
+
+    /// Uebernimmt einen zusammengefuehrten Stand.
+    ///
+    /// Die `didSet`-Schreiber laufen dabei mit und legen alles in
+    /// `UserDefaults` ab — **genau dadurch folgt das Kommandozeilenwerkzeug
+    /// dem Abgleich, ohne selbst je die Wolke anzufassen.** Es liest weiter
+    /// die Einstellungen der App; sie sind jetzt nur eben die abgeglichenen.
+    /// Ein zweiter Leser in der Wolke braeuchte seine eigene Berechtigung, und
+    /// er saehe zwischen zwei Abgleichen etwas anderes als die App.
+    ///
+    /// `uebernimmtGerade` haelt derweil den Rueckweg zu: Sonst schriebe jede
+    /// uebernommene Aenderung sich selbst wieder in die Wolke.
+    func standUebernehmen(_ stand: Einrichtungsstand) {
+        uebernimmtGerade = true
+        defer { uebernimmtGerade = false }
+        if uhren != stand.uhren { uhren = stand.uhren }
+        let ziele = Set(stand.zielIDs)
+        if zielIDs != ziele { zielIDs = ziele }
+        if brokerHost != stand.brokerHost { brokerHost = stand.brokerHost }
+        if brokerPort != stand.brokerPort { brokerPort = stand.brokerPort }
+        if benutzer != stand.benutzer { benutzer = stand.benutzer }
+        let anzeigen = Dictionary(
+            stand.bekannteAnzeigen.compactMap { text, liste in
+                UUID(uuidString: text).map { ($0, liste) }
+            },
+            uniquingKeysWith: { erster, _ in erster })
+        if bekannteAnzeigen != anzeigen { bekannteAnzeigen = anzeigen }
+        // Die aktive Uhr kann mit dem Stand verschwunden sein.
+        if let id = aktiveID, !uhren.contains(where: { $0.id == id }) { aktiveID = uhren.first?.id }
+        if aktiveID == nil { aktiveID = uhren.first?.id }
+    }
+
+    /// Legt die eigene Einrichtung in die Wolke — wenn sie gewaehlt ist, wenn
+    /// sich etwas geaendert hat und wenn sie hineinpasst.
+    private func wolkeSchreiben() {
+        guard wolkeGewaehlt, !uebernimmtGerade, initialisiert else { return }
+        guard let daten = eigenerStand.alsDaten else { return }
+        guard daten != zuletztGeschrieben else { return }
+        guard daten.count <= Einrichtungsstand.hoechstmass else {
+            fehler = lok("Die Einrichtung ist zu groß für den iCloud-Abgleich.")
+            return
+        }
+        zuletztGeschrieben = daten
+        wolke.schreiben(daten)
+    }
+
+    /// Nimmt, was in der Wolke steht, und fuehrt es mit dem eigenen Stand
+    /// zusammen.
+    func wolkeLesen() {
+        guard wolkeGewaehlt, let daten = wolke.lesen(),
+              let fern = try? JSONDecoder().decode(Einrichtungsstand.self, from: daten)
+        else { return }
+        let zusammen = Einrichtungsstand.zusammengefuehrt(oertlich: eigenerStand, fern: fern)
+        standUebernehmen(zusammen)
+        // Was beim Zusammenfuehren dazugekommen ist, gehoert zurueck in die
+        // Wolke — sonst kennte das andere Geraet die hier eingetragene Uhr nie.
+        zuletztGeschrieben = daten
+        wolkeSchreiben()
+    }
+
+    private func wolkeHorchen() {
+        guard wolkeGewaehlt, wolkenBeobachter == nil else { return }
+        wolkenBeobachter = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.wolkeLesen() }
+            }
+        wolke.anstossen()
+        wolkeLesen()
+    }
+
+    private func wolkeNichtMehrHorchen() {
+        if let wolkenBeobachter { NotificationCenter.default.removeObserver(wolkenBeobachter) }
+        wolkenBeobachter = nil
+    }
+
+    /// Sieht nach, ob ein Behaelter erreichbar ist. Blockiert, laeuft deshalb
+    /// losgeloest — und wird erst gerufen, wenn die Einstellungen aufgehen.
+    public func wolkeBereitPruefen() {
+        guard wolkeBereit == nil, !wolkeLaeuft else { return }
+        Task.detached(priority: .utility) { [weak self] in
+            let bereit = Ablageort.behaelterErmitteln() != nil
+            await MainActor.run { [weak self] in self?.wolkeBereit = bereit }
+        }
+    }
+
+    /// Schaltet den Abgleich um — mitsamt dem Umzug. Blockiert, laeuft deshalb
+    /// losgeloest; der Schalter bleibt derweil gesperrt.
+    public func wolkeUmschalten(_ an: Bool) {
+        guard !wolkeLaeuft else { return }
+        wolkeLaeuft = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let ergebnis = Ablageort.umschalten(an)
+            await MainActor.run { [weak self] in self?.wolkeUmgeschaltet(ergebnis) }
+        }
+    }
+
+    private func wolkeUmgeschaltet(_ ergebnis: Umschaltergebnis) {
+        wolkeLaeuft = false
+        wolkeBereit = ergebnis.bereit
+        wolkeGewaehlt = ergebnis.gewaehlt
+        if ergebnis.bilanz.kopiert > 0 {
+            log(lokf("iCloud: %d Dateien übernommen", ergebnis.bilanz.kopiert))
+        }
+        if ergebnis.bilanz.fehlgeschlagen > 0 {
+            fehler = lokf("%d Dateien ließen sich nicht kopieren.", ergebnis.bilanz.fehlgeschlagen)
+        }
+        if ergebnis.gewaehlt {
+            Ablageort.gemeinsam.herunterladenAnstossen()
+            wolkeHorchen()
+        } else {
+            wolkeNichtMehrHorchen()
+            zuletztGeschrieben = nil
+        }
     }
 }

@@ -744,3 +744,10 @@
 "Eine auffällig große Nutzlast — %@" = "A noticeably large payload — %@";
 "nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "only a shorter text makes it smaller, the speed changes nothing.";
 "nur weniger Einzelbilder machen sie kleiner, das Tempo ändert daran nichts." = "only fewer frames make it smaller, the speed changes nothing.";
+
+// Der iCloud-Abgleich (14.09.2026). Meldungen aus dem Modell — sie gehen als
+// gewoehnliches String ins Protokoll bzw. in die Fehlerleiste und muessen
+// deshalb durch lok/lokf.
+"Die Einrichtung ist zu groß für den iCloud-Abgleich." = "The setup is too large for iCloud sync.";
+"iCloud: %d Dateien übernommen" = "iCloud: %d files taken over";
+"%d Dateien ließen sich nicht kopieren." = "%d files could not be copied.";

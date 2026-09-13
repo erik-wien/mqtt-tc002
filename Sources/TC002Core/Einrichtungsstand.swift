@@ -56,7 +56,17 @@ extension Einrichtungsstand {
     /// je Schluessel. Bei **einem** Schluessel ist beides dieselbe Grenze.
     public static let hoechstmass = 1_024 * 1_024
 
-    public var alsDaten: Data? { try? JSONEncoder().encode(self) }
+    /// **Mit sortierten Schluesseln**, und das ist kein Schoenheitswunsch:
+    /// `bekannteAnzeigen` ist ein Woerterbuch und schriebe sonst bei gleichem
+    /// Inhalt mal so und mal so. Der Vergleich „hat sich etwas geaendert"
+    /// (`AppZustand.zuletztGeschrieben`) verglich dann Bytes, die sich
+    /// unterscheiden duerfen, ohne dass sich etwas geaendert hat — und jedes
+    /// Lesen aus der Wolke loeste ein Schreiben aus.
+    public var alsDaten: Data? {
+        let kodierer = JSONEncoder()
+        kodierer.outputFormatting = [.sortedKeys]
+        return try? kodierer.encode(self)
+    }
 
     /// Ob dieser Stand in die Ablage passt. Er tut es mit weitem Abstand: Eine
     /// Uhr wiegt rund 200 Bytes, ein gemerkter Anzeigenname ein paar Dutzend.
