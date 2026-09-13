@@ -273,24 +273,18 @@
 "Weg" = "Method";
 "als Pixel" = "as pixels";
 "als Text" = "as text";
-"„als Pixel“: die App rastert selbst — mit Umlauten, zu langer Text läuft als GIF. „als Text“: die Uhr setzt den Text selbst und lässt ihn bei Bedarf laufen, kennt dabei aber keine Umlaute." = "\"as pixels\": the app rasterizes itself — with umlauts, and text that is too long scrolls as a GIF. \"as text\": the clock typesets the text itself and scrolls it when needed, but knows no umlauts.";
 "Tempo" = "Speed";
-"Wie schnell der Text durchläuft." = "How fast the text scrolls through.";
 "Icon mitscrollen" = "Scroll icon along";
-"Aus: das Icon steht links, der Text läuft rechts daneben durch. An: es steht am Anfang des Textes und wandert mit hinaus." = "Off: the icon sits at the left, the text scrolls past to the right of it. On: it sits at the start of the text and travels out with it.";
 "Text" = "Text";
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo." = "Only an approximation — the clock typesets this text itself and shows it differently. If it scrolls because it does not fit, \"Scroll speed\" under Settings sets the speed.";
 "Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie." = "The device's built-in font does not know these characters and simply drops them: %@. \"as pixels\" can do them.";
 "Schrift" = "Font";
 "Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten." = "Font — narrow, monospaced fonts work best at a height of 16 pixels.";
 "%d px" = "%d px";
-"Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe." = "Font size — %@ is drawn for the pixel grid, in between there is no clean size.";
-"Schriftgröße" = "Font size";
 "Lage" = "Layout";
 "Rand %d" = "Margin %d";
 "Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht." = "Rows that stay free at \"top\" and \"bottom\" — 0 sets the text flush against the edge. Flush looks different from font to font, because some bring space above the cap height and others do not; a margin of your own makes the impression independent of that. With \"middle\" it has no effect.";
 "Abstand %d" = "Gap %d";
-"Leere Spalten zwischen den Zeichen, 0 bis 3 — nur beim Weg „als Pixel“: Jedes Zeichen wird einzeln gerastert und nach seiner Tinte angehängt, der Abstand ist also immer exakt so groß wie hier eingestellt, unabhängig von Schriftart, Größe und Zeichenpaar." = "Empty columns between the characters, 0 to 3 — only with the \"as pixels\" method: each character is rasterized on its own and appended by its ink, so the gap is always exactly as large as set here, independent of font, size and character pair.";
 "Waagrecht" = "Horizontal";
 "Senkrecht" = "Vertical";
 "Farbe" = "Color";
@@ -711,8 +705,6 @@
 "%@ aufgenommen, %@ — und geöffnet." = "%@ taken in, %@ — and opened.";
 "„Ungesichert“ heißt hier: Was auf der Leinwand steht, weicht von dem ab, was im Bestand liegt — nicht, dass es beim Beenden verloren ginge; das zuletzt Gemalte übersteht einen Neustart ohnehin. Eine nie gesicherte Zeichnung ist deshalb ungesichert, ein eben geöffnetes Bild nicht, und wer seinen Strich mit „Rückgängig“ zurücknimmt, steht wieder auf dem gesicherten Stand. Danach fragt alles, was die Leinwand verwirft: „Neu“, ein Größenwechsel, ein geöffnetes und ein geladenes Bild. Name und Nummer zählen dabei nicht mit — sie sind in zwei Anschlägen wieder eingetippt." = "\"Unsaved\" here means: what is on the canvas differs from what is in the stock — not that it would be lost on quitting; the last thing you drew survives a restart anyway. A drawing that was never saved is therefore unsaved, a just-opened image is not, and anyone who takes a stroke back with \"Undo\" stands on the saved state again. Everything that discards the canvas asks accordingly: \"New\", a size change, an opened and a loaded image. Name and number do not count towards it — they are typed again in two keystrokes.";
 "Aufgenommenes kommt **auch auf die Leinwand** — in seiner eigenen Größe, die Leinwand stellt sich darauf ein. Steht dort Ungesichertes, fragt eine Rückfrage vorher: „Ersetzen“ legt das Geladene auf die Leinwand, „Nur in den Bestand“ lässt sie stehen, wie sie ist, „Abbrechen“ ändert gar nichts. In den Bestand geht es in jedem Fall; zur Frage steht allein die Leinwand. Bis zum 14.09.2026 wanderte eine eingelesene Datei nur in den Bestand und war nirgends zu sehen." = "What is taken in goes **onto the canvas as well** — in its own size; the canvas adjusts to it. If unsaved work stands there, a prompt asks first: \"Replace\" puts the loaded image onto the canvas, \"Stock only\" leaves it as it is, \"Cancel\" changes nothing at all. Into the stock it goes in every case; only the canvas is in question. Until 14.09.2026 a file that was read in went into the stock alone and was nowhere to be seen.";
-"Die LaMetric-Nummer — zugleich der Dateiname." = "The LaMetric number — also the file name.";
-"Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt." = "The Ulanzi piece number, if there is one — it only records where the image came from.";
 "„Name“ und „Sichern“ legen alle Einzelbilder auf einmal ab. Bei 8×8 kommt „Nummer“ dazu: Sie ist der Dateiname und zugleich die LaMetric-Nummer und muss eindeutig sein. Bei 16×52 gibt es ebenfalls eine — die Werknummer, die Ulanzi für seine „Pixel Art 16×52“ vergibt —, aber sie ist **wahlfrei** und benennt die Datei nicht: Dort heißt die Datei weiter nach dem Namen, und derselbe Name ersetzt das Vorhandene. Bei 16×16 gibt es keine Nummer; diese Größe ist nicht kanonisch, sie stammt von uns. Nachladen lässt sich von Ulanzi nichts — eine Adresse, die eine fertige 16×52-Datei liefert, gibt es dort nicht." = "\"Name\" and \"Save\" file all frames at once. At 8×8 \"Number\" is added: it is the file name and at the same time the LaMetric number, and it must be unique. At 16×52 there is one as well — the piece number Ulanzi assigns to its \"Pixel Art 16×52\" — but it is **optional** and does not name the file: there the file is still named after the name, and the same name replaces what is there. At 16×16 there is no number; that size is not canonical, it comes from us. Nothing can be fetched from Ulanzi — there is no address there that hands out a finished 16×52 file.";
 
 // Umbenennen in der Liste „Vorhandene" (14.09.2026).
@@ -752,6 +744,7 @@
 "Icons, Bilder und die zuletzt gesendeten Meldungen liegen in iCloud." = "Icons, images and the most recently sent messages live in iCloud.";
 "Icons, Bilder und die zuletzt gesendeten Meldungen bleiben auf diesem Gerät." = "Icons, images and the most recently sent messages stay on this device.";
 "Das Kennwort bleibt im Schlüsselbund und wird nicht abgeglichen." = "The password stays in the keychain and is not synced.";
+
 // Die Hilfe zum iCloud-Abgleich (TC002Ansichten/HilfeInhalt.swift, 14.09.2026).
 // „Über iCloud abgleichen" steht schon oben beim Schalter und ist derselbe
 // Schluessel — kein zweiter Eintrag.
