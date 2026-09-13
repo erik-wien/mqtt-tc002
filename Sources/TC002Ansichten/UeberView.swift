@@ -86,6 +86,16 @@ public struct UeberView: View {
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 6) {
+                Text("Quelltext").font(.subheadline).fontWeight(.semibold)
+                // Kein Uebersetzungsschluessel: eine Adresse wird nicht uebersetzt.
+                Link(destination: URL(string: "https://github.com/erik-wien/mqtt-tc002")!) {
+                    Text(verbatim: "github.com/erik-wien/mqtt-tc002")
+                }
+            }
+            .font(.footnote)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Lizenz").font(.subheadline).fontWeight(.semibold)
                 Text("GPL-3.0, weil die App auf Teilen von PixDeck aufbaut, das selbst unter der GPL-3.0 steht.")
                 Link("www.gnu.org/licenses/gpl-3.0.html", destination: URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!)
