@@ -4,7 +4,7 @@ import Foundation
 /// Anfuehrungszeichen). Wird auf jeden nutzergesteuerten Text angewendet, bevor er in
 /// die JSON-Nutzlast eingebettet wird — sonst erzeugt ein Anfuehrungszeichen, ein
 /// Rueckwaertsstrich oder ein Steuerzeichen im Text ungueltiges JSON.
-private func jsonEscape(_ text: String) -> String {
+func jsonEscape(_ text: String) -> String {
     var ergebnis = ""
     ergebnis.reserveCapacity(text.count)
     for scalar in text.unicodeScalars {
@@ -54,6 +54,39 @@ public struct Textblock: Equatable, Sendable {
     public init(inhalt: String) { self.inhalt = inhalt }
 }
 
+/// Woraus ein Rahmen entstanden ist.
+///
+/// **Gehoert nicht zur Nutzlast** und kommt in `alsJSON()` nicht vor. Die
+/// Werksfirmware bekommt fertige Pixel und braucht nichts weiter; eine AWTRIX
+/// NG setzt den Text dagegen selbst, und ihr nuetzen gerade die Pixel nichts —
+/// sie braucht den Text und die Regler, aus denen er entstand
+/// (`NGNutzlast.anzeige`).
+///
+/// Deshalb reist die Herkunft mit dem Rahmen mit, statt an vier Stellen
+/// getrennt weitergereicht zu werden: Jeder Absender — App, Kommandozeilen-
+/// werkzeug, Kurzbefehl — baut seinen Rahmen ueber `Meldungsbau.rahmen`, und
+/// damit kann jeder von ihnen an beide Gattungen senden, ohne es eigens zu
+/// wissen. Wo es keine Regler gibt (ein gemaltes Bild, ein Bild aus der
+/// Sammlung), bleibt sie `nil` — und genau dann sagt `Anzeigen`, dass diese
+/// Sendung an eine AWTRIX nicht geht, statt sie ins Leere zu schicken.
+public struct Meldungsherkunft: Equatable, Sendable {
+    public var optionen: Meldungsoptionen
+    /// Das Icon als vollstaendige Daten-URI — so, wie es die Werksfirmware
+    /// bekommt. NG schneidet den Vorsatz selbst ab (`NGNutzlast.icon`).
+    public var iconDatenURI: String?
+    /// Die Kantenlaenge des Icons. Der Werksfirmware ist sie einerlei — sie
+    /// bekommt das fertige Bild an der richtigen Stelle. Eine AWTRIX NG hat
+    /// acht Zeilen, und ein 16×16-Icon spielt dort gar nicht; ohne diese
+    /// Angabe liesse sich das erst am dunklen Geraet feststellen.
+    public var iconKante: Int
+
+    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil, iconKante: Int = 8) {
+        self.optionen = optionen
+        self.iconDatenURI = iconDatenURI
+        self.iconKante = iconKante
+    }
+}
+
 /// Was die Uhr als Nutzlast erwartet. Leere Bestandteile fallen weg — das Geraet
 /// stolpert sonst ueber leere Felder, und die Nachrichten werden unnoetig gross.
 public struct Frame: Equatable, Sendable {
@@ -61,10 +94,14 @@ public struct Frame: Equatable, Sendable {
     public var bilder: [Bild] = []
     public var texte: [Textblock] = []
     public var dauer: Int?
+    /// Siehe `Meldungsherkunft` — steht daneben, nicht darin.
+    public var herkunft: Meldungsherkunft?
 
     public init(draw: [DrawBefehl] = [], bilder: [Bild] = [],
-                texte: [Textblock] = [], dauer: Int? = nil) {
+                texte: [Textblock] = [], dauer: Int? = nil,
+                herkunft: Meldungsherkunft? = nil) {
         self.draw = draw; self.bilder = bilder; self.texte = texte; self.dauer = dauer
+        self.herkunft = herkunft
     }
 
     public func alsJSON() -> String {

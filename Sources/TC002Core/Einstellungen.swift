@@ -76,8 +76,46 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// ist eine. Beim Schreiben faellt das Feld wieder weg, solange es `nil`
     /// ist — eine aeltere Fassung liest die Datei damit weiterhin.
     ///
-    /// Heute fragt nichts danach, und die Oberflaeche zeigt es nicht.
+    /// Gelesen wird das Feld nirgends unmittelbar, sondern ueber `gattung` —
+    /// dieselbe Bauart wie `betriebsart`/`wirksameBetriebsart`, damit die
+    /// Lesart „`nil` heisst TC002" an genau einer Stelle steht.
     public var typ: Geraetetyp?
+
+    /// Welche Geraeteart fuer diese Uhr gilt. Der einzige Leser von `typ`.
+    public var gattung: Geraetetyp { typ ?? .tc002 }
+
+    /// Wie breit die Anzeige dieser Uhr in Pixeln ist — **vom Geraet geholt,
+    /// nicht angenommen**.
+    ///
+    /// Betrifft allein AWTRIX NG: Dort ergibt sich die Breite aus
+    /// `panelWidth × panels` und muss zwischen 32 und 128 liegen
+    /// (`docs/awtrix-ng-protokoll.md` §1). Die Werksfirmware ist fest 52×16.
+    ///
+    /// `Optional` aus demselben Grund wie `typ` und `betriebsart`: Ein
+    /// nachtraeglich hinzugefuegtes Pflichtfeld wirft beim Decode
+    /// `keyNotFound`, und weil beide Leser mit `try?` lesen, waere die Folge
+    /// eine leere Uhrenliste statt einer Meldung.
+    ///
+    /// Gelesen wird es nirgends unmittelbar, sondern ueber `anzeigemass`.
+    public var panelbreite: Int?
+
+    /// Die Masse der Anzeige dieser Uhr, in Pixeln.
+    ///
+    /// **Zwei Geraete, zwei Seitenverhaeltnisse:** 52×16 ist 3,25:1, 32×8 ist
+    /// 4:1. Wer mit den Konstanten aus `Pixelfeld` rechnet, rechnet fuer die
+    /// Werksfirmware — fuer eine NG-Uhr gehoert diese Angabe hierher gefragt.
+    ///
+    /// Die Hoehe ist bei NG **fest 8** und nicht einstellbar; nur die Breite
+    /// ist eine Frage ans Geraet. Solange sie nicht gestellt wurde, gilt die
+    /// dokumentierte Vorgabe `32 × 1` — als Vorgabe benannt, nicht als
+    /// Tatsache ueber diese Uhr: Sobald „Abfragen" gelaufen ist, steht die
+    /// gemessene Breite da.
+    public var anzeigemass: (breite: Int, hoehe: Int) {
+        switch gattung {
+        case .tc002: return (Pixelfeld.breiteStandard, Pixelfeld.hoeheStandard)
+        case .awtrixNG: return (panelbreite ?? Geraetetyp.ngVorgabebreite, Geraetetyp.ngHoehe)
+        }
+    }
 
     /// Der Weg, auf dem diese Uhr beschickt wird — **optional aus demselben
     /// Grund wie `typ`**: Ein nachtraegliches Pflichtfeld wirft beim Decode
@@ -122,7 +160,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 
     public init(id: UUID = UUID(), name: String, host: String,
                 praefix: String = "", mac: String = "", typ: Geraetetyp? = nil,
-                betriebsart: Betriebsart? = nil) {
+                betriebsart: Betriebsart? = nil, panelbreite: Int? = nil) {
         self.id = id
         self.name = name
         self.host = host
@@ -130,6 +168,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         self.mac = mac
         self.typ = typ
         self.betriebsart = betriebsart
+        self.panelbreite = panelbreite
     }
 }
 

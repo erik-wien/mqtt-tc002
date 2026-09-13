@@ -21,36 +21,83 @@ public struct Anzeigen {
         case http(Geraet)
     }
     private let kanal: Kanal
+    /// Welche Firmware am anderen Ende steht. **Zwei Achsen, nicht eine:** Der
+    /// Kanal sagt, wie die Bytes hinkommen, die Gattung, welche Bytes es sind.
+    /// Beide zusammen ergeben vier Faelle, und alle vier kommen vor.
+    public let gattung: Geraetetyp
 
-    public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String) {
+    public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String,
+                gattung: Geraetetyp = .tc002) {
         var normalisiert = praefix
         while normalisiert.hasSuffix("/") {
             normalisiert.removeLast()
         }
         kanal = .mqtt(sender: sender, zugang: zugang, praefix: normalisiert)
+        self.gattung = gattung
     }
 
     /// Der HTTP-Kanal. Kein Praefix, kein Broker — nur die Adresse der Uhr.
+    /// Die Gattung kennt das `Geraet` bereits; sie wird nicht zweimal gefuehrt.
     public init(geraet: Geraet) {
         kanal = .http(geraet)
+        gattung = geraet.typ
+    }
+
+    /// Das Thema, auf dem eine benannte Anzeige liegt — je Gattung ein anderes.
+    ///
+    /// Ein Schreibfehler waere hier auf beiden Gattungen unsichtbar: MQTT 3.1.1
+    /// kennt keinen Rueckkanal fuer eine abgelehnte Veroeffentlichung, und NG
+    /// antwortet auf ein Thema ohne Route ueberhaupt nicht. Deshalb steht das
+    /// Thema an einer Stelle und wird dort geprueft.
+    private func anzeigenthema(_ praefix: String, _ name: String) -> String {
+        switch gattung {
+        case .tc002: return "\(praefix)/custom/\(name)"
+        case .awtrixNG: return NGThema.anzeige(praefix: praefix, name: name)
+        }
+    }
+
+    /// Was auf dem Thema landet bzw. im Rumpf steht — dieselben Bytes auf
+    /// beiden Kanaelen, verschiedene auf beiden Gattungen.
+    ///
+    /// Die Werksfirmware bekommt den fertigen Rahmen. AWTRIX NG setzt den Text
+    /// selbst; ihr nuetzen unsere Pixel nichts, sie braucht die Regler, aus
+    /// denen sie entstanden (`Frame.herkunft`). Fehlen die — ein gemaltes Bild,
+    /// ein Bild aus der Sammlung —, **wird nichts geschickt und gesagt, warum**.
+    /// Ein auf acht Zeilen gestauchtes 52×16-Bild waere nicht dasselbe Bild,
+    /// und stillschweigend nichts zu tun ist das Gegenteil einer Loesung.
+    private func nutzlast(_ frame: Frame) throws -> String {
+        switch gattung {
+        case .tc002: return frame.alsJSON()
+        case .awtrixNG:
+            guard let herkunft = frame.herkunft else { throw NGFehler.keinPixelweg }
+            return try NGNutzlast.anzeige(herkunft.optionen,
+                                          iconDatenURI: herkunft.iconDatenURI,
+                                          iconKante: herkunft.iconKante)
+        }
     }
 
     public func zeigen(_ frame: Frame, auf name: String) throws {
+        let json = try nutzlast(frame)
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix):
-            try sender.senden(Data(frame.alsJSON().utf8), an: "\(praefix)/custom/\(name)", zugang: zugang)
+            try sender.senden(Data(json.utf8), an: anzeigenthema(praefix, name), zugang: zugang)
         case .http(let geraet):
-            try geraet.anzeigeSetzen(frame.alsJSON(), name: name)
+            try geraet.anzeigeSetzen(json, name: name)
         }
     }
 
     /// Entfernt die Anzeige vom Geraet — ueber MQTT mit einer leeren Nutzlast,
     /// ueber HTTP mit dem Rumpf `{}`. Siehe oben: Die beiden Wege meinen mit
     /// „leer" genau das Gegenteil voneinander.
+    ///
+    /// **Ueber MQTT gilt das fuer beide Gattungen gleich**: genau null Bytes
+    /// loeschen, bei der Werksfirmware wie bei NG. Nur das Thema wechselt.
+    /// Ueber HTTP gehen die beiden auseinander, und zwar wieder gegenlaeufig —
+    /// das erledigt `Geraet.anzeigeLoeschen`.
     public func loeschen(_ name: String) throws {
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix):
-            try sender.senden(Data(), an: "\(praefix)/custom/\(name)", zugang: zugang)
+            try sender.senden(Data(), an: anzeigenthema(praefix, name), zugang: zugang)
         case .http(let geraet):
             try geraet.anzeigeLoeschen(name: name)
         }
@@ -59,7 +106,13 @@ public struct Anzeigen {
     public func umschalten(auf name: String) throws {
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix):
-            try sender.senden(Data(name.utf8), an: "\(praefix)/switchDiyApp", zugang: zugang)
+            switch gattung {
+            case .tc002:
+                try sender.senden(Data(name.utf8), an: "\(praefix)/switchDiyApp", zugang: zugang)
+            case .awtrixNG:
+                try sender.senden(Data(NGNutzlast.umschalten(auf: name).utf8),
+                                  an: NGThema.umschalten(praefix: praefix), zugang: zugang)
+            }
         case .http(let geraet):
             try geraet.umschalten(auf: name)
         }
@@ -99,10 +152,11 @@ public struct Anzeigen {
         switch uhr.wirksameBetriebsart {
         case .http:
             guard !uhr.host.isEmpty else { return nil }
-            return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung))
+            return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung, typ: uhr.gattung))
         case .mqtt:
             guard !uhr.praefix.isEmpty, let zugang = brokerzugang() else { return nil }
-            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
+            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix,
+                            gattung: uhr.gattung)
         }
     }
 }
@@ -130,6 +184,31 @@ extension Anzeigen {
     ///
     /// nil heisst „das war keine lesbare Liste"; die leere Liste heisst „auf der
     /// Uhr steht gerade nichts".
+    /// Das Inventar einer AWTRIX NG (`GET /api/v1/apps`, §7.2) — gefiltert auf
+    /// das, was jemand von aussen abgelegt hat.
+    ///
+    /// ```json
+    /// [{"name":"Time","origin":"builtin"}, {"name":"meldung1","origin":"pushed"}]
+    /// ```
+    ///
+    /// **Genauer als `customList` der Werksfirmware**, und deshalb ein eigener
+    /// Leser statt einer dritten Schreibweise in `namenAusAppsFeld`: Was dort
+    /// eine Liste von Namen ist, ist hier eine Liste von Apps mit Herkunft, und
+    /// nur `pushed` sind unsere. Die eingebauten (`Time`, `Battery`, …) und die
+    /// von Berry-Skripten mitzuzaehlen hiesse, fuenf Bloecke als belegt zu
+    /// zeigen, weil das Geraet eine Uhrzeit anzeigt.
+    ///
+    /// `nil` heisst „das war kein lesbares Inventar"; die leere Liste heisst
+    /// „es liegt keine eigene Anzeige darauf".
+    public static func namenAusNGInventar(_ feld: Any?) -> [String]? {
+        guard let eintraege = feld as? [[String: Any]] else { return nil }
+        return eintraege.compactMap { eintrag in
+            guard eintrag["origin"] as? String == "pushed",
+                  let name = eintrag["name"] as? String else { return nil }
+            return name
+        }
+    }
+
     static func namenAusAppsFeld(_ feld: Any?) -> [String]? {
         if let namen = feld as? [String] { return namen }
         if let eintraege = feld as? [[String: Any]] {

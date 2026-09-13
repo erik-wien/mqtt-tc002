@@ -10,6 +10,10 @@ final class Doppelgaenger: URLProtocol {
     /// steht der Anzeigenname dort und nirgends sonst.
     nonisolated(unsafe) static var abfragen: [String: String] = [:]
     nonisolated(unsafe) static var methoden: [String: String] = [:]
+    /// Der `Content-Type` je Pfad. Bei AWTRIX NG ist er bei `PUT` und `PATCH`
+    /// **Pflicht**: Ohne ihn wird die Anfrage mit `415` abgewiesen, bevor der
+    /// Rumpf ueberhaupt gelesen wird.
+    nonisolated(unsafe) static var inhaltstypen: [String: String] = [:]
     nonisolated(unsafe) static var pfade: [String] = []
 
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -20,6 +24,7 @@ final class Doppelgaenger: URLProtocol {
         Self.pfade.append(pfad)
         Self.abfragen[pfad] = request.url?.query ?? ""
         Self.methoden[pfad] = request.httpMethod ?? ""
+        Self.inhaltstypen[pfad] = request.value(forHTTPHeaderField: "Content-Type") ?? ""
         if let koerper = request.httpBody ?? request.httpBodyStream.map({ s -> Data in
             s.open(); defer { s.close() }
             var d = Data(); var puffer = [UInt8](repeating: 0, count: 4096)
@@ -60,6 +65,7 @@ final class GeraetTests: XCTestCase {
         Doppelgaenger.gesendeteRuempfe = [:]
         Doppelgaenger.abfragen = [:]
         Doppelgaenger.methoden = [:]
+        Doppelgaenger.inhaltstypen = [:]
         Doppelgaenger.pfade = []
     }
 

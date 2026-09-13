@@ -2,14 +2,14 @@ import Foundation
 
 /// Waagrechte Ausrichtung des Textes innerhalb der verfuegbaren Breite (52 Pixel
 /// ohne Icon, ab Spalte 10 mit einem 8×8-Icon, ab Spalte 18 mit einem 16×16).
-public enum SendenHAusrichtung: String, CaseIterable, Identifiable {
+public enum SendenHAusrichtung: String, CaseIterable, Identifiable, Sendable {
     case links, mittig, rechts
     public var id: String { rawValue }
 }
 
 /// Senkrechte Ausrichtung innerhalb der 16 Zeilen, gerechnet ueber die tatsaechlich
 /// gesetzte Hoehe (`Textraster.hoehe`), nicht die Schriftgroesse.
-public enum SendenVAusrichtung: String, CaseIterable, Identifiable {
+public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable {
     case oben, mittig, unten
     public var id: String { rawValue }
 }
@@ -21,14 +21,14 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable {
 /// passt (`docs/tc002-protokoll.md` §4.3, §5.4). Deren Schrift kennt weder
 /// Schriftartwahl noch Fett — deshalb sind genau diese zwei Regler dort
 /// gesperrt, nicht mehr.
-public enum SendeWeg: String, CaseIterable, Identifiable {
+public enum SendeWeg: String, CaseIterable, Identifiable, Sendable {
     case pixel, text
     public var id: String { rawValue }
 }
 
 /// Wie schnell die Laufschrift durchlaeuft. Ein Regler statt zweier Zahlen:
 /// Schrittweite und Bilddauer rechnet niemand im Kopf in ein Tempo um.
-public enum Lauftempo: String, CaseIterable, Identifiable {
+public enum Lauftempo: String, CaseIterable, Identifiable, Sendable {
     case langsam, mittel, schnell
     public var id: String { rawValue }
 
@@ -58,7 +58,7 @@ public enum Lauftempo: String, CaseIterable, Identifiable {
 /// Die Felder entsprechen eins zu eins den `@AppStorage`-Werten der
 /// Sendeansicht. Wer hier etwas umbenennt, muss dort denselben Namen benutzen,
 /// sonst liest eine laufende Installation ihre Einstellungen nicht mehr.
-public struct Meldungsoptionen {
+public struct Meldungsoptionen: Sendable, Equatable {
     public var text: String
     public var weg: SendeWeg = .pixel
     public var schrift: String = "Silkscreen"
@@ -238,6 +238,26 @@ public enum Meldungsbau {
     /// teuerste Rechnung der App, doppelt ausgeführt.
     public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
                        vorberechnet: String? = nil) throws -> Frame {
+        var gebaut = try gebauterRahmen(o, icon: icon, sammlung: sammlung, vorberechnet: vorberechnet)
+        // **Die Herkunft haengt an jedem Rahmen, den diese Funktion baut** —
+        // und nur an ihnen. Ein gemaltes Bild kommt nicht hier vorbei, hat
+        // keine Regler und kann deshalb auch keine mitgeben; genau daran
+        // erkennt `Anzeigen`, dass es an eine AWTRIX NG nicht zu schicken ist.
+        //
+        // Das Icon wird hier **noch einmal** gelesen, obwohl der stehende Fall
+        // es schon in `bilder` traegt: Im laufenden Fall steckt es im GIF und
+        // liesse sich von dort nicht mehr herausloesen. Eine Stelle, an der es
+        // immer dasteht, ist eine Icondatei je Sendung wert.
+        gebaut.herkunft = Meldungsherkunft(
+            optionen: o,
+            iconDatenURI: try icon.map { try sammlung.datenURI(fuer: $0) },
+            iconKante: icon?.kante ?? 8)
+        return gebaut
+    }
+
+    /// Der Rahmen selbst, ohne Herkunft — der Rumpf von `rahmen`.
+    private static func gebauterRahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
+                                       vorberechnet: String?) throws -> Frame {
         let mitIcon = icon != nil
         // Die einzige Stelle, an der die Groesse des Icons wirklich entschieden
         // wird: Alles darunter rechnet mit ihr weiter, statt 8 anzunehmen.
