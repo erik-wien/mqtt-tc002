@@ -283,7 +283,7 @@ public struct EditorBereichView: View {
                 Image(systemName: "film")
                     .accessibilityLabel("Animation").tag(Inspektormodus.animation)
                 Image(systemName: "tray.and.arrow.down")
-                    .accessibilityLabel("Sichern").tag(Inspektormodus.sichern)
+                    .accessibilityLabel("Bestand").tag(Inspektormodus.sichern)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -406,7 +406,7 @@ public struct EditorBereichView: View {
                     .help("Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert.")
             }
         } header: {
-            Text("Dieses Bild")
+            Text("Diese Bildgruppe")
         } footer: {
             Text(groesse.mitNummer
                  ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")

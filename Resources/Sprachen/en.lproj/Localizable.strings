@@ -242,7 +242,6 @@
 "Nach vorn" = "Forward";
 "Nach hinten" = "Back";
 "Mehrere Einzelbilder ergeben beim Sichern ein animiertes GIF." = "Several frames make an animated GIF when saved.";
-"Dieses Bild" = "This drawing";
 "Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene." = "The name is also the file name — the same name replaces what is there.";
 "Beginnt von vorn: Leinwand, Einzelbilder, Name und Nummer werden geleert." = "Starts over: canvas, frames, name and number are cleared.";
 "Vorhandene" = "Existing";
@@ -684,3 +683,5 @@
 "Steht über der Liste „von dieser App angelegt“, hat keiner der beiden Wege etwas ergeben: die Uhr aus oder nicht erreichbar, und nichts mitgehört. Dann zeigt die Liste die eigene Buchführung und sagt es — was die Uhr selbst gesagt hat, wird nicht mit dem Alter zur Tatsache." = "If \"created by this app\" stands above the list, neither route produced anything: the clock off or unreachable, and nothing heard. The list then shows the app's own bookkeeping and says so — what the clock itself said does not become fact by growing old.";
 "Ob die Uhr gerade am Broker hängt, meldet sie über `<präfix>/status` (Gerätereferenz, §3.4). Das lässt sich nicht abfragen — es kommt, wenn die Uhr es schickt." = "Whether the clock is currently attached to the broker it reports on `<prefix>/status` (device reference, §3.4). That cannot be queried — it arrives when the clock sends it.";
 "Quelltext" = "Source code";
+"Bestand" = "Library";
+"Diese Bildgruppe" = "This image group";
