@@ -105,6 +105,9 @@ mosquitto_pub -h 192.168.1.10 -u konto -P kennwort \
 
 The display disappears from the device and from the page change.
 
+Over HTTP it is the other way round: there the body `{}` deletes, and an empty
+body does nothing (§5.6). Anyone using both routes confuses this easily.
+
 > ✅ **A standing display blocks.** As long as a named display is being shown, it
 > stays up; new messages under the same prefix have no visible effect until the
 > standing display is deleted. So if you want to show different things one after
@@ -122,6 +125,9 @@ mosquitto_pub -h 192.168.1.10 -u konto -P kennwort \
 
 This topic appears in **no** vendor documentation. The evidence for it is that
 the device subscribes to it at the broker, and that switching with it works.
+
+The same works without a broker: `POST /api/switchDiyApp?name=<name>` (§5.8).
+The HTTP route answers, this one does not.
 
 ❓ Open: whether `switchDiyApp` also takes effect when the named display does not
 exist at all or is not in the device's DIY list.
@@ -156,13 +162,16 @@ with no broker involved — and it still appears in the list the clock publishes
 over MQTT. Observed on 2026-09-11. So `customList` really is the state of the
 device, not the bookkeeping of one particular sender.
 
-There is a practical consequence: **sending over HTTP and listening over MQTT
-can be mixed.** If you have a broker, you can send over HTTP — which gives you
-real error codes instead of the silence described in §2 — and still keep the
-feedback channel. Without a broker, the question of **which** displays exist at
-least remains answerable (§5.7). What is on them and whether the device is
-online only MQTT will say; deleting (§5.6) and switching (§3.3) are under
-suspicion of working over HTTP too — unverified, see defect list items 2 and 5.
+Two things follow. First: **sending over HTTP and listening over MQTT can be
+mixed.** If you have a broker, you can send over HTTP — which gives you real
+error codes instead of the silence described in §2 — and still keep the feedback
+channel.
+
+Second: **HTTP-only operation is possible.** Creating and deleting (§5.6),
+switching (§5.8) and the display list (§5.7) all work without a broker, all four
+measured on the device. Two things remain reserved for MQTT: the **content** of
+a display — only somebody listening in on the `custom` publish learns that
+(§3.1) — and the report of whether the clock is online at all (§3.4).
 
 Both topics appear in **no** vendor documentation.
 
@@ -350,11 +359,13 @@ smaller of the two values wins.
 
 ## 5. The HTTP interface
 
-The device answers HTTP on port 80. This interface is **not** the remote-control
-path — MQTT is meant for that — but it is the **only** way to learn the topic
+The device answers HTTP on port 80. The vendor documentation presents MQTT as
+the remote-control path, but **HTTP carries an operating mode of its own**:
+creating and deleting (§5.6), switching (§5.8) and the display list (§5.7) are
+all available here. Conversely HTTP is the **only** way to learn the topic
 prefix and the connection state, and the only way to change device settings.
 
-All queries are `GET` without authentication.
+All queries are `GET`, all commands `POST`; none of it requires authentication.
 
 ### 5.1 `GET /getBase` — device identification
 
@@ -441,9 +452,29 @@ curl -s -X POST 'http://192.168.1.20/api/custom?name=notiz' \
   -d '{"draw":[{"df":[0,0,4,4,"#00FF66"]}]}'
 ```
 
-> ❌ **Deleting does not work this way.** An empty body does answer
+✅ **Deleting works this way too — with the body `{}`.** Measured on 2026-09-13
+and checked against `GET /api/customList` (§5.7):
+
+```bash
+curl -s http://192.168.1.20/api/customList
+# {"apps":["meldung2","meldung3","meldung1"],"count":3}
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,8,8,"#FF0000"]}]}'
+# {"code":200,"message":"ok"}   → the list names four displays afterwards
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{}'
+# {"code":200,"message":"ok"}
+
+curl -s http://192.168.1.20/api/customList
+# {"apps":["meldung2","meldung3","meldung1"],"count":3}   → probe is gone
+```
+
+> ❌ **An empty body does not delete.** It answers the same
 > `{"code":200,"message":"ok"}`, but the display stays up — verified on
-> 2026-09-11. The only way to delete is the empty MQTT payload from §3.2.
+> 2026-09-11. The trap is that over MQTT it is exactly the other way round: there
+> the **empty** payload deletes (§3.2) and `{}` achieves nothing.
 
 [PixDeck](https://github.com/cailurus/PixDeck) takes this route, and that is why
 the MQTT chapter of the vendor documentation recommends a program that in truth
@@ -471,6 +502,25 @@ The spelling differs from §3.5: here they are plain strings, there objects with
 These are **names only**. What is on a display the device does not reveal this
 way either — occupied or free is therefore certain, the content is not.
 
+### 5.8 `POST /api/switchDiyApp?name=<name>` — switching without a broker
+
+✅ The call is accepted and answers. Measured on 2026-09-13:
+
+```bash
+curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
+{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+```
+
+This is the counterpart to the MQTT topic in §3.3 — and more forthcoming: there
+is no answer at all there, here there is one with a name and a number.
+
+> ❓ **What is proven is the answer, not the effect.** "app switch **requested**"
+> means requested, not done. Whether the clock actually jumps to the named
+> display afterwards, nobody has looked. Test: switch and watch the display.
+
+> ❓ **`index` is uninterpreted.** Why it says `100` there we do not know — the
+> number is written down here, not explained.
+
 ---
 
 ## 6. When nothing appears
@@ -484,7 +534,8 @@ In order, from the most common to the rarest:
    broker's permissions file; with Mosquitto the log reports a rejected publish —
    the sender itself learns nothing about it (§2).
 4. **Is an old display still standing?** `GET /api/customList` (§5.7) says which
-   ones exist; get rid of them with the empty payload (§3.2).
+   ones exist; get rid of them with the empty MQTT payload (§3.2) or over HTTP
+   with the body `{}` (§5.6).
 5. **Not paging?** `carouselSpeed` is `0` (§5.4).
 6. **Characters missing from the text?** Umlauts and most punctuation marks do
    not exist in the device font — send them as pixels (§1, §4.1).
@@ -497,6 +548,8 @@ Named honestly instead of kept quiet:
 
 - ❓ How `duration` and `carouselSpeed` interact (§4.4).
 - ❓ Whether `switchDiyApp` has an effect on displays that do not exist (§3.3).
+- ❓ Whether `POST /api/switchDiyApp` really switches the clock — the answer says
+  "requested", nobody has seen it happen — and what `index` in it means (§5.8).
 - ❓ Whether the device font has uppercase letters (§1).
 - ❓ Whether `status` and `customList` are published retained (§3.5).
 - ❓ How **large** a payload may be. What is proven is that around **14 KB** get

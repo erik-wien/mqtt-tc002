@@ -106,6 +106,9 @@ mosquitto_pub -h 192.168.1.10 -u konto -P kennwort \
 
 Die Anzeige verschwindet vom Gerät und aus dem Seitenwechsel.
 
+Über HTTP ist es umgekehrt: Dort löscht der Rumpf `{}`, und ein leerer Rumpf
+tut nichts (§5.6). Wer beide Wege benutzt, verwechselt das leicht.
+
 > ✅ **Eine stehende Anzeige blockiert.** Solange eine benannte Anzeige gezeigt
 > wird, bleibt sie stehen; neue Nachrichten unter demselben Präfix wirken nicht
 > sichtbar, bis die stehende Anzeige gelöscht wird. Wer nacheinander
@@ -123,6 +126,9 @@ mosquitto_pub -h 192.168.1.10 -u konto -P kennwort \
 
 Dieses Thema steht in **keiner** Hersteller-Doku. Belegt ist es daraus, dass das
 Gerät es beim Broker abonniert, und daraus, dass Umschalten damit funktioniert.
+
+Dasselbe geht ohne Broker: `POST /api/switchDiyApp?name=<name>` (§5.8). Der
+HTTP-Weg antwortet dabei, dieser hier nicht.
 
 ❓ Offen: ob `switchDiyApp` auch greift, wenn die genannte Anzeige gar nicht
 existiert oder nicht in der DIY-Liste des Geräts steht.
@@ -158,13 +164,16 @@ Liste, die die Uhr über MQTT veröffentlicht. Am 11.09.2026 so beobachtet.
 `customList` ist damit wirklich der Zustand des Geräts und nicht die
 Buchführung eines einzelnen Senders.
 
-Daraus folgt etwas Praktisches: **Senden über HTTP und Zuhören über MQTT lässt
+Daraus folgt zweierlei. Erstens: **Senden über HTTP und Zuhören über MQTT lässt
 sich mischen.** Wer einen Broker hat, kann über HTTP schicken — dort gibt es
 echte Fehlercodes statt der Stille aus §2 — und den Rückkanal trotzdem
-behalten. Ohne Broker bleibt immerhin die Frage beantwortbar, **welche**
-Anzeigen es gibt (§5.7). Was auf ihnen steht und ob das Gerät online ist,
-sagt nur MQTT; Löschen (§5.6) und Umschalten (§3.3) stehen unter Verdacht,
-auch über HTTP zu gehen — ungeprüft, siehe Mängelliste Punkt 2 und 5.
+behalten.
+
+Zweitens: **Ein reiner HTTP-Betrieb ist möglich.** Anlegen und Löschen (§5.6),
+Umschalten (§5.8) und die Anzeigenliste (§5.7) gehen ohne Broker, alle vier am
+Gerät gemessen. Zwei Dinge bleiben MQTT vorbehalten: der **Inhalt** einer
+Anzeige — den erfährt nur, wer die Sendung auf `custom` mitliest (§3.1) — und
+die Meldung, ob die Uhr überhaupt online ist (§3.4).
 
 Beide Themen stehen in **keiner** Hersteller-Doku.
 
@@ -353,12 +362,15 @@ oder ob der kleinere der beiden Werte gewinnt.
 
 ## 5. Die HTTP-Schnittstelle
 
-Das Gerät beantwortet HTTP auf Port 80. Diese Schnittstelle ist **nicht** der
-Fernsteuerungsweg — dafür ist MQTT gedacht —, aber sie ist der **einzige** Weg, das
-Themen-Präfix und den Verbindungszustand zu erfahren, und der einzige, um
-Geräteeinstellungen zu ändern.
+Das Gerät beantwortet HTTP auf Port 80. Die Hersteller-Doku führt MQTT als den
+Fernsteuerungsweg, aber **HTTP trägt einen Betrieb für sich allein**: Anlegen
+und Löschen (§5.6), Umschalten (§5.8) und die Anzeigenliste (§5.7) sind hier
+ebenso zu haben. Umgekehrt ist HTTP der **einzige** Weg, das Themen-Präfix und
+den Verbindungszustand zu erfahren, und der einzige, um Geräteeinstellungen zu
+ändern.
 
-Alle Abfragen sind `GET` ohne Anmeldung.
+Alle Abfragen sind `GET`, alle Befehle `POST`; nichts davon verlangt eine
+Anmeldung.
 
 ### 5.1 `GET /getBase` — Gerätekennung
 
@@ -444,9 +456,29 @@ curl -s -X POST 'http://192.168.1.20/api/custom?name=notiz' \
   -d '{"draw":[{"df":[0,0,4,4,"#00FF66"]}]}'
 ```
 
-> ❌ **Löschen geht hierüber nicht.** Ein leerer Rumpf antwortet zwar
+✅ **Löschen geht hierüber auch — mit dem Rumpf `{}`.** Am 13.09.2026 gemessen,
+gegen `GET /api/customList` (§5.7) geprüft:
+
+```bash
+curl -s http://192.168.1.20/api/customList
+# {"apps":["meldung2","meldung3","meldung1"],"count":3}
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{"draw":[{"df":[0,0,8,8,"#FF0000"]}]}'
+# {"code":200,"message":"ok"}   → die Liste nennt danach vier Anzeigen
+
+curl -s -X POST 'http://192.168.1.20/api/custom?name=probe' \
+  -H 'Content-Type: application/json' -d '{}'
+# {"code":200,"message":"ok"}
+
+curl -s http://192.168.1.20/api/customList
+# {"apps":["meldung2","meldung3","meldung1"],"count":3}   → probe ist weg
+```
+
+> ❌ **Ein leerer Rumpf löscht nicht.** Er antwortet dasselbe
 > `{"code":200,"message":"ok"}`, die Anzeige bleibt aber stehen — am 11.09.2026
-> nachgeprüft. Zum Löschen führt nur die leere MQTT-Nutzlast aus §3.2.
+> nachgeprüft. Die Falle liegt darin, dass über MQTT genau umgekehrt die **leere**
+> Nutzlast löscht (§3.2) und `{}` dort nichts ausrichtet.
 
 Diesen Weg geht [PixDeck](https://github.com/cailurus/PixDeck), und deshalb steht
 im MQTT-Kapitel der Hersteller-Doku ein Programm empfohlen, das in Wahrheit über
@@ -473,6 +505,26 @@ Objekte mit `appName`. Gemeint ist dieselbe Liste.
 Es sind **nur Namen**. Was auf einer Anzeige steht, verrät das Gerät auch
 hierüber nicht — belegt oder frei ist damit gesichert, der Inhalt nicht.
 
+### 5.8 `POST /api/switchDiyApp?name=<name>` — umschalten ohne Broker
+
+✅ Der Aufruf wird angenommen und antwortet. Am 13.09.2026 gemessen:
+
+```bash
+curl -s -X POST 'http://192.168.1.20/api/switchDiyApp?name=meldung2'
+{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":100}}
+```
+
+Das ist das Gegenstück zum MQTT-Thema aus §3.3 — und auskunftsfreudiger: Dort
+gibt es überhaupt keine Antwort, hier eine mit Namen und einer Zahl.
+
+> ❓ **Belegt ist die Antwort, nicht die Wirkung.** „app switch **requested**"
+> heißt angefordert, nicht erledigt. Ob die Uhr daraufhin wirklich auf die
+> genannte Anzeige springt, hat niemand nachgesehen. Prüfung: umschalten und
+> auf das Display schauen.
+
+> ❓ **`index` ist ungedeutet.** Warum dort `100` steht, wissen wir nicht — die
+> Zahl ist hier abgeschrieben, nicht erklärt.
+
 ---
 
 ## 6. Wenn nichts erscheint
@@ -486,7 +538,8 @@ Der Reihe nach, vom Häufigsten zum Seltensten:
    Rechtedatei des Brokers; bei Mosquitto meldet das Protokoll eine abgelehnte
    Veröffentlichung — der Sender selbst erfährt davon nichts (§2).
 4. **Steht noch eine alte Anzeige?** Welche es gibt, sagt `GET /api/customList`
-   (§5.7); weg damit über die leere Nutzlast (§3.2).
+   (§5.7); weg damit über die leere MQTT-Nutzlast (§3.2) oder über HTTP mit dem
+   Rumpf `{}` (§5.6).
 5. **Blättert es nicht?** `carouselSpeed` ist `0` (§5.4).
 6. **Fehlen Zeichen im Text?** Umlaute und die meisten Satzzeichen gibt es in der
    Gerätschrift nicht — als Pixel schicken (§1, §4.1).
@@ -501,6 +554,8 @@ erneut zu prüfen wäre, steht gesammelt in
 
 - ❓ Wie `duration` und `carouselSpeed` zusammenwirken (§4.4).
 - ❓ Ob `switchDiyApp` auf nicht vorhandene Anzeigen wirkt (§3.3).
+- ❓ Ob `POST /api/switchDiyApp` die Uhr wirklich umschaltet — die Antwort sagt
+  „requested", gesehen hat es niemand — und was `index` darin bedeutet (§5.8).
 - ❓ Ob die Gerätschrift Großbuchstaben kennt (§1).
 - ❓ Ob `status` und `customList` aufbewahrt veröffentlicht werden (§3.5).
 - ❓ Wie **groß** eine Nutzlast sein darf. Belegt ist, dass rund **14 KB**
