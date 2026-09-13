@@ -23,7 +23,7 @@ public enum Pixelgroessen {
     public static let abgesegnet: [String: [Double]] = [
         "Micro 5": [10, 14, 16],
         "Silkscreen": [7, 8, 9, 10, 12, 14, 16],
-        "Tiny5": [7, 8, 9, 12, 15, 16],
+        "Tiny5": [7, 8, 9, 10, 12, 14, 16],
     ]
 
     /// Was das Bedienelement anbietet.

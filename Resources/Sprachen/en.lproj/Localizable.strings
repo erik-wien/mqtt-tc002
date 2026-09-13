@@ -504,7 +504,7 @@
 "„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine Liste:" = "\"Size\" does not offer every number, but one list per font:";
 "10, 14 und 16 Pixel" = "10, 14 and 16 pixels";
 "7, 8, 9, 10, 12, 14 und 16 Pixel" = "7, 8, 9, 10, 12, 14 and 16 pixels";
-"7, 8, 9, 12, 15 und 16 Pixel" = "7, 8, 9, 12, 15 and 16 pixels";
+"7, 8, 9, 10, 12, 14 und 16 Pixel" = "7, 8, 9, 10, 12, 14 and 16 pixels";
 "alle anderen Schriften" = "all other fonts";
 "der volle Bereich 6 bis 16 Pixel" = "the full range, 6 to 16 pixels";
 "Die drei Listen haben Lücken, und das ist kein Versehen: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus, und welche Größen das trifft, folgt keiner Schrittweite. Angeboten wird deshalb, was beim Durchsehen der Schriftprobe bestanden hat — mit den Augen entschieden, nicht gerechnet: Die Messung dort kann eine Größe ausschließen, nie eine empfehlen." = "The three lists have gaps, and that is no oversight: without antialiasing a pixel font frays arbitrarily between its design size and multiples of it, and which sizes that hits follows no step width. What is offered is therefore what passed a look through the font sample — decided by eye, not calculated: the measurement there can rule a size out, never recommend one.";

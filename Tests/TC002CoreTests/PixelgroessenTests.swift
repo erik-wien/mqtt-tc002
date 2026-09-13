@@ -10,7 +10,7 @@ final class PixelgroessenTests: XCTestCase {
     func testAbgesegneteListenStehenFest() {
         XCTAssertEqual(Pixelgroessen.abgesegnet["Micro 5"], [10, 14, 16])
         XCTAssertEqual(Pixelgroessen.abgesegnet["Silkscreen"], [7, 8, 9, 10, 12, 14, 16])
-        XCTAssertEqual(Pixelgroessen.abgesegnet["Tiny5"], [7, 8, 9, 12, 15, 16])
+        XCTAssertEqual(Pixelgroessen.abgesegnet["Tiny5"], [7, 8, 9, 10, 12, 14, 16])
     }
 
     /// Der Grund, warum aus dem Schieber eine Liste wurde: Keine der drei
@@ -32,7 +32,7 @@ final class PixelgroessenTests: XCTestCase {
     }
 
     func testSchriftMitListeBekommtNurDiese() {
-        XCTAssertEqual(Pixelgroessen.angeboten(fuer: "Tiny5"), [7, 8, 9, 12, 15, 16])
+        XCTAssertEqual(Pixelgroessen.angeboten(fuer: "Tiny5"), [7, 8, 9, 10, 12, 14, 16])
     }
 
     /// Der eigentliche Auftrag: die naechstgelegene, nicht die kleinste.
@@ -41,8 +41,8 @@ final class PixelgroessenTests: XCTestCase {
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 14, fuer: "Micro 5"), 14)
         // 15 hat Micro 5 nicht; 14 und 16 liegen gleich weit, die kleinere gewinnt.
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 15, fuer: "Micro 5"), 14)
-        // Tiny5 hat 14 nicht; 15 liegt daneben, 7 waere die kleinste.
-        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 14, fuer: "Tiny5"), 15)
+        // Tiny5 hat 11 nicht; 10 und 12 liegen gleich weit, die kleinere gewinnt.
+        XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 11, fuer: "Tiny5"), 10)
         // Micro 5 faengt erst bei 10 an.
         XCTAssertEqual(Pixelgroessen.naechstgelegene(zu: 6, fuer: "Micro 5"), 10)
         // Micro 5 hoert bei 16 auf.

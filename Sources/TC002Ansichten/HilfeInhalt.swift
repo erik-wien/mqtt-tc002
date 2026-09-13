@@ -152,7 +152,7 @@ public enum HilfeInhalt {
         .tabelle([
             ("Micro 5", "10, 14 und 16 Pixel"),
             ("Silkscreen", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
-            ("Tiny5", "7, 8, 9, 12, 15 und 16 Pixel"),
+            ("Tiny5", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
             ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
         ]),
         .absatz("Die drei Listen haben Lücken, und das ist kein Versehen: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus, und welche Größen das trifft, folgt keiner Schrittweite. Angeboten wird deshalb, was beim Durchsehen der Schriftprobe bestanden hat — mit den Augen entschieden, nicht gerechnet: Die Messung dort kann eine Größe ausschließen, nie eine empfehlen."),
