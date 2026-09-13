@@ -70,20 +70,32 @@ struct ZielauswahlView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(uhr.name)
                             HStack(spacing: 6) {
-                                if uhr.praefix.isEmpty {
-                                    Label("kein Präfix — kann erst empfangen, wenn abgefragt",
+                                // Woran eine Uhr fehlt, haengt an ihrer
+                                // Betriebsart. „Kein Präfix" war fuer eine
+                                // HTTP-Uhr die falsche Warnung: Sie braucht
+                                // keines, und der Satz schickte jemanden zu
+                                // „Abfragen", wo nichts zu holen war.
+                                //
+                                // `lok(…)`, weil ein Ternär mit einem
+                                // `String`-Zweig SwiftUI in die
+                                // `StringProtocol`-Überladung zwingt — die
+                                // schlägt nichts nach.
+                                if !uhr.beschickbar {
+                                    Label(uhr.wirksameBetriebsart == .http
+                                          ? lok("keine Adresse — kann nichts empfangen")
+                                          : lok("kein Präfix — kann erst empfangen, wenn abgefragt"),
                                           systemImage: "exclamationmark.triangle")
                                         .font(.caption).foregroundStyle(.orange)
+                                } else if uhr.wirksameBetriebsart == .http {
+                                    Text("HTTP")
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundStyle(.secondary)
                                 } else {
                                     Text(uhr.praefix)
                                         .font(.system(.caption, design: .monospaced))
                                         .foregroundStyle(.secondary)
                                 }
-                                if let steht = zustand.verbunden[uhr.id] {
-                                    Image(systemName: steht ? "checkmark.circle" : "exclamationmark.triangle")
-                                        .foregroundStyle(steht ? .green : .orange)
-                                        .help(steht ? "Am Broker angemeldet" : "Nicht am Broker angemeldet")
-                                }
+                                Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                             }
                         }
                         Spacer()

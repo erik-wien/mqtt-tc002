@@ -56,11 +56,7 @@ public struct VerbindungView: View {
                         Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
                             .font(.system(.callout, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        if let steht = zustand.verbunden[uhr.id] {
-                            Image(systemName: steht ? "checkmark.circle" : "exclamationmark.triangle")
-                                .foregroundStyle(steht ? .green : .orange)
-                                .help(steht ? "Am Broker angemeldet" : "Nicht am Broker angemeldet")
-                        }
+                        Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                         Spacer()
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
                             .knopfBefehl()

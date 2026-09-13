@@ -376,6 +376,7 @@
 "Alle" = "All";
 "Keine" = "None";
 "kein Präfix — kann erst empfangen, wenn abgefragt" = "no prefix — can only receive once queried";
+"keine Adresse — kann nichts empfangen" = "no address — cannot receive anything";
 "an alle Uhren (%d)" = "to all clocks (%d)";
 "an: %@" = "to: %@";
 "an %d Uhren" = "to %d clocks";
