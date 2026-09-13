@@ -45,7 +45,7 @@ struct VerbindungiOS: View {
 
     private var uhrenAbschnitt: some View {
         Section("Uhren") {
-            ForEach(zustand.uhren) { uhr in
+            ForEach($zustand.uhren) { $uhr in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(uhr.name)
@@ -57,9 +57,20 @@ struct VerbindungiOS: View {
                         }
                     }
                     Text(uhr.host).font(.caption).foregroundStyle(.secondary)
-                    Text(uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    // Nur im MQTT-Betrieb: Bei einer HTTP-Uhr stuende hier
+                    // „noch nicht abgefragt" und schickte jemanden hinter ein
+                    // Praefix her, das diese Uhr nie braucht.
+                    if uhr.wirksameBetriebsart == .mqtt {
+                        Text(uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    Picker("Betriebsart", selection: betriebsart($uhr)) {
+                        Text("HTTP").tag(Betriebsart.http)
+                        Text("MQTT").tag(Betriebsart.mqtt)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
                     HStack {
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
                             .knopfBefehl()
@@ -81,9 +92,24 @@ struct VerbindungiOS: View {
                     .knopfBefehl()
                     .disabled(neueAdresse.trimmingCharacters(in: .whitespaces).isEmpty)
             }
-            Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
+            Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
+                .font(.caption).foregroundStyle(.secondary)
+            Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse. Es gehört zum MQTT-Betrieb.")
                 .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    /// Die Betriebsart als nicht-wahlfreie Wahl fuer den Picker — dieselbe
+    /// Ueberlegung wie in der Mac-Fassung: Das Optional ist ein Dateiformat,
+    /// die Oberflaeche sieht nur zwei Faelle, und wer waehlt, schreibt einen
+    /// Wert ausdruecklich hinein.
+    private func betriebsart(_ uhr: Binding<Uhr>) -> Binding<Betriebsart> {
+        Binding(get: { uhr.wrappedValue.wirksameBetriebsart },
+                set: { neu in
+                    guard neu != uhr.wrappedValue.wirksameBetriebsart else { return }
+                    uhr.wrappedValue.betriebsart = neu
+                    zustand.betriebsartGeaendert(uhr.wrappedValue.id)
+                })
     }
 
     /// Hilfe und Über am Fuß der Einstellungen. iOS stellt für „Über“ keine
@@ -107,6 +133,15 @@ struct VerbindungiOS: View {
 
     private var brokerAbschnitt: some View {
         Section("Broker") {
+            // Weiter sichtbar und weiter benutzbar — nur eingeordnet. Die
+            // Begruendung steht bei der Mac-Fassung, sie gilt hier genauso:
+            // Ein verschwindender Abschnitt liesse das Formular springen, ein
+            // abgeblendeter verhinderte, den Broker **vor** dem Umstellen
+            // einer Uhr einzutragen.
+            if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
+                Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             // Beschriftet waren die vier Felder hier schon; was fehlte, war
             // der Platzhalter, der nach dem Leeren der Vorgaben sichtbar wird.
             // Die Beschriftung links sagt, was das Feld ist, das Beispiel

@@ -46,6 +46,13 @@ public struct VerbindungView: View {
                             .eingabefeld()
                             .frame(width: 130)
                             .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
+                        Picker("Betriebsart", selection: betriebsart($uhr)) {
+                            Text("HTTP").tag(Betriebsart.http)
+                            Text("MQTT").tag(Betriebsart.mqtt)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 116)
                         Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
                             .font(.system(.callout, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -72,7 +79,9 @@ public struct VerbindungView: View {
                     Button("Hinzufügen") { uhrHinzufuegen() }
                         .knopfBefehl()
                 }
-                Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse.")
+                Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Einstellungen der aktiven Uhr") {
@@ -96,6 +105,17 @@ public struct VerbindungView: View {
                 }
             }
             Section("Broker") {
+                // Der Abschnitt wird **nicht** ausgeblendet und nicht
+                // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge
+                // das Formular bei jedem Griff an die Betriebsart; abgeblendet
+                // liesse sich ein Broker nicht mehr eintragen, **bevor** man
+                // eine Uhr auf MQTT stellt — und genau in der Reihenfolge geht
+                // man vor. Die Felder sind auch nicht wirkungslos: Sie wirken,
+                // sobald eine Uhr sie benutzt. Nur das gehört gesagt.
+                if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
+                    Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
                 // `LabeledContent` statt der Beschriftung, die `TextField`
                 // selbst mitbringt: Am Mac zeigt SwiftUI die zwar an, auf dem
                 // iPad dagegen ist sie der Platzhalter — und der verschwindet,
@@ -176,6 +196,22 @@ public struct VerbindungView: View {
                 zustand.fehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
             }
         }
+    }
+
+    /// Die Betriebsart als nicht-wahlfreie Wahl fuer den Picker.
+    ///
+    /// `Uhr.betriebsart` ist ein `Optional`, weil es ein Dateiformat ist; die
+    /// Oberflaeche hat damit nichts zu schaffen und sieht nur zwei Faelle. Wer
+    /// waehlt, schreibt den Wert ausdruecklich — auch „MQTT", auch wenn es
+    /// ohnehin schon galt: Danach steht in der Datei eine Entscheidung und
+    /// keine Auslassung mehr.
+    private func betriebsart(_ uhr: Binding<Uhr>) -> Binding<Betriebsart> {
+        Binding(get: { uhr.wrappedValue.wirksameBetriebsart },
+                set: { neu in
+                    guard neu != uhr.wrappedValue.wirksameBetriebsart else { return }
+                    uhr.wrappedValue.betriebsart = neu
+                    zustand.betriebsartGeaendert(uhr.wrappedValue.id)
+                })
     }
 
     private func setzen(_ feld: String, _ wert: Int) {

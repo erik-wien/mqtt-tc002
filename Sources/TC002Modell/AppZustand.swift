@@ -543,6 +543,12 @@ public final class AppZustand {
     /// gleich in welchem Betrieb, und nach dem Abraeumen des Abonnements
     /// stuende sonst nichts mehr da.
     public func betriebsartGeaendert(_ id: UUID, sitzung: URLSession = .shared) {
+        // Im HTTP-Betrieb ist „am Broker angemeldet" keine Auskunft mehr ueber
+        // etwas, das diese App benutzt — das Haekchen in der Zeile stuende
+        // sonst als Rest einer Einrichtung da, die nicht mehr gilt.
+        if uhren.first(where: { $0.id == id })?.wirksameBetriebsart == .http {
+            verbunden[id] = nil
+        }
         horchenAbgleichen()
         belegungAbfragen(id, sitzung: sitzung)
     }
