@@ -773,6 +773,30 @@ final class AppZustandTests: XCTestCase {
                       "der Fehlschlag gehört ins Protokoll")
     }
 
+    /// **Der Riegel gegen das Flackern selbst** (siehe
+    /// `Belegungsdoppelgaenger.marke`). Ohne ihn schrieb ein Nachzuegler aus
+    /// einem frueheren Test in die Aufzeichnung des laufenden, und
+    /// `testOhneAdresseWirdNichtGefragt` fiel etwa jeden zehnten Lauf ueber ein
+    /// `/api/customList`, das es nicht bestellt hatte.
+    ///
+    /// Statistisch war das nicht zu belegen; hier steht es deterministisch:
+    /// eine Anfrage aus einer **frueheren** Sitzung gegen eine aus der
+    /// laufenden, beide unmittelbar hintereinander.
+    func testNurDieLaufendeProbeSchreibtInDieAufzeichnung() async throws {
+        let frueher = Belegungsdoppelgaenger.sitzung()
+        let jetzt = Belegungsdoppelgaenger.sitzung()
+        let url = try XCTUnwrap(URL(string: "http://uhr.test/api/customList"))
+
+        Belegungsdoppelgaenger.pfade = []
+        _ = try? await frueher.data(from: url)
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, [],
+                       "ein Nachzuegler aus einer frueheren Probe gehoert nicht in diese Aufzeichnung")
+
+        _ = try? await jetzt.data(from: url)
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/customList"],
+                       "die laufende Probe muss sehr wohl mitschreiben — sonst zeichnete nichts mehr auf")
+    }
+
     /// Eine eingerichtete Uhr ohne Adresse gibt es nicht zu fragen — und der
     /// Abruf darf ihre Auskunft auch nicht abraeumen.
     func testOhneAdresseWirdNichtGefragt() throws {
@@ -937,9 +961,27 @@ final class Belegungsdoppelgaenger: URLProtocol {
     nonisolated(unsafe) static var weitere: [String: String] = [:]
     nonisolated(unsafe) static var pfade: [String] = []
 
+    /// **Die Aufzeichnung gehoert der Probe, nicht dem Prozess.**
+    ///
+    /// `pfade` ist statisch und wird von fuenfzehn Stellen benutzt. Die Abrufe
+    /// laufen losgeloest (`Task.detached`), und ein Test ist zu Ende, bevor
+    /// sein letzter Abruf angekommen ist — der landete dann in der
+    /// Aufzeichnung des **naechsten** Tests, nachdem der sie geleert hat.
+    /// `testOhneAdresseWirdNichtGefragt` sah so etwa jeden zehnten Lauf ein
+    /// `/api/customList`, das es nicht bestellt hatte. Ein Flackern, das wie
+    /// ein Fehler in `AppZustand` aussah und keiner war.
+    ///
+    /// Jede `sitzung()` traegt darum eine eigene Marke im Kopf der Anfrage,
+    /// und aufgezeichnet wird nur, was die **aktuelle** Marke traegt. Kein
+    /// Warten, keine Frist: Ein Nachzuegler aus einem frueheren Test traegt
+    /// eine alte Marke und faellt einfach weg.
+    nonisolated(unsafe) static var marke = ""
+
     static func sitzung() -> URLSession {
+        marke = UUID().uuidString
         let k = URLSessionConfiguration.ephemeral
         k.protocolClasses = [Belegungsdoppelgaenger.self]
+        k.httpAdditionalHeaders = ["X-Probe": marke]
         return URLSession(configuration: k)
     }
 
@@ -957,7 +999,10 @@ final class Belegungsdoppelgaenger: URLProtocol {
 
     override func startLoading() {
         let pfad = request.url?.path ?? ""
-        Self.pfade.append(pfad)
+        // Siehe `marke`: Nur die laufende Probe schreibt mit.
+        if request.value(forHTTPHeaderField: "X-Probe") == Self.marke {
+            Self.pfade.append(pfad)
+        }
         let text = pfad == "/api/customList" ? Self.antwort : (Self.weitere[pfad] ?? "{}")
         let antwort = HTTPURLResponse(url: request.url!, statusCode: 200,
                                       httpVersion: nil, headerFields: nil)!
