@@ -6,14 +6,23 @@ import Foundation
 /// **Die Pruefung sagt nur Nein, nie Ja.** Eine leere Liste heisst „nicht
 /// ausgeschlossen", nicht „brauchbar": Zwei Zeichen koennen sich um ein
 /// einziges Pixel unterscheiden und trotzdem unlesbar sein. Darueber urteilt
-/// nur ein Augenpaar — dafuer gibt es die Musterseite
-/// (`SchriftprobeSeiteTests`).
+/// nur ein Augenpaar — dafuer gibt es die Schriftprobe in der App und die
+/// Musterseite `erzeugt/schriftprobe.html`.
 ///
 /// Das Verfahren ist das von `Textraster.kannKleinbuchstaben` und
 /// `Textraster.kannFett`, nur nicht mehr auf einen Sonderfall beschraenkt:
 /// rastern, die Pixel vergleichen, und aus **gleichen** Pixeln auf eine
 /// verlorene Unterscheidung schliessen.
 public enum Schriftprobe {
+    /// Die drei Pixelschriften, die die App mitbringt, unter ihrem
+    /// registrierten Familiennamen. Micro 5 traegt ein Leerzeichen im Namen —
+    /// im Font-Editor gepruefte Tatsache, kein Tippfehler.
+    public static let mitgelieferteSchriften = ["Micro 5", "Silkscreen", "Tiny5"]
+
+    /// Die Groessen, die der Schieber in der Sendeansicht zulaesst
+    /// (`Stepper(… in: 6...16)`, ein Pixel Schrittweite).
+    public static let groessen: [Double] = Array(stride(from: 6.0, through: 16.0, by: 1.0))
+
     /// Der Zeichenvorrat, den die App auf dem Weg „als Pixel" wirklich schickt.
     ///
     /// Zusammengetragen, nicht erfunden: Klein-, Grossbuchstaben und Ziffern
@@ -45,12 +54,55 @@ public enum Schriftprobe {
         Zeichenpaar("ß", "s"),
     ]
 
-    /// Oberlaenge (G, ß), Unterlaenge (ß) und ein Umlaut in einem Wort.
-    public static let musterwort = "Grüße"
+    /// Alle Zeichen, deren Unterscheidung vom Umlaut abhaengt — die Umlaute
+    /// selbst und das scharfe S.
+    public static let umlautzeichen: Set<Character> = ["ä", "ö", "ü", "Ä", "Ö", "Ü", "ß"]
+
+    /// Ein Wort mit allem, was die sechzehn Zeilen belasten kann: Oberlaenge
+    /// (`F`, `b`), gleich drei Unterlaengen (`g`), ein Umlaut und das scharfe S.
+    /// Es dient der Hoehenmessung und dem Gesamteindruck, nicht der
+    /// Unterscheidbarkeit — die haengt an den Kollisionsgruppen.
+    public static let musterwort = "Fußgängerzone"
 
     /// Eine volle Versalienzeile — fuer die Frage, ob Grossbuchstaben samt
-    /// Umlautpunkten noch in die sechzehn Zeilen passen.
+    /// Umlautpunkten noch in die sechzehn Zeilen passen. `Q` traegt dabei die
+    /// einzige Unterlaenge, die ein Grossbuchstabe hat.
     public static let versalien = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ"
+
+    /// Jeder Umlaut neben seinem Grundbuchstaben: der entscheidende Fall auf
+    /// einen Blick.
+    public static let umlautprobe = "a ä o ö u ü s ß"
+
+    /// Hoechstens so viele Kollisionsgruppen werden als Raster gezeigt — in der
+    /// App wie auf der Musterseite, damit beide dasselbe zeigen.
+    ///
+    /// Die Zahl ist zugleich die Grenze zwischen den beiden Lagen (siehe
+    /// `lage(_:)`): Bis hierher sieht man **jede** Gruppe und kann sie
+    /// abwaegen; darueber hinaus faellt so viel zusammen, dass keine einzelne
+    /// Gruppe mehr den Ausschlag gibt — und eine Wand aus Rastern liest
+    /// niemand. Vier, weil das die groesste Zahl ist, die in den gemessenen
+    /// Faellen noch vollstaendig gezeigt werden kann: Was darueber liegt,
+    /// springt auf zehn und mehr.
+    public static let gruppenObergrenze = 4
+
+    /// Wie viel bei dieser Schrift und Groesse zusammenfaellt — die Auskunft,
+    /// die entscheidet, ob sich Hinsehen ueberhaupt lohnt. Kein Urteil ueber
+    /// die Groesse, sondern ueber die Zahl der Gruppen.
+    public enum Lage: Equatable, Sendable {
+        /// Kein einziges Zeichenpaar faellt zusammen — es gibt nichts zu
+        /// vergleichen.
+        case nichtsFaelltZusammen
+        /// Wenige Gruppen, alle zu sehen: hier haengt es am Auge.
+        case wenigeGruppen
+        /// Mehr Gruppen als `gruppenObergrenze` — sie werden gekappt.
+        case vieleGruppen
+    }
+
+    public static func lage(_ gruende: [Grund]) -> Lage {
+        let gruppen = kollisionsgruppen(gruende)
+        if gruppen.isEmpty { return .nichtsFaelltZusammen }
+        return gruppen.count <= gruppenObergrenze ? .wenigeGruppen : .vieleGruppen
+    }
 
     /// Zwei Zeichen, die miteinander zu tun haben. Eigener Typ statt eines
     /// Tupels, damit `Grund` vergleichbar bleibt.
@@ -68,10 +120,19 @@ public enum Schriftprobe {
         /// Ein Umlaut ist von seinem Grundbuchstaben nicht zu unterscheiden.
         /// Der schwerste Fall, deshalb eigens und immer zuerst.
         case umlautVerloren([Zeichenpaar])
-        /// Zwei sonstige Zeichen des Vorrats rastern zu demselben Bild.
-        case zeichenFallenZusammen([Zeichenpaar])
         /// Zeichen ohne einen einzigen gesetzten Pixel — sie fehlen ersatzlos.
         case unsichtbar([Character])
+        /// Diese Schrift kennt bei dieser Groesse keine eigenen
+        /// Kleinbuchstaben. Kein Fehler der Groesse, sondern eine Eigenschaft
+        /// der Schrift (dieselbe, die `Textraster.kannKleinbuchstaben`
+        /// meldet) — und deshalb ein eigener Grund und keine Kollision:
+        /// Sonst erschluegen allein die sechsundzwanzig Paare A=a, B=b, … in
+        /// jeder Zeile alles andere.
+        case nurGrossbuchstaben
+        /// Gruppen von Zeichen, die zu **demselben** Pixelbild rastern. Jede
+        /// Gruppe fuer sich ist eine verlorene Unterscheidung; die groessten
+        /// stehen vorn.
+        case zeichenFallenZusammen([[Character]])
         /// Der Text passt nicht in die sechzehn Zeilen der Anzeige — oben,
         /// unten oder beides geht Tinte verloren. Gezaehlt in Zeilen.
         case zuHoch(text: String, obenFehlt: Int, untenFehlt: Int)
@@ -87,53 +148,55 @@ public enum Schriftprobe {
     /// App einstellt (`Meldungsoptionen.abstand`, Vorgabe 1).
     public static func ausschlussgruende(schrift: String, groesse: Double,
                                          abstand: Int = 1) -> [Grund] {
+        var gruende: [Grund] = []
+
+        // Kennt die Schrift ueberhaupt Kleinbuchstaben? Wenn nicht, rastern
+        // „a" und „A" dieselben Pixel — das ist keine verlorene Unterscheidung
+        // dieser Groesse, sondern die Schrift selbst. Die Kleinbuchstaben
+        // bleiben dann aussen vor, sonst bestuende die halbe Kollisionsliste
+        // aus derselben Auskunft.
+        let nurGross = !Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+        let geprueft = nurGross ? vorrat.filter { !hatEigeneGrossform($0) } : vorrat
+
         // Teuer ist das Rastern, nicht das Vergleichen: je Zeichen ein
         // CGContext (`Textraster.zeichenTinte`). Also jedes Zeichen genau
         // einmal rastern, danach nur noch die fertigen Bilder ansehen.
         var felder: [Character: Pixelfeld] = [:]
-        for zeichen in Set(vorrat).union(musterwort) {
+        for zeichen in Set(geprueft).union(musterwort) {
             felder[zeichen] = Textraster.rasterPuffer(String(zeichen), schrift: schrift,
                                                       groesse: groesse, fett: false, farbe: tinte)
         }
         let bilder = felder.mapValues(signatur)
 
-        var gruende: [Grund] = []
-
         // 1a. Die Umlaute zuerst, und getrennt von allem anderen.
-        let verloreneUmlaute = umlautpaare.filter { bilder[$0.eins] == bilder[$0.zwei] }
+        let verloreneUmlaute = umlautpaare.filter {
+            guard let a = bilder[$0.eins], let b = bilder[$0.zwei] else { return false }
+            return a == b
+        }
         if !verloreneUmlaute.isEmpty { gruende.append(.umlautVerloren(verloreneUmlaute)) }
 
-        // 2. Unsichtbare Zeichen. Vor den uebrigen Kollisionen ermittelt, denn
-        //    unsichtbare Zeichen fallen untereinander natuerlich alle zusammen —
-        //    das ist dieselbe Auskunft zweimal.
-        let unsichtbare = vorrat.filter { bilder[$0]?.contains("1") == false }.sorted()
+        // 2. Unsichtbare Zeichen. Vor den Gruppen ermittelt, denn unsichtbare
+        //    Zeichen fallen untereinander natuerlich alle zusammen — das waere
+        //    dieselbe Auskunft zweimal.
+        let unsichtbare = geprueft.filter { bilder[$0]?.contains("1") == false }.sorted()
         if !unsichtbare.isEmpty { gruende.append(.unsichtbar(unsichtbare)) }
 
-        // 1b. Alle uebrigen Paare mit gleichem Pixelbild. Nach Signatur
-        //     gruppiert statt Paar fuer Paar verglichen: n Vergleiche statt n².
+        if nurGross { gruende.append(.nurGrossbuchstaben) }
+
+        // 1b. Alle Zeichen mit gleichem Pixelbild, nach Signatur gruppiert
+        //     statt Paar fuer Paar verglichen: n Vergleiche statt n². Die
+        //     Umlautpaare stehen hier gegebenenfalls noch einmal — die Gruppe
+        //     ist der Befund, `umlautVerloren` seine Deutung.
         let unsichtbarMenge = Set(unsichtbare)
         var gruppen: [String: [Character]] = [:]
-        for zeichen in vorrat where !unsichtbarMenge.contains(zeichen) {
+        for zeichen in geprueft where !unsichtbarMenge.contains(zeichen) {
             gruppen[bilder[zeichen]!, default: []].append(zeichen)
         }
-        let schonGenannt = Set(verloreneUmlaute)
-        var kollisionen: [Zeichenpaar] = []
-        for gruppe in gruppen.values where gruppe.count > 1 {
-            let sortiert = gruppe.sorted()
-            for i in 0..<(sortiert.count - 1) {
-                for j in (i + 1)..<sortiert.count {
-                    let paar = Zeichenpaar(sortiert[i], sortiert[j])
-                    guard !schonGenannt.contains(paar),
-                          !schonGenannt.contains(Zeichenpaar(paar.zwei, paar.eins)) else { continue }
-                    kollisionen.append(paar)
-                }
-            }
-        }
-        if !kollisionen.isEmpty {
-            gruende.append(.zeichenFallenZusammen(kollisionen.sorted {
-                ($0.eins, $0.zwei) < ($1.eins, $1.zwei)
-            }))
-        }
+        // Die groesste Gruppe zuerst: Sie richtet den meisten Schaden an, und
+        // wer die Liste kappt, soll oben das Wichtigste sehen.
+        let kollisionen = gruppen.values.filter { $0.count > 1 }.map { $0.sorted() }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.lexicographicallyPrecedes($1) }
+        if !kollisionen.isEmpty { gruende.append(.zeichenFallenZusammen(kollisionen)) }
 
         // 3. Hoehe — passt das Musterwort, passt eine Versalienzeile?
         for text in [musterwort, versalien] {
@@ -147,6 +210,40 @@ public enum Schriftprobe {
                                         groesse: groesse, abstand: abstand)
         if !gelaufen.isEmpty { gruende.append(.zusammengelaufen(gelaufen)) }
         return gruende
+    }
+
+    // MARK: - Auskunft ueber ein Ergebnis
+
+    /// Die Kollisionsgruppen aus einem Ergebnis, oder leer. Beide Darstellungen
+    /// — die Schriftprobe in der App und die Musterseite — zeigen genau diese
+    /// Gruppen als Raster; dort faellt die Entscheidung, ob man sie noch
+    /// auseinanderhaelt.
+    public static func kollisionsgruppen(_ gruende: [Grund]) -> [[Character]] {
+        for grund in gruende {
+            if case .zeichenFallenZusammen(let gruppen) = grund { return gruppen }
+        }
+        return []
+    }
+
+    /// Hat es einen Umlaut erwischt — als verlorenen Umlaut oder irgendwo in
+    /// einer Kollisionsgruppe? Nur dann lohnt es, die Umlautzeile zu zeigen;
+    /// sonst ist sie Fuellung.
+    public static func umlauteBetroffen(_ gruende: [Grund]) -> Bool {
+        for grund in gruende {
+            if case .umlautVerloren = grund { return true }
+        }
+        return kollisionsgruppen(gruende).contains { gruppe in
+            gruppe.contains { umlautzeichen.contains($0) }
+        }
+    }
+
+    // MARK: - Messung
+
+    /// Hat dieses Zeichen eine eigene Grossform, faellt also bei einer Schrift
+    /// ohne Kleinbuchstaben mit ihr zusammen? `ß` nicht: Es wird zu „SS" und
+    /// ist damit kein Fall von Gross gegen Klein, sondern ein Zeichen fuer sich.
+    private static func hatEigeneGrossform(_ zeichen: Character) -> Bool {
+        zeichen.isLowercase && String(zeichen).uppercased().count == 1
     }
 
     /// Benachbarte Zeichen des Musterworts, zwischen denen im fertig gesetzten
@@ -239,32 +336,51 @@ public enum Schriftprobe {
 }
 
 public extension Schriftprobe.Grund {
-    /// Der Grund als Satz, fuer die Musterseite und die Testausgabe.
+    /// Der Grund als Satz — fuer die Schriftprobe in der App, die Musterseite
+    /// und die Testtabelle.
     ///
-    /// **Bewusst ohne `lok(…)`.** Diese Saetze stehen in einem Werkzeug — der
-    /// erzeugten Musterseite und der Testtabelle —, nicht in der Oberflaeche
-    /// der App. Wer sie eines Tages in einer Ansicht zeigt, muss sie durch
-    /// `lok` schicken und die englischen Gegenstuecke nachtragen; bis dahin
-    /// waeren es Uebersetzungsschluessel, die nie jemand nachschlaegt.
+    /// Uebersetzt, denn dieser Satz steht in der Oberflaeche: `lok`/`lokf`, weil
+    /// er als gewoehnliches `String` weitergereicht wird und deshalb nie durch
+    /// SwiftUIs eigene Nachschlage geht. Die Zeichen selbst bleiben, wie sie
+    /// sind — an „0=8=9" ist nichts zu uebersetzen.
     var beschreibung: String {
         switch self {
         case .umlautVerloren(let paare):
-            return "Umlaut verloren: " + paare.map(Self.paarText).joined(separator: ", ")
-        case .zeichenFallenZusammen(let paare):
-            return "Zeichen fallen zusammen: " + paare.map(Self.paarText).joined(separator: ", ")
+            return lokf("Umlaut verloren: %@", paare.map { "\($0.eins)=\($0.zwei)" }
+                .joined(separator: ", "))
         case .unsichtbar(let zeichen):
-            return "unsichtbar: " + zeichen.map { "„\($0)“" }.joined(separator: ", ")
+            return lokf("unsichtbar: %@", zeichen.map(String.init).joined(separator: " "))
+        case .nurGrossbuchstaben:
+            return lok("Diese Schrift kennt keine eigenen Kleinbuchstaben — sie rastern wie Großbuchstaben und bleiben hier außer Betracht.")
+        case .zeichenFallenZusammen(let gruppen):
+            return lokf("Zeichen fallen zusammen: %@", gruppen.map(Self.gruppentext)
+                .joined(separator: ", "))
         case .zuHoch(let text, let oben, let unten):
-            let wo = [oben > 0 ? "\(oben) Zeile(n) oben" : nil,
-                      unten > 0 ? "\(unten) Zeile(n) unten" : nil].compactMap { $0 }
-            return "„\(text)“ passt nicht in \(Pixelfeld.hoeheStandard) Zeilen: "
-                + wo.joined(separator: " und ") + " fehlen"
+            if oben > 0, unten > 0 {
+                return lokf("„%@“ passt nicht in die Anzeige: oben abgeschnitten um %@, unten um %@.",
+                            text, Self.zeilen(oben), Self.zeilen(unten))
+            }
+            if oben > 0 {
+                return lokf("„%@“ passt nicht in die Anzeige: oben abgeschnitten um %@.",
+                            text, Self.zeilen(oben))
+            }
+            return lokf("„%@“ passt nicht in die Anzeige: unten abgeschnitten um %@.",
+                        text, Self.zeilen(unten))
         case .zusammengelaufen(let paare):
-            return "keine Trennspalte: " + paare.map { "„\($0.eins)\($0.zwei)“" }.joined(separator: ", ")
+            return lokf("keine Trennspalte zwischen: %@", paare.map { "\($0.eins)\($0.zwei)" }
+                .joined(separator: ", "))
         }
     }
 
-    private static func paarText(_ paar: Schriftprobe.Zeichenpaar) -> String {
-        "„\(paar.eins)“ = „\(paar.zwei)“"
+    /// „1 Zeile" oder „3 Zeilen" — eigene Schluessel statt eines Zaehlworts
+    /// hinter `%d`, sonst stuende dort „1 Zeilen".
+    private static func zeilen(_ anzahl: Int) -> String {
+        anzahl == 1 ? lok("1 Zeile") : lokf("%d Zeilen", anzahl)
+    }
+
+    /// Eine Kollisionsgruppe als Text: `0=8=9=B`. Kein uebersetzbarer Satz,
+    /// sondern die Zeichen selbst.
+    static func gruppentext(_ gruppe: [Character]) -> String {
+        gruppe.map(String.init).joined(separator: "=")
     }
 }

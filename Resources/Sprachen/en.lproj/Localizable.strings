@@ -553,3 +553,15 @@
 
 /* UeberView.swift */
 "Die Lizenzdatei liegt nicht im App-Paket. Am Mac passiert das, wenn die App nicht über ./build.sh gebaut wurde." = "The license file is not in the app bundle. On the Mac that happens when the app was not built with ./build.sh.";
+
+/* Schriftprobe — die Ausschlussgruende der Schriftmessung */
+"Umlaut verloren: %@" = "Umlaut lost: %@";
+"unsichtbar: %@" = "invisible: %@";
+"Diese Schrift kennt keine eigenen Kleinbuchstaben — sie rastern wie Großbuchstaben und bleiben hier außer Betracht." = "This typeface has no lowercase of its own — lowercase letters render as capitals and are left out of the comparison here.";
+"Zeichen fallen zusammen: %@" = "Characters collapse into one: %@";
+"„%@“ passt nicht in die Anzeige: oben abgeschnitten um %@, unten um %@." = "“%@” does not fit the display: clipped by %@ at the top and %@ at the bottom.";
+"„%@“ passt nicht in die Anzeige: oben abgeschnitten um %@." = "“%@” does not fit the display: clipped by %@ at the top.";
+"„%@“ passt nicht in die Anzeige: unten abgeschnitten um %@." = "“%@” does not fit the display: clipped by %@ at the bottom.";
+"keine Trennspalte zwischen: %@" = "no separating column between: %@";
+"1 Zeile" = "1 row";
+"%d Zeilen" = "%d rows";

@@ -8,12 +8,6 @@ import XCTest
 /// der Waechter: Aendert sich eine Schriftdatei oder die Rasterung, faellt es
 /// hier auf, nicht erst am Geraet.
 final class SchriftprobeTests: XCTestCase {
-    /// Was der Schieber in `SendenView` zulaesst: `Stepper(… in: 6...16)`, ein
-    /// Pixel Schrittweite. Silkscreen ist dort zusaetzlich auf 8 und 16
-    /// eingeengt (`sauberePixelgroessen`) — hier trotzdem durchgehend gemessen,
-    /// denn genau diese Einengung soll die Messung beantworten.
-    static let groessen = Array(stride(from: 6.0, through: 16.0, by: 1.0))
-
     override func setUp() {
         super.setUp()
         Schriftbuendel.anmelden()
@@ -23,7 +17,7 @@ final class SchriftprobeTests: XCTestCase {
     /// Ersatzschrift — die ganze Tabelle waere dann etwas anderes als
     /// behauptet. Deshalb zuerst diese Frage.
     func testDieMitgeliefertenSchriftenSindDa() {
-        for schrift in Schriftbuendel.schriften {
+        for schrift in Schriftprobe.mitgelieferteSchriften {
             XCTAssertTrue(Schriftbuendel.vorhanden(schrift), "Schrift „\(schrift)“ fehlt")
         }
     }
@@ -37,8 +31,8 @@ final class SchriftprobeTests: XCTestCase {
             "# urteilt nur ein Augenpaar (erzeugt/schriftprobe.html).",
             "",
         ]
-        for schrift in Schriftbuendel.schriften {
-            for groesse in Self.groessen {
+        for schrift in Schriftprobe.mitgelieferteSchriften {
+            for groesse in Schriftprobe.groessen {
                 let gruende = Schriftprobe.ausschlussgruende(schrift: schrift, groesse: groesse)
                 zeilen.append("\(schrift) \(Int(groesse)) px")
                 if gruende.isEmpty {
@@ -69,8 +63,8 @@ final class SchriftprobeTests: XCTestCase {
     /// **kein** Umlaut seines Grundbuchstabens verlustig gegangen. Faellt das
     /// eines Tages, ist es das Erste, was man wissen will.
     func testInDenAngebotenenGroessenBleibenDieUmlauteErhalten() {
-        for schrift in Schriftbuendel.schriften {
-            for groesse in Self.groessen {
+        for schrift in Schriftprobe.mitgelieferteSchriften {
+            for groesse in Schriftprobe.groessen {
                 for grund in Schriftprobe.ausschlussgruende(schrift: schrift, groesse: groesse) {
                     if case .umlautVerloren(let paare) = grund {
                         XCTFail("\(schrift) \(Int(groesse)) px verliert \(paare)")
@@ -81,14 +75,40 @@ final class SchriftprobeTests: XCTestCase {
     }
 
     /// Ein Zeichen ohne einen einzigen gesetzten Pixel fehlt ersatzlos. Micro 5
-    /// bei drei Pixeln zeigt sechs Zeichen des Vorrats gar nicht.
+    /// bei drei Pixeln zeigt vier Zeichen des Vorrats gar nicht.
     func testUnsichtbareZeichenWerdenGenannt() {
         let gruende = Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 3)
         let unsichtbare = gruende.compactMap { grund -> [Character]? in
             if case .unsichtbar(let z) = grund { return z }
             return nil
         }.first
-        XCTAssertEqual(unsichtbare, ["4", "F", "L", "P", "f", "r"])
+        XCTAssertEqual(unsichtbare, ["4", "F", "L", "P"])
+    }
+
+    /// Silkscreen kennt keine eigenen Kleinbuchstaben. Das ist eine Eigenschaft
+    /// der Schrift, kein Schaden dieser Groesse — also ein eigener Grund, und
+    /// die Kleinbuchstaben bleiben aus den Gruppen heraus. Sonst bestuenden die
+    /// aus sechsundzwanzig Mal derselben Auskunft, und alles andere ginge
+    /// darin unter.
+    func testSchriftOhneKleinbuchstabenWirdAlsSolcheGefuehrt() {
+        let gruende = Schriftprobe.ausschlussgruende(schrift: "Silkscreen", groesse: 8)
+        XCTAssertTrue(gruende.contains(.nurGrossbuchstaben))
+        for gruppe in Schriftprobe.kollisionsgruppen(gruende) {
+            XCTAssertFalse(gruppe.contains { $0.isLowercase && $0 != "ß" },
+                           "Gruppe \(gruppe) enthält Kleinbuchstaben")
+        }
+        // Und die Gegenprobe: Tiny5 kennt welche, dort steht der Grund nicht.
+        XCTAssertFalse(Schriftprobe.ausschlussgruende(schrift: "Tiny5", groesse: 8)
+            .contains(.nurGrossbuchstaben))
+    }
+
+    /// Die Umlautzeile wird nur gezeigt, wo ein Umlaut wirklich betroffen ist.
+    /// Bei Micro 5 in 8 px faellt „Ö“ mit „Ü“ zusammen, bei 12 px nicht.
+    func testUmlautschadenWirdErkannt() {
+        XCTAssertTrue(Schriftprobe.umlauteBetroffen(
+            Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 8)))
+        XCTAssertFalse(Schriftprobe.umlauteBetroffen(
+            Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 12)))
     }
 
     /// Der Ausschnitt ist sechzehn Zeilen hoch — was darunter liegt, ist weg.
