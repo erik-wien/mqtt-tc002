@@ -26,7 +26,7 @@ public enum BildersammlungFehler: Error, LocalizedError {
 }
 
 /// Mehrere gemalte 52×16-Bilder unter Namen — die Ablage neben dem einen
-/// Arbeitsstand, den „Malen" ohnehin schon ueber Neustarts hinweg behaelt.
+/// Arbeitsstand, den der Bereich „Bilder" ohnehin schon ueber Neustarts hinweg behaelt.
 /// Gesichert wird als GIF, wie bei den Icons: so sind die Bilder auch
 /// ausserhalb der App zu sehen.
 public struct Bildersammlung {

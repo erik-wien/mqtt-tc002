@@ -3,7 +3,7 @@ import TC002Core
 import TC002Modell
 
 /// Waehlt, an welche Uhr oder Uhren gesendet wird. Ein Knopf, der das Ziel
-/// benennt, oeffnet ein Blatt mit einer Zeile je Uhr. Von „Senden“ und „Malen“
+/// benennt, oeffnet ein Blatt mit einer Zeile je Uhr. Von „Senden“ und „Bilder“
 /// gemeinsam genutzt — zwei verschiedene Bedienungen fuer dieselbe Sache waeren
 /// schlimmer als gar keine.
 ///

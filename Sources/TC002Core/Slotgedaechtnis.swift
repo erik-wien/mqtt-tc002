@@ -110,7 +110,7 @@ public struct Slotgedaechtnis: Sendable {
 
     /// Eine gehaltene Fassung fuer die Oberflaeche. `init` legt den Ordner an,
     /// und `AppZustand.slotzustand` laeuft fuenfmal je Neuzeichnen — in
-    /// `SendenView` also bei jedem Tastendruck im Textfeld, in `MalenView` bei
+    /// `SendenView` also bei jedem Tastendruck im Textfeld, in `BilderBereichView` bei
     /// jedem Strich. Als Vorgabewert eines Arguments wuerde `Slotgedaechtnis()`
     /// dabei jedes Mal neu ausgewertet und jedes Mal `createDirectory` rufen.
     ///
@@ -208,7 +208,7 @@ public struct Slotgedaechtnis: Sendable {
 
     /// Wirft die Erinnerung an **einen** Platz weg — aufzurufen, wenn dieser
     /// Platz geraeumt oder mit etwas ueberschrieben wird, das sich nicht merken
-    /// laesst: Ein gemaltes Bild hat keine Regler (`MalenView`, und damit
+    /// laesst: Ein gemaltes Bild hat keine Regler (`BilderBereichView`, und damit
     /// `AppZustand.senden` mit `slotPlatz`, aber ohne `slotOptionen`), und eine
     /// Loeschung laesst gar nichts mehr zurueck (`AppZustand.anzeigeGeloescht`,
     /// und der Kurzbefehl „Meldung nehmen").

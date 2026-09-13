@@ -5,7 +5,7 @@ import TC002Core
 /// Text rechts. Die Darstellung (`HilfeabschnittView`) und die Absätze, die
 /// auf beiden Geräten gelten (`HilfeInhalt`), liegen in `TC002Ansichten` —
 /// hier steht nur, was diese Oberfläche auszeichnet: Fenster, Seitenleiste,
-/// Menüs, Inspektor, Finder, Malen und der Icon-Editor.
+/// Menüs, Inspektor, Finder, „Bilder" und der Icon-Editor.
 ///
 /// Was das Gerät kann, steht in der Gerätereferenz (Hilfe -> Gerätereferenz,
 /// aus docs/tc002-protokoll.md, siehe GeraeteReferenzView.swift); hier steht
@@ -42,7 +42,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
     case verbindung = "Einstellungen"
     case senden = "Senden"
-    case malen = "Malen"
+    case bilder = "Bilder"
     case icons = "Icons"
     case anzeigen = "Verlauf"
     case fehlersuche = "Wenn nichts erscheint"
@@ -58,10 +58,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Bereiche"),
                     .tabelle([
                         ("Senden", "Text und Icon verschicken"),
-                        ("Malen", "ein frei gezeichnetes Bild verschicken"),
+                        ("Bilder", "ein frei gezeichnetes Bild verschicken"),
                         ("Verlauf", "bereits verschickte Inhalte und das Protokoll"),
                         ("Einstellungen", "Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr"),
-                        ("Icons", "eigene 8×8-Bildchen"),
+                        ("Icons", "eigene Bildchen neben dem Text"),
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
@@ -100,7 +100,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fuenfPlaetze
                 + HilfeInhalt.blockwissenAnfang
                 + [
-                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Sendung aus dem Malbereich wirft obendrein weg, was zu diesem Platz gemerkt war."),
+                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Sendung aus dem Bereich „Bilder“ wirft obendrein weg, was zu diesem Platz gemerkt war."),
                 ]
                 + HilfeInhalt.blockwissenSchluss
                 + [
@@ -121,7 +121,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.papierkorb
                 + [
-                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“, nur dort, wo man den Platz gerade in der Hand hat. Im Malbereich sitzt er ebenso in der unteren Zeile neben den fünf Blöcken; „Leeren“ steht dagegen oben in der Werkzeugzeile. Die beiden meinen Verschiedenes: „Leeren“ macht die Malfläche leer, der Papierkorb löscht die Anzeige auf der Uhr."),
+                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“, nur dort, wo man den Platz gerade in der Hand hat. Im Bereich „Bilder“ sitzt er ebenso in der Sendezeile neben den fünf Blöcken; „Leeren“ steht dagegen oben in der Werkzeugzeile. Die beiden meinen Verschiedenes: „Leeren“ macht die Malfläche leer, der Papierkorb löscht die Anzeige auf der Uhr."),
                 ]
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen
@@ -153,18 +153,19 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Senden auslösen"),
                     .absatz("Die Eingabetaste löst „Senden“ aus, solange der Knopf nicht gesperrt ist. Geht dabei etwas schief — falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert. Bleibt das Fenster aus, ist die Nachricht beim Broker angekommen — was das noch nicht heißt, steht unter „Wenn nichts erscheint“."),
                 ]
-        case .malen:
+        case .bilder:
             return [
                     .ueberschrift("Zeichnen"),
-                    .absatz("„Malen“ ist eine 52×16-Fläche zum freien Zeichnen. Der Systemfarbwähler oben links stellt die Farbe ein, „Radierer“ schaltet auf Löschen um, „Leeren“ macht die ganze Fläche leer. Gemalt wird mit gedrückter Maustaste."),
+                    .absatz("„Bilder“ ist eine 52×16-Fläche zum freien Zeichnen — die ganze Anzeige, nicht ein Bildchen daneben. Der Editor steht links, die Sammlung der gesicherten Bilder als Liste rechts, genau wie im Bereich „Icons“."),
+                    .absatz("Der Systemfarbwähler oben links stellt die Farbe ein, „Radierer“ schaltet auf Löschen um, „Leeren“ macht die ganze Fläche leer. Gemalt wird mit gedrückter Maustaste oder mit dem Finger."),
                     .absatz("Die Fläche passt ihre Kästchengröße dem Platz im Fenster an — in einem schmalen Fenster werden die Kästchen kleiner, statt dass die Fläche rechts abgeschnitten wird. Das zuletzt gemalte Bild bleibt über einen Neustart der App hinweg erhalten."),
                     .ueberschrift("Icon einfügen"),
                     .absatz("„Icon einfügen“ setzt eines der vorhandenen 8×8-Icons als Ausgangspunkt senkrecht mittig ins Feld — an derselben Stelle, an der es auch unter „Senden“ läge. Danach lässt sich frei weitermalen; durchsichtige Stellen im Icon lassen die Fläche dort unverändert."),
-                    .ueberschrift("Bilder-Sammlung"),
-                    .absatz("„Bilder“ öffnet die Sammlung mehrerer gesicherter 52×16-Bilder — anders als der eine Arbeitsstand, der ohnehin über Neustarts hinweg erhalten bleibt, sind das benannte Bilder zum Wiederverwenden. Ein Klick auf ein Bild lädt es ins Feld, mit Rückfrage, wenn die Fläche gerade nicht leer ist; „Löschen“ nimmt ein Bild wieder heraus."),
-                    .absatz("Ein Name und „Sichern“ legen das aktuelle Feld ab — derselbe Name ersetzt das vorhandene Bild. Gesichert liegen sie unter `~/Library/Application Support/MQTT-TC002/Bilder`, erreichbar auch über „Ablage → Eigene Bilder im Finder zeigen“."),
+                    .ueberschrift("Gesicherte Bilder"),
+                    .absatz("Rechts steht die Sammlung: benannte 52×16-Bilder zum Wiederverwenden, anders als der eine Arbeitsstand, der ohnehin über Neustarts hinweg erhalten bleibt. Ein Klick auf eine Zeile lädt das Bild ins Feld, mit Rückfrage, wenn die Fläche gerade nicht leer ist; das Papierkorb-Symbol in der Zeile nimmt ein Bild wieder heraus, mit Rückfrage, die den Namen nennt — dasselbe bietet auch „Löschen“ im Kontextmenü der Zeile."),
+                    .absatz("Ein Name und „Sichern“ legen das aktuelle Feld ab — derselbe Name ersetzt das vorhandene Bild, denn der Name ist zugleich der Dateiname. Gesichert liegen sie unter `~/Library/Application Support/MQTT-TC002/Bilder`, erreichbar auch über „Ablage → Eigene Bilder im Finder zeigen“."),
                     .ueberschrift("Datei einlesen"),
-                    .absatz("„Datei einlesen…“ im selben Blatt nimmt eine GIF-, PNG- oder JPEG-Datei in die Sammlung auf, auf 52×16 gerechnet, ohne Glättung. Danach folgt ein Feld für den Namen, mit dem Dateinamen als Vorschlag. Musste die Datei dafür umgerechnet werden, weil sie eine andere Größe hatte, steht das in der Meldung dazu. Ein animiertes GIF zählt hier nur mit seinem ersten Einzelbild — die Bildersammlung kennt, anders als die Icons, keine Animation."),
+                    .absatz("„Datei einlesen…“ darüber nimmt eine GIF-, PNG- oder JPEG-Datei in die Sammlung auf, auf 52×16 gerechnet, ohne Glättung. Danach folgt ein Feld für den Namen, mit dem Dateinamen als Vorschlag. Musste die Datei dafür umgerechnet werden, weil sie eine andere Größe hatte, steht das in der Meldung dazu."),
                     .ueberschrift("Senden"),
                     .absatz("Die fünf Slot-Blöcke stehen auch hier, mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“ — ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App ein gemaltes Bild nicht, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war: Nach einem Neustart ohne Broker zeigt der Block dort „belegt“ ohne Inhalt — nicht mehr den Text, der vor dem Malen auf dem Platz stand."),
                     .absatz("„Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben — auch hier ersetzt ein erneutes Senden auf denselben Platz die vorherige Anzeige, und auch hier ist der Sendeknopf gesperrt, solange keine Uhr fertig eingerichtet ist; der Hinweis dazu steht darunter. Fehler beim Senden meldet dasselbe Hinweisfenster wie unter „Senden“."),
@@ -223,7 +224,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Weitere Symptome"),
                     .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es bei „Malen“ nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es bei „Bilder“ nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
                 ]
         }
     }

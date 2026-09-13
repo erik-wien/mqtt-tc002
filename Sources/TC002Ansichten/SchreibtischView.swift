@@ -30,20 +30,20 @@ public struct SchreibtischView: View {
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", malen = "Malen", icons = "Icons",
+        case senden = "Senden", bilder = "Bilder", icons = "Icons",
              verlauf = "Verlauf", einstellungen = "Einstellungen"
         var id: String { rawValue }
         var symbol: String {
             switch self {
             case .senden: return "paperplane"
-            case .malen: return "paintbrush"
+            case .bilder: return "paintbrush"
             case .icons: return "paintpalette"
             case .verlauf: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }
         }
         /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
-        static let oben: [Bereich] = [.senden, .malen, .icons]
+        static let oben: [Bereich] = [.senden, .bilder, .icons]
         static let unten: [Bereich] = [.verlauf, .einstellungen]
 
         /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und ohne
@@ -68,7 +68,7 @@ public struct SchreibtischView: View {
         // Mal-/Vorschaufläche bei ihrer groessten Kantenlaenge (14) plus
         // Innenabstand — sonst faellt die Flaeche wie im gemeldeten Fall rechts
         // aus dem Fenster, bevor die reaktive Anpassung ueberhaupt eingreift.
-        // 980 kommt von „Malen": 52 Spalten bei groesster Kantenlaenge plus
+        // 980 kommt von „Bilder": 52 Spalten bei groesster Kantenlaenge plus
         // Seitenleiste. Der Inspektor von „Senden" braucht rund 340 Punkte
         // obendrauf — erzwungen wird das hier aber nicht, sonst waere das
         // Fenster fuer alle Bereiche so breit wie fuer den einen, der ihn hat,
@@ -80,7 +80,7 @@ public struct SchreibtischView: View {
         // gleich was ihr Inhalt an Mindestbreite angibt. Mit fester
         // Seitenleiste (170) und festem Inspektor (340) fehlten bei 980 genau
         // 128 Punkte — beide Leisten wurden angeschnitten, nicht die Mitte.
-        // 170 + 600 + 340 = 1110, mit Luft 1120. Malen braucht weniger.
+        // 170 + 600 + 340 = 1110, mit Luft 1120. „Bilder" braucht weniger.
         //
         // Nur am Mac: Kein iPad erreicht 1120 im Hochformat (das groesste hat
         // 1024), und in geteilter Ansicht bricht es immer. Die Forderung ist am
@@ -136,7 +136,7 @@ public struct SchreibtischView: View {
         Group {
             switch gewaehlt {
             case .senden: SendenView(zustand: zustand)
-            case .malen: MalenView(zustand: zustand)
+            case .bilder: BilderBereichView(zustand: zustand)
             case .icons: IconEditorView(zustand: zustand)
             case .verlauf: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand)

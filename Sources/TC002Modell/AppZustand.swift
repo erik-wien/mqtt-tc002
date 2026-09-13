@@ -399,7 +399,7 @@ public final class AppZustand {
     /// Papierkorb brauchen; es ist `belegtePlaetze.contains(platz)`.
     ///
     /// Eine Fassung fuer alle drei Ansichten (Senden Mac, Senden iPhone,
-    /// Malen): Derselbe Platz derselben Uhr soll ueberall dasselbe zeigen.
+    /// Bilder): Derselbe Platz derselben Uhr soll ueberall dasselbe zeigen.
     public func slotzustand(_ platz: Int, belegt: Bool,
                             gedaechtnis: Slotgedaechtnis = .gemeinsam) -> Slotzustand {
         guard belegt else { return .frei }
@@ -705,7 +705,7 @@ public final class AppZustand {
     ///
     /// `slotOptionen`/`slotIcon` sind nur gesetzt, wenn diese Sendung zu einem
     /// der fünf Meldungsplätze mit bekannten Reglern gehört (`SendenView`,
-    /// `SendeniOS`). Beim Malen (`MalenView`) bleiben sie `nil`, denn ein
+    /// `SendeniOS`). Im Bereich „Bilder" (`BilderBereichView`) bleiben sie `nil`, denn ein
     /// gemaltes Bild hat keine Regler, die sich wiederherstellen ließen —
     /// `slotPlatz` kommt aber auch von dort, und genau dann wird die alte
     /// Erinnerung an diesen Platz **weggeworfen**: Wer einen Platz mit etwas
@@ -881,8 +881,8 @@ public final class AppZustand {
             // `custom/#` liefert jede Anzeige auf dieser Uhr, gleich von wem —
             // auch unter Namen, die diese App nie vergibt (ein fremder Absender,
             // `mqtttc002 senden --name wetter`). Nur unsere fuenf Slotnamen
-            // (`meldung1`…`meldung5`) betreffen `slotInhalt`; „Malen" schickt
-            // ebenfalls an genau die (`MalenView.senden`).
+            // (`meldung1`…`meldung5`) betreffen `slotInhalt`; „Bilder" schickt
+            // ebenfalls an genau die (`BilderBereichView.senden`).
             let vorsilbe = "\(uhr.praefix)/custom/"
             guard thema.hasPrefix(vorsilbe) else { return }
             let name = String(thema.dropFirst(vorsilbe.count))
