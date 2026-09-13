@@ -68,12 +68,18 @@ public struct EditorBereichView: View {
 
     /// „Datei einlesen…": erst die Dateiauswahl, danach ein Blatt fuer Nummer
     /// und Namen mit dem Dateinamen als Vorschlag.
+    ///
+    /// Gemerkt wird der **Inhalt**, nicht die URL — warum, steht bei
+    /// `dateiUebernehmen`.
     @State private var zeigeDateiImport = false
     @State private var zeigeImportBlatt = false
-    @State private var importDatei: URL?
+    @State private var importDaten: Data?
     @State private var importNummer = ""
     @State private var importName = ""
     @State private var importGroesse: (breite: Int, hoehe: Int)?
+    /// Was im Blatt steht, wenn das Einlesen nicht klappt. Im Blatt und nicht
+    /// unter der Leinwand: Eine Meldung dahinter saehe niemand.
+    @State private var importMeldung: String?
 
     static let arbeitsstandSchluessel = "bilder.arbeitsstand"
 
@@ -422,13 +428,15 @@ public struct EditorBereichView: View {
             Button("Datei einlesen…") { zeigeDateiImport = true }
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
-                    guard case .success(let url) = ergebnis else { return }
-                    importDatei = url
-                    let basis = url.deletingPathExtension().lastPathComponent
-                    importNummer = basis
-                    importName = basis
-                    importGroesse = Bildraster.groesse(url)
-                    zeigeImportBlatt = true
+                    switch ergebnis {
+                    case .success(let url): dateiUebernehmen(url)
+                    // Bis 13.09.2026 stand hier `guard case .success … else
+                    // { return }`: Wer eine Datei waehlte und scheiterte, sah
+                    // nichts geschehen und konnte nicht wissen, woran es lag.
+                    case .failure(let fehler):
+                        zustand.fehler = lokf("Die Datei ließ sich nicht öffnen: %@",
+                                              fehler.localizedDescription)
+                    }
                 }
             if groesse.mitNummer {
                 Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
@@ -673,6 +681,9 @@ public struct EditorBereichView: View {
                 Text("Name").font(.caption).foregroundStyle(.secondary)
                 TextField("Name", text: $importName)
             }
+            if let importMeldung {
+                Text(importMeldung).font(.callout).foregroundStyle(.orange)
+            }
             HStack {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
@@ -826,16 +837,55 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// Liest die zuvor gewaehlte Datei in den Bestand der aktuellen Groesse.
-    /// Der Hinweis auf eine Umrechnung nennt die Originalgroesse nur, wenn
-    /// tatsaechlich gerechnet wurde.
-    private func einlesen() {
-        guard let datei = importDatei else { return }
+    /// Nimmt die gewaehlte Datei entgegen — und liest sie **sofort**.
+    ///
+    /// Eine URL aus dem Dateiwaehler zeigt in die Dateien-App und ist
+    /// zugriffsgeschuetzt: Lesen darf man sie nur zwischen
+    /// `startAccessingSecurityScopedResource` und `stop…`. Die App merkte sich
+    /// bis 13.09.2026 die URL und las erst beim Bestaetigen des Blattes — da
+    /// war der Zugriff laengst zu, und am iPad schlug jeder Import fehl. Am
+    /// Mac fiel es nicht auf: Die App laeuft dort nicht in der Sandbox, und
+    /// ohne Sandbox gilt die Einschraenkung nicht.
+    ///
+    /// `startAccessingSecurityScopedResource` gibt ausserhalb der Sandbox
+    /// `false` zurueck, obwohl das Lesen dort klappt — deshalb ist der
+    /// Rueckgabewert **kein** Grund abzubrechen, sondern nur die Frage, ob
+    /// hinterher abzumelden ist.
+    private func dateiUebernehmen(_ url: URL) {
+        let zugriff = url.startAccessingSecurityScopedResource()
+        defer { if zugriff { url.stopAccessingSecurityScopedResource() } }
+        let daten: Data
         do {
-            let eintrag = try bestand.einlesen(datei: datei, groesse: groesse,
+            daten = try Data(contentsOf: url)
+        } catch {
+            zustand.fehler = lokf("„%@“ ließ sich nicht lesen: %@",
+                                  url.lastPathComponent, error.localizedDescription)
+            return
+        }
+        guard let masse = Bildraster.groesse(daten) else {
+            zustand.fehler = lokf("„%@“ lässt sich nicht als Bild lesen.", url.lastPathComponent)
+            return
+        }
+        importDaten = daten
+        importGroesse = masse
+        let basis = url.deletingPathExtension().lastPathComponent
+        importNummer = basis
+        importName = basis
+        importMeldung = nil
+        zeigeImportBlatt = true
+    }
+
+    /// Legt die gelesenen Daten im Bestand der aktuellen Groesse ab —
+    /// heruntergerechnet, ohne Glaettung. Der Hinweis auf eine Umrechnung
+    /// nennt die Originalgroesse nur, wenn tatsaechlich gerechnet wurde.
+    private func einlesen() {
+        guard let daten = importDaten else { return }
+        do {
+            let eintrag = try bestand.einlesen(daten: daten, groesse: groesse,
                                                nummer: importNummer, name: importName)
             vorhandene = bestand.alle()
             zeigeImportBlatt = false
+            importDaten = nil
             if let masse = importGroesse, masse != (groesse.breite, groesse.hoehe) {
                 meldung = lokf("%@ eingelesen. Das Bild wurde von %d×%d auf %d×%d gerechnet.",
                                eintrag.name, masse.breite, masse.hoehe,
@@ -845,7 +895,9 @@ public struct EditorBereichView: View {
             }
             zustand.log("Eingelesen: \(eintrag.name)")
         } catch {
-            meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            // Das Blatt bleibt stehen und sagt hier, woran es lag: Eine
+            // Meldung unter der Leinwand laege dahinter.
+            importMeldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
     }
 

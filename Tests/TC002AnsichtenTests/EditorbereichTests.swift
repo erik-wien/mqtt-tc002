@@ -87,4 +87,26 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertFalse(text.contains("case bilder"), "der Abschnitt „Bilder“ steht noch da")
         XCTAssertFalse(text.contains("case icons"), "der Abschnitt „Icons“ steht noch da")
     }
+
+    /// Der Dateiwaehler. Am iPad laeuft die App in der Sandbox, und eine URL
+    /// von dort gilt nur zwischen `startAccessingSecurityScopedResource` und
+    /// `stop…`; am Mac gilt die Einschränkung nicht — deshalb **kann** kein
+    /// Test hier die Wirkung zeigen, und deshalb hält dieser fest, dass der
+    /// Weg der richtige bleibt. Genau so ist der Fehler entstanden: Die App
+    /// merkte sich die URL und las erst beim Bestätigen des Blattes.
+    func testDerDateiwaehlerLiestSofortUndMeldetJedenFehlschlag() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        XCTAssertTrue(text.contains("url.startAccessingSecurityScopedResource()"),
+                      "ohne Zugriffsanforderung schlägt am iPad jedes Lesen fehl")
+        XCTAssertTrue(text.contains("url.stopAccessingSecurityScopedResource()"),
+                      "ein Zugriff, der nicht abgemeldet wird, bleibt offen")
+        XCTAssertTrue(text.contains("try Data(contentsOf: url)"),
+                      "die Datei wird nicht gelesen, solange der Zugriff offen ist")
+        XCTAssertTrue(text.contains("importDaten"),
+                      "gemerkt gehören die Bytes, nicht die URL")
+        XCTAssertFalse(text.contains("importDatei"),
+                       "die URL wird wieder aufbewahrt und später gelesen — dann ist der Zugriff zu")
+        XCTAssertTrue(text.contains("case .failure(let fehler):"),
+                      "ein fehlgeschlagener Dateiwähler tut wieder stillschweigend nichts")
+    }
 }

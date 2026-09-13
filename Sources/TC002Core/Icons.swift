@@ -81,6 +81,26 @@ public enum Bildraster {
         guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else {
             throw BildrasterFehler.nichtLesbar
         }
+        return try lesen(quelle: quelle, breite: breite, hoehe: hoehe)
+    }
+
+    /// Dasselbe aus dem Speicher.
+    ///
+    /// **Gebraucht wird das fuer den Dateiwaehler.** Eine URL von dort zeigt in
+    /// die Dateien-App und ist zugriffsgeschuetzt: Lesen darf man sie nur
+    /// zwischen `startAccessingSecurityScopedResource` und `stop…`. Wer sie sich
+    /// merkt und spaeter noch einmal liest, greift ins Leere — am iPad, wo die
+    /// App in der Sandbox laeuft; am Mac faellt es nicht auf, weil sie es dort
+    /// nicht tut. Deshalb einmal lesen, solange der Zugriff offen ist, und
+    /// danach mit den Daten arbeiten.
+    public static func lesen(_ daten: Data, breite: Int, hoehe: Int) throws -> [[String?]] {
+        guard let quelle = CGImageSourceCreateWithData(daten as CFData, nil) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        return try lesen(quelle: quelle, breite: breite, hoehe: hoehe)
+    }
+
+    private static func lesen(quelle: CGImageSource, breite: Int, hoehe: Int) throws -> [[String?]] {
         let anzahl = CGImageSourceGetCount(quelle)
         guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
         return try (0..<anzahl).map { i in
@@ -105,6 +125,18 @@ public enum Bildraster {
         guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else {
             throw BildrasterFehler.nichtLesbar
         }
+        return try lesenMitZeiten(quelle: quelle, breite: breite, hoehe: hoehe)
+    }
+
+    /// Dasselbe aus dem Speicher — siehe `lesen(_ daten:…)`.
+    public static func lesenMitZeiten(_ daten: Data, breite: Int, hoehe: Int) throws -> [Einzelbild] {
+        guard let quelle = CGImageSourceCreateWithData(daten as CFData, nil) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        return try lesenMitZeiten(quelle: quelle, breite: breite, hoehe: hoehe)
+    }
+
+    private static func lesenMitZeiten(quelle: CGImageSource, breite: Int, hoehe: Int) throws -> [Einzelbild] {
         let anzahl = CGImageSourceGetCount(quelle)
         guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
         return try (0..<anzahl).map { i in
@@ -132,8 +164,19 @@ public enum Bildraster {
     /// Die Pixelgroesse des ersten Einzelbilds einer Datei, wenn lesbar — fuer den
     /// Hinweis, wenn eine eingelesene Datei umgerechnet werden musste.
     public static func groesse(_ datei: URL) -> (breite: Int, hoehe: Int)? {
-        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil),
-              let eigenschaften = CGImageSourceCopyPropertiesAtIndex(quelle, 0, nil) as? [CFString: Any],
+        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else { return nil }
+        return groesse(quelle: quelle)
+    }
+
+    /// Dasselbe aus dem Speicher — und zugleich die Probe, ob sich diese Datei
+    /// ueberhaupt als Bild lesen laesst: `nil` heisst nein.
+    public static func groesse(_ daten: Data) -> (breite: Int, hoehe: Int)? {
+        guard let quelle = CGImageSourceCreateWithData(daten as CFData, nil) else { return nil }
+        return groesse(quelle: quelle)
+    }
+
+    private static func groesse(quelle: CGImageSource) -> (breite: Int, hoehe: Int)? {
+        guard let eigenschaften = CGImageSourceCopyPropertiesAtIndex(quelle, 0, nil) as? [CFString: Any],
               let breite = eigenschaften[kCGImagePropertyPixelWidth] as? Int,
               let hoehe = eigenschaften[kCGImagePropertyPixelHeight] as? Int
         else { return nil }
@@ -354,6 +397,14 @@ public struct Iconsammlung {
     @discardableResult
     public func einfuegen(datei: URL, nummer: String, name: String) throws -> Icon {
         let raster = try Bildraster.lesen(datei, breite: kante, hoehe: kante)
+        return try sichern(nummer: nummer, name: name, bilder: raster, verzoegerung: 0.2)
+    }
+
+    /// Dasselbe aus schon gelesenen Daten — der Weg des Dateiwaehlers, dessen
+    /// URL nur waehrend des Zugriffs gilt (siehe `Bildraster.lesen(_ daten:…)`).
+    @discardableResult
+    public func einfuegen(daten: Data, nummer: String, name: String) throws -> Icon {
+        let raster = try Bildraster.lesen(daten, breite: kante, hoehe: kante)
         return try sichern(nummer: nummer, name: name, bilder: raster, verzoegerung: 0.2)
     }
 

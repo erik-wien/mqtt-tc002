@@ -134,7 +134,20 @@ public struct Bildersammlung {
     @discardableResult
     public func einfuegen(datei: URL, name: String) throws -> Gemaltes {
         let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
-        let gelesen = try Bildraster.lesenMitZeiten(datei, breite: breite, hoehe: hoehe)
+        return try einfuegen(gelesen: try Bildraster.lesenMitZeiten(datei, breite: breite, hoehe: hoehe),
+                             name: name)
+    }
+
+    /// Dasselbe aus schon gelesenen Daten — der Weg des Dateiwaehlers, dessen
+    /// URL nur waehrend des Zugriffs gilt (siehe `Bildraster.lesen(_ daten:…)`).
+    @discardableResult
+    public func einfuegen(daten: Data, name: String) throws -> Gemaltes {
+        let breite = Pixelfeld.breiteStandard, hoehe = Pixelfeld.hoeheStandard
+        return try einfuegen(gelesen: try Bildraster.lesenMitZeiten(daten, breite: breite, hoehe: hoehe),
+                             name: name)
+    }
+
+    private func einfuegen(gelesen: [Bildraster.Einzelbild], name: String) throws -> Gemaltes {
         guard let erstes = gelesen.first else { throw BildersammlungFehler.nichtLesbar }
         return try sichern(name: name, bilder: gelesen.map(\.pixel),
                            verzoegerung: erstes.dauer)

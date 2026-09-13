@@ -164,9 +164,15 @@ public struct Editorbestand {
         }
     }
 
-    /// Liest eine Datei von der Platte in den Bestand der angegebenen Groesse.
+    /// Liest eine schon gelesene Bilddatei in den Bestand der angegebenen
+    /// Groesse — heruntergerechnet, ohne Glaettung (`Bildraster.lesen`).
+    ///
+    /// **`Data`, nicht `URL`.** Eine URL aus dem Dateiwaehler gilt nur zwischen
+    /// `startAccessingSecurityScopedResource` und `stop…`; wer sie sich merkt
+    /// und hier noch einmal liest, greift am iPad ins Leere. Die Ansicht liest
+    /// die Datei deshalb sofort und reicht die Bytes weiter.
     @discardableResult
-    public func einlesen(datei: URL, groesse: Leinwandgroesse,
+    public func einlesen(daten: Data, groesse: Leinwandgroesse,
                          nummer: String, name: String) throws -> Editoreintrag {
         switch groesse {
         case .icon8, .icon16:
@@ -176,7 +182,7 @@ public struct Editorbestand {
                 : Dateiname.aus(name)
             guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
             let sauber = name.trimmingCharacters(in: .whitespaces)
-            let icon = try sammlung.einfuegen(datei: datei, nummer: schluessel,
+            let icon = try sammlung.einfuegen(daten: daten, nummer: schluessel,
                                               name: sauber.isEmpty ? schluessel : sauber)
             return Editoreintrag(groesse: groesse, name: icon.name,
                                  nummer: groesse.mitNummer ? icon.nummer : nil,
@@ -184,7 +190,7 @@ public struct Editorbestand {
         case .anzeige:
             let sauber = name.trimmingCharacters(in: .whitespaces)
             guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
-            let eintrag = try bilder.einfuegen(datei: datei, name: sauber)
+            let eintrag = try bilder.einfuegen(daten: daten, name: sauber)
             return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: nil,
                                  datei: eintrag.datei)
         }

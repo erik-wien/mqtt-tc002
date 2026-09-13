@@ -184,6 +184,9 @@
 "Schließen" = "Close";
 "Abbrechen" = "Cancel";
 "Datei einlesen" = "Import file";
+"Die Datei ließ sich nicht öffnen: %@" = "The file could not be opened: %@";
+"„%@“ ließ sich nicht lesen: %@" = "\"%@\" could not be read: %@";
+"„%@“ lässt sich nicht als Bild lesen." = "\"%@\" cannot be read as an image.";
 "Einlesen" = "Import";
 "%@ gesichert." = "%@ saved.";
 "%@ eingelesen. Das Bild wurde von %d×%d auf %d×%d gerechnet." = "%@ imported. The image was scaled from %d×%d to %d×%d.";
