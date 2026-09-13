@@ -173,6 +173,46 @@ for ofl in OFL-Micro5.txt OFL-Silkscreen.txt OFL-Tiny5.txt; do
     fi
 done
 
+# Die Kurzbefehle. `appintentsmetadataprocessor` baut aus dem Quelltext eine
+# eigene Fassung jedes sichtbaren Textes — aus `Summary("\(\.$text) …")` wird
+# im Buendel `${text} …`, und genau dieser Wortlaut wird zur Laufzeit
+# nachgeschlagen, nicht der aus dem Quelltext. `texte-sammeln.py --pruefen`
+# kann das nicht sehen: Es liest die Quellen. Deshalb hier gegen das
+# **gebaute** Buendel: Jeder Schluessel, den die Kurzbefehle-App nachschlaegt,
+# muss in en.lproj stehen — sonst bleibt der Eintrag auf einem englischen
+# Telefon deutsch, ohne dass irgendetwas darauf hinweist.
+DATEN="$APP/Metadata.appintents/extract.actionsdata"
+if [ -f "$DATEN" ]; then
+    if ! OHNE=$(python3 - "$DATEN" "$APP/en.lproj/Localizable.strings" <<'PYTHON'
+import json, re, sys
+daten = json.load(open(sys.argv[1]))
+da = set(re.findall(r'^\s*"((?:[^"\\]|\\.)*)"\s*=',
+                    open(sys.argv[2], encoding="utf-8").read(), re.M))
+gesucht = []
+for name, a in daten.get("actions", {}).items():
+    gesucht.append(a["title"]["key"])
+    gesucht.append(a["descriptionMetadata"]["descriptionText"]["key"])
+    zus = a["actionConfiguration"]["actionSummary"]["wrapper"]["summaryString"]
+    gesucht.append(zus["formatString"])
+    for p in a.get("parameters", []):
+        gesucht.append(p["title"]["key"])
+        if "parameterDescription" in p:
+            gesucht.append(p["parameterDescription"]["key"])
+for e in daten.get("enums", []):
+    gesucht.append(e["displayTypeName"]["key"])
+    for f in e["cases"]:
+        gesucht.append(f["displayRepresentation"]["title"]["key"])
+fehlend = sorted({k for k in gesucht if k not in da})
+print("\n".join(fehlend))
+sys.exit(1 if fehlend else 0)
+PYTHON
+    ); then
+        echo "fehlt   Uebersetzung fuer Kurzbefehle-Texte aus dem Buendel:"
+        echo "$OHNE" | sed 's/^/        /'
+        fehlt=1
+    fi
+fi
+
 if [ "$fehlt" -eq 1 ]; then
     echo "Buendel unvollstaendig: $APP" >&2
     exit 1
