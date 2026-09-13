@@ -560,8 +560,11 @@ public struct SendenView: View {
                       ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
                       : lok("Schriftgröße"))
 
-                // Beide Schalter in einer Zeile, wie B I U bei Pages — nicht je
-                // eine volle Zeile fuer ein einsames Symbol rechts.
+                // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
+                // samt Textfarbe bei Pages — nicht je eine volle Zeile fuer ein
+                // einsames Symbol rechts. Die Farbe stand bis 13.09.2026 in
+                // einer eigenen Zeile darunter; am iPad fiel auf, dass sie dort
+                // eine ganze Zeile fuer einen Kringel verbraucht.
                 LabeledContent("Stil") {
                     HStack(spacing: 4) {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
@@ -574,13 +577,14 @@ public struct SendenView: View {
                             .disabled(!kleinbuchstabenMoeglich)
                             .help(grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
+                        // `labelsHidden` nimmt nur die sichtbare Beschriftung;
+                        // fuer VoiceOver bleibt „Farbe“ die des Waehlers. Der
+                        // Einblendtext ersetzt das Wort, das die eigene Zeile
+                        // vorher gezeigt hat.
+                        ColorPicker("Farbe", selection: farbe)
+                            .labelsHidden()
+                            .help("Farbe")
                     }
-                }
-
-                // Farbe gehoert zur Schrift, wie „Textfarbe" bei Pages — kein
-                // eigener Abschnitt mit einer einzigen Zeile.
-                LabeledContent("Farbe") {
-                    ColorPicker("Farbe", selection: farbe).labelsHidden()
                 }
             }
 
