@@ -149,6 +149,47 @@ final class SchriftprobeTests: XCTestCase {
         XCTAssertFalse(vorrat.contains(" "), "das Leerzeichen hat keine Tinte und gehört nicht hinein")
     }
 
+    // MARK: - Der Block, den beide Fassungen zeigen
+
+    /// Die Messung liefert fertige Bilder: hoechstens `gruppenObergrenze`
+    /// Gruppen als Raster, der Rest als Text, die Umlautzeile nur bei Schaden.
+    /// Beide Darstellungen haengen daran — weicht das ab, zeigen App und
+    /// Musterseite Verschiedenes.
+    func testMessungKapptDieGruppenUndZeigtNurNoetigeUmlautzeile() {
+        let viele = Schriftprobe.messen(schrift: "Micro 5", groesse: 8)
+        XCTAssertEqual(viele.lage, .vieleGruppen)
+        XCTAssertEqual(viele.gruppen.count, Schriftprobe.gruppenObergrenze)
+        XCTAssertFalse(viele.weitereGruppen.isEmpty, "der Rest gehört als Text dazu")
+        XCTAssertEqual(viele.gruppen.count + viele.weitereGruppen.count,
+                       Schriftprobe.kollisionsgruppen(viele.gruende).count,
+                       "keine Gruppe darf unterwegs verlorengehen")
+        XCTAssertEqual(viele.gruppen.first?.text, "0=8=9=B=H=K=O=R=U=X",
+                       "die größte Gruppe steht vorn")
+        XCTAssertNotNil(viele.umlautbild, "„Ö=Ü“ ist ein Umlautschaden")
+
+        let wenige = Schriftprobe.messen(schrift: "Micro 5", groesse: 12)
+        XCTAssertEqual(wenige.lage, .wenigeGruppen)
+        XCTAssertTrue(wenige.weitereGruppen.isEmpty)
+        XCTAssertNil(wenige.umlautbild, "ohne Umlautschaden keine Umlautzeile")
+        // Das Bild einer Gruppe ist wirklich deren Zeichen, nicht irgendeines.
+        let hkx = wenige.gruppen.first { $0.text == "H=K=X" }
+        XCTAssertEqual(hkx?.bild, Textraster.rasterPuffer("HKX", schrift: "Micro 5", groesse: 12,
+                                                          fett: false, farbe: "#FFFFFF", luecke: 1))
+    }
+
+    /// Die ganze Tabelle auf einmal — und gemerkt, damit ein zweites Öffnen der
+    /// Ansicht nicht wieder eine halbe Sekunde rastert.
+    func testAlleMessungenDeckenDieTabelleAbUndSindGemerkt() {
+        let erste = Schriftprobe.alleMessungen()
+        XCTAssertEqual(erste.count,
+                       Schriftprobe.mitgelieferteSchriften.count * Schriftprobe.groessen.count)
+        let start = Date()
+        let zweite = Schriftprobe.alleMessungen()
+        XCTAssertEqual(erste, zweite)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 0.05,
+                          "der zweite Aufruf darf nicht erneut rastern")
+    }
+
     // MARK: - Schnappschuss
 
     private var ordner: URL {

@@ -77,6 +77,21 @@ SWIFT
         echo "Buendel unvollstaendig: $APP" >&2
         exit 1
     fi
+    # Uebersetzungen und die beiden Nachschlagewerke. Fehlt en.lproj, laeuft
+    # die App weiter und bleibt still deutsch; fehlt ein Dokument, zeigt das
+    # Fenster einen Fehlerschirm. Beides verdeckt ein gruener Bau.
+    mac_fehlt=0
+    for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md LICENSE; do
+        if [ ! -s "$RESSOURCEN/$pflicht" ]; then
+            echo "fehlt   $pflicht unter $RESSOURCEN" >&2
+            mac_fehlt=1
+        fi
+    done
+    if [ "$mac_fehlt" -eq 1 ]; then
+        echo "Buendel unvollstaendig: $APP" >&2
+        exit 1
+    fi
+
     echo "Buendel vollstaendig: $APP ($BUENDEL_PFAD: $ERGEBNIS)"
     exit 0
 fi

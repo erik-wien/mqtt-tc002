@@ -565,3 +565,18 @@
 "keine Trennspalte zwischen: %@" = "no separating column between: %@";
 "1 Zeile" = "1 row";
 "%d Zeilen" = "%d rows";
+
+/* SchriftprobeView.swift — die Schriftprobe im Hilfemenue */
+"Schriftprobe" = "Type Specimen";
+"Die Schriften werden vermessen …" = "Measuring the typefaces …";
+"Warum eigene Schriften?" = "Why fonts of our own?";
+"Die eingebaute Schrift der Uhr kennt keine Umlaute. Wer „Grüße“ schreiben will, muss den Text selbst in Pixel wandeln — genau das tut diese App auf dem Weg „als Pixel“, mit einer der drei mitgelieferten Pixelschriften." = "The clock's built-in font has no umlauts. To write “Grüße”, the text has to be turned into pixels beforehand — which is exactly what this app does with the \"as pixels\" method, using one of the three bundled pixel fonts.";
+"Warum nicht jede Größe?" = "Why not every size?";
+"Die Anzeige ist 52 × 16 Pixel groß. Auf so wenigen Punkten rastern verschiedene Zeichen leicht zu genau demselben Bild — dann ist die Unterscheidung weg, und zwar unwiederbringlich, bevor die Uhr etwas davon sieht. Unten steht für jede Schrift und jede Größe, welche Zeichen das trifft, mit den tatsächlichen Pixeln." = "The display is 52 × 16 pixels. On so few dots, different characters easily rasterize to exactly the same image — and that distinction is then gone for good, before the clock ever sees it. Below, for every typeface and every size, are the characters this happens to, with the actual pixels.";
+"„Nichts fällt zusammen“ heißt nicht „gut“: Zwei Zeichen können sich um ein einziges Pixel unterscheiden und trotzdem unlesbar sein. Diese Messung kann eine Größe ausschließen, nie empfehlen." = "“Nothing collapses” does not mean “good”: two characters can differ by a single pixel and still be unreadable. This measurement can rule a size out, never recommend one.";
+"wird angeboten" = "offered";
+"wird nicht angeboten" = "not offered";
+"Kein Zeichen fällt mit einem anderen zusammen." = "No character collapses into another.";
+"Diese Zeichen rastern zu demselben Bild:" = "These characters rasterize to the same image:";
+"und %d weitere Gruppen: %@" = "and %d more groups: %@";
+"Umlaute:" = "Umlauts:";

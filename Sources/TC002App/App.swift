@@ -56,6 +56,7 @@ struct TC002App: App {
                 Button("MQTT-TC002-Hilfe") { openWindow(id: "hilfe") }
                     .keyboardShortcut("?", modifiers: .command)
                 Button("Gerätereferenz") { openWindow(id: "geraetereferenz") }
+                Button("Schriftprobe") { openWindow(id: "schriftprobe") }
             }
             // Beide Ordner liegen normalerweise unsichtbar in der Library und
             // werden von Iconordner.eigene bzw. Bilderordner.eigene bei Bedarf
@@ -83,6 +84,14 @@ struct TC002App: App {
 
         Window("Gerätereferenz", id: "geraetereferenz") {
             GeraeteReferenzView()
+        }
+        .windowResizability(.contentSize)
+
+        // Die Schriftprobe bekommt die angebotenen Groessen gereicht, statt sie
+        // zu kennen: Die Regel gehoert der Sendeansicht, die Ansicht zeigt nur,
+        // was gemessen wurde — und daneben, was der Schieber daraus macht.
+        Window("Schriftprobe", id: "schriftprobe") {
+            SchriftprobeView(angeboteneGroessen: SendenView.sauberePixelgroessen)
         }
         .windowResizability(.contentSize)
     }

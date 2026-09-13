@@ -26,14 +26,14 @@ final class SchriftprobeSeiteTests: XCTestCase {
             try XCTSkipUnless(Schriftbuendel.vorhanden(schrift), "Schrift „\(schrift)“ fehlt")
         }
 
+        let messungen = Schriftprobe.alleMessungen()
         var koerper = ""
         var erwarteteRaster = 0
         for schrift in Schriftprobe.mitgelieferteSchriften {
             koerper += "<h2>\(entschaerft(schrift))</h2>\n"
-            for groesse in Schriftprobe.groessen {
-                let gruende = Schriftprobe.ausschlussgruende(schrift: schrift, groesse: groesse)
-                koerper += Self.block(schrift: schrift, groesse: groesse, gruende: gruende)
-                erwarteteRaster += Self.rasterzahl(gruende)
+            for messung in messungen where messung.schrift == schrift {
+                koerper += Self.block(messung)
+                erwarteteRaster += messung.gruppen.count + (messung.umlautbild == nil ? 0 : 1) + 1
             }
         }
 
@@ -67,7 +67,7 @@ final class SchriftprobeSeiteTests: XCTestCase {
         }
         XCTAssertGreaterThan(gesetzt, 0)
 
-        let html = Self.raster("HKX", schrift: "Micro 5", groesse: 12)
+        let html = Self.raster(feld)
         XCTAssertEqual(html.components(separatedBy: "<b>").count - 1, gesetzt)
         XCTAssertEqual(html.components(separatedBy: "<i>").count - 1,
                        feld.breite * feld.hoehe - gesetzt)
@@ -85,90 +85,74 @@ final class SchriftprobeSeiteTests: XCTestCase {
     /// sehen; bei 8 px zu viele, dann wird gekappt und der Rest steht als Text.
     func testBlockZeigtDieKollisionsgruppenUndKapptBeiVielen() {
         Schriftbuendel.anmelden()
-        let wenige = Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 12)
-        XCTAssertEqual(Schriftprobe.lage(wenige), .wenigeGruppen)
-        let blockWenige = Self.block(schrift: "Micro 5", groesse: 12, gruende: wenige)
-        for gruppe in Schriftprobe.kollisionsgruppen(wenige) {
-            XCTAssertTrue(blockWenige.contains(Schriftprobe.Grund.gruppentext(gruppe)),
-                          "Gruppe \(gruppe) fehlt im Block")
+        let wenige = Schriftprobe.messen(schrift: "Micro 5", groesse: 12)
+        let blockWenige = Self.block(wenige)
+        for gruppe in wenige.gruppen {
+            XCTAssertTrue(blockWenige.contains(gruppe.text), "Gruppe \(gruppe.text) fehlt im Block")
         }
         XCTAssertFalse(blockWenige.contains("weitere Gruppen"))
         XCTAssertFalse(blockWenige.contains(Schriftprobe.umlautprobe),
                        "ohne Umlautschaden keine Umlautzeile")
 
-        let viele = Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 8)
-        XCTAssertEqual(Schriftprobe.lage(viele), .vieleGruppen)
-        let blockViele = Self.block(schrift: "Micro 5", groesse: 8, gruende: viele)
+        let viele = Schriftprobe.messen(schrift: "Micro 5", groesse: 8)
+        let blockViele = Self.block(viele)
         XCTAssertTrue(blockViele.contains("weitere Gruppen"))
-        XCTAssertEqual(Self.rasterzahl(viele) - 1,  // ohne das Musterwort
-                       Schriftprobe.gruppenObergrenze + 1, "gekappt plus Umlautzeile")
         XCTAssertTrue(blockViele.contains(Schriftprobe.umlautprobe),
                       "„Ö=Ü“ ist ein Umlautschaden — dann gehört die Zeile hin")
     }
 
     // MARK: - Bausteine
 
-    /// Wie viele Raster ein Block traegt: die gezeigten Gruppen, gegebenenfalls
-    /// die Umlautzeile, und immer das Musterwort.
-    static func rasterzahl(_ gruende: [Schriftprobe.Grund]) -> Int {
-        min(Schriftprobe.kollisionsgruppen(gruende).count, Schriftprobe.gruppenObergrenze)
-            + (Schriftprobe.umlauteBetroffen(gruende) ? 1 : 0) + 1
-    }
-
-    static func block(schrift: String, groesse: Double,
-                      gruende: [Schriftprobe.Grund]) -> String {
-        let gruppen = Schriftprobe.kollisionsgruppen(gruende)
-        let gezeigt = gruppen.prefix(Schriftprobe.gruppenObergrenze)
-        let rest = gruppen.dropFirst(Schriftprobe.gruppenObergrenze)
-
+    /// Ein Block aus der gemeinsamen Messung. Dieselben Gruppen, dieselbe
+    /// Kappung, dieselbe Umlautentscheidung wie in der App — hier nur mit
+    /// Kreuz und Swift-Ausgabe drumherum.
+    static func block(_ m: Schriftprobe.Messung) -> String {
         let marke: (String, String)
-        switch Schriftprobe.lage(gruende) {
+        switch m.lage {
         case .nichtsFaelltZusammen: marke = ("frei", "nichts fällt zusammen")
         case .wenigeGruppen: marke = ("entscheidung", "hier ist zu entscheiden")
         case .vieleGruppen: marke = ("entschieden", "schon entschieden")
         }
 
         var inhalt = ""
-        if gruppen.isEmpty {
+        if m.gruppen.isEmpty {
             inhalt += "<p class=\"frei\">Kein Zeichen fällt mit einem anderen zusammen — nichts zu vergleichen.</p>\n"
         } else {
             inhalt += "<div class=\"gruppen\">"
-            for gruppe in gezeigt {
-                let text = Schriftprobe.Grund.gruppentext(gruppe)
-                inhalt += "<div class=\"gruppe\"><p class=\"beschriftung\">\(entschaerft(text))</p>"
-                inhalt += raster(String(gruppe), schrift: schrift, groesse: groesse)
+            for gruppe in m.gruppen {
+                inhalt += "<div class=\"gruppe\"><p class=\"beschriftung\">\(entschaerft(gruppe.text))</p>"
+                inhalt += raster(gruppe.bild)
                 inhalt += "</div>"
             }
             inhalt += "</div>\n"
-            if !rest.isEmpty {
-                let liste = rest.map { entschaerft(Schriftprobe.Grund.gruppentext($0)) }
-                    .joined(separator: ", ")
-                inhalt += "<p class=\"rest\">und \(rest.count) weitere Gruppen: \(liste)</p>\n"
+            if !m.weitereGruppen.isEmpty {
+                let liste = m.weitereGruppen.map(entschaerft).joined(separator: ", ")
+                inhalt += "<p class=\"rest\">und \(m.weitereGruppen.count) weitere Gruppen: \(liste)</p>\n"
             }
         }
 
-        if Schriftprobe.umlauteBetroffen(gruende) {
+        if let umlautbild = m.umlautbild {
             inhalt += "<p class=\"beschriftung\">Umlaute: \(Schriftprobe.umlautprobe)</p>"
-            inhalt += raster(Schriftprobe.umlautprobe, schrift: schrift, groesse: groesse) + "\n"
+            inhalt += raster(umlautbild) + "\n"
         } else {
             inhalt += "<p class=\"frei\">Umlaute sauber.</p>\n"
         }
 
-        if !gruende.isEmpty {
+        if !m.gruende.isEmpty {
             inhalt += "<ul class=\"gruende\">"
-                + gruende.map { "<li>\(entschaerft($0.beschreibung))</li>" }.joined()
+                + m.gruende.map { "<li>\(entschaerft($0.beschreibung))</li>" }.joined()
                 + "</ul>\n"
         }
 
         // Das Musterwort ganz unten und klein: Es entscheidet nichts, aber ohne
         // einen zusammenhaengenden Text fehlt der Gesamteindruck.
         inhalt += "<p class=\"beschriftung leise\">\(Schriftprobe.musterwort)</p>"
-        inhalt += raster(Schriftprobe.musterwort, schrift: schrift, groesse: groesse)
+        inhalt += raster(m.musterbild)
 
         return """
         <section class="\(marke.0)">
-          <h3>\(Int(groesse)) px <span class="marke">\(marke.1)</span>
-              <label class="haken"><input type="checkbox" data-schrift="\(entschaerft(schrift))" data-groesse="\(Int(groesse))"> brauchbar</label></h3>
+          <h3>\(Int(m.groesse)) px <span class="marke">\(marke.1)</span>
+              <label class="haken"><input type="checkbox" data-schrift="\(entschaerft(m.schrift))" data-groesse="\(Int(m.groesse))"> brauchbar</label></h3>
           \(inhalt)
         </section>
 
@@ -185,10 +169,7 @@ final class SchriftprobeSeiteTests: XCTestCase {
     /// zehntausend Geschwistern wuerden zehntausend Ebenen, und das Gitter legt
     /// nur seine unmittelbaren Kinder aus — die Seite zeigte dann eine einzige
     /// Spalte.
-    static func raster(_ text: String, schrift: String, groesse: Double) -> String {
-        // Abstand 1 wie die Vorgabe der App (`Meldungsoptionen.abstand`).
-        let feld = Textraster.rasterPuffer(text, schrift: schrift, groesse: groesse,
-                                           fett: false, farbe: "#FFFFFF", luecke: 1)
+    static func raster(_ feld: Pixelfeld) -> String {
         var punkte = ""
         for y in 0..<feld.hoehe {
             for x in 0..<feld.breite {

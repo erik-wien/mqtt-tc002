@@ -212,6 +212,80 @@ public enum Schriftprobe {
         return gruende
     }
 
+    // MARK: - Ein fertiger Block
+
+    /// Eine Kollisionsgruppe samt ihrem Bild — die Zeichen nebeneinander
+    /// gesetzt, wie die Uhr sie zeigte.
+    public struct Gruppenbild: Identifiable, Equatable, Sendable {
+        public let id: Int
+        /// Die Gruppe als Text, `H=K=X`.
+        public let text: String
+        public let bild: Pixelfeld
+    }
+
+    /// Alles, was eine Darstellung ueber ein Paar aus Schrift und Groesse
+    /// braucht — fertig gerastert.
+    ///
+    /// Beide Fassungen bauen darauf: die Schriftprobe in der App und die
+    /// Musterseite `erzeugt/schriftprobe.html`. Sonst zeigten sie frueher oder
+    /// spaeter Verschiedenes und niemand wuesste, welche stimmt.
+    public struct Messung: Identifiable, Equatable, Sendable {
+        public var id: String { "\(schrift)|\(groesse)" }
+        public let schrift: String
+        public let groesse: Double
+        public let gruende: [Grund]
+        public let lage: Lage
+        /// Hoechstens `gruppenObergrenze` Gruppen, die groesste zuerst.
+        public let gruppen: [Gruppenbild]
+        /// Die abgeschnittenen Gruppen, nur noch als Text — eine Wand aus
+        /// Rastern liest niemand.
+        public let weitereGruppen: [String]
+        /// Die Umlautzeile, aber nur, wo ein Umlaut wirklich betroffen ist.
+        /// Sonst waere sie Fuellung.
+        public let umlautbild: Pixelfeld?
+        /// Das Musterwort — fuer den Gesamteindruck, nicht fuer die
+        /// Unterscheidbarkeit.
+        public let musterbild: Pixelfeld
+    }
+
+    public static func messen(schrift: String, groesse: Double, abstand: Int = 1) -> Messung {
+        let gruende = ausschlussgruende(schrift: schrift, groesse: groesse, abstand: abstand)
+        let alle = kollisionsgruppen(gruende)
+        let gezeigt = alle.prefix(gruppenObergrenze)
+        func bild(_ text: String) -> Pixelfeld {
+            Textraster.rasterPuffer(text, schrift: schrift, groesse: groesse,
+                                    fett: false, farbe: tinte, luecke: max(0, abstand))
+        }
+        return Messung(
+            schrift: schrift, groesse: groesse, gruende: gruende, lage: lage(gruende),
+            gruppen: gezeigt.enumerated().map { i, gruppe in
+                Gruppenbild(id: i, text: Grund.gruppentext(gruppe), bild: bild(String(gruppe)))
+            },
+            weitereGruppen: alle.dropFirst(gruppenObergrenze).map(Grund.gruppentext),
+            umlautbild: umlauteBetroffen(gruende) ? bild(umlautprobe) : nil,
+            musterbild: bild(musterwort))
+    }
+
+    /// Die ganze Tabelle: jede mitgelieferte Schrift in jeder angebotenen
+    /// Groesse.
+    ///
+    /// Gemerkt, weil sie teuer und deterministisch ist: rund sechs Zehntel
+    /// Sekunden fuer drei Schriften mal elf Groessen mal dreiundsiebzig
+    /// Zeichen. Das ist zu lang fuer einen Fensteraufbau und waere beim
+    /// zweiten Oeffnen genau dieselbe Antwort.
+    public static func alleMessungen(abstand: Int = 1) -> [Messung] {
+        tabellensperre.lock(); defer { tabellensperre.unlock() }
+        if let da = tabelle[abstand] { return da }
+        let ergebnis = mitgelieferteSchriften.flatMap { schrift in
+            groessen.map { messen(schrift: schrift, groesse: $0, abstand: abstand) }
+        }
+        tabelle[abstand] = ergebnis
+        return ergebnis
+    }
+
+    private static let tabellensperre = NSLock()
+    private static var tabelle: [Int: [Messung]] = [:]
+
     // MARK: - Auskunft ueber ein Ergebnis
 
     /// Die Kollisionsgruppen aus einem Ergebnis, oder leer. Beide Darstellungen
