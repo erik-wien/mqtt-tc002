@@ -192,6 +192,57 @@ ein Formatwechsel schon einmal beinahe alle Einstellungen unlesbar gemacht
 (`EinstellungenTests.testUhrBleibtLesbar` ist seither das Netz). **Der Umzug
 braucht einen Rueckweg**, nicht nur einen Hinweg.
 
+**E1a. Gebaut am 14.09.2026 — es fehlt nur noch die Berechtigung.**
+
+Sieben Stufen, alle gruen: `Ablageort` (eine Stelle entscheidet, wo die vier
+Bestaende liegen), `Bestandsumzug` (Hinweg und Rueckweg, beide kopierend),
+`Einrichtungsstand` (die Einstellungen als ein Schluessel, je Uhr
+zusammengefuehrt), `Wolkenablage` (Protokoll vor `NSUbiquitousKeyValueStore`),
+die Verdrahtung in `AppZustand`, der Abschnitt „iCloud" in den Einstellungen
+(Mac und Telefon derselbe), die Hilfe.
+
+**Umgezogen, nicht gespiegelt.** Ein Spiegel waere ein eigener Abgleichmotor
+mit zwei Richtungen, Grabsteinen fuer Geloeschtes und eigener
+Konfliktaufloesung; ein Behaelter ist dasselbe Ergebnis, nur macht es das
+System. Der Umzug selbst **kopiert** in beide Richtungen — deshalb ist der
+Rueckweg schon eingebaut.
+
+**Das Werkzeug folgt, ohne es zu wissen.** Ein uebernommener Stand laeuft durch
+dieselben `didSet`-Schreiber wie jede Aenderung von Hand und landet damit in
+`UserDefaults`; `mqtttc002` liest weiter dort und faehrt iCloud nie an. Fuer
+die Dateien reicht `Ablageort` — vorausgesetzt, `build.sh` signiert das
+mitreisende Werkzeug mit denselben Berechtigungen (tut es, sobald
+`TC002_ENTITLEMENTS` gesetzt ist).
+
+**Was der Auftraggeber tun muss, in dieser Reihenfolge:**
+
+1. **Behaelter anlegen.** In Xcode ein beliebiges Ziel oeffnen, „Signing &
+   Capabilities" → „+ Capability" → **iCloud**, dort **iCloud Documents** und
+   **Key-value storage** ankreuzen und den Behaelter
+   `iCloud.cloud.eriks.mqtt-tc002` hinzufuegen (Team 25ZK4SS655). Das legt ihn
+   im Entwicklerkonto an und erneuert das Bereitstellungsprofil.
+2. **Die Aenderung in Xcode wieder wegwerfen.** Sie steht in der
+   `.xcodeproj`, die nicht eingecheckt ist und beim naechsten
+   `xcodegen generate` ohnehin ueberschrieben wird. Gebraucht wurde nur
+   Schritt 1.
+3. **In `project.yml` die eine Zeile entkommentieren:**
+   `CODE_SIGN_ENTITLEMENTS: Resources/MQTT-TC002.entitlements`, dann
+   `xcodegen generate`.
+4. **iOS bauen und aufs Geraet laden.** Ein Simulatorbau gelingt auch ohne all
+   das — er beweist also nichts; das Geraet ist die Probe.
+5. **Mac:** das Profil als `.provisionprofile` laden und
+   `TC002_PROFIL=<pfad> TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements ./build.sh`.
+6. **Probe:** In den Einstellungen muss der Schalter jetzt anzufassen sein und
+   die Zeile darunter nicht mehr „nicht bereit" sagen. Einschalten, dann in
+   iCloud Drive nach dem Ordner **MQTT-TC002** sehen — darin `Icons`,
+   `Icons16`, `Bilder`, `Slots`.
+
+**Noch ungeprueft, weil es ohne Behaelter nicht zu pruefen ist:** ob
+`NSUbiquitousKeyValueStore` unter der Signatur wirklich traegt, wie lange ein
+Umzug mit vollem Bestand dauert, und ob nicht materialisierte Dateien
+(`.icloud`-Platzhalter) im Bestand fehlen, bis das System sie nachgeladen hat —
+`Ablageort.herunterladenAnstossen()` stoesst das an, wartet aber nicht.
+
 **E2. AWTRIX NG — entschieden: „statt", nicht „neben".** Eine Uhr ist entweder
 eine TC002 oder eine AWTRIX; gemischte Ziele gibt es nicht. **Damit faellt die
 schwerste Frage der Erhebung weg** — die Vorschau muss nie zwei Darstellungen
