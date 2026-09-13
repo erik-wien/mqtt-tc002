@@ -14,6 +14,9 @@ mqtttc002 — Meldungen an eine Ulanzi TC002 schicken.
 Benutzt die Einrichtung der App MQTT-TC002: Broker, Kennwort und Uhren
 werden von dort gelesen. Eingerichtet wird ausschliesslich in der App.
 
+Jede Uhr wird auf dem Weg beschickt, der in der App fuer sie eingestellt
+ist — HTTP oder MQTT. "mqtttc002 uhren" zeigt ihn an.
+
 AUFRUF
   mqtttc002 [senden] <Text>        Text an die Uhren schicken
   mqtttc002 loeschen <Anzeige>     eine benannte Anzeige entfernen
@@ -108,17 +111,19 @@ func lauf() throws {
         let ziele = Set(einstellungen.ziele.map(\.id))
         for uhr in einstellungen.uhren {
             let marke = ziele.contains(uhr.id) ? "*" : " "
-            let praefix = uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix
-            print("\(marke) \(uhr.name)\t\(uhr.host)\t\(praefix)")
+            // Das Praefix gehoert zum MQTT-Betrieb. Bei einer HTTP-Uhr stuende
+            // dort „noch nicht abgefragt" und schickte jemanden hinter etwas
+            // her, das diese Uhr gar nicht braucht.
+            let dritte: String
+            switch uhr.wirksameBetriebsart {
+            case .http: dritte = "HTTP"
+            case .mqtt: dritte = "MQTT " + (uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix)
+            }
+            print("\(marke) \(uhr.name)\t\(uhr.host)\t\(dritte)")
         }
         print("")
         print(lok("* geht ohne „--an“ eine Sendung zu."))
         return
-    }
-
-    // Ab hier wird gesendet, also braucht es einen Broker.
-    guard einstellungen.brokerEingerichtet else {
-        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
     }
 
     let gewaehlte: [Uhr]
@@ -136,9 +141,23 @@ func lauf() throws {
         throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Einstellungen“ eine anlegen."))
     }
 
-    let ohnePraefix = gewaehlte.filter { $0.praefix.isEmpty }
+    // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
+    // wenigstens eine dieser Uhren ueber ihn geht. Wer ausschliesslich ueber
+    // HTTP sendet, soll hier nicht an einer Bedingung scheitern, die seine
+    // Einrichtung gar nicht kennt.
+    if Einstellungen.brokerNoetig(fuer: gewaehlte), !einstellungen.brokerEingerichtet {
+        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
+    }
+
+    // Woran eine Uhr fehlt, haengt an ihrer Betriebsart: Die MQTT-Uhr braucht
+    // ein abgefragtes Praefix, die HTTP-Uhr eine Adresse.
+    let ohnePraefix = gewaehlte.filter { $0.wirksameBetriebsart == .mqtt && !$0.beschickbar }
     if !ohnePraefix.isEmpty {
         throw Abbruch(lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ „Abfragen“ drücken — ohne Präfix gibt es kein Thema, an das sich senden liesse.", ohnePraefix.map(\.name).joined(separator: ", ")))
+    }
+    let ohneAdresse = gewaehlte.filter { $0.wirksameBetriebsart == .http && !$0.beschickbar }
+    if !ohneAdresse.isEmpty {
+        throw Abbruch(lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", ohneAdresse.map(\.name).joined(separator: ", ")))
     }
 
     let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
@@ -148,9 +167,10 @@ func lauf() throws {
     func anAlle(_ was: String, _ tun: (Anzeigen, Uhr) throws -> Void) throws {
         var fehler: [String] = []
         for uhr in gewaehlte {
-            guard let zugang = einstellungen.zugang(
-                clientID: "tc002-cli-" + uhr.id.uuidString.prefix(8).lowercased()) else { continue }
-            let anzeigen = Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
+            // Derselbe Kanal, den auch die App und die Kurzbefehle benutzen —
+            // ein Werkzeug, das anders sendet als die App, waere eine Falle.
+            guard let anzeigen = Anzeigen.fuer(uhr, brokerzugang: einstellungen.zugang(
+                clientID: "tc002-cli-" + uhr.id.uuidString.prefix(8).lowercased())) else { continue }
             do {
                 try tun(anzeigen, uhr)
                 print(lokf("%@: %@", uhr.name, was))
@@ -171,11 +191,21 @@ func lauf() throws {
             // Der Trockenlauf ist auch die Auskunft darueber, womit gesendet
             // wuerde: Ein fehlendes Kennwort faellt sonst nirgends auf — MQTT
             // 3.1.1 hat keinen Rueckkanal fuer eine abgelehnte Sendung.
-            print(lokf("Broker %@:%d, Konto %@, Kennwort %@", einstellungen.brokerHost, Int(einstellungen.brokerPort),
-                         einstellungen.benutzer ?? "—",
-                         einstellungen.kennwort == nil ? lok("fehlt") : lok("vorhanden")))
+            //
+            // Nur wenn ueberhaupt eine MQTT-Uhr dabei ist: `einstellungen.kennwort`
+            // greift in den Schluesselbund und zieht dabei einen Dialog auf.
+            // Fuer eine reine HTTP-Sendung waere das eine Frage nach etwas,
+            // das nirgends gebraucht wird.
+            if Einstellungen.brokerNoetig(fuer: gewaehlte) {
+                print(lokf("Broker %@:%d, Konto %@, Kennwort %@", einstellungen.brokerHost, Int(einstellungen.brokerPort),
+                             einstellungen.benutzer ?? "—",
+                             einstellungen.kennwort == nil ? lok("fehlt") : lok("vorhanden")))
+            }
             for uhr in gewaehlte {
-                print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
+                switch uhr.wirksameBetriebsart {
+                case .http: print("POST http://\(uhr.host)/api/custom?name=\(optionen.anzeigename)")
+                case .mqtt: print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
+                }
             }
             print(json)
             print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))

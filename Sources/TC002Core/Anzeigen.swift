@@ -83,15 +83,21 @@ public struct Anzeigen {
     /// HTTP-Betrieb, ohne Praefix oder ohne Brokerzugang im MQTT-Betrieb.
     /// Warum — das sagt der Aufrufer, der den Fall besser kennt
     /// (`AppZustand.zugangsmeldung`).
-    public static func fuer(_ uhr: Uhr, brokerzugang: MQTTZugang?,
+    /// **`brokerzugang` ist ein `@autoclosure`, und das ist kein Feinschliff.**
+    /// `Einstellungen.zugang(clientID:)` liest das Kennwort aus dem
+    /// Schluesselbund, und das oeffnet auf dem Rechner eines Menschen einen
+    /// Dialog. Eifrig ausgewertet fragte eine reine HTTP-Sendung aus dem
+    /// Werkzeug oder einem Kurzbefehl nach einem Brokerkennwort, das sie
+    /// nirgends benutzt — bei einer Automation ohne jemanden davor.
+    public static func fuer(_ uhr: Uhr, brokerzugang: @autoclosure () -> MQTTZugang?,
                             sitzung: URLSession = .shared) -> Anzeigen? {
         switch uhr.wirksameBetriebsart {
         case .http:
             guard !uhr.host.isEmpty else { return nil }
             return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung))
         case .mqtt:
-            guard !uhr.praefix.isEmpty, let brokerzugang else { return nil }
-            return Anzeigen(sender: MQTTSender(), zugang: brokerzugang, praefix: uhr.praefix)
+            guard !uhr.praefix.isEmpty, let zugang = brokerzugang() else { return nil }
+            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
         }
     }
 }

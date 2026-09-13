@@ -154,10 +154,11 @@ struct MeldungSendenIntent: AppIntent {
         let gesendet = try await Task.detached(priority: .userInitiated) { () -> [String] in
             var erledigt: [String] = []
             for ziel in ziele {
-                guard let zugang = einstellungen.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
-                try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
-                    .zeigen(rahmen, auf: name)
+                // Derselbe Kanal wie in der App: Der Kurzbefehl folgt der
+                // Betriebsart, die fuer diese Uhr eingestellt ist.
+                guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                try anzeigen.zeigen(rahmen, auf: name)
                 erledigt.append(ziel.name)
                 // Erfolgreich gesendet: das Gedaechtnis merkt sich die Regler
                 // fuer diesen Platz auf dieser Uhr. Schlaegt das Schreiben
@@ -174,9 +175,6 @@ struct MeldungSendenIntent: AppIntent {
 
     /// Die gemeinten Uhren, oder ein Fehler, der sagt was fehlt.
     private func zieleBestimmen(_ e: Einstellungen) throws -> [Uhr] {
-        guard e.brokerEingerichtet else {
-            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
-        }
         guard !e.uhren.isEmpty else {
             throw $text.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
         }
@@ -189,19 +187,28 @@ struct MeldungSendenIntent: AppIntent {
         } else {
             gewaehlt = e.ziele
         }
-        let ohnePraefix = gewaehlt.filter { $0.praefix.isEmpty }
+        // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
+        // wenigstens eine dieser Uhren ueber ihn geht — sonst scheiterte ein
+        // Kurzbefehl an einer Uhr aus einer Einrichtung, die er nicht benutzt.
+        if Einstellungen.brokerNoetig(fuer: gewaehlt), !e.brokerEingerichtet {
+            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+        }
+        let ohnePraefix = gewaehlt.filter { $0.wirksameBetriebsart == .mqtt && !$0.beschickbar }
         guard ohnePraefix.isEmpty else {
             throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ohnePraefix.map(\.name).joined(separator: ", "))))
+        }
+        let ohneAdresse = gewaehlt.filter { $0.wirksameBetriebsart == .http && !$0.beschickbar }
+        guard ohneAdresse.isEmpty else {
+            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", ohneAdresse.map(\.name).joined(separator: ", "))))
         }
         return gewaehlt
     }
 }
 
-/// Nimmt eine Meldung wieder von der Uhr — über MQTT, wie alles hier, mit
-/// leerer Nutzlast (Gerätereferenz §3.2). Über HTTP ginge es inzwischen auch:
-/// `POST /api/custom?name=…` mit dem Rumpf `{}` löscht, am 13.09.2026
-/// gemessen (§5.6). Ein leerer Rumpf tut es weiterhin nicht — genau diese
-/// Verwechslung stand bis dahin als Firmwaremangel in unserer eigenen Liste.
+/// Nimmt eine Meldung wieder von der Uhr — auf dem Weg, der für sie
+/// eingestellt ist: über MQTT mit leerer Nutzlast (Gerätereferenz §3.2), über
+/// HTTP mit dem Rumpf `{}` (§5.6). Die beiden meinen mit „leer" genau das
+/// Gegenteil voneinander; `Anzeigen` hält das auseinander.
 struct MeldungLoeschenIntent: AppIntent {
     static let title: LocalizedStringResource = "Meldung von der Uhr nehmen"
     static let description = IntentDescription(
@@ -221,9 +228,6 @@ struct MeldungLoeschenIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let e = Einstellungen.gelesen()
-        guard e.brokerEingerichtet else {
-            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
-        }
         guard !e.uhren.isEmpty else {
             throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
         }
@@ -236,17 +240,19 @@ struct MeldungLoeschenIntent: AppIntent {
         } else {
             ziele = e.ziele
         }
-        let abgefragt = ziele.filter { !$0.praefix.isEmpty }
+        let abgefragt = ziele.filter(\.beschickbar)
         guard !abgefragt.isEmpty else {
             throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ziele.map(\.name).joined(separator: ", "))))
+        }
+        if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
+            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
         }
         let name = Meldungsplatz.name(fuer: platz)
         try await Task.detached(priority: .userInitiated) {
             for ziel in abgefragt {
-                guard let zugang = e.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()) else { continue }
-                try Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: ziel.praefix)
-                    .loeschen(name)
+                guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: e.zugang(
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                try anzeigen.loeschen(name)
                 // Erst nach der Sendung und je Uhr: Wer einen Platz raeumt,
                 // wirft die Erinnerung an ihn weg — sonst rechnete ein Block
                 // in der App daraus weiter den Text, der hier gerade von der
