@@ -22,6 +22,21 @@ public struct Editoreintrag: Equatable, Sendable, Identifiable {
     public var id: String { "\(groesse.rawValue)/\(datei.path)" }
 }
 
+public extension Array where Element == Editoreintrag {
+    /// Filtert nach Name und Nummer, unabhaengig von Gross- und
+    /// Kleinschreibung. Eine leere Suche laesst die Liste unveraendert — die
+    /// Ansicht sucht damit in dem, was sie ohnehin schon gelesen hat, statt bei
+    /// jedem Tastendruck neu ins Dateisystem zu gehen.
+    func gefiltert(nach suche: String) -> [Editoreintrag] {
+        let s = suche.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return self }
+        return filter {
+            $0.name.localizedCaseInsensitiveContains(s)
+                || ($0.nummer?.localizedCaseInsensitiveContains(s) ?? false)
+        }
+    }
+}
+
 /// Die drei Bestaende unter einem Dach.
 ///
 /// **Sie bleiben, wie sie sind** — `Icons`, `Icons16` und `Bilder`, jeder mit
@@ -82,15 +97,9 @@ public struct Editorbestand {
         return ergebnis
     }
 
-    /// Nach Name und Nummer, unabhaengig von Gross- und Kleinschreibung. Eine
-    /// leere Suche laesst die Liste unveraendert.
+    /// Nach Name und Nummer, unabhaengig von Gross- und Kleinschreibung.
     public func gefiltert(nach suche: String) -> [Editoreintrag] {
-        let s = suche.trimmingCharacters(in: .whitespaces)
-        guard !s.isEmpty else { return alle() }
-        return alle().filter {
-            $0.name.localizedCaseInsensitiveContains(s)
-                || ($0.nummer?.localizedCaseInsensitiveContains(s) ?? false)
-        }
+        alle().gefiltert(nach: suche)
     }
 
     /// Legt ab, was gerade gemalt ist. `nummer` gilt nur beim 8×8 — bei den

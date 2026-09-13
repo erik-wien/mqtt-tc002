@@ -30,20 +30,19 @@ public struct SchreibtischView: View {
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", bilder = "Bilder", icons = "Icons",
+        case senden = "Senden", editor = "Editor",
              verlauf = "Verlauf", einstellungen = "Einstellungen"
         var id: String { rawValue }
         var symbol: String {
             switch self {
             case .senden: return "paperplane"
-            case .bilder: return "paintbrush"
-            case .icons: return "paintpalette"
+            case .editor: return "paintpalette"
             case .verlauf: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }
         }
         /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
-        static let oben: [Bereich] = [.senden, .bilder, .icons]
+        static let oben: [Bereich] = [.senden, .editor]
         static let unten: [Bereich] = [.verlauf, .einstellungen]
 
         /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und ohne
@@ -136,8 +135,7 @@ public struct SchreibtischView: View {
         Group {
             switch gewaehlt {
             case .senden: SendenView(zustand: zustand)
-            case .bilder: BilderBereichView(zustand: zustand)
-            case .icons: IconEditorView(zustand: zustand)
+            case .editor: EditorBereichView(zustand: zustand)
             case .verlauf: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand)
             }

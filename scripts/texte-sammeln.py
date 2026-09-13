@@ -66,7 +66,7 @@ PARAMETER_SCHLUESSEL = ["title", "description"]
 # werden, sonst faellt ihr Fehlen erst dem Anwender auf.
 DYNAMISCH = [
     # Bereiche der Seitenleiste (SchreibtischView.swift, enum Bereich)
-    "Senden", "Bilder", "Icons", "Verlauf", "Einstellungen",
+    "Senden", "Editor", "Verlauf", "Einstellungen",
     # Die vier Nebenfenster (Nebenfenster.swift, `titel` schlaegt ueber
     # `lok(rawValue)` nach). Drei davon stehen heute zufaellig auch als
     # Literal in einem Menueeintrag oder Knopf — verlassen darf sich darauf
