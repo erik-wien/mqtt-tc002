@@ -15,63 +15,88 @@ public struct VerbindungView: View {
         Form {
             Section("Uhren") {
                 ForEach($zustand.uhren) { $uhr in
-                    HStack {
-                        Button {
-                            zustand.aktiveID = uhr.id
-                        } label: {
-                            Image(systemName: zustand.aktiveID == uhr.id ? "largecircle.fill.circle" : "circle")
-                        }
-                        .buttonStyle(.plain)
-                        // **Nicht „das Ziel beim Senden"**, und genau so stand
-                        // es bis zum 14.09.2026 hier. Das stimmt nur, solange
-                        // niemand unter „Senden" ein eigenes Ziel gewaehlt hat
-                        // (`AppZustand.ziele()` faellt dann auf die aktive Uhr
-                        // zurueck). Wovon die Wahl **immer** entscheidet, ist,
-                        // welche Uhr die App zeigt — und wer das verwechselt,
-                        // sucht die Erklaerung fuer einen falschen
-                        // Geraeterahmen an der falschen Stelle.
-                        .help("Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie")
-                        .accessibilityLabel("Diese Uhr ansehen")
-
-                        TextField("Name", text: $uhr.name)
-                            .eingabefeld()
-                            .frame(width: 140)
-                        TextField("Adresse", text: $uhr.host)
-                            .eingabefeld()
-                            .frame(width: 130)
-                            .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
-                        Picker("Betriebsart", selection: betriebsart($uhr)) {
-                            Text("HTTP").tag(Betriebsart.http)
-                            Text("MQTT").tag(Betriebsart.mqtt)
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
-                        .frame(width: 116)
-                        // **Der Tausch gehoert an den Schalter, nicht unter die
-                        // Liste.** Als Fusstext stand er bis zum 14.09.2026 da
-                        // und nahm den Platz weg, an dem jetzt steht, was der
-                        // Punkt links bedeutet. Am Schalter kostet er keine
-                        // Zeile — und er steht dort, wo die Wahl getroffen
-                        // wird. Ausfuehrlich steht beides in der Hilfe
-                        // (`HilfeInhalt`, „Betriebsart: HTTP oder MQTT").
-                        .help("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
-                        Picker("Geräteart", selection: geraeteart($uhr)) {
-                            ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
-                                Text(art.beschriftung).tag(art)
+                    // **Zwei Zeilen, nicht eine.** Neun Bedienelemente in einer
+                    // Reihe brauchen rund 820 Punkte; der Kasten eines
+                    // gruppierten Formulars ist am Mac aber bei 704 gedeckelt
+                    // und zentriert — gemessen am 14.09.2026 offscreen, bei 900
+                    // und bei 1200 Punkten Fensterbreite derselbe Kasten.
+                    // `.frame(maxWidth: .infinity)` hilft nicht, der Deckel
+                    // sitzt im Stil. Uebrig blieb eine Zeile, in der „Abfragen"
+                    // und „Entfernen" zu „A…" und „E…" zusammenschnurrten und
+                    // das Praefix ueber zwei Zeilen brach.
+                    //
+                    // Oben steht, was die Uhr **ist**, unten, was sie gerade
+                    // **meldet** und was man mit ihr **tut**.
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Button {
+                                zustand.aktiveID = uhr.id
+                            } label: {
+                                Image(systemName: zustand.aktiveID == uhr.id ? "largecircle.fill.circle" : "circle")
                             }
+                            .buttonStyle(.plain)
+                            // **Nicht „das Ziel beim Senden"**, und genau so stand
+                            // es bis zum 14.09.2026 hier. Das stimmt nur, solange
+                            // niemand unter „Senden" ein eigenes Ziel gewaehlt hat
+                            // (`AppZustand.ziele()` faellt dann auf die aktive Uhr
+                            // zurueck). Wovon die Wahl **immer** entscheidet, ist,
+                            // welche Uhr die App zeigt — und wer das verwechselt,
+                            // sucht die Erklaerung fuer einen falschen
+                            // Geraeterahmen an der falschen Stelle.
+                            .help("Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie")
+                            .accessibilityLabel("Diese Uhr ansehen")
+
+                            TextField("Name", text: $uhr.name)
+                                .eingabefeld()
+                                .frame(width: 140)
+                            TextField("Adresse", text: $uhr.host)
+                                .eingabefeld()
+                                .frame(width: 130)
+                                .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
+                            Spacer(minLength: 8)
+                            Picker("Betriebsart", selection: betriebsart($uhr)) {
+                                Text("HTTP").tag(Betriebsart.http)
+                                Text("MQTT").tag(Betriebsart.mqtt)
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            .frame(width: 116)
+                            // **Der Tausch gehoert an den Schalter, nicht unter die
+                            // Liste.** Als Fusstext stand er bis zum 14.09.2026 da
+                            // und nahm den Platz weg, an dem jetzt steht, was der
+                            // Punkt links bedeutet. Am Schalter kostet er keine
+                            // Zeile — und er steht dort, wo die Wahl getroffen
+                            // wird. Ausfuehrlich steht beides in der Hilfe
+                            // (`HilfeInhalt`, „Betriebsart: HTTP oder MQTT").
+                            .help("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
+                            Picker("Geräteart", selection: geraeteart($uhr)) {
+                                ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
+                                    Text(art.beschriftung).tag(art)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 132)
+                            .help("„Abfragen“ stellt die Geräteart selbst fest. Von Hand zu wählen ist sie nur dort, wo das nicht gelingt — etwa wenn die Schnittstelle der AWTRIX eine Anmeldung verlangt.")
                         }
-                        .labelsHidden()
-                        .frame(width: 132)
-                        .help("„Abfragen“ stellt die Geräteart selbst fest. Von Hand zu wählen ist sie nur dort, wo das nicht gelingt — etwa wenn die Schnittstelle der AWTRIX eine Anmeldung verlangt.")
-                        Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
-                            .font(.system(.callout, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                        Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
-                        Spacer()
-                        Button("Abfragen") { zustand.abfragen(uhr.id) }
-                            .knopfBefehl()
-                        Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
-                            .knopfZerstoerend()
+                        HStack(spacing: 8) {
+                            // Das Praefix ist eine Auskunft, kein Feld: eine
+                            // Zeile, nie zwei.
+                            Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
+                                .font(.system(.callout, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
+                            Spacer(minLength: 8)
+                            Button("Abfragen") { zustand.abfragen(uhr.id) }
+                                .knopfBefehl()
+                                .fixedSize()
+                            Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
+                                .knopfZerstoerend()
+                                .fixedSize()
+                        }
+                        // Unter dem Punkt eingerueckt: Die zweite Zeile gehoert
+                        // zur Uhr darueber und faengt nicht neu am Rand an.
+                        .padding(.leading, 24)
                     }
                 }
                 HStack {

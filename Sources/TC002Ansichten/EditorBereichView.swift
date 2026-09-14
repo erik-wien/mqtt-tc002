@@ -393,7 +393,15 @@ public struct EditorBereichView: View {
                       feld.alsDrawBefehle().count))
                 .font(.footnote).foregroundStyle(.secondary)
         }
-        if let meldung {
+        // **Nur noch als Auffangnetz.** Die Meldung stand bis zum 14.09.2026
+        // allein hier — unter der Leinwand, waehrend der Knopf, der sie
+        // ausloest, rechts im Inspektor sitzt. Wer „Sichern" drueckte, sah
+        // dort nichts geschehen und hielt es fuer wirkungslos. Sie steht
+        // deshalb jetzt im Abschnitt „Diese Bildgruppe", gleich unter den
+        // Knoepfen. Hier bleibt sie fuer den einen Fall, in dem es den
+        // Abschnitt gerade nicht gibt: Der Inspektor ist ausgeblendet, und
+        // „Sichern" kam ueber ⌘↩.
+        if let meldung, !zeigeInspektor {
             Text(meldung).font(.callout).foregroundStyle(.secondary)
         }
     }
@@ -653,6 +661,11 @@ public struct EditorBereichView: View {
                     .disabled(schluessel.isEmpty)
                 Button("Neu") { neuAnfragen() }
                     .knopfBefehl()
+            }
+            // Die Antwort auf den Druck, unmittelbar darunter — „Hearts
+            // gesichert." oder der Grund, warum nicht.
+            if let meldung {
+                Text(meldung).font(.footnote).foregroundStyle(.secondary)
             }
         } header: {
             Text("Diese Bildgruppe")
