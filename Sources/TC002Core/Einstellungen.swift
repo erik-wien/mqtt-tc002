@@ -84,6 +84,34 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// Welche Geraeteart fuer diese Uhr gilt. Der einzige Leser von `typ`.
     public var gattung: Geraetetyp { typ ?? .tc002 }
 
+    /// **Woran zwei Geräte dieselbe Uhr erkennen.**
+    ///
+    /// Die `id` allein taugt dafür nicht, und das war ein teurer Irrtum: Die
+    /// UUID entsteht beim Anlegen **auf dem jeweiligen Gerät**. Dieselbe Uhr,
+    /// auf dem Mac und auf dem iPhone eingetragen, hat zwei verschiedene — der
+    /// Abgleich hielt sie für zwei Uhren und hängte sie aneinander. Am
+    /// 14.09.2026 standen so nach zwanzig Minuten drei Einträge derselben Uhr
+    /// in der Liste, und Entfernen half nicht: Beim nächsten Abgleich kamen sie
+    /// zurück.
+    ///
+    /// Die `id` **wegzuwerfen** wäre aber der entgegengesetzte Fehler: Wer auf
+    /// einem Gerät die Adresse einer Uhr ändert, hat weiterhin dieselbe Uhr,
+    /// und nur die Kennung weiß das noch.
+    ///
+    /// Darum zählt hier **jede** Übereinstimmung. Zwei Einträge sind dieselbe
+    /// Uhr, wenn sie die Kennung teilen, **oder** die MAC-Adresse, **oder** die
+    /// Adresse. `Einrichtungsstand.zusammengefuehrt` legt daraus Gruppen — auch
+    /// über Ecken: Trifft sich A mit B über die Adresse und B mit C über die
+    /// MAC, sind alle drei dieselbe Uhr.
+    public var abgleichmerkmale: [String] {
+        var merkmale = ["id:\(id.uuidString)"]
+        let kennung = mac.lowercased().filter(\.isHexDigit)
+        if !kennung.isEmpty { merkmale.append("mac:\(kennung)") }
+        let adresse = host.trimmingCharacters(in: .whitespaces).lowercased()
+        if !adresse.isEmpty { merkmale.append("host:\(adresse)") }
+        return merkmale
+    }
+
     /// Wie breit die Anzeige dieser Uhr in Pixeln ist — **vom Geraet geholt,
     /// nicht angenommen**.
     ///

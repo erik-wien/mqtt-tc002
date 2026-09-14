@@ -12,6 +12,106 @@ final class EinrichtungsstandTests: XCTestCase {
 
     // MARK: Uhren
 
+    // MARK: Dieselbe Uhr auf zwei Geraeten
+
+    /// **Der Fehler vom 14.09.2026, als Zusicherung.** Dieselbe Uhr, auf zwei
+    /// Geraeten eingetragen, hat zwei Kennungen — sie entstehen beim Anlegen.
+    /// Zusammengefuehrt wurde ueber genau diese Kennung, also hielt der
+    /// Abgleich sie fuer zwei Uhren und hing sie aneinander. Nach zwanzig
+    /// Minuten standen drei Eintraege derselben Uhr in der Liste, und
+    /// „Entfernen" half nicht: Beim naechsten Abgleich kamen sie zurueck.
+    func testDieselbeAdresseAufZweiGeraetenIstEineUhr() {
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [uhr("Küche", "10.0.0.1")]),
+            fern: Einrichtungsstand(uhren: [uhr("Küche", "10.0.0.1")]))
+        XCTAssertEqual(ergebnis.uhren.count, 1,
+                       "zwei Eintraege derselben Adresse sind eine Uhr, keine zwei")
+    }
+
+    /// Und dieselbe MAC, auch wenn die Adresse inzwischen eine andere ist —
+    /// die MAC ist das Bestaendigere von beidem.
+    func testDieselbeMacIstEineUhr() {
+        var hier = uhr("Küche", "10.0.0.1"); hier.mac = "AA:BB:CC:DD:A8:6B"
+        var dort = uhr("Küche", "10.0.0.77"); dort.mac = "aabbccdda86b"
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [hier]),
+            fern: Einrichtungsstand(uhren: [dort]))
+        XCTAssertEqual(ergebnis.uhren.count, 1, "Schreibweise und Adresse duerfen nichts daran aendern")
+        XCTAssertEqual(ergebnis.uhren.first?.host, "10.0.0.77", "die Wolke gewinnt bei den Feldern")
+    }
+
+    /// **Ueber Ecken.** A und B teilen die Adresse, B und C die MAC — dann
+    /// gehoeren alle drei zusammen, obwohl A und C nichts unmittelbar
+    /// gemeinsam haben. Ein Woerterbuch ueber einen einzigen Schluessel kaeme
+    /// hier auf zwei Uhren.
+    func testUeberEckenZusammengefuehrt() {
+        let a = uhr("A", "10.0.0.1")
+        var b = uhr("B", "10.0.0.1"); b.mac = "aabbccddeeff"
+        var c = uhr("C", "10.0.0.2"); c.mac = "AABBCCDDEEFF"
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [a]),
+            fern: Einrichtungsstand(uhren: [b, c]))
+        XCTAssertEqual(ergebnis.uhren.count, 1)
+    }
+
+    /// Die Heilung des Bestands: Drei Eintraege derselben Uhr — der Zustand,
+    /// in dem die Liste am Morgen des 14.09. war — fallen beim naechsten
+    /// Abgleich zu einem zusammen, ohne dass jemand etwas von Hand loeschen
+    /// muss.
+    func testDreiEintraegeDerselbenUhrFallenZusammen() {
+        let drei = [uhr("awtrix_a86b", "10.0.0.1"),
+                    uhr("awtrix_a86b", "10.0.0.1"),
+                    uhr("awtrix_a86b", "10.0.0.1")]
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: drei),
+            fern: Einrichtungsstand(uhren: []))
+        XCTAssertEqual(ergebnis.uhren.count, 1)
+    }
+
+    /// **Beide Geraete muessen auf dieselbe Kennung kommen**, sonst schriebe
+    /// jedes seine eigene in die Wolke und sie wechselten einander ab — ein
+    /// Abgleich, der nie zur Ruhe kaeme. Deshalb gewinnt die kleinere, eine
+    /// Regel ohne Absprache.
+    func testBeideSeitenWaehlenDieselbeKennung() {
+        let eine = uhr("Küche", "10.0.0.1"), andere = uhr("Küche", "10.0.0.1")
+        let so = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [eine]), fern: Einrichtungsstand(uhren: [andere]))
+        let andersherum = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [andere]), fern: Einrichtungsstand(uhren: [eine]))
+        XCTAssertEqual(so.uhren.first?.id, andersherum.uhren.first?.id)
+        XCTAssertEqual(so.uhren.first?.id, min(eine.id.uuidString, andere.id.uuidString) == eine.id.uuidString ? eine.id : andere.id)
+    }
+
+    /// Faellt eine Kennung weg, muss die Buchfuehrung mitwandern — sonst
+    /// haengen die bekannten Anzeigen an einer Uhr, die es nicht mehr gibt,
+    /// und die fuenf Bloecke waeren leer.
+    func testBekannteAnzeigenWandernAufDieBleibendeKennung() {
+        let hier = uhr("Küche", "10.0.0.1"), dort = uhr("Küche", "10.0.0.1")
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [hier],
+                                        bekannteAnzeigen: [hier.id.uuidString: ["meldung1"]]),
+            fern: Einrichtungsstand(uhren: [dort],
+                                    bekannteAnzeigen: [dort.id.uuidString: ["meldung2"]]))
+        let bleibt = try? XCTUnwrap(ergebnis.uhren.first?.id.uuidString)
+        XCTAssertEqual(ergebnis.bekannteAnzeigen.count, 1, "zwei Buchfuehrungen fuer eine Uhr")
+        XCTAssertEqual(ergebnis.bekannteAnzeigen[bleibt ?? ""].map(Set.init), Set(["meldung1", "meldung2"]),
+                       "und beide Namen muessen ueberleben")
+    }
+
+    /// Dasselbe fuer die Auswahl: Eine Zieluhr aus der Wolke, deren Kennung
+    /// zusammengefallen ist, darf nicht herausfallen — sonst gaelte
+    /// stillschweigend „alle Uhren".
+    func testDieAuswahlWandertMit() {
+        let hier = uhr("Küche", "10.0.0.1"), dort = uhr("Küche", "10.0.0.1")
+        let extra = uhr("Bad", "10.0.0.2")
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(uhren: [hier, extra]),
+            fern: Einrichtungsstand(uhren: [dort, extra], zielIDs: [dort.id]))
+        XCTAssertEqual(ergebnis.zielIDs.count, 1, "war: \(ergebnis.zielIDs)")
+        XCTAssertEqual(ergebnis.zielIDs.first, ergebnis.uhren.first?.id)
+    }
+
+
     /// Der Fall, um dessentwillen ueberhaupt zusammengefuehrt wird: Am Mac
     /// kommt eine Uhr dazu, am Telefon wird eine andere umgestellt. „Letzter
     /// gewinnt" verloere eine der beiden Aenderungen wortlos.

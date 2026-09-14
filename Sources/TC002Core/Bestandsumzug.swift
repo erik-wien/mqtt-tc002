@@ -100,6 +100,55 @@ public enum Bestandsumzug {
     /// Unterordner gibt es in diesen Bestaenden nicht; einer, den doch jemand
     /// anlegt, bleibt liegen, statt den Umzug abzubrechen.
     @discardableResult
+    /// **Liegt dort schon etwas — auch wenn es noch nicht heruntergeladen
+    /// ist?**
+    ///
+    /// `FileManager.fileExists` sagt im iCloud-Behaelter nein zu einer Datei,
+    /// die dort sehr wohl liegt, aber nur als Platzhalter: Der heisst
+    /// `.82.gif.icloud` und traegt den Inhalt noch nicht. Genau daran ist der
+    /// Umzug am 14.09.2026 gescheitert — das zweite Geraet hielt den Behaelter
+    /// fuer leer, kopierte seinen ganzen Bestand hinein, und iCloud machte aus
+    /// den doppelten Schreibvorgaengen Konfliktkopien: `82 2.gif`, `Scan 2`,
+    /// und im Bestand standen sie als eigene Icons.
+    ///
+    /// Ein Platzhalter zaehlt deshalb als vorhanden. Lieber einmal zu wenig
+    /// kopiert — die Datei ist ja da — als eine Kopie zu erzeugen, die niemand
+    /// wieder loswird.
+    static func vorhanden(_ ort: URL) -> Bool {
+        let fm = FileManager.default
+        if fm.fileExists(atPath: ort.path) { return true }
+        let platzhalter = ort.deletingLastPathComponent()
+            .appendingPathComponent(".\(ort.lastPathComponent).icloud")
+        return fm.fileExists(atPath: platzhalter.path)
+    }
+
+    /// Legt die vier Ordner im Behaelter an — **koordiniert**.
+    ///
+    /// `NSFileCoordinator` mit `.forMerging` wartet, bis der Stand des Ortes
+    /// wirklich bekannt ist, und haelt andere Schreiber derweil auf. Ohne das
+    /// legten zwei Geraete dieselben vier Ordner unabhaengig an, jedes bevor
+    /// der Behaelter bei ihm angekommen war, und iCloud machte acht daraus.
+    ///
+    /// **Blockiert** und gehoert deshalb nicht auf den Zeichenweg — gerufen
+    /// wird nur beim Umschalten und beim Vorwaermen, beides ohnehin im
+    /// Hintergrund.
+    @discardableResult
+    public static func behaelterVorbereiten(_ ort: Ablageort) -> Bool {
+        guard let ferneWurzel = ort.ferneWurzel else { return false }
+        var gelungen = false
+        var fehler: NSError?
+        NSFileCoordinator().coordinate(writingItemAt: ferneWurzel,
+                                       options: .forMerging, error: &fehler) { wurzel in
+            for bestand in Ablageort.Bestand.allCases {
+                try? FileManager.default.createDirectory(
+                    at: wurzel.appendingPathComponent(bestand.rawValue),
+                    withIntermediateDirectories: true)
+            }
+            gelungen = true
+        }
+        return gelungen && fehler == nil
+    }
+
     public static func ordnerKopieren(von quelle: URL, nach ziel: URL,
                                       bei konflikt: BeiKonflikt) -> Bilanz {
         let fm = FileManager.default
@@ -116,7 +165,7 @@ public enum Bestandsumzug {
             guard (try? datei.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true
             else { continue }
             let amZiel = ziel.appendingPathComponent(name)
-            if fm.fileExists(atPath: amZiel.path) {
+            if vorhanden(amZiel) {
                 switch konflikt {
                 case .vorhandenesBehalten:
                     bilanz.uebersprungen += 1

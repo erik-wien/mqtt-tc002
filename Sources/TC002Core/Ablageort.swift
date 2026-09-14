@@ -79,12 +79,27 @@ public struct Ablageort: Sendable, Equatable {
         ferneWurzel?.appendingPathComponent(bestand.rawValue)
     }
 
-    /// Legt die vier Ordner an und gibt sich selbst zurueck — einmal beim
-    /// Ermitteln, nicht bei jedem Zugriff.
+    /// Legt die vier **oertlichen** Ordner an und gibt sich selbst zurueck.
+    ///
+    /// **Ausdruecklich nicht die im Behaelter**, und das ist die Lehre aus dem
+    /// 14.09.2026: Vorher legte diese Methode die Ordner am *wirksamen* Ort an,
+    /// also im iCloud-Behaelter, sobald der Abgleich lief — und sie wird aus
+    /// `Ablageort.gemeinsam` heraus gerufen, dem ersten Zugriff ueberhaupt.
+    /// Zwei Geraete taten das unabhaengig voneinander, jedes bevor der
+    /// Behaelter bei ihm angekommen war. `createDirectory` sah nichts, legte an
+    /// — und iCloud machte daraus `Icons`, `Icons 2`, `Bilder`, `Bilder 2` und
+    /// so fort. Der Anwender fand acht Ordner statt vier.
+    ///
+    /// Im Behaelter wird deshalb **nur koordiniert** angelegt
+    /// (`Bestandsumzug.behaelterVorbereiten`), und nur dort, wo es ohnehin
+    /// blockierend zugeht: beim Umschalten und beim Vorwaermen. Ein
+    /// `NSFileCoordinator` wartet, bis der Stand des Behaelters wirklich
+    /// bekannt ist — genau das, was hier fehlte. Auf dem Zeichenweg darf er
+    /// nicht liegen, er kann Sekunden brauchen.
     @discardableResult
     public func angelegt() -> Ablageort {
         for bestand in Bestand.allCases {
-            try? FileManager.default.createDirectory(at: ordner(bestand),
+            try? FileManager.default.createDirectory(at: oertlicherOrdner(bestand),
                                                      withIntermediateDirectories: true)
         }
         return self
@@ -168,7 +183,19 @@ extension Ablageort {
     /// hundertfach gebaut).
     public static func vorbereiten() {
         guard gewaehlt() else { return }
-        Task.detached(priority: .utility) { _ = Ablageort.gemeinsam }
+        // `Hintergrund`, nicht `Task.detached`: Hier wird der Behaelter
+        // ermittelt und koordiniert vorbereitet, und beides blockiert — im
+        // kooperativen Pool waere das ein besetzter Platz auf unbestimmte Zeit.
+        Task {
+            await Hintergrund.lauf {
+                let ort = Ablageort.gemeinsam
+                // Die vier Ordner im Behaelter koordiniert anlegen, falls das
+                // Umschalten es nicht schon getan hat (etwa nach einer
+                // Neuinstallation, bei der die Wahl schon gesetzt ist).
+                Bestandsumzug.behaelterVorbereiten(ort)
+                ort.herunterladenAnstossen()
+            }
+        }
     }
 
     /// Stoesst das Herunterladen der Bestaende an. Eine Datei im Behaelter, die
@@ -233,6 +260,12 @@ extension Ablageort {
         }
         let ort = Ablageort(oertlicheWurzel: oertlicheWurzel, ferneWurzel: fern,
                             gewuenscht: true).angelegt()
+        // Die Ordner im Behaelter **koordiniert** anlegen, bevor irgendetwas
+        // hineinkopiert wird: Ohne das legen zwei Geraete sie unabhaengig an,
+        // jedes bevor der Behaelter bei ihm angekommen ist, und iCloud macht
+        // acht daraus (14.09.2026 genau so passiert). Blockiert — steht hier
+        // richtig, `umschalten` laeuft ohnehin im Hintergrund.
+        Bestandsumzug.behaelterVorbereiten(ort)
         let bilanz = an ? Bestandsumzug.hinweg(ort) : Bestandsumzug.rueckweg(ort)
         waehlen(an, bereich: bereich)
         return Umschaltergebnis(gewaehlt: an, bereit: true, bilanz: bilanz)

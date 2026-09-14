@@ -168,6 +168,60 @@ final class BestandsumzugTests: XCTestCase {
         XCTAssertEqual(Bestandsumzug.rueckweg(o), Bestandsumzug.Bilanz())
         XCTAssertEqual(inhalt(o.oertlicherOrdner(.icons8), "1.gif"), "a")
     }
+
+    // MARK: - Platzhalter im Behaelter
+
+    /// **Der Fehler vom 14.09.2026.** Eine Datei, die im iCloud-Behaelter
+    /// liegt, aber auf diesem Geraet noch nicht heruntergeladen ist, gibt es
+    /// dort nur als Platzhalter `.82.gif.icloud`. `FileManager.fileExists` auf
+    /// `82.gif` sagt dann **nein** — und der Umzug hielt den Behaelter fuer
+    /// leer und kopierte seinen ganzen Bestand hinein. iCloud machte aus den
+    /// doppelten Schreibvorgaengen Konfliktkopien: `82 2.gif`, im Bestand
+    /// sichtbar als eigenes Icon namens „82 2".
+    /// Ein Wegwerfordner unter der Wurzel dieses Laufs.
+    private func wegwerfordner(_ name: String) -> URL {
+        let o = wurzel.appendingPathComponent(name)
+        try? FileManager.default.createDirectory(at: o, withIntermediateDirectories: true)
+        return o
+    }
+
+    func testEinPlatzhalterZaehltAlsVorhanden() throws {
+        let ordner = wegwerfordner("platzhalter")
+        let platzhalter = ordner.appendingPathComponent(".82.gif.icloud")
+        try Data().write(to: platzhalter)
+
+        XCTAssertTrue(Bestandsumzug.vorhanden(ordner.appendingPathComponent("82.gif")),
+                      "ein Platzhalter ist die Datei, nur noch nicht geladen — "
+                      + "wer hier kopiert, erzeugt eine Konfliktkopie")
+    }
+
+    /// Und der Umzug ueberspringt sie dann auch wirklich. Das ist die Aussage,
+    /// auf die es ankommt — `vorhanden` allein koennte richtig sein, ohne dass
+    /// sie irgendwo gefragt wird.
+    func testDerUmzugUeberspringtEinenPlatzhalter() throws {
+        let quelle = wegwerfordner("q1"), ziel = wegwerfordner("z1")
+        try Data([0x47, 0x49, 0x46]).write(to: quelle.appendingPathComponent("82.gif"))
+        try Data().write(to: ziel.appendingPathComponent(".82.gif.icloud"))
+
+        let bilanz = Bestandsumzug.ordnerKopieren(von: quelle, nach: ziel,
+                                                  bei: .vorhandenesBehalten)
+        XCTAssertEqual(bilanz.kopiert, 0, "es lag schon dort — nur eben ungeladen")
+        XCTAssertEqual(bilanz.uebersprungen, 1)
+        XCTAssertFalse(FileManager.default.fileExists(atPath:
+            ziel.appendingPathComponent("82.gif").path),
+            "kopiert wurde nichts, der Platzhalter bleibt der Platzhalter")
+    }
+
+    /// Die Gegenprobe: Ohne Platzhalter wird sehr wohl kopiert — sonst waere
+    /// der Umzug mit dieser Aenderung stillgelegt.
+    func testOhnePlatzhalterWirdKopiert() throws {
+        let quelle = wegwerfordner("q2"), ziel = wegwerfordner("z2")
+        try Data([0x47, 0x49, 0x46]).write(to: quelle.appendingPathComponent("82.gif"))
+
+        let bilanz = Bestandsumzug.ordnerKopieren(von: quelle, nach: ziel,
+                                                  bei: .vorhandenesBehalten)
+        XCTAssertEqual(bilanz.kopiert, 1)
+    }
 }
 
 /// Das Umschalten selbst — gegen Wegwerfverzeichnisse und eine Wegwerf-Ablage,
@@ -256,4 +310,6 @@ final class UmschaltenTests: XCTestCase {
         umschalten(false, behaelter: wolke)
         XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Slots"), "abc.json"), "[]")
     }
+
+
 }

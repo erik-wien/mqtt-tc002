@@ -115,25 +115,98 @@ extension Einrichtungsstand {
                                         fern: Einrichtungsstand) -> Einrichtungsstand {
         var ergebnis = oertlich
 
-        let ausDerWolke = Dictionary(fern.uhren.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        var uhren = oertlich.uhren.map { ausDerWolke[$0.id] ?? $0 }
-        let eigene = Set(oertlich.uhren.map(\.id))
-        uhren += fern.uhren.filter { !eigene.contains($0.id) }
+        // **Zusammengefuehrt wird ueber `Uhr.abgleichmerkmale`, nicht ueber
+        // `id` allein.** Dort steht, warum: Die Kennung entsteht je Geraet,
+        // dieselbe Uhr hat also zwei — wer darueber zusammenfuehrt, haengt sie
+        // aneinander statt sie zu vereinen (nachgewiesen am 14.09.2026 an drei
+        // Eintraegen derselben Uhr). Die Kennung wegzuwerfen waere der
+        // Gegenfehler: Wer eine Adresse aendert, hat weiterhin dieselbe Uhr.
+        //
+        // Darum zaehlt jede Uebereinstimmung, und zwar **ueber Ecken**: Trifft
+        // sich A mit B ueber die Adresse und B mit C ueber die MAC, gehoeren
+        // alle drei zusammen. Das ist eine Vereinigungssuche, kein Woerterbuch.
+        //
+        // Diese Fassung heilt auch rueckwirkend: Mehrere Eintraege derselben
+        // Uhr fallen zu einem zusammen, sobald der Abgleich wieder laeuft.
+        let alle = oertlich.uhren + fern.uhren
+        var wurzel = Array(0..<alle.count)
+        func suchen(_ i: Int) -> Int {
+            var k = i
+            while wurzel[k] != k { wurzel[k] = wurzel[wurzel[k]]; k = wurzel[k] }
+            return k
+        }
+        func vereinen(_ a: Int, _ b: Int) {
+            let wa = suchen(a), wb = suchen(b)
+            if wa != wb { wurzel[max(wa, wb)] = min(wa, wb) }
+        }
+        var zuerstGesehen: [String: Int] = [:]
+        for (i, uhr) in alle.enumerated() {
+            for merkmal in uhr.abgleichmerkmale {
+                if let frueher = zuerstGesehen[merkmal] { vereinen(frueher, i) }
+                else { zuerstGesehen[merkmal] = i }
+            }
+        }
+
+        var reihenfolge: [Int] = []
+        var gruppen: [Int: [Int]] = [:]
+        for i in alle.indices {
+            let w = suchen(i)
+            if gruppen[w] == nil { reihenfolge.append(w) }
+            gruppen[w, default: []].append(i)
+        }
+
+        // Welche Kennung die zusammengefallene Uhr behaelt, muss auf **beiden**
+        // Geraeten gleich ausgehen — sonst schriebe jedes seine eigene in die
+        // Wolke und sie wechselten einander ab. Die kleinere gewinnt: eine
+        // Regel, die ohne Absprache ueberall dasselbe ergibt.
+        let fernAb = oertlich.uhren.count
+        var neueKennung: [UUID: UUID] = [:]
+        var uhren: [Uhr] = []
+        for w in reihenfolge {
+            let mitglieder = gruppen[w] ?? []
+            // Die Wolke gewinnt bei den Feldern — wie bisher.
+            let gewaehlt = mitglieder.first(where: { $0 >= fernAb }) ?? mitglieder[0]
+            var uhr = alle[gewaehlt]
+            let kanonisch = mitglieder.map { alle[$0].id }
+                .min { $0.uuidString < $1.uuidString } ?? uhr.id
+            uhr.id = kanonisch
+            for i in mitglieder { neueKennung[alle[i].id] = kanonisch }
+            uhren.append(uhr)
+        }
         ergebnis.uhren = uhren
 
         let vorhanden = Set(uhren.map(\.id))
-        let auswahl = fern.zielIDs.filter { vorhanden.contains($0) }
+        // Durch die Abbildung, sonst zeigte eine Auswahl aus der Wolke auf eine
+        // Kennung, die es nach dem Zusammenfallen nicht mehr gibt — sie fiele
+        // heraus, und stillschweigend gaelte „alle".
+        var auswahl: [UUID] = []
+        for ziel in fern.zielIDs {
+            let kanonisch = neueKennung[ziel] ?? ziel
+            if vorhanden.contains(kanonisch), !auswahl.contains(kanonisch) { auswahl.append(kanonisch) }
+        }
         ergebnis.zielIDs = auswahl.isEmpty ? uhren.map(\.id) : auswahl
 
         if !fern.brokerHost.isEmpty { ergebnis.brokerHost = fern.brokerHost }
         if !fern.brokerPort.isEmpty { ergebnis.brokerPort = fern.brokerPort }
         if !fern.benutzer.isEmpty { ergebnis.benutzer = fern.benutzer }
 
-        var anzeigen = oertlich.bekannteAnzeigen
-        for (uhr, namen) in fern.bekannteAnzeigen {
-            var liste = anzeigen[uhr] ?? []
+        // Die Schluessel sind Kennungen als Zeichenkette und muessen durch
+        // dieselbe Abbildung — sonst haengt die Buchfuehrung an einer Uhr, die
+        // es nicht mehr gibt, und die fuenf Bloecke wuessten nichts mehr von
+        // ihren Anzeigen.
+        func kanonisch(_ schluessel: String) -> String {
+            guard let alt = UUID(uuidString: schluessel), let neu = neueKennung[alt] else {
+                return schluessel
+            }
+            return neu.uuidString
+        }
+        var anzeigen: [String: [String]] = [:]
+        for (uhr, namen) in oertlich.bekannteAnzeigen.sorted(by: { $0.key < $1.key })
+            + fern.bekannteAnzeigen.sorted(by: { $0.key < $1.key }) {
+            let schluessel = kanonisch(uhr)
+            var liste = anzeigen[schluessel] ?? []
             for name in namen where !liste.contains(name) { liste.append(name) }
-            anzeigen[uhr] = liste
+            anzeigen[schluessel] = liste
         }
         ergebnis.bekannteAnzeigen = anzeigen
 
