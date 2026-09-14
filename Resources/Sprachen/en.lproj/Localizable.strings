@@ -812,3 +812,4 @@
 "Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4)." = "How the two interact is unclear — whether the duration overrides the page change for that display, or the smaller value wins, the manufacturer's documentation does not say (device reference, §4.4).";
 "Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft." = "How fast the text scrolls — only when it does not fit the display and therefore runs.";
 "Erneut abfragen" = "Query again";
+"Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft." = "Applies to this message only — and only when the text does not fit the display and therefore scrolls.";

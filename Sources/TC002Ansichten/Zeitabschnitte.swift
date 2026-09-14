@@ -97,10 +97,22 @@ struct Zeitabschnitte<Zusatz: View>: View {
                     .keyboardType(.numberPad)
                     #endif
             }
-            zusatz
             Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe — dann gilt der Seitenwechsel unten.")
                 .font(.footnote).foregroundStyle(.secondary)
         }
+
+        // **Ein eigener Abschnitt, keine Zeile im vorigen.** Am 14.09.2026
+        // stand das Lauftempo als Zeile unter der Dauer — und im schmalen
+        // Inspektor faellt die Beschriftung eines Segmentschalters weg. Uebrig
+        // blieb ein namenloses „langsam mittel schnell" unter „Dauer (Sek.)",
+        // mit einem Fusstext darunter, der von der Dauer handelt. Es las sich
+        // als Teil der Dauer.
+        //
+        // Der Abschnitt bringt seine Ueberschrift selbst mit, und die faellt
+        // nicht weg. Was er dabei einbuesst — die Naehe zur Dauer, mit der er
+        // die Reichweite teilt —, holt sein Fusstext zurueck: Er sagt
+        // ausdruecklich, dass er nur fuer diese eine Meldung gilt.
+        zusatz
 
         Section("Alles, was diese Uhr zeigt") {
             if nurUlanzi {

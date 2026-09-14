@@ -578,7 +578,7 @@ public struct SendenView: View {
                 // hiesse, drei Werte durchzureichen, damit ein Baustein
                 // entscheiden kann, was der Aufrufer laengst weiss.
                 Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
-                    laufschriftZeile
+                    laufschriftAbschnitt
                 }
             }
             .formStyle(.grouped)
@@ -587,20 +587,27 @@ public struct SendenView: View {
         }
     }
 
-    /// Siehe die Begruendung im Zeit-Reiter oben. **Eine Zeile, kein
-    /// Abschnitt**: Das Tempo reist mit der Meldung mit wie die Dauer und
-    /// gehoert darum unter dieselbe Ueberschrift.
+    /// **Ein eigener Abschnitt** — die Begruendung steht in `Zeitabschnitte`:
+    /// Im schmalen Inspektor faellt die Beschriftung eines Segmentschalters
+    /// weg, und ein namenloses „langsam mittel schnell" unter der Dauer las
+    /// sich als deren Teil. Die Ueberschrift eines Abschnitts faellt nicht weg.
     @ViewBuilder
-    private var laufschriftZeile: some View {
-        Picker("Laufschrift", selection: $tempo) {
-            Text("langsam").tag(Lauftempo.langsam)
-            Text("mittel").tag(Lauftempo.mittel)
-            Text("schnell").tag(Lauftempo.schnell)
+    private var laufschriftAbschnitt: some View {
+        Section("Laufschrift") {
+            Picker("Tempo", selection: $tempo) {
+                Text("langsam").tag(Lauftempo.langsam)
+                Text("mittel").tag(Lauftempo.mittel)
+                Text("schnell").tag(Lauftempo.schnell)
+            }
+            .pickerStyle(.segmented).labelsHidden()
+            .disabled(!(weg == .pixel && !passt))
+            .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")
+                                          : lok("Gilt nur, wenn der Text nicht ins Display passt."))
+            // Sagt, was die Ueberschrift nicht mehr sagt: fuer wie viele
+            // Anzeigen das gilt, und wann ueberhaupt.
+            Text("Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft.")
+                .font(.footnote).foregroundStyle(.secondary)
         }
-        .pickerStyle(.segmented)
-        .disabled(!(weg == .pixel && !passt))
-        .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")
-                                      : lok("Gilt nur, wenn der Text nicht ins Display passt."))
     }
 
     private var formatinhalt: some View {

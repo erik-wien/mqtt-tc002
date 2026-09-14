@@ -218,6 +218,28 @@ cp LIZENZ-AUSNAHME.md "$APP/Contents/Resources/LIZENZ-AUSNAHME.md"
 # liest denselben Bestand; ohne dieselben Berechtigungen saehe es den
 # iCloud-Behaelter nicht und schriebe seine Slots weiter auf die Platte —
 # ein Werkzeug, das andere Meldungen sieht als die App.
+# **Vorgabe statt Schalter — und das ist die Lehre vom 14.09.2026.**
+#
+# Bis dahin musste man `TC002_ENTITLEMENTS` und `TC002_PROFIL` bei jedem Bau
+# von Hand mitgeben. Ein blosses `./build.sh` erzeugte dann stillschweigend
+# eine App **ohne** iCloud-Berechtigungen und ohne Profil — sie baut, sie
+# laeuft, und nur zwei Dinge fehlen: Der iCloud-Schalter bleibt tot, und
+# macOS haelt sie fuer ein **anderes Programm**. Damit ist die Freigabe
+# „Lokales Netzwerk" weg, und die App meldet „keine Verbindung zum Internet",
+# obwohl die Uhr in Millisekunden antwortet. Genau so passiert, dreimal
+# hintereinander, ohne dass irgendetwas es gemeldet haette.
+#
+# Liegen Berechtigungsdatei und Profil da, werden sie darum **benutzt**. Wer
+# ausdruecklich ohne bauen will, setzt die Variable auf einen leeren Wert:
+#     TC002_ENTITLEMENTS= ./build.sh
+if [ -z "${TC002_ENTITLEMENTS+gesetzt}" ] && [ -f Resources/MQTT-TC002.entitlements ]; then
+    TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements
+fi
+if [ -z "${TC002_PROFIL+gesetzt}" ]; then
+    for p in erzeugt/*.provisionprofile *.provisionprofile; do
+        [ -f "$p" ] && { TC002_PROFIL="$p"; break; }
+    done
+fi
 BERECHTIGUNGEN="${TC002_ENTITLEMENTS:-}"
 if [ -n "$BERECHTIGUNGEN" ] && [ ! -f "$BERECHTIGUNGEN" ]; then
     echo "Fehler: TC002_ENTITLEMENTS zeigt auf keine Datei: $BERECHTIGUNGEN" >&2
@@ -253,4 +275,10 @@ else
     echo "         Der Schluesselbund fragt dann nach jedem Bau erneut nach dem Broker-Kennwort." >&2
 fi
 
+if [ -n "$BERECHTIGUNGEN" ]; then
+    echo "Berechtigungen: $BERECHTIGUNGEN"
+    [ -n "${TC002_PROFIL:-}" ] && echo "Profil: $TC002_PROFIL"
+else
+    echo "Warnung: ohne Berechtigungen gebaut. iCloud bleibt tot, und macOS haelt die App fuer ein anderes Programm - die Freigabe fuers lokale Netzwerk faellt damit weg." >&2
+fi
 echo "fertig: $APP — Fassung $VERSION ($COMMIT), Bau $BAUNUMMER"
