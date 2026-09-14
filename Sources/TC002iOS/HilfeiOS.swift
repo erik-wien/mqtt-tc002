@@ -118,6 +118,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
 
+                    .ueberschrift("Ein Bild schicken"),
+                    .absatz("Das Bildsymbol in der Formatpille öffnet den Bestand der 16 × 52-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display."),
+                    .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
+
                     .ueberschrift("Formatpille"),
                     .absatz("Über dem Eingabefeld liegt die Formatpille mit elf Bedienelementen: Icon, waagrechte und senkrechte Ausrichtung, Farbe, der Pinsel für das Blatt „Format“, Schriftart, Größe, Fett, Großbuchstaben, Rand und Abstand. Sie passen nicht alle nebeneinander auf ein Telefon — die Pille lässt sich seitwärts schieben, und der Pfeil an ihrem rechten Rand zeigt an, solange dort noch etwas liegt."),
                 ]

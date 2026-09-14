@@ -15,14 +15,25 @@ import TC002Core
 ///
 /// Der Hintergrund bleibt Sache des Aufrufers: „aus" ist durchsichtig, nicht
 /// schwarz, und im Icon-Raster soll die Zelle durchscheinen.
-struct Rasterbild: View {
+/// **Öffentlich seit dem 14.09.2026**: Das Telefon zeigt damit die
+/// 16×52-Anzeigen des Bestands, die es schicken kann. Dieselbe Ansicht, nicht
+/// eine zweite daneben — die erste Wahl war ein eigenes `Canvas` im
+/// Auswahlblatt, und zwei Stellen, die dasselbe zeichnen, laufen auseinander.
+public struct Rasterbild: View {
     let datei: URL
     var breite: Int = 8
     var hoehe: Int = 8
     /// Kantenlänge eines Pixels in Punkten.
     let kante: Double
 
-    var body: some View {
+    public init(datei: URL, breite: Int = 8, hoehe: Int = 8, kante: Double) {
+        self.datei = datei
+        self.breite = breite
+        self.hoehe = hoehe
+        self.kante = kante
+    }
+
+    public var body: some View {
         let pixel = (try? Bildraster.lesen(datei, breite: breite, hoehe: hoehe))?.first ?? []
         Canvas { kontext, _ in
             guard pixel.count == breite * hoehe else { return }

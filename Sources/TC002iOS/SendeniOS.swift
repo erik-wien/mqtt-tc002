@@ -75,6 +75,7 @@ struct SendeniOS: View {
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
+    @State private var zeigeBilder = false
     // Misst die schiebbare Formatpille, um den Pfeil nur zu zeigen, solange
     // rechts wirklich noch etwas liegt (siehe `zeigtPfeil` unten).
     @State private var pilleInhaltsbreite: CGFloat = 0
@@ -294,6 +295,9 @@ struct SendeniOS: View {
         .sheet(isPresented: $zeigeFormat) {
             FormatblattiOS(weg: $weg, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
                            dauerText: $dauerText)
+        }
+        .sheet(isPresented: $zeigeBilder) {
+            BildauswahliOS(platz: platz, zustand: zustand)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)
@@ -525,6 +529,20 @@ struct SendeniOS: View {
                     }
                     .buttonStyle(.automatic)
                     .accessibilityLabel("Format")
+                    // **Hier und nicht am Ende der Pille.** Die fuenf davor
+                    // (Icon, waagrecht, senkrecht, Farbe, Pinsel) muessen
+                    // ohne Schieben sichtbar bleiben; ein sechstes Zeichen
+                    // von 44 Punkten passt daneben noch in die Breite —
+                    // hinausgeschoben wird dadurch der Schriftname, nicht ein
+                    // Knopf. Am Ende, hinter Rand und Abstand, faende es
+                    // niemand.
+                    Button { zeigeBilder = true } label: {
+                        Image(systemName: "photo")
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.automatic)
+                    .accessibilityLabel("Bild senden")
                     Menu {
                         Picker("Schriftart", selection: $schrift) {
                             ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
