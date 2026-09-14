@@ -181,8 +181,13 @@ der Broker im Haus sind in Tests tabu.
 
 ## Lizenz
 
-GPL-3.0. Die Herkunft ist [PixDeck](https://github.com/cailurus/PixDeck),
-siehe „Quellen“ unten.
+GPL-3.0, mit einer **zusätzlichen Erlaubnis** für die Verbreitung über einen
+Anwendungsvertrieb — siehe [`LIZENZ-AUSNAHME.md`](LIZENZ-AUSNAHME.md). Ohne sie
+wäre der App Store ein Lizenzverstoß, auch bei offenem Quelltext.
+
+Quelltext von [PixDeck](https://github.com/cailurus/PixDeck) ist **nicht**
+enthalten: Es war eine Referenz über das Verhalten des Geräts, und Tatsachen
+über ein Gerät sind nicht urheberrechtlich geschützt — siehe „Quellen“ unten.
 
 ## Quellen
 

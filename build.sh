@@ -185,6 +185,9 @@ cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 cp docs/awtrix-ng-protokoll.md "$APP/Contents/Resources/awtrix-ng-protokoll.md"
 [ -f docs/en/awtrix-ng-protocol.md ] && cp docs/en/awtrix-ng-protocol.md "$APP/Contents/Resources/awtrix-ng-protocol.md"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
+# Die zusaetzliche Erlaubnis nach GPL-Abschnitt 7 faehrt mit: Wer sie nicht im
+# Buendel hat, kann sich nicht darauf berufen.
+cp LIZENZ-AUSNAHME.md "$APP/Contents/Resources/LIZENZ-AUSNAHME.md"
 
 # Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,
 # und die Kennung traegt dann einen Hash ueber die Binaerdatei: nach jedem Bau

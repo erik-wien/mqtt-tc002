@@ -97,9 +97,18 @@ public struct UeberView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Lizenz").font(.subheadline).fontWeight(.semibold)
-                Text("GPL-3.0, weil die App auf Teilen von PixDeck aufbaut, das selbst unter der GPL-3.0 steht.")
+                // **Bis zum 14.09.2026 stand hier „weil die App auf Teilen von
+                // PixDeck aufbaut".** Das war falsch und ausgerechnet an der
+                // Stelle, an der es zaehlt: PixDeck ist Python und war eine
+                // Referenz ueber das Verhalten des Geraets, keine Quelle fuer
+                // Quelltext. Ein Programm, das von sich selbst behauptet, eine
+                // Bearbeitung zu sein, macht seinem Urheber die zusaetzliche
+                // Erlaubnis unten streitig.
+                Text("GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt.")
                 Link("www.gnu.org/licenses/gpl-3.0.html", destination: URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!)
                 textknopf(lok("Lizenztext anzeigen…")) { lizenztextSichtbar = true }
+                Text("Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen.")
+                    .foregroundStyle(.secondary)
             }
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)

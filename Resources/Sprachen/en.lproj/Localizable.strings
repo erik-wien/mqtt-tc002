@@ -301,7 +301,6 @@
 "Version %@" = "Version %@";
 "Schickt Text-, Icon- und Bildanzeigen über MQTT an Ulanzi-TC002-Pixeluhren." = "Sends text, icon and image displays to Ulanzi TC002 pixel clocks over MQTT.";
 "Lizenz" = "License";
-"GPL-3.0, weil die App auf Teilen von PixDeck aufbaut, das selbst unter der GPL-3.0 steht." = "GPL-3.0, because the app builds on parts of PixDeck, which is itself under the GPL-3.0.";
 "www.gnu.org/licenses/gpl-3.0.html" = "www.gnu.org/licenses/gpl-3.0.html";
 "Lizenztext anzeigen…" = "Show license text…";
 "Danksagungen" = "Acknowledgments";
@@ -803,3 +802,5 @@
 "Diese Anzeige" = "This display";
 "Leer oder 0 heißt: keine eigene Angabe — dann entscheidet allein der Seitenwechsel." = "Empty or 0 means no value of its own — then the page change alone decides.";
 "Diese Uhr" = "This clock";
+"GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt." = "GPL-3.0. No PixDeck source code is included — what came from there is knowledge about the device, and that is not copyrightable.";
+"Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen." = "Additional permission under section 7 of the GPL: this program may be distributed through an application distribution service (\"app store\") even where its terms impose restrictions on recipients that would otherwise be incompatible. All other terms of the GPL remain in force, in particular the obligation to make the complete source code available.";

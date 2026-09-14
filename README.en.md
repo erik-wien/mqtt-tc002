@@ -182,7 +182,14 @@ the house are off limits in tests.
 
 ## License
 
-GPL-3.0. The origin is [PixDeck](https://github.com/cailurus/PixDeck), see
+GPL-3.0, with an **additional permission** for distribution through an
+application distribution service — see
+[`LIZENZ-AUSNAHME.md`](LIZENZ-AUSNAHME.md). Without it the App Store would be a
+licence violation, even with the source published.
+
+No source code from [PixDeck](https://github.com/cailurus/PixDeck) is included:
+it was a reference for how the device behaves, and facts about a device are not
+copyrightable. See
 "Sources" below.
 
 ## Sources

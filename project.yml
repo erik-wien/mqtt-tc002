@@ -43,6 +43,11 @@ targets:
       # braucht deshalb ihre eigene Zeile. Am Mac tut dasselbe `build.sh`.
       - path: LICENSE
         buildPhase: resources
+      # Die zusaetzliche Erlaubnis nach GPL-Abschnitt 7 — ohne sie im Buendel
+      # kann sich der Empfaenger nicht darauf berufen, und ohne sie waere die
+      # Verbreitung ueber den App Store ein Lizenzverstoss.
+      - path: LIZENZ-AUSNAHME.md
+        buildPhase: resources
       # Das Datenschutzmanifest. Apple verlangt es seit Mai 2024, sobald die App
       # eine „API mit Begruendungspflicht" benutzt — `UserDefaults` ist eine.
       # Es muss in der **Wurzel** des Buendels liegen, nicht in einem Ordner.

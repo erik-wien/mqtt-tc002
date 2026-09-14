@@ -82,7 +82,8 @@ SWIFT
     # Fenster einen Fehlerschirm. Beides verdeckt ein gruener Bau.
     mac_fehlt=0
     for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md \
-                   awtrix-ng-protokoll.md awtrix-ng-protocol.md LICENSE; do
+                   awtrix-ng-protokoll.md awtrix-ng-protocol.md LICENSE \
+                   LIZENZ-AUSNAHME.md; do
         if [ ! -s "$RESSOURCEN/$pflicht" ]; then
             echo "fehlt   $pflicht unter $RESSOURCEN" >&2
             mac_fehlt=1
@@ -135,6 +136,11 @@ fi
 # benutzt sie durchgehend. Fehlt es, beanstandet App Store Connect den Upload,
 # und zwar erst **dort**: Der Bau gelingt, das Buendel sieht fertig aus, und
 # auffallen wuerde es beim Hochladen. Es muss in der Buendelwurzel liegen.
+if [ ! -s "$APP/LIZENZ-AUSNAHME.md" ]; then
+    echo "fehlt   LIZENZ-AUSNAHME.md"
+    fehlt=1
+fi
+
 if [ ! -s "$APP/PrivacyInfo.xcprivacy" ]; then
     echo "fehlt   PrivacyInfo.xcprivacy"
     fehlt=1
