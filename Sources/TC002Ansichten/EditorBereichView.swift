@@ -855,8 +855,20 @@ public struct EditorBereichView: View {
                 .background(Color.black)
             VStack(alignment: .leading, spacing: 1) {
                 Text(eintrag.name).lineLimit(1)
-                Text(lok(eintrag.groesse.beschriftung) + (eintrag.nummer.map { " · \($0)" } ?? ""))
-                    .font(.caption).foregroundStyle(.secondary)
+                // **Das Abspielzeichen neben die Groesse, nicht ins Bild.**
+                // LaMetric und AWTRIX legen es durchscheinend ueber das
+                // Vorschaubildchen; bei 8×8 verdeckt es damit ein Viertel des
+                // Motivs, und gerade das Motiv soll man ja erkennen. In der
+                // Beschriftungszeile kostet es nichts und steht bei den
+                // uebrigen Angaben ueber die Datei.
+                HStack(spacing: 4) {
+                    Text(lok(eintrag.groesse.beschriftung) + (eintrag.nummer.map { " · \($0)" } ?? ""))
+                    if Bildraster.bewegt(eintrag.datei) {
+                        Image(systemName: "play.fill")
+                            .accessibilityLabel(Text("bewegt"))
+                    }
+                }
+                .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             // Derselbe Stil wie der Papierkorb daneben — gleiche Groesse,

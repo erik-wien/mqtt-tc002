@@ -84,6 +84,21 @@ public enum Bildraster {
         return try lesen(quelle: quelle, breite: breite, hoehe: hoehe)
     }
 
+    /// **Bewegt sich das Bild?** — also hat die Datei mehr als ein Einzelbild.
+    ///
+    /// Billig zu haben: `CGImageSourceGetCount` liest den Kopf und die
+    /// Bildbeschreibungen, aber **keine Pixel**. Das ist der Unterschied zu
+    /// `lesen`, das jedes Einzelbild dekodiert und rastert — in einer Liste
+    /// von sechzig Icons waere das spuerbar.
+    ///
+    /// Unlesbar heisst `false` und nicht „Fehler": Wer das hier fragt, will
+    /// ein Zeichen in eine Liste setzen. Eine Datei, die sich nicht oeffnen
+    /// laesst, faellt an anderer Stelle auf, wo sie wirklich gebraucht wird.
+    public static func bewegt(_ datei: URL) -> Bool {
+        guard let quelle = CGImageSourceCreateWithURL(datei as CFURL, nil) else { return false }
+        return CGImageSourceGetCount(quelle) > 1
+    }
+
     /// Dasselbe aus dem Speicher.
     ///
     /// **Gebraucht wird das fuer den Dateiwaehler.** Eine URL von dort zeigt in

@@ -619,4 +619,36 @@ final class IconsTests: XCTestCase {
         XCTAssertEqual(try achter.pixel(fuer: klein).count, 64)
     }
 
+
+    // MARK: - Bewegt oder nicht
+
+    /// Die Auskunft, an der in den Listen das Abspielzeichen haengt.
+    /// **Ohne Pixel zu lesen**: `CGImageSourceGetCount` sieht die
+    /// Bildbeschreibungen, nicht den Inhalt — in einer Liste von sechzig Icons
+    /// waere der Unterschied spuerbar.
+    func testBewegtErkenntMehrereEinzelbilder() throws {
+        let sammlung = Iconsammlung(schreibordner: temp())
+        var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
+        var zwei = [String?](repeating: nil, count: 64); zwei[63] = "#00FF66"
+
+        let lauf = try sammlung.sichern(nummer: "lauf", name: "Lauf",
+                                        bilder: [eins, zwei], verzoegerung: 0.2)
+        XCTAssertTrue(Bildraster.bewegt(lauf.datei))
+    }
+
+    /// Und ein stehendes Bild ist nicht bewegt — sonst truege jedes Icon das
+    /// Zeichen, und das Zeichen saegte nichts mehr aus.
+    func testEinStehendesBildIstNichtBewegt() throws {
+        let sammlung = Iconsammlung(schreibordner: temp())
+        var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
+        let steht = try sammlung.sichern(nummer: "steht", name: "Steht", pixel: eins)
+        XCTAssertFalse(Bildraster.bewegt(steht.datei))
+    }
+
+    /// Eine Datei, die es nicht gibt, ist nicht bewegt — und wirft auch nicht.
+    /// Wer das fragt, will ein Zeichen setzen, nicht einen Fehler behandeln.
+    func testEineUnlesbareDateiIstNichtBewegt() {
+        XCTAssertFalse(Bildraster.bewegt(temp().appendingPathComponent("gibtsnicht.gif")))
+    }
+
 }

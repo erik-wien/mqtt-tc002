@@ -808,3 +808,4 @@
 "HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken." = "HTTP reports back whether the clock accepted the display. MQTT never reports that, but it reads along with what others send to the same clock.";
 "sieht: %@" = "viewing: %@";
 "Angesehene Uhr" = "Clock being viewed";
+"bewegt" = "animated";

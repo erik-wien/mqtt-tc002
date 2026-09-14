@@ -94,7 +94,19 @@ struct IconAuswahlView: View {
                                     // Bild, sondern das feinere.
                                     Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
                                                kante: 36 / Double(icon.kante))
-                                    Text(icon.name).font(.system(size: 9)).lineLimit(1)
+                                    // Dasselbe Zeichen wie in der
+                                    // Bestandsliste, nur gibt es hier keine
+                                    // Groessenzeile — also neben den Namen.
+                                    // **Nicht** ins Bildchen: Bei 36 Punkten
+                                    // Kantenlaenge verdeckte es das Motiv.
+                                    HStack(spacing: 2) {
+                                        if Bildraster.bewegt(icon.datei) {
+                                            Image(systemName: "play.fill")
+                                                .accessibilityLabel(Text("bewegt"))
+                                        }
+                                        Text(icon.name).lineLimit(1)
+                                    }
+                                    .font(.system(size: 9))
                                 }
                             }
                             .buttonStyle(.plain)
