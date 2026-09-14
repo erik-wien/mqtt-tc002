@@ -61,6 +61,21 @@ struct Zeitabschnitte<Zusatz: View>: View {
     @State private var nutzerHatGewaehlt = false
     @State private var nutzerHatScrollGewaehlt = false
 
+    /// **Warum die beiden Werte gerade nicht dastehen — als Zeile, nicht als
+    /// Hinweisfenster.**
+    ///
+    /// Bis zum 14.09.2026 setzte das Lesen `zustand.fehler`, also einen
+    /// modalen Dialog. Das ging durch, solange es nur beim Öffnen der
+    /// Einstellungen geschah — ein Griff, den man selbst getan hat. Seit die
+    /// beiden Regler hier stehen, liest die App beim Öffnen des Zeit-Reiters,
+    /// und eine nicht erreichbare Uhr warf einem dann mitten im Senden einen
+    /// Dialog vor die Nase, für eine Auskunft, um die man nicht gebeten hat.
+    ///
+    /// Ein Fenster gehört zu einer Handlung, die der Anwender ausgelöst hat.
+    /// Eine Abfrage, die von selbst läuft, meldet sich in ihrer eigenen Zeile
+    /// — und im Protokoll, wo man nachsehen kann.
+    @State private var lesefehler: String?
+
     /// Ob die aktive Uhr die Werksfirmware fährt. Nur dann sind die beiden
     /// oberen Regler eine Einstellung **dieser** Uhr: Sie stehen in
     /// `/getConfig`, und diesen Pfad gibt es bei AWTRIX NG nicht.
@@ -102,12 +117,27 @@ struct Zeitabschnitte<Zusatz: View>: View {
                     Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
                 }
                 .help(lok("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert."))
-                Text("Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen.")
-                    .font(.footnote).foregroundStyle(.secondary)
                 .onChange(of: scrollTempo) { _, neu in
                     guard !scrollLadeLauf else { scrollLadeLauf = false; return }
                     nutzerHatScrollGewaehlt = true
                     setzen("scrollSpeed", neu)
+                }
+                Text("Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                if let lesefehler {
+                    // Angezeigt wird der Grund, **nicht** ein aufgeräumter
+                    // Ersatzsatz: Steht dort „keine Verbindung zum lokalen
+                    // Netzwerk“, sagt die Meldung des Kerns schon, was zu tun
+                    // ist.
+                    Label(lesefehler, systemImage: "exclamationmark.triangle")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button("Erneut abfragen") {
+                        geladen = false
+                        self.lesefehler = nil
+                        Task { await lesen() }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.footnote)
                 }
             } else {
                 Text("Seitenwechsel und Scrolltempo sind Einstellungen der Ulanzi-Werksfirmware. Die aktive Uhr ist eine AWTRIX NG; sie führt beides anders und nicht an dieser Stelle.")
@@ -136,18 +166,19 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // Ohne Meldung zeigte der Wähler nach einem Fehlschlag fälschlich
         // „kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
         if let meldung = ergebnis.fehler {
-            zustand.fehler = lokf("Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: %@", meldung)
+            lesefehler = meldung
+            zustand.log(lokf("Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: %@", meldung))
             return
         }
         if let wert = ergebnis.carousel {
             if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
         } else {
-            zustand.fehler = lok("Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet.")
+            lesefehler = lok("Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet.")
         }
         if let wert = ergebnis.scroll {
             if wert != scrollTempo, !nutzerHatScrollGewaehlt { scrollLadeLauf = true; scrollTempo = wert }
         } else {
-            zustand.fehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
+            lesefehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
         }
     }
 
