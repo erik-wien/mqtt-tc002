@@ -15,28 +15,59 @@ Nachzuegler aus einem frueheren Test landete in der Aufzeichnung des naechsten,
 nachdem der sie geleert hatte. Sie gehoert jetzt der Probe statt dem Prozess
 (`d24dd64`).
 
-### Was du selbst tun musst, bevor etwas davon wirkt
+### Freigeschaltet am 14.09.2026 — was dabei herauskam
 
-1. **iCloud in Xcode freischalten.** „Signing & Capabilities" → „+ Capability"
-   → **iCloud**, darin **iCloud Documents** und **Key-value storage**,
-   Behaelter `iCloud.cloud.eriks.mqtt-tc002`. Danach die Aenderung in Xcode
-   **wegwerfen** — sie steht in der `.xcodeproj`, die nicht eingecheckt ist;
-   gebraucht war nur der Eintrag im Konto. Dann in `project.yml` die eine Zeile
-   `CODE_SIGN_ENTITLEMENTS: Resources/MQTT-TC002.entitlements` entkommentieren
-   und `xcodegen generate`. Ein Simulatorbau gelingt auch ohne all das
-   (nachgemessen) und beweist darum nichts — **aufs Geraet bauen**.
-   Mac: Profil als `.provisionprofile` laden, dann
-   `TC002_PROFIL=<pfad> TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements ./build.sh`.
-2. **Ein Schluesselbundeintrag, den ich nicht wegraeumen konnte.** Unter dem
-   Dienst `cloud.eriks.mqtt-tc002` liegt ein Konto `test-<UUID>` mit dem Wert
-   „geheim" — aus einer Mutationsprobe entstanden. Jeder Aufraeumversuch haette
-   einen Schluesselbunddialog auf deinen Bildschirm gezogen, und das war die
-   Regel, die ich nicht brechen wollte. Er stoert nichts (die App sucht
-   Kennwoerter nur unter Broker-Kontonamen); in der Schluesselbundverwaltung
-   ist er in zehn Sekunden geloescht. Dass so etwas nicht wieder entsteht, ist
-   der Inhalt von F1a (unten).
-3. **Das Brokerkennwort `claude-lesen` gehoert gewechselt** — es stand im
-   Gespraechsverlauf.
+Der iCloud-Behaelter `iCloud.cloud.eriks.mqtt-tc002` steht im Entwicklerkonto,
+`project.yml` traegt `CODE_SIGN_ENTITLEMENTS`, iPhone und Mac sind gebaut. Vier
+Dinge sind dabei gelernt worden, die vorher offen oder falsch waren:
+
+1. **Ein Developer-ID-Bereitstellungsprofil gibt die iCloud-Berechtigung her.**
+   Das war die Unsicherheit, mit der dieser Abschnitt gestern endete. Im Portal
+   heisst der Eintrag unter *Distribution* schlicht **Developer ID** („to use
+   Apple services with your Developer ID signed applications"). Kein
+   Geraetebezug, gueltig bis 2044, Umgebung *Production*.
+2. **Ein macOS-Development-Profil taugt ebenfalls, aber schlechter.** Es nennt
+   genau einen Rechner und traegt das Zertifikat *Apple Development* — damit
+   muesste `build.sh` ueber `TC002_SIGNATUR` mit derselben Identitaet
+   signieren. Der Bau gelingt sonst trotzdem, und die Berechtigungen verfallen
+   still: Ein Profil im Buendel, das die Signatur nicht kennt, ist so gut wie
+   keines. Zweiter Grund dagegen: Die Freigabe „Lokales Netzwerk" haengt an der
+   Programmidentitaet, und ein Wechsel von Developer ID auf Apple Development
+   macht die App fuer macOS zu einer anderen.
+3. **Xcode legt eine zweite Berechtigungsdatei an** (`MQTT-TC002-iOS.entitlements`
+   im Wurzelverzeichnis), auf die nichts zeigt. Ignoriert, nicht gefuehrt —
+   zwei Wahrheiten ueber dieselbe Sache sind gefaehrlicher als eine.
+4. **Bereitstellungsprofile gehoeren nicht ins Repo** (es ist oeffentlich): Sie
+   enthalten die Bereitstellungs-UDID des Rechners und das Entwicklerzertifikat
+   samt Adresse. `*.provisionprofile` steht jetzt in `.gitignore`.
+
+Der Mac-Bau lautet damit:
+
+    TC002_PROFIL=mqtttc002.provisionprofile \
+    TC002_ENTITLEMENTS=Resources/MQTT-TC002.entitlements ./build.sh
+    ditto build/MQTT-TC002.app /Applications/MQTT-TC002.app
+
+Nachgeprueft am fertigen Buendel, nicht am Bauprotokoll: Die Signatur traegt
+`ubiquity-container-identifiers`, das Profil liegt als
+`Contents/embedded.provisionprofile` bei, und **auch das mitreisende
+`mqtttc002` hat die Berechtigungen** — ohne sie schriebe das Werkzeug seine
+Slots weiter auf die Platte, waehrend die App in iCloud liest.
+
+### Was noch offen ist
+
+- **Der iCloud-Pfad ist weiterhin ungefahren.** Signatur und Berechtigungen
+  stimmen; ob `FileManager.url(forUbiquityContainerIdentifier:)` zur Laufzeit
+  etwas liefert und wie lange ein Umzug mit vollem Bestand dauert, weiss
+  niemand. `Ablageort.herunterladenAnstossen()` stoesst an und **wartet
+  nicht** — ein Bestand, der zunaechst unvollstaendig aussieht, ist die
+  wahrscheinlichste Ueberraschung.
+- **Ein Schluesselbundeintrag aus einer Mutationsprobe.** Dienst
+  `cloud.eriks.mqtt-tc002`, Konto `test-<UUID>`, Wert „geheim". Wegraeumen
+  haette einen Dialog auf dem Bildschirm gezogen; er stoert nichts, ist aber in
+  der Schluesselbundverwaltung in zehn Sekunden geloescht. Dass so etwas nicht
+  wiederkommt, ist der Inhalt von F1a.
+- **Das Brokerkennwort `claude-lesen` gehoert gewechselt** — es stand im
+  Gespraechsverlauf.
 
 ### Was diese Nacht entstanden ist
 
