@@ -75,6 +75,19 @@ Präfix darf also mehrere Themenebenen enthalten.
 da**: Die Schlüsseltabelle nennt für `mqttPrefix` weder Zeichenvorrat noch
 Bereich.
 
+🔬 **Ein Leerzeichen am Rand zählt mit — und ist nirgends zu sehen.** Am
+14.09.2026 stand auf einem Gerät `mqttPrefix` mit einem abschließenden
+Leerzeichen; das Geräteprotokoll führte es als `prefix awtrix ` mit, und das
+Gerät abonnierte entsprechend `awtrix /cmd/#`. Wer das Präfix in einer
+Oberfläche abliest, sieht `awtrix` und schreibt auf ein Thema, das kein Gerät
+abonniert — NG antwortet darauf gar nicht. Die Firmware nimmt den Wert also
+wörtlich, auch am Rand.
+
+🔬 **Ein geändertes `mqttPrefix` greift erst beim nächsten Verbindungsaufbau.**
+Nach dem `PATCH` blieb `connects: 1` stehen, und die laufende Sitzung führte
+weiter das alte Präfix; erst nach einem Neustart stand das neue im
+Geräteprotokoll. Wer es ändert, muss die Verbindung neu aufbauen lassen.
+
 📄 Themen außerhalb von `<P>/` werden nicht gelesen.
 
 ---
@@ -678,6 +691,21 @@ fest einzutragen.
 | Skriptquelle | `scriptMaxBytes`, Vorgabe 16384, Bereich 1024–32768 | `413 payloadTooLarge`, nie abgeschnitten |
 | Skripte installiert | `scriptLimit`, Vorgabe 16, Bereich 0–32 | `507` |
 | Melodie, Sender, MP3 | Quelltext 512 Zeichen, 32 Sender, Name 1–24 bzw. 1–32 Zeichen | `422 validationFailed` |
+
+🔬 **Wie weit die 8192 Byte in der Praxis weg sind** (gemessen am 14.09.2026
+mit dem Rahmenbau dieser App):
+
+| Nutzlast | ganze Nachricht |
+|---|---|
+| Text, 1 000 Zeichen | 1 096 Byte |
+| Text, 7 900 Zeichen | 7 996 Byte — **8 096 Zeichen ist die Grenze** |
+| Text mit Umlauten, 5 600 Zeichen | 7 296 Byte (zwei Byte je Umlaut) |
+| animiertes 32×8-Icon, 20 Bilder | 1 402 Byte |
+| animiertes 32×8-Icon, 80 Bilder | 5 042 Byte — rund **130 Bilder** wären die Grenze |
+
+Die Leinwand für Icons ist fest 32×8 (§1), größer geht also gar nicht. Für
+gewöhnliche Anzeigen ist die Grenze damit unerreichbar; wer sie reißt, hat es
+darauf angelegt.
 
 📄 Die **50** zählt nur **neue** Namen: Eine vorhandene Anzeige zu ersetzen
 gelingt immer, was der Zähler auch sagt.

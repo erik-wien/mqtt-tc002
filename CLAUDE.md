@@ -46,6 +46,13 @@ ist und bei einem Update nachzuprüfen wäre, in
   nicht mehr stimmten — gefährlicher als keine, weil sie die falschen
   Maschinen schützten.) Dafür gibt es Doppelgänger: `URLProtocol` für die
   HTTP-Schnittstelle des Geräts, `NachrichtSendend` für das MQTT-Senden.
+- **Ohne Gerät ausprobieren: die virtuelle Uhr.** `Virtuelleuhr` beantwortet
+  die Anfragen einer Ulanzi-Werksfirmware als reine Funktion, `Uhrenserver`
+  hängt sie an einen Port. In den Einstellungen ist sie ein Schalter; in Tests
+  ist sie die Naht, an der sich der **ganze** HTTP-Weg prüfen lässt, ohne die
+  Regel oben zu verletzen — die Testreihe hört sich selbst zu, auf
+  `127.0.0.1` und einem Port, den sie selbst aufmacht. Wer etwas am Sendeweg
+  ändert, hat dort einen Prüfstand.
 - Die MQTT-Bytes sind gegen eine echte Aufzeichnung von `mosquitto_pub`
   geprüft (`MQTTPaketTests`). Dieser Test wird nicht abgeschwächt.
 - Das Themen-Präfix nie hart eintragen, immer über `Geraet.themenPraefix()`

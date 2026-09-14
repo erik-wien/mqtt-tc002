@@ -171,6 +171,20 @@ und dann in Xcode Ziel wählen und starten. `xcodegen` erzeugt das Projekt aus
 sagt nichts darüber, ob Schriften, Icons, App-Symbol, Übersetzungen und die
 `LICENSE` im Bündel gelandet sind — das prüft `scripts/buendel-pruefen.sh`.
 
+## Ohne Uhr ausprobieren
+
+In den Einstellungen steht ein Schalter **„Virtuelle Uhr"**. Er startet einen
+kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle einer Ulanzi
+mit Werksfirmware spricht; „Als Uhr eintragen" legt sie in der Uhrenliste an,
+„Ansehen" öffnet ein Fenster mit Geräterahmen, den fünf Plätzen und dem
+Blättern.
+
+Ab da ist alles echt: Abfragen, Geräteart erkennen, Senden, Löschen,
+Umschalten, der Verlauf. Kein Sonderweg im Code — die App merkt nicht, dass am
+anderen Ende kein Gerät hängt. Sie hört nur auf dem eigenen Rechner zu und
+spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann nicht
+mitkommen. AWTRIX NG spricht sie nicht.
+
 ## Tests
 
 `swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr
@@ -178,6 +192,13 @@ laufen gegen einen `URLProtocol`-Doppelgänger, das Senden über MQTT gegen
 einen `NachrichtSendend`-Doppelgänger. Die erzeugten MQTT-Bytes selbst sind
 gegen eine echte Aufzeichnung von `mosquitto_pub` geprüft. Die echte Uhr und
 der Broker im Haus sind in Tests tabu.
+
+Vier Tests sprechen dabei über einen **echten Port** mit der virtuellen Uhr —
+dieselbe `URLSession`, dieselben Pfade, dieselbe Auswertung wie am Gerät. Das
+ist kein Verstoß gegen die Regel oben: Die Testreihe hört sich selbst zu, auf
+`127.0.0.1` und einem Port, den sie selbst aufmacht. Gefunden hat das gleich
+einen echten Fehler — eine Adresse **mit Portangabe** scheiterte an genau
+einem Pfad.
 
 ## Lizenz
 

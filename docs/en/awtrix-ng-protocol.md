@@ -73,6 +73,18 @@ string in the form `mqtt: broker <broker>:1883, prefix <prefix>`. A prefix may t
 ❓ Whether `mqttPrefix` is checked for the MQTT wildcards (`#`, `+`) **is not
 stated**: the key table gives `mqttPrefix` neither a character set nor a range.
 
+🔬 **A space at either end counts — and is nowhere to be seen.** On
+14/09/2026 a device had `mqttPrefix` with a trailing space; its log carried it
+as `prefix awtrix `, and the device subscribed to `awtrix /cmd/#` accordingly.
+Read off a user interface, the prefix looks like `awtrix`, and anything
+published there lands on a topic no device subscribes to — NG does not answer
+that at all. The firmware takes the value literally, edges included.
+
+🔬 **A changed `mqttPrefix` takes effect at the next connect.** After the
+`PATCH`, `connects: 1` stayed put and the running session kept the old prefix;
+only after a restart did the new one appear in the device log. Whoever changes
+it has to let the connection be rebuilt.
+
 📄 Topics outside `<P>/` are not read.
 
 ---
@@ -667,6 +679,21 @@ transitions, 6 overlays and the eight built-in palettes (`Cloud`, `Lava`,
 | Script source | `scriptMaxBytes`, default 16384, range 1024–32768 | `413 payloadTooLarge`, never truncated |
 | Scripts installed | `scriptLimit`, default 16, range 0–32 | `507` |
 | Melody, station, MP3 | melody source 512 characters, 32 stations, names 1–24 or 1–32 characters | `422 validationFailed` |
+
+🔬 **How far away the 8192 bytes are in practice** (measured on 14/09/2026
+with this app's frame builder):
+
+| Payload | whole message |
+|---|---|
+| text, 1 000 characters | 1 096 bytes |
+| text, 7 900 characters | 7 996 bytes — **8 096 characters is the limit** |
+| text with umlauts, 5 600 characters | 7 296 bytes (two bytes per umlaut) |
+| animated 32×8 icon, 20 frames | 1 402 bytes |
+| animated 32×8 icon, 80 frames | 5 042 bytes — about **130 frames** would be the limit |
+
+The canvas for icons is a fixed 32×8 (§1), so nothing larger is possible. For
+ordinary displays the limit is therefore out of reach; whoever hits it went
+looking for it.
 
 📄 The **50** counts **new** names only: replacing an app that already exists
 always works, whatever the count says.
