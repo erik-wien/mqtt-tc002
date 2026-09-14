@@ -17,7 +17,7 @@ public enum HilfeInhalt {
     /// zwei Wege gibt, steht der Broker nicht mehr zwangslaeufig dazwischen —
     /// welcher Weg gilt, entscheidet jede Uhr fuer sich (`Betriebsart`).
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("MQTT-TC002 schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
+        .absatz("Pixel Clock Messenger schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
     ]
 
     /// Die Wahl selbst — was sie bedeutet und was sie kostet. Gehoert hierher

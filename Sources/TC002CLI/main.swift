@@ -11,8 +11,8 @@ import TC002Core
 let hilfetext = """
 mqtttc002 — Meldungen an eine Ulanzi TC002 schicken.
 
-Benutzt die Einrichtung der App MQTT-TC002: Broker, Kennwort und Uhren
-werden von dort gelesen. Eingerichtet wird ausschliesslich in der App.
+Benutzt die Einrichtung der App Pixel Clock Messenger: Broker, Kennwort und
+Uhren werden von dort gelesen. Eingerichtet wird ausschliesslich in der App.
 
 Jede Uhr wird auf dem Weg beschickt, der in der App fuer sie eingestellt
 ist — HTTP oder MQTT. "mqtttc002 uhren" zeigt ihn an.

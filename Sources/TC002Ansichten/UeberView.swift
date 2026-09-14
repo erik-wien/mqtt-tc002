@@ -75,7 +75,7 @@ public struct UeberView: View {
             #endif
 
             VStack(spacing: 2) {
-                Text("MQTT-TC002").font(.title2).fontWeight(.semibold)
+                Text("Pixel Clock Messenger").font(.title2).fontWeight(.semibold)
                 Text(lokf("Version %@", fassung))
                     .font(.callout)
                     .foregroundStyle(.secondary)

@@ -6,8 +6,12 @@ Meldungen an die Ulanzi TC002 (Pixbar, 52×16) schicken — per MQTT.
 
 ## Was die App tut
 
-MQTT-TC002 ist eine macOS-App, die Text, Bilder und selbst gemalte Icons an
-eine oder mehrere Ulanzi-TC002-Pixeluhren schickt. Der Weg dorthin führt über
+**Pixel Clock Messenger** (so heißt die App seit dem 14.09.2026 in den
+Stores; das Repo, die Bündelkennung `cloud.eriks.mqtt-tc002`, der Datenordner
+und der Befehl `mqtttc002` behalten ihren Namen — daran hängen Identität,
+Freigaben und vorhandene Bestände) ist eine App für macOS, iPhone und iPad,
+die Text, Bilder und selbst gemalte Icons an eine oder mehrere
+Ulanzi-TC002-Pixeluhren schickt. Der Weg dorthin führt über
 einen MQTT-Broker, nicht direkt zur Uhr — die Uhr hört auf ihn, nicht auf die
 App.
 

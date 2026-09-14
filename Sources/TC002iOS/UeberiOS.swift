@@ -11,7 +11,7 @@ struct UeberiOS: View {
     var body: some View {
         NavigationStack {
             UeberView()
-                .navigationTitle("Über MQTT-TC002")
+                .navigationTitle("Über Pixel Clock Messenger")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { schliessen() }

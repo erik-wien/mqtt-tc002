@@ -128,8 +128,9 @@ targets:
       # mitten in einer Veroeffentlichung.
       path: erzeugt/InfoiOS.plist
       properties:
-        CFBundleName: MQTT-TC002
-        CFBundleDisplayName: MQTT-TC002
+        # Der Anzeigename; die Kennung bleibt `cloud.eriks.mqtt-tc002`.
+        CFBundleName: Pixel Clock Messenger
+        CFBundleDisplayName: Pixel Clock Messenger
         CFBundleDevelopmentRegion: de
         UILaunchScreen: {}
         # Zwei Schluessel, nicht einer: Das iPhone bleibt im Hochformat — die

@@ -6,6 +6,14 @@ sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
 ist und bei einem Update nachzuprüfen wäre, in
 `docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
 
+- **Die App heißt „Pixel Clock Messenger", das Repo weiter `mqtt-tc002`.**
+  Geändert wurde nur, was angezeigt wird (`CFBundleName`,
+  `CFBundleDisplayName`, „Über …", die Hilfe, der Kopf des Werkzeugs).
+  **Nicht** geändert und nicht zu ändern: die Bündelkennung
+  `cloud.eriks.mqtt-tc002` (App-Store-Eintrag, iCloud-Container,
+  Schlüsselbund), der Datenordner `Application Support/MQTT-TC002/` (dort
+  liegen Icons, Bilder, Slots), der Dateiname `MQTT-TC002.app` (die Freigabe
+  „Lokales Netzwerk" hängt am Programm) und der Befehl `mqtttc002`.
 - Logik gehört in `TC002Core` und wird dort getestet. Die Oberflächen bleiben
   dünn — reine SwiftUI-Views und Zustandsverdrahtung, keine Geschäftslogik.
 - Sechs Ziele, und wer wohin gehört:

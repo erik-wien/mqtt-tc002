@@ -1,4 +1,4 @@
-/* MQTT-TC002 — English. Keys are the German source strings. */
+/* Pixel Clock Messenger — English. Keys are the German source strings. */
 
 /* AnzeigenView.swift */
 "Anzeigen" = "Displays";
@@ -15,10 +15,10 @@
 "umgeschaltet auf %@" = "switched to %@";
 "gelöscht: %@" = "deleted: %@";
 /* App.swift */
-"Über MQTT-TC002" = "About MQTT-TC002";
+"Über Pixel Clock Messenger" = "About Pixel Clock Messenger";
 /* Nebenfenster.swift — Titel des Ueber-Fensters (Mac) bzw. seiner Kopfzeile (iPad) */
 "Über" = "About";
-"MQTT-TC002-Hilfe" = "MQTT-TC002 Help";
+"Pixel Clock Messenger-Hilfe" = "Pixel Clock Messenger Help";
 "Gerätereferenz" = "Device Reference";
 "Eigene Icons im Finder zeigen" = "Show My Icons in Finder";
 "Eigene Bilder im Finder zeigen" = "Show My Images in Finder";
@@ -298,7 +298,7 @@
 "schnell" = "fast";
 "Formatierung ein- oder ausblenden" = "Show or hide formatting";
 /* UeberView.swift */
-"MQTT-TC002" = "MQTT-TC002";
+"Pixel Clock Messenger" = "Pixel Clock Messenger";
 "Version %@" = "Version %@";
 "Schickt Text-, Icon- und Bildanzeigen über MQTT an Ulanzi-TC002-Pixeluhren." = "Sends text, icon and image displays to Ulanzi TC002 pixel clocks over MQTT.";
 "Lizenz" = "License";
@@ -423,7 +423,7 @@
 "keine gültige Antwort" = "no valid answer";
 
 /* TC002CLI/main.swift — hilfetext */
-"cli.hilfe" = "mqtttc002 — send messages to an Ulanzi TC002.\n\nUses the setup of the MQTT-TC002 app: broker, password and clocks are read\nfrom there. Setting up happens in the app only.\n\nEvery clock is served on the way that is set for it in the app — HTTP or\nMQTT. \"mqtttc002 clocks\" shows which one.\n\nUSAGE\n  mqtttc002 [send] <text>          send text to the clocks\n  mqtttc002 delete <display>       remove a named display\n  mqtttc002 switch <display>       switch to a display\n  mqtttc002 clocks                 list the clocks that are set up\n  mqtttc002 icons                  list the icons that are there\n  mqtttc002 help                   this text\n\nOPTIONS FOR \"send\"\n  --to <clock>        name or address; may be given more than once.\n                      Without it, the selection that applies in the app.\n  --name <display>    name of the display on the clock (default: cli)\n  --color #RRGGBB     default: #00FF66\n  --icon <number>     an 8x8 icon to the left of the text\n  --font <name>       default: Silkscreen\n  --size <number>     default: 8\n  --bold              bold cut, if the font has one\n  --upper             everything in capitals\n  --top|--middle|--bottom       vertical alignment (default: middle)\n  --left|--center|--right       horizontal alignment (default: left)\n  --margin <number>   rows left free at top/bottom (default: 1)\n  --gap <number>      empty columns between the characters (default: 1)\n  --duration <seconds>  how long the clock shows the display\n  --speed langsam|mittel|schnell   only for scrolling text\n  --device-font       use the clock's built-in font instead of\n                      rasterizing here. Knows no umlauts.\n  --dry-run           only show what would be sent\n\nThe German names work as well: senden, loeschen, umschalten, uhren, hilfe,\n--an, --farbe, --schrift, --groesse, --fett, --gross, --oben, --mitte,\n--unten, --links, --zentriert, --rechts, --rand, --abstand, --dauer,\n--tempo, --geraeteschrift, --trocken.\n\nEXAMPLES\n  mqtttc002 \"Coffee ready\"\n  mqtttc002 send \"Mail is here\" --icon 1673 --color \"#FFAA00\"\n  mqtttc002 send Attention --to Kitchen --duration 10 --center\n  mqtttc002 delete cli\n\nTexts that are too long scroll by themselves; the app does the same.";
+"cli.hilfe" = "mqtttc002 — send messages to an Ulanzi TC002.\n\nUses the setup of the Pixel Clock Messenger app: broker, password and clocks\nare read from there. Setting up happens in the app only.\n\nEvery clock is served on the way that is set for it in the app — HTTP or\nMQTT. \"mqtttc002 clocks\" shows which one.\n\nUSAGE\n  mqtttc002 [send] <text>          send text to the clocks\n  mqtttc002 delete <display>       remove a named display\n  mqtttc002 switch <display>       switch to a display\n  mqtttc002 image <name>           send a finished image from the stock\n  mqtttc002 clocks                 list the clocks that are set up\n  mqtttc002 icons                  list the icons that are there\n  mqtttc002 images                 list the 16x52 images that are there\n  mqtttc002 help                   this text\n\nAn image is a whole display (16x52) from the app's editor and replaces text\nand icon. Of the options below only --to, --name and --duration apply to it;\neverything else formats text, which an image has none of. An AWTRIX NG will\nnot take such an image — its display is 32x8.\n\nOPTIONS FOR \"send\"\n  --to <clock>        name or address; may be given more than once.\n                      Without it, the selection that applies in the app.\n  --name <display>    name of the display on the clock (default: cli)\n  --color #RRGGBB     default: #00FF66\n  --icon <number>     an 8x8 icon to the left of the text\n  --font <name>       default: Silkscreen\n  --size <number>     default: 8\n  --bold              bold cut, if the font has one\n  --upper             everything in capitals\n  --top|--middle|--bottom       vertical alignment (default: middle)\n  --left|--center|--right       horizontal alignment (default: left)\n  --margin <number>   rows left free at top/bottom (default: 1)\n  --gap <number>      empty columns between the characters (default: 1)\n  --duration <seconds>  how long the clock shows the display\n  --speed langsam|mittel|schnell   only for scrolling text\n  --device-font       use the clock's built-in font instead of\n                      rasterizing here. Knows no umlauts.\n  --dry-run           only show what would be sent\n\nThe German names work as well: senden, loeschen, umschalten, bild, uhren,\nbilder, hilfe, --an, --farbe, --schrift, --groesse, --fett, --gross, --oben,\n--mitte, --unten, --links, --zentriert, --rechts, --rand, --abstand,\n--dauer, --tempo, --geraeteschrift, --trocken.\n\nEXAMPLES\n  mqtttc002 \"Coffee ready\"\n  mqtttc002 send \"Mail is here\" --icon 1673 --color \"#FFAA00\"\n  mqtttc002 send Attention --to Kitchen --duration 10 --center\n  mqtttc002 image Heart --name meldung3\n  mqtttc002 delete cli\n\nTexts that are too long scroll by themselves; the app does the same.";
 
 /* TC002iOS/IconauswahliOS.swift */
 "Icon" = "Icon";
@@ -531,7 +531,7 @@
 "Slot %d, unbekannt" = "Slot %d, unknown";
 
 /* HilfeInhalt.swift — die Absaetze, die Mac und iPhone teilen */
-"MQTT-TC002 schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind." = "MQTT-TC002 sends displays to one or more Ulanzi TC002 pixel clocks. Which way it takes is set per clock under “Settings”: directly over HTTP, or through the MQTT broker in the house that the clocks are connected to as well.";
+"Pixel Clock Messenger schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind." = "Pixel Clock Messenger sends displays to one or more Ulanzi TC002 pixel clocks. Which way it takes is set per clock under “Settings”: directly over HTTP, or through the MQTT broker in the house that the clocks are connected to as well.";
 "Betriebsart: HTTP oder MQTT" = "Method: HTTP or MQTT";
 "Jede Uhr hat in ihrer Zeile eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:" = "Every clock has its own choice in its row, with two entries: “HTTP” and “MQTT”. Both ways send the very same display — the same bytes, only a different channel; text, font, colour and icon stay as they are. The difference lies beside that, and it is a trade:";
 "Die Uhr antwortet. Anlegen, Löschen und Umschalten quittiert sie, und eine abgewiesene Sendung ist als solche zu erkennen. Es braucht weder Broker noch Präfix." = "The clock answers. It acknowledges creating, deleting and switching, and a rejected send can be recognised as one. Neither a broker nor a prefix is needed.";

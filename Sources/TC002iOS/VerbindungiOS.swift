@@ -162,7 +162,7 @@ struct VerbindungiOS: View {
             // `.automatic`, damit die Entscheidung im Quelltext steht.
             Button("Hilfe") { zeigeHilfe = true }
                 .buttonStyle(.automatic)
-            Button("Über MQTT-TC002") { zeigeUeber = true }
+            Button("Über Pixel Clock Messenger") { zeigeUeber = true }
                 .buttonStyle(.automatic)
         }
     }

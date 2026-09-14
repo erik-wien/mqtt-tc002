@@ -24,17 +24,17 @@ struct TC002App: App {
     @Environment(\.scenePhase) private var phase
 
     var body: some Scene {
-        WindowGroup("MQTT-TC002") {
+        WindowGroup("Pixel Clock Messenger") {
             hauptfenster
         }
         .defaultSize(width: 1360, height: 720)
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("Über MQTT-TC002") { openWindow(id: Nebenfenster.ueber.id) }
+                Button("Über Pixel Clock Messenger") { openWindow(id: Nebenfenster.ueber.id) }
             }
             CommandGroup(replacing: .help) {
-                Button("MQTT-TC002-Hilfe") { openWindow(id: Nebenfenster.hilfe.id) }
+                Button("Pixel Clock Messenger-Hilfe") { openWindow(id: Nebenfenster.hilfe.id) }
                     .keyboardShortcut("?", modifiers: .command)
                 Button("Gerätereferenz") { openWindow(id: Nebenfenster.geraetereferenz.id) }
                 Button("Schriftprobe") { openWindow(id: Nebenfenster.schriftprobe.id) }

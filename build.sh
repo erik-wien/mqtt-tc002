@@ -21,6 +21,13 @@ BAUNUMMER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 # Alles Erzeugte liegt unter `erzeugt/` — die fertige Mac-App also in
 # `erzeugt/mac/`. Der Ordner ist ignoriert; in der Wurzel stehen dadurch nur
 # noch die Quellen und die drei Skripte, die man wirklich aufruft.
+# **Der Dateiname bleibt.** Die App heisst seit dem 14.09.2026 „Pixel Clock
+# Messenger" — das ist `CFBundleName`/`CFBundleDisplayName`, also was in der
+# Menueleiste und unter dem Symbol steht. Das **Buendel** weiter umzubenennen
+# waere teuer: Die Freigabe „Lokales Netzwerk" haengt am Programm, und ein
+# anders benanntes gilt als ein anderes (siehe CLAUDE.md, „Nach /Applications
+# installieren"). Kennung, Datenordner und der Befehl `mqtttc002` bleiben aus
+# demselben Grund, wie sie sind.
 APP="erzeugt/mac/MQTT-TC002.app"
 ICON_EINTRAEGE=""
 
@@ -135,8 +142,8 @@ for sprache in Resources/Sprachen/*.lproj; do
 done
 for lproj in "$APP/Contents/Resources"/*.lproj; do
     cat > "$lproj/InfoPlist.strings" <<'STRINGS'
-CFBundleName = "MQTT-TC002";
-CFBundleDisplayName = "MQTT-TC002";
+CFBundleName = "Pixel Clock Messenger";
+CFBundleDisplayName = "Pixel Clock Messenger";
 STRINGS
 done
 
@@ -145,7 +152,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>MQTT-TC002</string>
+    <key>CFBundleName</key><string>Pixel Clock Messenger</string>
     <key>CFBundleExecutable</key><string>TC002App</string>
     <key>CFBundleIdentifier</key><string>cloud.eriks.mqtt-tc002</string>
     <key>CFBundlePackageType</key><string>APPL</string>
@@ -167,7 +174,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
         <key>iCloud.cloud.eriks.mqtt-tc002</key>
         <dict>
             <key>NSUbiquitousContainerIsDocumentScopePublic</key><true/>
-            <key>NSUbiquitousContainerName</key><string>MQTT-TC002</string>
+            <key>NSUbiquitousContainerName</key><string>Pixel Clock Messenger</string>
             <key>NSUbiquitousContainerSupportedFolderLevels</key><string>Any</string>
         </dict>
     </dict>
