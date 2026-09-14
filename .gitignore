@@ -15,3 +15,10 @@ erzeugt/
 # waere eine zweite Wahrheit ueber dieselbe Sache, und wer einmal die falsche
 # erwischt, baut eine App, die laut Signatur iCloud kann und es nicht tut.
 MQTT-TC002-iOS.entitlements
+# Bereitstellungsprofile. `build.sh` nimmt eines ueber TC002_PROFIL entgegen,
+# und es ist bequem, es im Wurzelverzeichnis liegen zu haben — eingecheckt
+# gehoert es nicht: **Das Repo ist oeffentlich**, und im Profil stehen die
+# Bereitstellungs-UDID des Rechners und das Entwicklerzertifikat samt Adresse.
+# Messwerte gehoeren in die Doku, Kennungen nicht.
+*.provisionprofile
+*.mobileprovision
