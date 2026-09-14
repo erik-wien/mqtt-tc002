@@ -63,6 +63,12 @@ public struct EditorBereichView: View {
     @State private var name = ""
     @State private var nummer = ""
     @State private var suche = ""
+    /// Die Filterleiste ueber dem Bestand — Groesse und Bewegung.
+    @State private var filtergroesse: Leinwandgroesse?
+    @State private var nurBewegte = false
+    /// Einmal gelesen: Welche Eintraege sich bewegen, steht in den Dateien.
+    /// Die Begruendung steht bei `Array<Icon>.bewegteKennungen`.
+    @State private var bewegte: Set<String> = []
     @State private var vorhandene: [Editoreintrag] = []
     @State private var meldung: String?
     @State private var lametricNummer = ""
@@ -321,7 +327,7 @@ public struct EditorBereichView: View {
         .padding()
         .toolbar { werkzeugleiste }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
-        .onAppear { vorhandene = bestand.alle() }
+        .onAppear { vorhandene = bestand.alle(); bewegungLesen() }
         .onDisappear { stoppeAbspielen(); arbeitsstandSichern() }
         // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben
         // erst gemalter, noch ungesicherter Strich verloren. `scenePhase` statt
@@ -751,12 +757,32 @@ public struct EditorBereichView: View {
         Section("Vorhandene") {
             TextField("Suchen", text: $suche)
                 .eingabefeld()
-            // Gesucht wird in der schon gelesenen Liste (`vorhandene`), nicht
-            // bei jedem Tastendruck neu im Dateisystem.
-            ForEach(vorhandene.gefiltert(nach: suche)) { eintrag in
+            // **Dieselbe Leiste wie im Auswahlblatt**, nur mit drei Groessen
+            // statt zwei: Hier steht auch die ganze Anzeige im Bestand.
+            Filterleiste(wert: $filtergroesse,
+                         angebot: Leinwandgroesse.allCases.map { ($0.beschriftung, $0) },
+                         nurBewegte: $nurBewegte)
+            // Gesucht und gefiltert wird in der schon gelesenen Liste
+            // (`vorhandene`), nicht bei jedem Tastendruck neu im Dateisystem.
+            ForEach(gefilterterBestand) { eintrag in
                 bestandszeile(eintrag)
             }
         }
+    }
+
+    /// Suche, Groesse und Bewegung zusammen — dieselbe Reihenfolge der Fragen
+    /// wie in `Iconfilter`, nur ueber `Editoreintrag`, der drei Groessen
+    /// kennt statt zwei.
+    private var gefilterterBestand: [Editoreintrag] {
+        var ergebnis = vorhandene.gefiltert(nach: suche)
+        if let filtergroesse { ergebnis = ergebnis.filter { $0.groesse == filtergroesse } }
+        if nurBewegte { ergebnis = ergebnis.filter { bewegte.contains($0.datei.path) } }
+        return ergebnis
+    }
+
+    /// Einmal je Bestandsaenderung, nicht bei jedem Neuzeichnen.
+    private func bewegungLesen() {
+        bewegte = Set(vorhandene.filter { Bildraster.bewegt($0.datei) }.map(\.datei.path))
     }
 
     /// Vier Pfeile um einen Mittelpunkt — schiebt die ganze Grafik um ein
@@ -906,7 +932,7 @@ public struct EditorBereichView: View {
                 // uebrigen Angaben ueber die Datei.
                 HStack(spacing: 4) {
                     Text(lok(eintrag.groesse.beschriftung) + (eintrag.nummer.map { " · \($0)" } ?? ""))
-                    if Bildraster.bewegt(eintrag.datei) {
+                    if bewegte.contains(eintrag.datei.path) {
                         Image(systemName: "play.fill")
                             .accessibilityLabel(Text("bewegt"))
                     }
@@ -1337,6 +1363,7 @@ public struct EditorBereichView: View {
         do {
             let eintrag = try bestand.sichern(leinwand, name: name, nummer: nummer)
             vorhandene = bestand.alle()
+        bewegungLesen()
             // Von hier an weicht nichts mehr ab. Der Verlauf bleibt stehen:
             // Rueckgaengig ueber ein Sichern hinweg ist erlaubt — und macht
             // die Leinwand dann wieder ungesichert, weil sie wieder anders
@@ -1354,6 +1381,7 @@ public struct EditorBereichView: View {
         do {
             try bestand.loeschen(eintrag)
             vorhandene = bestand.alle()
+        bewegungLesen()
             // War das Geloeschte gerade geoeffnet, bleibt das Bild stehen, aber
             // Name und Nummer werden geleert — sonst legt ein erneutes
             // „Sichern" es unter demselben Namen wieder an.
@@ -1386,6 +1414,7 @@ public struct EditorBereichView: View {
         do {
             let neu = try bestand.umbenennen(eintrag, name: benennName, nummer: benennNummer)
             vorhandene = bestand.alle()
+        bewegungLesen()
             if offen {
                 name = neu.name
                 nummer = neu.nummer ?? ""
@@ -1412,6 +1441,7 @@ public struct EditorBereichView: View {
                 let icon = try sammlung.holen(nummer: n)
                 await MainActor.run {
                     vorhandene = bestand.alle()
+        bewegungLesen()
                     lametricNummer = ""
                     laedt = false
                     // Dasselbe wie nach „Oeffnen…": Ein geholtes Icon will man
@@ -1483,6 +1513,7 @@ public struct EditorBereichView: View {
             let eintrag = try bestand.einlesen(daten: daten,
                                                nummer: importNummer, name: importName)
             vorhandene = bestand.alle()
+        bewegungLesen()
             importDaten = nil
             zustand.log("Eingelesen: \(eintrag.name)")
             // Weiter geht es erst, wenn das Blatt wirklich zu ist
@@ -1519,6 +1550,7 @@ public struct EditorBereichView: View {
                                   leseordner: [Iconordner.mitgeliefert])
         let anzahl = quelle.mitgelieferteUebernehmen()
         vorhandene = bestand.alle()
+        bewegungLesen()
         meldung = anzahl > 0
             ? lokf("%d Icons aus dem Grundschatz wiederhergestellt.", anzahl)
             : lok("Nichts zu holen — der Grundschatz ist vollständig da.")

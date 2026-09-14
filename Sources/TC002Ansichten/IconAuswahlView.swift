@@ -106,9 +106,18 @@ struct IconAuswahlView: View {
             Text("Icon wählen").font(.headline)
             TextField("Suchen", text: $suche)
                 .eingabefeld()
-            Iconfilterleiste(kante: $filterkante, nurBewegte: $nurBewegte)
+            Filterleiste(wert: $filterkante,
+                         angebot: [(Leinwandgroesse.icon8.beschriftung, 8),
+                                   (Leinwandgroesse.icon16.beschriftung, 16)],
+                         nurBewegte: $nurBewegte)
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
+                // **72 statt 44.** Die Kacheln waren so gross wie eine
+                // Trefferflaeche mindestens sein muss — und damit so klein,
+                // dass ein 8×8-Motiv zu raten war. Am Telefon nimmt eine
+                // Kachel seit dem 14.09.2026 ein Fuenftel der Breite; hier ist
+                // die entsprechende Groesse ein Raster, das sich an 72 Punkten
+                // ausrichtet.
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 72))], spacing: 10) {
                     // **Waehlen schliesst das Blatt.** Bis zum 14.09.2026
                     // blieb es offen, und man musste danach noch „Schliessen"
                     // druecken — zwei Handgriffe fuer eine Entscheidung. Ein
@@ -129,7 +138,7 @@ struct IconAuswahlView: View {
                                     // 16×16 ist nicht das doppelt so grosse
                                     // Bild, sondern das feinere.
                                     Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
-                                               kante: 36 / Double(icon.kante))
+                                               kante: 64 / Double(icon.kante))
                                     // Dasselbe Zeichen wie in der
                                     // Bestandsliste, nur gibt es hier keine
                                     // Groessenzeile — also neben den Namen.
@@ -170,7 +179,7 @@ struct IconAuswahlView: View {
             }
         }
         .padding()
-        .frame(minWidth: 380, minHeight: 360)
+        .frame(minWidth: 460, minHeight: 420)
         .confirmationDialog(
             "„\(zuLoeschen?.name ?? "")“ löschen?",
             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),

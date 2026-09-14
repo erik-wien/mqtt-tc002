@@ -809,7 +809,7 @@
 "sieht: %@" = "viewing: %@";
 "Angesehene Uhr" = "Clock being viewed";
 "bewegte" = "moving";
-"Nur Icons zeigen, die sich bewegen" = "Show only icons that move";
+"Nur Einträge zeigen, die sich bewegen" = "Show only entries that move";
 "alle" = "all";
 "bewegt" = "animated";
 "Nur diese Meldung" = "This message only";

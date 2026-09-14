@@ -136,7 +136,10 @@ struct IconauswahliOS: View {
                     // dort schon als antippbar zu erkennen.
                     Button("Kein Icon") { gewaehlt = nil; schliessen() }
                         .buttonStyle(.automatic)
-                    Iconfilterleiste(kante: $filterkante, nurBewegte: $nurBewegte)
+                    Filterleiste(wert: $filterkante,
+                         angebot: [(Leinwandgroesse.icon8.beschriftung, 8),
+                                   (Leinwandgroesse.icon16.beschriftung, 16)],
+                         nurBewegte: $nurBewegte)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {
                         // **Die Kennung, nicht die Nummer.** Beide Bestaende
