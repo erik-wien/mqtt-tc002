@@ -53,7 +53,13 @@ struct Zeitabschnitte: View {
     private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
 
     var body: some View {
-        Section("Diese Anzeige") {
+        // **Die Ueberschriften nennen die Reichweite, nicht den Gegenstand.**
+        // „Diese Anzeige" und „Diese Uhr" standen hier zuerst, und der
+        // Anwender hat den Unterschied zweimal nicht verstanden — zu Recht:
+        // Beide Abschnitte handeln von Sekunden, und woran die Sekunden
+        // haengen, sagten die Woerter nicht. „Nur diese Meldung" gegen „Alles,
+        // was diese Uhr zeigt" sagt es in der Ueberschrift selbst.
+        Section("Nur diese Meldung") {
             LabeledContent("Dauer (Sek.)") {
                 TextField("", text: $dauerText)
                     .eingabefeld()
@@ -62,11 +68,11 @@ struct Zeitabschnitte: View {
                     .keyboardType(.numberPad)
                     #endif
             }
-            Text("Leer oder 0 heißt: keine eigene Angabe — dann entscheidet allein der Seitenwechsel.")
+            Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe — dann gilt der Seitenwechsel unten.")
                 .font(.footnote).foregroundStyle(.secondary)
         }
 
-        Section("Diese Uhr") {
+        Section("Alles, was diese Uhr zeigt") {
             if nurUlanzi {
                 Picker("Seitenwechsel", selection: $seitenwechsel) {
                     Text("kein Wechsel").tag(0)
@@ -81,6 +87,8 @@ struct Zeitabschnitte: View {
                     Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
                 }
                 .help(lok("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert."))
+                Text("Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen.")
+                    .font(.footnote).foregroundStyle(.secondary)
                 .onChange(of: scrollTempo) { _, neu in
                     guard !scrollLadeLauf else { scrollLadeLauf = false; return }
                     nutzerHatScrollGewaehlt = true

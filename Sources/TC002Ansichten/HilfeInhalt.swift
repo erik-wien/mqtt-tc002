@@ -186,7 +186,8 @@ public enum HilfeInhalt {
     /// und am iPhone „Dauer … s“ — die Sache dahinter ist dieselbe (`duration`
     /// im Rahmen).
     public static let dauer: [Hilfebaustein] = [
-        .absatz("Die Dauer gibt der Uhr eine eigene Standzeit für diese eine Anzeige mit; leer oder 0 bedeutet keine Angabe, dann entscheidet allein der Seitenwechsel. Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4)."),
+        .absatz("Der Unterschied zwischen „Dauer“ und „Seitenwechsel“ ist die Reichweite. Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, die fünf Meldungen. Wie schnell sie das tut, sagt der Seitenwechsel, und er gilt für alle. Die Dauer reist dagegen mit einer einzelnen Meldung mit und gibt ihr eine eigene Standzeit; leer oder 0 heißt keine Angabe, dann bleibt es beim Seitenwechsel."),
+        .absatz("Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4)."),
     ]
 
     /// Umlaute und Sonderzeichen. Dass die Geraeteschrift sie nicht kennt, ist
