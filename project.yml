@@ -76,7 +76,11 @@ targets:
     # danach — eine Aenderung an der Info.plist hier macht die Signatur also
     # nicht ungueltig. Umgekehrt waere sie es: Wer nach dem Signieren schreibt,
     # bekommt ein Buendel, das nirgends mehr laeuft.
-    postBuildScripts:
+    # **Vor** dem Bau, nicht danach: Xcode kopiert die Quell-Plist erst nach
+    # den Skriptschritten ueber das Produkt (`ProcessInfoPlistFile`). Ein
+    # Nachlauf schriebe also gegen etwas an, das gleich ueberbuegelt wird —
+    # siehe die Begruendung in `scripts/fassung-eintragen.sh`.
+    preBuildScripts:
       - name: Fassung und Baunummer aus Git
         script: sh "$PROJECT_DIR/scripts/fassung-eintragen.sh"
         basedOnDependencyAnalysis: false
