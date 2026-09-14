@@ -15,38 +15,60 @@ import TC002Core
 /// „alle“.
 public struct Filterleiste<Wert: Hashable>: View {
     @Binding var wert: Wert?
-    /// Beschriftung und Wert je Segment, in der angebotenen Reihenfolge. Die
-    /// Beschriftung ist ein Übersetzungsschlüssel („8 × 8“), kein fertiger
-    /// Text — deshalb `lok` und nicht `Text(_:)`.
-    let angebot: [(titel: String, wert: Wert)]
+    /// Beschriftung, Kurzform und Wert je Segment, in der angebotenen
+    /// Reihenfolge. Die Beschriftungen sind Übersetzungsschlüssel („8 × 8“),
+    /// keine fertigen Texte — deshalb `lok` und nicht `Text(_:)`.
+    let angebot: [(titel: String, kurz: String, wert: Wert)]
     @Binding var nurBewegte: Bool
 
-    public init(wert: Binding<Wert?>, angebot: [(titel: String, wert: Wert)],
+    public init(wert: Binding<Wert?>, angebot: [(titel: String, kurz: String, wert: Wert)],
                 nurBewegte: Binding<Bool>) {
         self._wert = wert
         self.angebot = angebot
         self._nurBewegte = nurBewegte
     }
 
+    /// **Nachgebend, nicht abschneidend.** Im Inspektor des Editors sind es
+    /// vier Segmente und ein Schalter auf rund 280 Punkten — am iPad, wo die
+    /// Zeilenschrift 17 statt 13 Punkte misst, wurde daraus
+    /// „alle · 8… · 16… · 16…". Zwei abgeschnittene Beschriftungen, die
+    /// dasselbe zeigen, sind schlimmer als eine kurze, die unterscheidet.
+    ///
+    /// `ViewThatFits` probiert deshalb zuerst die ausgeschriebenen Größen und
+    /// fällt erst dann auf die kurzen zurück — auf breiten Blättern ändert
+    /// sich nichts.
     public var body: some View {
+        ViewThatFits(in: .horizontal) {
+            leiste(kurz: false)
+            leiste(kurz: true)
+        }
+    }
+
+    private func leiste(kurz: Bool) -> some View {
         HStack(spacing: 10) {
             Picker("Größe", selection: $wert) {
                 Text("alle").tag(nil as Wert?)
                 ForEach(angebot, id: \.wert) { eintrag in
-                    Text(lok(eintrag.titel)).tag(Optional(eintrag.wert))
+                    Text(lok(kurz ? eintrag.kurz : eintrag.titel)).tag(Optional(eintrag.wert))
                 }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            // Kein Schalter mit Beschriftung daneben, sondern ein Knopf, der
-            // eingerastet bleibt: Er sagt an derselben Stelle, was er tut und
-            // ob er gerade tut. Das Zeichen ist dasselbe wie an den bewegten
-            // Einträgen in der Liste.
+            .fixedSize()
+            // **Nur das Zeichen, kein Wort** — Entscheidung des Auftraggebers
+            // am 14.09.2026, nachdem „bewegte" am Mac zu „b…" und am iPad zu
+            // „beweg-te" über zwei Zeilen geworden war. Es ist dasselbe
+            // Zeichen, das in jeder Zeile der Liste die bewegten Einträge
+            // markiert; daneben steht kein zweites, mit dem es zu verwechseln
+            // wäre. Für die Sprachausgabe steht der Name weiterhin da.
             Toggle(isOn: $nurBewegte) {
                 Label("bewegte", systemImage: "play.fill")
+                    .labelStyle(.iconOnly)
             }
             .toggleStyle(.button)
             .help("Nur Einträge zeigen, die sich bewegen")
+            .accessibilityLabel(Text("bewegte"))
+            Spacer(minLength: 0)
         }
     }
 }

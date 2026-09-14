@@ -137,8 +137,10 @@ struct IconauswahliOS: View {
                     Button("Kein Icon") { gewaehlt = nil; schliessen() }
                         .buttonStyle(.automatic)
                     Filterleiste(wert: $filterkante,
-                         angebot: [(Leinwandgroesse.icon8.beschriftung, 8),
-                                   (Leinwandgroesse.icon16.beschriftung, 16)],
+                         angebot: [(Leinwandgroesse.icon8.beschriftung,
+                                    Leinwandgroesse.icon8.kurzbeschriftung, 8),
+                                   (Leinwandgroesse.icon16.beschriftung,
+                                    Leinwandgroesse.icon16.kurzbeschriftung, 16)],
                          nurBewegte: $nurBewegte)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {

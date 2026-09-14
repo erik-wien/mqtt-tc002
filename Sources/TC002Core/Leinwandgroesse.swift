@@ -50,6 +50,22 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
         }
     }
 
+    /// **Dieselbe Groesse in einem Wort** — fuer eine Filterleiste, die im
+    /// schmalen Inspektor sonst „8…", „16…", „16…" anzeigt und damit zwei
+    /// Groessen ununterscheidbar macht (gesehen am iPad, 14.09.2026).
+    ///
+    /// Genommen wird die Zahl, die **unterscheidet**: 8×8 und 16×16 an ihrer
+    /// Kante, 16×52 an ihrer Breite. Nebeneinander in einer Leiste ist das
+    /// eindeutig, und daneben steht in jeder Zeile der Liste die ganze
+    /// Angabe.
+    public var kurzbeschriftung: String {
+        switch self {
+        case .icon8: return "8"
+        case .icon16: return "16"
+        case .anzeige: return "52"
+        }
+    }
+
     /// Nur die ganze Anzeige laesst sich an die Uhr schicken. Ein Icon ist fuer
     /// sich keine Anzeige — es steht unter „Senden" neben einem Text.
     public var sendbar: Bool {

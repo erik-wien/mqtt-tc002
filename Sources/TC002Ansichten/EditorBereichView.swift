@@ -760,7 +760,7 @@ public struct EditorBereichView: View {
             // **Dieselbe Leiste wie im Auswahlblatt**, nur mit drei Groessen
             // statt zwei: Hier steht auch die ganze Anzeige im Bestand.
             Filterleiste(wert: $filtergroesse,
-                         angebot: Leinwandgroesse.allCases.map { ($0.beschriftung, $0) },
+                         angebot: Leinwandgroesse.allCases.map { ($0.beschriftung, $0.kurzbeschriftung, $0) },
                          nurBewegte: $nurBewegte)
             // Gesucht und gefiltert wird in der schon gelesenen Liste
             // (`vorhandene`), nicht bei jedem Tastendruck neu im Dateisystem.

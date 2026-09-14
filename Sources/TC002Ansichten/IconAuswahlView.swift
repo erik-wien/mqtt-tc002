@@ -107,8 +107,10 @@ struct IconAuswahlView: View {
             TextField("Suchen", text: $suche)
                 .eingabefeld()
             Filterleiste(wert: $filterkante,
-                         angebot: [(Leinwandgroesse.icon8.beschriftung, 8),
-                                   (Leinwandgroesse.icon16.beschriftung, 16)],
+                         angebot: [(Leinwandgroesse.icon8.beschriftung,
+                                    Leinwandgroesse.icon8.kurzbeschriftung, 8),
+                                   (Leinwandgroesse.icon16.beschriftung,
+                                    Leinwandgroesse.icon16.kurzbeschriftung, 16)],
                          nurBewegte: $nurBewegte)
             ScrollView {
                 // **72 statt 44.** Die Kacheln waren so gross wie eine
