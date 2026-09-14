@@ -5,12 +5,18 @@ import TC002Core
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
 /// gestapelt verdeckte es die Vorschau. Schriftart, beide Ausrichtungen,
 /// Größe, Fett, Großbuchstaben, Rand und Abstand sitzen inzwischen in der
-/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben nur noch
-/// Weg und Laufschrift.
+/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Weg,
+/// Dauer und Laufschrift.
+///
+/// **Die Dauer kam am 14.09.2026 dazu.** Sie stand als eigene Zeile neben den
+/// fünf Blöcken und nahm dort die Breite weg, die die Blöcke brauchen. Hier
+/// steht sie bei der Laufschrift — beide reisen mit *dieser einen* Meldung
+/// mit, und genau so hält es der Zeit-Reiter am Schreibtisch.
 struct FormatblattiOS: View {
     @Binding var weg: SendeWeg
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
+    @Binding var dauerText: String
     @Environment(\.dismiss) private var schliessen
 
     var body: some View {
@@ -29,6 +35,15 @@ struct FormatblattiOS: View {
                         Text("Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
+                }
+                Section("Nur diese Meldung") {
+                    LabeledContent("Dauer (Sek.)") {
+                        TextField("Uhr entscheidet", text: $dauerText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {

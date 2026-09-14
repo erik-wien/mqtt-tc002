@@ -57,7 +57,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .ueberblick:
             return HilfeInhalt.wasEsTut
                 + [
-                    .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze und die Dauer, unten die Formatpille und das Eingabefeld. „Verlauf“ und „Einstellungen“ gehen über die beiden Symbole rechts oben als Blatt auf."),
+                    .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze, unten die Formatpille und das Eingabefeld. „Verlauf“ und „Einstellungen“ gehen über die beiden Symbole rechts oben als Blatt auf."),
                     .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres MQTT-Protokolls. Sie liegt der Mac-Fassung dieser App bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
@@ -112,6 +112,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.papierkorb
                 + [.absatz("Dasselbe tut unter „Verlauf“ ein Wischen nach links.")]
                 + HilfeInhalt.dauer
+                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit dem Weg und der Laufschrift. Den Seitenwechsel stellt diese Fassung nicht ein.")]
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),

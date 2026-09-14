@@ -75,10 +75,6 @@ struct SendeniOS: View {
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
-    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
-    /// dem Dauer-Feld nur durch Tippen daneben heraus.
-    @FocusState private var dauerFokus: Bool
-
     // Misst die schiebbare Formatpille, um den Pfeil nur zu zeigen, solange
     // rechts wirklich noch etwas liegt (siehe `zeigtPfeil` unten).
     @State private var pilleInhaltsbreite: CGFloat = 0
@@ -252,7 +248,8 @@ struct SendeniOS: View {
                             Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
-                        platzUndDauer
+                        blockZeile
+                            .padding(.horizontal)
                     }
                     .padding(.vertical, 12)
                 }
@@ -295,7 +292,8 @@ struct SendeniOS: View {
             }
         }
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(weg: $weg, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit)
+            FormatblattiOS(weg: $weg, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
+                           dauerText: $dauerText)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconauswahliOS(gewaehlt: $gewaehltesIcon)
@@ -350,18 +348,25 @@ struct SendeniOS: View {
     /// (`AppZustand.referenzUhr`) — Antippen waehlt den Platz und stellt,
     /// wenn belegbar, die Regler wieder her (siehe `slotWaehlen`). Was ein
     /// Block zeigt, rechnet `AppZustand.slotzustand` fuer alle Oberflaechen
-    /// gleich. Block und Papierkorb sind auf 44×44 fixiert statt nur auf das
-    /// `minWidth`/`minHeight` aus `Slotblock` selbst — das macht die Breite
-    /// der Zeile berechenbar (siehe Bericht zur Breitenrechnung) statt vom
-    /// verfuegbaren Platz abhaengig.
+    /// gleich.
+    ///
+    /// **Die Bloecke nehmen die ganze Breite.** Bis zum 14.09.2026 waren sie
+    /// auf 44×44 festgenagelt — die Zeile war damit 294 Punkte breit und
+    /// stand mit dem Dauer-Feld daneben. Ein Block zeigt aber das Display der
+    /// Uhr, und das ist 52 zu 16: In 44 Punkten Breite blieben 13 Punkte
+    /// Hoehe, auf denen nichts zu erkennen war. Seit das Dauer-Feld im
+    /// Formatblatt sitzt, hat die Zeile die Breite fuer sich; jeder Block
+    /// nimmt ein Fuenftel davon und wird dadurch um die Haelfte groesser.
+    /// Die 44 Punkte bleiben als **Mindestmass** in `Slotblock` stehen, wo
+    /// sie hingehoeren.
     private var blockZeile: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
                 Button { slotWaehlen(i) } label: {
                     Slotblock(platz: i,
                               zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
                               gewaehlt: platz == i)
-                        .frame(width: 44, height: 44)
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
                 // **Dieselbe Entscheidung wie am Schreibtisch**: Das Loeschen
@@ -380,46 +385,6 @@ struct SendeniOS: View {
                         .offset(x: 6, y: -6)
                 }
             }
-        }
-    }
-
-    private var dauerFeld: some View {
-        HStack(spacing: 4) {
-            Text("Dauer")
-            // Ohne feste Breite: Bei "Uhr entscheidet" als Platzhalter
-            // schnitt 64pt auf dem Telefon den Text ab (auf dem breiteren
-            // Mac-Fenster passte dieselbe Breite noch).
-            TextField("Uhr entscheidet", text: $dauerText)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .focused($dauerFokus)
-            Text("s")
-        }
-        .font(.callout)
-        // Keine „Fertig"-Leiste ueber der Tastatur: `placement: .keyboard` gilt
-        // fuer **jede** Tastatur dieser Ansicht, nicht nur fuer das Zahlenfeld
-        // daneben — sie erschien also auch beim Schreiben der Meldung und legte
-        // sich dort ueber den Sendeknopf. Aus dem Dauerfeld kommt man durch
-        // Tippen daneben heraus.
-    }
-
-    /// Bei grossen Bedienungshilfen-Schriftgroessen passt die Zeile aus
-    /// Blockreihe und Dauerfeld nicht mehr nebeneinander in die
-    /// Bildschirmbreite. `ViewThatFits` probiert zuerst die gewohnte Zeile
-    /// und faellt erst dann auf zwei gestapelte Zeilen zurueck, statt am Rand
-    /// abzuschneiden.
-    private var platzUndDauer: some View {
-        ViewThatFits {
-            HStack(spacing: 12) {
-                blockZeile
-                dauerFeld
-            }
-            .padding(.horizontal)
-            VStack(alignment: .leading, spacing: 8) {
-                blockZeile
-                dauerFeld
-            }
-            .padding(.horizontal)
         }
     }
 
