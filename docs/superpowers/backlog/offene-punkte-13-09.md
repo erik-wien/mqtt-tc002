@@ -200,6 +200,46 @@ die Hilfe, die all das beschreibt.
    dieselben Ansichten sind — mittelbar auch fuers iPad; fuers iPhone braeuchte
    es einen Simulator, und der ist in dieser Werkstatt tabu.
 7. **Eine NG hinter Basic-Auth bleibt unbedienbar** (kein Praefix zu holen).
+8. **Icons auf die Uhr legen, statt sie mitzuschicken** (nur AWTRIX NG,
+   aufgenommen am 14.09.2026). Heute reist jedes Icon als Base64 in der
+   Nutzlast mit — die Uhr braucht nichts zu haben, und die Vorschau kann nicht
+   luegen. NG koennte es auch aus seiner Dateiablage nehmen: Bis 64 Zeichen
+   gilt das Feld `icon` als Kennung und wird gegen `/ICONS/<id>.gif`
+   aufgeloest (§5.3), darueber sind es die Bytes selbst.
+
+   **Gemessen am Geraet** (14.09.2026, Adresse durch Platzhalter ersetzt):
+   `GET /api/v1/files` fuehrt dort bereits die LaMetric-Icons unter genau den
+   Nummern, die auch diese App benutzt — 66 bis 1034 Byte je Datei, belegt
+   100 von 512 KB. Referenzieren **koennte** man also sofort.
+
+   **Warum es trotzdem nicht auf den Sendeweg gehoert**, und das ist der Kern:
+
+   - `GET /api/v1/files` gibt es nur ueber **HTTP**. Eine MQTT-Uhr muesste vor
+     jedem Senden eine HTTP-Anfrage machen — der MQTT-Weg haengt dann daran,
+     dass die Uhr auch ueber HTTP erreichbar ist. Bei einer schlafenden Uhr
+     sind das bis zu zehn Sekunden fuer eine Nachricht, die sonst in
+     Millisekunden draussen ist.
+   - Der Gewinn ist klein: 88 bis 1379 Zeichen je Nachricht.
+   - Der Preis waere ein **stiller** Fehler. Gleicher Name heisst nicht
+     gleiches Bild: Wer ein Icon im Editor aendert, haette auf der Uhr weiter
+     die alte Fassung — und die Vorschau zeigte etwas anderes als das Display.
+     Heute gilt ausnahmslos „was du siehst, bekommt die Uhr".
+
+   **Wann es sich wirklich lohnt** — und der Grund, es nicht zu vergessen: NG
+   verwirft eine MQTT-Nutzlast ueber **8192 Byte stillschweigend**, ohne
+   Fehler und ohne `/result`-Antwort (§8). Mit 8×8-Icons sind wir weit
+   darunter; ein 32×8-Hintergrund-GIF oder eine laengere Animation ist es
+   nicht. Dann ist die Datei auf dem Geraet nicht eine Ersparnis, sondern der
+   einzige Weg.
+
+   **Form, falls es gebaut wird:** ein ausdruecklich ausgeloestes „Icons auf
+   die Uhr legen" bei der Uhr in den Einstellungen, mit Fortschritt und
+   Bericht — nie auf dem Sendeweg. Der Rahmenbau referenziert erst dann, wenn
+   die Nutzlast sonst ueber 8 KB ginge; das kann er selbst entscheiden, ohne
+   dass jemand etwas einstellt. Hochgeladen wird ueber `POST /api/v1/files`,
+   geloescht ueber `DELETE /api/v1/files` (§4.2). **Fuer die Ulanzi gibt es
+   keine solche Route** in unserer Referenz — das Feature bliebe NG-only, und
+   das gehoert in die Hilfe.
 
 ### Zwei Anmerkungen zur Arbeitsweise
 
