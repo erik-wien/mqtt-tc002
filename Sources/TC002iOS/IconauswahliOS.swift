@@ -75,6 +75,13 @@ struct IconauswahliOS: View {
     @State private var laedt = false
     @State private var meldung: String?
     @State private var einzelansicht: Icon?
+    /// Die Filterleiste: Größe und Bewegung.
+    @State private var filterkante: Int?
+    @State private var nurBewegte = false
+    /// **Einmal gelesen, nicht bei jedem Tastendruck.** Welche Icons sich
+    /// bewegen, steht in den Dateien; `bewegteKennungen()` fragt sie beim
+    /// Laden des Bestands, danach ist es ein Nachschlagen.
+    @State private var bewegte: Set<String> = []
     /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
     /// dem Nummernfeld nur durch Tippen daneben heraus.
     @FocusState private var lametricFokus: Bool
@@ -129,6 +136,7 @@ struct IconauswahliOS: View {
                     // dort schon als antippbar zu erkennen.
                     Button("Kein Icon") { gewaehlt = nil; schliessen() }
                         .buttonStyle(.automatic)
+                    Iconfilterleiste(kante: $filterkante, nurBewegte: $nurBewegte)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {
                         // **Die Kennung, nicht die Nummer.** Beide Bestaende
@@ -138,7 +146,10 @@ struct IconauswahliOS: View {
                         // beantwortet das nicht mit einem Fehler, sondern mit
                         // der falschen Kachel: Jedes Tippen oeffnete dasselbe
                         // Icon.
-                        ForEach(vorhandene.gefiltert(nach: suche), id: \.kennung) { icon in
+                        ForEach(vorhandene.gefiltert(Iconfilter(suche: suche, kante: filterkante,
+                                                                nurBewegte: nurBewegte),
+                                                     bewegt: { bewegte.contains($0.kennung) }),
+                                id: \.kennung) { icon in
                             Button {
                                 einzelansicht = icon
                             } label: {
@@ -158,7 +169,7 @@ struct IconauswahliOS: View {
                                     // man erkennen soll. Hier ist die
                                     // Namenszeile ohnehin da.
                                     HStack(spacing: 2) {
-                                        if Bildraster.bewegt(icon.datei) {
+                                        if bewegte.contains(icon.kennung) {
                                             Image(systemName: "play.fill")
                                                 .accessibilityHidden(true)
                                         }
@@ -177,7 +188,7 @@ struct IconauswahliOS: View {
                             // Icon. Derselbe Fallstrick wie im Editor bei
                             // „Sichern"/„Neu" und in der Blockreihe.
                             .buttonStyle(.plain)
-                            .accessibilityLabel(Text(Bildraster.bewegt(icon.datei)
+                            .accessibilityLabel(Text(bewegte.contains(icon.kennung)
                                                      ? lokf("%@, bewegt", icon.name) : icon.name))
                             .accessibilityAddTraits(gewaehlt?.kennung == icon.kennung ? [.isSelected] : [])
                         }
@@ -215,6 +226,7 @@ struct IconauswahliOS: View {
 
     private func neuLesen() {
         vorhandene = bestaende.flatMap { $0.alle() }
+        bewegte = vorhandene.bewegteKennungen()
     }
 
     /// Die Sammlung, in deren Schreibordner dieses Icon liegt — allein sie

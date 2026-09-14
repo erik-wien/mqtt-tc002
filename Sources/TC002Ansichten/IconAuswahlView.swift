@@ -27,12 +27,24 @@ struct IconAuswahlView: View {
     /// die Liste wird bei jedem Zugriff frisch von der Platte gelesen, aber
     /// SwiftUI zeichnet nur neu, wenn sich ein beobachteter Zustand aendert.
     @State private var aktualisierung = 0
+    /// Die Filterleiste: Größe und Bewegung.
+    @State private var filterkante: Int?
+    @State private var nurBewegte = false
+    /// Einmal gelesen — die Begründung steht bei `bewegteKennungen()`.
+    @State private var bewegte: Set<String> = []
 
     private var gefilterte: [Icon] {
         _ = aktualisierung
         return sammlungen.flatMap { $0.alle() }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-            .gefiltert(nach: suche)
+            .gefiltert(Iconfilter(suche: suche, kante: filterkante, nurBewegte: nurBewegte),
+                       bewegt: { bewegte.contains($0.kennung) })
+    }
+
+    /// Den Bestand einmal nach Bewegung fragen — beim Öffnen des Blattes und
+    /// nach jeder Änderung am Bestand.
+    private func bewegungLesen() {
+        bewegte = sammlungen.flatMap { $0.alle() }.bewegteKennungen()
     }
 
     var body: some View {
@@ -86,7 +98,7 @@ struct IconAuswahlView: View {
                 .help(lok("Icon entfernen"))
             }
         }
-        .sheet(isPresented: $zeigeBlatt) { blatt }
+        .sheet(isPresented: $zeigeBlatt) { blatt.onAppear { bewegungLesen() } }
     }
 
     private var blatt: some View {
@@ -94,6 +106,7 @@ struct IconAuswahlView: View {
             Text("Icon wählen").font(.headline)
             TextField("Suchen", text: $suche)
                 .eingabefeld()
+            Iconfilterleiste(kante: $filterkante, nurBewegte: $nurBewegte)
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
                     // **Waehlen schliesst das Blatt.** Bis zum 14.09.2026
@@ -123,7 +136,7 @@ struct IconAuswahlView: View {
                                     // **Nicht** ins Bildchen: Bei 36 Punkten
                                     // Kantenlaenge verdeckte es das Motiv.
                                     HStack(spacing: 2) {
-                                        if Bildraster.bewegt(icon.datei) {
+                                        if bewegte.contains(icon.kennung) {
                                             Image(systemName: "play.fill")
                                                 .accessibilityLabel(Text("bewegt"))
                                         }
@@ -178,5 +191,6 @@ struct IconAuswahlView: View {
         // zurueck — es gibt danach schlicht nichts mehr, worauf sie zeigen koennte.
         if gewaehltesIcon?.kennung == icon.kennung { gewaehltesIcon = nil }
         aktualisierung += 1
+        bewegungLesen()
     }
 }
