@@ -98,6 +98,9 @@ DYNAMISCH = [
     "Entfernt eine der fünf Meldungen wieder von der Uhr.",
     "Meldung schicken",
     "Meldung nehmen",
+    "Bild an die Uhr schicken",
+    "Schickt eine fertige 16 × 52-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.",
+    "Bild schicken",
     # `Summary(...)` in Kurzbefehle.swift: Im Quelltext steht SwiftUIs
     # Parameterverweis-Syntax `\(\.$…)`, aber `appintentsmetadataprocessor`
     # baut daraus beim Bauen einen eigenen Platzhalter `${…}` — nachgesehen in
@@ -107,6 +110,7 @@ DYNAMISCH = [
     # nachgeschlagen — deshalb hier von Hand eingetragen statt ein wackliges
     # Muster zu bauen.
     r"${text} an die Uhr schicken",
+    r"Bild ${bild} an die Uhr schicken",
     r"Slot ${platz} von der Uhr nehmen",
 ]
 

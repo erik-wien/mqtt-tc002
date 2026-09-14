@@ -187,3 +187,43 @@ final class OptionenTests: XCTestCase {
         XCTAssertLessThan(mitte, unten)
     }
 }
+
+/// Die beiden Befehle fuer den Bilderbestand (14.09.2026). Ein Bild ist eine
+/// ganze Anzeige und ersetzt Text und Icon — deshalb ein eigener Befehl und
+/// nicht eine Option an `senden`.
+final class BildbefehlTests: XCTestCase {
+    func testBildMitNamen() throws {
+        let o = try Optionen.zerlegt(["bild", "Herz"])
+        XCTAssertEqual(o.befehl, .bild(name: "Herz"))
+    }
+
+    /// Ein Name aus mehreren Woertern kommt zusammengesetzt an — wie der Text
+    /// bei `senden`, und aus demselben Grund: Die Schale hat ihn laengst
+    /// zerlegt.
+    func testEinNameAusMehrerenWoertern() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["bild", "Hallo", "Welt"]).befehl,
+                       .bild(name: "Hallo Welt"))
+    }
+
+    func testOhneNamenEineVerstaendlicheMeldung() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["bild"])) { f in
+            // Die Meldung nennt den Weg zur Liste — dieselbe Bauart wie bei
+            // den uebrigen Fehlern dieses Zerlegers.
+            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("bilder") == true)
+        }
+    }
+
+    func testBilderAuflisten() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["bilder"]).befehl, .bilder)
+        XCTAssertEqual(try Optionen.zerlegt(["images"]).befehl, .bilder)
+    }
+
+    /// `--name` und `--dauer` gelten auch fuer ein Bild: Sie sagen, **wohin**
+    /// und **wie lange**, nicht wie etwas gesetzt wird.
+    func testPlatzUndDauerGeltenAuchFuerEinBild() throws {
+        let o = try Optionen.zerlegt(["bild", "Herz", "--name", "meldung3", "--dauer", "7"])
+        XCTAssertEqual(o.befehl, .bild(name: "Herz"))
+        XCTAssertEqual(o.anzeigename, "meldung3")
+        XCTAssertEqual(o.dauer, 7)
+    }
+}

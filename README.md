@@ -112,6 +112,8 @@ mqtttc002 senden "Post da" --icon 1673 --farbe "#FFAA00" --dauer 10
 mqtttc002 senden Achtung --an Küche --zentriert --unten
 mqtttc002 uhren            # was eingerichtet ist, * sind die Ziele
 mqtttc002 icons            # Nummer und Name
+mqtttc002 bilder           # die 16×52-Anzeigen aus dem Editor
+mqtttc002 bild Herz        # eine davon schicken, statt Text
 mqtttc002 loeschen cli     # die Anzeige wieder von der Uhr nehmen
 mqtttc002 hilfe            # alle Optionen
 ```

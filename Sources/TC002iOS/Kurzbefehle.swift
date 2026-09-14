@@ -286,6 +286,106 @@ struct MeldungLoeschenIntent: AppIntent {
     }
 }
 
+/// **Ein fertiges Bild aus dem Bestand schicken.**
+///
+/// Eigener Kurzbefehl und nicht eine Angabe an „Meldung schicken": Eine
+/// 16 × 52-Anzeige ist das **ganze** Display und ersetzt Text und Icon. Von
+/// den Angaben dort gelten hier nur die, die sagen *wohin* und *wie lange* —
+/// alles Übrige formatiert Text, den es hier nicht gibt.
+///
+/// Die Bilder entstehen im Editor am Mac und am iPad und kommen über iCloud
+/// hierher; gemalt wird am Telefon nicht.
+struct BildSendenIntent: AppIntent {
+    static let title: LocalizedStringResource = "Bild an die Uhr schicken"
+    static let description = IntentDescription(
+        "Schickt eine fertige 16 × 52-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.")
+    static let openAppWhenRun = false
+
+    @Parameter(title: "Bild", description: "Der Name, unter dem es im Editor gesichert wurde.")
+    var bild: String
+
+    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    var uhr: String?
+
+    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
+               inclusiveRange: (1, 5))
+    var platz: Int?
+
+    @Parameter(title: "Dauer in Sekunden")
+    var dauer: Int?
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Bild \(\.$bild) an die Uhr schicken") {
+            \.$uhr
+            \.$platz
+            \.$dauer
+        }
+    }
+
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let e = Einstellungen.gelesen()
+        let name = bild.trimmingCharacters(in: .whitespaces)
+        let bestand = Bildersammlung(ordner: Bilderordner.eigene)
+        guard let gefunden = bestand.alle().first(where: { $0.name == name }) else {
+            // Die Meldung nennt, was es gibt — ein Kurzbefehl hat keine Liste
+            // zum Nachsehen, und der Name kommt womoeglich aus einer
+            // Automation, die ihn nie gesehen hat.
+            let alle = bestand.alle().map(\.name).sorted().joined(separator: ", ")
+            throw $bild.needsValueError(IntentDialog(stringLiteral: alle.isEmpty
+                ? lok("Noch keine Bilder. Sie entstehen im Editor am Mac und am iPad.")
+                : lokf("Kein Bild namens %@. Vorhanden: %@", name, alle)))
+        }
+
+        let ziele = try zieleBestimmenFuerBild(e)
+        // Dieselbe Entscheidung wie in App und Werkzeug: ein Einzelbild als
+        // Rechtecke, mehrere als GIF (`Bildsendung.rahmen`).
+        let rahmen = try Bildsendung.rahmen(aus: gefunden.datei, dauer: (dauer ?? 0) > 0 ? dauer : nil)
+        let anzeigenname = Meldungsplatz.name(fuer: platz ?? 1)
+        try await Task.detached(priority: .userInitiated) {
+            for ziel in ziele {
+                guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: e.zugang(
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                try anzeigen.zeigen(rahmen, auf: anzeigenname)
+                // **Vergessen, nicht merken**: Ein Bild hat keine Regler, die
+                // sich merken liessen. Bliebe die Erinnerung an eine fruehere
+                // Textsendung liegen, zeigte der Block in der App nach dem
+                // naechsten Start ohne Broker wieder den alten Text.
+                if let p = Meldungsplatz.platz(fuerName: anzeigenname) {
+                    Slotgedaechtnis.gemeinsam.vergessen(fuer: ziel.id, platz: p)
+                }
+            }
+        }.value
+        return .result(dialog: IntentDialog(stringLiteral: lokf("%@ geschickt.", gefunden.name)))
+    }
+
+    /// Dieselbe Reihe von Pruefungen wie bei den beiden anderen Kurzbefehlen —
+    /// eingerichtet, abgefragt, Broker vorhanden —, nur an den Feldern dieses
+    /// Kurzbefehls aufgehaengt, damit die Rueckfrage dort landet, wo sie
+    /// hingehoert.
+    private func zieleBestimmenFuerBild(_ e: Einstellungen) throws -> [Uhr] {
+        guard !e.uhren.isEmpty else {
+            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
+        }
+        let gewaehlt: [Uhr]
+        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
+            guard let ziel = e.uhr(benannt: name) else {
+                throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Keine Uhr namens %@.", name)))
+            }
+            gewaehlt = [ziel]
+        } else {
+            gewaehlt = e.ziele
+        }
+        let abgefragt = gewaehlt.filter(\.beschickbar)
+        guard !abgefragt.isEmpty else {
+            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", gewaehlt.map(\.name).joined(separator: ", "))))
+        }
+        if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
+            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+        }
+        return abgefragt
+    }
+}
+
 /// Damit die beiden ohne Zutun in Siri und in der Suche auftauchen. Ohne diesen
 /// Anbieter müsste man sie erst von Hand in einen Kurzbefehl einbauen.
 struct TC002Kurzbefehle: AppShortcutsProvider {
@@ -295,6 +395,11 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
                               "Send a message with \(.applicationName)"],
                     shortTitle: "Meldung schicken",
                     systemImageName: "paperplane")
+        AppShortcut(intent: BildSendenIntent(),
+                    phrases: ["Schicke ein Bild mit \(.applicationName)",
+                              "Send an image with \(.applicationName)"],
+                    shortTitle: "Bild schicken",
+                    systemImageName: "photo")
         AppShortcut(intent: MeldungLoeschenIntent(),
                     phrases: ["Nimm die Meldung von der Uhr mit \(.applicationName)",
                               "Clear a message with \(.applicationName)"],

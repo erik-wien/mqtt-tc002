@@ -21,9 +21,16 @@ AUFRUF
   mqtttc002 [senden] <Text>        Text an die Uhren schicken
   mqtttc002 loeschen <Anzeige>     eine benannte Anzeige entfernen
   mqtttc002 umschalten <Anzeige>   zu einer Anzeige wechseln
+  mqtttc002 bild <Name>            ein fertiges Bild aus dem Bestand schicken
   mqtttc002 uhren                  die eingerichteten Uhren auflisten
   mqtttc002 icons                  die vorhandenen Icons auflisten
+  mqtttc002 bilder                 die vorhandenen 16x52-Bilder auflisten
   mqtttc002 hilfe                  diesen Text
+
+Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
+Text und Icon. Von „senden" gelten dafuer nur --an, --name und --dauer; alles
+Uebrige formatiert Text, den es dort nicht gibt. Eine AWTRIX NG nimmt so ein
+Bild nicht — ihre Anzeige ist 32x8.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
@@ -111,6 +118,21 @@ func lauf() throws {
         // nicht dazwischengeschoben — wer bisher Spalte 1 und 2 auswertet,
         // liest weiter dasselbe.
         for icon in alle { print("\(icon.nummer)\t\(icon.name)\t\(icon.kante)×\(icon.kante)") }
+        return
+    }
+
+    if case .bilder = optionen.befehl {
+        let alle = Bildersammlung(ordner: Bilderordner.eigene).alle()
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        guard !alle.isEmpty else {
+            print(lok("Keine Bilder. Sie entstehen im Editor der App."))
+            return
+        }
+        // Dieselbe Form wie bei `icons`: Name, dann was die Zeile sonst noch
+        // unterscheidet. Eine Werknummer hat nicht jedes Bild.
+        for bild in alle {
+            print("\(bild.name)\t\(Leinwandgroesse.anzeige.beschriftung)\t\(bild.nummer ?? "")")
+        }
         return
     }
 
@@ -240,6 +262,41 @@ func lauf() throws {
             }
         }
 
+    case .bild(let name):
+        // **Gesucht wird ueber den Namen, nicht ueber den Dateinamen.** Beides
+        // ist bei diesem Bestand dasselbe, aber der Name ist das, was in der
+        // App steht und was `mqtttc002 bilder` ausgibt.
+        let bestand = Bildersammlung(ordner: Bilderordner.eigene)
+        guard let bild = bestand.alle().first(where: { $0.name == name }) else {
+            throw Abbruch(lokf("Kein Bild namens „%@“. „mqtttc002 bilder“ zeigt alle.", name))
+        }
+        // Dieselbe Entscheidung wie in der App: ein Einzelbild als Rechtecke,
+        // mehrere als GIF (`Bildsendung.rahmen`).
+        let rahmen = try Bildsendung.rahmen(aus: bild.datei, dauer: optionen.dauer)
+        let json = rahmen.alsJSON()
+        if optionen.trocken {
+            for uhr in gewaehlte {
+                switch uhr.wirksameBetriebsart {
+                case .http: print("POST http://\(uhr.host)/api/custom?name=\(optionen.anzeigename)")
+                case .mqtt: print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
+                }
+            }
+            print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))
+            return
+        }
+        try anAlle(lokf("„%@“ gesendet an „%@“ (%d Byte)", bild.name, optionen.anzeigename,
+                        json.utf8.count)) { anzeigen, uhr in
+            try anzeigen.zeigen(rahmen, auf: optionen.anzeigename)
+            // **Vergessen, nicht merken.** Ein Bild hat keine Regler, die sich
+            // merken liessen; stand auf dem Platz vorher eine Textsendung,
+            // rechnete der Block daraus sonst beim naechsten Start ohne Broker
+            // weiter den alten Text. Dieselbe Entscheidung wie bei einem
+            // gemalten Bild in der App (siehe `AppZustand.senden`).
+            if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
+                _ = Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: platz)
+            }
+        }
+
     case .loeschen(let name):
         if optionen.trocken {
             print(lokf("Würde „%@“ löschen.", name)); return
@@ -256,7 +313,7 @@ func lauf() throws {
             try anzeigen.umschalten(auf: name)
         }
 
-    case .uhren, .icons, .hilfe, .fassung:
+    case .uhren, .icons, .bilder, .hilfe, .fassung:
         break                                    // oben schon abgehandelt
     }
 }

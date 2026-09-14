@@ -205,11 +205,11 @@ die Hilfe, die all das beschreibt.
    **Fehler** in dieser Reihe ist behoben (die Adresse ohne Leerraum, `f4a9159`);
    was hier steht, sind Faehigkeiten, die es nur in der App gibt:
 
-   - **Ein Bild aus dem Bestand schicken.** `Bildsendung.rahmen(aus datei:)`
-     steht im Kern und wird vom Telefon benutzt; ein `mqtttc002 bild <name>`
-     waere im Werkzeug ein Dutzend Zeilen, ein „Bild senden"-Kurzbefehl
-     entsprechend. Sinnvoll vor allem im Werkzeug: Ein Cron-Eintrag, der
-     morgens ein Bild schickt, geht heute nicht.
+   - ~~**Ein Bild aus dem Bestand schicken.**~~ **Erledigt am 14.09.2026**:
+     `mqtttc002 bild <Name>` und `mqtttc002 bilder` im Werkzeug, der
+     Kurzbefehl „Bild an die Uhr schicken" am Telefon. Beide gehen ueber
+     `Bildsendung.rahmen` und vergessen den gemerkten Slotstand, statt ihn zu
+     merken — ein Bild hat keine Regler.
    - **Der Grund, warum eine Uhr nicht am Broker haengt.** `Geraet.brokerstand`
      gibt ihn her; `mqtttc002 uhren` zeigt heute nur Praefix und Betriebsart
      und fragt gar nicht nach. Eine Spalte „Broker" waere eine Zeile Code und

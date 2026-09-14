@@ -164,6 +164,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
                 .ueberschrift("Meldung schicken"),
                 .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
+                .absatz("„Bild an die Uhr schicken“ ist der dritte: Er nimmt den Namen einer 16 × 52-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
                 .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
 
                 .ueberschrift("Die Formatangaben"),

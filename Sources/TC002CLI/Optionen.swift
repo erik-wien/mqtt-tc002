@@ -12,6 +12,11 @@ struct Optionen {
         case umschalten(anzeige: String)
         case uhren
         case icons
+        /// Ein fertiges Bild aus dem Bestand schicken — der Name, unter dem es
+        /// im Editor gesichert wurde.
+        case bild(name: String)
+        /// Den Bilderbestand auflisten, wie `icons` die Icons.
+        case bilder
         case hilfe
         case fassung
     }
@@ -40,6 +45,7 @@ struct Optionen {
         case keineZahl(option: String, wert: String)
         case keineFarbe(String)
         case fehlenderText
+        case fehlenderBildname
 
         var errorDescription: String? {
             switch self {
@@ -53,6 +59,8 @@ struct Optionen {
                 return lokf("„%@“ ist keine Farbe der Form #RRGGBB.", w)
             case .fehlenderText:
                 return lok("Was soll gesendet werden? Text als letztes Wort angeben.")
+            case .fehlenderBildname:
+                return lok("Welches Bild? Den Namen angeben — „mqtttc002 bilder“ zeigt alle.")
             }
         }
     }
@@ -79,6 +87,10 @@ struct Optionen {
             o.befehl = .uhren
         case "icons":
             o.befehl = .icons
+        case "bild", "image":
+            o.befehl = .bild(name: "")
+        case "bilder", "images":
+            o.befehl = .bilder
         case "hilfe", "help", "--help", "-h":
             return Optionen(befehl: .hilfe)
         case "fassung", "version", "--version":
@@ -153,6 +165,9 @@ struct Optionen {
         case .umschalten:
             guard !freierText.isEmpty else { throw Fehler.fehlenderText }
             o.befehl = .umschalten(anzeige: freierText)
+        case .bild:
+            guard !freierText.isEmpty else { throw Fehler.fehlenderBildname }
+            o.befehl = .bild(name: freierText)
         default:
             break
         }

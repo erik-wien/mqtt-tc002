@@ -84,6 +84,13 @@ deutschen Satz zurück, nicht auf einen Schlüsselnamen.
   `StringProtocol`-Überladung, und die schlägt nichts nach. Der Eintrag steht
   in `en.lproj` und wird nie gefunden. Abhilfe: `lok("Senden")` — dann ist die
   Übersetzung schon geschehen, bevor SwiftUI den Wert sieht.
+- **Der App-Intents-Schritt läuft nicht von selbst neu.** Am 14.09.2026 trug
+  ein frisch gebautes Bündel `Metadata.appintents` vom Vortag: Ein neuer
+  Kurzbefehl war übersetzt, im Bündel aber nicht vorhanden — und wäre auf dem
+  Gerät nie aufgetaucht. `** BUILD SUCCEEDED **` sagt dazu nichts. Wer einen
+  `AppIntent` hinzufügt oder umbenennt, wirft danach den DerivedData-Ordner
+  weg und baut neu; nachgesehen wird in
+  `Metadata.appintents/extract.actionsdata`, ob der Typ darin steht.
 - **Was in der Kurzbefehle-App steht, schlüsselt anders.** App Intents führen
   ihre `parameterSummary` im Bündel als `${text} …`, nicht als
   `\(\.$text) …`. Wer den Quelltext abschreibt, legt einen Schlüssel an, den
