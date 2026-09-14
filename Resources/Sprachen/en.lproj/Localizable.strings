@@ -52,6 +52,8 @@
 "Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt." = "What the device itself can do, and what the protocol behind it looks like, is not here but under Help → Device Reference. This help describes only what you click in the app.";
 "Uhr hinzufügen" = "Adding a clock";
 "Beim allerersten Start fragt macOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und die allererste „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt — einfach erlauben und erneut abfragen. Zurücknehmen lässt sich die Freigabe später unter Systemeinstellungen → Datenschutz & Sicherheit → Lokales Netzwerk." = "On the very first launch macOS asks whether the app may reach devices on the local network. Without that permission it reaches neither clock nor broker, and the very first query then fails with a message that points at the wrong cause — simply allow it and query again. The permission can be withdrawn later under System Settings → Privacy & Security → Local Network.";
+"Konfigurieren" = "Configure";
+"Die Web-Oberfläche von %@ im Browser öffnen" = "Open the web interface of %@ in the browser";
 "Abfragen" = "Query";
 "„Abfragen“ holt von der Uhr selbst das Themen-Präfix und die MAC-Adresse und zeigt das Präfix monospaced in der Zeile an. Das Häkchen- oder Warndreieck-Symbol daneben sagt, ob die Uhr gerade beim Broker angemeldet ist — das ist aber nur die Anmeldung, keine Aussage darüber, ob die App auf das richtige Thema schreiben darf (mehr dazu unter „Wenn nichts erscheint“)." = "\"Query\" fetches the topic prefix and the MAC address from the clock itself and shows the prefix monospaced in the row. The checkmark or warning-triangle symbol beside it says whether the clock is currently logged in to the broker — but that is the login and nothing more. It says nothing about whether the app may write to the right topic (more on that under \"When nothing appears\").";
 "Das Präfix lässt sich absichtlich nicht von Hand eintragen: es ist nicht dasselbe wie das in Ulanzi Studio eingestellte, die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt das wirksame Präfix selbst. Hat die Uhr gar kein Präfix eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört." = "The prefix deliberately cannot be entered by hand: it is not the same as the one set in Ulanzi Studio, because the firmware appends the last four digits of the MAC address. \"Query\" determines the effective prefix itself. If the clock has no prefix set at all, \"Query\" says so — instead of building a topic it will never listen to.";
@@ -181,7 +183,6 @@
 "LaMetric-Nummer" = "LaMetric number";
 "Nummer von developer.lametric.com — das Icon landet bei den eigenen." = "Number from developer.lametric.com — the icon lands among your own.";
 "Öffnen" = "Open";
-"Öffnen…" = "Open…";
 "Ersetzen" = "Replace";
 "Wird aufgenommen als %@" = "Taken in as %@";
 "„%@“ liegt dort schon und wird ersetzt." = "\"%@\" is already there and will be replaced.";
@@ -190,9 +191,11 @@
 "Nichts zu holen — der Grundschatz ist vollständig da." = "Nothing to fetch — the starter set is complete.";
 "%@ gelöscht." = "%@ deleted.";
 "s" = "s";
-"Stopp" = "Stop";
 "Abspielen" = "Play";
 "Hole…" = "Fetching…";
+"Pause" = "Pause";
+"Finder …" = "Finder …";
+"Dateien …" = "Files …";
 "Nachladen" = "Fetch";
 "%@ geöffnet (%d Bilder)." = "%@ opened (%d frames).";
 "%@ geöffnet." = "%@ opened.";

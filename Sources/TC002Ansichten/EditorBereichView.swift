@@ -109,6 +109,16 @@ public struct EditorBereichView: View {
         _leinwand = State(initialValue: Self.gelesenerArbeitsstand())
     }
 
+    /// Woher eine Datei geholt wird — das heisst auf beiden Plattformen
+    /// anders, und der Name der App ist der Ort, den die Leute kennen.
+    private static var dateiwahlname: String {
+        #if os(macOS)
+        lok("Finder …")
+        #else
+        lok("Dateien …")
+        #endif
+    }
+
     /// Was der Inspektor zeigt.
     enum Inspektormodus: String, CaseIterable, Identifiable {
         case malen, animation, sichern, zeit
@@ -386,8 +396,21 @@ public struct EditorBereichView: View {
     /// Was unter der Leinwand steht: die Rechteckzahl (nur da, wo sie etwas
     /// besagt — sie zaehlt die Befehle der naechsten Sendung) und die Meldung
     /// der letzten Handlung.
-    @ViewBuilder
     private var fusszeile: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) { fusstexte }
+            Spacer()
+            // **Am Bild, nicht im Reiter.** Wer ein bewegtes Icon aus dem
+            // Bestand oeffnet, will es laufen sehen; der Knopf sass aber im
+            // Reiter Animation neben der Verzoegerung, und dorthin kommt man
+            // nur mit einem Umweg. Er steht deshalb hier, wo das Bild steht —
+            // und nur dann, wenn es ueberhaupt etwas abzuspielen gibt.
+            if leinwand.bilder.count > 1 { abspielknopf }
+        }
+    }
+
+    @ViewBuilder
+    private var fusstexte: some View {
         if groesse.sendbar {
             Text(lokf("%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.",
                       feld.alsDrawBefehle().count))
@@ -592,7 +615,6 @@ public struct EditorBereichView: View {
                         .eingabefeld()
                         .frame(width: 60)
                     Text("s").foregroundStyle(.secondary)
-                    abspielknopf
                 }
             }
         } header: {
@@ -602,26 +624,26 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// **B3.** Kein eigener Knopf „Abspielen" mehr, sondern ein Symbol
-    /// unmittelbar rechts neben dem Sekundenwert — so verlangt. Die Zeit und
-    /// das Probelaufen gehoeren zusammen; zwei Zeilen liessen es wie zweierlei
-    /// aussehen.
+    /// **Play und Pause, nicht Play und Stopp.** Das Anhalten laesst das
+    /// gerade gezeigte Einzelbild stehen — `stoppeAbspielen` bricht nur die
+    /// Schleife ab, es springt nichts an den Anfang zurueck. Das ist eine
+    /// Pause, und `stop.fill` versprach etwas anderes.
     ///
-    /// Der Knopf **schaltet um**, also muss er beides zeigen: `play.fill`,
-    /// solange es steht, `stop.fill`, solange es laeuft. Ein Symbol allein
-    /// sagt der Sprachausgabe nichts — die Beschriftung steht deshalb in
-    /// **beiden** Zustaenden da, und weil sie durch ein Ternaer kommt, ist
-    /// jeder Zweig schon uebersetzt (`lok`), bevor SwiftUI ihn sieht: Ein
-    /// Ternaer mit `String`-Zweig schlaegt selbst nichts mehr nach.
+    /// Rund und gross, unmittelbar unter der Leinwand: So hat es der
+    /// Auftraggeber aufgezeichnet, und so halten es Abspielknoepfe sonst
+    /// ueberall. Ein Symbol allein sagt der Sprachausgabe nichts — die
+    /// Beschriftung steht deshalb in **beiden** Zustaenden da, und weil sie
+    /// durch ein Ternaer kommt, ist jeder Zweig schon uebersetzt (`lok`),
+    /// bevor SwiftUI ihn sieht: Ein Ternaer mit `String`-Zweig schlaegt selbst
+    /// nichts mehr nach.
     private var abspielknopf: some View {
         Button { abspielenUmschalten() } label: {
-            Label(spielAb ? lok("Stopp") : lok("Abspielen"), systemImage: spielAb ? "stop.fill" : "play.fill")
+            Image(systemName: spielAb ? "pause.circle" : "play.circle")
+                .font(.system(size: 30, weight: .light))
         }
-        .namensichtbarAmIPad()
-        .knopfBefehl()
-        .disabled(leinwand.bilder.count < 2)
-        .help(spielAb ? lok("Stopp") : lok("Abspielen"))
-        .accessibilityLabel(Text(spielAb ? lok("Stopp") : lok("Abspielen")))
+        .buttonStyle(.plain)
+        .help(spielAb ? lok("Pause") : lok("Abspielen"))
+        .accessibilityLabel(Text(spielAb ? lok("Pause") : lok("Abspielen")))
     }
 
     @ViewBuilder
@@ -682,25 +704,33 @@ public struct EditorBereichView: View {
         // auf 16×16 stand, fand die LaMetric-Wahl nicht mehr und konnte
         // nicht erraten, warum.
         Section("Hinzufügen") {
-            // Beschriftung links, gefasstes Feld rechts — wie „Zeilen 18" bei
-            // Numbers. Bis 13.09.2026 stand „Nachladen" mit im rechten Teil
-            // der Zeile; Feld und Knopf zusammen waren breiter als die
-            // Inspektorspalte, SwiftUI stapelte sie deshalb **unter** die
-            // Beschriftung, und die stand dann allein da wie eine
-            // Ueberschrift. Der Knopf hat jetzt seine eigene Zeile.
+            // **Eine Zeile fuer eine Handlung.** Feld, Knopf und der Verweis
+            // auf die Gallery standen untereinander und nahmen drei Zeilen
+            // fuer eine einzige Sache. Der Knopf traegt jetzt nur noch sein
+            // Symbol — als Wort waren Feld und Knopf zusammen breiter als die
+            // Inspektorspalte, und SwiftUI stapelte sie deshalb doch wieder
+            // untereinander.
             LabeledContent("LaMetric-Nummer") {
-                TextField("Nummer", text: $lametricNummer)
-                    .labelsHidden()
-                    .eingabefeld()
-                    .frame(width: 90)
-                    .onSubmit { nachladen() }
+                HStack(spacing: 6) {
+                    TextField("Nummer", text: $lametricNummer)
+                        .labelsHidden()
+                        .eingabefeld()
+                        .frame(width: 80)
+                        .onSubmit { nachladen() }
+                    Button { nachladen() } label: {
+                        Image(systemName: laedt ? "ellipsis" : "arrow.down.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .help(laedt ? lok("Hole…") : lok("Nachladen"))
+                    .accessibilityLabel(Text(laedt ? lok("Hole…") : lok("Nachladen")))
+                }
             }
-            Button(laedt ? lok("Hole…") : lok("Nachladen")) { nachladen() }
-                .knopfBefehl()
-                .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
             Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
                 .font(.caption)
-            Button("Öffnen…") { zeigeDateiImport = true }
+            // **Der Knopf sagt, wo gesucht wird.** „Öffnen…" liess offen, ob
+            // der Bestand der App gemeint ist oder das Dateisystem.
+            Button(Self.dateiwahlname) { zeigeDateiImport = true }
                 .knopfBefehl()
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in

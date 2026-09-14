@@ -231,20 +231,27 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     // MARK: - Zwei weitere Symbolknöpfe für sich allein: Abspielsymbol und
     // das geteilte Verschiebekreuz.
 
-    /// Das Abspielsymbol schaltet um (Abspielen/Stopp) und steht für sich
-    /// allein, ohne Beschriftung daneben — ein Symbolknopf braucht das
-    /// Gegenstück.
+    /// **Die eine Ausnahme von der Gegenstück-Regel.** Sonst gilt: Ein
+    /// Symbolknopf, der allein steht, zeigt seinen Namen am iPad sichtbar an
+    /// (`namensichtbarAmIPad()`), weil es dort kein Verweilen gibt. Das
+    /// runde Play/Pause unter der Leinwand trägt ihn ausdrücklich **nicht**:
+    /// Es ist das eine Zeichen, das überall dasselbe bedeutet, und ein Wort
+    /// daneben wäre am Bild nur Lärm — so hält es jede Abspielfläche des
+    /// Systems. Die Sprachausgabe bekommt den Namen trotzdem, über
+    /// `.accessibilityLabel` (siehe `EditorbereichTests`).
     ///
-    /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` beim
-    /// Abspielsymbol entfernt → 1 `.help` gegen 0 Gegenstücke,
-    /// durchgefallen; wieder eingesetzt → grün.
-    func testAbspielsymbolZeigtNamenAuchAmIPad() throws {
+    /// Der Test hält die Ausnahme fest, statt sie zu verschweigen: Wer
+    /// `namensichtbarAmIPad()` hier wieder einsetzt, soll die Entscheidung
+    /// noch einmal treffen und nicht bloß einer Regel folgen.
+    func testAbspielsymbolTraegtSeinenNamenNurFuerDieSprachausgabe() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
         XCTAssertEqual(anzahl(knopf, ".help("), 1,
                        "das Abspielsymbol hat nicht mehr genau einen Einblendtext")
-        XCTAssertEqual(anzahl(knopf, ".namensichtbarAmIPad()"), 1,
-                       "das Abspielsymbol zeigt seinen Namen am iPad nicht mehr sichtbar an")
+        XCTAssertEqual(anzahl(knopf, ".accessibilityLabel("), 1,
+                       "das Abspielsymbol ist für die Sprachausgabe stumm")
+        XCTAssertEqual(anzahl(knopf, ".namensichtbarAmIPad()"), 0,
+                       "das runde Transportzeichen trägt wieder einen sichtbaren Namen — gewollt?")
     }
 
     /// Die vier Pfeile des Verschiebekreuzes teilen sich eine Funktion
@@ -301,10 +308,11 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// übrigen zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 11,
+        XCTAssertEqual(anzahl(text, ".help("), 12,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
                        + "die Werkzeugleiste (3), die beiden Kontextmenü-Zeilen (2 + 2), das "
-                       + "Abspielsymbol (1), das Verschiebekreuz (1), das Nummernfeld (1) und der "
-                       + "Sendeknopf (1) — eine neue Stelle ist keinem der Tests oben bekannt")
+                       + "Abspielsymbol (1), das Verschiebekreuz (1), das Nummernfeld (1), der "
+                       + "Sendeknopf (1) und das Nachladen-Zeichen der LaMetric-Zeile (1) — eine neue "
+                       + "Stelle ist keinem der Tests oben bekannt")
     }
 }

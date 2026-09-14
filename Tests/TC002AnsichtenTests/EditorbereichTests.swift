@@ -286,45 +286,50 @@ final class EditorbereichTests: XCTestCase {
     ///
     /// Nichts davon sieht ein Übersetzer, ein Bau oder ein Blick auf den Mac:
     /// Ein Symbol ohne Beschriftung baut und zeichnet anstandslos.
-    func testDasAbspielsymbolStehtNebenDenSekundenUndNenntBeideZustaende() throws {
+    func testDasAbspielsymbolStehtAnDerLeinwandUndNenntBeideZustaende() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertFalse(text.contains("lok(\"Abspielen\")) { abspielenUmschalten() }"),
-                       "„Abspielen“ steht wieder als eigener beschrifteter Knopf da")
 
-        // Bis zum schließenden `}` der Zeile, nicht bis zum Ende des
-        // Abschnitts: Ein Symbol, das wieder eine eigene Zeile darunter
-        // bekommt, stünde sonst immer noch „im Abschnitt“ und fiele nicht auf.
-        let zeile = ausschnitt(text, von: "LabeledContent(\"Verzögerung\")", bis: "\n            }")
-        XCTAssertTrue(zeile.contains("Text(\"s\")"),
+        // **Am Bild, nicht im Reiter** (14.09.2026). Bis dahin sass das
+        // Symbol neben dem Sekundenwert im Reiter „Animation"; wer ein
+        // bewegtes Icon aus dem Bestand oeffnete, kam nur ueber einen Umweg
+        // daran. Es steht jetzt unter der Leinwand — und nur dann, wenn es
+        // ueberhaupt etwas abzuspielen gibt.
+        let fuss = ausschnitt(text, von: "private var fusszeile", bis: "private var fusstexte")
+        XCTAssertTrue(fuss.contains("abspielknopf"),
+                      "das Wiedergabesymbol steht nicht mehr unter der Leinwand")
+        XCTAssertTrue(fuss.contains("leinwand.bilder.count > 1"),
+                      "das Symbol steht auch bei einem einzigen Einzelbild da — dann ist es ein Knopf "
+                      + "ohne Wirkung statt einer Auskunft darueber, dass sich hier etwas bewegt")
+
+        let sekunden = ausschnitt(text, von: "LabeledContent(\"Verzögerung\")", bis: "\n            }")
+        XCTAssertTrue(sekunden.contains("Text(\"s\")"),
                       "die Sekundenzeile sieht anders aus — dann prüft dieser Test die falsche Stelle")
-        XCTAssertTrue(zeile.contains("abspielknopf"),
-                      "das Wiedergabesymbol steht nicht mehr unmittelbar neben dem Sekundenwert, "
-                      + "sondern wieder in einer Zeile für sich")
+        XCTAssertFalse(sekunden.contains("abspielknopf"),
+                       "das Symbol steht wieder **zusätzlich** neben dem Sekundenwert — zwei Orte für "
+                       + "dieselbe Handlung")
 
         let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
-        for zustand in ["\"play.fill\"", "\"stop.fill\""] {
+        // Play und **Pause**, nicht Play und Stopp: `stoppeAbspielen` bricht
+        // nur die Schleife ab, das gezeigte Einzelbild bleibt stehen. Ein
+        // `stop.fill` verspraeche einen Ruecksprung an den Anfang.
+        for zustand in ["\"play.circle\"", "\"pause.circle\""] {
             XCTAssertTrue(knopf.contains(zustand),
                           "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen")
         }
+        XCTAssertFalse(knopf.contains("stop.fill"),
+                       "das Symbol verspricht wieder einen Stopp, hält aber nur an")
         XCTAssertTrue(knopf.contains(".accessibilityLabel("),
                       "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
-        // Seit 13.09.2026 wieder mit `.help(...)`: Ein reiner Symbolknopf ohne
-        // Einblendtext ist am Mac ein Verstoß gegen die HIG. Am iPad zeigt
-        // `namensichtbarAmIPad()` denselben Namen sichtbar an, statt ihn im
-        // unsichtbaren Verweilen zu verstecken — beides, nicht entweder-oder.
-        // Beide Zustände stehen deshalb dreifach da: Beschriftung, Einblendtext,
-        // Sprachausgabe.
-        for wort in ["lok(\"Stopp\")", "lok(\"Abspielen\")"] {
-            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 3,
-                           "\(wort) steht nicht in Beschriftung, Einblendtext **und** Sprachausgabe — "
+        // Zweimal, nicht dreimal: Der Knopf traegt sein Symbol ohne sichtbaren
+        // Namen (siehe `EinblendtextGegenstueckTests`), es bleiben
+        // Einblendtext und Sprachausgabe.
+        for wort in ["lok(\"Pause\")", "lok(\"Abspielen\")"] {
+            XCTAssertEqual(knopf.components(separatedBy: wort).count - 1, 2,
+                           "\(wort) steht nicht in Einblendtext **und** Sprachausgabe — "
                            + "oder ein Zweig ist ohne `lok` geschrieben und übersetzt damit nicht")
         }
         XCTAssertTrue(knopf.contains(".help("),
                       "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
-        XCTAssertTrue(knopf.contains(".namensichtbarAmIPad()"),
-                      "das Symbol zeigt seinen Namen am iPad nicht mehr sichtbar an")
-        XCTAssertTrue(knopf.contains("leinwand.bilder.count < 2"),
-                      "das Symbol ist bei einem einzigen Einzelbild nicht mehr gesperrt")
     }
 
     /// **Ein geladenes Bild will man auch sehen.** Aus einer Datei wie von
