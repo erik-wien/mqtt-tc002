@@ -33,53 +33,15 @@ if [ -z "$APP" ] || [ ! -d "$APP" ]; then
 fi
 
 if [ -d "$APP/Contents" ]; then
-    # macOS-Layout: TC002Ansichten bringt sein eigenes .bundle mit
-    # (`<Paket>_TC002Ansichten.bundle`). SwiftPM kopiert dessen Bildkatalog
-    # ueber die Kommandozeile nur roh — erst `build.sh` uebersetzt ihn mit
-    # `actool` zu Assets.car. Fehlt das, findet `Bundle.module` zur Laufzeit
-    # kein Bild, und die Vorschau zeigt einen leeren Rahmen.
+    # macOS-Layout: Die Pflichtstuecke liegen in `Contents/Resources`.
+    #
+    # Hier stand bis zum 14.09.2026 die Pruefung eines Ressourcenbuendels mit
+    # `Assets.car` — samt einem echten Ladeversuch ueber AppKit, weil
+    # `assetutil` ein Bild findet, das `Bundle(path:).image(forResource:)`
+    # dann doch nicht liefert. Das war noetig, solange die Geraetefront eine
+    # SVG im Bildkatalog war. Sie wird gezeichnet, der Katalog ist weg, und
+    # mit ihm diese Pruefung.
     RESSOURCEN="$APP/Contents/Resources"
-    CAR=""
-    for b in "$RESSOURCEN"/*_TC002Ansichten.bundle; do
-        [ -f "$b/Assets.car" ] && CAR="$b/Assets.car"
-    done
-    if [ -z "$CAR" ]; then
-        echo "fehlt   *_TC002Ansichten.bundle/Assets.car unter $RESSOURCEN" >&2
-        echo "Buendel unvollstaendig: $APP" >&2
-        exit 1
-    fi
-    # assetutil liest nur die Katalogmetadaten und sagt nichts darueber, ob
-    # das Bild zur Laufzeit tatsaechlich ladbar ist. SwiftPMs nativer Bauweg
-    # legt das Ressourcenbuendel ohne Info.plist an (build.sh legt seit der
-    # GeraeteRahmen-Behebung eine nach), und ohne CFBundleIdentifier kann ein
-    # Buendel seinen Bildkatalog bei CoreUI nicht registrieren: assetutil
-    # findet "GeraeteRahmen" trotzdem, `Bundle(path:).image(forResource:)`
-    # liefert dann aber still nil. Genau das hat diese Pruefung „Buendel
-    # vollstaendig" gemeldet, waehrend die App am Mac keinen Rahmen zeigte —
-    # deshalb hier der tatsaechliche Ladeversuch, wie AppKit ihn zur
-    # Laufzeit auch macht.
-    BUENDEL_PFAD="$(dirname "$CAR")"
-    if ! ERGEBNIS="$(swift - "$BUENDEL_PFAD" <<'SWIFT' 2>&1
-import AppKit
-let pfad = CommandLine.arguments[1]
-guard let buendel = Bundle(path: pfad) else {
-    print("Bundle(path:) fehlgeschlagen fuer \(pfad)")
-    exit(1)
-}
-guard let bild = buendel.image(forResource: "GeraeteRahmen") else {
-    print("image(forResource: \"GeraeteRahmen\") liefert nil in \(pfad)")
-    exit(1)
-}
-print("geladen, Groesse \(bild.size)")
-SWIFT
-)"; then
-        echo "fehlt   Bild \"GeraeteRahmen\" nicht ladbar: $ERGEBNIS" >&2
-        echo "Buendel unvollstaendig: $APP" >&2
-        exit 1
-    fi
-    # Uebersetzungen und die beiden Nachschlagewerke. Fehlt en.lproj, laeuft
-    # die App weiter und bleibt still deutsch; fehlt ein Dokument, zeigt das
-    # Fenster einen Fehlerschirm. Beides verdeckt ein gruener Bau.
     mac_fehlt=0
     for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md \
                    awtrix-ng-protokoll.md awtrix-ng-protocol.md LICENSE \
@@ -94,7 +56,7 @@ SWIFT
         exit 1
     fi
 
-    echo "Buendel vollstaendig: $APP ($BUENDEL_PFAD: $ERGEBNIS)"
+    echo "Buendel vollstaendig: $APP"
     exit 0
 fi
 

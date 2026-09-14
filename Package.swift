@@ -19,8 +19,14 @@ let package = Package(
         .target(name: "TC002Core", swiftSettings: [.swiftLanguageMode(.v5)]),
         .target(name: "TC002Modell", dependencies: ["TC002Core"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
+        // **Ohne Ressourcen.** Bis zum 14.09.2026 lag hier ein Bildkatalog mit
+        // einer einzigen SVG — der Geraetefront der TC002. Sie wird seit
+        // `97f22ea` gezeichnet statt eingesetzt, und mit ihr ist die ganze
+        // Kette gefallen: `Bilder.swift` (das Ressourcenbuendel suchen), der
+        // `actool`-Schritt in `build.sh`, die Info.plist-Nachreichung und die
+        // Assets.car-Pflicht in `scripts/buendel-pruefen.sh`. Rund sechzig
+        // Zeilen Baumaschinerie fuer ein Bild, das niemand mehr laedt.
         .target(name: "TC002Ansichten", dependencies: ["TC002Core", "TC002Modell"],
-                resources: [.process("Resources")],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
         .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell", "TC002Ansichten"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),

@@ -42,10 +42,23 @@ struct IconAuswahlView: View {
                     if let icon = gewaehltesIcon {
                         Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
                                    kante: 16 / Double(icon.kante))
+                            // Das Bildchen gibt **nicht** nach. Ohne das
+                            // schrumpft es, sobald der Name mehr Platz will —
+                            // und gerade das Bildchen ist die Auskunft, welches
+                            // Icon gewaehlt ist. Der Name ist die Zugabe.
+                            .layoutPriority(1)
+                        // **Eine Zeile, abgeschnitten.** „Moon cloud soleil
+                        // nuage" brach im schmalen Inspektor auf vier Zeilen um
+                        // und drueckte das Bildchen zu einem Fleck zusammen.
+                        // Ein Name, der nicht ganz passt, ist als Anfang immer
+                        // noch lesbar; ein Icon, das zum Fleck wird, ist es
+                        // nicht mehr.
                         Text(icon.name)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     } else {
                         Image(systemName: "photo")
-                        Text("Icon wählen…")
+                        Text("Icon wählen…").lineLimit(1)
                     }
                 }
             }
