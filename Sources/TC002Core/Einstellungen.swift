@@ -53,6 +53,22 @@ public extension Array where Element == Uhr {
     func nachAdresse() -> [Uhr] {
         sorted { $0.host.localizedStandardCompare($1.host) == .orderedAscending }
     }
+
+    /// Adressen ohne Leerraum am Rand — **beim Lesen**, nicht erst beim Setzen.
+    ///
+    /// `Uhr.host` trimmt in seinem `didSet`, und Beobachter laufen beim
+    /// Decodieren nicht: Was eine aeltere Fassung krumm abgelegt hat, bliebe
+    /// krumm. Die App heilt es beim Start — das Werkzeug und die Kurzbefehle
+    /// lesen aber dieselbe Datei, und zwar moeglicherweise, bevor die App das
+    /// naechste Mal laeuft. Deshalb hier, an der Stelle, die alle drei
+    /// benutzen.
+    func mitSauberenAdressen() -> [Uhr] {
+        map { uhr in
+            var sauber = uhr
+            sauber.host = uhr.host.trimmingCharacters(in: .whitespacesAndNewlines)
+            return sauber
+        }
+    }
 }
 
 public enum Betriebsart: String, Codable, Sendable, CaseIterable {
@@ -339,8 +355,9 @@ public struct Einstellungen: Sendable {
     /// Liest die Einstellungen der App.
     public static func gelesen(bereich: String = kennung) -> Einstellungen {
         let d = ablage(bereich)
-        let uhren = (try? JSONDecoder().decode([Uhr].self,
-                        from: d?.data(forKey: "uhren") ?? Data())) ?? []
+        let uhren = ((try? JSONDecoder().decode([Uhr].self,
+                        from: d?.data(forKey: "uhren") ?? Data())) ?? [])
+            .mitSauberenAdressen()
         let ziele = (try? JSONDecoder().decode(Set<UUID>.self,
                         from: d?.data(forKey: "zielIDs") ?? Data())) ?? []
         let benutzer = d?.string(forKey: "benutzer") ?? Vorgabe.benutzer

@@ -48,3 +48,33 @@ final class AdresseTests: XCTestCase {
         XCTAssertFalse(Geraet.adresseTaugt("/uhr"))
     }
 }
+
+/// **Auch das Werkzeug und die Kurzbefehle lesen diese Datei.** Sie gehen
+/// nicht ueber `AppZustand`, sondern ueber `Einstellungen.gelesen()` — und
+/// zwar moeglicherweise, bevor die App das naechste Mal laeuft und die Adresse
+/// von selbst heilt.
+final class GelesenAdresseTests: XCTestCase {
+    func testDerLeserTrimmtDieAdressen() {
+        let krumm = [Uhr(name: "a", host: " 10.0.0.5 "), Uhr(name: "b", host: "10.0.0.6")]
+        XCTAssertEqual(krumm.mitSauberenAdressen().map(\.host), ["10.0.0.5", "10.0.0.6"])
+    }
+
+    /// **Und zwar wirklich beim Lesen**, nicht nur als Funktion, die niemand
+    /// aufruft. Geprueft wird durch `Einstellungen.gelesen` hindurch, mit einem
+    /// eigenen Ablagebereich — die Einrichtung des Auftraggebers bleibt
+    /// unberuehrt.
+    ///
+    /// **Mutationsprobe** (14.09.2026): `.mitSauberenAdressen()` in `gelesen`
+    /// entfernt → dieser Test faellt; wieder eingesetzt → gruen.
+    func testEinstellungenGelesenTrimmtDieAdressen() throws {
+        let bereich = "cloud.eriks.mqtt-tc002.test." + UUID().uuidString
+        let ablage = try XCTUnwrap(UserDefaults(suiteName: bereich))
+        defer { UserDefaults().removePersistentDomain(forName: bereich) }
+
+        let krumm = [Uhr(name: "Probe", host: " 10.0.0.5 ")]
+        ablage.set(try JSONEncoder().encode(krumm), forKey: "uhren")
+
+        let gelesen = Einstellungen.gelesen(bereich: bereich)
+        XCTAssertEqual(gelesen.uhren.map(\.host), ["10.0.0.5"])
+    }
+}

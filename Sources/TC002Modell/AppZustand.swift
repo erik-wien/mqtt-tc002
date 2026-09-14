@@ -212,10 +212,7 @@ public final class AppZustand {
         // ihr Fehler faellt erst beim Senden auf. Hier und nicht gleich beim
         // Decodieren: Dort sind noch nicht alle Eigenschaften gesetzt, und
         // `uhren[i]` ist schon ein Zugriff auf `self`.
-        for i in uhren.indices {
-            uhren[i].host = uhren[i].host.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        uhren = uhren.nachAdresse()
+        uhren = uhren.mitSauberenAdressen().nachAdresse()
         if aktiveID == nil { aktiveID = uhren.first?.id }
         // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
         // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren
