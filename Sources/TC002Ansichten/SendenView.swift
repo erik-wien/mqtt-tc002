@@ -648,8 +648,16 @@ public struct SendenView: View {
                 // Beschriftung links, die beiden Waehler stehen rechts
                 // nebeneinander; der Groessenwaehler bekommt nur so viel
                 // Breite, wie „16 px" braucht.
-                LabeledContent("Schrift") {
-                    HStack(spacing: 8) {
+                // **Ohne Beschriftung links.** Der Abschnitt heisst schon
+                // „Schrift"; eine Zeile gleichen Namens darunter sagt nichts
+                // und nimmt die halbe Breite. Was hier Platz braucht, ist der
+                // Schriftname — „Silkscreen" stand als „Silk…reen" da, waehrend
+                // links „Schrift" stand.
+                //
+                // Ohne `LabeledContent` faellt auch die Regel gegen umwickelte
+                // Waehler nicht mehr ins Gewicht: Es gibt keine Umwicklung
+                // mehr, nur zwei Waehler nebeneinander in einer Zeile.
+                HStack(spacing: 8) {
                         Picker("Schriftart", selection: $schrift) {
                             ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
                             // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
@@ -661,6 +669,9 @@ public struct SendenView: View {
                             }
                         }
                         .labelsHidden()
+                        // Nimmt, was uebrig ist — der Name ist das Lange von
+                        // beiden.
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .disabled(weg == .text)
                         .gattungssperre(.schriftart, gattung,
                             sonst: weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
@@ -680,7 +691,6 @@ public struct SendenView: View {
                             sonst: eigenesRaster
                               ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
                               : lok("Schriftgröße"))
-                    }
                 }
 
                 // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
