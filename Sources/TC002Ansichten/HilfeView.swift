@@ -118,7 +118,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.papierkorb
                 + [
-                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“, nur dort, wo man den Platz gerade in der Hand hat. Im Bereich „Editor“ sitzt er ebenso in der Sendezeile neben den fünf Blöcken. Ihn und „Alles löschen“ im Inspektor nicht verwechseln: „Alles löschen“ leert die Leinwand, der Papierkorb löscht die Anzeige auf der Uhr."),
+                    .absatz("Dasselbe tut unter „Verlauf“ der Knopf „Löschen“. Im Bereich „Editor“ tragen die fünf Blöcke dasselbe ⊗. Es und „Alles löschen“ im Inspektor nicht verwechseln: „Alles löschen“ leert die Leinwand, das ⊗ löscht die Anzeige auf der Uhr."),
                 ]
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen
@@ -192,7 +192,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("„Aus“ und „schwarz gemalt“ sind zweierlei, auch nach dem Sichern: Ein ausgeschaltetes Pixel wird im GIF durchsichtig abgelegt, ein schwarz gemaltes deckend schwarz. Auf der Uhr sieht beides gleich aus, weil ihr Grund schwarz ist — im Editor kommt ein wieder geöffnetes Bild aber so zurück, wie es gemalt war. Dass „aus“ durchsichtig bleibt, ist nebenbei die Bedingung dafür, dass die Laufschrift auf der Uhr sauber läuft (Gerätereferenz, §4.2a)."),
                     .ueberschrift("Senden"),
                     .absatz("Die Sendezeile unter der Leinwand gibt es nur bei 16×52 — ein Icon ist für sich keine Anzeige. Die fünf Slot-Blöcke stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App ein gemaltes Bild nicht, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war."),
-                    .absatz("Der Papierkorb daneben löscht die Anzeige auf der Uhr — nicht die Leinwand. „Dauer (Sek.)“, die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist."),
+                    .absatz("Das ⊗ an einem belegten Block löscht die Anzeige auf der Uhr — nicht die Leinwand. Die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist; die Dauer steht im Zeit-Reiter des Inspektors."),
                     .absatz("Der Hinweis unter der Leinwand zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Ein einzelnes Bild geht so hinaus — klein und exakt. Mehrere gehen als ein animiertes GIF, denn Rechtecke kennen keine Zeit; was dabei an Nutzlast zusammenkommt, gilt wie bei der Laufschrift unter „Senden“ — ein langes Laufbild wird groß, und wo die Grenze der Uhr liegt, weiß niemand."),
                 ]
         case .anzeigen:

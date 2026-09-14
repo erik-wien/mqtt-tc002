@@ -364,9 +364,22 @@ struct SendeniOS: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                // **Dieselbe Entscheidung wie am Schreibtisch**: Das Loeschen
+                // gehoert an den Block, den es betrifft, nicht als sechster
+                // Knopf daneben. Der Papierkorb bezog sich auf den gerade
+                // *gewaehlten* Platz — man musste ihn erst treffen — und nahm
+                // in einer Zeile, die auf 44 Punkte je Platz gerechnet ist,
+                // einen ganzen weiteren Platz ein.
+                //
+                // Das ⊗ liegt **ausserhalb** des Blockknopfes: Innen waere es
+                // Teil von dessen Beschriftung und loeste beim Tippen die
+                // Platzwahl aus statt zu loeschen.
+                .overlay(alignment: .topTrailing) {
+                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
+                                         belegt: belegtePlaetze.contains(i))
+                        .offset(x: 6, y: -6)
+                }
             }
-            MeldungLoeschenKnopf(zustand: zustand, platz: platz,
-                                 belegt: belegtePlaetze.contains(platz))
         }
     }
 
@@ -767,23 +780,42 @@ private struct MeldungLoeschenKnopf: View {
 
     @State private var laeuft = false
 
+    private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
+
     var body: some View {
-        // Rot getoent wie am Mac, aber ohne Fassung: Die Breite dieser Zeile
-        // ist auf 44 Punkte je Platz gerechnet (siehe `blockZeile`), und ein
-        // `.bordered` legte um jedes davon noch seine eigene Polsterung.
-        Button(role: .destructive) {
-            laeuft = true
-            let name = Meldungsplatz.name(fuer: platz)
-            Task { await zustand.loeschen(name); laeuft = false }
-        } label: {
-            Image(systemName: "trash")
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
+        // **Nur an belegten Plaetzen.** Ein leerer Platz hat nichts zu
+        // loeschen; ein abgeblendetes ⊗ an vier von fuenf Bloecken waere
+        // Unruhe ohne Aussage.
+        if belegt {
+            Button(role: .destructive) {
+                laeuft = true
+                let name = Meldungsplatz.name(fuer: platz)
+                Task { await zustand.loeschen(name); laeuft = false }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .red)
+                    .font(.system(size: 15))
+                    // Polsterung statt Symbolgroesse: Das Zeichen bleibt
+                    // klein, die Trefferflaeche waechst. 44 Punkte wie bei
+                    // den uebrigen Symbolknoepfen dieser Datei waeren hier
+                    // groesser als der Block selbst.
+                    .padding(6)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(laeuft || zustand.ziele().isEmpty)
+            .accessibilityLabel(Text(beschriftung))
+            // Das Gegenstueck zum fehlenden sichtbaren Namen: Der Knopf
+            // wiederholt sich fuenfmal, ein Langdruck nennt ihn beim Namen.
+            .contextMenu {
+                Button(role: .destructive) {
+                    laeuft = true
+                    let name = Meldungsplatz.name(fuer: platz)
+                    Task { await zustand.loeschen(name); laeuft = false }
+                } label: { Text(beschriftung) }
+            }
         }
-        .buttonStyle(.automatic)
-        .tint(.red)
-        .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
-        .accessibilityLabel(Text(lokf("Slot %d auf der Uhr löschen", platz)))
     }
 }
 

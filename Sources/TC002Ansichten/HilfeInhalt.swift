@@ -176,10 +176,13 @@ public enum HilfeInhalt {
         .absatz("Egal wie viele Plätze belegt sind: Eine gerade angezeigte, stehende Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder ersetzt wird — deshalb ist „auf denselben Platz senden“ oft das, was man eigentlich will."),
     ]
 
-    /// Der Papierkorb neben den fuenf Bloecken. Steht auf beiden Geraeten an
-    /// derselben Stelle und ist bei leerem Platz gesperrt.
+    /// Das ⊗ an den fuenf Bloecken. Steht auf beiden Geraeten an derselben
+    /// Stelle und erscheint nur an belegten Plaetzen.
+    ///
+    /// Bis zum 14.09.2026 war es **ein** Papierkorb neben der Reihe, der sich
+    /// auf den gerade gewaehlten Platz bezog — man musste ihn erst treffen.
     public static let papierkorb: [Hilfebaustein] = [
-        .absatz("Der Papierkorb rechts neben der Platzwahl löscht den gewählten Platz auf den gewählten Uhren. Er ist gesperrt, solange der Platz leer ist."),
+        .absatz("Das ⊗ in der Ecke eines Blocks löscht genau diesen Platz auf den gewählten Uhren. Es erscheint nur an belegten Plätzen — ein leerer hat nichts zu löschen. Ein langer Druck darauf nennt den Platz beim Namen, bevor man ihn trifft."),
     ]
 
     /// Die eigene Standzeit einer Anzeige. Das Feld heisst am Mac „Dauer (Sek.)“
