@@ -67,6 +67,18 @@ public struct SendenView: View {
     /// beim ersten Start ausgesehen, als waeren sie weg.
     @State private var zeigeInspektor = true
 
+    /// Welcher Reiter im Inspektor steht. **Neu am 14.09.2026**: Bis dahin gab
+    /// es hier keine Reiter, sondern einen durchgehenden Inspektor. „Wie lange
+    /// ist etwas zu sehen" lag deshalb an drei Stellen verstreut — Dauer in der
+    /// Sendezeile, Seitenwechsel und Scrolltempo unter „Einstellungen". Jetzt
+    /// steht das zusammen, und zwar an derselben Stelle wie im Editor.
+    @State private var inspektorreiter = Inspektorreiter.format
+
+    enum Inspektorreiter: String, CaseIterable, Identifiable {
+        case format, zeit
+        var id: String { rawValue }
+    }
+
     public init(zustand: AppZustand) {
         self.zustand = zustand
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
@@ -397,25 +409,11 @@ public struct SendenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            // Breit: Bloecke und Dauer nebeneinander. Schmal: die Dauer
-            // rueckt darunter. Die fuenf Bloecke geben nicht nach — sie
-            // bringen ihre 44-Punkt-Trefferflaeche mit —, und mit Papierkorb
-            // und Dauerfeld kommt die Zeile auf rund 420 Punkte Mindestbreite.
-            // Der zweite Zweig ist damit ein Ueberlaufschutz, kein zweites
-            // Aussehen: Er kommt erst, wenn der erste nicht mehr passt. Am Mac
-            // ist das Fenster mindestens 1120 breit — dort kommt er nie, und
-            // nichts sieht anders aus als vorher.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 20) {
-                    slotZeile
-                    dauerFeld
-                    Spacer()
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    slotZeile
-                    dauerFeld
-                }
-            }
+            // Nur noch die fuenf Bloecke: Die Dauer steht seit dem 14.09.2026
+            // im Zeit-Reiter des Inspektors, bei Seitenwechsel und
+            // Scrolltempo. Damit faellt auch der `ViewThatFits` weg, der hier
+            // den Ueberlauf einer ueberladenen Zeile auffangen musste.
+            slotZeile
 
             // Breit: Feld und Knopf in einer Zeile. Schmal: der Knopf rueckt
             // unter das Feld, rechts — damit die Mitte weiter nachgeben kann,
@@ -542,6 +540,37 @@ public struct SendenView: View {
     /// Scrollt bei Bedarf ebenfalls von selbst, ein eigenes `ScrollView` bräuchte
     /// es dafuer nicht mehr.
     private var inspektor: some View {
+        VStack(spacing: 0) {
+            // **Symbole statt Woerter**, dieselbe Ueberlegung wie im Editor:
+            // Die Namen stehen als `accessibilityLabel` am Segment, so wie es
+            // die Ausrichtungswaehler weiter unten seit je halten.
+            Picker("Inspektor", selection: $inspektorreiter) {
+                Image(systemName: "textformat").tag(Inspektorreiter.format)
+                    .accessibilityLabel(Text("Format"))
+                Image(systemName: "clock").tag(Inspektorreiter.zeit)
+                    .accessibilityLabel(Text("Zeit"))
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            Divider()
+            inspektorinhalt
+        }
+    }
+
+    @ViewBuilder
+    private var inspektorinhalt: some View {
+        switch inspektorreiter {
+        case .zeit:
+            Form { Zeitabschnitte(zustand: zustand, dauerText: $dauerText) }
+                .formStyle(.grouped)
+        case .format:
+            formatinhalt
+        }
+    }
+
+    private var formatinhalt: some View {
         Form {
             // Segmentschalter ueber die volle Breite, ohne Beschriftung links:
             // Der Abschnittstitel sagt schon, worum es geht. Eine Beschriftung
@@ -584,33 +613,47 @@ public struct SendenView: View {
                 // Zeile selbst — Beschriftung links, Wert im grauen Kaestchen
                 // mit Doppelpfeil rechts. Die Umwicklung nahm ihm genau das
                 // und liess unter iPadOS blanken Text mit Doppelpfeil uebrig.
-                Picker("Schriftart", selection: $schrift) {
-                    ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
-                    // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
-                    // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
-                    // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
-                    if !Self.schriftarten.contains(schrift) {
-                        Divider()
-                        Text(schrift).tag(schrift)
-                    }
-                }
-                .disabled(weg == .text)
-                .gattungssperre(.schriftart, gattung,
-                    sonst: weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
-                                        : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
+                // **Schrift und Groesse in einer Zeile.** Sie gehoeren
+                // zusammen — welche Groessen es gibt, haengt an der Schrift
+                // (`angeboteneGroessen`) —, und zwei volle Zeilen fuer eine
+                // Entscheidung sind eine zu viel. `LabeledContent` traegt die
+                // Beschriftung links, die beiden Waehler stehen rechts
+                // nebeneinander; der Groessenwaehler bekommt nur so viel
+                // Breite, wie „16 px" braucht.
+                LabeledContent("Schrift") {
+                    HStack(spacing: 8) {
+                        Picker("Schriftart", selection: $schrift) {
+                            ForEach(Self.schriftarten, id: \.self) { Text($0).tag($0) }
+                            // Eine frueher gewaehlte, seither aus der Auswahl gefallene Schrift
+                            // bleibt gesetzt und waehlbar, bis man selbst etwas anderes waehlt —
+                            // abgesetzt durch den Trenner, statt sie kommentarlos zu verwerfen.
+                            if !Self.schriftarten.contains(schrift) {
+                                Divider()
+                                Text(schrift).tag(schrift)
+                            }
+                        }
+                        .labelsHidden()
+                        .disabled(weg == .text)
+                        .gattungssperre(.schriftart, gattung,
+                            sonst: weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
+                                                : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
-                // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
-                // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
-                // laesst sich als Schrittweite nicht ausdruecken.
-                Picker("Größe", selection: $groesse) {
-                    ForEach(angeboteneGroessen, id: \.self) { g in
-                        Text(lokf("%d px", Int(g))).tag(g)
+                        // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
+                        // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
+                        // laesst sich als Schrittweite nicht ausdruecken.
+                        Picker("Größe", selection: $groesse) {
+                            ForEach(angeboteneGroessen, id: \.self) { g in
+                                Text(lokf("%d px", Int(g))).tag(g)
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        .gattungssperre(.groesse, gattung,
+                            sonst: eigenesRaster
+                              ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
+                              : lok("Schriftgröße"))
                     }
                 }
-                .gattungssperre(.groesse, gattung,
-                    sonst: eigenesRaster
-                      ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
-                      : lok("Schriftgröße"))
 
                 // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
                 // samt Textfarbe bei Pages — nicht je eine volle Zeile fuer ein
@@ -715,9 +758,17 @@ public struct SendenView: View {
                               gewaehlt: platz == i)
                 }
                 .buttonStyle(.plain)
+                // Das ⊗ liegt **ueber** dem Block und ausserhalb seines
+                // Knopfes: Innen waere es Teil von dessen Beschriftung und
+                // loeste beim Tippen die Platzwahl aus statt zu loeschen.
+                // Etwas nach aussen versetzt, damit es die Vorschau im Block
+                // nicht verdeckt.
+                .overlay(alignment: .topTrailing) {
+                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
+                                         belegt: belegtePlaetze.contains(i))
+                        .offset(x: 8, y: -8)
+                }
             }
-            MeldungLoeschenKnopf(zustand: zustand, platz: platz,
-                                 belegt: belegtePlaetze.contains(platz))
         }
     }
 
@@ -742,19 +793,6 @@ public struct SendenView: View {
         TextField("Text", text: $text)
             .font(.title2)
             .eingabefeld()
-    }
-
-    /// Beschriftung links, Wert rechts, Einheit dahinter — nicht eine
-    /// Ueberschrift ueber dem Feld.
-    private var dauerFeld: some View {
-        LabeledContent("Dauer") {
-            HStack(spacing: 4) {
-                TextField("Uhr entscheidet", text: $dauerText)
-                    .eingabefeld()
-                    .frame(width: 90)
-                Text("s").foregroundStyle(.secondary)
-            }
-        }
     }
 
     /// Die **eine** Haupthandlung dieser Ansicht. Gesperrt bleibt sie
@@ -800,13 +838,25 @@ public struct SendenView: View {
     }
 }
 
-/// Löscht den gewählten Meldungsplatz auf den gewählten Uhren. Er steht neben
-/// der Blockreihe, weil man den Platz dort gerade in der Hand hat — unter
-/// „Verlauf" geht es weiterhin auch, nur eben nicht dort, wo man arbeitet.
+/// Löscht **diesen** Meldungsplatz auf den gewählten Uhren — ein ⊗ in der Ecke
+/// des Blocks, den es betrifft.
 ///
-/// Symbol und Einblendtext sagen ausdrücklich, dass es die Uhr betrifft: Im
-/// Malbereich gibt es oben in der Werkzeugzeile „Leeren", und das meint das
-/// Bild, nicht das Gerät.
+/// Bis zum 14.09.2026 stand stattdessen **eine** breite rote Schaltfläche
+/// neben der Blockreihe, beschriftet „Slot 3 auf der Uhr löschen". Sie war
+/// aus zwei Gründen schlecht: Sie bezog sich auf den gerade *gewählten* Platz,
+/// den man erst treffen musste, und sie nahm in einer ohnehin engen Zeile mehr
+/// Platz ein als die fünf Blöcke zusammen. Ein Zeichen an dem Block, den es
+/// angeht, braucht keine Beschriftung und keine Erklärung, welcher gemeint
+/// ist.
+///
+/// **Nur an belegten Plätzen.** Ein leerer Platz hat nichts zu löschen; ein
+/// abgeblendetes ⊗ an vier von fünf Blöcken wäre Unruhe ohne Aussage.
+///
+/// Das Gegenstück zum Einblendtext ist hier ein **Kontextmenü**, nicht
+/// `namensichtbarAmIPad()`: Der Knopf wiederholt sich fünfmal, und fünf
+/// ausgeschriebene Namen in der Blockreihe wären mehr Text als Bild — dieselbe
+/// Überlegung wie beim Papierkorb im Icon-Raster
+/// (`EinblendtextGegenstueckTests`).
 struct MeldungLoeschenKnopf: View {
     @Bindable var zustand: AppZustand
     let platz: Int
@@ -816,17 +866,33 @@ struct MeldungLoeschenKnopf: View {
 
     @State private var laeuft = false
 
+    private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
+
     var body: some View {
-        Button(role: .destructive) {
-            laeuft = true
-            let name = Meldungsplatz.name(fuer: platz)
-            Task { await zustand.loeschen(name); laeuft = false }
-        } label: {
-            Label(lokf("Slot %d auf der Uhr löschen", platz), systemImage: "trash")
+        if belegt {
+            Button(role: .destructive, action: loeschen) {
+                Image(systemName: "xmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .red)
+                    .font(.system(size: 15))
+                    // Polsterung, nicht Symbolgröße: Das Zeichen bleibt klein,
+                    // die Trefferfläche wächst.
+                    .padding(6)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(laeuft || zustand.ziele().isEmpty)
+            .help(beschriftung)
+            .accessibilityLabel(Text(beschriftung))
+            .contextMenu {
+                Button(role: .destructive, action: loeschen) { Text(beschriftung) }
+            }
         }
-        .namensichtbarAmIPad()
-        .knopfZerstoerend()
-        .disabled(!belegt || laeuft || zustand.ziele().isEmpty)
-        .help(lokf("Slot %d auf der Uhr löschen", platz))
+    }
+
+    private func loeschen() {
+        laeuft = true
+        let name = Meldungsplatz.name(fuer: platz)
+        Task { await zustand.loeschen(name); laeuft = false }
     }
 }

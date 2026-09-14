@@ -218,8 +218,22 @@ final class KnopfstilTests: XCTestCase {
             for (i, z) in alle.enumerated() {
                 guard z.nackt.contains("LabeledContent(") else { continue }
                 let block = kette(alle, ab: i)
-                guard block.range(of: #"\bPicker\("#, options: .regularExpression) != nil,
-                      block.contains("labelsHidden()") else { continue }
+                guard block.contains("labelsHidden()") else { continue }
+                // **Genau einer.** Die Regel zielt auf den Waehler, der allein
+                // in einer Zeile steht: Der zeichnet sie in einer gruppierten
+                // `Form` selbst, und die Umwicklung nimmt ihm genau das.
+                //
+                // Stehen **zwei** Waehler in einer Zeile — „Schrift" traegt
+                // seit dem 14.09.2026 Schriftart und Groesse nebeneinander,
+                // wie es Pages haelt —, geht es ohne Klammer nicht, und dann
+                // gehoert die Beschriftung ihr. Die Ausnahme ist am
+                // Doppelpunkt abzulesen und nicht zu erschleichen: Wer einen
+                // einzelnen Waehler umwickelt, faellt hier weiterhin.
+                // Mit Wortgrenze gezaehlt, sonst zaehlte `ColorPicker(` mit —
+                // und die Zeile „Stil", die zwei Schalter und den Farbwaehler
+                // traegt, faellt faelschlich.
+                let waehler = block.ranges(of: #/\bPicker\(/#).count
+                guard waehler == 1 else { continue }
                 umwickelt.append("\(datei):\(i + 1)  \(z.nackt)")
             }
         }
@@ -235,8 +249,11 @@ final class KnopfstilTests: XCTestCase {
     /// `Schrittwahl`; hier steht, dass die drei Stellen sie auch benutzen und
     /// nicht wieder je einen nackten `Stepper` hinschreiben.
     func testDieDreiSchrittwahlenGehenUeberDasGemeinsameElement() throws {
+        // `VerbindungView` hat seine Schrittwahl am 14.09.2026 an
+        // `Zeitabschnitte` abgegeben — dorthin ist „Scrolltempo" gezogen, zu
+        // Seitenwechsel und Dauer.
         for (datei, anzahl) in [("Sources/TC002Ansichten/SendenView.swift", 2),
-                                ("Sources/TC002Ansichten/VerbindungView.swift", 1)] {
+                                ("Sources/TC002Ansichten/Zeitabschnitte.swift", 1)] {
             let text = try zeilen(datei).map(\.text).joined(separator: "\n")
             let treffer = text.components(separatedBy: "Schrittwahl(").count - 1
             XCTAssertEqual(treffer, anzahl,

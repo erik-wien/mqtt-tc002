@@ -59,7 +59,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         ("Senden", "Text und Icon verschicken"),
                         ("Editor", "Icons und ganze Anzeigen malen"),
                         ("Verlauf", "bereits verschickte Inhalte und das Protokoll"),
-                        ("Einstellungen", "Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr"),
+                        ("Einstellungen", "Uhren und Broker"),
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
@@ -78,13 +78,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
-                    .ueberschrift("Einstellungen der aktiven Uhr"),
-                    .punkte([
-                        "„Seitenwechsel“: wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — „kein Wechsel“ bedeutet, die erste Anzeige bleibt stehen, egal was sonst ankommt.",
-                        "„Scrolltempo“: wie schnell Text läuft, den die Uhr selbst setzt — eine Einstellung des Geräts, deren gültiger Wertebereich nicht dokumentiert ist.",
-                    ]),
-                    .absatz("Beide betreffen nichts, was diese App sendet: Sie rastert jeden Text selbst und bestimmt das Tempo einer Laufschrift unter „Senden“ eigenständig. Beides gilt immer für die gerade aktive Uhr — welche das ist, bestimmt der Radioknopf oben in der Liste."),
-                    .absatz("Gelesen wird beim Öffnen des Bereichs direkt von der Uhr über HTTP, geschrieben erst, wenn man selbst etwas wählt; von sich aus ändert die App nichts am Gerät. Lässt sich ein Wert nicht lesen, sagt das ein Hinweisfenster statt stillschweigend einen falschen Stand zu zeigen."),
+                    .absatz("„Seitenwechsel“ und „Scrolltempo“ standen bis September 2026 hier; sie stehen jetzt im Zeit-Reiter des Inspektors, unter „Senden“ und im Editor — bei der „Dauer“, mit der sie zusammengehören."),
                     .ueberschrift("Broker"),
                     .absatz("Darunter steht der Broker: Adresse, Port, Benutzer und Kennwort."),
                 ]

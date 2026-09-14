@@ -553,14 +553,21 @@ final class EditorbereichTests: XCTestCase {
 
         XCTAssertTrue(ausschnitt(text, von: "private var inspektor", bis: "private var modusWahl")
                         .contains("modusWahl"),
-                      "der Inspektor trägt die Moduswahl nicht mehr an seinem Kopf — dann gibt es keinen Weg mehr zu den drei Modi")
+                      "der Inspektor trägt die Moduswahl nicht mehr an seinem Kopf — dann gibt es keinen Weg mehr zu den vier Modi")
 
         let wahl = ausschnitt(text, von: "private var modusWahl", bis: "private var malenAbschnitte")
         XCTAssertTrue(wahl.contains(".pickerStyle(.segmented)"),
                       "die Moduswahl ist keine Segmentwahl mehr")
-        for modus in ["Malen", "Animation", "Bestand"] {
-            XCTAssertTrue(wahl.contains("Text(\"\(modus)\").tag("),
-                          "„\(modus)“ fehlt in der Segmentwahl — oder das Kennzeichen sitzt nicht mehr ganz außen")
+        // **Symbole statt Woerter** seit dem 14.09.2026: Vier ausgeschriebene
+        // Namen passen in 330 Punkte nicht mehr, ohne abgeschnitten zu werden.
+        // Die Namen duerfen deshalb nicht verschwinden, sondern wandern an die
+        // Bedienungshilfen — geprueft wird beides, Symbol **und** Name.
+        for (modus, symbol) in [("Malen", "paintpalette"), ("Animation", "film"),
+                                ("Bestand", "folder"), ("Zeit", "clock")] {
+            XCTAssertTrue(wahl.contains("Image(systemName: \"\(symbol)\").tag("),
+                          "„\(modus)“ fehlt als Symbol „\(symbol)“ — oder das Kennzeichen sitzt nicht mehr ganz außen")
+            XCTAssertTrue(wahl.contains("accessibilityLabel(Text(\"\(modus)\"))"),
+                          "„\(modus)“ hat keinen Namen mehr — ein Symbol ohne Namen ist für VoiceOver stumm")
         }
     }
 

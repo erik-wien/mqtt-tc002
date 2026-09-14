@@ -122,9 +122,12 @@ final class SendefeldTests: XCTestCase {
             }
             if ohneKommentar.contains(".eingabefeld()") { treffer.append(nurEinZweig) }
         }
-        XCTAssertEqual(treffer.count, 2,
-                       ".eingabefeld() kommt in SendenView.swift nicht genau zweimal vor "
-                       + "(Meldungsfeld und Dauer) — eines der beiden steht wieder ohne Fassung da")
+        // Eines, nicht zwei: Das Dauerfeld ist am 14.09.2026 in den Zeit-Reiter
+        // des Inspektors gezogen (`Zeitabschnitte`), zu Seitenwechsel und
+        // Scrolltempo. Uebrig bleibt hier das Meldungsfeld.
+        XCTAssertEqual(treffer.count, 1,
+                       ".eingabefeld() kommt in SendenView.swift nicht genau einmal vor "
+                       + "(das Meldungsfeld) — steht es wieder ohne Fassung da?")
         XCTAssertFalse(treffer.contains(true),
                        "die Fassung steht wieder in einem Plattformzweig — sie gilt beiden Schreibtischen")
     }

@@ -111,7 +111,7 @@ public struct EditorBereichView: View {
 
     /// Was der Inspektor zeigt.
     enum Inspektormodus: String, CaseIterable, Identifiable {
-        case malen, animation, sichern
+        case malen, animation, sichern, zeit
         var id: String { rawValue }
     }
 
@@ -288,6 +288,19 @@ public struct EditorBereichView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // **Dieselbe Stelle wie unter „Senden"**: oben rechts ueber der
+            // Leinwand, nicht unten in der Sendezeile. Dort stand sie bis zum
+            // 14.09.2026 zwischen Dauerfeld, Zwischenraum und Sendeknopf — bei
+            // wenig Platz gequetscht und abgeschnitten, und vor allem an einer
+            // anderen Stelle als in der Ansicht daneben. Zwei Orte fuer
+            // dieselbe Wahl sind schlimmer als ein unguenstiger.
+            //
+            // Ohne zweite Uhr zeigt `ZielauswahlView` nichts, die Zeile bleibt
+            // dann leer.
+            HStack {
+                Spacer()
+                ZielauswahlView(zustand: zustand)
+            }
             Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
                        vorStrich: { verlauf.merken(leinwand) },
                        nachStrich: arbeitsstandSichern)
@@ -441,6 +454,7 @@ public struct EditorBereichView: View {
                 case .malen: malenAbschnitte
                 case .animation: animationAbschnitte
                 case .sichern: sichernAbschnitte
+                case .zeit: Zeitabschnitte(zustand: zustand, dauerText: $dauerText)
                 }
             }
             .formStyle(.grouped)
@@ -472,10 +486,21 @@ public struct EditorBereichView: View {
         // umhuellt, findet die Auswahl nicht mehr verlaesslich — und ein
         // Segmentschalter, dessen Wahl ins Leere greift, faellt beim
         // Uebersetzen nicht auf.
+        // **Symbole statt Woerter.** Vier Reiter mit ausgeschriebenen Namen
+        // passen in einen Segmentschalter von 330 Punkten nicht mehr, ohne
+        // dass die Namen abgeschnitten werden — und ein abgeschnittenes Wort
+        // sagt weniger als ein Bild. Die Namen gehen dabei nicht verloren: Sie
+        // stehen als `accessibilityLabel` an jedem Segment, so wie es die
+        // Ausrichtungswaehler in `SendenView` seit je halten.
         Picker("Inspektor", selection: $modus) {
-            Text("Malen").tag(Inspektormodus.malen)
-            Text("Animation").tag(Inspektormodus.animation)
-            Text("Bestand").tag(Inspektormodus.sichern)
+            Image(systemName: "paintpalette").tag(Inspektormodus.malen)
+                .accessibilityLabel(Text("Malen"))
+            Image(systemName: "film").tag(Inspektormodus.animation)
+                .accessibilityLabel(Text("Animation"))
+            Image(systemName: "folder").tag(Inspektormodus.sichern)
+                .accessibilityLabel(Text("Bestand"))
+            Image(systemName: "clock").tag(Inspektormodus.zeit)
+                .accessibilityLabel(Text("Zeit"))
         }
         .pickerStyle(.segmented)
         .labelsHidden()
@@ -878,13 +903,11 @@ public struct EditorBereichView: View {
             }
             // Breit: Bloecke und Dauer nebeneinander. Schmal: die Dauer rueckt
             // darunter, statt dass die Zeile rechts abgeschnitten wird.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .bottom, spacing: 16) { sendeteile }
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 6) { slotBloecke }
-                    HStack(spacing: 16) { dauerFeld; Spacer(); ZielauswahlView(zustand: zustand); sendeKnopf }
-                }
-            }
+            // Nur noch Bloecke und Sendeknopf: Die Dauer steht im Zeit-Reiter
+            // des Inspektors, die Zielauswahl oben. Was hier bleibt, passt
+            // damit auch schmal in **eine** Zeile — das `ViewThatFits` von
+            // vorher war die Folge einer ueberladenen Zeile, nicht ihre Kur.
+            HStack(alignment: .bottom, spacing: 16) { sendeteile }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -895,9 +918,7 @@ public struct EditorBereichView: View {
     @ViewBuilder
     private var sendeteile: some View {
         HStack(spacing: 6) { slotBloecke }
-        dauerFeld
         Spacer()
-        ZielauswahlView(zustand: zustand)
         sendeKnopf
     }
 
@@ -914,17 +935,12 @@ public struct EditorBereichView: View {
                           gewaehlt: platz == i)
             }
             .buttonStyle(.plain)
-        }
-        MeldungLoeschenKnopf(zustand: zustand, platz: platz,
-                             belegt: belegtePlaetze.contains(platz))
-    }
-
-    private var dauerFeld: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Dauer (Sek.)").font(.caption).foregroundStyle(.secondary)
-            TextField("Uhr entscheidet", text: $dauerText)
-                .eingabefeld()
-                .frame(width: 100)
+            // Wie unter „Senden": das ⊗ ueber dem Block, den es betrifft.
+            .overlay(alignment: .topTrailing) {
+                MeldungLoeschenKnopf(zustand: zustand, platz: i,
+                                     belegt: belegtePlaetze.contains(i))
+                    .offset(x: 8, y: -8)
+            }
         }
     }
 

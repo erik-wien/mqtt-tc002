@@ -126,24 +126,36 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                        + "ohnehin als Text")
     }
 
-    /// Außerhalb des Inspektors bleiben nur die beiden Symbolknöpfe für sich
-    /// allein — „Formatierung ein-/ausblenden“ und der Papierkorb bei
-    /// `MeldungLoeschenKnopf` —, und die tragen wie bisher ihr Gegenstück.
+    /// Außerhalb des Inspektors bleiben zwei Symbolknöpfe, und sie tragen
+    /// **verschiedene** Gegenstücke — genau nach der Regel oben:
+    ///
+    /// - „Formatierung ein-/ausblenden“ steht **für sich allein** in der
+    ///   Werkzeugleiste → `.namensichtbarAmIPad()`.
+    /// - Das ⊗ von `MeldungLoeschenKnopf` **wiederholt sich fünfmal**, einmal
+    ///   je Slot → `.contextMenu`. Fünf ausgeschriebene Namen in der
+    ///   Blockreihe wären mehr Text als Bild; dieselbe Überlegung wie beim
+    ///   Papierkorb im Icon-Raster.
+    ///
+    /// Bis zum 14.09.2026 war das Löschen **eine** breite rote Schaltfläche
+    /// neben der Reihe und trug deshalb `.namensichtbarAmIPad()`.
     ///
     /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` bei
     /// `MeldungLoeschenKnopf` entfernt → 2 `.help` gegen 1 Gegenstück,
-    /// durchgefallen; wieder eingesetzt → grün.
+    /// durchgefallen; wieder eingesetzt → grün. Nach dem Umbau erneut, jetzt
+    /// gegen `.contextMenu`.
     func testSendenViewStandaloneKnoepfeZeigenNamenAuchAmIPad() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
         let help = anzahl(text, ".help(") - anzahl(inspektor, ".help(")
-        let gegenstueck = anzahl(text, ".namensichtbarAmIPad()") - anzahl(inspektor, ".namensichtbarAmIPad()")
+        let namen = anzahl(text, ".namensichtbarAmIPad()") - anzahl(inspektor, ".namensichtbarAmIPad()")
+        let menue = anzahl(text, ".contextMenu") - anzahl(inspektor, ".contextMenu")
         XCTAssertEqual(help, 2,
-                       "außerhalb des Inspektors sind es nicht mehr zwei Symbolknöpfe für sich allein")
-        XCTAssertEqual(help, gegenstueck,
-                       "\(help) `.help(...)` außerhalb des Inspektors, aber nur \(gegenstueck) "
-                       + "`.namensichtbarAmIPad()` — ein Symbolknopf zeigt seinen Namen am iPad nicht "
-                       + "mehr")
+                       "außerhalb des Inspektors sind es nicht mehr zwei Symbolknöpfe")
+        XCTAssertEqual(namen, 1, "der Knopf, der für sich allein steht, zeigt seinen Namen nicht mehr am iPad")
+        XCTAssertEqual(menue, 1, "dem sich wiederholenden Knopf fehlt sein Kontextmenü")
+        XCTAssertEqual(help, namen + menue,
+                       "\(help) `.help(...)` außerhalb des Inspektors, aber nur \(namen + menue) "
+                       + "Gegenstücke — einer der beiden Symbolknöpfe ist am iPad namenlos")
     }
 
     /// Hält die Gesamtzahl fest, damit eine neue, keinem der beiden Tests

@@ -59,9 +59,6 @@
 "Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“." = "If you change the address of a clock already entered, the app discards prefix, MAC and connection state and shows \"—\" in the row again: the new address may belong to a different clock, and the old prefix would then be the wrong topic. So after an address change, query again.";
 "Entfernen" = "Remove";
 "„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen." = "\"Remove\" at the right edge of the row deletes the clock from the list, together with everything the app remembered about it. On the clock itself nothing changes — a display standing there stays, so it is better to delete it under History first.";
-"Einstellungen der aktiven Uhr" = "Settings of the active clock";
-"Beide betreffen nichts, was diese App sendet: Sie rastert jeden Text selbst und bestimmt das Tempo einer Laufschrift unter „Senden“ eigenständig. Beides gilt immer für die gerade aktive Uhr — welche das ist, bestimmt der Radioknopf oben in der Liste." = "Neither affects anything this app sends: it rasterizes every text itself and sets the speed of scrolling text under Send on its own. Both always apply to the clock that is currently active — which one that is, the radio button at the top of the list decides.";
-"Gelesen wird beim Öffnen des Bereichs direkt von der Uhr über HTTP, geschrieben erst, wenn man selbst etwas wählt; von sich aus ändert die App nichts am Gerät. Lässt sich ein Wert nicht lesen, sagt das ein Hinweisfenster statt stillschweigend einen falschen Stand zu zeigen." = "They are read straight from the clock over HTTP when the area opens, and written only once you choose something yourself; the app changes nothing on the device by itself. If a value cannot be read, an alert says so instead of quietly showing a wrong state.";
 "Broker" = "Broker";
 "„Sichern und prüfen“ schreibt Adresse, Port, Benutzer und Kennwort ausdrücklich fest und fragt danach den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt." = "\"Save and check\" commits address, port, user and password explicitly and then asks the broker whether it accepts the login — that takes up to eight seconds and runs under a client ID of its own, so that no send in progress is kicked out.";
 "Meldung und Platz" = "Message and slot";
@@ -143,8 +140,6 @@
 "Der Reihe nach prüfen" = "Checking in order";
 "Weitere Symptome" = "Further symptoms";
 "Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“." = "If the clock does not turn to the new display although several are set up: \"Page change\" under Settings is probably set to \"no change\".";
-"„Seitenwechsel“: wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — „kein Wechsel“ bedeutet, die erste Anzeige bleibt stehen, egal was sonst ankommt." = "\"Page change\": how long a display stays before the clock turns to the next — \"no change\" means the first display stays put, no matter what else arrives.";
-"„Scrolltempo“: wie schnell Text läuft, den die Uhr selbst setzt — eine Einstellung des Geräts, deren gültiger Wertebereich nicht dokumentiert ist." = "\"Scroll speed\": how fast text scrolls that the clock typesets itself — a setting of the device whose valid range of values is not documented.";
 "„Micro 5“ ist die schmalste und bringt am meisten Text stehend aufs Display, ohne zu laufen." = "\"Micro 5\" is the narrowest and gets the most text onto the display standing, without scrolling.";
 "„Silkscreen“ ist die klassische Pixeloptik, gut lesbar." = "\"Silkscreen\" is the classic pixel look, easy to read.";
 "„Tiny5“ wirkt bei großer Größe kräftig und plakativ." = "\"Tiny5\" looks strong and poster-like at a large size.";
@@ -158,7 +153,6 @@
 "Viertens, ob unter „Verlauf“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen." = "Fourth, whether an old standing display is still blocking under History — delete that one first, or replace it under the same name.";
 "Text und Icon verschicken" = "send text and an icon";
 "bereits verschickte Inhalte und das Protokoll" = "content already sent, and the log";
-"Uhren, Broker sowie Seitenwechsel und Scrolltempo der aktiven Uhr" = "clocks, broker, and the page change and scroll speed of the active clock";
 "Umlaute und „ß“ gehen; die App entscheidet selbst — passt der Text, bleibt er stehen, sonst läuft er als GIF." = "umlauts and \"ß\" work; the app decides for itself — if the text fits, it stands still, otherwise it scrolls as a GIF.";
 "nur `%`, `.`, `-` und `:` als Sonderzeichen; läuft von selbst durch, wenn nötig, ohne dass die App ein GIF bauen muss." = "only `%`, `.`, `-` and `:` as special characters; scrolls by itself when needed, without the app having to build a GIF.";
 /* IconAuswahlView.swift */
@@ -803,3 +797,9 @@
 "Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück." = "Only the stock firmware accepts a drawn image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image, and sending it would come back as silence.";
 "Auf die Uhr senden" = "Send to the clock";
 "„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt." = "\"%@\" is not a valid address. Correct the clock's address in the settings — a single space is enough to break it.";
+"Zeit" = "Time";
+"„Seitenwechsel“ und „Scrolltempo“ standen bis September 2026 hier; sie stehen jetzt im Zeit-Reiter des Inspektors, unter „Senden“ und im Editor — bei der „Dauer“, mit der sie zusammengehören." = "\"Page change\" and \"Scroll speed\" lived here until September 2026; they are now in the time tab of the inspector, under \"Send\" and in the editor — next to \"Duration\", which belongs with them.";
+"Uhren und Broker" = "Clocks and broker";
+"Diese Anzeige" = "This display";
+"Leer oder 0 heißt: keine eigene Angabe — dann entscheidet allein der Seitenwechsel." = "Empty or 0 means no value of its own — then the page change alone decides.";
+"Diese Uhr" = "This clock";

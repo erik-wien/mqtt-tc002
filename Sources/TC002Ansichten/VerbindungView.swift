@@ -11,20 +11,13 @@ public struct VerbindungView: View {
     /// bei jedem Tastendruck.
     @FocusState private var kennwortFokus: Bool
 
-    @State private var seitenwechsel = 0
-    @State private var geladen = false
     /// Kennzeichen fuer den gelesenen Wert: das folgende .onChange stammt dann vom
     /// Laden, nicht vom Nutzer, und darf nicht zurueckschreiben.
-    @State private var ladeLauf = false
     /// Waehlt der Nutzer, waehrend die Abfrage noch unterwegs ist, darf der spaeter
     /// eintreffende gelesene Wert seine Wahl nicht ueberschreiben.
-    @State private var nutzerHatGewaehlt = false
 
     /// `scrollSpeed` — dieselben drei Zustaende wie bei `seitenwechsel` oben,
     /// nur fuer ein zweites Feld derselben Konfiguration.
-    @State private var scrollTempo = 0
-    @State private var scrollLadeLauf = false
-    @State private var nutzerHatScrollGewaehlt = false
 
     public var body: some View {
         Form {
@@ -88,14 +81,6 @@ public struct VerbindungView: View {
                 Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Section("Einstellungen der aktiven Uhr") {
-                if nurUlanzi {
-                    ulanziEinstellungen
-                } else {
-                    Text("Seitenwechsel und Scrolltempo sind Einstellungen der Ulanzi-Werksfirmware. Die aktive Uhr ist eine AWTRIX NG; sie führt beides anders und nicht an dieser Stelle.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-            }
             Section("Broker") {
                 // Der Abschnitt wird **nicht** ausgeblendet und nicht
                 // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge
@@ -156,72 +141,9 @@ public struct VerbindungView: View {
         // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort dabei verloren.
         .onDisappear { zustand.kennwortSichern() }
-        .task {
-            guard !geladen else { return }
-            geladen = true
-            // `/getConfig` gibt es nur bei der Werksfirmware. Bei einer AWTRIX
-            // NG holte diese Abfrage eine 404 und meldete sie als Fehler —
-            // fuer eine Einstellung, die dort gar nicht gefragt ist.
-            guard nurUlanzi, let host = zustand.aktiveUhr?.host else { return }
-            // .task laeuft auf dem Hauptthread, konfiguration() blockiert bis zur Antwort
-            // der Uhr. Ohne den losgeloesten Task steht das Fenster so lange still.
-            // Ein Abruf fuer beide Felder statt zweier — sie stehen ohnehin in
-            // derselben Antwort.
-            let ergebnis: (carousel: Int?, scroll: Int?, fehler: String?) = await Task.detached {
-                do {
-                    let k = try Geraet(host: host).konfiguration()
-                    return (k["carouselSpeed"] as? Int, k["scrollSpeed"] as? Int, nil)
-                } catch { return (nil, nil, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
-            }.value
-            // Ohne Meldung zeigte der Picker nach einem Fehlschlag faelschlich
-            // "kein Wechsel" — und sah aus wie eine Einstellung der Uhr.
-            if let meldung = ergebnis.fehler {
-                zustand.fehler = lokf("Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: %@", meldung)
-                return
-            }
-            // Hat der Nutzer waehrend der Abfrage schon selbst gewaehlt, gilt
-            // seine Wahl — der spaet eintreffende gelesene Wert ueberschreibt sie nicht.
-            if let wert = ergebnis.carousel {
-                if wert != seitenwechsel, !nutzerHatGewaehlt { ladeLauf = true; seitenwechsel = wert }
-            } else {
-                zustand.fehler = lok("Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet.")
-            }
-            if let wert = ergebnis.scroll {
-                if wert != scrollTempo, !nutzerHatScrollGewaehlt { scrollLadeLauf = true; scrollTempo = wert }
-            } else {
-                zustand.fehler = lok("Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet.")
-            }
-        }
     }
 
-    /// Ob die aktive Uhr die Werksfirmware faehrt. Nur dann sind die beiden
-    /// Regler unten ueberhaupt eine Einstellung **dieser** Uhr: Sie stehen in
-    /// `/getConfig`, und diesen Pfad gibt es bei AWTRIX NG nicht.
-    private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
 
-    /// `carouselSpeed` und `scrollSpeed` — beides Felder der
-    /// Ulanzi-Werksfirmware.
-    @ViewBuilder
-    private var ulanziEinstellungen: some View {
-        Picker("Seitenwechsel", selection: $seitenwechsel) {
-            Text("kein Wechsel").tag(0)
-            ForEach([10, 20, 30, 60], id: \.self) { Text(lokf("alle %d Sekunden", $0)).tag($0) }
-        }
-        .onChange(of: seitenwechsel) { _, neu in
-            guard !ladeLauf else { ladeLauf = false; return }
-            nutzerHatGewaehlt = true
-            setzen("carouselSpeed", neu)
-        }
-        LabeledContent("Scrolltempo") {
-            Schrittwahl("Scrolltempo", wert: $scrollTempo, bereich: 0...20)
-        }
-        .help("Lauftempo für Text, den die Uhr selbst setzt (unter „Senden“ der Weg „als Text“). Der gültige Wertebereich ist nicht dokumentiert.")
-        .onChange(of: scrollTempo) { _, neu in
-            guard !scrollLadeLauf else { scrollLadeLauf = false; return }
-            nutzerHatScrollGewaehlt = true
-            setzen("scrollSpeed", neu)
-        }
-    }
 
     /// Die Geraeteart als nicht-wahlfreie Wahl fuer den Picker — dieselbe
     /// Bauart wie `betriebsart` darunter und aus demselben Grund: `Uhr.typ` ist
@@ -256,14 +178,6 @@ public struct VerbindungView: View {
                 })
     }
 
-    private func setzen(_ feld: String, _ wert: Int) {
-        guard let host = zustand.aktiveUhr?.host else { return }
-        Task.detached {
-            do { try Geraet(host: host).konfigurationSetzen(feld, wert)
-                 await MainActor.run { zustand.log(lokf("%@ auf %@ gesetzt", feld, "\(wert)")) } }
-            catch { await MainActor.run { zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)" } }
-        }
-    }
 
     private func uhrHinzufuegen() {
         let host = neuerHost.trimmingCharacters(in: .whitespaces)
