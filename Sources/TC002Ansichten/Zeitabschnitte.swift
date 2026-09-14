@@ -28,11 +28,25 @@ import TC002Modell
 ///
 /// Von „Senden" und „Editor" gemeinsam benutzt — zwei Fassungen derselben drei
 /// Regler liefen früher oder später auseinander.
-struct Zeitabschnitte: View {
+struct Zeitabschnitte<Zusatz: View>: View {
     @Bindable var zustand: AppZustand
     /// Die Dauer gehört der jeweiligen Ansicht: Sie ist Teil des Auftrags, der
     /// dort zusammengestellt wird, und nicht Zustand dieses Bausteins.
     @Binding var dauerText: String
+
+    /// **Was die Ansicht sonst noch zur einzelnen Meldung zu sagen hat** — bei
+    /// „Senden“ das Lauftempo, im Editor nichts.
+    ///
+    /// Als Platz statt als Parameter, weil das Tempo an `weg` und `passt`
+    /// hängt: Zustand der Sendeansicht. Ihn hierher zu reichen hieße, drei
+    /// Werte durchzugeben, damit dieser Baustein entscheiden kann, was der
+    /// Aufrufer längst weiß.
+    ///
+    /// Und **innerhalb** von „Nur diese Meldung“, nicht darüber: Das Tempo
+    /// reist mit der Meldung mit wie die Dauer. Ein eigener Abschnitt daneben
+    /// ließe offen, für wie viele Anzeigen er gilt — und genau diese Frage war
+    /// hier schon einmal die falsch beantwortete.
+    @ViewBuilder let zusatz: Zusatz
 
     @State private var seitenwechsel = 0
     @State private var scrollTempo = 0
@@ -68,6 +82,7 @@ struct Zeitabschnitte: View {
                     .keyboardType(.numberPad)
                     #endif
             }
+            zusatz
             Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe — dann gilt der Seitenwechsel unten.")
                 .font(.footnote).foregroundStyle(.secondary)
         }
@@ -146,5 +161,12 @@ struct Zeitabschnitte: View {
                 zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             }
         }
+    }
+}
+
+extension Zeitabschnitte where Zusatz == EmptyView {
+    /// Für Aufrufer ohne eigene Zeile — der Editor kennt keine Laufschrift.
+    init(zustand: AppZustand, dauerText: Binding<String>) {
+        self.init(zustand: zustand, dauerText: dauerText) { EmptyView() }
     }
 }

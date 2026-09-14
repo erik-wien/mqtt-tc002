@@ -564,11 +564,43 @@ public struct SendenView: View {
     private var inspektorinhalt: some View {
         switch inspektorreiter {
         case .zeit:
-            Form { Zeitabschnitte(zustand: zustand, dauerText: $dauerText) }
-                .formStyle(.grouped)
+            Form {
+                // **Die Laufschrift gehoert hierher, nicht zum Format.** Sie
+                // beantwortet dieselbe Frage wie Dauer und Seitenwechsel: wie
+                // lange man etwas sieht — nur bezogen auf einen Text, der
+                // durchlaeuft, statt auf eine Anzeige, die steht. Bis zum
+                // 14.09.2026 stand sie zwischen „Senden als" und „Icon", wo
+                // sie zwar zur Sendung passte, aber nicht zu ihren Nachbarn.
+                //
+                // Der Abschnitt bleibt hier in `SendenView` und wandert nicht
+                // nach `Zeitabschnitte`: Ob er wirkt, haengt an `weg` und
+                // `passt` — Zustand dieser Ansicht. Ihn dorthin zu schieben
+                // hiesse, drei Werte durchzureichen, damit ein Baustein
+                // entscheiden kann, was der Aufrufer laengst weiss.
+                Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
+                    laufschriftZeile
+                }
+            }
+            .formStyle(.grouped)
         case .format:
             formatinhalt
         }
+    }
+
+    /// Siehe die Begruendung im Zeit-Reiter oben. **Eine Zeile, kein
+    /// Abschnitt**: Das Tempo reist mit der Meldung mit wie die Dauer und
+    /// gehoert darum unter dieselbe Ueberschrift.
+    @ViewBuilder
+    private var laufschriftZeile: some View {
+        Picker("Laufschrift", selection: $tempo) {
+            Text("langsam").tag(Lauftempo.langsam)
+            Text("mittel").tag(Lauftempo.mittel)
+            Text("schnell").tag(Lauftempo.schnell)
+        }
+        .pickerStyle(.segmented)
+        .disabled(!(weg == .pixel && !passt))
+        .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")
+                                      : lok("Gilt nur, wenn der Text nicht ins Display passt."))
     }
 
     private var formatinhalt: some View {
@@ -588,18 +620,6 @@ public struct SendenView: View {
             // Zustand erscheint und verschwindet, laesst die Seitenleiste
             // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
             // Regler hier.
-            Section("Laufschrift") {
-                Picker("Tempo", selection: $tempo) {
-                    Text("langsam").tag(Lauftempo.langsam)
-                    Text("mittel").tag(Lauftempo.mittel)
-                    Text("schnell").tag(Lauftempo.schnell)
-                }
-                .pickerStyle(.segmented).labelsHidden()
-                .disabled(!(weg == .pixel && !passt))
-                .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft.")
-                                              : lok("Gilt nur, wenn der Text nicht ins Display passt."))
-            }
-
             Section("Icon") {
                 IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen)
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
