@@ -126,7 +126,22 @@ struct IconauswahliOS: View {
                                             RoundedRectangle(cornerRadius: 3)
                                                 .stroke(Color.accentColor, lineWidth: gewaehlt?.nummer == icon.nummer ? 2 : 0)
                                         )
-                                    Text(icon.nummer).font(.caption).foregroundStyle(.secondary)
+                                    // **Das Abspielzeichen neben die Nummer,
+                                    // nicht ins Bild** — dieselbe Entscheidung
+                                    // wie in den Listen am Schreibtisch.
+                                    // LaMetric und AWTRIX legen es
+                                    // durchscheinend ueber das Vorschaubildchen
+                                    // und verdecken damit gerade das Motiv, das
+                                    // man erkennen soll. Hier ist die
+                                    // Nummernzeile ohnehin da.
+                                    HStack(spacing: 1) {
+                                        if Bildraster.bewegt(icon.datei) {
+                                            Image(systemName: "play.fill")
+                                                .accessibilityHidden(true)
+                                        }
+                                        Text(icon.nummer)
+                                    }
+                                    .font(.caption).foregroundStyle(.secondary)
                                 }
                                 // Die Zelle selbst ist bei acht Spalten schmaler als 44pt und
                                 // bleibt es, damit alle acht sichtbar nebeneinander passen. Die
@@ -143,7 +158,8 @@ struct IconauswahliOS: View {
                             // damit die Entscheidung im Quelltext steht.
                             .buttonStyle(.automatic)
                             .tint(.primary)
-                            .accessibilityLabel(Text(icon.name))
+                            .accessibilityLabel(Text(Bildraster.bewegt(icon.datei)
+                                                     ? lokf("%@, bewegt", icon.name) : icon.name))
                             .accessibilityAddTraits(gewaehlt?.nummer == icon.nummer ? [.isSelected] : [])
                         }
                     }
