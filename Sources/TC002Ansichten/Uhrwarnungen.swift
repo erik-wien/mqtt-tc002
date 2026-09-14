@@ -24,31 +24,6 @@ public struct Adresswarnung: View {
     }
 }
 
-/// **Zwei Uhren mit demselben Präfix sind für den Broker eine.**
-///
-/// Über MQTT *ist* das Präfix die Adresse: Was an die eine geht, bekommt die
-/// andere auch, beide melden ihren Zustand auf demselben Thema, und von da an
-/// kann die App nicht mehr auseinanderhalten, welche was sagt. Kein Fehler
-/// dieser App — aber einer, den sie sieht, und deshalb sagen muss.
-public struct Praefixwarnung: View {
-    let uhr: Uhr
-    let geteilte: Set<String>
-
-    public init(uhr: Uhr, geteilte: Set<String>) {
-        self.uhr = uhr
-        self.geteilte = geteilte
-    }
-
-    public var body: some View {
-        if uhr.wirksameBetriebsart == .mqtt, geteilte.contains(uhr.praefix) {
-            Label(lokf("Dieses Präfix führt noch eine zweite Uhr: Über MQTT ist es die Adresse — was an eine geht, zeigen beide. Das Präfix an einer der beiden ändern (%@).", lok("Konfigurieren")),
-                  systemImage: "exclamationmark.triangle")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
 /// **Warum eine Uhr nicht am Broker hängt** — wenn sie es selbst sagt.
 ///
 /// Am 14.09.2026 stand in den Einstellungen ein Warndreieck, und der

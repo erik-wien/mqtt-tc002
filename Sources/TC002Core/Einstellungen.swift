@@ -53,28 +53,6 @@ public extension Array where Element == Uhr {
     func nachAdresse() -> [Uhr] {
         sorted { $0.host.localizedStandardCompare($1.host) == .orderedAscending }
     }
-
-    /// **Präfixe, die sich mehr als eine Uhr teilt** — im MQTT-Betrieb ein
-    /// Problem, sonst keines.
-    ///
-    /// Über MQTT **ist** das Präfix die Adresse. Zwei Uhren mit demselben
-    /// Präfix sind für den Broker eine: Was an die eine geht, bekommt die
-    /// andere auch, beide melden ihren Zustand auf demselben Thema, und die
-    /// App kann von da an nicht mehr auseinanderhalten, welche was sagt. Kein
-    /// Fehler dieser App, aber einer, den sie sehen kann — und deshalb sagen
-    /// muss.
-    ///
-    /// Gezählt wird nur, was über MQTT läuft und ein Präfix hat: Im
-    /// HTTP-Betrieb wird gar kein Thema gebildet, und ein leeres Präfix heißt
-    /// „noch nicht abgefragt“, nicht „dasselbe wie die andere“.
-    func geteiltePraefixe() -> Set<String> {
-        var gesehen: Set<String> = []
-        var doppelt: Set<String> = []
-        for uhr in self where uhr.wirksameBetriebsart == .mqtt && !uhr.praefix.isEmpty {
-            if !gesehen.insert(uhr.praefix).inserted { doppelt.insert(uhr.praefix) }
-        }
-        return doppelt
-    }
 }
 
 public enum Betriebsart: String, Codable, Sendable, CaseIterable {

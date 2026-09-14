@@ -63,7 +63,6 @@ struct VerbindungiOS: View {
                     }
                     Text(uhr.host).font(.caption).foregroundStyle(.secondary)
                     Adresswarnung(host: uhr.host)
-                    Praefixwarnung(uhr: uhr, geteilte: zustand.uhren.geteiltePraefixe())
                     Brokergrund(grund: zustand.brokergrund[uhr.id])
                     // Nur im MQTT-Betrieb: Bei einer HTTP-Uhr stuende hier
                     // „noch nicht abgefragt" und schickte jemanden hinter ein
