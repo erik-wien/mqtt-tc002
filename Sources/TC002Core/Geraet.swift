@@ -84,6 +84,25 @@ public struct Geraet {
     /// - Es antwortet `401`. NG kann seine ganze Schnittstelle hinter eine
     ///   Anmeldung stellen (§4.1); dann ist der Typ nicht festzustellen, und
     ///   der Ausweg ist die Wahl von Hand.
+    /// **Jede Antwort ist eine Feststellung, jedes Ausbleiben ein Fehler.**
+    ///
+    /// NG kennt `/api/v1/device` und legt dort `boardType` hinein. Alles
+    /// andere — ein `404`, eine Weboberflaeche in HTML, ein JSON ohne das Feld
+    /// — beantwortet die Frage ebenso: Das Geraet antwortet, und es ist keine
+    /// NG. Am 14.09.2026 habe ich daraus kurzzeitig ein `Optional` gemacht,
+    /// um „nicht feststellbar" auszudruecken; `testEineAntwortOhneBoardTypeIst
+    /// DieWerksfirmware` hat gezeigt, dass es diesen Fall kaum gibt und die
+    /// Unterscheidung nur Entschlusskraft kostet.
+    ///
+    /// Drei Ausnahmen, und die werfen:
+    ///
+    /// - **nicht erreichbar** — gar keine Antwort, also kein Befund;
+    /// - **401** — NG kann die ganze Schnittstelle hinter eine Anmeldung
+    ///   stellen; „also eine TC002" waere die falsche Antwort auf eine Frage,
+    ///   die nicht beantwortet wurde;
+    /// - **ungueltige Adresse** — daran ist nichts festzustellen, und sie
+    ///   stillschweigend zur Werksfirmware zu erklaeren verdeckte den
+    ///   eigentlichen Fehler.
     public func erkannteArt() throws -> Geraetetyp {
         do {
             return try hole("/api/v1/device")["boardType"] is String ? .awtrixNG : .tc002
@@ -91,6 +110,8 @@ public struct Geraet {
             throw GeraetFehler.nichtErreichbar(grund)
         } catch GeraetFehler.httpFehler(_, let code) where code == 401 {
             throw GeraetFehler.anmeldungNoetig
+        } catch GeraetFehler.ungueltigeAdresse(let adresse) {
+            throw GeraetFehler.ungueltigeAdresse(adresse)
         } catch {
             return .tc002
         }

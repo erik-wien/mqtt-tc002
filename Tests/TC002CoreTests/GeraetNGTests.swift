@@ -230,4 +230,20 @@ final class GeraetNGTests: XCTestCase {
     func testEineAngenommeneAnfrageWirftNicht() {
         XCTAssertNoThrow(try geraet().anzeigeSetzen(#"{"text":"x"}"#, name: "meldung1"))
     }
+
+    /// **Eine ungueltige Adresse ist kein Befund.** Sie stillschweigend zur
+    /// Werksfirmware zu erklaeren verdeckte den eigentlichen Fehler — und der
+    /// Anwender saehe „ist eine Ulanzi TC002" statt „da steht ein Leerzeichen
+    /// in der Adresse".
+    func testEineUngueltigeAdresseWirdNichtZurWerksfirmware() {
+        let k = URLSessionConfiguration.ephemeral
+        k.protocolClasses = [Doppelgaenger.self]
+        let krumm = Geraet(host: "a b", sitzung: URLSession(configuration: k))
+        XCTAssertThrowsError(try krumm.erkannteArt()) { fehler in
+            guard case GeraetFehler.ungueltigeAdresse = fehler else {
+                return XCTFail("war stattdessen \(fehler)")
+            }
+        }
+    }
+
 }
