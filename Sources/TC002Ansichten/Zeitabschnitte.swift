@@ -88,7 +88,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // Beide Abschnitte handeln von Sekunden, und woran die Sekunden
         // haengen, sagten die Woerter nicht. „Nur diese Meldung" gegen „Alles,
         // was diese Uhr zeigt" sagt es in der Ueberschrift selbst.
-        Section("Nur diese Meldung") {
+        Section {
             LabeledContent("Dauer (Sek.)") {
                 TextField("", text: $dauerText)
                     .eingabefeld()
@@ -97,9 +97,23 @@ struct Zeitabschnitte<Zusatz: View>: View {
                     .keyboardType(.numberPad)
                     #endif
             }
-            Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe — dann gilt der Seitenwechsel unten.")
+            Text(nurUlanzi
+                 ? lok("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe — dann gilt der Seitenwechsel unten.")
+                 : lok("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe."))
                 .font(.footnote).foregroundStyle(.secondary)
+        } header: {
+            Text("Nur diese Meldung")
+        } footer: {
+            // **Ein Satz unter der Karte, keine zweite Karte.** Bei einer
+            // AWTRIX NG blieb von „Alles, was diese Uhr zeigt" nichts uebrig
+            // als diese Begruendung — eine Ueberschrift, die die Reichweite
+            // von nichts nannte. Als Fusstext steht der Satz da, wo Fusstexte
+            // stehen, und verspricht keine Regler.
+            if !nurUlanzi {
+                Text("Seitenwechsel und Scrolltempo stellt diese App nur bei der Ulanzi-Werksfirmware. Diese Uhr ist eine AWTRIX NG; sie führt beides selbst.")
+            }
         }
+        .task(id: zustand.aktiveID) { await lesen() }
 
         // **Ein eigener Abschnitt, keine Zeile im vorigen.** Am 14.09.2026
         // stand das Lauftempo als Zeile unter der Dauer — und im schmalen
@@ -114,8 +128,8 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // ausdruecklich, dass er nur fuer diese eine Meldung gilt.
         zusatz
 
-        Section("Alles, was diese Uhr zeigt") {
-            if nurUlanzi {
+        if nurUlanzi {
+            Section("Alles, was diese Uhr zeigt") {
                 Picker("Seitenwechsel", selection: $seitenwechsel) {
                     Text("kein Wechsel").tag(0)
                     ForEach([10, 20, 30, 60], id: \.self) { Text(lokf("alle %d Sekunden", $0)).tag($0) }
@@ -151,12 +165,8 @@ struct Zeitabschnitte<Zusatz: View>: View {
                     .buttonStyle(.borderless)
                     .font(.footnote)
                 }
-            } else {
-                Text("Seitenwechsel und Scrolltempo sind Einstellungen der Ulanzi-Werksfirmware. Die aktive Uhr ist eine AWTRIX NG; sie führt beides anders und nicht an dieser Stelle.")
-                    .font(.footnote).foregroundStyle(.secondary)
             }
         }
-        .task(id: zustand.aktiveID) { await lesen() }
     }
 
     /// Ein Abruf für beide Felder statt zweier — sie stehen ohnehin in
