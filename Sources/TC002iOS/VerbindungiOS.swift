@@ -62,6 +62,7 @@ struct VerbindungiOS: View {
                         }
                     }
                     Text(uhr.host).font(.caption).foregroundStyle(.secondary)
+                    Adresswarnung(host: uhr.host)
                     // Nur im MQTT-Betrieb: Bei einer HTTP-Uhr stuende hier
                     // „noch nicht abgefragt" und schickte jemanden hinter ein
                     // Praefix her, das diese Uhr nie braucht.

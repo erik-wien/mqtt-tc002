@@ -118,6 +118,8 @@ public struct VerbindungView: View {
                         // Unter dem Punkt eingerueckt: Die zweite Zeile gehoert
                         // zur Uhr darueber und faengt nicht neu am Rand an.
                         .padding(.leading, 24)
+                        Adresswarnung(host: uhr.host)
+                            .padding(.leading, 24)
                     }
                 }
                 HStack {

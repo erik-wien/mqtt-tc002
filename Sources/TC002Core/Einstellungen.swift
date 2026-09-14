@@ -57,7 +57,26 @@ public enum Betriebsart: String, Codable, Sendable, CaseIterable {
 public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     public var id = UUID()
     public var name: String
-    public var host: String
+    /// Die Adresse der Uhr — **ohne Leerraum am Rand**.
+    ///
+    /// Getrimmt wird beim Setzen und nicht erst beim Senden: Ein Leerzeichen
+    /// vorn oder hinten ist unsichtbar und macht aus der Adresse etwas, woraus
+    /// sich keine Anfrage bilden laesst (`URL(string:)` sagt dazu `nil`).
+    /// Gemeldet wurde das bis zum 14.09.2026 erst beim Senden, als Fenster
+    /// mitten in der Arbeit — fuer einen Fehler, der beim Eintippen entstand
+    /// und dort auch hingehoert.
+    ///
+    /// In der Mitte wird nichts angetastet: Ein Leerzeichen dort ist ebenso
+    /// falsch, aber sichtbar, und Namen mit Leerzeichen gibt es (`mein
+    /// geraet.local` ist kein gueltiger Hostname, aber das zu entscheiden ist
+    /// nicht die Aufgabe eines Trimmers).
+    public var host: String {
+        didSet {
+            // Eine Zuweisung im eigenen `didSet` loest ihn nicht erneut aus.
+            let sauber = host.trimmingCharacters(in: .whitespacesAndNewlines)
+            if sauber != host { host = sauber }
+        }
+    }
     public var praefix: String = ""
     public var mac: String = ""
     /// **Optional, und das ist der ganze Grund, warum es heute schon da ist.**

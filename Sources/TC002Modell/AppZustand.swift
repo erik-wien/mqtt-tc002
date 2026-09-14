@@ -202,6 +202,15 @@ public final class AppZustand {
         bekannteAnzeigen = Dictionary(
             flach.compactMap { text, liste in UUID(uuidString: text).map { ($0, liste) } },
             uniquingKeysWith: { erster, _ in erster })
+        // **Leerraum am Rand der Adresse, aus einer aelteren Fassung.** Der
+        // Beobachter an `Uhr.host` trimmt beim Setzen, laeuft beim Decode aber
+        // nicht — eine einmal krumm abgelegte Adresse bliebe sonst krumm, und
+        // ihr Fehler faellt erst beim Senden auf. Hier und nicht gleich beim
+        // Decodieren: Dort sind noch nicht alle Eigenschaften gesetzt, und
+        // `uhren[i]` ist schon ein Zugriff auf `self`.
+        for i in uhren.indices {
+            uhren[i].host = uhren[i].host.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         if aktiveID == nil { aktiveID = uhren.first?.id }
         // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
         // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren

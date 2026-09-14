@@ -389,6 +389,19 @@ public struct Geraet {
                                         feld: (feld?.isEmpty ?? true) ? nil : feld)
     }
 
+    /// **Taugt diese Adresse überhaupt für eine Anfrage?** — dieselbe Prüfung,
+    /// die `url(_:)` zur Sendezeit macht, nur früher.
+    ///
+    /// Die Oberfläche kann damit beim Eintragen sagen, dass etwas nicht
+    /// stimmt, statt es beim Senden als Fenster vorzuwerfen. Ein leerer Host
+    /// ist dabei der Fall, den `URL(string:)` **nicht** fängt:
+    /// `http:///getBase` ist eine gültige URL, die nirgendwohin zeigt.
+    public static func adresseTaugt(_ host: String) -> Bool {
+        guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let url = URL(string: "http://\(host)/") else { return false }
+        return !(url.host ?? "").isEmpty
+    }
+
     /// **Die Web-Oberfläche dieser Uhr** — für den Knopf „Konfigurieren" in
     /// den Einstellungen. Beide Firmwares bringen eine mit, und alles, was
     /// diese App nicht einstellt (WLAN, Helligkeit, die eingebauten Anzeigen,
