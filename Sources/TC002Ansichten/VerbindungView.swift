@@ -11,14 +11,6 @@ public struct VerbindungView: View {
     /// bei jedem Tastendruck.
     @FocusState private var kennwortFokus: Bool
 
-    /// Kennzeichen fuer den gelesenen Wert: das folgende .onChange stammt dann vom
-    /// Laden, nicht vom Nutzer, und darf nicht zurueckschreiben.
-    /// Waehlt der Nutzer, waehrend die Abfrage noch unterwegs ist, darf der spaeter
-    /// eintreffende gelesene Wert seine Wahl nicht ueberschreiben.
-
-    /// `scrollSpeed` — dieselben drei Zustaende wie bei `seitenwechsel` oben,
-    /// nur fuer ein zweites Feld derselben Konfiguration.
-
     public var body: some View {
         Form {
             Section("Uhren") {
@@ -30,7 +22,16 @@ public struct VerbindungView: View {
                             Image(systemName: zustand.aktiveID == uhr.id ? "largecircle.fill.circle" : "circle")
                         }
                         .buttonStyle(.plain)
-                        .help("Diese Uhr ist das Ziel beim Senden")
+                        // **Nicht „das Ziel beim Senden"**, und genau so stand
+                        // es bis zum 14.09.2026 hier. Das stimmt nur, solange
+                        // niemand unter „Senden" ein eigenes Ziel gewaehlt hat
+                        // (`AppZustand.ziele()` faellt dann auf die aktive Uhr
+                        // zurueck). Wovon die Wahl **immer** entscheidet, ist,
+                        // welche Uhr die App zeigt — und wer das verwechselt,
+                        // sucht die Erklaerung fuer einen falschen
+                        // Geraeterahmen an der falschen Stelle.
+                        .help("Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie")
+                        .accessibilityLabel("Diese Uhr ansehen")
 
                         TextField("Name", text: $uhr.name)
                             .eingabefeld()
@@ -46,6 +47,14 @@ public struct VerbindungView: View {
                         .labelsHidden()
                         .pickerStyle(.segmented)
                         .frame(width: 116)
+                        // **Der Tausch gehoert an den Schalter, nicht unter die
+                        // Liste.** Als Fusstext stand er bis zum 14.09.2026 da
+                        // und nahm den Platz weg, an dem jetzt steht, was der
+                        // Punkt links bedeutet. Am Schalter kostet er keine
+                        // Zeile — und er steht dort, wo die Wahl getroffen
+                        // wird. Ausfuehrlich steht beides in der Hilfe
+                        // (`HilfeInhalt`, „Betriebsart: HTTP oder MQTT").
+                        .help("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
                         Picker("Geräteart", selection: geraeteart($uhr)) {
                             ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
                                 Text(art.beschriftung).tag(art)
@@ -76,7 +85,7 @@ public struct VerbindungView: View {
                     Button("Hinzufügen") { uhrHinzufuegen() }
                         .knopfBefehl()
                 }
-                Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
+                Text("Der Punkt links wählt die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel — das steht unter „Senden“ oben rechts. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)

@@ -64,9 +64,18 @@ final class BetriebsartTests: XCTestCase {
     }
 
     /// Der Unterschied ist ein **Tausch**, und beide Hälften davon stehen
-    /// nebeneinander in derselben Zeile: was HTTP kann und was MQTT kann.
-    /// Nur eine Hälfte zu nennen wäre eine Empfehlung, keine Auskunft — und
-    /// die Vorgabe ist ohnehin schon gesetzt.
+    /// beieinander: was HTTP kann und was MQTT kann. Nur eine Hälfte zu nennen
+    /// wäre eine Empfehlung, keine Auskunft — und die Vorgabe ist ohnehin schon
+    /// gesetzt.
+    ///
+    /// **Wo** der Satz steht, ist den beiden Oberflächen überlassen und hat
+    /// sich am 14.09.2026 am Schreibtisch geändert: Dort war er ein Fußtext
+    /// unter der Liste und hat den Platz belegt, an dem jetzt erklärt wird, was
+    /// der Punkt links bedeutet (die angesehene Uhr — eine Verwechslung, die
+    /// den Anwender eine Vorschau mit dem falschen Geräterahmen gekostet hat).
+    /// Jetzt hängt er am Betriebsartschalter selbst: dieselbe Stelle, an der
+    /// gewählt wird, und ohne eine Zeile zu verbrauchen. Geprüft wird deshalb
+    /// der Wortlaut, nicht seine Bauform.
     func testDerHinweisNenntBeideHaelftenDesTauschs() throws {
         for pfad in ["Sources/TC002Ansichten/VerbindungView.swift",
                      "Sources/TC002iOS/VerbindungiOS.swift"] {
