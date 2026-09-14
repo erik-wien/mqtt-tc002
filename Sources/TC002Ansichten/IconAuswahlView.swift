@@ -96,11 +96,21 @@ struct IconAuswahlView: View {
                 .eingabefeld()
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 8) {
-                    Button { gewaehltesIcon = nil } label: { Text("ohne").font(.caption) }
+                    // **Waehlen schliesst das Blatt.** Bis zum 14.09.2026
+                    // blieb es offen, und man musste danach noch „Schliessen"
+                    // druecken — zwei Handgriffe fuer eine Entscheidung. Ein
+                    // Blatt, das nur eine Wahl treffen soll, ist mit der Wahl
+                    // fertig; so halten es die Blaetter des Systems auch.
+                    //
+                    // Der Papierkorb in der Kachel schliesst ausdruecklich
+                    // **nicht**: Er oeffnet eine Rueckfrage, und ein Blatt,
+                    // das unter seiner eigenen Rueckfrage wegfaellt, nimmt sie
+                    // mit.
+                    Button { gewaehltesIcon = nil; zeigeBlatt = false } label: { Text("ohne").font(.caption) }
                         .knopfBefehl()
                     ForEach(gefilterte, id: \.kennung) { icon in
                         ZStack(alignment: .topTrailing) {
-                            Button { gewaehltesIcon = icon } label: {
+                            Button { gewaehltesIcon = icon; zeigeBlatt = false } label: {
                                 VStack(spacing: 2) {
                                     // Beide Groessen gleich gross zeigen: Ein
                                     // 16×16 ist nicht das doppelt so grosse
