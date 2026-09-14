@@ -174,7 +174,32 @@ die Hilfe, die all das beschreibt.
    `ci_scripts/ci_post_clone.sh`, das `xcodegen` installiert und laufen
    laesst), der flache Klon hat keine Tags (die Fassungsnummer fiele auf
    „0.0"), und gebaut wird der Stand auf GitHub, nicht der auf der Platte.
-6. **Eine NG hinter Basic-Auth bleibt unbedienbar** (kein Praefix zu holen).
+6. **Gerenderte Tests fuer die Ansichten** (halber Tag, aufgenommen am
+   14.09.2026). Der Kern hat 639 Tests mit Mutationsproben, die Ansichten nur
+   Textbeweise: Sie pruefen, *dass* etwas im Quelltext steht, nie, *wie* es
+   aussieht. Abgeschnittene Beschriftungen, ueberlaufende Zeilen, ein Icon in
+   Originalaufloesung — nichts davon faengt ein gruener Bau, das sieht nur ein
+   Mensch, und der sitzt nicht an dieser Tastatur.
+
+   **Der Weg ist gangbar und am 14.09.2026 gemessen**, nicht vermutet:
+
+       let host = NSHostingView(rootView: ansicht)
+       host.frame = NSRect(x: 0, y: 0, width: 1120, height: 420)
+       host.layoutSubtreeIfNeeded()
+       let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds)!
+       host.cacheDisplay(in: host.bounds, to: rep)
+
+   Kein Fenster, kein Simulator, echte AppKit-Bedienelemente, unter einer
+   Sekunde. Damit liess sich der 704-Punkte-Deckel des gruppierten Formulars
+   bei zwei Fensterbreiten nachmessen. `ImageRenderer` taugt dafuer **nicht** —
+   er liefert ein leeres Bild, auch mit kopfloser `NSApplication`.
+
+   Was daraus zu bauen waere: Randpixel suchen und gegen erwartete Grenzen
+   pruefen (laeuft etwas ueber seinen Kasten hinaus?), zwei Fensterbreiten je
+   Ansicht, und die Uhrenzeile als erster Fall. Gilt fuer Mac und — weil es
+   dieselben Ansichten sind — mittelbar auch fuers iPad; fuers iPhone braeuchte
+   es einen Simulator, und der ist in dieser Werkstatt tabu.
+7. **Eine NG hinter Basic-Auth bleibt unbedienbar** (kein Praefix zu holen).
 
 ### Zwei Anmerkungen zur Arbeitsweise
 

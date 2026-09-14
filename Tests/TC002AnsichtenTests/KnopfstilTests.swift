@@ -85,6 +85,12 @@ final class KnopfstilTests: XCTestCase {
     /// der Deklaration, in der der Knopf steht — weiter außen steht nur noch
     /// der Typ.
     private func istAusgenommen(_ alle: [Zeile], ab stelle: Int) -> Bool {
+        stehtIn(alle, ab: stelle, einem: Self.ausnahmen)
+    }
+
+    /// Derselbe Gang nach aussen, aber nach frei gewaehlten Umgebungen — die
+    /// Grundlage der Kachelregel weiter unten.
+    private func stehtIn(_ alle: [Zeile], ab stelle: Int, einem woerter: [String]) -> Bool {
         var einzug = alle[stelle].einzug
         var i = stelle - 1
         while i >= 0 {
@@ -95,7 +101,7 @@ final class KnopfstilTests: XCTestCase {
             // Gleich tief zählt mit: Ein Aufruf über mehrere Zeilen
             // (`confirmationDialog(` … `) { eintrag in`) trägt seinen Namen in
             // der **ersten** davon, und die steht nicht flacher als der Rest.
-            if Self.ausnahmen.contains(where: { z.nackt.contains($0) }) { return true }
+            if woerter.contains(where: { z.nackt.contains($0) }) { return true }
             if z.nackt.hasPrefix("var ") || z.nackt.hasPrefix("private var ")
                 || z.nackt.hasPrefix("func ") || z.nackt.hasPrefix("private func ")
                 || z.nackt.hasPrefix("struct ") || z.nackt.hasPrefix("public struct ")
@@ -263,5 +269,92 @@ final class KnopfstilTests: XCTestCase {
                            "\(datei) baut wieder einen Stepper von Hand; "
                            + "der trägt weder Kästchen noch die gemeinsame Fassung")
         }
+    }
+
+    // MARK: - Die Kachelregel
+
+    /// **Ein Knopf in einer Rasterkachel ist `.plain`, nie `.automatic`.**
+    ///
+    /// Der Fehler, den das abfängt, hat am 14.09.2026 einen halben Tag
+    /// gekostet und war vorher schon zweimal da: Eine Zeile einer `List` oder
+    /// `Form` ist am Telefon **selbst** ein Bedienelement. Knöpfe mit dem
+    /// vorgegebenen Stil darin teilen sich ihre Trefferfläche, und ein Tipp
+    /// landet beim ersten. Im Editor traf „Neu“ statt „Sichern“; im
+    /// Auswahlraster öffneten vierzig Kacheln dasselbe Icon.
+    ///
+    /// Geprüft wird die Umgebung, nicht die Datei: Jeder Knopf, der von einem
+    /// `LazyVGrid` umschlossen ist, muss einen Stil tragen, der ihn als
+    /// eigenes Bedienelement stehen lässt.
+    ///
+    /// **Mutationsprobe** (14.09.2026): `.plain` im Auswahlraster des Telefons
+    /// auf `.automatic` gedreht → dieser Test fällt mit genau dieser Zeile
+    /// durch; zurückgedreht → grün.
+    func testEinKnopfInEinerRasterkachelTraegtKeinenVorgegebenenStil() throws {
+        var beanstandet: [String] = []
+        for ordner in Self.ordner {
+            for pfad in swiftDateien(unter: ordner) {
+                let alle = try zeilen(pfad)
+                for (i, z) in alle.enumerated() where z.nackt.contains("Button") {
+                    guard stehtIn(alle, ab: i, einem: ["LazyVGrid", "LazyHGrid"]) else { continue }
+                    let k = kette(alle, ab: i)
+                    guard k.contains(".buttonStyle(") else { continue }
+                    if k.contains(".buttonStyle(.automatic)") {
+                        beanstandet.append("\(pfad):\(i + 1)")
+                    }
+                }
+            }
+        }
+        XCTAssertEqual(beanstandet, [],
+                       "Knopf in einer Rasterkachel mit `.automatic`: Die Zeile der Liste nimmt den "
+                       + "Tipp entgegen, nicht die Kachel — alle Kacheln lösen dann dieselbe Wahl aus")
+    }
+
+    // MARK: - Der Sperrklinken-Bestand
+
+    /// **Wo `.automatic` ausdrücklich richtig ist** — und nirgends sonst.
+    ///
+    /// `.automatic` ist eine Entscheidung, keine Vergesslichkeit (siehe oben),
+    /// aber eine, die nur an wenigen Stellen stimmt: bei einer Listenzeile,
+    /// die für sich allein steht und weiterführt, bei den Kapseln der
+    /// Formatpille, die keine Listenzeile sind, und beim plattformabhängigen
+    /// Rückfall in `UeberView`. Diese Summe hält den Bestand fest: Eine neue
+    /// Stelle fällt auf und will begründet werden, statt still dazuzukommen.
+    ///
+    /// **Mutationsprobe** (14.09.2026): ein zusätzliches
+    /// `.buttonStyle(.automatic)` in `FehlerleisteiOS` → 2 statt 1 in der
+    /// Datei, durchgefallen; wieder entfernt → grün.
+    func testDerBestandAnVorgegebenenStilenIstBekannt() throws {
+        // Datei → Anzahl, mit dem Grund in einem Wort.
+        let bekannt: [String: Int] = [
+            // Die schiebbare Formatpille: Kapseln in einem `ScrollView`,
+            // keine Listenzeilen — dort ist `.automatic` das Aussehen, das
+            // die Pille haben soll (5: Icon, Format, Fett, Großbuchstaben,
+            // Senden).
+            "Sources/TC002iOS/SendeniOS.swift": 5,
+            // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
+            // weiterführen, jede für sich allein in ihrer Zeile.
+            "Sources/TC002iOS/VerbindungiOS.swift": 2,
+            // „Kein Icon“ — dieselbe Bauart, eigene Zeile.
+            "Sources/TC002iOS/IconauswahliOS.swift": 1,
+            // Die Löschzeile im Verlauf, allein in ihrer Zeile.
+            "Sources/TC002iOS/AnzeigeniOS.swift": 1,
+            // Plattformabhängiger Rückfall: `.link` gibt es nur am Mac.
+            "Sources/TC002Ansichten/UeberView.swift": 1,
+            // „Fertig“ im Nebenfenster-Blatt des iPads.
+            "Sources/TC002Ansichten/SchreibtischView.swift": 1,
+        ]
+        var gefunden: [String: Int] = [:]
+        for ordner in Self.ordner {
+            for pfad in swiftDateien(unter: ordner) {
+                let text = try zeilen(pfad).map(\.nackt).joined(separator: "\n")
+                let anzahl = text.components(separatedBy: ".buttonStyle(.automatic)").count - 1
+                if anzahl > 0 { gefunden[pfad] = anzahl }
+            }
+        }
+        XCTAssertEqual(gefunden, bekannt,
+                       "Der Bestand an `.buttonStyle(.automatic)` hat sich geändert. Jede Stelle ist "
+                       + "eine Entscheidung: In einer Listenzeile mit mehreren Bedienelementen ist sie "
+                       + "falsch (siehe die Kachelregel darüber), sonst kann sie richtig sein — dann "
+                       + "gehört sie hier eingetragen, mit dem Grund.")
     }
 }
