@@ -491,7 +491,13 @@ struct SendeniOS: View {
                     Button { zeigeIcons = true } label: {
                         Group {
                             if let icon = gewaehltesIcon {
-                                IconbildiOS(datei: icon.datei, kante: 2.5)
+                                // Beide Groessen gleich gross: Ein 16×16 ist
+                                // nicht das doppelt so grosse Bild, sondern
+                                // das feinere — dieselbe Ueberlegung wie im
+                                // Raster am Schreibtisch.
+                                IconbildiOS(datei: icon.datei,
+                                            kante: 20 / Double(icon.kante),
+                                            pixelkante: icon.kante)
                             } else {
                                 Image(systemName: "face.smiling")
                             }

@@ -7,9 +7,16 @@ import TC002Core
 struct IconbildiOS: View {
     let datei: URL
     var kante: Double = 3
+    /// **Die Kantenlaenge des Icons in Pixeln — 8 oder 16.**
+    ///
+    /// Bis zum 14.09.2026 stand hier ueberall die 8 fest. Das ging, solange
+    /// das Telefon nur den 8×8-Bestand kannte; seit die eigenen 16×16 ueber
+    /// iCloud auch dort ankommen, zeigte es sie gar nicht erst an.
+    var pixelkante: Int = 8
 
     var body: some View {
-        IconRasteriOS(pixel: (try? Bildraster.lesen(datei, breite: 8, hoehe: 8))?.first ?? [], kante: kante)
+        IconRasteriOS(pixel: (try? Bildraster.lesen(datei, breite: pixelkante, hoehe: pixelkante))?.first ?? [],
+                      pixelkante: pixelkante, kante: kante)
     }
 }
 
@@ -18,20 +25,22 @@ struct IconbildiOS: View {
 /// zusätzlich laufende Icons zeigt.
 private struct IconRasteriOS: View {
     let pixel: [String?]
+    /// 8 oder 16 — siehe `IconbildiOS.pixelkante`.
+    var pixelkante: Int = 8
     var kante: Double
 
     var body: some View {
         Canvas { kontext, _ in
-            guard pixel.count == 64 else { return }
-            for y in 0..<8 {
-                for x in 0..<8 {
-                    guard let farbe = pixel[y * 8 + x], let c = Color(hex: farbe) else { continue }
+            guard pixel.count == pixelkante * pixelkante else { return }
+            for y in 0..<pixelkante {
+                for x in 0..<pixelkante {
+                    guard let farbe = pixel[y * pixelkante + x], let c = Color(hex: farbe) else { continue }
                     kontext.fill(Path(CGRect(x: Double(x) * kante, y: Double(y) * kante,
                                              width: kante, height: kante)), with: .color(c))
                 }
             }
         }
-        .frame(width: 8 * kante, height: 8 * kante)
+        .frame(width: Double(pixelkante) * kante, height: Double(pixelkante) * kante)
         .background(.black)
         .clipShape(RoundedRectangle(cornerRadius: 3))
     }
@@ -84,6 +93,18 @@ struct IconauswahliOS: View {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
     }
 
+    /// **Beide Bestaende**, wie am Schreibtisch und wie im Werkzeug seit
+    /// `224ad3f`. Ein eigenes 16×16 entsteht zwar nur im Editor am Mac — ueber
+    /// den iCloud-Abgleich liegt es danach aber auch hier, und bis zum
+    /// 14.09.2026 zeigte das Telefon es gar nicht erst an.
+    ///
+    /// `sammlung` behaelt dabei ihren zusaetzlichen Leseordner
+    /// (`Iconordner.mitgeliefert`); den Unterschied zum Schreibtisch taste ich
+    /// hier nicht an, er gehoert nicht zu dieser Aenderung.
+    private var bestaende: [Iconsammlung] {
+        [sammlung, Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -121,7 +142,8 @@ struct IconauswahliOS: View {
                                 einzelansicht = icon
                             } label: {
                                 VStack(spacing: 2) {
-                                    IconbildiOS(datei: icon.datei, kante: kante)
+                                    IconbildiOS(datei: icon.datei, kante: kante,
+                                                pixelkante: icon.kante)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 3)
                                                 .stroke(Color.accentColor, lineWidth: gewaehlt?.nummer == icon.nummer ? 2 : 0)
@@ -179,7 +201,7 @@ struct IconauswahliOS: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") { schliessen() }
             } }
-            .onAppear { vorhandene = sammlung.alle() }
+            .onAppear { vorhandene = bestaende.flatMap { $0.alle() } }
         }
         .presentationDragIndicator(.visible)
         .sheet(isPresented: Binding(
@@ -206,7 +228,9 @@ struct IconauswahliOS: View {
             do {
                 let icon = try quelle.holen(nummer: nummer)
                 await MainActor.run {
-                    vorhandene = quelle.alle()
+                    // Beide Bestaende: Geholt wird zwar nur ein 8×8 von
+                    // LaMetric, die Liste zeigt aber beide.
+                    vorhandene = bestaende.flatMap { $0.alle() }
                     gewaehlt = icon
                     meldung = lokf("%@ geholt.", icon.name)
                     lametricNummer = ""
@@ -246,10 +270,11 @@ private struct IconEinzelansichtiOS: View {
                 if bilder.count > 1 {
                     TimelineView(.animation) { zeit in
                         IconRasteriOS(pixel: Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel,
-                                      kante: Self.kante)
+                                      pixelkante: icon.kante, kante: Self.kante)
                     }
                 } else {
-                    IconRasteriOS(pixel: bilder.first?.pixel ?? [], kante: Self.kante)
+                    IconRasteriOS(pixel: bilder.first?.pixel ?? [],
+                                  pixelkante: icon.kante, kante: Self.kante)
                 }
                 Spacer()
                 Button("Übernehmen", action: uebernehmen)
@@ -263,7 +288,7 @@ private struct IconEinzelansichtiOS: View {
             } }
         }
         .task(id: icon.datei) {
-            bilder = (try? Bildraster.lesenMitZeiten(icon.datei, breite: 8, hoehe: 8)) ?? []
+            bilder = (try? Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)) ?? []
         }
     }
 
