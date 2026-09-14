@@ -81,7 +81,7 @@ public struct VerbindungView: View {
                         HStack(spacing: 8) {
                             // Das Praefix ist eine Auskunft, kein Feld: eine
                             // Zeile, nie zwei.
-                            Text(uhr.praefix.isEmpty ? "—" : uhr.praefix)
+                            Text(uhr.praefix.isEmpty ? "—" : Themenpraefix.sichtbar(uhr.praefix))
                                 .font(.system(.callout, design: .monospaced))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)

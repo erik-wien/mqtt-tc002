@@ -62,7 +62,7 @@ struct VerbindungiOS: View {
                     // „noch nicht abgefragt" und schickte jemanden hinter ein
                     // Praefix her, das diese Uhr nie braucht.
                     if uhr.wirksameBetriebsart == .mqtt {
-                        Text(uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : uhr.praefix)
+                        Text(uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : Themenpraefix.sichtbar(uhr.praefix))
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.secondary)
                     }
