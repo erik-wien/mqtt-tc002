@@ -140,33 +140,41 @@ sich unterwegs erledigt: Sie steht nur noch in `Brokerzeichen.swift`.
 
 ### Was als naechstes ansteht
 
-1. **`Meldungsbau` auf eine freie Feldgroesse.** Die Vorschau zeigt fuer eine
-   NG-Uhr weiterhin 52×16, obwohl das Geraet 32×8 hat. `Uhr.anzeigemass` liegt
-   bereit, aber `Pixelfeld.breiteStandard`/`hoeheStandard` stecken an **48
-   Stellen** im Quelltext, mitten in der Rasterung, an der die funktionierende
-   TC002 haengt. Das ist ein eigener Durchgang mit eigener Testreihe und nichts
-   fuer nebenbei.
-2. **Der Grund einer Sperre ist am iPad und am iPhone unsichtbar.** Ein
-   gesperrter Regler ohne erkennbaren Anlass — kein neues Loch (es stand schon
-   fuer `fettWirkt` offen), aber es betrifft jetzt deutlich mehr Zeilen. Eine
-   sichtbare Fassung ist eine Entscheidung ueber die Oberflaeche und gehoert
-   dir, nicht mir.
-3. **Das Icon „ein bisschen nach rechts"** auf NG — aus deinen Worten:
-   > „Damit sollten wir gut zurecht kommen, wenn wir 8x8 Grafiken und <12px
-   > Schriften verwenden. Das einzig spezielle ist, dass das Icon ein bisschen
-   > nach rechts ruecken muesste. Der Rest ist Standard."
+**Stand nach dem Abgleich ueber die Oberflaechen am 14.09.2026 nachmittags.**
+Erledigt sind seither: die verwaiste SVG samt sechzig Zeilen Baumaschinerie
+(`4136ce3`), das ⊗ am Slot auf beiden Familien, das Abspielzeichen in allen
+Listen, die Icon-Bestaende am Telefon, die Berechtigungen als Bauvorgabe und
+die Hilfe, die all das beschreibt.
 
-   Nicht gebaut: Ohne Blick aufs Geraet waere jeder Pixelwert geraten.
-   **Das Feld dafuer heisst `iconOffsetX`** (int, Vorgabe 0, §6 der
-   NG-Referenz) — es fehlt also nur die Zahl, nicht der Weg.
-4. **Die verwaiste SVG.** Niemand zeichnet sie mehr; sie haengt noch an
-   `Bilder.swift`, `Package.swift`, dem actool-Schritt in `build.sh` und einem
-   Ladeversuch in `scripts/buendel-pruefen.sh`. Geschlossene Liste, ein
-   Handgriff.
-5. **Eine Schriftprobe fuer acht Zeilen.** `Pixelgroessen.abgesegnet` ist an
-   16 Pixeln durchgesehen und gilt auf NG nicht. Die Beurteilung ist deine.
-6. `abfragen` ueberschreibt eine von Hand gewaehlte Geraeteart. Eine NG hinter
-   Basic-Auth bleibt unbedienbar (kein Praefix zu holen).
+1. **`Meldungsbau` auf eine freie Feldgroesse.** Der groesste verbliebene
+   Punkt: Die Vorschau zeigt fuer eine NG-Uhr weiterhin 52×16, obwohl das
+   Geraet 32×8 hat. `Uhr.anzeigemass` liegt bereit. Nachgezaehlt am
+   14.09.2026: 48 Fundstellen von `Pixelfeld.breiteStandard`/`hoeheStandard`,
+   aber **ballungsweise** — `Textraster` 11, `Meldungsbau` 6, das ist der
+   Kern; der Rest sind Ansichten (`VorschauiOS` 8, `Bildersammlung` 6,
+   `Slotblock` 3 …).
+
+   Der gangbare Weg: `Meldungsbau.feld` und `Textraster` bekommen die Groesse
+   als Parameter **mit der bisherigen als Vorgabe**. Dann bleibt jeder
+   bestehende Aufruf byteweise gleich, die vorhandene Testreihe deckt das ab,
+   und nur die Vorschau reicht etwas anderes durch. Ein eigener Durchgang mit
+   eigener Testreihe — nichts fuer nebenbei, weil daran die funktionierende
+   TC002 haengt.
+2. **Der Grund einer Sperre ist am iPad und am iPhone unsichtbar.** Ein
+   gesperrter Regler ohne erkennbaren Anlass. Eine sichtbare Fassung ist eine
+   Entscheidung ueber die Oberflaeche und gehoert dem Auftraggeber.
+3. **Das Icon „ein bisschen nach rechts"** auf NG. **Das Feld dafuer heisst
+   `iconOffsetX`** (int, Vorgabe 0, §6 der NG-Referenz) — es fehlt nur die
+   Zahl, und die ist ohne Blick aufs Geraet geraten.
+4. **Eine Schriftprobe fuer acht Zeilen.** `Pixelgroessen.abgesegnet` ist an
+   16 Pixeln durchgesehen und gilt auf NG nicht. Die Beurteilung ist die des
+   Auftraggebers.
+5. **Xcode Cloud**, falls gewuenscht: Es scheitert an drei konkreten Dingen —
+   die `.xcodeproj` ist nicht eingecheckt (es braeuchte ein
+   `ci_scripts/ci_post_clone.sh`, das `xcodegen` installiert und laufen
+   laesst), der flache Klon hat keine Tags (die Fassungsnummer fiele auf
+   „0.0"), und gebaut wird der Stand auf GitHub, nicht der auf der Platte.
+6. **Eine NG hinter Basic-Auth bleibt unbedienbar** (kein Praefix zu holen).
 
 ### Zwei Anmerkungen zur Arbeitsweise
 
