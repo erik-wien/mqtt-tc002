@@ -225,12 +225,27 @@ die Hilfe, die all das beschreibt.
      die alte Fassung — und die Vorschau zeigte etwas anderes als das Display.
      Heute gilt ausnahmslos „was du siehst, bekommt die Uhr".
 
-   **Wann es sich wirklich lohnt** — und der Grund, es nicht zu vergessen: NG
-   verwirft eine MQTT-Nutzlast ueber **8192 Byte stillschweigend**, ohne
-   Fehler und ohne `/result`-Antwort (§8). Mit 8×8-Icons sind wir weit
-   darunter; ein 32×8-Hintergrund-GIF oder eine laengere Animation ist es
-   nicht. Dann ist die Datei auf dem Geraet nicht eine Ersparnis, sondern der
-   einzige Weg.
+   **Und die Bedingung, unter der es sich lohnen wuerde, ist praktisch
+   unerreichbar.** Der Gedanke war: NG verwirft eine MQTT-Nutzlast ueber
+   **8192 Byte stillschweigend**, ohne Fehler und ohne `/result`-Antwort (§8)
+   — ein grosses Icon kaeme dorthin, und dann waere die Datei auf dem Geraet
+   der einzige Weg. Nachgerechnet stimmt das nicht:
+
+   - Die **Leinwand fuer Icons ist bei NG immer 32×8**, unabhaengig von der
+     Panelbreite (§1). Groesser geht also gar nicht, auch nicht an einer
+     laengeren Kette.
+   - Die **Werksfirmware der Ulanzi speichert ueberhaupt keine Icons**, die
+     sich referenzieren liessen — dort gibt es diesen Weg nie.
+   - Gemessen am 14.09.2026 fuer ein **animiertes 32×8**, wanderndes Muster
+     in zwei Farben: 1 Bild → 250 Byte ganze Nutzlast, 20 Bilder → 1 402,
+     40 Bilder → 2 590, **80 Bilder → 5 042**. Acht Sekunden Animation liegen
+     also bei knapp der Haelfte der Grenze; es braeuchte rund 130 Einzelbilder,
+     um sie zu reissen.
+
+   Damit bleibt als Grund nur noch die Ersparnis von 88 bis 1379 Zeichen je
+   Nachricht — und dagegen steht weiterhin, dass Vorschau und Anzeige still
+   auseinanderlaufen koennten. **Wer das hier spaeter wieder aufgreift, sollte
+   einen neuen Grund haben**; die alten sind gemessen und halten nicht.
 
    **Form, falls es gebaut wird:** ein ausdruecklich ausgeloestes „Icons auf
    die Uhr legen" bei der Uhr in den Einstellungen, mit Fortschritt und
