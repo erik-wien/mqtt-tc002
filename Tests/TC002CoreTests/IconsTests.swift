@@ -675,3 +675,45 @@ final class IconsTests: XCTestCase {
     }
 
 }
+
+/// **Ein Icon reist als Bytes mit, nie als Nummer** — und daran hängt mehr,
+/// als es aussieht.
+///
+/// AWTRIX NG entscheidet allein nach der Länge (`docs/awtrix-ng-protokoll.md`
+/// §5.3): bis 64 Zeichen ist der Wert eine **Kennung**, die gegen das
+/// Dateisystem des Geräts aufgelöst wird (`/ICONS/<id>.gif`), darüber sind es
+/// die Bytes selbst. Unsere Icons liegen nicht auf dem Gerät — fiele eines
+/// unter die 64, suchte die Uhr eine Datei, die es dort nie gab, und zeigte
+/// **stillschweigend kein Icon**.
+///
+/// Gemessen am 14.09.2026: Das kürzeste, was unser GIF-Schreiber hergibt, sind
+/// 100 Zeichen — ein leeres 8×8 ebenso wie ein einfarbiges. Dieser Test hält
+/// den Abstand fest, damit ein sparsamerer Schreiber nicht still unter die
+/// Grenze rutscht.
+final class IconLaengeTests: XCTestCase {
+    private func temp() -> URL {
+        let ordner = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iconlaenge-" + UUID().uuidString)
+        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        return ordner
+    }
+
+    func testJedesIconIstLaengerAlsEineKennung() throws {
+        let ordner = temp()
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        let sammlung = Iconsammlung(schreibordner: ordner)
+
+        let faelle: [(String, [String?])] = [
+            ("leer", [String?](repeating: nil, count: 64)),
+            ("einfarbig", [String?](repeating: "#FFFFFF", count: 64)),
+            ("ein Punkt", { var p = [String?](repeating: nil, count: 64); p[0] = "#FF0000"; return p }()),
+        ]
+        for (name, pixel) in faelle {
+            let icon = try sammlung.sichern(nummer: name, name: name, pixel: pixel)
+            let base64 = try NGNutzlast.icon(ausDatenURI: try sammlung.datenURI(fuer: icon))
+            XCTAssertGreaterThan(base64.count, 64,
+                                 "„\(name)“ ist auf \(base64.count) Zeichen geschrumpft — "
+                                 + "AWTRIX NG liest das als Kennung und sucht eine Datei auf dem Gerät")
+        }
+    }
+}
