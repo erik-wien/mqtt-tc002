@@ -200,6 +200,29 @@ die Hilfe, die all das beschreibt.
    dieselben Ansichten sind — mittelbar auch fuers iPad; fuers iPhone braeuchte
    es einen Simulator, und der ist in dieser Werkstatt tabu.
 7. **Eine NG hinter Basic-Auth bleibt unbedienbar** (kein Praefix zu holen).
+9. **Was Werkzeug und Kurzbefehle von heute noch nicht koennen** (gesichtet am
+   14.09.2026, nachdem der Auftraggeber danach gefragt hat). Der einzige
+   **Fehler** in dieser Reihe ist behoben (die Adresse ohne Leerraum, `f4a9159`);
+   was hier steht, sind Faehigkeiten, die es nur in der App gibt:
+
+   - **Ein Bild aus dem Bestand schicken.** `Bildsendung.rahmen(aus datei:)`
+     steht im Kern und wird vom Telefon benutzt; ein `mqtttc002 bild <name>`
+     waere im Werkzeug ein Dutzend Zeilen, ein „Bild senden"-Kurzbefehl
+     entsprechend. Sinnvoll vor allem im Werkzeug: Ein Cron-Eintrag, der
+     morgens ein Bild schickt, geht heute nicht.
+   - **Der Grund, warum eine Uhr nicht am Broker haengt.** `Geraet.brokerstand`
+     gibt ihn her; `mqtttc002 uhren` zeigt heute nur Praefix und Betriebsart
+     und fragt gar nicht nach. Eine Spalte „Broker" waere eine Zeile Code und
+     eine Netzabfrage je Uhr — die dort bisher **niemand** macht, und das ist
+     der Grund, es nicht beilaeufig zu tun: `uhren` ist heute ein Befehl, der
+     ohne Netz auskommt.
+   - **Die virtuelle Uhr** braucht dort nichts: Sie ist eine Adresse wie jede
+     andere, das Werkzeug spricht sie ohne Aenderung an.
+
+   Nichts davon ist ein Rueckstand im Sinne von „laeuft auseinander" — die
+   gemeinsamen Entscheidungen (beide Icon-Bestaende, NG-Nutzlast, Slotplaetze,
+   Adressen) liegen alle im Kern und gelten fuer alle drei Programme.
+
 8. **Icons auf die Uhr legen, statt sie mitzuschicken** (nur AWTRIX NG,
    aufgenommen am 14.09.2026). Heute reist jedes Icon als Base64 in der
    Nutzlast mit — die Uhr braucht nichts zu haben, und die Vorschau kann nicht
