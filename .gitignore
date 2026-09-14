@@ -7,3 +7,11 @@ __pycache__/
 MQTT-TC002-iOS.xcodeproj/
 erzeugt/
 .superpowers/
+# Xcode legt beim Einschalten einer Faehigkeit eine eigene Berechtigungsdatei
+# im Wurzelverzeichnis an und traegt sie in die `.xcodeproj` ein. Beides ist
+# hier fluechtig: Die `.xcodeproj` wird von `xcodegen generate` ueberschrieben,
+# und die massgebliche Datei ist `Resources/MQTT-TC002.entitlements` — die
+# einzige, auf die `project.yml` und `build.sh` zeigen. Eine zweite im Baum
+# waere eine zweite Wahrheit ueber dieselbe Sache, und wer einmal die falsche
+# erwischt, baut eine App, die laut Signatur iCloud kann und es nicht tut.
+MQTT-TC002-iOS.entitlements
