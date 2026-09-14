@@ -108,23 +108,28 @@ public final class AppZustand {
             return
         }
         brokerStand = .laeuft
-        Task.detached { [weak self] in
-            // Blockiert bis zu acht Sekunden — nicht auf dem Hauptthread.
-            var pruefZugang = zugang
-            pruefZugang.clientID = "tc002-app-pruef"
+        // `let`, nicht `var`: Eine veraenderliche Variable, die in eine
+        // nebenlaeufige Closure faellt, ist unter Swift 6 ein Fehler.
+        let pruefZugang: MQTTZugang = {
+            var z = zugang
+            z.clientID = "tc002-app-pruef"
+            return z
+        }()
+        // Blockiert bis zu acht Sekunden — deshalb `Hintergrund`, nicht
+        // `Task.detached`: Der kooperative Pool hat so viele Threads wie der
+        // Rechner Kerne, und einer davon waere hier acht Sekunden lang belegt.
+        // Der `Task` selbst erbt den Hauptakteur von `AppZustand`; alles
+        // ausserhalb von `Hintergrund.lauf` laeuft also dort, wo es hingehoert.
+        Task { [weak self] in
             do {
-                try MQTTSender().pruefen(zugang: pruefZugang)
-                await MainActor.run { [weak self] in
-                    self?.brokerStand = .angenommen
-                    self?.log(lok("Broker-Prüfung: angenommen"))
-                    self?.horchenAbgleichen()
-                }
+                try await Hintergrund.lauf { try MQTTSender().pruefen(zugang: pruefZugang) }
+                self?.brokerStand = .angenommen
+                self?.log(lok("Broker-Prüfung: angenommen"))
+                self?.horchenAbgleichen()
             } catch {
                 let meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-                await MainActor.run { [weak self] in
-                    self?.brokerStand = .abgelehnt(meldung)
-                    self?.log(lokf("Broker-Prüfung abgelehnt: %@", meldung))
-                }
+                self?.brokerStand = .abgelehnt(meldung)
+                self?.log(lokf("Broker-Prüfung abgelehnt: %@", meldung))
             }
         }
     }
@@ -265,17 +270,20 @@ public final class AppZustand {
     public func belegungAbfragen(_ id: UUID, sitzung: URLSession = .shared) {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return }
         let host = uhr.host, name = uhr.name, gattung = uhr.gattung
-        // Blockiert bis zur Antwort der Uhr — nicht auf dem Hauptthread.
-        Task.detached { [weak self] in
+        // Blockiert bis zur Antwort der Uhr — und **eine Uhr, die nicht
+        // antwortet, blockiert zehn Sekunden**. Genau dafuer gibt es
+        // `Hintergrund`: Im kooperativen Pool haetten fuenf eingetragene Uhren,
+        // von denen eine tot ist, nacheinander dessen Plaetze belegt.
+        Task { [weak self] in
             do {
-                let namen = try Geraet(host: host, sitzung: sitzung, typ: gattung).anzeigennamen()
-                await MainActor.run { [weak self] in self?.belegungGemeldet(namen, fuer: id) }
+                let namen = try await Hintergrund.lauf {
+                    try Geraet(host: host, sitzung: sitzung, typ: gattung).anzeigennamen()
+                }
+                self?.belegungGemeldet(namen, fuer: id)
             } catch {
                 let grund = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-                await MainActor.run { [weak self] in
-                    self?.belegungGemeldet(nil, fuer: id)
-                    self?.log(lokf("%@ sagt nicht, was auf ihr steht: %@", name, grund))
-                }
+                self?.belegungGemeldet(nil, fuer: id)
+                self?.log(lokf("%@ sagt nicht, was auf ihr steht: %@", name, grund))
             }
         }
     }
@@ -655,8 +663,13 @@ public final class AppZustand {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
         let art = uhr.wirksameBetriebsart
-        Task.detached { [weak self] in
+        // Der blockierende Teil laeuft auf `Hintergrund`, nicht im kooperativen
+        // Pool: Eine Uhr, die nicht antwortet, haelt hier zehn Sekunden. Der
+        // `Task` selbst erbt den Hauptakteur, alles danach steht also schon
+        // dort, wo es hingehoert.
+        Task { [weak self] in
             do {
+                let geholt = try await Hintergrund.lauf { () throws -> (Geraetetyp, String, Basisdaten, Int?, Bool?, [String]?) in
                 // **Zuerst: was antwortet da ueberhaupt?** Praefix, Belegung
                 // und Verbindungsstand stehen bei den beiden Firmwares an
                 // verschiedenen Pfaden, und die der einen gibt es bei der
@@ -686,7 +699,10 @@ public final class AppZustand {
                 // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
                 // Praefix und Verbindungsstand noch lange nicht gescheitert.
                 let namen = try? geraet.anzeigennamen()
-                await MainActor.run { [weak self] in
+                    return (gattung, praefix, basis, breite, steht, namen)
+                }
+                let (gattung, praefix, basis, breite, steht, namen) = geholt
+                do {
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
                     let gattungGewechselt = self.uhren[i].gattung != gattung
                     // Ausdruecklich eingetragen, auch `.tc002`: Danach steht in
@@ -723,10 +739,8 @@ public final class AppZustand {
                     if let namen { self.belegungGemeldet(namen, fuer: id) }
                 }
             } catch {
-                await MainActor.run { [weak self] in
-                    self?.verbunden[id] = nil
-                    self?.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-                }
+                self?.verbunden[id] = nil
+                self?.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             }
         }
     }
@@ -1403,9 +1417,11 @@ public final class AppZustand {
     /// losgeloest — und wird erst gerufen, wenn die Einstellungen aufgehen.
     public func wolkeBereitPruefen() {
         guard wolkeBereit == nil, !wolkeLaeuft else { return }
-        Task.detached(priority: .utility) { [weak self] in
-            let bereit = Ablageort.behaelterErmitteln() != nil
-            await MainActor.run { [weak self] in self?.wolkeBereit = bereit }
+        // `behaelterErmitteln` blockiert — daher `Hintergrund` statt des
+        // kooperativen Pools.
+        Task { [weak self] in
+            let bereit = await Hintergrund.lauf { Ablageort.behaelterErmitteln() != nil }
+            self?.wolkeBereit = bereit
         }
     }
 
@@ -1414,9 +1430,12 @@ public final class AppZustand {
     public func wolkeUmschalten(_ an: Bool) {
         guard !wolkeLaeuft else { return }
         wolkeLaeuft = true
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let ergebnis = Ablageort.umschalten(an)
-            await MainActor.run { [weak self] in self?.wolkeUmgeschaltet(ergebnis) }
+        // Umschalten laeuft koordiniert gegen den iCloud-Behaelter und kopiert
+        // dabei den ganzen Bestand — das kann dauern und blockiert die ganze
+        // Zeit. Im kooperativen Pool waere das der denkbar schlechteste Ort.
+        Task { [weak self] in
+            let ergebnis = await Hintergrund.lauf { Ablageort.umschalten(an) }
+            self?.wolkeUmgeschaltet(ergebnis)
         }
     }
 
