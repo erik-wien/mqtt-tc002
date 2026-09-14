@@ -130,6 +130,8 @@ sich unterwegs erledigt: Sie steht nur noch in `Brokerzeichen.swift`.
    > nach rechts ruecken muesste. Der Rest ist Standard."
 
    Nicht gebaut: Ohne Blick aufs Geraet waere jeder Pixelwert geraten.
+   **Das Feld dafuer heisst `iconOffsetX`** (int, Vorgabe 0, §6 der
+   NG-Referenz) — es fehlt also nur die Zahl, nicht der Weg.
 4. **Die verwaiste SVG.** Niemand zeichnet sie mehr; sie haengt noch an
    `Bilder.swift`, `Package.swift`, dem actool-Schritt in `build.sh` und einem
    Ladeversuch in `scripts/buendel-pruefen.sh`. Geschlossene Liste, ein
