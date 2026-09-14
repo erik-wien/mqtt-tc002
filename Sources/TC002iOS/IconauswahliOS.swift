@@ -4,9 +4,16 @@ import TC002Core
 
 /// Ein Icon als stehende Vorschau. Zeigt das erste Einzelbild; animierte Icons
 /// laufen hier nicht, das wäre im Raster nur Unruhe.
+///
+/// **Nimmt die Fläche, die es bekommt, und rechnet die Punktgröße daraus** —
+/// wie `Slotraster` es im Block tut. Bis zum 14.09.2026 bekam es die Kante je
+/// Bildpunkt von außen gereicht, und die stammte aus einer gemessenen
+/// Rasterbreite; wo die Messung zu klein ausfiel, standen die Icons in
+/// Originalauflösung da, also stecknadelkopfgroß. Eine Ansicht, deren Größe
+/// von einer Messung abhängt, die ihrerseits von der Größe abhängt, ist eine
+/// Falle — der Aufrufer setzt jetzt einen Rahmen, und das Bild füllt ihn.
 struct IconbildiOS: View {
     let datei: URL
-    var kante: Double = 3
     /// **Die Kantenlaenge des Icons in Pixeln — 8 oder 16.**
     ///
     /// Bis zum 14.09.2026 stand hier ueberall die 8 fest. Das ging, solange
@@ -16,22 +23,24 @@ struct IconbildiOS: View {
 
     var body: some View {
         IconRasteriOS(pixel: (try? Bildraster.lesen(datei, breite: pixelkante, hoehe: pixelkante))?.first ?? [],
-                      pixelkante: pixelkante, kante: kante)
+                      pixelkante: pixelkante)
     }
 }
 
-/// Zeichnet ein bereits gelesenes Pixelraster — der gemeinsame Kern von
-/// `IconbildiOS` (ein stehendes Einzelbild) und der Einzelansicht, die
-/// zusätzlich laufende Icons zeigt.
+/// Zeichnet ein bereits gelesenes Pixelraster in die verfügbare Fläche — der
+/// gemeinsame Kern von `IconbildiOS` (ein stehendes Einzelbild) und der
+/// Einzelansicht, die zusätzlich laufende Icons zeigt. Quadratisch, weil ein
+/// Icon quadratisch ist; beide Größen werden damit gleich groß gezeigt, das
+/// 16×16 ist nicht das doppelt so große Bild, sondern das feinere.
 private struct IconRasteriOS: View {
     let pixel: [String?]
     /// 8 oder 16 — siehe `IconbildiOS.pixelkante`.
     var pixelkante: Int = 8
-    var kante: Double
 
     var body: some View {
-        Canvas { kontext, _ in
+        Canvas { kontext, groesse in
             guard pixel.count == pixelkante * pixelkante else { return }
+            let kante = groesse.width / Double(pixelkante)
             for y in 0..<pixelkante {
                 for x in 0..<pixelkante {
                     guard let farbe = pixel[y * pixelkante + x], let c = Color(hex: farbe) else { continue }
@@ -40,19 +49,10 @@ private struct IconRasteriOS: View {
                 }
             }
         }
-        .frame(width: Double(pixelkante) * kante, height: Double(pixelkante) * kante)
+        .aspectRatio(1, contentMode: .fit)
         .background(.black)
         .clipShape(RoundedRectangle(cornerRadius: 3))
     }
-}
-
-/// Meldet die Breite, die dem Raster tatsächlich zur Verfügung steht — damit
-/// die Zellengröße nicht geschätzt werden muss, sondern zur Bildschirmbreite
-/// passt. Dieselbe Bauart wie die Breitenmessung der Formatpille in
-/// SendeniOS.swift.
-private struct RasterBreiteKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 /// Blatt zur Icon-Auswahl. Suchen, wählen, abwählen, umbenennen, löschen, und
@@ -75,28 +75,12 @@ struct IconauswahliOS: View {
     @State private var laedt = false
     @State private var meldung: String?
     @State private var einzelansicht: Icon?
-    @State private var rasterBreite: CGFloat = 340
     /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
     /// dem Nummernfeld nur durch Tippen daneben heraus.
     @FocusState private var lametricFokus: Bool
 
     private static let spalten = 5
     private static let zwischenraum = 10.0
-
-    /// Breite einer Zelle, aus der gemessenen Rasterbreite errechnet — so
-    /// passen fünf nebeneinander, auf jeder Bildschirmbreite.
-    private var zellenbreite: Double {
-        (Double(rasterBreite) - Double(Self.spalten - 1) * Self.zwischenraum) / Double(Self.spalten)
-    }
-
-    /// Kantenlänge **je Bildpunkt**, und deshalb von der Pixelkante des Icons
-    /// abhängig: Ein 16×16 ist nicht das doppelt so große Bild, sondern das
-    /// feinere — dieselbe Entscheidung wie im Auswahlraster am Schreibtisch.
-    /// Mit einem festen Wert für alle wäre ein 16×16 doppelt so breit wie
-    /// seine Zelle und läge über der nächsten.
-    private func kante(fuer icon: Icon) -> Double {
-        max(2, zellenbreite / Double(icon.kante))
-    }
 
     /// Der Grundschatz wird gelesen, Nachgeladenes geschrieben.
     private var sammlung: Iconsammlung {
@@ -159,8 +143,8 @@ struct IconauswahliOS: View {
                                 einzelansicht = icon
                             } label: {
                                 VStack(spacing: 3) {
-                                    IconbildiOS(datei: icon.datei, kante: kante(fuer: icon),
-                                                pixelkante: icon.kante)
+                                    IconbildiOS(datei: icon.datei, pixelkante: icon.kante)
+                                        .frame(maxWidth: .infinity)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 3)
                                                 .stroke(Color.accentColor, lineWidth: gewaehlt?.kennung == icon.kennung ? 2 : 0)
@@ -184,23 +168,21 @@ struct IconauswahliOS: View {
                                 }
                                 .contentShape(Rectangle())
                             }
-                            // Rasterkachel, kein Befehlsknopf — das Icon ist
-                            // selbst die Flaeche. `.automatic` ausdruecklich,
-                            // damit die Entscheidung im Quelltext steht.
-                            .buttonStyle(.automatic)
-                            .tint(.primary)
+                            // **`.plain`, und daran haengt, ob ueberhaupt das
+                            // getroffene Icon aufgeht.** Eine Listenzeile ist
+                            // selbst ein Bedienelement: Knoepfe mit dem
+                            // vorgegebenen Stil darin teilen sich ihre Flaeche,
+                            // und ein Tipp landet beim ersten. Vierzig Kacheln
+                            // in einer Zeile hiessen also vierzigmal dasselbe
+                            // Icon. Derselbe Fallstrick wie im Editor bei
+                            // „Sichern"/„Neu" und in der Blockreihe.
+                            .buttonStyle(.plain)
                             .accessibilityLabel(Text(Bildraster.bewegt(icon.datei)
                                                      ? lokf("%@, bewegt", icon.name) : icon.name))
                             .accessibilityAddTraits(gewaehlt?.kennung == icon.kennung ? [.isSelected] : [])
                         }
                     }
                     .padding(.vertical, 6)
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(key: RasterBreiteKey.self, value: geo.size.width)
-                        }
-                    )
-                    .onPreferenceChange(RasterBreiteKey.self) { rasterBreite = $0 }
                     .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
                 }
             }
@@ -317,7 +299,8 @@ private struct IconEinzelansichtiOS: View {
     @State private var fragtUmbenennen = false
     @State private var fragtLoeschen = false
 
-    private static let kante = 20.0
+    /// Kantenlaenge der grossen Ansicht in Punkten — nicht je Bildpunkt.
+    private static let kante = 220.0
 
     init(icon: Icon, darfAendern: Bool,
          uebernehmen: @escaping (Icon) -> Void,
@@ -337,11 +320,13 @@ private struct IconEinzelansichtiOS: View {
                 if bilder.count > 1 {
                     TimelineView(.animation) { zeit in
                         IconRasteriOS(pixel: Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel,
-                                      pixelkante: icon.kante, kante: Self.kante)
+                                      pixelkante: icon.kante)
+                            .frame(width: Self.kante, height: Self.kante)
                     }
                 } else {
                     IconRasteriOS(pixel: bilder.first?.pixel ?? [],
-                                  pixelkante: icon.kante, kante: Self.kante)
+                                  pixelkante: icon.kante)
+                        .frame(width: Self.kante, height: Self.kante)
                 }
                 Spacer()
                 Button("Übernehmen") { uebernehmen(icon) }

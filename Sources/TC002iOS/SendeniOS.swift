@@ -460,9 +460,8 @@ struct SendeniOS: View {
                                 // nicht das doppelt so grosse Bild, sondern
                                 // das feinere — dieselbe Ueberlegung wie im
                                 // Raster am Schreibtisch.
-                                IconbildiOS(datei: icon.datei,
-                                            kante: 20 / Double(icon.kante),
-                                            pixelkante: icon.kante)
+                                IconbildiOS(datei: icon.datei, pixelkante: icon.kante)
+                                    .frame(width: 20, height: 20)
                             } else {
                                 Image(systemName: "face.smiling")
                             }
