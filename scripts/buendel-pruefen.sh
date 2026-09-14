@@ -130,6 +130,16 @@ if [ ! -s "$APP/LICENSE" ]; then
     fehlt=1
 fi
 
+# Das Datenschutzmanifest. Apple verlangt es seit Mai 2024, sobald die App eine
+# „API mit Begruendungspflicht" benutzt — `UserDefaults` ist eine, und diese App
+# benutzt sie durchgehend. Fehlt es, beanstandet App Store Connect den Upload,
+# und zwar erst **dort**: Der Bau gelingt, das Buendel sieht fertig aus, und
+# auffallen wuerde es beim Hochladen. Es muss in der Buendelwurzel liegen.
+if [ ! -s "$APP/PrivacyInfo.xcprivacy" ]; then
+    echo "fehlt   PrivacyInfo.xcprivacy"
+    fehlt=1
+fi
+
 # Die Geraetereferenz in beiden Sprachen — dieselbe Pflicht wie am Mac.
 # `GeraeteReferenzView` sucht sie ueber `Bundle.main.resourceURL` in der
 # Buendelwurzel; fehlt sie, steht statt des Dokuments ein Fehlerschirm, der

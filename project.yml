@@ -43,6 +43,11 @@ targets:
       # braucht deshalb ihre eigene Zeile. Am Mac tut dasselbe `build.sh`.
       - path: LICENSE
         buildPhase: resources
+      # Das Datenschutzmanifest. Apple verlangt es seit Mai 2024, sobald die App
+      # eine „API mit Begruendungspflicht" benutzt — `UserDefaults` ist eine.
+      # Es muss in der **Wurzel** des Buendels liegen, nicht in einem Ordner.
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
       # Die Geraetereferenz, beide Sprachen. `GeraeteReferenzView` liegt seit
       # dem Umzug in `TC002Ansichten` und wird damit auch fuers iPhone
       # uebersetzt; sie sucht das Dokument in der Buendelwurzel und zeigt sonst
@@ -61,6 +66,15 @@ targets:
         buildPhase: resources
       - path: docs/en/awtrix-ng-protocol.md
         buildPhase: resources
+    # **Nach allen anderen Schritten, aber vor dem Signieren.** Xcode fuehrt
+    # Skriptschritte in der Reihenfolge der Bauphasen aus und signiert erst
+    # danach — eine Aenderung an der Info.plist hier macht die Signatur also
+    # nicht ungueltig. Umgekehrt waere sie es: Wer nach dem Signieren schreibt,
+    # bekommt ein Buendel, das nirgends mehr laeuft.
+    postBuildScripts:
+      - name: Fassung und Baunummer aus Git
+        script: sh "$PROJECT_DIR/scripts/fassung-eintragen.sh"
+        basedOnDependencyAnalysis: false
     dependencies:
       - package: TC002
         product: TC002Core
@@ -74,8 +88,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: cloud.eriks.mqtt-tc002
         DEVELOPMENT_TEAM: 25ZK4SS655
         CODE_SIGN_STYLE: Automatic
-        MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "1"
+        # **Nur die Rueckfallwerte.** Die wirklichen Zahlen schreibt der
+        # Bauschritt unten aus Git in die fertige Info.plist — dieselbe Quelle,
+        # aus der `build.sh` die Mac-Fassung nimmt (juengstes Tag, Zahl der
+        # Commits). Standen hier feste Werte, lud jeder TestFlight-Upload
+        # dieselbe Baunummer hoch, und App Store Connect nimmt keine zweimal:
+        # Der erste ginge durch, der zweite nicht.
+        MARKETING_VERSION: "0.0"
+        CURRENT_PROJECT_VERSION: "0"
+        # Der Bauschritt ruft `git`; in einer Sandkiste gaebe es das nicht.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_ASSET_PATHS: ""
@@ -121,6 +143,12 @@ targets:
         # Ohne diesen Eintrag erreicht die App weder Uhr noch Broker, und die
         # Fehlermeldung zeigt in die falsche Richtung — derselbe Fall wie auf
         # dem Mac.
+        # **Die Ausfuhrerklaerung, ein fuer alle Mal.** Ohne diesen Schluessel
+        # fragt App Store Connect bei **jedem** Upload nach — und ein Bau, der
+        # auf eine Frage wartet, laedt nicht hoch. Die App verschluesselt
+        # nichts selbst: Das Brokerkennwort liegt im Schluesselbund (System),
+        # und MQTT geht unverschluesselt ins Heimnetz.
+        ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: >-
           Die App spricht die Pixeluhr und den MQTT-Broker in Ihrem Heimnetz an.
         # Damit der Behaelter in „Dateien" und in iCloud Drive auftaucht, statt

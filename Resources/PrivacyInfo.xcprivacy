@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Das Datenschutzmanifest. Apple verlangt es seit Mai 2024, sobald eine App
+	  eine der „APIs mit Begruendungspflicht" benutzt — und `UserDefaults` steht
+	  auf dieser Liste. Diese App benutzt sie durchgehend (`Einstellungen`,
+	  `MeldungsoptionenAblage`, `Pixelfeld`, `Icons`, `Einrichtungsstand`), also
+	  braucht es die Angabe. Ohne sie beanstandet App Store Connect den Upload.
+
+	  Nachgesehen statt angenommen, welche der uebrigen Kategorien zutreffen:
+	  Zeitstempel von Dateien, freier Speicherplatz und Systemlaufzeit werden
+	  nirgends gelesen (am 14.09.2026 im Quelltext geprueft). Sie stehen
+	  deshalb nicht hier — ein Manifest, das mehr angibt als wahr ist, ist
+	  genauso falsch wie eines, das zu wenig angibt.
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<!--
+	  Nichts. Die App erhebt keine Daten und schickt nichts irgendwohin ausser
+	  an die Uhr und den MQTT-Broker im Heimnetz des Anwenders — beides Geraete,
+	  die er selbst eingetragen hat. Kein Analysedienst, kein Absturzmelder,
+	  kein Netzaufruf nach draussen.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<!--
+			  CA92.1: „Zugriff allein auf die Voreinstellungen der App selbst."
+			  Genau das ist der Fall — gelesen und geschrieben wird der eigene
+			  Bereich, nie ein fremder.
+			-->
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
