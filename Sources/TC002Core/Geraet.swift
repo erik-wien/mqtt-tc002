@@ -315,10 +315,17 @@ public struct Geraet {
     /// Wer nur auf den Status sieht, haelt eine Ablehnung fuer einen Erfolg.
     @discardableResult
     private func anAnzeige(_ pfad: String, name: String, koerper: Data?) throws -> [String: Any] {
-        var teile = URLComponents()
-        teile.scheme = "http"
-        teile.host = host
-        teile.path = pfad
+        // **Ueber `url(_:)`, nicht ueber `teile.host`.** Wer die Adresse in
+        // `URLComponents.host` legt, verliert jede mit Portangabe: `host`
+        // haelt genau einen Rechnernamen, ein Doppelpunkt darin ergibt keine
+        // URL, und der Aufruf endete in `unerwarteteAntwort` — als haette die
+        // Uhr Unsinn geantwortet, obwohl nie eine Anfrage hinausging.
+        // Aufgefallen am 14.09.2026 an der virtuellen Uhr
+        // (`127.0.0.1:8752`); eine eingetippte Adresse mit Port traf es
+        // genauso, an genau diesem einen Pfad.
+        guard var teile = URLComponents(url: try url(pfad), resolvingAgainstBaseURL: false) else {
+            throw GeraetFehler.ungueltigeAdresse(host)
+        }
         // Nicht von Hand zusammengesetzt: Ein Anzeigename darf alles
         // enthalten, was ein Mensch eintippt, und `URLComponents` kodiert es.
         teile.queryItems = [URLQueryItem(name: "name", value: name)]

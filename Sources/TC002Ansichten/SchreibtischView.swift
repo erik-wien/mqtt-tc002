@@ -23,9 +23,13 @@ public struct SchreibtischView: View {
     /// nimmt seinen Anfangswert nur beim ersten Aufbau dieser Ansicht — genau
     /// einmal, beim Start. Ein spaeterer Aufbau (`.senden` gewaehlt, Uhr
     /// entfernt) wirft die Wahl des Benutzers damit nicht um.
+    /// Wird nur von der Mac-App gesetzt (siehe `VerbindungView.ansehen`).
+    private let fensterOeffnen: ((String) -> Void)?
+
     @MainActor
-    public init(zustand: AppZustand) {
+    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil) {
         self.zustand = zustand
+        self.fensterOeffnen = fensterOeffnen
         _bereich = State(initialValue: Bereich.start(eingerichtet: zustand.eingerichtet))
     }
 
@@ -139,7 +143,7 @@ public struct SchreibtischView: View {
             case .senden: SendenView(zustand: zustand)
             case .editor: EditorBereichView(zustand: zustand)
             case .verlauf: AnzeigenView(zustand: zustand)
-            case .einstellungen: VerbindungView(zustand: zustand)
+            case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
             }
         }
         // Nur auf dem iPad: Hochkant verschwindet die Seitenleiste hinter

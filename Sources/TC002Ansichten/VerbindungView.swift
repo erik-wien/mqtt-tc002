@@ -5,11 +5,31 @@ import TC002Modell
 public struct VerbindungView: View {
     @Bindable var zustand: AppZustand
 
-    public init(zustand: AppZustand) { self.zustand = zustand }
+    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil) {
+        self.zustand = zustand
+        self.fensterOeffnen = fensterOeffnen
+    }
     @State private var neuerHost = ""
     /// Das Kennwort wandert beim Verlassen des Feldes in den Schluesselbund, nicht
     /// bei jedem Tastendruck.
     @FocusState private var kennwortFokus: Bool
+
+    /// Wo die virtuelle Uhr aufgeht: am Mac als eigenes Fenster, am iPad als
+    /// Einblendung. Die Handlung kommt **herein** und wird hier nicht
+    /// gewaehlt: `openWindow` gibt es unter iOS zwar als Aufruf, aber er tut
+    /// dort nichts — deshalb steht er allein in der Mac-App, und diese
+    /// Ansicht weiss gar nicht, dass es Fenster gibt (`PlattformwegeTests`).
+    /// `nil` heisst: kein Fenster zur Hand, dann ein Blatt.
+    private let fensterOeffnen: ((String) -> Void)?
+    @State private var zeigeVirtuelleUhr = false
+
+    private func ansehen() {
+        if let fensterOeffnen {
+            fensterOeffnen(Nebenfenster.virtuelleUhr.id)
+        } else {
+            zeigeVirtuelleUhr = true
+        }
+    }
 
     public var body: some View {
         Form {
@@ -163,6 +183,7 @@ public struct VerbindungView: View {
                     brokerStandAnzeige
                 }
             }
+            VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam, ansehen: ansehen)
             Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
         }
         .formStyle(.grouped)
@@ -176,6 +197,7 @@ public struct VerbindungView: View {
         // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
         // eingetipptes Kennwort dabei verloren.
         .onDisappear { zustand.kennwortSichern() }
+        .sheet(isPresented: $zeigeVirtuelleUhr) { Nebenfenster.virtuelleUhr.inhalt }
     }
 
 

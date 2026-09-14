@@ -24,6 +24,7 @@ public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
     case hilfe = "Hilfe"
     case geraetereferenz = "Gerätereferenz"
     case schriftprobe = "Schriftprobe"
+    case virtuelleUhr = "Virtuelle Uhr"
 
     /// Zugleich die Kennung der `Window`-Szene am Mac.
     public var id: String {
@@ -32,6 +33,7 @@ public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
         case .hilfe: return "hilfe"
         case .geraetereferenz: return "geraetereferenz"
         case .schriftprobe: return "schriftprobe"
+        case .virtuelleUhr: return "virtuelleUhr"
         }
     }
 
@@ -46,10 +48,14 @@ public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
         case .hilfe: return "questionmark.circle"
         case .geraetereferenz: return "doc.text"
         case .schriftprobe: return "textformat.size"
+        case .virtuelleUhr: return "display"
         }
     }
 
-    @ViewBuilder public var inhalt: some View {
+    /// `@MainActor`, seit die virtuelle Uhr dazugehoert: Ihr Betrieb ist an
+    /// den Hauptthread gebunden. Gebaut werden diese Ansichten ohnehin nur
+    /// dort — in einer `Scene` am Mac und in einer Einblendung am iPad.
+    @MainActor @ViewBuilder public var inhalt: some View {
         switch self {
         case .ueber: UeberView()
         case .hilfe: HilfeView()
@@ -58,6 +64,9 @@ public enum Nebenfenster: String, CaseIterable, Identifiable, Sendable {
         // zu kennen: Die Ansicht zeigt, was gemessen wurde — und daneben, was
         // die durchgesehene Liste (`Pixelgroessen.abgesegnet`) daraus anbietet.
         case .schriftprobe: SchriftprobeView(angeboteneGroessen: Pixelgroessen.abgesegnet)
+        // Kein Dokument, sondern ein Blick auf etwas Laufendes — und darum
+        // das einzige dieser Fenster, das sich von selbst aendert.
+        case .virtuelleUhr: VirtuelleUhrView(betrieb: .gemeinsam)
         }
     }
 }

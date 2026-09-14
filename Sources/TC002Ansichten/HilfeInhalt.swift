@@ -110,6 +110,16 @@ public enum HilfeInhalt {
     /// Dort stehen ein Schalter und eine Zeile, die sagt, was gilt — warum es
     /// so gilt, steht hier. Jeder Satz ist auf beiden Geraeten wahr, der
     /// Abschnitt sieht auf Mac und Telefon gleich aus (`Wolkenabschnitt`).
+    /// **Ausprobieren ohne Geraet.** Steht in `HilfeInhalt` und nicht in einer
+    /// der beiden Hilfen: Den Schalter gibt es auf allen drei Oberflaechen,
+    /// und was er tut, ist ueberall dasselbe.
+    public static let virtuelleUhr: [Hilfebaustein] = [
+        .ueberschrift("Virtuelle Uhr"),
+        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
+        .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
+        .absatz("Sie spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
+    ]
+
     public static let wolkenabgleich: [Hilfebaustein] = [
         .ueberschrift("Über iCloud abgleichen"),
         .absatz("Ist der Schalter an, liegen die eigenen Icons (8×8 und 16×16), die gemalten Bilder, die Einstellungen und das Gedächtnis der fünf Plätze nicht mehr auf diesem Gerät, sondern in iCloud — und damit auf jedem Gerät, auf dem die App mit demselben Konto läuft."),

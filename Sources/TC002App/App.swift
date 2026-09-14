@@ -75,12 +75,19 @@ struct TC002App: App {
             Nebenfenster.schriftprobe.inhalt
         }
         .windowResizability(.contentSize)
+
+        // **Nicht `.contentSize`.** Die virtuelle Uhr zeigt etwas Laufendes,
+        // kein Dokument: Wer sie neben dem Sendebildschirm stehen hat, will
+        // sie zurechtziehen koennen.
+        Window(Nebenfenster.virtuelleUhr.titel, id: Nebenfenster.virtuelleUhr.id) {
+            Nebenfenster.virtuelleUhr.inhalt
+        }
     }
 
     /// Die Oberflaeche selbst liegt in `TC002Ansichten` — das iPad zeigt
     /// dieselbe. Hier haengt nur an, was es dort nicht gibt.
     private var hauptfenster: some View {
-        SchreibtischView(zustand: zustand)
+        SchreibtischView(zustand: zustand, fensterOeffnen: { openWindow(id: $0) })
             // ⌘Q verlaesst das Fokusfeld nicht — ohne dieses Netz ginge ein eben
             // erst eingetipptes Kennwort verloren, das noch nicht im
             // Schluesselbund steht.
@@ -106,6 +113,11 @@ struct TC002App: App {
                 // Erst hier, nicht im Konstruktor: ein AppZustand allein soll keine
                 // Verbindung aufbauen — sonst horchte auch jeder Test mit.
                 zustand.horchenStarten()
+                // Dieselbe Ueberlegung wie bei `horchenStarten`: Ein
+                // `AppZustand` allein soll keinen Port aufmachen, sonst
+                // laege in jedem Test ein Dienst auf 8752. Der Dienst kommt
+                // deshalb hier hoch — und nur, wenn er beim Beenden lief.
+                Virtuelleuhrbetrieb.gemeinsam.beimStart()
             }
     }
 }

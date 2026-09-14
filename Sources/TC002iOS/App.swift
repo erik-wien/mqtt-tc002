@@ -34,6 +34,11 @@ struct TC002iOSApp: App {
                 // Erst hier, nicht im Konstruktor: ein AppZustand allein soll
                 // keine Verbindung aufbauen, sonst horchte auch jeder Test mit.
                 zustand.horchenStarten()
+                // Dieselbe Ueberlegung wie bei `horchenStarten`: Ein
+                // `AppZustand` allein soll keinen Port aufmachen, sonst
+                // laege in jedem Test ein Dienst auf 8752. Der Dienst kommt
+                // deshalb hier hoch — und nur, wenn er beim Beenden lief.
+                Virtuelleuhrbetrieb.gemeinsam.beimStart()
             }
             .onChange(of: phase) { _, neu in
                 // Dasselbe Netz wie am Mac: Ein eben eingetipptes Kennwort steht

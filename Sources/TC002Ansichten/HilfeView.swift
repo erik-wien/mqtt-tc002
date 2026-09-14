@@ -89,6 +89,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Gesichert wird es, sobald man das Feld verlässt, die Eingabetaste drückt, den Bereich wechselt oder die App beendet — nicht bei jedem Tastendruck."),
                 ]
                 + HilfeInhalt.brokerPruefen
+                + HilfeInhalt.virtuelleUhr
                 + HilfeInhalt.wolkenabgleich
         case .senden:
             return [

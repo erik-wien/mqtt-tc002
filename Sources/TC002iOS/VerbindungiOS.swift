@@ -13,6 +13,7 @@ struct VerbindungiOS: View {
     /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
     /// dem Port-Feld nur durch Tippen daneben heraus.
     @FocusState private var portFokus: Bool
+    @State private var zeigeVirtuelleUhr = false
     @State private var zeigeHilfe = false
     @State private var zeigeUeber = false
 
@@ -23,6 +24,8 @@ struct VerbindungiOS: View {
                 Form {
                     uhrenAbschnitt
                     brokerAbschnitt
+                    VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
+                                          ansehen: { zeigeVirtuelleUhr = true })
                     Wolkenabschnitt(zustand: zustand, fussnote: .caption)
                     ueberAbschnitt
                 }
@@ -36,6 +39,7 @@ struct VerbindungiOS: View {
             } }
         }
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $zeigeVirtuelleUhr) { VirtuelleUhrView(betrieb: .gemeinsam) }
         .sheet(isPresented: $zeigeHilfe) { HilfeiOS() }
         .sheet(isPresented: $zeigeUeber) { UeberiOS() }
         // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
