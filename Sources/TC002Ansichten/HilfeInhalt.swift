@@ -80,6 +80,10 @@ public enum HilfeInhalt {
         .absatz("„Abfragen“ holt von der Uhr selbst das Themen-Präfix und die MAC-Adresse und zeigt das Präfix monospaced in der Zeile an. Das Häkchen- oder Warndreieck-Symbol daneben sagt, ob die Uhr gerade beim Broker angemeldet ist — das ist aber nur die Anmeldung, keine Aussage darüber, ob die App auf das richtige Thema schreiben darf (mehr dazu unter „Wenn nichts erscheint“)."),
         .absatz("Beides gehört zum MQTT-Betrieb. Steht die Uhr auf HTTP, wird kein Präfix gebraucht, das Symbol bleibt weg, und „Abfragen“ sagt dort nur eines — dass die Uhr antwortet. Geholt wird dabei in beiden Fällen auch, welche Anzeigen gerade auf ihr stehen."),
         .absatz("Das Präfix lässt sich absichtlich nicht von Hand eintragen: es ist nicht dasselbe wie das in Ulanzi Studio eingestellte, die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt das wirksame Präfix selbst. Hat die Uhr gar kein Präfix eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
+        .absatz("Bei einer AWTRIX NG ist das Präfix dagegen genau das, was auf ihr eingestellt ist, ohne jeden Anhang. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das man liest."),
+
+        .ueberschrift("Konfigurieren"),
+        .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen — und bei einer AWTRIX NG der Broker samt Präfix."),
     ]
 
     /// Womit die vier Brokerfelder beginnen: mit nichts. Gilt fuer beide
