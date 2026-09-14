@@ -1606,19 +1606,17 @@ public struct EditorBereichView: View {
     /// Ein einzelnes Bild geht als `draw` hinaus — klein und exakt. Mehrere
     /// gehen als ein animiertes GIF: Rechtecke kennen keine Zeit.
     private func senden() {
+        // **Die Entscheidung steht im Kern** (`Bildsendung.rahmen`), nicht hier:
+        // Dasselbe trifft das Telefon, wenn es ein Bild aus dem Bestand
+        // schickt, und zwei Stellen mit derselben Regel laufen auseinander.
         let frame: Frame
-        if leinwand.bilder.count > 1 {
-            do {
-                let uri = try Bildraster.alsDatenURI(leinwand.bilder,
-                                                     breite: leinwand.breite, hoehe: leinwand.hoehe,
-                                                     verzoegerung: leinwand.verzoegerung)
-                frame = Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
-            } catch {
-                zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-                return
-            }
-        } else {
-            frame = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+        do {
+            frame = try Bildsendung.rahmen(aus: leinwand.bilder,
+                                           breite: leinwand.breite, hoehe: leinwand.hoehe,
+                                           verzoegerung: leinwand.verzoegerung, dauer: dauer)
+        } catch {
+            zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return
         }
         laeuft = true
         let anzeigenName = Meldungsplatz.name(fuer: platz)

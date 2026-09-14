@@ -50,3 +50,26 @@ final class BildsendungTests: XCTestCase {
         XCTAssertThrowsError(try Bildsendung.rahmen(aus: datei))
     }
 }
+
+/// **Beide Wege müssen dasselbe ergeben** — der Editor reicht Einzelbilder aus
+/// dem Speicher, das Telefon eine Datei. Liefen sie auseinander, sähe dieselbe
+/// Anzeige auf der Uhr verschieden aus, je nachdem, von wo sie geschickt wurde.
+final class BildsendungBeideWegeTests: XCTestCase {
+    func testDateiUndSpeicherErgebenDenselbenRahmen() throws {
+        let ordner = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bildsendung-gleich-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        let sammlung = Bildersammlung(ordner: ordner)
+
+        var punkte = [String?](repeating: nil, count: 52 * 16)
+        punkte[5] = "#FF8800"
+        guard let feld = Pixelfeld(punkte: punkte) else { return XCTFail("Feld") }
+        let gemaltes = try sammlung.sichern(name: "Gleich", feld: feld)
+
+        let ausDatei = try Bildsendung.rahmen(aus: gemaltes.datei)
+        let ausSpeicher = try Bildsendung.rahmen(aus: [punkte], verzoegerung: 0.2)
+        XCTAssertEqual(ausDatei.draw, ausSpeicher.draw)
+        XCTAssertTrue(ausDatei.bilder.isEmpty && ausSpeicher.bilder.isEmpty)
+    }
+}
