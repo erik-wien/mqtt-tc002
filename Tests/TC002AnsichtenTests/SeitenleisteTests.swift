@@ -1,51 +1,70 @@
 import XCTest
 @testable import TC002Ansichten
 
-/// Die Breite der Seitenleiste. Auf jedem Bildschirmfoto vom iPad stand
-/// „Einstel-lungen" — umgebrochen, weil 170 Punkte dort nicht reichen.
+/// Die Breite der Seitenleiste, **je Plattform eine**.
 ///
-/// Gemessen wird der laengste Eintrag mit CoreText an der Systemschrift; diese
-/// Tests halten fest, dass die Zahl in `Seitenleiste` zu dieser Messung passt
-/// und nicht wieder unter sie faellt.
+/// Zweimal hat hier eine Zahl nicht gereicht: 170 brachen am iPad zu
+/// „Einstel-lungen" um, und am 14.09.2026 die 190 zu „Einstellun-gen". Beide
+/// Male war die Rechnung dieselbe Summe aus Einzelposten, und beide Male war
+/// sie zu klein — iPadOS legt um eine Seitenleistenzeile mehr herum, als sich
+/// aus den sichtbaren Teilen zusammenzaehlen laesst.
+///
+/// Diese Tests pruefen **beide** Plattformen, gleich auf welcher sie laufen.
+/// Eine Zahl, die nur unter `#if os(macOS)` geprueft wird, ist für die
+/// iPad-Fassung ungeprueft — und genau dort ist es zweimal schiefgegangen.
 final class SeitenleisteTests: XCTestCase {
 
-    /// Symbolspalte, Abstand, Text und beide Zeilenraender muessen hineinpassen —
-    /// sonst bricht der Eintrag um.
-    func testDerLaengsteEintragPasstInEineZeile() {
-        let gebraucht = Seitenleiste.zeilenrand + Seitenleiste.symbolspalte
-            + Seitenleiste.symbolAbstand + Seitenleiste.laengsterEintrag
-            + Seitenleiste.zeilenrand
-        XCTAssertLessThanOrEqual(gebraucht, Seitenleiste.breite,
-                                 "„Einstellungen“ bricht wieder um")
+    func testDerLaengsteEintragPasstAmMacInEineZeile() {
+        XCTAssertLessThanOrEqual(
+            Seitenleiste.zeilenverbrauchMac + Seitenleiste.laengsterEintragMac,
+            Seitenleiste.breiteMac, "„Einstellungen“ bricht am Mac um")
+    }
+
+    func testDerLaengsteEintragPasstAmIPadInEineZeile() {
+        XCTAssertLessThanOrEqual(
+            Seitenleiste.zeilenverbrauchTouch + Seitenleiste.laengsterEintragTouch,
+            Seitenleiste.breiteTouch, "„Einstellungen“ bricht am iPad um")
     }
 
     /// Und eine Stufe groessere Systemschrift bringt sie nicht sofort wieder
-    /// zum Umbrechen — das war der Grund, ueber die gemessenen 176 hinauszugehen.
+    /// zum Umbrechen.
     func testEineSchriftstufeGroesserPasstAuchNoch() {
-        let gebraucht = Seitenleiste.zeilenrand + Seitenleiste.symbolspalte
-            + Seitenleiste.symbolAbstand
-            + Seitenleiste.laengsterEintrag + Seitenleiste.eineSchriftstufe
-            + Seitenleiste.zeilenrand
-        XCTAssertLessThanOrEqual(gebraucht, Seitenleiste.breite,
-                                 "bei der nächsten Textgröße bricht es wieder um")
+        XCTAssertLessThanOrEqual(
+            Seitenleiste.zeilenverbrauchMac + Seitenleiste.laengsterEintragMac
+                + Seitenleiste.schriftstufeMac,
+            Seitenleiste.breiteMac, "am Mac bricht es bei der nächsten Textgröße um")
+        XCTAssertLessThanOrEqual(
+            Seitenleiste.zeilenverbrauchTouch + Seitenleiste.laengsterEintragTouch
+                + Seitenleiste.schriftstufeTouch,
+            Seitenleiste.breiteTouch, "am iPad bricht es bei der nächsten Textgröße um")
     }
 
-    /// Die Messung selbst: 170 reichten nicht, und genau das soll die Zahl
-    /// festhalten. Ohne diese Zusicherung koennte jemand `laengsterEintrag`
-    /// kleinrechnen und beide Tests gruen bekommen, ohne dass die Leiste
-    /// breiter wuerde.
-    func testDieAlteBreiteWaereZuSchmalGewesen() {
-        let gebraucht = Seitenleiste.zeilenrand + Seitenleiste.symbolspalte
-            + Seitenleiste.symbolAbstand + Seitenleiste.laengsterEintrag
-            + Seitenleiste.zeilenrand
-        XCTAssertGreaterThan(gebraucht, 170,
-                             "dann hätte es bei 170 gar nicht umgebrochen — die Messung stimmt nicht")
+    /// **Die Messung selbst.** Ohne diese Zusicherung koennte jemand den
+    /// Verbrauch kleinrechnen und die Tests oben gruen bekommen, ohne dass die
+    /// Leiste breiter wuerde — die 190 haben am iPad nachweislich nicht
+    /// gereicht.
+    func testDieAlteBreiteWaereAmIPadZuSchmalGewesen() {
+        XCTAssertGreaterThan(
+            Seitenleiste.zeilenverbrauchTouch + Seitenleiste.laengsterEintragTouch, 190,
+            "dann hätte es bei 190 gar nicht umgebrochen — die Messung stimmt nicht")
     }
 
-    /// Und die Fensterforderung am Mac muss mitwachsen: Seitenleiste plus die
-    /// gemessenen 600 Punkte Detailspalte plus Inspektor.
-    func testDieMacFensterbreiteTraegtDieBreitereLeiste() {
-        XCTAssertGreaterThanOrEqual(1140, Seitenleiste.breite + 600 + 340,
+    /// Und die Fensterforderung am Mac muss die dortige Leiste tragen:
+    /// Seitenleiste plus die gemessenen 600 Punkte Detailspalte plus Inspektor.
+    /// **Die iPad-Breite gehoert hier ausdruecklich nicht hinein** — auf dem
+    /// iPad gibt es kein Fenster zu ziehen.
+    func testDieMacFensterbreiteTraegtDieMacLeiste() {
+        XCTAssertGreaterThanOrEqual(1140, Seitenleiste.breiteMac + 600 + 340,
                                     "das Fenster schneidet am Mac wieder eine der beiden Leisten an")
+    }
+
+    /// Dass `breite` auf dieser Plattform die richtige der beiden Zahlen
+    /// nimmt — sonst waere die Fallunterscheidung eine Zierde.
+    func testDieGeltendeBreiteIstDieDerPlattform() {
+        #if os(macOS)
+        XCTAssertEqual(Seitenleiste.breite, Seitenleiste.breiteMac)
+        #else
+        XCTAssertEqual(Seitenleiste.breite, Seitenleiste.breiteTouch)
+        #endif
     }
 }

@@ -118,11 +118,13 @@ public struct SchreibtischView: View {
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
-        // Auf dem iPad zugleich ein Gewinn: 190 statt der dortigen Vorgabe von
+        // Auf dem iPad zugleich ein Gewinn: 220 statt der dortigen Vorgabe von
         // rund 320 laesst quer genug fuer Mitte und Inspektor uebrig.
         //
-        // Woher die 190 kommen, steht in `Seitenleiste` — gemessen an
-        // „Einstellungen", das bei 170 auf dem iPad umbrach.
+        // Woher die Zahlen kommen, steht in `Seitenleiste` — gemessen an
+        // „Einstellungen", das bei 170 **und bei 190** auf dem iPad umbrach.
+        // Am Mac bleibt es bei 190: Dort ist die Zeilenschrift 13 statt 17
+        // Punkte gross, und die Mindestbreite des Fensters unten haengt daran.
         .navigationSplitViewColumnWidth(Seitenleiste.breite)
         #if !os(macOS)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { nebenfensterMenue } }

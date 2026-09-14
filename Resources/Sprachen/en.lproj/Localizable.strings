@@ -802,3 +802,4 @@
 "Gerät" = "Device";
 "Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück." = "Only the stock firmware accepts a drawn image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image, and sending it would come back as silence.";
 "Auf die Uhr senden" = "Send to the clock";
+"„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt." = "\"%@\" is not a valid address. Correct the clock's address in the settings — a single space is enough to break it.";

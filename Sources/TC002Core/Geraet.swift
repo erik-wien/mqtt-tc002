@@ -13,6 +13,9 @@ public enum GeraetFehler: Error, LocalizedError {
     case unerwarteteAntwort(String)
     case httpFehler(pfad: String, code: Int)
     case keinPraefix
+    /// Die eingetragene Adresse ergibt keine gueltige URL — ein Leerzeichen
+    /// genuegt dafuer schon.
+    case ungueltigeAdresse(String)
     case abgelehnt(name: String, code: Int, meldung: String)
     /// Die Schnittstelle verlangt eine Anmeldung (`authEnabled`, AWTRIX NG
     /// § 4.1). Dann ist nicht einmal die Geräteart festzustellen — deshalb ein
@@ -29,6 +32,7 @@ public enum GeraetFehler: Error, LocalizedError {
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
         case .keinPraefix: return lok("Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen.")
+        case .ungueltigeAdresse(let a): return lokf("„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt.", a)
         case .abgelehnt(let name, let code, let meldung):
             return lokf("Die Uhr hat „%@“ abgelehnt: %@ (Code %d)", name, meldung, code)
         case .anmeldungNoetig:
@@ -322,7 +326,7 @@ public struct Geraet {
         var k = try konfiguration()
         k[feld] = wert
         let koerper = try JSONSerialization.data(withJSONObject: k)
-        var anfrage = URLRequest(url: URL(string: "http://\(host)/setConfig")!)
+        var anfrage = URLRequest(url: try url("/setConfig"))
         anfrage.httpMethod = "POST"
         anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
         anfrage.httpBody = koerper
@@ -341,10 +345,7 @@ public struct Geraet {
     /// `Content-Type: application/json` ist bei `PUT` Pflicht: Ohne ihn wird
     /// die Anfrage abgewiesen, **bevor** der Rumpf ueberhaupt gelesen wird.
     private func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws {
-        guard let url = URL(string: "http://\(host)\(pfad)") else {
-            throw GeraetFehler.unerwarteteAntwort(pfad)
-        }
-        var anfrage = URLRequest(url: url)
+        var anfrage = URLRequest(url: try url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
             anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -360,10 +361,28 @@ public struct Geraet {
                                         feld: (feld?.isEmpty ?? true) ? nil : feld)
     }
 
+    /// **Die einzige Stelle, an der aus Adresse und Pfad eine URL wird.**
+    ///
+    /// Vorher stand an drei Stellen `URL(string: …)!`, und am 14.09.2026 hat
+    /// genau das die iPad-Fassung umgebracht: Ein **Leerzeichen** in der
+    /// eingetragenen Adresse laesst `URL(string:)` `nil` liefern, und das
+    /// Ausrufezeichen dahinter macht daraus einen Absturz statt einer Meldung.
+    /// (Ein *leerer* Host tut das uebrigens nicht — `http:///api/v1/apps` ist
+    /// eine gueltige URL. Nachgemessen, nicht vermutet.)
+    ///
+    /// Eine Adresse kommt aus den Einstellungen, ist also von Hand eingetippt.
+    /// Auf solche Eingaben gehoert kein `!`.
+    private func url(_ pfad: String) throws -> URL {
+        guard let url = URL(string: "http://\(host)\(pfad)") else {
+            throw GeraetFehler.ungueltigeAdresse(host)
+        }
+        return url
+    }
+
     /// Wie `hole`, nur fuer eine Antwort, die oben ein **Feld** ist statt eines
     /// Objekts — `GET /api/v1/apps` ist die einzige, die diese App liest.
     private func holeFeld(_ pfad: String) throws -> [Any] {
-        let daten = try fuehreAus(URLRequest(url: URL(string: "http://\(host)\(pfad)")!))
+        let daten = try fuehreAus(URLRequest(url: try url(pfad)))
         guard let objekt = try? JSONSerialization.jsonObject(with: daten),
               let feld = objekt as? [Any] else {
             throw GeraetFehler.unerwarteteAntwort(pfad)
@@ -372,7 +391,7 @@ public struct Geraet {
     }
 
     private func hole(_ pfad: String) throws -> [String: Any] {
-        let daten = try fuehreAus(URLRequest(url: URL(string: "http://\(host)\(pfad)")!))
+        let daten = try fuehreAus(URLRequest(url: try url(pfad)))
         let objekt: Any
         do {
             objekt = try JSONSerialization.jsonObject(with: daten)

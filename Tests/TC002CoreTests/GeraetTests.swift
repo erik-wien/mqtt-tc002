@@ -51,6 +51,13 @@ final class GeraetTests: XCTestCase {
         return Geraet(host: "10.0.0.1", sitzung: URLSession(configuration: k))
     }
 
+    /// Dasselbe mit einer Adresse, die keine ist.
+    private func geraet(host: String, typ: Geraetetyp = .tc002) -> Geraet {
+        let k = URLSessionConfiguration.ephemeral
+        k.protocolClasses = [Doppelgaenger.self]
+        return Geraet(host: host, sitzung: URLSession(configuration: k), typ: typ)
+    }
+
     override func setUp() {
         Doppelgaenger.antworten = [
             "/getBase": #"{"devSn":"TC002-TESTGERAET01","ssid":"heimnetz","ip":"192.168.1.20","mac":"aabbccdda86b","mcuVer":"V1.0.17","appVer":"1.1.1"}"#,
@@ -233,4 +240,47 @@ final class GeraetTests: XCTestCase {
             XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
         }
     }
+
+    // MARK: - Eine Adresse, die keine ist
+
+    /// **Der Absturz vom 14.09.2026.** An drei Stellen stand
+    /// `URL(string: "http://\(host)\(pfad)")!`. Ein **Leerzeichen** in der
+    /// eingetragenen Adresse laesst `URL(string:)` `nil` liefern, und das
+    /// Ausrufezeichen dahinter beendet die App — auf dem iPad mitten im
+    /// Abfragen, mit „Unexpectedly found nil while unwrapping an Optional
+    /// value" und ohne dass der Anwender je erfaehrt, dass es an seiner
+    /// Eingabe lag.
+    ///
+    /// Eine Adresse kommt aus den Einstellungen und ist von Hand eingetippt.
+    /// Sie muss eine **Meldung** ergeben koennen, keinen Absturz.
+    func testEineAdresseMitLeerzeichenWirftStattAbzustuerzen() {
+        XCTAssertThrowsError(try geraet(host: "awtrix a86b").basis()) { fehler in
+            guard case GeraetFehler.ungueltigeAdresse(let genannt) = fehler else {
+                return XCTFail("falscher Fehler: \(fehler)")
+            }
+            XCTAssertEqual(genannt, "awtrix a86b", "die Meldung muss die Adresse nennen")
+        }
+    }
+
+    /// Derselbe Weg bei einer AWTRIX — dort lief der Absturz ueber
+    /// `holeFeld` (`GET /api/v1/apps`), einen anderen Aufrufer derselben
+    /// Zeile.
+    func testAuchDerNGWegWirft() {
+        XCTAssertThrowsError(try geraet(host: "awtrix a86b", typ: .awtrixNG).anzeigennamen())
+    }
+
+    /// Und der schreibende Weg (`PUT`), der seine URL frueher selbst baute.
+    func testAuchDerSchreibendeWegWirft() {
+        XCTAssertThrowsError(try geraet(host: "a b", typ: .awtrixNG)
+            .anzeigeSetzen("{}", name: "meldung1"))
+    }
+
+    /// Die Gegenprobe: Ein **leerer** Host stuerzt nicht ab und wirft auch
+    /// nicht hier — `http:///getBase` ist eine gueltige URL. Nachgemessen,
+    /// nicht vermutet; wer das umdreht, baut eine Falle ein, die erst auf dem
+    /// Geraet zuschnappt.
+    func testEinLeererHostErgibtEineGueltigeURL() {
+        XCTAssertNotNil(URL(string: "http:///getBase"))
+    }
+
 }
