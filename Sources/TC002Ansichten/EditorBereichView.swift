@@ -299,6 +299,7 @@ public struct EditorBereichView: View {
             // dann leer.
             HStack {
                 Spacer()
+                AngeseheneUhrView(zustand: zustand)
                 ZielauswahlView(zustand: zustand)
             }
             Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,

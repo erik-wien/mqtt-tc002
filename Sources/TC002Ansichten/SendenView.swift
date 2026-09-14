@@ -345,6 +345,7 @@ public struct SendenView: View {
                 // ZielauswahlView nichts, die Zeile bleibt dann leer.
                 HStack {
                     Spacer()
+                    AngeseheneUhrView(zustand: zustand)
                     ZielauswahlView(zustand: zustand)
                 }
                 // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
