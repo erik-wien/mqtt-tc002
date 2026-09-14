@@ -22,6 +22,10 @@ public final class AppZustand {
     public var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     public var verbunden: [UUID: Bool] = [:]
+    /// **Warum** eine Uhr nicht am Broker haengt, wenn sie es selbst sagt.
+    /// Nur AWTRIX NG tut das (`badCredentials` und dergleichen); bei der
+    /// Werksfirmware bleibt es leer.
+    public var brokergrund: [UUID: String] = [:]
     /// Was die Uhr selbst als ihre Anzeigen nennt — auf **zwei** Wegen, die
     /// dieselbe Auskunft geben: mitgelesen von `<praefix>/customList` (§3.5)
     /// und erfragt ueber `GET /api/customList` (§5.7). Beides ist die Uhr
@@ -211,6 +215,7 @@ public final class AppZustand {
         for i in uhren.indices {
             uhren[i].host = uhren[i].host.trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        uhren = uhren.nachAdresse()
         if aktiveID == nil { aktiveID = uhren.first?.id }
         // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
         // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren
@@ -589,6 +594,10 @@ public final class AppZustand {
         for merkmal in neue.abgleichmerkmale { ohneGrabstein[merkmal] = nil }
         if ohneGrabstein != grabsteine { grabsteine = ohneGrabstein }
         uhren.append(neue)
+        // **Nicht bei jeder Adressaenderung**, sondern beim Anlegen, beim
+        // Lesen und nach dem Abgleich: Waehrend des Tippens sortiert, spraenge
+        // die Zeile unter dem Cursor weg.
+        uhren = uhren.nachAdresse()
         if aktiveID == nil { aktiveID = neue.id }
         // Nur bei der allerersten Uhr: sonst traete eine spaeter hinzugefuegte
         // Uhr unversehens der bisherigen Auswahl bei, statt aussen vor zu bleiben.
@@ -700,7 +709,7 @@ public final class AppZustand {
         // dort, wo es hingehoert.
         Task { [weak self] in
             do {
-                let geholt = try await Hintergrund.lauf { () throws -> (Geraetetyp, String, Basisdaten, Int?, Bool?, [String]?) in
+                let geholt = try await Hintergrund.lauf { () throws -> (Geraetetyp, String, Basisdaten, Int?, Bool?, String?, [String]?) in
                 // **Zuerst: was antwortet da ueberhaupt?** Praefix, Belegung
                 // und Verbindungsstand stehen bei den beiden Firmwares an
                 // verschiedenen Pfaden, und die der einen gibt es bei der
@@ -725,14 +734,15 @@ public final class AppZustand {
                 let praefix = ergebnis.praefix, basis = ergebnis.basis, breite = ergebnis.breite
                 // Ob die Uhr am Broker haengt, ist nur im MQTT-Betrieb eine
                 // Auskunft ueber etwas, das diese App benutzt.
-                let steht = art == .mqtt ? try geraet.verbunden() : nil
+                let stand = art == .mqtt ? try geraet.brokerstand() : nil
+                let steht = stand?.steht
                 // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
                 // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
                 // Praefix und Verbindungsstand noch lange nicht gescheitert.
                 let namen = try? geraet.anzeigennamen()
-                    return (gattung, praefix, basis, breite, steht, namen)
+                    return (gattung, praefix, basis, breite, steht, stand?.grund, namen)
                 }
-                let (gattung, praefix, basis, breite, steht, namen) = geholt
+                let (gattung, praefix, basis, breite, steht, grund, namen) = geholt
                 do {
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
                     let gattungGewechselt = self.uhren[i].gattung != gattung
@@ -754,6 +764,9 @@ public final class AppZustand {
                         self.uhren[i].name = praefix
                     }
                     self.verbunden[id] = steht
+                    // Der Grund steht nur da, wenn es einen gibt — die
+                    // Werksfirmware nennt keinen.
+                    self.brokergrund[id] = grund
                     if let steht {
                         self.log(lokf("%@: Präfix %@, MQTT %@", self.uhren[i].name, praefix,
                                       steht ? lok("verbunden") : lok("nicht verbunden")))
@@ -1380,7 +1393,7 @@ public final class AppZustand {
     func standUebernehmen(_ stand: Einrichtungsstand) {
         uebernimmtGerade = true
         defer { uebernimmtGerade = false }
-        if uhren != stand.uhren { uhren = stand.uhren }
+        if uhren != stand.uhren { uhren = stand.uhren.nachAdresse() }
         let ziele = Set(stand.zielIDs)
         if zielIDs != ziele { zielIDs = ziele }
         if brokerHost != stand.brokerHost { brokerHost = stand.brokerHost }

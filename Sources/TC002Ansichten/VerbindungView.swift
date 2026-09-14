@@ -23,6 +23,9 @@ public struct VerbindungView: View {
     private let fensterOeffnen: ((String) -> Void)?
     @State private var zeigeVirtuelleUhr = false
 
+    /// Einmal je Neuzeichnen statt je Uhr: Die Frage gilt der ganzen Liste.
+    private var geteiltePraefixe: Set<String> { zustand.uhren.geteiltePraefixe() }
+
     private func ansehen() {
         if let fensterOeffnen {
             fensterOeffnen(Nebenfenster.virtuelleUhr.id)
@@ -119,6 +122,10 @@ public struct VerbindungView: View {
                         // zur Uhr darueber und faengt nicht neu am Rand an.
                         .padding(.leading, 24)
                         Adresswarnung(host: uhr.host)
+                            .padding(.leading, 24)
+                        Praefixwarnung(uhr: uhr, geteilte: geteiltePraefixe)
+                            .padding(.leading, 24)
+                        Brokergrund(grund: zustand.brokergrund[uhr.id])
                             .padding(.leading, 24)
                     }
                 }

@@ -206,17 +206,34 @@ public struct Geraet {
         return Geraetetyp.ngBreitenbereich.contains(breite) ? breite : nil
     }
 
-    public func verbunden() throws -> Bool {
+    public func verbunden() throws -> Bool { try brokerstand().steht }
+
+    /// Ob die Uhr am Broker haengt — **und warum nicht**.
+    ///
+    /// Der Grund ist die eigentliche Auskunft. Am 14.09.2026 stand in den
+    /// Einstellungen ein Warndreieck an einer AWTRIX, und was fehlte, war
+    /// nicht das Zeichen, sondern der Satz dahinter: Das Geraet meldete
+    /// `badCredentials` — neun Versuche, keine Verbindung. Das stand in der
+    /// Antwort und wurde weggeworfen.
+    ///
+    /// Die Werksfirmware nennt keinen Grund (`/getMqttStatus` hat nur
+    /// `connected`); dort bleibt er `nil`.
+    public func brokerstand() throws -> (steht: Bool, grund: String?) {
         guard typ == .tc002 else {
             // §7.1: Ob das Geraet am Broker haengt und warum nicht, steht unter
             // `mqtt` in der Geraeteauskunft. Ein eigener Endpunkt dafuer wie
             // `/getMqttStatus` existiert bei NG nicht.
             let mqtt = try hole("/api/v1/device")["mqtt"] as? [String: Any]
-            return mqtt?["state"] as? String == "connected"
+            let steht = mqtt?["state"] as? String == "connected"
+            // `error` ist der laufende, `lastError` der letzte — nach einem
+            // Fehlschlag steht in beiden dasselbe, vor dem ersten Versuch in
+            // keinem.
+            let grund = (mqtt?["error"] as? String) ?? (mqtt?["lastError"] as? String)
+            return (steht, steht ? nil : grund)
         }
         let d = try hole("/getMqttStatus")
         let daten = d["data"] as? [String: Any]
-        return daten?["connected"] as? Bool ?? false
+        return (daten?["connected"] as? Bool ?? false, nil)
     }
 
     public func konfiguration() throws -> [String: Any] { try hole("/getConfig") }
