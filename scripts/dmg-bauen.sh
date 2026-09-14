@@ -14,9 +14,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION="${1:-1.0}"
-APP="build/MQTT-TC002.app"
+APP="erzeugt/mac/MQTT-TC002.app"
 NAME="MQTT-TC002"
-DMG="build/MQTT-TC002-$VERSION.dmg"
+DMG="erzeugt/mac/MQTT-TC002-$VERSION.dmg"
 ROH="build/roh.dmg"
 BERG="/Volumes/$NAME"
 

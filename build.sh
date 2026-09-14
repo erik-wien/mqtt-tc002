@@ -18,7 +18,10 @@ git diff --quiet 2>/dev/null || COMMIT="$COMMIT+"
 VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')}"
 [ -n "$VERSION" ] || VERSION="0.0"
 BAUNUMMER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
-APP="build/MQTT-TC002.app"
+# Alles Erzeugte liegt unter `erzeugt/` — die fertige Mac-App also in
+# `erzeugt/mac/`. Der Ordner ist ignoriert; in der Wurzel stehen dadurch nur
+# noch die Quellen und die drei Skripte, die man wirklich aufruft.
+APP="erzeugt/mac/MQTT-TC002.app"
 ICON_EINTRAEGE=""
 
 swift build -c "$CONFIG"

@@ -2,9 +2,10 @@
 **/.DS_Store
 .build/
 .swiftpm/
-build/
 __pycache__/
 MQTT-TC002-iOS.xcodeproj/
+# Alles Erzeugte an einer Stelle: das Xcode-Projekt kann dort nicht liegen
+# (siehe CLAUDE.md), die fertige Mac-App und die Info.plist sehr wohl.
 erzeugt/
 .superpowers/
 # Xcode legt beim Einschalten einer Faehigkeit eine eigene Berechtigungsdatei

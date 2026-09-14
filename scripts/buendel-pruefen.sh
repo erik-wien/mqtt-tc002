@@ -10,7 +10,7 @@
 #   scripts/buendel-pruefen.sh [Pfad/zu/App.app]
 #
 # Ohne Argument wird das zuletzt gebaute MQTT-TC002-iOS.app unter DerivedData
-# gesucht und wie bisher geprueft. Ein macOS-Buendel (build/MQTT-TC002.app,
+# gesucht und wie bisher geprueft. Ein macOS-Buendel (erzeugt/mac/MQTT-TC002.app,
 # als Argument uebergeben) ist an seinem `Contents`-Ordner erkennbar und
 # bekommt eine eigene, kuerzere Pruefung: dort geht es allein um das
 # Ressourcenbuendel des geteilten Ziels TC002Ansichten und das darin

@@ -198,7 +198,7 @@ Schrift.
 Deshalb nach jedem Bau:
 
     sh scripts/buendel-pruefen.sh                    # iOS
-    sh scripts/buendel-pruefen.sh build/MQTT-TC002.app   # macOS
+    sh scripts/buendel-pruefen.sh erzeugt/mac/MQTT-TC002.app   # macOS
 
 Zwei Eigenheiten, die dahinterstecken:
 
@@ -224,6 +224,21 @@ die Info.plist gegen sein Argument.
 Die `.xcodeproj` wird **nicht** eingecheckt — wer eine Quelldatei hinzufügt,
 ändert die YAML und erzeugt neu, statt in erzeugtem XML zu schneiden.
 
+**Sie bleibt in der Wurzel, und das ist kein Versäumnis.** Alles andere
+Erzeugte liegt unter `erzeugt/`; für das Xcode-Projekt wurde dasselbe am
+14.09.2026 versucht und wieder zurückgenommen. `xcodegen generate --project
+erzeugt/ios` legt es zwar dort ab, rechnet dabei aber nicht alles um: Der
+Paketpfad (`packages.TC002.path`) und die Bauvariable
+`CODE_SIGN_ENTITLEMENTS` werden gegen `$(SRCROOT)` aufgelöst, also gegen das
+erzeugte Projekt, und ein Ordnerverweis (`type: folder`, also `Icons` und
+`Resources/Schriften`) behält `sourceTree = SOURCE_ROOT` mit unverändertem
+Pfad — den relativiert XcodeGen gar nicht. Jede dieser Stellen ließe sich mit
+einem `../..` erschlagen, aber dann gilt die Beschreibung nur noch für genau
+einen Aufruf, und der nächste `xcodegen generate` ohne `--project` baut ein
+Projekt, das nicht übersetzt. Die zwei Einträge in der Wurzel
+(`MQTT-TC002-iOS.xcodeproj`, `MQTT-TC002-iOS.entitlements`) sind beide
+ignoriert und in einem frischen Klon ohnehin nicht da.
+
     brew install xcodegen        # einmalig
     xcodegen generate
     xcodebuild -project MQTT-TC002-iOS.xcodeproj -scheme MQTT-TC002-iOS \
@@ -244,10 +259,10 @@ Am 11.09.2026 genau so passiert, nach dreimaligem Austausch.
 
 Stattdessen an Ort und Stelle ersetzen, das erhaelt die Identitaet:
 
-    ditto build/MQTT-TC002.app /Applications/MQTT-TC002.app
+    ditto erzeugt/mac/MQTT-TC002.app /Applications/MQTT-TC002.app
 
 Und die App moeglichst nur von **einem** Ort aus starten. Zwei Kopien mit
-derselben Buendelkennung — etwa `/Applications` und `build/` — verwirren die
+derselben Buendelkennung — etwa `/Applications` und `erzeugt/mac/` — verwirren die
 Rechteverwaltung zusaetzlich.
 
 Ist es doch passiert: Systemeinstellungen > Datenschutz & Sicherheit >

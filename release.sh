@@ -23,8 +23,8 @@ if [ -z "$VERSION" ]; then
 fi
 
 PROFIL="${TC002_NOTAR_PROFIL:-MQTT-TC002}"
-APP="build/MQTT-TC002.app"
-DMG="build/MQTT-TC002-$VERSION.dmg"
+APP="erzeugt/mac/MQTT-TC002.app"
+DMG="erzeugt/mac/MQTT-TC002-$VERSION.dmg"
 
 IDENTITAET=$(security find-identity -v -p codesigning \
              | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' | head -1)
@@ -47,7 +47,7 @@ echo "== Tests =="
 swift test
 
 echo "== Bauen =="
-rm -rf build
+rm -rf erzeugt/mac
 TC002_VERSION="$VERSION" ./build.sh >/dev/null
 
 # Gegenprobe: Die App im Abbild muss sich als genau diese Fassung ausgeben.

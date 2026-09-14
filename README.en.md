@@ -12,7 +12,7 @@ not straight to the clock — the clock listens to the broker, not to the app.
 
 ## Building
 
-`./build.sh` packages up `build/MQTT-TC002.app`. If you would rather work in
+`./build.sh` packages up `erzeugt/mac/MQTT-TC002.app`. If you would rather work in
 Xcode, open `Package.swift` directly. There are no external package
 dependencies; macOS 14 or newer is required.
 

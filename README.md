@@ -13,7 +13,7 @@ App.
 
 ## Bauen
 
-`./build.sh` schnürt `build/MQTT-TC002.app`. Wer lieber in Xcode arbeitet,
+`./build.sh` schnürt `erzeugt/mac/MQTT-TC002.app`. Wer lieber in Xcode arbeitet,
 öffnet `Package.swift` direkt. Es gibt keine externen Paketabhängigkeiten;
 vorausgesetzt wird macOS 14 aufwärts.
 
