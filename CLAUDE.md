@@ -240,6 +240,16 @@ jüngsten Tag, die Baunummer ist die Zahl der Commits. `release.sh <fassung>`
 setzt die Variable, bricht bei geändertem Arbeitsbaum ab und prüft hinterher
 die Info.plist gegen sein Argument.
 
+**Beim iOS-Ziel schreibt der Schritt in die Quell-Plist, nicht ins Bündel** —
+und zwar **vor** dem Bau (`preBuildScripts`). Xcode kopiert
+`erzeugt/InfoiOS.plist` nämlich mit `ProcessInfoPlistFile` erst **nach** den
+Skriptschritten über das Produkt; ein Nachlauf schreibt gegen etwas an, das
+gleich überbügelt wird. Am 14.09.2026 trug deshalb jedes iOS-Bündel weiterhin
+`1.0 (1)` — bei jedem Bau dieselbe Baunummer, und App Store Connect nimmt
+keine zweimal an. Nachgesehen wird am fertigen Bündel, nicht an der Ausgabe
+des Schritts: Er meldet die richtigen Zahlen auch dann, wenn sie nirgends
+ankommen.
+
 ## Die iOS-Fassung
 
 `project.yml` beschreibt das Xcode-Projekt; `xcodegen generate` erzeugt es.
