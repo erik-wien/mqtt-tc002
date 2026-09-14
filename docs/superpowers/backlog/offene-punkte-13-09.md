@@ -53,6 +53,33 @@ Nachgeprueft am fertigen Buendel, nicht am Bauprotokoll: Die Signatur traegt
 `mqtttc002` hat die Berechtigungen** — ohne sie schriebe das Werkzeug seine
 Slots weiter auf die Platte, waehrend die App in iCloud liest.
 
+### Zurueckgestellt am 14.09.2026 — „hoher Aufwand fuer Kosmetik ist die Woche nicht mehr im Budget"
+
+**Das Sendemodell herausziehen.** `SendenView` (898 Zeilen, Mac und iPad) und
+`SendeniOS` (803 Zeilen, iPhone) fuehren je ihre eigenen zwanzig
+`@AppStorage`-Eigenschaften und leiten daraus dieselben Antworten ab. Von den
+zwoelf Commits am 14.09. mussten drei beide anfassen — A5, die Reglersperren
+und die Geraeteart in der Vorschau. **Kein einziger davon betraf das
+Aussehen**: Es ging jedes Mal um dieselbe Frage (welches Icon gilt, welcher
+Regler ist tot, welches Geraet zeigt die Vorschau), die zweimal beantwortet
+wird.
+
+Die Abhilfe waere **nicht**, die Oberflaechen zu verschmelzen — die
+Unterschiede sind gewollt und in `CLAUDE.md` begruendet —, sondern ein
+gemeinsames **Sendemodell**: ein Typ mit Text, Weg, Schrift, Groesse, Dauer
+und den abgeleiteten Antworten (`passt`, `iconKante`, `gattung`, `optionen`).
+Beide Ansichten binden daran. Danach unterscheidet sie nur noch die
+Anordnung, und genau die soll verschieden sein.
+
+Zur Einordnung, damit die Frage nicht wiederkommt: **Mac und iPad sind nicht
+getrennt.** Sie teilen sich `TC002Ansichten` (6432 Zeilen, eine Fassung); nur
+133 Zeilen gehoeren dem Mac allein. iPhone und iPad sind ueberdies **ein**
+Programm, ein Ziel, ein Buendel — die Weiche steht zur Laufzeit in
+`App.swift` (`idiom == .pad`). Die Trennung ist eine Gestaltungsentscheidung,
+keine Folge der Auslieferung.
+
+**Mac-Kosmetik** allgemein: zurueckgestellt, solange TestFlight das Ziel ist.
+
 ### Was noch offen ist
 
 - **Der iCloud-Pfad ist weiterhin ungefahren.** Signatur und Berechtigungen
