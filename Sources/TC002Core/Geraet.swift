@@ -382,6 +382,28 @@ public struct Geraet {
                                         feld: (feld?.isEmpty ?? true) ? nil : feld)
     }
 
+    /// **Die Web-Oberfläche dieser Uhr** — für den Knopf „Konfigurieren" in
+    /// den Einstellungen. Beide Firmwares bringen eine mit, und alles, was
+    /// diese App nicht einstellt (WLAN, Helligkeit, die eingebauten Anzeigen,
+    /// bei NG der Broker samt Präfix), wird dort eingestellt.
+    ///
+    /// `nil` heißt: Daraus wird keine Adresse, hier gehört kein Knopf hin.
+    /// Ein leerer Host ist der wichtigste Fall — `URL(string: "http://")`
+    /// liefert brav eine URL, nur zeigt die nirgendwohin (siehe die
+    /// Anmerkung bei `url(_:)` darunter). Deshalb wird zusätzlich geprüft,
+    /// dass wirklich ein Rechnername darin steht.
+    ///
+    /// Wer selbst ein Schema einträgt („https://uhr.lan"), behält es; ohne
+    /// eines wird `http://` vorangestellt — die Uhren sprechen im Hausnetz
+    /// kein TLS.
+    public static func weboberflaeche(host: String) -> URL? {
+        let sauber = host.trimmingCharacters(in: .whitespaces)
+        guard !sauber.isEmpty else { return nil }
+        let mitSchema = sauber.contains("://") ? sauber : "http://" + sauber
+        guard let url = URL(string: mitSchema), !(url.host ?? "").isEmpty else { return nil }
+        return url
+    }
+
     /// **Die einzige Stelle, an der aus Adresse und Pfad eine URL wird.**
     ///
     /// Vorher stand an drei Stellen `URL(string: …)!`, und am 14.09.2026 hat

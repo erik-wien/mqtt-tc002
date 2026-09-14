@@ -89,6 +89,7 @@ struct VerbindungiOS: View {
                     HStack {
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
                             .knopfBefehl()
+                        Uhrlink(host: uhr.host)
                         Spacer()
                         Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
                             .knopfZerstoerend()

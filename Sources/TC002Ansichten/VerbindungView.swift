@@ -87,6 +87,7 @@ public struct VerbindungView: View {
                                 .lineLimit(1)
                             Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                             Spacer(minLength: 8)
+                            Uhrlink(host: uhr.host)
                             Button("Abfragen") { zustand.abfragen(uhr.id) }
                                 .knopfBefehl()
                                 .fixedSize()
