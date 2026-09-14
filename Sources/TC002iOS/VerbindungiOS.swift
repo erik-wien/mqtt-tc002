@@ -72,6 +72,20 @@ struct VerbindungiOS: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
+                    // **Am Telefon war die Geraeteart bis zum 14.09.2026 gar
+                    // nicht zu stellen.** Am Mac gibt es den Waehler, hier gab
+                    // es nur „Abfragen" — und das kommt an eine Uhr, die nur
+                    // ueber MQTT erreichbar ist oder deren Schnittstelle eine
+                    // Anmeldung verlangt, gar nicht heran. Wer die AWTRIX NG
+                    // hier eintrug, hatte damit eine Uhr, die als Werksfirmware
+                    // galt: Die App schickte auf `<Praefix>/custom/…` statt auf
+                    // `<Praefix>/cmd/apps/pushed/…`, NG antwortet auf ein Thema
+                    // ohne Route nicht, und auf der Uhr erschien nichts.
+                    Picker("Geräteart", selection: geraeteart($uhr)) {
+                        ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
+                            Text(art.beschriftung).tag(art)
+                        }
+                    }
                     HStack {
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
                             .knopfBefehl()
@@ -95,7 +109,7 @@ struct VerbindungiOS: View {
             }
             Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
                 .font(.caption).foregroundStyle(.secondary)
-            Text("Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse. Es gehört zum MQTT-Betrieb.")
+            Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -104,6 +118,20 @@ struct VerbindungiOS: View {
     /// Ueberlegung wie in der Mac-Fassung: Das Optional ist ein Dateiformat,
     /// die Oberflaeche sieht nur zwei Faelle, und wer waehlt, schreibt einen
     /// Wert ausdruecklich hinein.
+    /// Die Geraeteart als nicht-wahlfreie Wahl — wortgleich zur Mac-Fassung
+    /// (`VerbindungView.geraeteart`), damit beide Oberflaechen dasselbe tun:
+    /// `Uhr.typ` ist ein `Optional`, weil es ein Dateiformat ist, gelesen wird
+    /// es ueber `gattung`, und wer waehlt, schreibt einen Wert ausdruecklich
+    /// hinein.
+    private func geraeteart(_ uhr: Binding<Uhr>) -> Binding<Geraetetyp> {
+        Binding(get: { uhr.wrappedValue.gattung },
+                set: { neu in
+                    guard neu != uhr.wrappedValue.gattung else { return }
+                    uhr.wrappedValue.typ = neu
+                    zustand.geraeteartGeaendert(uhr.wrappedValue.id)
+                })
+    }
+
     private func betriebsart(_ uhr: Binding<Uhr>) -> Binding<Betriebsart> {
         Binding(get: { uhr.wrappedValue.wirksameBetriebsart },
                 set: { neu in

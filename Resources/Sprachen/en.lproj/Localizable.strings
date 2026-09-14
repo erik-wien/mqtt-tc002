@@ -317,7 +317,6 @@
 "Betriebsart" = "Method";
 "HTTP" = "HTTP";
 "MQTT" = "MQTT";
-"Das Präfix ermittelt die App selbst — es ist das eingestellte plus die letzten vier Stellen der MAC-Adresse. Es gehört zum MQTT-Betrieb." = "The app determines the prefix itself — it is the one set plus the last four digits of the MAC address. It belongs to the MQTT method.";
 "Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird." = "No clock is currently set to MQTT — then none of this is needed here. It may still be entered, and it applies as soon as a clock is switched over.";
 "kein Wechsel" = "no change";
 "alle %d Sekunden" = "every %d seconds";
