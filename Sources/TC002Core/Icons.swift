@@ -2,7 +2,7 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-public struct Icon: Equatable, Sendable {
+public struct Icon: Equatable, Sendable, Identifiable {
     public var nummer: String, name: String, kategorie: String
     public var datei: URL
     /// Kantenlaenge in Pixeln: 8 fuer ein kanonisches LaMetric-Icon, 16 fuer
@@ -24,6 +24,14 @@ public struct Icon: Equatable, Sendable {
     /// und duerfen beide so heissen. Wo Icons beider Groessen nebeneinander
     /// stehen (Auswahlraster, gemerkte Wahl), zaehlt diese Kennung.
     public var kennung: String { "\(kante)/\(nummer)" }
+
+    /// `Identifiable` ueber genau diese Kennung — damit eine Liste, die beide
+    /// Bestaende zeigt, nicht zwei Eintraege unter derselben Kennung fuehrt.
+    /// SwiftUI beantwortet doppelte Kennungen nicht mit einem Fehler, sondern
+    /// mit der falschen Zeile: Am 14.09.2026 lieferte das Auswahlraster am
+    /// Telefon bei jedem Tippen dasselbe Icon, weil es `nummer` als Kennung
+    /// nahm und die 8×8- und 16×16-Bestaende Nummern teilen.
+    public var id: String { kennung }
 }
 
 public extension Array where Element == Icon {

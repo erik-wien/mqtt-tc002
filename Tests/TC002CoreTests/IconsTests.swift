@@ -599,6 +599,29 @@ final class IconsTests: XCTestCase {
         let b = Icon(nummer: "stern", name: "Stern", kategorie: "", datei: datei, kante: 16)
         XCTAssertEqual(a.nummer, b.nummer)
         XCTAssertNotEqual(a.kennung, b.kennung)
+        // `Identifiable` fuehrt ueber dieselbe Kennung. Eine Liste, die beide
+        // Bestaende zeigt, bekommt damit je Eintrag eine eigene — mit der
+        // Nummer als Kennung oeffnete das Auswahlraster am Telefon bei jedem
+        // Tippen dasselbe Icon.
+        XCTAssertEqual(a.id, a.kennung)
+        XCTAssertNotEqual(a.id, b.id)
+    }
+
+    /// Und das nicht nur im Kopf: Zwei Bestaende, dieselbe Nummer, zwei
+    /// Dateien — was eine Liste beider zu sehen bekommt, traegt einmal
+    /// dieselbe Nummer und zweimal verschiedene Kennungen.
+    func testBeideBestaendeZusammenErgebenEindeutigeKennungen() throws {
+        let achter = Iconsammlung(ordner: temp())
+        let sechzehner = Iconsammlung(ordner: temp(), kante: 16)
+        _ = try achter.sichern(nummer: "82", name: "Acht",
+                               pixel: [String?](repeating: "#FFFFFF", count: 64))
+        _ = try sechzehner.sichern(nummer: "82", name: "Sechzehn",
+                                   pixel: [String?](repeating: "#FFFFFF", count: 256))
+
+        let zusammen = [achter, sechzehner].flatMap { $0.alle() }
+        XCTAssertEqual(zusammen.count, 2)
+        XCTAssertEqual(Set(zusammen.map(\.nummer)).count, 1)
+        XCTAssertEqual(Set(zusammen.map(\.id)).count, 2)
     }
 
 

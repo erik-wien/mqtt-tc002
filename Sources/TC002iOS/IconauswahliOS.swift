@@ -2,7 +2,7 @@ import SwiftUI
 import TC002Ansichten
 import TC002Core
 
-/// Ein 8×8-Icon als Vorschau. Zeigt das erste Einzelbild; animierte Icons
+/// Ein Icon als stehende Vorschau. Zeigt das erste Einzelbild; animierte Icons
 /// laufen hier nicht, das wäre im Raster nur Unruhe.
 struct IconbildiOS: View {
     let datei: URL
@@ -20,7 +20,7 @@ struct IconbildiOS: View {
     }
 }
 
-/// Zeichnet ein bereits gelesenes 8×8-Pixelraster — der gemeinsame Kern von
+/// Zeichnet ein bereits gelesenes Pixelraster — der gemeinsame Kern von
 /// `IconbildiOS` (ein stehendes Einzelbild) und der Einzelansicht, die
 /// zusätzlich laufende Icons zeigt.
 private struct IconRasteriOS: View {
@@ -55,14 +55,16 @@ private struct RasterBreiteKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
-/// Blatt zur Icon-Auswahl. Suchen, wählen, abwählen, und über die
-/// LaMetric-Nummer nachladen. Malen geht hier nicht — Icons werden am Mac
-/// bearbeitet, ein 8×8-Raster mit dem Finger wäre keine Arbeitsfläche.
+/// Blatt zur Icon-Auswahl. Suchen, wählen, abwählen, umbenennen, löschen, und
+/// über die LaMetric-Nummer nachladen. Malen geht hier nicht — Icons werden am
+/// Mac bearbeitet, ein 8×8-Raster mit dem Finger wäre keine Arbeitsfläche.
 ///
-/// Die Icons stehen als Raster zu acht je Zeile, darunter nur die Nummer —
-/// der Name würde die Zellen ungleich breit machen. Antippen öffnet die
+/// Die Icons stehen als Raster zu fünf je Zeile, darunter der Name. Bis zum
+/// 14.09.2026 waren es acht — dort war unter der Kachel nur Platz für die
+/// Nummer, und die sagt bei einem eigenen Icon nichts. Antippen öffnet die
 /// Einzelansicht (`IconEinzelansichtiOS`) mit Namen, großer — bei laufenden
-/// Icons auch laufender — Ansicht und der Schaltfläche „Übernehmen“.
+/// Icons auch laufender — Ansicht, „Übernehmen“ und dem Menü zum Umbenennen
+/// und Löschen.
 struct IconauswahliOS: View {
     @Binding var gewaehlt: Icon?
     @Environment(\.dismiss) private var schliessen
@@ -78,14 +80,22 @@ struct IconauswahliOS: View {
     /// dem Nummernfeld nur durch Tippen daneben heraus.
     @FocusState private var lametricFokus: Bool
 
-    private static let spalten = 8
-    private static let zwischenraum = 6.0
+    private static let spalten = 5
+    private static let zwischenraum = 10.0
 
-    /// Kantenlänge je Punkt, aus der gemessenen Rasterbreite errechnet — so
-    /// passen acht Zellen nebeneinander, auf jeder Bildschirmbreite.
-    private var kante: Double {
-        let zellenbreite = (Double(rasterBreite) - Double(Self.spalten - 1) * Self.zwischenraum) / Double(Self.spalten)
-        return max(3, zellenbreite / 8)
+    /// Breite einer Zelle, aus der gemessenen Rasterbreite errechnet — so
+    /// passen fünf nebeneinander, auf jeder Bildschirmbreite.
+    private var zellenbreite: Double {
+        (Double(rasterBreite) - Double(Self.spalten - 1) * Self.zwischenraum) / Double(Self.spalten)
+    }
+
+    /// Kantenlänge **je Bildpunkt**, und deshalb von der Pixelkante des Icons
+    /// abhängig: Ein 16×16 ist nicht das doppelt so große Bild, sondern das
+    /// feinere — dieselbe Entscheidung wie im Auswahlraster am Schreibtisch.
+    /// Mit einem festen Wert für alle wäre ein 16×16 doppelt so breit wie
+    /// seine Zelle und läge über der nächsten.
+    private func kante(fuer icon: Icon) -> Double {
+        max(2, zellenbreite / Double(icon.kante))
     }
 
     /// Der Grundschatz wird gelesen, Nachgeladenes geschrieben.
@@ -137,44 +147,43 @@ struct IconauswahliOS: View {
                         .buttonStyle(.automatic)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {
-                        ForEach(vorhandene.gefiltert(nach: suche), id: \.nummer) { icon in
+                        // **Die Kennung, nicht die Nummer.** Beide Bestaende
+                        // zaehlen ihre Nummern getrennt; ein 8×8 und ein 16×16
+                        // duerfen „82" heissen. Mit `nummer` als Kennung
+                        // standen im Raster doppelte Kennungen, und SwiftUI
+                        // beantwortet das nicht mit einem Fehler, sondern mit
+                        // der falschen Kachel: Jedes Tippen oeffnete dasselbe
+                        // Icon.
+                        ForEach(vorhandene.gefiltert(nach: suche), id: \.kennung) { icon in
                             Button {
                                 einzelansicht = icon
                             } label: {
-                                VStack(spacing: 2) {
-                                    IconbildiOS(datei: icon.datei, kante: kante,
+                                VStack(spacing: 3) {
+                                    IconbildiOS(datei: icon.datei, kante: kante(fuer: icon),
                                                 pixelkante: icon.kante)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 3)
-                                                .stroke(Color.accentColor, lineWidth: gewaehlt?.nummer == icon.nummer ? 2 : 0)
+                                                .stroke(Color.accentColor, lineWidth: gewaehlt?.kennung == icon.kennung ? 2 : 0)
                                         )
-                                    // **Das Abspielzeichen neben die Nummer,
+                                    // **Das Abspielzeichen neben den Namen,
                                     // nicht ins Bild** — dieselbe Entscheidung
                                     // wie in den Listen am Schreibtisch.
                                     // LaMetric und AWTRIX legen es
                                     // durchscheinend ueber das Vorschaubildchen
                                     // und verdecken damit gerade das Motiv, das
                                     // man erkennen soll. Hier ist die
-                                    // Nummernzeile ohnehin da.
-                                    HStack(spacing: 1) {
+                                    // Namenszeile ohnehin da.
+                                    HStack(spacing: 2) {
                                         if Bildraster.bewegt(icon.datei) {
                                             Image(systemName: "play.fill")
                                                 .accessibilityHidden(true)
                                         }
-                                        Text(icon.nummer)
+                                        Text(icon.name).lineLimit(1)
                                     }
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .font(.caption2).foregroundStyle(.secondary)
                                 }
-                                // Die Zelle selbst ist bei acht Spalten schmaler als 44pt und
-                                // bleibt es, damit alle acht sichtbar nebeneinander passen. Die
-                                // Trefferflaeche greift stattdessen in den Zwischenraum zur
-                                // naechsten Zelle: nach aussen gepolstert, dann wieder
-                                // eingezogen — das Rasterlayout bleibt gleich gross, nur was
-                                // trifft, wird groesser.
-                                .padding(Self.zwischenraum / 2)
                                 .contentShape(Rectangle())
                             }
-                            .padding(-Self.zwischenraum / 2)
                             // Rasterkachel, kein Befehlsknopf — das Icon ist
                             // selbst die Flaeche. `.automatic` ausdruecklich,
                             // damit die Entscheidung im Quelltext steht.
@@ -182,7 +191,7 @@ struct IconauswahliOS: View {
                             .tint(.primary)
                             .accessibilityLabel(Text(Bildraster.bewegt(icon.datei)
                                                      ? lokf("%@, bewegt", icon.name) : icon.name))
-                            .accessibilityAddTraits(gewaehlt?.nummer == icon.nummer ? [.isSelected] : [])
+                            .accessibilityAddTraits(gewaehlt?.kennung == icon.kennung ? [.isSelected] : [])
                         }
                     }
                     .padding(.vertical, 6)
@@ -201,20 +210,57 @@ struct IconauswahliOS: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") { schliessen() }
             } }
-            .onAppear { vorhandene = bestaende.flatMap { $0.alle() } }
+            .onAppear { neuLesen() }
         }
         .presentationDragIndicator(.visible)
-        .sheet(isPresented: Binding(
-            get: { einzelansicht != nil },
-            set: { if !$0 { einzelansicht = nil } }
-        )) {
-            if let icon = einzelansicht {
-                IconEinzelansichtiOS(icon: icon) {
-                    gewaehlt = icon
-                    schliessen()
-                }
-            }
+        // **`item:` und nicht `isPresented:`.** Ein Blatt, das ueber einen
+        // Merker aufgeht und seinen Inhalt aus einem zweiten Zustand liest,
+        // baut ihn in dem Augenblick, in dem SwiftUI den Merker sieht — und
+        // das war hier einmal zu frueh: Es zeigte das zuvor angetippte Icon.
+        // Mit `item:` kommt das Icon als Wert herein, den es zeigen soll.
+        .sheet(item: $einzelansicht) { icon in
+            IconEinzelansichtiOS(
+                icon: icon,
+                // Eigen heisst: Es liegt in einem Schreibordner dieser App.
+                // Der Grundschatz im Buendel liegt das nicht und laesst sich
+                // deshalb weder umbenennen noch loeschen.
+                darfAendern: heimat(von: icon) != nil,
+                uebernehmen: { gewaehlt = $0; schliessen() },
+                umbenennen: { umbenennen($0, auf: $1) },
+                loeschen: { loeschen($0) })
         }
+    }
+
+    private func neuLesen() {
+        vorhandene = bestaende.flatMap { $0.alle() }
+    }
+
+    /// Die Sammlung, in deren Schreibordner dieses Icon liegt — allein sie
+    /// darf es ändern. Welche das ist, entscheidet sie selbst (`istEigen`) und
+    /// nicht diese Ansicht.
+    private func heimat(von icon: Icon) -> Iconsammlung? {
+        bestaende.first { $0.istEigen(icon) }
+    }
+
+    /// Gibt dem Icon einen neuen Namen. **Die Nummer bleibt** — sie ist der
+    /// Dateiname und das, worauf sich ein Kurzbefehl oder das
+    /// Kommandozeilenwerkzeug beruft. Zurück kommt das umbenannte Icon, damit
+    /// die Einzelansicht ihren Titel nachziehen kann.
+    private func umbenennen(_ icon: Icon, auf name: String) -> Icon? {
+        guard let heimat = heimat(von: icon),
+              let neu = try? heimat.umbenennen(icon, nummer: icon.nummer, name: name) else { return nil }
+        if gewaehlt?.kennung == icon.kennung { gewaehlt = neu }
+        neuLesen()
+        return neu
+    }
+
+    /// Entfernt das Icon endgültig. War es gerade gewählt, fällt die Wahl auf
+    /// „Kein Icon" zurück — es gibt danach nichts mehr, worauf sie zeigen
+    /// könnte. Dieselbe Entscheidung wie im Auswahlblatt am Schreibtisch.
+    private func loeschen(_ icon: Icon) {
+        guard let heimat = heimat(von: icon), (try? heimat.loeschen(icon)) != nil else { return }
+        if gewaehlt?.kennung == icon.kennung { gewaehlt = nil }
+        neuLesen()
     }
 
     /// Holt ein Icon über seine Nummer. Blockiert nicht den Hauptthread — der
@@ -230,7 +276,7 @@ struct IconauswahliOS: View {
                 await MainActor.run {
                     // Beide Bestaende: Geholt wird zwar nur ein 8×8 von
                     // LaMetric, die Liste zeigt aber beide.
-                    vorhandene = bestaende.flatMap { $0.alle() }
+                    neuLesen()
                     gewaehlt = icon
                     meldung = lokf("%@ geholt.", icon.name)
                     lametricNummer = ""
@@ -247,7 +293,9 @@ struct IconauswahliOS: View {
 }
 
 /// Einzelansicht eines Icons: Name als Titel, groß gerastert — bei einem
-/// laufenden Icon auch laufend —, darunter „Übernehmen“.
+/// laufenden Icon auch laufend —, darunter „Übernehmen“. Im Menü rechts oben
+/// stehen „Umbenennen“ und „Löschen“; sie sind hier und nicht in der Kachel,
+/// weil erst hier der Name dabeisteht, den die Rückfrage nennt.
 ///
 /// Bauart wie die Vorschau am Sendebildschirm (`VorschauiOS`): Die
 /// Einzelbilder samt Standzeiten werden einmal über `.task(id:)` in
@@ -255,13 +303,32 @@ struct IconauswahliOS: View {
 /// liefe sonst 60 bis 120 mal je Sekunde auf dem Hauptthread. `TimelineView`
 /// wird zudem nur montiert, wenn es tatsächlich mehr als ein Einzelbild gibt.
 private struct IconEinzelansichtiOS: View {
-    let icon: Icon
-    let uebernehmen: () -> Void
+    let darfAendern: Bool
+    let uebernehmen: (Icon) -> Void
+    let umbenennen: (Icon, String) -> Icon?
+    let loeschen: (Icon) -> Void
     @Environment(\.dismiss) private var schliessen
 
+    /// Das Icon liegt hier als Zustand und nicht als Übergabewert: Nach dem
+    /// Umbenennen soll der Titel der neue sein, ohne dass das Blatt zugeht.
+    @State private var icon: Icon
     @State private var bilder: [Bildraster.Einzelbild] = []
+    @State private var neuerName = ""
+    @State private var fragtUmbenennen = false
+    @State private var fragtLoeschen = false
 
     private static let kante = 20.0
+
+    init(icon: Icon, darfAendern: Bool,
+         uebernehmen: @escaping (Icon) -> Void,
+         umbenennen: @escaping (Icon, String) -> Icon?,
+         loeschen: @escaping (Icon) -> Void) {
+        _icon = State(initialValue: icon)
+        self.darfAendern = darfAendern
+        self.uebernehmen = uebernehmen
+        self.umbenennen = umbenennen
+        self.loeschen = loeschen
+    }
 
     var body: some View {
         NavigationStack {
@@ -277,15 +344,49 @@ private struct IconEinzelansichtiOS: View {
                                   pixelkante: icon.kante, kante: Self.kante)
                 }
                 Spacer()
-                Button("Übernehmen", action: uebernehmen)
+                Button("Übernehmen") { uebernehmen(icon) }
                     .knopfHaupthandlung()
             }
             .padding()
             .navigationTitle(icon.name)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) {
-                Button("Abbrechen") { schliessen() }
-            } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { schliessen() }
+                }
+                if darfAendern {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            Button("Umbenennen") {
+                                neuerName = icon.name
+                                fragtUmbenennen = true
+                            }
+                            Button("Löschen", role: .destructive) { fragtLoeschen = true }
+                        } label: {
+                            Label("Mehr", systemImage: "ellipsis.circle")
+                        }
+                    }
+                }
+            }
+            .alert("Umbenennen", isPresented: $fragtUmbenennen) {
+                TextField("Name", text: $neuerName)
+                Button("Abbrechen", role: .cancel) {}
+                Button("Sichern") {
+                    if let neu = umbenennen(icon, neuerName) { icon = neu }
+                }
+            } message: {
+                Text("Die Nummer bleibt, wie sie ist — Kurzbefehle finden das Icon weiterhin.")
+            }
+            .confirmationDialog(Text(lokf("„%@“ löschen?", icon.name)),
+                                isPresented: $fragtLoeschen, titleVisibility: .visible) {
+                Button("Löschen", role: .destructive) {
+                    loeschen(icon)
+                    schliessen()
+                }
+                Button("Abbrechen", role: .cancel) {}
+            } message: {
+                Text(lokf("Das Icon „%@“ wird endgültig entfernt.", icon.name))
+            }
         }
         .task(id: icon.datei) {
             bilder = (try? Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)) ?? []
