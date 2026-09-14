@@ -80,6 +80,11 @@ public final class AppZustand {
     /// vergessen hätte.
     public var bekannteAnzeigen: [UUID: [String]] { didSet { anzeigenSichern() } }
 
+    /// **Grabsteine entfernter Uhren** — siehe `Einrichtungsstand.entfernt`.
+    /// Ohne sie wird eine Loeschung nie uebertragen, und eine auf einem Geraet
+    /// entfernte Uhr kommt vom anderen zurueck.
+    public private(set) var grabsteine: [String: Date] = [:] { didSet { grabsteineSichern() } }
+
     /// Der zuletzt gesicherte Wert — Grundlage dafuer, dass mehrfache Aufrufe
     /// (Fokuswechsel, .onDisappear, Beenden) gefahrlos sind: ein unveraenderter
     /// Wert loest keinen zweiten Schluesselbund-Schreibvorgang aus.
@@ -214,6 +219,8 @@ public final class AppZustand {
             bekannteAnzeigen[id] = alt
             d.removeObject(forKey: "bekannteAnzeigen")
         }
+        grabsteine = (try? JSONDecoder().decode([String: Date].self,
+                                                from: d.data(forKey: "grabsteine") ?? Data())) ?? [:]
         kennwortGesichert = kennwort
         initialisiert = true
         // Nur wenn der Abgleich gewaehlt ist, wird der Behaelter ueberhaupt
@@ -565,7 +572,13 @@ public final class AppZustand {
     /// Oberflaeche ruft `uhrHinzufuegen(host:)`.
     public func uhrHinzufuegen(host: String, sitzung: URLSession = .shared) {
         let erste = uhren.isEmpty
-        let neue = Uhr(name: host, host: host, betriebsart: .http)
+        // `angelegt` traegt den Zeitpunkt, damit ein Grabstein derselben
+        // Adresse ueberstimmt werden kann — sonst liesse sich eine einmal
+        // entfernte Uhr nie wieder eintragen.
+        let neue = Uhr(name: host, host: host, betriebsart: .http, angelegt: Date())
+        var ohneGrabstein = grabsteine
+        for merkmal in neue.abgleichmerkmale { ohneGrabstein[merkmal] = nil }
+        if ohneGrabstein != grabsteine { grabsteine = ohneGrabstein }
         uhren.append(neue)
         if aktiveID == nil { aktiveID = neue.id }
         // Nur bei der allerersten Uhr: sonst traete eine spaeter hinzugefuegte
@@ -578,6 +591,15 @@ public final class AppZustand {
     /// Ablage unter Application Support greifen muessen — die Oberflaeche
     /// ruft wie bisher `uhrEntfernen(id)`.
     public func uhrEntfernen(_ id: UUID, gedaechtnis: Slotgedaechtnis = .gemeinsam) {
+        // **Vor dem Entfernen**, solange die Uhr noch da ist: Ihre Merkmale
+        // sind der Grabstein, und ohne den holt das andere Geraet sie beim
+        // naechsten Abgleich zurueck.
+        if let uhr = uhren.first(where: { $0.id == id }) {
+            let jetzt = Date()
+            var liste = grabsteine
+            for merkmal in uhr.abgleichmerkmale { liste[merkmal] = jetzt }
+            grabsteine = liste
+        }
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
         bekannteAnzeigen[id] = nil
@@ -1280,6 +1302,13 @@ public final class AppZustand {
 
     /// UserDefaults kennt keine UUID-Schluessel — deshalb als JSON ueber die
     /// Zeichenketten-Fassung der Kennungen.
+    private func grabsteineSichern() {
+        guard initialisiert else { return }
+        guard let daten = try? JSONEncoder().encode(grabsteine) else { return }
+        UserDefaults.standard.set(daten, forKey: "grabsteine")
+        wolkeSchreiben()
+    }
+
     private func anzeigenSichern() {
         guard initialisiert else { return }
         let flach = Dictionary(uniqueKeysWithValues:
@@ -1324,7 +1353,8 @@ public final class AppZustand {
             brokerHost: brokerHost, brokerPort: brokerPort, benutzer: benutzer,
             bekannteAnzeigen: Dictionary(
                 bekannteAnzeigen.map { ($0.key.uuidString, $0.value) },
-                uniquingKeysWith: { erster, _ in erster }))
+                uniquingKeysWith: { erster, _ in erster }),
+            entfernt: grabsteine.isEmpty ? nil : grabsteine)
     }
 
     /// Uebernimmt einen zusammengefuehrten Stand.
@@ -1353,6 +1383,8 @@ public final class AppZustand {
             },
             uniquingKeysWith: { erster, _ in erster })
         if bekannteAnzeigen != anzeigen { bekannteAnzeigen = anzeigen }
+        let uebrig = stand.entfernt ?? [:]
+        if grabsteine != uebrig { grabsteine = uebrig }
         // Die aktive Uhr kann mit dem Stand verschwunden sein.
         if let id = aktiveID, !uhren.contains(where: { $0.id == id }) { aktiveID = uhren.first?.id }
         if aktiveID == nil { aktiveID = uhren.first?.id }

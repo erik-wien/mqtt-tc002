@@ -103,6 +103,17 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// Adresse. `Einrichtungsstand.zusammengefuehrt` legt daraus Gruppen — auch
     /// über Ecken: Trifft sich A mit B über die Adresse und B mit C über die
     /// MAC, sind alle drei dieselbe Uhr.
+    /// Wann dieser Eintrag angelegt wurde — **nur fuer den Abgleich**, und nur
+    /// dafuer, damit ein Wiederanlegen einen Grabstein schlagen kann
+    /// (`Einrichtungsstand.entfernt`). Ohne das gewaenne die Loeschung fuer
+    /// immer: Wer eine Uhr entfernt und spaeter wieder eintraegt, saehe sie
+    /// beim naechsten Abgleich verschwinden.
+    ///
+    /// `Optional` aus demselben Grund wie `typ` — ein nachtraegliches
+    /// Pflichtfeld wirft beim Decode und liesse die Uhrenliste leer statt
+    /// fehlerhaft. `nil` heisst „von frueher"; ein Grabstein gewinnt dann.
+    public var angelegt: Date?
+
     public var abgleichmerkmale: [String] {
         var merkmale = ["id:\(id.uuidString)"]
         let kennung = mac.lowercased().filter(\.isHexDigit)
@@ -188,13 +199,15 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 
     public init(id: UUID = UUID(), name: String, host: String,
                 praefix: String = "", mac: String = "", typ: Geraetetyp? = nil,
-                betriebsart: Betriebsart? = nil, panelbreite: Int? = nil) {
+                betriebsart: Betriebsart? = nil, panelbreite: Int? = nil,
+                angelegt: Date? = nil) {
         self.id = id
         self.name = name
         self.host = host
         self.praefix = praefix
         self.mac = mac
         self.typ = typ
+        self.angelegt = angelegt
         self.betriebsart = betriebsart
         self.panelbreite = panelbreite
     }

@@ -153,6 +153,65 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.uhren.first?.host, "10.0.0.9")
     }
 
+    // MARK: Grabsteine
+
+    /// **Ohne Grabsteine wird eine Loeschung nie uebertragen.** Der Abgleich
+    /// behaelt jede oertliche Uhr und fuegt jede ferne hinzu — wer eine Uhr auf
+    /// einem Geraet entfernt, bekommt sie vom anderen zurueck. Am 14.09.2026
+    /// genau so erlebt: „Lassen sich zwar entfernen, kommen aber sofort
+    /// wieder."
+    func testEineEntfernteUhrKommtNichtZurueck() {
+        let weg = uhr("Küche", "10.0.0.1")
+        var oertlich = Einrichtungsstand(uhren: [])
+        oertlich.alsEntferntVermerken(weg)
+
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: oertlich, fern: Einrichtungsstand(uhren: [weg]))
+        XCTAssertEqual(ergebnis.uhren.count, 0,
+                       "die Uhr wurde entfernt — das muss auch fuer das andere Geraet gelten")
+    }
+
+    /// Und der Grabstein gilt auch, wenn das andere Geraet dieselbe Uhr unter
+    /// **seiner eigenen** Kennung fuehrt. Deshalb werden alle Merkmale
+    /// vermerkt, nicht nur die Kennung.
+    func testDerGrabsteinGiltAuchFuerDieAndereKennung() {
+        var oertlich = Einrichtungsstand(uhren: [])
+        oertlich.alsEntferntVermerken(uhr("Küche", "10.0.0.1"))
+
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: oertlich,
+            fern: Einrichtungsstand(uhren: [uhr("Küche", "10.0.0.1")]))
+        XCTAssertEqual(ergebnis.uhren.count, 0)
+    }
+
+    /// **Ein Grabstein ist kein Urteil auf ewig.** Wird dieselbe Adresse
+    /// spaeter wieder eingetragen, gilt die Uhr — sonst waere eine einmal
+    /// entfernte Adresse fuer immer verbrannt.
+    func testWiederEingetragenSchlaegtDenGrabstein() {
+        var oertlich = Einrichtungsstand(uhren: [])
+        oertlich.alsEntferntVermerken(uhr("Küche", "10.0.0.1"),
+                                      am: Date(timeIntervalSince1970: 1_000))
+        var neu = uhr("Küche", "10.0.0.1")
+        neu.angelegt = Date(timeIntervalSince1970: 2_000)
+
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: oertlich, fern: Einrichtungsstand(uhren: [neu]))
+        XCTAssertEqual(ergebnis.uhren.count, 1, "spaeter eingetragen als begraben")
+        XCTAssertNil(ergebnis.entfernt?["host:10.0.0.1"],
+                     "und der Grabstein ist abgeraeumt, sonst pruefte ihn jede Runde erneut")
+    }
+
+    /// Der Gegenfall: Ein Eintrag **ohne** Zeitpunkt stammt aus einer Fassung
+    /// vor dieser. Er darf einen Grabstein nicht ueberdauern, sonst liesse sich
+    /// eine alte Datei nie aufraeumen.
+    func testEinEintragOhneZeitpunktUnterliegtDemGrabstein() {
+        var oertlich = Einrichtungsstand(uhren: [])
+        oertlich.alsEntferntVermerken(uhr("Küche", "10.0.0.1"))
+        let ergebnis = Einrichtungsstand.zusammengefuehrt(
+            oertlich: oertlich, fern: Einrichtungsstand(uhren: [uhr("Küche", "10.0.0.1")]))
+        XCTAssertEqual(ergebnis.uhren.count, 0)
+    }
+
     // MARK: Auswahl
 
     func testAuswahlKommtAusDerWolke() {

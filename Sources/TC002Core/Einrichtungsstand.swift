@@ -37,15 +37,53 @@ public struct Einrichtungsstand: Codable, Equatable, Sendable {
     /// Woerterbuch keine UUID-Schluessel kennt.
     public var bekannteAnzeigen: [String: [String]]
 
+    /// **Grabsteine.** Ohne sie wird eine Loeschung nie uebertragen: Der
+    /// Abgleich behaelt jede oertliche Uhr und fuegt jede ferne hinzu, entfernt
+    /// wird nirgends etwas — wer eine Uhr auf einem Geraet loescht, bekommt sie
+    /// vom anderen zurueck. Am 14.09.2026 genau so erlebt.
+    ///
+    /// Je Eintrag ein Merkmal der entfernten Uhr (`Uhr.abgleichmerkmale`) und
+    /// der Zeitpunkt. Merkmale statt der blossen Kennung, weil das andere
+    /// Geraet die Uhr unter einer anderen Kennung fuehrt — dieselbe Ueberlegung
+    /// wie beim Zusammenfuehren.
+    ///
+    /// **Ein Grabstein ist kein Urteil auf ewig:** Wird dieselbe Uhr spaeter
+    /// wieder eingetragen, ist ihr `angelegt` juenger als der Grabstein, und
+    /// dann gilt die Uhr. Sonst koennte man eine einmal entfernte Adresse nie
+    /// wieder benutzen.
+    /// **`Optional`, und der vorhandene Test hat mich daran erinnert:** Ein
+    /// nachtraegliches Pflichtfeld wirft beim Decode `keyNotFound`, auch mit
+    /// Vorgabewert — `testDieAbgelegteFormBleibtLesbar` fiel sofort. `nil`
+    /// heisst „keine Grabsteine"; leer wird auch wieder `nil` geschrieben,
+    /// damit eine aeltere Fassung die Datei weiterhin liest.
+    public var entfernt: [String: Date]?
+
     public init(uhren: [Uhr] = [], zielIDs: [UUID] = [], brokerHost: String = "",
                 brokerPort: String = "", benutzer: String = "",
-                bekannteAnzeigen: [String: [String]] = [:]) {
+                bekannteAnzeigen: [String: [String]] = [:],
+                entfernt: [String: Date]? = nil) {
         self.uhren = uhren
         self.zielIDs = zielIDs
         self.brokerHost = brokerHost
         self.brokerPort = brokerPort
         self.benutzer = benutzer
         self.bekannteAnzeigen = bekannteAnzeigen
+        self.entfernt = entfernt
+    }
+
+    /// Traegt eine Uhr als entfernt ein — alle ihre Merkmale, damit das andere
+    /// Geraet sie auch unter seiner eigenen Kennung erkennt.
+    public mutating func alsEntferntVermerken(_ uhr: Uhr, am zeitpunkt: Date = Date()) {
+        var liste = entfernt ?? [:]
+        for merkmal in uhr.abgleichmerkmale { liste[merkmal] = zeitpunkt }
+        entfernt = liste
+    }
+
+    /// Nimmt die Grabsteine einer wieder eingetragenen Uhr zurueck.
+    public mutating func grabsteineAufheben(_ uhr: Uhr) {
+        guard var liste = entfernt else { return }
+        for merkmal in uhr.abgleichmerkmale { liste[merkmal] = nil }
+        entfernt = liste.isEmpty ? nil : liste
     }
 }
 
@@ -173,6 +211,30 @@ extension Einrichtungsstand {
             for i in mitglieder { neueKennung[alle[i].id] = kanonisch }
             uhren.append(uhr)
         }
+        // **Grabsteine, vereinigt und dann angewandt.** Der juengere gewinnt:
+        // Loescht ein Geraet und traegt das andere spaeter wieder ein, zaehlt
+        // der spaetere Handgriff.
+        var grabsteine = oertlich.entfernt ?? [:]
+        for (merkmal, zeit) in fern.entfernt ?? [:] {
+            if let bisher = grabsteine[merkmal], bisher > zeit { continue }
+            grabsteine[merkmal] = zeit
+        }
+        // Ein Grabstein zaehlt nur, solange die Uhr nicht **danach** wieder
+        // eingetragen wurde. `angelegt == nil` heisst „von frueher" — dann
+        // gewinnt der Grabstein, sonst koennte eine alte Datei jede Loeschung
+        // ueberdauern.
+        uhren = uhren.filter { uhr in
+            let begraben = uhr.abgleichmerkmale.compactMap { grabsteine[$0] }.max()
+            guard let begraben else { return true }
+            guard let angelegt = uhr.angelegt else { return false }
+            return angelegt > begraben
+        }
+        // Was die Uhr ueberlebt hat, raeumt seinen Grabstein ab — sonst laege er
+        // fuer immer da und jede Runde muesste ihn erneut pruefen.
+        for uhr in uhren {
+            for merkmal in uhr.abgleichmerkmale { grabsteine[merkmal] = nil }
+        }
+        ergebnis.entfernt = grabsteine.isEmpty ? nil : grabsteine
         ergebnis.uhren = uhren
 
         let vorhanden = Set(uhren.map(\.id))
