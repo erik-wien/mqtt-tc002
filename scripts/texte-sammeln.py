@@ -45,6 +45,13 @@ ERSTES_ARGUMENT = [
     "confirmationDialog", "alert", "Tab", "GroupBox", "LabeledContent",
     "NavigationLink", "ProgressView", "ToolbarItem", "ContentUnavailableView",
     "ColorPicker",
+    # Eigener Baustein (TC002Ansichten/Hilfezeichen.swift): eine
+    # Gruppenueberschrift samt (?). Ihr Titel geht als LocalizedStringKey an
+    # `Text` und wird wie ein `Section("…")` nachgeschlagen — ohne diesen
+    # Eintrag faende der Sammler ihn nicht und die Ueberschrift bliebe still
+    # deutsch. Die Erklaerung dahinter steht als `lok(…)` da und wird ohnehin
+    # gefunden.
+    "Abschnittskopf",
 ]
 # Aufrufe, die eine *Liste* von Texten bekommen — die Hilfe baut ihre
 # Aufzaehlungen und Tabellen so. Hier steht der Text nicht hinter der Klammer,

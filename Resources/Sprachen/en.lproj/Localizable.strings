@@ -265,6 +265,8 @@
 "Slot" = "Slot";
 "Slot %d auf der Uhr löschen" = "Delete slot %d on the clock";
 "Senden als" = "Send as";
+"Als Pixel rechnet die App das Bild selbst; passt der Text nicht, baut sie den Lauf als GIF. Als Text setzt ihn die Uhr mit ihrer eingebauten Schrift und lässt ihn bei Bedarf selbst durchlaufen — das Tempo steht dann in den Einstellungen der Uhr." = "As pixels, the app renders the image itself; if the text does not fit, it builds the scroll as a GIF. As text, the clock sets it in its built-in font and scrolls it by itself when needed — the speed is then set in the clock's settings.";
+"Zur Wahl stehen nur Schriften, die aufs Pixelraster der Uhr gezeichnet oder dafür durchgesehen sind — schmale, dicktengleiche stehen bei sechzehn Zeilen am besten. Sechzehn Pixel füllen die volle Höhe; die hat nur die TC002. Eine TC001 unter AWTRIX NG hat acht Zeilen und setzt den Text ohnehin mit ihrer eigenen Schrift." = "Only fonts drawn for the clock's pixel grid, or reviewed for it, are offered — narrow, monospaced ones look best at sixteen rows. Sixteen pixels fill the full height, and only the TC002 has it. A TC001 running AWTRIX NG has eight rows and sets the text in its own font anyway.";
 "Weg" = "Method";
 "als Pixel" = "as pixels";
 "als Text" = "as text";
@@ -691,7 +693,8 @@
 "„Verlauf“ listet, was auf der aktiven Uhr steht. Über der Liste steht, woher sie kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Auskunft stammt von der Uhr selbst; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen." = "History lists what is on the active clock. Above the list it says where it comes from, and that distinction matters: \"reported by the device\" means the answer comes from the clock itself; then everything that is really on it is listed, including what another tool created, and that too can be deleted here.";
 "Quelltext" = "Source code";
 "Bestand" = "Library";
-"Diese Bildgruppe" = "This image group";
+"Dieses Bild" = "This image";
+"Icons für solche Uhren werden über LaMetric-Nummern angesprochen. Die Nummer stammt aus der LaMetric Icon Gallery, ist beim 8×8 zugleich der Dateiname und muss darum eindeutig sein. Ein über sie geholtes Icon ist immer ein 8×8 und landet im 8×8-Bestand — gleich, was gerade auf der Leinwand liegt." = "Icons for clocks like these are addressed by LaMetric numbers. The number comes from the LaMetric Icon Gallery, is also the file name for an 8×8, and must therefore be unique. An icon fetched by it is always an 8×8 and lands in the 8×8 stock — no matter what is currently on the canvas.";
 
 // Der Editor: ein geladenes Bild kommt auf die Leinwand (14.09.2026).
 "„%@“ liegt jetzt im Bestand. Auf die Leinwand kommt es nur, wenn es das Gemalte ersetzt — das ist nicht gesichert." = "\"%@\" is now in the stock. It only goes onto the canvas by replacing what you drew — and that is not saved.";

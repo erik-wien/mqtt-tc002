@@ -634,12 +634,14 @@ public struct SendenView: View {
             // Segmentschalter ueber die volle Breite, ohne Beschriftung links:
             // Der Abschnittstitel sagt schon, worum es geht. Eine Beschriftung
             // daneben quetschte den Schalter zusammen — genau das sah man.
-            Section("Senden als") {
+            Section {
                 Picker("Weg", selection: $weg) {
                     Text("als Pixel").tag(SendeWeg.pixel)
                     Text("als Text").tag(SendeWeg.text)
                 }
                 .pickerStyle(.segmented).labelsHidden()
+            } header: {
+                Abschnittskopf("Senden als", hilfe: lok("Als Pixel rechnet die App das Bild selbst; passt der Text nicht, baut sie den Lauf als GIF. Als Text setzt ihn die Uhr mit ihrer eingebauten Schrift und lässt ihn bei Bedarf selbst durchlaufen — das Tempo steht dann in den Einstellungen der Uhr."))
             }
 
             // Immer da, gesperrt statt versteckt: Ein Abschnitt, der je nach
@@ -654,7 +656,7 @@ public struct SendenView: View {
                     .disabled(gewaehltesIcon == nil || !(weg == .pixel && !passt))
             }
 
-            Section("Schrift") {
+            Section {
                 // Blank, ohne `LabeledContent` und ohne `labelsHidden`: Ein
                 // Waehler in einem gruppierten `Form` zeichnet die kanonische
                 // Zeile selbst — Beschriftung links, Wert im grauen Kaestchen
@@ -735,6 +737,10 @@ public struct SendenView: View {
                             .labelsHidden()
                     }
                 }
+            } header: {
+                // Der Größenwähler steht in der Zeile darunter und hat keine
+                // eigene Überschrift; seine Erklärung gehört deshalb hierher.
+                Abschnittskopf("Schrift", hilfe: lok("Zur Wahl stehen nur Schriften, die aufs Pixelraster der Uhr gezeichnet oder dafür durchgesehen sind — schmale, dicktengleiche stehen bei sechzehn Zeilen am besten. Sechzehn Pixel füllen die volle Höhe; die hat nur die TC002. Eine TC001 unter AWTRIX NG hat acht Zeilen und setzt den Text ohnehin mit ihrer eigenen Schrift."))
             }
 
             Section("Lage") {

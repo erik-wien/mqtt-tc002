@@ -125,6 +125,15 @@ public struct EditorBereichView: View {
         #endif
     }
 
+    /// Die Erklärung hinter dem (?) an **beiden** Stellen, an denen eine
+    /// LaMetric-Nummer vorkommt: am Abschnitt des bearbeiteten Bildes und
+    /// unter „Hinzufügen“. Ein Wortlaut, einmal hingeschrieben — zweimal wären
+    /// es zwei Übersetzungsschlüssel, die auseinanderlaufen können, für
+    /// dieselbe Sache (`HilfezeichenTests` hält das fest).
+    private static var lametricHilfe: String {
+        lok("Icons für solche Uhren werden über LaMetric-Nummern angesprochen. Die Nummer stammt aus der LaMetric Icon Gallery, ist beim 8×8 zugleich der Dateiname und muss darum eindeutig sein. Ein über sie geholtes Icon ist immer ein 8×8 und landet im 8×8-Bestand — gleich, was gerade auf der Leinwand liegt.")
+    }
+
     /// Was der Inspektor zeigt.
     enum Inspektormodus: String, CaseIterable, Identifiable {
         case malen, animation, sichern, zeit
@@ -426,7 +435,7 @@ public struct EditorBereichView: View {
         // allein hier — unter der Leinwand, waehrend der Knopf, der sie
         // ausloest, rechts im Inspektor sitzt. Wer „Sichern" drueckte, sah
         // dort nichts geschehen und hielt es fuer wirkungslos. Sie steht
-        // deshalb jetzt im Abschnitt „Diese Bildgruppe", gleich unter den
+        // deshalb jetzt im Abschnitt „Dieses Bild", gleich unter den
         // Knoepfen. Hier bleibt sie fuer den einen Fall, in dem es den
         // Abschnitt gerade nicht gibt: Der Inspektor ist ausgeblendet, und
         // „Sichern" kam ueber ⌘↩.
@@ -696,7 +705,7 @@ public struct EditorBereichView: View {
                 Text(meldung).font(.footnote).foregroundStyle(.secondary)
             }
         } header: {
-            Text("Diese Bildgruppe")
+            Abschnittskopf("Dieses Bild", hilfe: Self.lametricHilfe)
         } footer: {
             Text(groesse.nummerIstDateiname
                  ? lok("Die Nummer ist der Dateiname und zugleich die LaMetric-Nummer — sie muss eindeutig sein.")
@@ -709,7 +718,7 @@ public struct EditorBereichView: View {
         // 13.09.2026 hing der ganze Abschnitt an `groesse.mitNummer` — wer
         // auf 16×16 stand, fand die LaMetric-Wahl nicht mehr und konnte
         // nicht erraten, warum.
-        Section("Hinzufügen") {
+        Section {
             // **Eine Zeile fuer eine Handlung.** Feld, Knopf und der Verweis
             // auf die Gallery standen untereinander und nahmen drei Zeilen
             // fuer eine einzige Sache. Der Knopf traegt jetzt nur noch sein
@@ -752,6 +761,8 @@ public struct EditorBereichView: View {
                 }
             Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
                 .knopfBefehl()
+        } header: {
+            Abschnittskopf("Hinzufügen", hilfe: Self.lametricHilfe)
         }
 
         Section("Vorhandene") {
