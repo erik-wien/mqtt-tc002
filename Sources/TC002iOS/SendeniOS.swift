@@ -166,7 +166,19 @@ struct SendeniOS: View {
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
-    private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon) }
+
+    /// Auf wie vielen Punkten die Vorschau rechnet — den Maßen der angesehenen
+    /// Uhr. Dieselbe Überlegung wie in `SendenView` am Schreibtisch.
+    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
+
+    /// Womit die **Vorschau** rastert: Auf einer NG-Uhr mit fester
+    /// Näherungsschrift, weil das Gerät den Text selbst setzt. Gesendet werden
+    /// unverändert `optionen`.
+    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
+
+    private var passt: Bool {
+        Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, mass: mass)
+    }
 
     /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
     /// aendert — dieselbe Rechnung wie `SendenView.fettWirkt` (Mac). Ein Knopf
@@ -241,7 +253,7 @@ struct SendeniOS: View {
                 FehlerleisteiOS(zustand: zustand)
                 ScrollView {
                     VStack(spacing: 14) {
-                        VorschauiOS(feld: Meldungsbau.feld(optionen, mitIcon: mitIcon),
+                        VorschauiOS(feld: Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, mass: mass),
                                     icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
                                     laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil,
                                     typ: zustand.referenzUhr?.typ)
@@ -718,7 +730,7 @@ struct SendeniOS: View {
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
     /// ganz billige) Berechnung nur bei einer tatsächlichen Änderung neu läuft.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)"
+        "\(weg)|\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64 darüber —
@@ -728,15 +740,15 @@ struct SendeniOS: View {
         guard weg == .pixel, !passt else {
             laufschriftFrames = []; laufschriftURI = ""; return
         }
-        let o = optionen
+        let (o, mass) = (vorschauOptionen, mass)
         let iconBilder = gewaehltesIcon.flatMap { i -> [[String?]]? in
             try? Bildraster.lesenMitZeiten(i.datei, breite: 8, hoehe: 8).map(\.pixel)
         } ?? []
         let (frames, uri) = await Task.detached(priority: .userInitiated) {
-            let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder)
+            let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder, mass: mass)
             let uri = (try? Bildraster.alsDatenURI(
-                frames.map(\.pixel), breite: Pixelfeld.breiteStandard,
-                hoehe: Pixelfeld.hoeheStandard, verzoegerung: o.tempo.bilddauer)) ?? ""
+                frames.map(\.pixel), breite: mass.breite,
+                hoehe: mass.hoehe, verzoegerung: o.tempo.bilddauer)) ?? ""
             return (frames, uri)
         }.value
         guard !Task.isCancelled else { return }
@@ -748,8 +760,13 @@ struct SendeniOS: View {
         laeuft = true
         defer { laeuft = false }
         do {
-            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon,
-                                                sammlung: sammlung, vorberechnet: laufschriftURI)
+            // **Das vorberechnete GIF nur, wenn es die Größe hat, in der
+            // gesendet wird.** Die Vorschau rastert auf dem Maß der angesehenen
+            // Uhr; „An alle Uhren senden" schickt aber an jede eingerichtete,
+            // und eine TC002 bekäme das 32×8-GIF einer NG als Nutzlast.
+            // `Meldungsbau.rahmen` rastert dann eben selbst.
+            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
+                                                vorberechnet: mass == .tc002 ? laufschriftURI : nil)
             // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
             // am Mac (SendenView.senden()).
             let slotOptionen = optionen

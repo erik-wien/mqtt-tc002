@@ -118,6 +118,37 @@ public struct Meldungsoptionen: Sendable, Equatable {
     }
 }
 
+extension Meldungsoptionen {
+    /// **Die Vorschau einer NG-Uhr ist eine Näherung, und zwar immer dieselbe.**
+    ///
+    /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl
+    /// ist dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der gespeicherte
+    /// Wert bleibt davon aber unberührt und kann „Tiny5, 16 px" sein — auf
+    /// acht Zeilen gerastert wäre das abgeschnitten, und die Vorschau zeigte
+    /// einen Fehler, den das Gerät gar nicht hat.
+    ///
+    /// Gewählt ist Silkscreen in 8 px: eine Pixelschrift, die auf der
+    /// abgesegneten Liste steht (`Pixelgroessen.abgesegnet`) und in acht Zeilen
+    /// vollständig Platz hat.
+    ///
+    /// Angerührt werden nur Schrift und Größe. Farbe, Ausrichtung, Abstand und
+    /// das mitlaufende Icon sind Regler, die NG sehr wohl kennt
+    /// (`Geraetetyp.wirkt`) — sie zu ersetzen hieße, die Vorschau von der
+    /// Einstellung abzukoppeln, die wirklich gesendet wird.
+    ///
+    /// **Im Kern und nicht in den Ansichten**: Mac und iPhone rufen dasselbe.
+    /// Zwei Abschriften derselben Tabelle laufen früher oder später
+    /// auseinander, und die abweichende wäre die falsche — in diesem Projekt
+    /// schon dreimal vorgekommen (siehe `Regler` in `Geraetetyp.swift`).
+    public func naeherung(fuer gattung: Geraetetyp) -> Meldungsoptionen {
+        guard gattung.setztSelbst else { return self }
+        var o = self
+        o.schrift = "Silkscreen"
+        o.groesse = 8
+        return o
+    }
+}
+
 /// Baut aus Optionen und Icon den Rahmen, den die Uhr bekommt.
 ///
 /// Wortgetreu aus `SendenView` gelöst. Keine Rechnung wurde dabei geändert;
@@ -130,10 +161,13 @@ public enum Meldungsbau {
     /// bisher, bei 16×16 achtzehn.
     public static func iconBreite(kante: Int = 8) -> Int { kante + iconLuecke }
 
-    /// Auf welcher Zeile das Icon sitzt: senkrecht mittig in den sechzehn
-    /// Zeilen. Bei 8×8 ergibt das die bekannte 4, bei 16×16 die 0 — ein
-    /// 16×16 fuellt die volle Hoehe und schwimmt nicht.
-    public static func iconY(kante: Int = 8) -> Int { (Pixelfeld.hoeheStandard - kante) / 2 }
+    /// Auf welcher Zeile das Icon sitzt: senkrecht mittig im Feld. Auf den
+    /// sechzehn Zeilen der Werksfirmware ergibt das bei 8×8 die bekannte 4 und
+    /// bei 16×16 die 0 — ein 16×16 fuellt die volle Hoehe und schwimmt nicht.
+    /// Auf den acht Zeilen einer NG-Uhr tut das ein 8×8.
+    public static func iconY(kante: Int = 8, mass: Anzeigemass = .tc002) -> Int {
+        mass.iconY(kante: kante)
+    }
 
     /// `iconKante` hat ueberall eine Vorgabe: Jede Stelle, die frueher nur
     /// „Icon ja/nein" wusste, meinte damit ein 8×8 und rechnet unveraendert
@@ -141,15 +175,16 @@ public enum Meldungsbau {
     public static func flaecheX(mitIcon: Bool, iconKante: Int = 8) -> Int {
         mitIcon ? iconBreite(kante: iconKante) : 0
     }
-    public static func flaecheBreite(mitIcon: Bool, iconKante: Int = 8) -> Int {
-        Pixelfeld.breiteStandard - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
+    public static func flaecheBreite(mitIcon: Bool, iconKante: Int = 8,
+                                     mass: Anzeigemass = .tc002) -> Int {
+        mass.breite - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
     }
 
     /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage für `versatzY`
     /// und für das fertige Feld.
-    public static func puffer(_ o: Meldungsoptionen) -> Pixelfeld {
+    public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .tc002) -> Pixelfeld {
         Textraster.rasterPuffer(o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
-                                fett: o.fett, farbe: o.farbe, luecke: o.abstand)
+                                fett: o.fett, farbe: o.farbe, luecke: o.abstand, mass: mass)
     }
 
     public static func breite(_ o: Meldungsoptionen) -> Int {
@@ -162,29 +197,31 @@ public enum Meldungsbau {
     /// Icon 42 Spalten). Hinge die Rechnung an „Icon mitscrollen", würde das
     /// Einschalten den Text passend machen, den Schalter verschwinden lassen
     /// und ihn wieder umwerfen.
-    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Bool {
-        breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante)
+    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+                             mass: Anzeigemass = .tc002) -> Bool {
+        breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
     /// Schriftgröße: `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie
     /// sie hinlegt, nicht an den oberen Rand.
-    public static func versatzY(_ o: Meldungsoptionen) -> Int {
-        guard let tinte = Textraster.tintenZeilen(puffer(o)) else { return 0 }
+    public static func versatzY(_ o: Meldungsoptionen, mass: Anzeigemass = .tc002) -> Int {
+        guard let tinte = Textraster.tintenZeilen(puffer(o, mass: mass)) else { return 0 }
         let hoehe = tinte.letzte - tinte.erste + 1
         // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
         // Abschneiden, und das will niemand.
-        let r = min(o.rand, max(0, (Pixelfeld.hoeheStandard - hoehe) / 2))
+        let r = min(o.rand, max(0, (mass.hoehe - hoehe) / 2))
         switch o.senkrecht {
         case .oben:   return -tinte.erste + r
-        case .mittig: return (Pixelfeld.hoeheStandard - hoehe) / 2 - tinte.erste
-        case .unten:  return (Pixelfeld.hoeheStandard - hoehe) - tinte.erste - r
+        case .mittig: return (mass.hoehe - hoehe) / 2 - tinte.erste
+        case .unten:  return (mass.hoehe - hoehe) - tinte.erste - r
         }
     }
 
-    public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Int {
+    public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+                                mass: Anzeigemass = .tc002) -> Int {
         let x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
-        let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante)
+        let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
         switch o.waagrecht {
         case .links:  return x
         case .mittig: return x + max(0, (b - breite(o)) / 2)
@@ -195,10 +232,12 @@ public enum Meldungsbau {
     /// Vorschau und Sendung entstehen aus demselben Feld. Gerastert wird immer
     /// in derselben Phase, ausgerichtet wird durch Verschieben — sonst sähe
     /// dieselbe Schrift stehend anders aus als laufend.
-    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Pixelfeld {
-        var f = Pixelfeld()
-        Textraster.einsetzen(puffer(o), x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante),
-                             y: versatzY(o), in: &f)
+    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+                            mass: Anzeigemass = .tc002) -> Pixelfeld {
+        var f = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
+        Textraster.einsetzen(puffer(o, mass: mass),
+                             x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
+                             y: versatzY(o, mass: mass), in: &f)
         return f
     }
 
@@ -207,15 +246,17 @@ public enum Meldungsbau {
     /// einem GIF verpackt hat.
     public static func laufschriftBilder(_ o: Meldungsoptionen,
                                   iconBilder: [[String?]],
-                                  iconKante: Int = 8) -> [Bildraster.Einzelbild] {
+                                  iconKante: Int = 8,
+                                  mass: Anzeigemass = .tc002) -> [Bildraster.Einzelbild] {
         Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
-            versatzY: versatzY(o), iconBilder: iconBilder, iconKante: iconKante,
-            iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
+            versatzY: versatzY(o, mass: mass), iconBilder: iconBilder, iconKante: iconKante,
+            iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand, mass: mass)
     }
 
-    public static func textblock(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8) -> Textblock {
+    public static func textblock(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+                                 mass: Anzeigemass = .tc002) -> Textblock {
         var t = Textblock(inhalt: o.gesendeterText)
         t.schrifthoehe = Int(o.groesse)
         t.x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
@@ -224,7 +265,7 @@ public enum Meldungsbau {
         t.ausrichtung = o.geraeteAusrichtung
         t.vertikal = o.geraeteVertikal
         t.flaeche = [flaecheX(mitIcon: mitIcon, iconKante: iconKante), 0,
-                     flaecheBreite(mitIcon: mitIcon, iconKante: iconKante), Pixelfeld.hoeheStandard]
+                     flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass), mass.hoehe]
         return t
     }
 

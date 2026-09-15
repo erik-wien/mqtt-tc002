@@ -345,7 +345,8 @@
 "wird geprüft …" = "checking …";
 "angenommen" = "accepted";
 /* VorschauView.swift */
-"Vorschau der Anzeige, 52 mal 16 Pixel" = "Preview of the display, 52 by 16 pixels";
+"Vorschau der Anzeige, %d mal %d Pixel" = "Preview of the display, %d by %d pixels";
+"Hinaus geht der Text samt Reglern · %@" = "What goes out is the text with its settings · %@";
 /* ZielauswahlView.swift */
 "An welche Uhr senden?" = "Send to which clock?";
 "Alle" = "All";

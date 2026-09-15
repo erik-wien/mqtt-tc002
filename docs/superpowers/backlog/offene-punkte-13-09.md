@@ -146,20 +146,24 @@ Erledigt sind seither: die verwaiste SVG samt sechzig Zeilen Baumaschinerie
 Listen, die Icon-Bestaende am Telefon, die Berechtigungen als Bauvorgabe und
 die Hilfe, die all das beschreibt.
 
-1. **`Meldungsbau` auf eine freie Feldgroesse.** Der groesste verbliebene
-   Punkt: Die Vorschau zeigt fuer eine NG-Uhr weiterhin 52×16, obwohl das
-   Geraet 32×8 hat. `Uhr.anzeigemass` liegt bereit. Nachgezaehlt am
-   14.09.2026: 48 Fundstellen von `Pixelfeld.breiteStandard`/`hoeheStandard`,
-   aber **ballungsweise** — `Textraster` 11, `Meldungsbau` 6, das ist der
-   Kern; der Rest sind Ansichten (`VorschauiOS` 8, `Bildersammlung` 6,
-   `Slotblock` 3 …).
+1. ~~**`Meldungsbau` auf eine freie Feldgroesse.**~~ **Erledigt am
+   15.09.2026**, genau auf dem hier vorgeschlagenen Weg: `Anzeigemass` als ein
+   Wert mit der Vorgabe `.tc002` durch `Meldungsbau` und `Textraster`. Jeder
+   bestehende Aufruf blieb unveraendert; der Beweis, dass am TC002-Weg nichts
+   geruehrt wurde, ist die unveraenderte Testreihe samt `MQTTPaketTests`.
 
-   Der gangbare Weg: `Meldungsbau.feld` und `Textraster` bekommen die Groesse
-   als Parameter **mit der bisherigen als Vorgabe**. Dann bleibt jeder
-   bestehende Aufruf byteweise gleich, die vorhandene Testreihe deckt das ab,
-   und nur die Vorschau reicht etwas anderes durch. Ein eigener Durchgang mit
-   eigener Testreihe — nichts fuer nebenbei, weil daran die funktionierende
-   TC002 haengt.
+   Die Sorge „daran haengt die funktionierende TC002" hat sich beim Entwerfen
+   aufgeloest: `Anzeigen.nutzlast` schickt einer NG **nie** unsere Pixel,
+   sondern die Regler. Die Rasterung auf einem anderen Mass ist dort
+   ausschliesslich Vorschau. Dazu eine feste Naeherungsschrift fuer NG
+   (Silkscreen 8 px, `Meldungsoptionen.naeherung`) und eine Fusszeile, die bei
+   NG sagt, was wirklich hinausgeht. Entwurf:
+   `docs/superpowers/specs/2026-09-15-vorschau-feldgroesse-design.md`.
+
+   **Offen geblieben und ausdruecklich so entschieden:** Die fuenf Slotbloecke
+   und der Verlauf behalten ihr 52×16-Format — bei NG zeigen sie ohnehin
+   „belegt, Inhalt unbekannt", ihre Form ist ein Platzhalterkasten und kein
+   Abbild. Der Editor malt weiter in seinen drei festen Groessen.
 2. **Der Grund einer Sperre ist am iPad und am iPhone unsichtbar.** Ein
    gesperrter Regler ohne erkennbaren Anlass. Eine sichtbare Fassung ist eine
    Entscheidung ueber die Oberflaeche und gehoert dem Auftraggeber.

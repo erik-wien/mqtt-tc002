@@ -22,7 +22,11 @@ struct VorschauView: View {
     /// Kantenlaenge des Icons — 8 oder 16. `iconY` folgt ihr, damit die
     /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
     var iconKante: Int = 8
-    var iconY: Int { Meldungsbau.iconY(kante: iconKante) }
+    /// Senkrecht mittig **im gezeigten Feld**, nicht in festen sechzehn Zeilen:
+    /// Auf den acht Zeilen einer NG-Uhr saesse ein 8×8 sonst auf Zeile 4 und
+    /// waere zur Haelfte abgeschnitten.
+    var iconY: Int { Meldungsbau.iconY(kante: iconKante, mass: mass) }
+    private var mass: Anzeigemass { Anzeigemass(breite: feld.breite, hoehe: feld.hoehe) }
     /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
     /// ueberlagern — fuer die Laufschrift, die selbst schon das ganze Display
     /// belegt. Ein Aufrufer setzt entweder das hier oder verlaesst sich auf
@@ -64,7 +68,7 @@ struct VorschauView: View {
             .background(Color.black)
             .clipShape(RoundedRectangle(cornerRadius: 4))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
-            .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
+            .accessibilityLabel(lokf("Vorschau der Anzeige, %d mal %d Pixel", feld.breite, feld.hoehe))
             .task(id: icon) { einzelbilder = Self.geladen(icon, kante: iconKante) }
         }
     }
@@ -95,7 +99,10 @@ struct VorschauView: View {
     private func vollbild(_ bild: Bildraster.Einzelbild?) -> some View {
         let stil = pixelstil
         return Canvas { kontext, _ in
-            guard let bild else { return }
+            // Die Einzelbilder kommen aus derselben Rechnung wie `feld`; passt
+            // ihre Groesse trotzdem einmal nicht zusammen, bleibt das Bild leer,
+            // statt hinter das Ende des Rasters zu greifen.
+            guard let bild, bild.pixel.count == feld.breite * feld.hoehe else { return }
             for y in 0..<feld.hoehe {
                 for x in 0..<feld.breite {
                     guard let hex = bild.pixel[y * feld.breite + x], let farbe = Color(hex: hex) else { continue }

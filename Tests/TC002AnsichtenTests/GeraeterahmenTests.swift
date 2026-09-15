@@ -63,16 +63,56 @@ final class GeraeterahmenTests: XCTestCase {
 
                 // 5. Der Inhalt sitzt oben **und links** buendig — wie auf dem
                 //    Geraet selbst, das eine Anzeige immer bei Spalte 0 beginnt.
-                //    Nicht zentriert: Bei der AWTRIX-Zeichnung, deren Feld auf
-                //    32×8 gerechnet ist, waere ein 52×16 gerastertes Icon sonst
-                //    hinter einem unbeabsichtigten linken Rand versteckt
-                //    (`Meldungsbau.feld` kennt die Geraeteart nicht und
-                //    rastert immer auf 52×16).
+                //    Nicht zentriert: Bleibt doch einmal etwas uebrig, gehoert
+                //    der Rest nach rechts und nicht je zur Haelfte auf beide
+                //    Seiten (siehe `inhaltEcke`).
                 let ecke = z.inhaltEcke(inhaltHoehe: inhaltHoehe)
                 XCTAssertEqual(ecke.y, m.feldY, accuracy: 0.0001, "Inhalt nicht oben buendig — \(wo)")
                 XCTAssertEqual(ecke.x, m.feldX, accuracy: 0.0001, "Inhalt nicht links buendig — \(wo)")
             }
         }
+    }
+
+    /// **Der Beweis, der gefehlt hat.** Der Test oben misst die Zeichnung
+    /// gegen die Spaltenzahl, die das Geraet *hat* — und ging deshalb auch
+    /// durch, solange die App etwas ganz anderes rasterte: Bis zum 15.09.2026
+    /// kannte `Meldungsbau.feld` die Geraeteart nicht und lieferte immer
+    /// 52×16. Im Rahmen einer TC001 blieben davon zwoelf Spalten des
+    /// Displayfeldes schwarz, und kein Test sagte etwas.
+    ///
+    /// Hier haengt beides zusammen: Was die App **wirklich** rastert, gegen
+    /// das, was die Zeichnung dafuer vorsieht.
+    func testDasGerasterteFeldFuelltDasDisplayfeldWirklichAus() {
+        let uhren: [(Uhr, Geraetetyp)] = [
+            (Uhr(name: "Werk", host: "a.example", typ: .tc002), .tc002),
+            (Uhr(name: "NG", host: "b.example", typ: .awtrixNG), .awtrixNG),
+        ]
+        for (uhr, typ) in uhren {
+            let z = Geraetezeichnung.fuer(typ)
+            let mass = Anzeigemass.fuer(uhr)
+            let feld = Meldungsbau.feld(Meldungsoptionen(text: "Hallo"), mitIcon: false, mass: mass)
+            for kante in [4.0, 8, 14] {
+                let m = z.masse(inhaltHoehe: Double(feld.hoehe) * kante)
+                let rest = m.feldBreite - Double(feld.breite) * kante
+                XCTAssertGreaterThanOrEqual(rest, -0.0001,
+                    "\(typ): das Raster ragt aus dem Displayfeld — Kante \(kante)")
+                XCTAssertLessThan(rest, kante,
+                    "\(typ): \(rest / kante) Spalten des Displayfeldes bleiben leer — Kante \(kante)")
+            }
+        }
+    }
+
+    /// **Gegenprobe, damit der Test oben Zaehne hat.** Genau der Stand von
+    /// gestern — ein 52×16-Raster im Rahmen der TC001 — muss hier
+    /// durchfallen. Ginge auch er durch, pruefte der Test nichts.
+    func testEinRasterInDerFalschenGroesseFaelltAuf() {
+        let z = Geraetezeichnung.fuer(.awtrixNG)
+        let falsch = Meldungsbau.feld(Meldungsoptionen(text: "Hallo"), mitIcon: false)  // 52×16
+        let kante = 8.0
+        let m = z.masse(inhaltHoehe: Double(falsch.hoehe) * kante)
+        let rest = m.feldBreite - Double(falsch.breite) * kante
+        XCTAssertGreaterThan(rest, kante,
+            "ein 52×16-Raster fuellt den TC001-Rahmen unbemerkt aus — dann misst der Test daneben")
     }
 
     /// Dieselbe Aussage von der anderen Seite: Das gezeichnete Feld muss das

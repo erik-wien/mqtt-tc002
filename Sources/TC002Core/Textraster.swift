@@ -176,22 +176,23 @@ public enum Textraster {
     /// Leerzeichen haben keine Tinte und bekommen stattdessen die feste Breite
     /// `leerzeichenBreite`.
     private static func zeichenTinte(_ zeichen: Character, schrift: String, groesse: Double,
-                                     fett: Bool, farbe: String) -> Pixelfeld {
+                                     fett: Bool, farbe: String,
+                                     mass: Anzeigemass = .tc002) -> Pixelfeld {
         guard zeichen != " " else {
-            return Pixelfeld(breite: leerzeichenBreite, hoehe: Pixelfeld.hoeheStandard)
+            return Pixelfeld(breite: leerzeichenBreite, hoehe: mass.hoehe)
         }
         let text = String(zeichen)
         // Grosszuegiger Puffer, immer an derselben Stelle gerastert (x 4) — sonst
         // entscheidet der Zufall der Phase, welche Punkte bei ungeglaetteter
         // Schrift den Schwellwert von 127 ueberschreiten (siehe `rastern`).
         let breite = schriftBreite(text, schrift: schrift, groesse: groesse, fett: fett) + 12
-        var roh = Pixelfeld(breite: breite, hoehe: Pixelfeld.hoeheStandard)
+        var roh = Pixelfeld(breite: breite, hoehe: mass.hoehe)
         rastern(text, schrift: schrift, groesse: groesse, farbe: farbe, x: 4, y: 0, feld: &roh, fett: fett)
 
         guard let (erste, letzte) = tintenSpalten(roh) else {
-            return Pixelfeld(breite: 0, hoehe: Pixelfeld.hoeheStandard)
+            return Pixelfeld(breite: 0, hoehe: mass.hoehe)
         }
-        var ausschnitt = Pixelfeld(breite: letzte - erste + 1, hoehe: Pixelfeld.hoeheStandard)
+        var ausschnitt = Pixelfeld(breite: letzte - erste + 1, hoehe: mass.hoehe)
         for zeile in 0..<roh.hoehe {
             for spalte in erste...letzte {
                 guard let f = roh.farbe(x: spalte, y: zeile) else { continue }
@@ -212,12 +213,14 @@ public enum Textraster {
     /// gerastert — genau das haette bei ungeglaetteter Schrift dieselben Zeichen
     /// mal duenner, mal dicker aussehen lassen.
     public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
-                                    fett: Bool, farbe: String, luecke: Int = 0) -> Pixelfeld {
+                                    fett: Bool, farbe: String, luecke: Int = 0,
+                                    mass: Anzeigemass = .tc002) -> Pixelfeld {
         let luecke = max(0, luecke)
-        let zeichen = text.map { zeichenTinte($0, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe) }
+        let zeichen = text.map { zeichenTinte($0, schrift: schrift, groesse: groesse, fett: fett,
+                                              farbe: farbe, mass: mass) }
         let tintenbreite = zeichen.reduce(0) { $0 + $1.breite }
         let gesamtbreite = tintenbreite + luecke * max(0, zeichen.count - 1)
-        var puffer = Pixelfeld(breite: max(gesamtbreite, 1), hoehe: Pixelfeld.hoeheStandard)
+        var puffer = Pixelfeld(breite: max(gesamtbreite, 1), hoehe: mass.hoehe)
 
         var x = 0
         for (index, ausschnitt) in zeichen.enumerated() {
@@ -239,10 +242,11 @@ public enum Textraster {
         }
     }
 
-    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig. Die Kante ist
-    /// ein Parameter, kein fester Wert — bei 8×8 sitzt es auf Zeile 4, bei
-    /// 16×16 auf Zeile 0 und fuellt die volle Hoehe.
-    static func iconY(kante: Int) -> Int { (Pixelfeld.hoeheStandard - kante) / 2 }
+    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig. Kante **und**
+    /// Feldhoehe sind Parameter — bei 8×8 auf sechzehn Zeilen sitzt es auf
+    /// Zeile 4, bei 16×16 auf Zeile 0, und auf acht Zeilen fuellt ein 8×8 die
+    /// volle Hoehe. Die Rechnung selbst steht in `Anzeigemass`.
+    static func iconY(kante: Int, mass: Anzeigemass = .tc002) -> Int { mass.iconY(kante: kante) }
 
     /// Laesst ein 52×16-Fenster ueber den gerasterten Text wandern — ein
     /// Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig vor dem Text
@@ -273,17 +277,19 @@ public enum Textraster {
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
                                                iconBilder: [[String?]] = [], iconKante: Int = 8,
-                                               iconLaeuftMit: Bool = false, luecke: Int = 0) -> [Bildraster.Einzelbild] {
-        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, luecke: luecke)
+                                               iconLaeuftMit: Bool = false, luecke: Int = 0,
+                                               mass: Anzeigemass = .tc002) -> [Bildraster.Einzelbild] {
+        let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe,
+                                  luecke: luecke, mass: mass)
         // Ein deckend schwarzer Rand um das Icon zwingt die eingebackene
         // Laufschrift auf das falsche GIF-Entsorgungsverfahren (siehe
         // `Bildraster.schwarzrandBegrenzt`) — hier und nicht erst beim Kodieren
         // beschnitten, damit auch die abspielende Vorschau das schon zeigt.
         let iconBilder = iconBilder.map { Bildraster.schwarzrandBegrenzt($0, breite: iconKante, hoehe: iconKante) }
         let hatIcon = !iconBilder.isEmpty
-        let iconY = iconY(kante: iconKante)
+        let iconY = iconY(kante: iconKante, mass: mass)
         let festesIcon = hatIcon && !iconLaeuftMit
-        let fensterBreite = Pixelfeld.breiteStandard
+        let fensterBreite = mass.breite
         // Die Tinte des Icons, vereinigt ueber alle seine Einzelbilder, plus
         // ein Pixel Rand — 0, wenn das Icon gar keine Tinte hat.
         let iconInhaltBreite = hatIcon ? Bildraster.tintenBreite(iconBilder, breite: iconKante, hoehe: iconKante) : 0
@@ -300,12 +306,12 @@ public enum Textraster {
 
         var einzelbilder: [Bildraster.Einzelbild] = []
         for (n, versatz) in stride(from: -textbereich, through: bandBreite, by: schritt).enumerated() {
-            var fenster = [String?](repeating: nil, count: fensterBreite * Pixelfeld.hoeheStandard)
+            var fenster = [String?](repeating: nil, count: fensterBreite * mass.hoehe)
             let iconBild = hatIcon ? iconBilder[n % iconBilder.count] : nil
 
             for spalte in fensterTextAb..<fensterBreite {
                 let bandSpalte = versatz + (spalte - fensterTextAb)
-                for zeile in 0..<Pixelfeld.hoeheStandard {
+                for zeile in 0..<mass.hoehe {
                     guard let punkt = bandpunkt(bandSpalte, zeile, puffer: puffer, versatzY: versatzY,
                                                 bandTextAb: bandTextAb, iconLaeuftMit: iconLaeuftMit,
                                                 iconBild: iconBild, iconKante: iconKante,
@@ -314,8 +320,8 @@ public enum Textraster {
                 }
             }
             if festesIcon, let iconBild {
-                for y in 0..<iconKante {
-                    for x in 0..<iconKante {
+                for y in 0..<iconKante where (0..<mass.hoehe).contains(iconY + y) {
+                    for x in 0..<iconKante where x < fensterBreite {
                         guard let punkt = iconBild[y * iconKante + x] else { continue }
                         fenster[(iconY + y) * fensterBreite + x] = punkt
                     }
@@ -359,13 +365,15 @@ public enum Textraster {
                                    fett: Bool, farbe: String, schrittweite: Int,
                                    bilddauer: Double, versatzY: Int = 0,
                                    iconBilder: [[String?]] = [], iconKante: Int = 8,
-                                   iconLaeuftMit: Bool = false, luecke: Int = 0) throws -> String {
+                                   iconLaeuftMit: Bool = false, luecke: Int = 0,
+                                   mass: Anzeigemass = .tc002) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,
                                              iconBilder: iconBilder, iconKante: iconKante,
-                                             iconLaeuftMit: iconLaeuftMit, luecke: luecke)
-        return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: Pixelfeld.breiteStandard,
-                                          hoehe: Pixelfeld.hoeheStandard, verzoegerung: bilddauer)
+                                             iconLaeuftMit: iconLaeuftMit, luecke: luecke,
+                                             mass: mass)
+        return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: mass.breite,
+                                          hoehe: mass.hoehe, verzoegerung: bilddauer)
     }
 }

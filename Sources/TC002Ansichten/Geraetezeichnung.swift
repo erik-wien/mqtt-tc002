@@ -203,14 +203,18 @@ public struct Geraetezeichnung: Equatable, Sendable {
     /// oben **und links** buendig — wie auf dem Geraet selbst, das eine
     /// Anzeige immer bei Spalte 0 beginnt.
     ///
-    /// **Nicht zentriert** — das war der erste Stand. Er passte, solange das
-    /// Feld kaum breiter war als der Inhalt (bei der TC002 der Fall). Die
-    /// AWTRIX-Zeichnung ist auf ihre echte Aufloesung von 32×8 gerechnet
-    /// (siehe `awtrixNG`), waehrend die Vorschau weiterhin auf 52×16 rastert
-    /// (`Meldungsbau.feld` kennt die Geraeteart nicht) — ihr Feld ist darum
-    /// deutlich breiter als der tatsaechliche Inhalt. Zentriert legte das
-    /// einen unbeabsichtigten schwarzen Rand **vor** jedes Icon und jeden
-    /// Text; am Icon fiel er zuerst auf, betraf aber den ganzen Inhalt.
+    /// **Nicht zentriert** — das war der erste Stand, und er hat einen Fehler
+    /// verdeckt: Die Vorschau rasterte auf jedem Geraet 52×16, waehrend die
+    /// AWTRIX-Zeichnung auf ihre echten 32×8 gerechnet ist (siehe `awtrixNG`).
+    /// Zentriert legte das einen unbeabsichtigten schwarzen Rand **vor** jedes
+    /// Icon und jeden Text, links wie rechts je zur Haelfte.
+    ///
+    /// Seit dem 15.09.2026 rastert die Vorschau auf dem Mass der Uhr
+    /// (`Anzeigemass`), der Inhalt fuellt das Feld also wieder aus.
+    /// Buendig bleibt es trotzdem: Ein Geraet beginnt eine Anzeige bei Spalte
+    /// 0, und wo doch einmal etwas uebrigbleibt — eine NG mit gemeldeter
+    /// Panelbreite ueber 32 —, gehoert der Rest nach rechts und nicht je zur
+    /// Haelfte auf beide Seiten.
     public func inhaltEcke(inhaltHoehe: Double) -> (x: Double, y: Double) {
         let m = masse(inhaltHoehe: inhaltHoehe)
         return (m.feldX, m.feldY)

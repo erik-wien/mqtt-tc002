@@ -34,7 +34,7 @@ struct VorschauiOS: View {
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(Pixelfeld.hoeheStandard) * kante, typ: typ) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kante, typ: typ) {
             Group {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {
@@ -52,22 +52,25 @@ struct VorschauiOS: View {
                     anzeige(mitIcon(iconBilder.first))
                 }
             }
-            .frame(width: Double(Pixelfeld.breiteStandard) * kante,
-                   height: Double(Pixelfeld.hoeheStandard) * kante)
+            .frame(width: Double(feld.breite) * kante,
+                   height: Double(feld.hoehe) * kante)
             .background(.black)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .accessibilityLabel("Vorschau der Anzeige, 52 mal 16 Pixel")
+            .accessibilityLabel(lokf("Vorschau der Anzeige, %d mal %d Pixel", feld.breite, feld.hoehe))
             .task(id: icon) { iconBilder = Self.geladen(icon) }
         }
     }
 
-    /// Zeichnet ein volles 52×16-Punkteraster.
+    /// Zeichnet das volle Punkteraster — so gross wie die Anzeige der Uhr, auf
+    /// die sich die Vorschau bezieht. **Nicht mehr fest 52×16:** Eine NG-Uhr hat
+    /// 32×8, und ein Raster der falschen Groesse liefe hier ins Leere und im
+    /// Rahmen ueber (siehe `Anzeigemass`).
     private func anzeige(_ punkte: [String?]) -> some View {
         let stil = pixelstil
         return Canvas { kontext, _ in
-            for y in 0..<Pixelfeld.hoeheStandard {
-                for x in 0..<Pixelfeld.breiteStandard {
-                    let farbe = punkte[y * Pixelfeld.breiteStandard + x]
+            for y in 0..<feld.hoehe {
+                for x in 0..<feld.breite where y * feld.breite + x < punkte.count {
+                    let farbe = punkte[y * feld.breite + x]
                     guard let farbe, let c = Color(hex: farbe) else { continue }
                     kontext.fill(stil.pfad(spalte: x, zeile: y, zelle: kante), with: .color(c))
                 }
@@ -76,13 +79,19 @@ struct VorschauiOS: View {
     }
 
     /// Das stehende Feld mit eingesetztem Icon-Einzelbild, falls eines da ist.
+    ///
+    /// Die Zeile, auf der es sitzt, ist die senkrechte Mitte des Feldes und
+    /// **nicht** die feste 4: Auf den acht Zeilen einer NG-Uhr saesse ein 8×8
+    /// dort halb ausserhalb — geschrieben wuerde dabei hinter das Ende des
+    /// Rasters, und das ist kein schiefes Bild, sondern ein Absturz.
     private func mitIcon(_ iconBild: Bildraster.Einzelbild?) -> [String?] {
         var punkte = feld.punkteRoh
         guard let iconBild else { return punkte }
-        for y in 0..<8 {
-            for x in 0..<8 {
+        let y0 = Anzeigemass(breite: feld.breite, hoehe: feld.hoehe).iconY(kante: 8)
+        for y in 0..<8 where (0..<feld.hoehe).contains(y0 + y) {
+            for x in 0..<8 where x < feld.breite {
                 guard let p = iconBild.pixel[y * 8 + x] else { continue }
-                punkte[(y + 4) * Pixelfeld.breiteStandard + x] = p
+                punkte[(y0 + y) * feld.breite + x] = p
             }
         }
         return punkte

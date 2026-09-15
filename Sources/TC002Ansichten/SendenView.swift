@@ -231,8 +231,23 @@ public struct SendenView: View {
         guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
         horizontal = .links
     }
-    private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon, iconKante: iconKante) }
-    private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon, iconKante: iconKante) }
+    /// Auf wie vielen Punkten die **Vorschau** rechnet: den Maßen der Uhr, auf
+    /// die sie sich bezieht. Ohne eingerichtete Uhr die Werksfirmware — wie bei
+    /// `geraeteart` zeigt die Vorschau dann 52×16 und nicht gar nichts.
+    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
+
+    /// Die Optionen, mit denen die **Vorschau** rastert — auf einer NG-Uhr mit
+    /// fester Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
+    /// (`Meldungsoptionen.naeherung`). Was **gesendet** wird, sind unverändert
+    /// `optionen`: `gebauterRahmen` fragt hier nicht.
+    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
+
+    private var passt: Bool {
+        Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+    }
+    private var feld: Pixelfeld {
+        Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+    }
 
     /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
     /// Wirkung: `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
@@ -242,9 +257,32 @@ public struct SendenView: View {
     /// wissen wir vorher nicht (siehe die Naeherungs-Meldung dort).
     private var waagrechtWirktNicht: Bool { weg == .pixel && !passt }
 
+    /// **Das vorberechnete GIF geht nur mit, wenn es die Größe hat, in der
+    /// gesendet wird.** Die Vorschau rastert auf dem Maß der angesehenen Uhr;
+    /// gesendet wird an `zustand.ziele()`, und das dürfen mehrere sein
+    /// (`ZielauswahlView`). Steht die Vorschau auf einer NG-Uhr, ist ihr GIF
+    /// 32×8 — einer gleichzeitig gewählten TC002 hätte das als Nutzlast ein
+    /// Viertel ihrer Anzeige gefüllt. In dem Fall rastert `Meldungsbau.rahmen`
+    /// eben noch einmal selbst, in der Größe, die gesendet wird.
     private func gebauterRahmen() throws -> Frame {
         try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
-                               vorberechnet: laufschriftURI)
+                               vorberechnet: mass == .tc002 ? laufschriftURI : nil)
+    }
+
+    /// Wie viele Bytes an eine NG-Uhr wirklich hinausgehen: der Rumpf, den
+    /// `Anzeigen.nutzlast` für diese Gattung baut — Text, Regler und das Icon
+    /// als Daten-URI. 0 auf der Werksfirmware, wo die Frage nicht gestellt wird.
+    ///
+    /// Das Icon wird dafür von der Platte gelesen; deshalb abseits des
+    /// Hauptthreads, wie die Laufschrift selbst.
+    private func ngNutzlastBytes() async -> Int {
+        guard gattung.setztSelbst else { return 0 }
+        let (o, icon, sammlung) = (optionen, gewaehltesIcon, sammlung)
+        return await Task.detached(priority: .userInitiated) {
+            let uri = icon.flatMap { try? sammlung.datenURI(fuer: $0) }
+            let rumpf = try? NGNutzlast.anzeige(o, iconDatenURI: uri, iconKante: icon?.kante ?? 8)
+            return rumpf?.utf8.count ?? 0
+        }.value
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
@@ -311,7 +349,11 @@ public struct SendenView: View {
             .map(\.pixel)
     }
 
-    private var nutzlastBytes: Int { laufschriftURI.utf8.count }
+    /// Wie groß die nächste Nutzlast wird. Bei der Werksfirmware ist das das
+    /// Lauf-GIF; bei NG geht davon **nichts** hinaus, sondern der Text samt
+    /// Reglern (`Anzeigen.nutzlast`) — die Zahl wird deshalb im Rechenlauf
+    /// unten je nach Gattung verschieden ermittelt.
+    @State private var nutzlastBytes = 0
 
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
     /// den Satzzeichen nur `%`, `.`, `-`, `:` (Gerätereferenz, §1). Nur fürs
@@ -378,14 +420,13 @@ public struct SendenView: View {
                     let zeichnung = Geraetezeichnung.fuer(geraeteart)
                     // Nicht `breitenFaktor`: Der setzt eine bereits ausgemessene
                     // Feldbreite in Punkten voraus, hier steht aber nur die
-                    // Spaltenzahl des Pixelfelds (52, bei jeder Geraeteart —
-                    // die Vorschau rastert immer auf diesem Feld). Bei der TC002
-                    // trifft ihre Spaltenzahl zufaellig fast genau die Zeichnung,
-                    // bei der AWTRIX (auf 32×8 gezeichnet) unterschaetzte das die
-                    // wirkliche Rahmenbreite um rund ein Viertel — genau das
-                    // Mass, um das die Vorschau am iPad zu breit geriet, weil dort
-                    // weniger Luft bleibt, es aufzufangen. `masse(inhaltHoehe:)`
-                    // rechnet dieselbe Formel wie `GeraeteRahmen` selbst.
+                    // Spaltenzahl des Pixelfelds. Bei der TC002 trifft sie
+                    // zufaellig fast genau die Zeichnung, bei der AWTRIX
+                    // unterschaetzte das die wirkliche Rahmenbreite um rund ein
+                    // Viertel — genau das Mass, um das die Vorschau am iPad zu
+                    // breit geriet, weil dort weniger Luft bleibt, es
+                    // aufzufangen. `masse(inhaltHoehe:)` rechnet dieselbe Formel
+                    // wie `GeraeteRahmen` selbst.
                     let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
                     let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
                     let nachHoehe = (geo.size.height - 24) / einheit.rahmenHoehe
@@ -397,6 +438,20 @@ public struct SendenView: View {
                                 laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
+                // **Setzt die Uhr selbst, ist der Weg einerlei.** Eine NG bekommt
+                // von `Anzeigen.nutzlast` in beiden Faellen den Text samt Reglern,
+                // nie unsere Pixel. Die Zeile „Laufschrift · N Bilder · KB" spraeche
+                // hier von einem GIF, das niemand je sieht; was wirklich hinausgeht,
+                // ist der Rumpf, dessen Bytes `ngNutzlastBytes` misst.
+                if gattung.setztSelbst {
+                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo.",
+                          systemImage: "info.circle")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if nutzlastBytes > 0 {
+                        Text(lokf("Hinaus geht der Text samt Reglern · %@", Nutzlastzeile.groesse(nutzlastBytes)))
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                } else {
                 switch weg {
                 case .pixel:
                     if !passt {
@@ -425,6 +480,7 @@ public struct SendenView: View {
                               systemImage: "exclamationmark.triangle")
                             .font(.footnote).foregroundStyle(.orange)
                     }
+                }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -516,25 +572,33 @@ public struct SendenView: View {
             groesse = Pixelgroessen.naechstgelegene(zu: groesse, fuer: neu)
         }
         .task(id: laufschriftSchluessel) {
-            guard weg == .pixel, !passt else { laufschriftFrames = []; laufschriftURI = ""; return }
+            guard weg == .pixel, !passt else {
+                laufschriftFrames = []; laufschriftURI = ""
+                nutzlastBytes = await ngNutzlastBytes()
+                return
+            }
             // Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64
             // darueber — bei jedem Tastendruck. Das gehoert nicht auf den
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
-            let (o, iconBilder, iconKante) = (optionen, iconRaster, iconKante)
+            let (o, iconBilder, iconKante, mass) = (vorschauOptionen, iconRaster, iconKante, mass)
             let (frames, uri) = await Task.detached(priority: .userInitiated) {
-                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder, iconKante: iconKante)
+                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder,
+                                                           iconKante: iconKante, mass: mass)
                 // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
                 // einmal gerastert, sonst liefe die Rechnung zweimal.
                 let uri = (try? Bildraster.alsDatenURI(
-                    frames.map(\.pixel), breite: Pixelfeld.breiteStandard,
-                    hoehe: Pixelfeld.hoeheStandard, verzoegerung: o.tempo.bilddauer)) ?? ""
+                    frames.map(\.pixel), breite: mass.breite,
+                    hoehe: mass.hoehe, verzoegerung: o.tempo.bilddauer)) ?? ""
                 return (frames, uri)
             }.value
             guard !Task.isCancelled else { return }
             laufschriftFrames = frames
             laufschriftURI = uri
+            // Bei NG geht das eben gebaute GIF nicht hinaus — dort zaehlt, was
+            // `Anzeigen` wirklich schickt.
+            nutzlastBytes = gattung.setztSelbst ? await ngNutzlastBytes() : uri.utf8.count
         }
     }
 
@@ -543,7 +607,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)"
+        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
