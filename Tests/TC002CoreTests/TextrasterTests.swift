@@ -181,10 +181,12 @@ final class TextrasterTests: XCTestCase {
 
     /// Das feststehende Icon gehoert in jedes Einzelbild an dieselbe Stelle, und
     /// seine Spalten bleiben frei vom durchlaufenden Text — sonst blitzt der
-    /// zwischen den Iconpunkten hindurch.
+    /// zwischen den Iconpunkten hindurch. Reserviert wird dabei nur, was die
+    /// Tinte braucht (hier eine Spalte) plus ein Pixel Rand — nicht die volle
+    /// Iconkante von acht.
     func testFeststehendesIconStehtInJedemBild() {
         var icon = [String?](repeating: nil, count: 64)
-        icon[0] = "#FF0000"                                  // oben links im Icon
+        icon[0] = "#FF0000"                                  // oben links im Icon, einzige Tinte
         let bilder = Textraster.laufschriftEinzelbilder("Hallo Welt, hallo Welt", schrift: "Menlo",
                                                         groesse: 11, fett: false, farbe: "#00FF66",
                                                         schrittweite: 1, bilddauer: 0.08,
@@ -194,13 +196,18 @@ final class TextrasterTests: XCTestCase {
         for (n, bild) in bilder.enumerated() {
             XCTAssertEqual(bild.pixel[4 * breite + 0], "#FF0000", "Iconpunkt in Bild \(n)")
             for y in 0..<Pixelfeld.hoeheStandard {
-                for x in 0..<(8 + 2) where !(x == 0 && y == 4) {
+                for x in 0..<2 where !(x == 0 && y == 4) {
                     XCTAssertNil(bild.pixel[y * breite + x], "Spalte \(x) in Bild \(n) gehört dem Icon")
                 }
             }
         }
         XCTAssertNotEqual(bilder[bilder.count / 3].pixel, bilder[bilder.count / 2].pixel,
                           "der Textbereich läuft trotzdem durch")
+        // Die durch die schmale Tinte freigewordenen Spalten (ab 2) gehören dem
+        // Text — sonst hat sich am eigentlichen Zweck der Änderung nichts getan.
+        XCTAssertTrue(bilder.contains { bild in
+            (2..<breite).contains { x in (0..<Pixelfeld.hoeheStandard).contains { bild.pixel[$0 * breite + x] == "#00FF66" } }
+        }, "Text nutzt die freigewordenen Spalten neben dem schmalen Icon nicht")
     }
 
     /// Mitlaufend heisst: das Icon wandert selbst durchs Bild und haelt die
@@ -220,6 +227,43 @@ final class TextrasterTests: XCTestCase {
         XCTAssertGreaterThan(Set(stellen).count, 5, "das Icon steht nicht still")
     }
 
+    /// Genau der gemeldete Fall: ein 8×8-Icon, das nur seine ersten zwei
+    /// Spalten nutzt. Reserviert werden darf dafuer nur die Tinte plus ein
+    /// Pixel Rand (drei Spalten) — die restlichen fuenf muessen dem Text
+    /// zufallen, egal ob das Icon steht oder mitlaeuft.
+    func testSchmalesIconGibtUngenutzteSpaltenAnDenTextAb() {
+        var icon = [String?](repeating: nil, count: 64)
+        for y in 0..<8 { icon[y * 8] = "#FF0000"; icon[y * 8 + 1] = "#FF0000" }   // Spalten 0 und 1 voll
+        let breite = Pixelfeld.breiteStandard
+
+        func hatTextInSpalten(_ bilder: [Bildraster.Einzelbild], _ spalten: Range<Int>) -> Bool {
+            bilder.contains { bild in
+                spalten.contains { x in
+                    (0..<Pixelfeld.hoeheStandard).contains { bild.pixel[$0 * breite + x] == "#00FF66" }
+                }
+            }
+        }
+
+        let feststehend = Textraster.laufschriftEinzelbilder("Hallo Welt, hallo Welt", schrift: "Menlo",
+                                                              groesse: 11, fett: false, farbe: "#00FF66",
+                                                              schrittweite: 1, bilddauer: 0.08,
+                                                              iconBilder: [icon])
+        XCTAssertTrue(hatTextInSpalten(feststehend, 3..<8),
+                      "die fünf freigewordenen Spalten neben dem schmalen Icon bleiben leer")
+        for bild in feststehend {
+            for y in 0..<Pixelfeld.hoeheStandard {
+                XCTAssertNil(bild.pixel[y * breite + 2], "Spalte 2 ist der Rand und muss frei von Text bleiben")
+            }
+        }
+
+        let mitlaufend = Textraster.laufschriftEinzelbilder("Hallo Welt, hallo Welt", schrift: "Menlo",
+                                                            groesse: 11, fett: false, farbe: "#00FF66",
+                                                            schrittweite: 1, bilddauer: 0.08,
+                                                            iconBilder: [icon], iconLaeuftMit: true)
+        XCTAssertTrue(hatTextInSpalten(mitlaufend, 3..<8),
+                      "beim mitlaufenden Icon bleiben dieselben fünf Spalten ungenutzt")
+    }
+
     /// Ein animiertes Icon spielt waehrend des Laufs ab, statt auf seinem ersten
     /// Einzelbild stehenzubleiben.
     func testAnimiertesIconWechseltDieBilder() {
@@ -233,6 +277,29 @@ final class TextrasterTests: XCTestCase {
         let breite = Pixelfeld.breiteStandard
         XCTAssertEqual(bilder[0].pixel[4 * breite + 0], "#FF0000")
         XCTAssertEqual(bilder[1].pixel[(4 + 7) * breite + 7], "#0000FF")
+    }
+
+    /// Ein Icon mit deckend schwarzem Rand zwingt die eingebackene Laufschrift
+    /// aufs falsche GIF-Entsorgungsverfahren (`Bildraster.schwarzrandBegrenzt`)
+    /// — darum beschneidet `laufschriftEinzelbilder` das Icon selbst, nicht
+    /// erst das fertige GIF. Geprueft am feststehenden Icon, dessen Rand
+    /// unverstellt in jedem Einzelbild steht.
+    func testFeststehendesIconVerliertSeinenSchwarzenRand() {
+        var icon = [String?](repeating: "#000000", count: 64)
+        icon[4 * 8 + 4] = "#00FF66"                       // einzige echte Tinte, in der Mitte
+        let bilder = Textraster.laufschriftEinzelbilder("Hallo", schrift: "Menlo", groesse: 11,
+                                                        fett: false, farbe: "#00FF66",
+                                                        schrittweite: 1, bilddauer: 0.08,
+                                                        iconBilder: [icon])
+        let breite = Pixelfeld.breiteStandard
+        let bild = bilder[0]
+        // Iconzeile 4, Spalte 4: die Tinte selbst und ihr Rand von einem Pixel.
+        XCTAssertEqual(bild.pixel[(4 + 4) * breite + 4], "#00FF66")
+        for (dx, dy) in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)] {
+            XCTAssertEqual(bild.pixel[(4 + 4 + dy) * breite + 4 + dx], "#000000", "Rand bei (\(dx),\(dy))")
+        }
+        // Die Iconecke (0,0) liegt weit ausserhalb des Randes um die Mitte.
+        XCTAssertNil(bild.pixel[4 * breite + 0], "die Iconecke bleibt kein deckendes Schwarz")
     }
 
     /// Die senkrechte Ausrichtung setzt voraus, dass man weiss, wo die Tinte

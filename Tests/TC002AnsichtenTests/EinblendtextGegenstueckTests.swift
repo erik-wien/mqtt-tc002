@@ -63,9 +63,13 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     // `.namensichtbarAmIPad()`, in derselben Kette.
 
     /// **Mutationsprobe** (13.09.2026): `.namensichtbarAmIPad()` beim
-    /// „Icon entfernen“-Knopf in `IconAuswahlView.swift` entfernt → dieser
-    /// Test fällt für genau diese Datei durch (1 `.help` gegen 0
-    /// Gegenstücke); wieder eingesetzt → grün.
+    /// damaligen „Icon entfernen“-Knopf in `IconAuswahlView.swift` entfernt →
+    /// dieser Test fiel für genau diese Datei durch (1 `.help` gegen 0
+    /// Gegenstücke); wieder eingesetzt → grün. Der Knopf selbst ist seit
+    /// 15.09.2026 weg — redundant neben dem „ohne“-Feld im Blatt, das dieselbe
+    /// Wahl trifft —, `IconAuswahlView.swift` hat seither kein `.help(...)`
+    /// mehr und steht darum nicht mehr in der Liste unten (siehe Kopf der
+    /// Datei: „dafür gibt es hier nichts mehr zu prüfen“).
     ///
     /// `SendenView.swift` steht seit 13.09.2026 **nicht** mehr in dieser
     /// Liste: Sein Inspektor hat fünf Regler mit zustandsabhängigem
@@ -75,8 +79,7 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// verlangte für die von ihnen fälschlich ein Gegenstück.
     func testSchlichteAnsichtenZeigenJedenEinblendtextAuchAmIPad() throws {
         for datei in ["Sources/TC002Ansichten/Brokerzeichen.swift",
-                      "Sources/TC002Ansichten/AnzeigenView.swift",
-                      "Sources/TC002Ansichten/IconAuswahlView.swift"] {
+                      "Sources/TC002Ansichten/AnzeigenView.swift"] {
             let text = try quelltext(datei)
             let help = anzahl(text, ".help(")
             let gegenstueck = anzahl(text, ".namensichtbarAmIPad()")
@@ -94,13 +97,14 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     // Symbolknöpfe für sich allein — „Formatierung ein-/ausblenden“ und der
     // Papierkorb bei `MeldungLoeschenKnopf` — tragen ihr Gegenstück weiter.
 
-    /// Acht Regler im Inspektor erklären, warum sie gerade nichts bewirken —
+    /// Neun Regler im Inspektor erklären, warum sie gerade nichts bewirken —
     /// das kann weder die Beschriftung noch die Hilfe sagen, die den Zustand
     /// nicht kennt. Zwei Gründe kommen inzwischen zusammen, und beide zählen
     /// hier gleich:
     ///
-    /// - **am Zustand**: Schrift, Größe oder gewählter Weg geben den Regler
-    ///   gerade nicht her — `.help(...)` mit einem Ternär.
+    /// - **am Zustand**: Schrift, Größe, gewählter Weg oder eine laufende
+    ///   Laufschrift geben den Regler gerade nicht her — `.help(...)` mit
+    ///   einem Ternär.
     /// - **an der Geräteart**: die Gattung kennt den Regler überhaupt nicht —
     ///   `.gattungssperre(...)`, die `Geraetetyp.begruendung` holt und daraus
     ///   selbst ein `.help(...)` macht.
@@ -113,12 +117,16 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// **Mutationsprobe** (13.09.2026): `.help(fettHilfe)` beim
     /// „Fett“-Schalter entfernt → 4 gegen erwartete 5, durchgefallen; wieder
     /// eingesetzt → grün. Nach dem Umbau erneut: `.gattungssperre(.abstand,
-    /// gattung)` entfernt → 7 gegen erwartete 8, durchgefallen.
+    /// gattung)` entfernt → 7 gegen erwartete 8, durchgefallen. Ein neunter
+    /// kam am 15.09.2026 dazu: „Waagrecht“ wirkt nicht mehr, sobald der Text
+    /// als Laufschrift läuft (`waagrechtWirktNicht`) — vorher verschwand dort
+    /// nur, geräteartbedingt, das „rechts“-Segment, was leicht mit dieser
+    /// Sperre verwechselt wurde.
     func testSendenViewInspektorReglerHabenZustandsabhaengigenEinblendtext() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
-        XCTAssertEqual(anzahl(inspektor, ".help(") + anzahl(inspektor, ".gattungssperre("), 8,
-                       "der Inspektor hat nicht mehr acht Regler, die ihre Sperre begründen — "
+        XCTAssertEqual(anzahl(inspektor, ".help(") + anzahl(inspektor, ".gattungssperre("), 9,
+                       "der Inspektor hat nicht mehr neun Regler, die ihre Sperre begründen — "
                        + "dieser Test prüft die falsche Stelle")
         XCTAssertEqual(anzahl(inspektor, ".namensichtbarAmIPad()"), 0,
                        "ein Regler im Inspektor trägt `.namensichtbarAmIPad()` — das gilt nur für "
@@ -166,8 +174,8 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// 7, durchgefallen; wieder entfernt → grün.
     func testSendenViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertEqual(anzahl(text, ".help(") + anzahl(text, ".gattungssperre("), 10,
-                       "SendenView.swift hat jetzt eine andere Anzahl Einblendtextstellen als die acht "
+        XCTAssertEqual(anzahl(text, ".help(") + anzahl(text, ".gattungssperre("), 11,
+                       "SendenView.swift hat jetzt eine andere Anzahl Einblendtextstellen als die neun "
                        + "Regler im Inspektor plus die zwei Symbolknöpfe für sich allein — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")
     }

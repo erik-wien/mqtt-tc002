@@ -1117,12 +1117,12 @@ public final class AppZustand {
             let abonnent = MQTTAbonnent(zugang: eigener, themen: Self.themen(fuer: uhr))
             // Die Rückmeldungen kommen von der Warteschlange des Abonnenten;
             // AppZustand ist @MainActor-isoliert, also dorthin zurück.
-            abonnent.beiNachricht = { thema, nutzlast in
+            abonnent.beiNachricht = { [weak self] thema, nutzlast in
                 Task { @MainActor [weak self] in
                     self?.gemeldet(thema: thema, nutzlast: nutzlast, fuer: id)
                 }
             }
-            abonnent.beiZustand = { steht, grund in
+            abonnent.beiZustand = { [weak self] steht, grund in
                 Task { @MainActor [weak self] in self?.horchzustand(steht, grund, fuer: id) }
             }
             abonnent.starten()

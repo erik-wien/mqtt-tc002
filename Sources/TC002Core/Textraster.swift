@@ -239,11 +239,9 @@ public enum Textraster {
         }
     }
 
-    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig, dahinter zwei
-    /// Spalten Luft, bevor der Text beginnt. Die Kante ist ein Parameter, kein
-    /// fester Wert — bei 8×8 sitzt es auf Zeile 4, bei 16×16 auf Zeile 0 und
-    /// fuellt die volle Hoehe.
-    static let iconLuecke = 2
+    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig. Die Kante ist
+    /// ein Parameter, kein fester Wert — bei 8×8 sitzt es auf Zeile 4, bei
+    /// 16×16 auf Zeile 0 und fuellt die volle Hoehe.
     static func iconY(kante: Int) -> Int { (Pixelfeld.hoeheStandard - kante) / 2 }
 
     /// Laesst ein 52×16-Fenster ueber den gerasterten Text wandern — ein
@@ -266,20 +264,34 @@ public enum Textraster {
     /// unter dem Icon bleiben dabei in jedem Einzelbild schwarz, sonst blitzte
     /// der Text zwischen den Iconpunkten hindurch. Laeuft es mit, steht es am
     /// Anfang des Bandes und wandert mit hinaus; der Text nutzt dann alle Spalten.
+    ///
+    /// Reserviert wird nicht die volle Iconkante, sondern nur, was das Icon
+    /// tatsaechlich an Tinte braucht, plus ein Pixel Rand (`Bildraster.tintenBreite`)
+    /// — ein 8×8-Icon, das nur seine ersten zwei Spalten nutzt, gibt die
+    /// restlichen fuenf an den Text ab, statt sie ungenutzt schwarz zu lassen.
     public static func laufschriftEinzelbilder(_ text: String, schrift: String, groesse: Double,
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
                                                iconBilder: [[String?]] = [], iconKante: Int = 8,
                                                iconLaeuftMit: Bool = false, luecke: Int = 0) -> [Bildraster.Einzelbild] {
         let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe, luecke: luecke)
+        // Ein deckend schwarzer Rand um das Icon zwingt die eingebackene
+        // Laufschrift auf das falsche GIF-Entsorgungsverfahren (siehe
+        // `Bildraster.schwarzrandBegrenzt`) — hier und nicht erst beim Kodieren
+        // beschnitten, damit auch die abspielende Vorschau das schon zeigt.
+        let iconBilder = iconBilder.map { Bildraster.schwarzrandBegrenzt($0, breite: iconKante, hoehe: iconKante) }
         let hatIcon = !iconBilder.isEmpty
         let iconY = iconY(kante: iconKante)
         let festesIcon = hatIcon && !iconLaeuftMit
         let fensterBreite = Pixelfeld.breiteStandard
+        // Die Tinte des Icons, vereinigt ueber alle seine Einzelbilder, plus
+        // ein Pixel Rand — 0, wenn das Icon gar keine Tinte hat.
+        let iconInhaltBreite = hatIcon ? Bildraster.tintenBreite(iconBilder, breite: iconKante, hoehe: iconKante) : 0
+        let iconReserviert = iconInhaltBreite == 0 ? 0 : iconInhaltBreite + 1
         // Wo im Fenster der Text beginnt (feststehendes Icon) und wo er im
         // laufenden Band beginnt (mitlaufendes Icon).
-        let fensterTextAb = festesIcon ? iconKante + iconLuecke : 0
-        let bandTextAb = iconLaeuftMit ? iconKante + iconLuecke : 0
+        let fensterTextAb = festesIcon ? iconReserviert : 0
+        let bandTextAb = iconLaeuftMit ? iconReserviert : 0
         let textbereich = fensterBreite - fensterTextAb
         // Der Puffer ist exakt so breit wie die Tinte plus die Luecken — keine
         // Zugabe mehr, die hier herausgerechnet werden muesste.
@@ -316,11 +328,20 @@ public enum Textraster {
 
     /// Ein Punkt des laufenden Bandes: links das mitlaufende Icon, ab `bandTextAb`
     /// der gerasterte Text. Ausserhalb ist nichts — dort bleibt das Bild schwarz.
+    ///
+    /// Die Grenze zwischen beiden ist `bandTextAb`, **nicht** `iconKante`: Reserviert
+    /// `laufschriftEinzelbilder` weniger als die volle Kante (siehe `iconReserviert`
+    /// dort), sollen die freiwerdenden Spalten sofort dem Text gehoeren, nicht erst
+    /// bei Spalte `iconKante` — sonst bliebe ein schmales Icon trotzdem in seiner
+    /// vollen Kante fuer den Text gesperrt. Der Index ins Icon selbst bleibt an
+    /// `iconKante` gebunden: `bandTextAb` kann um das eine Randpixel darueber liegen
+    /// (ein volles Icon plus sein Rand), und genau die eine Spalte dahinter bleibt
+    /// dann leer statt einer ungueltigen Iconspalte.
     private static func bandpunkt(_ spalte: Int, _ zeile: Int, puffer: Pixelfeld, versatzY: Int,
                                   bandTextAb: Int, iconLaeuftMit: Bool,
                                   iconBild: [String?]?, iconKante: Int, iconY: Int) -> String? {
-        if iconLaeuftMit, spalte < iconKante {
-            guard spalte >= 0, let iconBild else { return nil }
+        if iconLaeuftMit, spalte < bandTextAb {
+            guard spalte >= 0, spalte < iconKante, let iconBild else { return nil }
             let y = zeile - iconY
             guard y >= 0, y < iconKante else { return nil }
             return iconBild[y * iconKante + spalte]

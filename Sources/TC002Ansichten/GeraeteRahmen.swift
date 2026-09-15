@@ -14,20 +14,19 @@ import TC002Core
 /// braucht hier keine Zeile.
 ///
 /// Die Zeichnung wird so gross gezeichnet, dass ihr Displayfeld genau `hoehe`
-/// hoch ist; `inhalt` passt damit in der Hoehe exakt hinein und wird waagrecht
-/// zentriert, ohne irgendwo skaliert zu werden. Die Pixel bleiben quadratisch.
-/// Das ruehrt an nichts in `Meldungsbau`, das die tatsaechliche Nutzlast
-/// erzeugt; hier geht es allein um Bildschirmgeometrie.
+/// hoch ist; `inhalt` passt damit in der Hoehe exakt hinein und wird oben und
+/// links buendig eingesetzt, ohne irgendwo skaliert zu werden — wie auf dem
+/// Geraet selbst, das eine Anzeige immer bei Spalte 0 beginnt. Die Pixel
+/// bleiben quadratisch. Das ruehrt an nichts in `Meldungsbau`, das die
+/// tatsaechliche Nutzlast erzeugt; hier geht es allein um Bildschirmgeometrie.
 public struct GeraeteRahmen<Inhalt: View>: View {
-    let breite: Double
     let hoehe: Double
     let zeichnung: Geraetezeichnung
     @ViewBuilder let inhalt: Inhalt
 
     /// `typ` ist `Optional`, weil `Uhr.typ` es ist: `nil` heisst `.tc002`.
-    public init(breite: Double, hoehe: Double, typ: Geraetetyp? = nil,
+    public init(hoehe: Double, typ: Geraetetyp? = nil,
                 @ViewBuilder inhalt: () -> Inhalt) {
-        self.breite = breite
         self.hoehe = hoehe
         self.zeichnung = .fuer(typ)
         self.inhalt = inhalt()
@@ -37,7 +36,7 @@ public struct GeraeteRahmen<Inhalt: View>: View {
 
     public var body: some View {
         let m = masse
-        let ecke = zeichnung.inhaltEcke(inhaltBreite: breite, inhaltHoehe: hoehe)
+        let ecke = zeichnung.inhaltEcke(inhaltHoehe: hoehe)
         return ZStack(alignment: .topLeading) {
             Canvas { kontext, _ in
                 Self.zeichnen(zeichnung, in: kontext, massstab: m.massstab)

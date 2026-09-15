@@ -200,12 +200,20 @@ public struct Geraetezeichnung: Equatable, Sendable {
     public var hoehenFaktor: Double { hoehe / feld.hoehe }
 
     /// Wo die Pixelvorschau im Rahmen sitzt: an der Feldhoehe ausgerichtet,
-    /// waagrecht zentriert. Das Feld ist nie schmaler als der Inhalt, aber
-    /// auch nie nennenswert breiter — der schwarze Rest links und rechts
-    /// bleibt unter einer Pixelbreite (`GeraeterahmenTests` misst das nach).
-    public func inhaltEcke(inhaltBreite: Double, inhaltHoehe: Double) -> (x: Double, y: Double) {
+    /// oben **und links** buendig — wie auf dem Geraet selbst, das eine
+    /// Anzeige immer bei Spalte 0 beginnt.
+    ///
+    /// **Nicht zentriert** — das war der erste Stand. Er passte, solange das
+    /// Feld kaum breiter war als der Inhalt (bei der TC002 der Fall). Die
+    /// AWTRIX-Zeichnung ist auf ihre echte Aufloesung von 32×8 gerechnet
+    /// (siehe `awtrixNG`), waehrend die Vorschau weiterhin auf 52×16 rastert
+    /// (`Meldungsbau.feld` kennt die Geraeteart nicht) — ihr Feld ist darum
+    /// deutlich breiter als der tatsaechliche Inhalt. Zentriert legte das
+    /// einen unbeabsichtigten schwarzen Rand **vor** jedes Icon und jeden
+    /// Text; am Icon fiel er zuerst auf, betraf aber den ganzen Inhalt.
+    public func inhaltEcke(inhaltHoehe: Double) -> (x: Double, y: Double) {
         let m = masse(inhaltHoehe: inhaltHoehe)
-        return (m.feldX + (m.feldBreite - inhaltBreite) / 2, m.feldY)
+        return (m.feldX, m.feldY)
     }
 
     // MARK: - Die Ulanzi TC002 mit Werksfirmware

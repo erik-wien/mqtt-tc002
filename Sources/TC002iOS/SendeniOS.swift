@@ -429,14 +429,6 @@ struct SendeniOS: View {
         }
     }
 
-    /// Sprachausgabe fuer den Sendeknopf, der laufend nur ein Symbol zeigt —
-    /// dieselben zwei Woerter wie im Mac-Knopf (`SendenView.swift`), kein
-    /// Ternaer (siehe `horizontalSymbol` oben), kein neuer Uebersetzungsschluessel.
-    private var sendenWort: LocalizedStringKey {
-        if laeuft { return "Sende…" }
-        return "Senden"
-    }
-
     /// Der Pfeil am rechten Rand der Pille zeigt nur an, solange dort
     /// wirklich noch etwas liegt, und verschwindet, sobald ganz durchgeschoben
     /// ist — sonst verspraeche er etwas, das nicht mehr da ist. 1pt Toleranz
@@ -673,33 +665,51 @@ struct SendeniOS: View {
         .padding(.vertical, 8)
     }
 
+    /// **Kein Sendeknopf — wie in Nachrichten.** Die Eingabetaste schickt.
+    /// `axis: .vertical` fuegt bei Return sonst einen Zeilenumbruch ein, statt
+    /// abzuschicken; das `.onChange` unten faengt genau dieses eine Zeichen ab,
+    /// bevor es im Feld erscheint, und sendet an seiner Stelle. Ein echter
+    /// Zeilenumbruch laesst sich damit nicht mehr eintippen — gewollt, die Uhr
+    /// zeigt ohnehin nur eine Zeile.
+    ///
+    /// **An seiner Stelle steht jetzt die Zielwahl**, wo vorher der Pfeil war
+    /// — dasselbe Ziel wie im Titelmenü (`angesehene`, `zustand.anMehrereUhren`),
+    /// nur an einer Stelle, die man nicht erst am Titel suchen muss. Bei nur
+    /// einer eingerichteten Uhr gibt es nichts zu wählen, wie beim Titelmenü,
+    /// und dort steht dann nichts.
     private var eingabe: some View {
         HStack(spacing: 8) {
             TextField("Text", text: $text, axis: .vertical)
                 .lineLimit(1...3)
                 .textFieldStyle(.roundedBorder)
-            Button {
-                Task { await senden() }
-            } label: {
-                Group {
-                    if laeuft {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "arrow.up.circle.fill").font(.title)
-                    }
+                .submitLabel(.send)
+                .disabled(laeuft)
+                .onChange(of: text) { _, neu in
+                    guard neu.hasSuffix("\n") else { return }
+                    text = String(neu.dropLast())
+                    guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                    Task { await senden() }
                 }
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
+            if laeuft {
+                ProgressView()
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel(Text("Sende…"))
+            } else if zustand.uhren.count > 1 {
+                Menu {
+                    Picker("Angesehene Uhr", selection: angesehene) {
+                        ForEach(zustand.uhren) { uhr in
+                            Text(uhr.name).tag(Optional(uhr.id))
+                        }
+                    }
+                    Toggle("An alle Uhren senden", isOn: $zustand.anMehrereUhren)
+                } label: {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.title2)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel(Text("Ziel wählen"))
             }
-            // Die Haupthandlung des Telefons — aber nicht als gefuellter
-            // Kasten: Der gefuellte Pfeil **ist** hier die Hervorhebung, wie
-            // in Nachrichten und Mail. Ein `.borderedProminent` darum herum
-            // waere die Antwort des Macs auf die Frage des iPhones.
-            // Ausdruecklich `.automatic`, damit die Entscheidung im
-            // Quelltext steht.
-            .buttonStyle(.automatic)
-            .disabled(laeuft || text.trimmingCharacters(in: .whitespaces).isEmpty)
-            .accessibilityLabel(Text(sendenWort))
         }
         .padding(.horizontal)
         .padding(.bottom, 8)

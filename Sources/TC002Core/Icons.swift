@@ -298,6 +298,71 @@ public enum Bildraster {
         guard CGImageDestinationFinalize(senke) else { throw BildrasterFehler.nichtLesbar }
         return "data:image/gif;base64," + (daten as Data).base64EncodedString()
     }
+
+    /// Setzt schwarze Pixel jenseits eines Rahmens von `maxRand` Pixeln um die
+    /// andersfarbige Tinte auf durchsichtig — dieselbe Ueberlegung wie
+    /// `Textraster.tintenSpalten`/`tintenZeilen`, nur auf einem Quadrat statt
+    /// einer Zeile, und mit „nicht schwarz" statt „gesetzt" als Tinte.
+    ///
+    /// Schwarz sieht man auf dem ohnehin schwarzen Grund der Uhr nicht — ein
+    /// deckend schwarzer Rand um ein Icon ist darum nie ein gestalterischer
+    /// Unterschied, wohl aber ein technischer: In einer eingebackenen
+    /// Laufschrift entscheidet genau diese Deckung ueber das
+    /// GIF-Entsorgungsverfahren (`cgBild`), und ein deckendes Einzelbild
+    /// hinterlaesst auf der Uhr Loecher (`docs/tc002-protokoll.md`). Ein Icon
+    /// ganz ohne andersfarbige Tinte bleibt unveraendert — ohne sie liesse
+    /// sich Rand nicht von Zeichnung unterscheiden.
+    public static func schwarzrandBegrenzt(_ pixel: [String?], breite: Int, hoehe: Int,
+                                           maxRand: Int = 1) -> [String?] {
+        guard let kasten = tintenKasten([pixel], breite: breite, hoehe: hoehe) else { return pixel }
+
+        let x0 = max(0, kasten.minX - maxRand), x1 = min(breite - 1, kasten.maxX + maxRand)
+        let y0 = max(0, kasten.minY - maxRand), y1 = min(hoehe - 1, kasten.maxY + maxRand)
+        var ergebnis = pixel
+        for y in 0..<hoehe {
+            for x in 0..<breite where x < x0 || x > x1 || y < y0 || y > y1 {
+                if let farbe = ergebnis[y * breite + x], istSchwarz(farbe) {
+                    ergebnis[y * breite + x] = nil
+                }
+            }
+        }
+        return ergebnis
+    }
+
+    /// Wieviele Spalten von links ein Icon wirklich braucht — die Spalte nach
+    /// der letzten mit andersfarbiger Tinte, ueber **alle** uebergebenen
+    /// Einzelbilder hinweg vereinigt. 0, wenn keins Tinte hat.
+    ///
+    /// Vereinigt und nicht je Einzelbild einzeln gemessen: Sonst wanderte die
+    /// Spalte, ab der Text danebenstehen darf, mit jedem Bild eines animierten
+    /// Icons, und der Text saesse nicht mehr fest.
+    public static func tintenBreite(_ bilder: [[String?]], breite: Int, hoehe: Int) -> Int {
+        guard let kasten = tintenKasten(bilder, breite: breite, hoehe: hoehe) else { return 0 }
+        return kasten.maxX + 1
+    }
+
+    private static func istSchwarz(_ farbe: String) -> Bool {
+        farbe.caseInsensitiveCompare("#000000") == .orderedSame
+    }
+
+    /// Der gemeinsame Kern von `schwarzrandBegrenzt` und `tintenBreite`: die
+    /// umschliessende Flaeche der andersfarbigen Tinte, ueber alle
+    /// Einzelbilder hinweg vereinigt. `nil`, wenn keins welche hat.
+    private static func tintenKasten(_ bilder: [[String?]], breite: Int, hoehe: Int)
+        -> (minX: Int, maxX: Int, minY: Int, maxY: Int)? {
+        var minX = breite, maxX = -1, minY = hoehe, maxY = -1
+        for pixel in bilder where pixel.count == breite * hoehe {
+            for y in 0..<hoehe {
+                for x in 0..<breite {
+                    guard let farbe = pixel[y * breite + x], !istSchwarz(farbe) else { continue }
+                    minX = min(minX, x); maxX = max(maxX, x)
+                    minY = min(minY, y); maxY = max(maxY, y)
+                }
+            }
+        }
+        guard maxX >= minX else { return nil }
+        return (minX, maxX, minY, maxY)
+    }
 }
 
 public enum BildrasterFehler: Error, LocalizedError {

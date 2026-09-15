@@ -234,6 +234,14 @@ public struct SendenView: View {
     private var passt: Bool { Meldungsbau.passt(optionen, mitIcon: mitIcon, iconKante: iconKante) }
     private var feld: Pixelfeld { Meldungsbau.feld(optionen, mitIcon: mitIcon, iconKante: iconKante) }
 
+    /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
+    /// Wirkung: `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
+    /// ganz aussen durchs Fenster und fragt `horizontal` gar nicht erst ab.
+    /// Nur der Pixel-Weg laeuft in unserer eigenen Rechnung — beim Text-Weg
+    /// entscheidet die Uhr selbst, ob und wie sie laufen laesst, und das
+    /// wissen wir vorher nicht (siehe die Naeherungs-Meldung dort).
+    private var waagrechtWirktNicht: Bool { weg == .pixel && !passt }
+
     private func gebauterRahmen() throws -> Frame {
         try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
                                vorberechnet: laufschriftURI)
@@ -368,8 +376,19 @@ public struct SendenView: View {
                 // nicht ganz passt.
                 GeometryReader { geo in
                     let zeichnung = Geraetezeichnung.fuer(geraeteart)
-                    let nachBreite = (geo.size.width - 24) / (Double(feld.breite) * zeichnung.breitenFaktor)
-                    let nachHoehe = (geo.size.height - 24) / (Double(feld.hoehe) * zeichnung.hoehenFaktor)
+                    // Nicht `breitenFaktor`: Der setzt eine bereits ausgemessene
+                    // Feldbreite in Punkten voraus, hier steht aber nur die
+                    // Spaltenzahl des Pixelfelds (52, bei jeder Geraeteart —
+                    // die Vorschau rastert immer auf diesem Feld). Bei der TC002
+                    // trifft ihre Spaltenzahl zufaellig fast genau die Zeichnung,
+                    // bei der AWTRIX (auf 32×8 gezeichnet) unterschaetzte das die
+                    // wirkliche Rahmenbreite um rund ein Viertel — genau das
+                    // Mass, um das die Vorschau am iPad zu breit geriet, weil dort
+                    // weniger Luft bleibt, es aufzufangen. `masse(inhaltHoehe:)`
+                    // rechnet dieselbe Formel wie `GeraeteRahmen` selbst.
+                    let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
+                    let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
+                    let nachHoehe = (geo.size.height - 24) / einheit.rahmenHoehe
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
                     VorschauView(feld: feld, kantenlaenge: kante,
                                 typ: geraeteart,
@@ -751,6 +770,10 @@ public struct SendenView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .disabled(waagrechtWirktNicht)
+                .help(waagrechtWirktNicht
+                    ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
+                    : lok("Waagrecht"))
                 Picker("Senkrecht", selection: $vertikal) {
                     Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
                     Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)

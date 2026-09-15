@@ -328,9 +328,10 @@ final class KnopfstilTests: XCTestCase {
         let bekannt: [String: Int] = [
             // Die schiebbare Formatpille: Kapseln in einem `ScrollView`,
             // keine Listenzeilen — dort ist `.automatic` das Aussehen, das
-            // die Pille haben soll (6: Icon, Format, Bild, Fett,
-            // Großbuchstaben, Senden).
-            "Sources/TC002iOS/SendeniOS.swift": 6,
+            // die Pille haben soll (5: Icon, Format, Bild, Fett,
+            // Großbuchstaben). Der Sendeknopf ist seit 15.09.2026 weg — die
+            // Eingabetaste schickt, wie in Nachrichten.
+            "Sources/TC002iOS/SendeniOS.swift": 5,
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/VerbindungiOS.swift": 2,

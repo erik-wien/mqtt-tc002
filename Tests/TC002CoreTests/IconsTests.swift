@@ -549,6 +549,69 @@ final class IconsTests: XCTestCase {
         XCTAssertNil(zurueck[63])
     }
 
+    // MARK: - Schwarzrand begrenzen
+
+    /// Ausserhalb eines Pixels um die andersfarbige Tinte wird Schwarz zu
+    /// durchsichtig — innerhalb bleibt es stehen, auch direkt neben der Tinte.
+    func testSchwarzrandBegrenztAufEinenPixel() {
+        var pixel = [String?](repeating: "#000000", count: 64)
+        pixel[4 * 8 + 4] = "#00FF66"                      // (4,4) einzige echte Tinte
+        let ergebnis = Bildraster.schwarzrandBegrenzt(pixel, breite: 8, hoehe: 8)
+
+        for y in 0..<8 {
+            for x in 0..<8 {
+                let i = y * 8 + x
+                if x == 4, y == 4 {
+                    XCTAssertEqual(ergebnis[i], "#00FF66")
+                } else if abs(x - 4) <= 1, abs(y - 4) <= 1 {
+                    XCTAssertEqual(ergebnis[i], "#000000", "(\(x),\(y)) liegt im Rand von einem Pixel")
+                } else {
+                    XCTAssertNil(ergebnis[i], "(\(x),\(y)) liegt ausserhalb des Randes")
+                }
+            }
+        }
+    }
+
+    /// Ein Icon ganz ohne andersfarbige Tinte bleibt unveraendert — ohne sie
+    /// liesse sich Rand nicht von Zeichnung unterscheiden, und ein komplett
+    /// geloeschtes Icon waere eine Aenderung, die niemand verlangt hat.
+    func testSchwarzrandBegrenztLaesstReinSchwarzesIconStehen() {
+        let pixel = [String?](repeating: "#000000", count: 64)
+        XCTAssertEqual(Bildraster.schwarzrandBegrenzt(pixel, breite: 8, hoehe: 8), pixel)
+    }
+
+    /// Bereits durchsichtige Pixel bleiben es — die Funktion setzt nur Schwarz
+    /// auf durchsichtig, nie umgekehrt.
+    func testSchwarzrandBegrenztRuehrtDurchsichtigeUndAndersfarbigePixelNichtAn() {
+        var pixel = [String?](repeating: nil, count: 64)
+        pixel[0] = "#000000"; pixel[63] = "#FF00FF"
+        let ergebnis = Bildraster.schwarzrandBegrenzt(pixel, breite: 8, hoehe: 8)
+        XCTAssertNil(ergebnis[0], "Schwarz weit weg von der einzigen Tinte wird durchsichtig")
+        XCTAssertEqual(ergebnis[63], "#FF00FF")
+    }
+
+    /// `maxRand` ist ein Parameter, keine feste Zahl — ein groesserer Rand
+    /// laesst entsprechend mehr Schwarz stehen.
+    func testSchwarzrandBegrenztNimmtDenGewaehltenRand() {
+        var pixel = [String?](repeating: "#000000", count: 64)
+        pixel[4 * 8 + 4] = "#00FF66"
+        let ergebnis = Bildraster.schwarzrandBegrenzt(pixel, breite: 8, hoehe: 8, maxRand: 2)
+        XCTAssertEqual(ergebnis[2 * 8 + 2], "#000000", "zwei Pixel Rand bleiben stehen")
+        XCTAssertNil(ergebnis[1 * 8 + 1], "drei Pixel weg ist ausserhalb von zwei Pixeln Rand")
+    }
+
+    /// Tinte direkt in der Ecke darf den Rand nicht ueber das Raster
+    /// hinausrechnen — sonst waere das ein Indexfehler, kein leerer Rand.
+    func testSchwarzrandBegrenztKlemmtAmRasterrand() {
+        var pixel = [String?](repeating: "#000000", count: 64)
+        pixel[0] = "#00FF66"                              // Tinte in der Ecke (0,0)
+        let ergebnis = Bildraster.schwarzrandBegrenzt(pixel, breite: 8, hoehe: 8)
+        XCTAssertEqual(ergebnis[0], "#00FF66")
+        XCTAssertEqual(ergebnis[1], "#000000", "(1,0) liegt im Rand")
+        XCTAssertEqual(ergebnis[8], "#000000", "(0,1) liegt im Rand")
+        XCTAssertNil(ergebnis[2], "(2,0) liegt ausserhalb des Randes")
+    }
+
     // MARK: - Zwei Groessen, zwei Bestaende
 
     /// Ein 16×16 kommt ungerechnet zurueck — wuerde es wie ein 8×8 gelesen,

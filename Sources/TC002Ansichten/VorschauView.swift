@@ -41,8 +41,7 @@ struct VorschauView: View {
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(breite: Double(feld.breite) * kantenlaenge,
-                      hoehe: Double(feld.hoehe) * kantenlaenge, typ: typ) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge, typ: typ) {
             Group {
                 if let laufschriftBilder, !laufschriftBilder.isEmpty {
                     if laufschriftBilder.count > 1 {

@@ -140,12 +140,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Uhr wählen"),
-                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü. Es wählt, welche Uhr man ansieht: Ihr Name steht im Titel, und die fünf Blöcke und der „Verlauf“ zeigen ihren Stand. Gesendet wird an dieselbe Uhr — am Telefon ist das eine Entscheidung und nicht zwei. Bei nur einer Uhr gibt es nichts zu wählen."),
+                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü, und neben dem Eingabefeld erscheint dasselbe Menü noch einmal als eigenes Zeichen. Beide wählen dasselbe: welche Uhr man ansieht. Ihr Name steht im Titel, und die fünf Blöcke und der „Verlauf“ zeigen ihren Stand. Gesendet wird an dieselbe Uhr — am Telefon ist das eine Entscheidung und nicht zwei. Bei nur einer Uhr gibt es nichts zu wählen, und das Zeichen neben dem Eingabefeld bleibt weg."),
                     .absatz("„An alle Uhren senden“ im selben Menü trennt beides wieder: Jede Sendung geht dann an alle eingerichteten Uhren, während Titel, Blöcke und „Verlauf“ bei der angesehenen bleiben — wie viele Uhren beliefert werden, sagt der Titel hinter ihrem Namen."),
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),
-                    .absatz("Der Pfeilknopf rechts neben dem Eingabefeld schickt die Anzeige; er ist gesperrt, solange das Textfeld leer ist oder eine Sendung läuft. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
+                    .absatz("Wie in Nachrichten: kein eigener Sendeknopf. Die Eingabetaste schickt die Anzeige, statt einen Zeilenumbruch einzufügen; bei leerem Textfeld oder während eine Sendung läuft, ist das Feld gesperrt. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
                     .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .anzeigen:

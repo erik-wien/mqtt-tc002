@@ -55,16 +55,22 @@ final class GeraeterahmenTests: XCTestCase {
                                             "Inhalt ragt aus dem Feld — \(wo)")
 
                 // 4. …und auch nicht nennenswert breiter: Was uebrig bleibt,
-                //    muss unter **einer** Pixelbreite liegen, sonst sieht man
-                //    links und rechts einen schwarzen Streifen im Feld.
+                //    muss unter **einer** Pixelbreite liegen, sonst bliebe
+                //    rechts im Feld ein schwarzer Streifen, den kein Inhalt
+                //    je erreicht.
                 XCTAssertLessThan(m.feldBreite - inhaltBreite, kante,
                                   "schwarzer Rest im Feld breiter als ein Pixel — \(wo)")
 
-                // 5. Der Inhalt sitzt oben buendig und waagrecht mittig.
-                let ecke = z.inhaltEcke(inhaltBreite: inhaltBreite, inhaltHoehe: inhaltHoehe)
+                // 5. Der Inhalt sitzt oben **und links** buendig — wie auf dem
+                //    Geraet selbst, das eine Anzeige immer bei Spalte 0 beginnt.
+                //    Nicht zentriert: Bei der AWTRIX-Zeichnung, deren Feld auf
+                //    32×8 gerechnet ist, waere ein 52×16 gerastertes Icon sonst
+                //    hinter einem unbeabsichtigten linken Rand versteckt
+                //    (`Meldungsbau.feld` kennt die Geraeteart nicht und
+                //    rastert immer auf 52×16).
+                let ecke = z.inhaltEcke(inhaltHoehe: inhaltHoehe)
                 XCTAssertEqual(ecke.y, m.feldY, accuracy: 0.0001, "Inhalt nicht oben buendig — \(wo)")
-                XCTAssertEqual(ecke.x - m.feldX, m.feldX + m.feldBreite - (ecke.x + inhaltBreite),
-                               accuracy: 0.0001, "Inhalt nicht zentriert — \(wo)")
+                XCTAssertEqual(ecke.x, m.feldX, accuracy: 0.0001, "Inhalt nicht links buendig — \(wo)")
             }
         }
     }

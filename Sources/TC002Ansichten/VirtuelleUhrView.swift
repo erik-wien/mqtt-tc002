@@ -29,8 +29,7 @@ public struct VirtuelleUhrView: View {
 
     public var body: some View {
         VStack(spacing: 16) {
-            GeraeteRahmen(breite: Double(Pixelfeld.breiteStandard) * Self.kante,
-                          hoehe: Double(Pixelfeld.hoeheStandard) * Self.kante,
+            GeraeteRahmen(hoehe: Double(Pixelfeld.hoeheStandard) * Self.kante,
                           typ: .tc002) {
                 anzeige
             }
