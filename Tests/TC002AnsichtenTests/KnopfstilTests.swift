@@ -177,13 +177,19 @@ final class KnopfstilTests: XCTestCase {
     ///
     /// **Mutationsprobe** (13.09.2026): `.eingabefeld()` bei „Suchen" im
     /// Editor entfernt → durchgefallen; wieder eingesetzt → grün.
+    ///
+    /// Seit dem 16.09.2026 zählt `.eingabefeld(loeschbar:)` mit: Dieselbe
+    /// Fassung, dazu ein (x) für die flüchtigen Felder. Geprüft wird auf
+    /// `.eingabefeld(` und nicht mehr auf die leere Klammer — die Zusicherung
+    /// ist „jedes Feld trägt die Fassung", nicht „jedes trägt genau diese
+    /// Schreibweise".
     func testKeinEingabefeldOhneFassung() throws {
         var ohneFassung: [String] = []
         for datei in swiftDateien(unter: "Sources/TC002Ansichten") {
             let alle = try zeilen(datei)
             for (i, z) in alle.enumerated() {
                 guard z.nackt.contains("TextField(") || z.nackt.contains("SecureField(") else { continue }
-                if kette(alle, ab: i).contains(".eingabefeld()") { continue }
+                if kette(alle, ab: i).contains(".eingabefeld(") { continue }
                 ohneFassung.append("\(datei):\(i + 1)  \(z.nackt)")
             }
         }

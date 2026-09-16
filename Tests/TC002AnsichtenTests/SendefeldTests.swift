@@ -120,7 +120,10 @@ final class SendefeldTests: XCTestCase {
             } else {
                 ohneKommentar = String(zeile)
             }
-            if ohneKommentar.contains(".eingabefeld()") { treffer.append(nurEinZweig) }
+            // `.eingabefeld(` und nicht `.eingabefeld()`: Das Meldungsfeld
+            // traegt seit dem 16.09.2026 die Fassung **mit** Loeschzeichen.
+            // Gemeint war hier immer die Fassung, nie ihre Schreibweise.
+            if ohneKommentar.contains(".eingabefeld(") { treffer.append(nurEinZweig) }
         }
         // Eines, nicht zwei: Das Dauerfeld ist am 14.09.2026 in den Zeit-Reiter
         // des Inspektors gezogen (`Zeitabschnitte`), zu Seitenwechsel und

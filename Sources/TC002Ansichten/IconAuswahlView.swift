@@ -75,6 +75,29 @@ struct IconAuswahlView: View {
                 }
             }
             .knopfBefehl()
+            if gewaehltesIcon != nil {
+                // **Das bloße Zeichen, ohne Beschriftung.** Es steht unmittelbar
+                // neben dem Namen des gewaehlten Icons; was es tut, sagt dort
+                // seine Form. Eine Beschriftung daneben stand bis zum
+                // 15.09.2026 da und machte aus einer Wertzeile zwei Knoepfe mit
+                // Text.
+                //
+                // Gedaempft und `.plain`: Der Hauptknopf (Icon wechseln) bleibt
+                // im Vordergrund, und unter iPadOS faerbt ein fehlender Stil die
+                // Beschriftung in der Akzentfarbe — ein blaues Zeichen neben
+                // einem blauen Namen las sich als Verweis mit Schliessknopf.
+                // Gewaehlt ist aber ein **Wert**, kein Verweis.
+                //
+                // Zwei Trefferflaechen und nicht ein Chip mit (x) darin:
+                // Wechseln und Abwaehlen sind zwei Handlungen.
+                Button { gewaehltesIcon = nil } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(lok("Icon entfernen"))
+                .accessibilityLabel(Text("Icon entfernen"))
+            }
         }
         .sheet(isPresented: $zeigeBlatt) { blatt.onAppear { bewegungLesen() } }
     }
@@ -83,7 +106,7 @@ struct IconAuswahlView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Icon wählen").font(.headline)
             TextField("Suchen", text: $suche)
-                .eingabefeld()
+                .eingabefeld(loeschbar: $suche)
             Filterleiste(wert: $filterkante,
                          angebot: [(Leinwandgroesse.icon8.beschriftung,
                                     Leinwandgroesse.icon8.kurzbeschriftung, 8),

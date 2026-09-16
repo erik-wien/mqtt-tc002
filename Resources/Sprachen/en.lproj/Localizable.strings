@@ -160,6 +160,7 @@
 "nur `%`, `.`, `-` und `:` als Sonderzeichen; läuft von selbst durch, wenn nötig, ohne dass die App ein GIF bauen muss." = "only `%`, `.`, `-` and `:` as special characters; scrolls by itself when needed, without the app having to build a GIF.";
 /* IconAuswahlView.swift */
 "Icon wählen…" = "Choose icon…";
+"Icon entfernen" = "Remove icon";
 "Suchen" = "Search";
 "„%@“ löschen" = "Delete \"%@\"";
 "Das Icon „%@“ wird endgültig entfernt." = "The icon \"%@\" will be permanently removed.";

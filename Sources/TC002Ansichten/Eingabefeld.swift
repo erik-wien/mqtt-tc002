@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 
 /// Die Fassung, die ein Eingabefeld sichtbar macht — derselbe Punkt wie bei
 /// den Schaltflaechen, nur eine Stufe allgemeiner
@@ -27,5 +28,38 @@ public extension View {
     /// taete das nicht.
     func eingabefeld() -> some View {
         textFieldStyle(.roundedBorder)
+    }
+
+    /// Dieselbe Fassung, dazu ein (x) am rechten Rand — **nur, solange etwas
+    /// drinsteht.**
+    ///
+    /// Nicht für jedes Feld: Wo man den Inhalt überschreibt statt ihn
+    /// wegzuwerfen (Brokeradresse, Port, Präfix), wäre es ein Knopf, den
+    /// niemand drückt. Gemeint sind die flüchtigen Felder — die Nachricht, die
+    /// Suche, Name und Nummer eines Bildes, das gerade gesichert wird.
+    ///
+    /// **Im Kasten und nicht daneben.** So halten es die Suchfelder des
+    /// Systems, und daneben nähme es den engen Inspektorzeilen die Breite, die
+    /// sie für Schriftnamen und Nummern brauchen. Der Preis: Text, der länger
+    /// ist als der Kasten, läuft unter dem Zeichen durch — beim System
+    /// ebenso.
+    ///
+    /// `.plain`, weil es hier wirklich nur ein Zeichen sein soll: Ohne
+    /// ausdrücklichen Stil zeichnete iPadOS blaue Schrift in der Akzentfarbe,
+    /// und ein blaues Zeichen im Feld läse sich als Verweis.
+    func eingabefeld(loeschbar text: Binding<String>) -> some View {
+        eingabefeld()
+            .overlay(alignment: .trailing) {
+                if !text.wrappedValue.isEmpty {
+                    Button { text.wrappedValue = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 4)
+                    .help(lok("Leeren"))
+                    .accessibilityLabel(Text("Leeren"))
+                }
+            }
     }
 }

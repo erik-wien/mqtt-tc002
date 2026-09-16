@@ -665,13 +665,13 @@ public struct EditorBereichView: View {
     private var sichernAbschnitte: some View {
         Section {
             LabeledContent("Name") {
-                TextField("Name", text: $name).labelsHidden().eingabefeld()
+                TextField("Name", text: $name).labelsHidden().eingabefeld(loeschbar: $name)
             }
             if groesse.mitNummer {
                 LabeledContent("Nummer") {
                     TextField("Nummer", text: $nummer)
                         .labelsHidden()
-                        .eingabefeld()
+                        .eingabefeld(loeschbar: $nummer)
                         .help(groesse.nummerIstDateiname
                               ? lok("Die LaMetric-Nummer — zugleich der Dateiname.")
                               : lok("Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt."))
@@ -729,7 +729,7 @@ public struct EditorBereichView: View {
                 HStack(spacing: 6) {
                     TextField("Nummer", text: $lametricNummer)
                         .labelsHidden()
-                        .eingabefeld()
+                        .eingabefeld(loeschbar: $lametricNummer)
                         .frame(width: 80)
                         .onSubmit { nachladen() }
                     Button { nachladen() } label: {
@@ -767,7 +767,7 @@ public struct EditorBereichView: View {
 
         Section("Vorhandene") {
             TextField("Suchen", text: $suche)
-                .eingabefeld()
+                .eingabefeld(loeschbar: $suche)
             // **Dieselbe Leiste wie im Auswahlblatt**, nur mit drei Groessen
             // statt zwei: Hier steht auch die ganze Anzeige im Bestand.
             Filterleiste(wert: $filtergroesse,

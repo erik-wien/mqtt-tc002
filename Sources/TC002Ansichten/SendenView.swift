@@ -923,7 +923,7 @@ public struct SendenView: View {
     private var textFeld: some View {
         TextField("Text", text: $text)
             .font(.title2)
-            .eingabefeld()
+            .eingabefeld(loeschbar: $text)
     }
 
     /// Die **eine** Haupthandlung dieser Ansicht. Gesperrt bleibt sie
