@@ -54,6 +54,54 @@ final class AwtrixNGZustandTests: XCTestCase {
             typ: .awtrixNG, betriebsart: .mqtt)
     }
 
+    private func mitUhren(_ uhren: [Uhr]) throws -> AppZustand {
+        d.set(try JSONEncoder().encode(uhren), forKey: "uhren")
+        d.set(uhren[0].id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set(uhren.map(\.id))), forKey: "zielIDs")
+        return AppZustand(schluesselbund: schluesselbund)
+    }
+
+    private func werksUhr() -> Uhr {
+        Uhr(name: "Kueche", host: "werk.example", praefix: "kueche/uhr",
+            typ: .tc002, betriebsart: .mqtt)
+    }
+
+    // MARK: - Was zu hoch fuer die Zieluhren ist
+
+    /// **Gefragt wird die Zielmenge, nicht die angesehene Uhr** — gesendet
+    /// wird ja an sie. Und gesperrt wird nur, wenn **keine** davon es nimmt:
+    /// Dieselbe Entscheidung, die der Editor fuer ein gemaltes Bild schon
+    /// trifft — sonst verbaete eine einzelne NG unter fuenf Uhren allen
+    /// anderen das 16er Icon.
+    func testEineNGAlleinSperrtDasSechzehnerIcon() throws {
+        let zustand = try mitUhr(ngUhr())
+        XCTAssertNotNil(zustand.grafikSperre(hoehe: 16))
+        XCTAssertNil(zustand.grafikSperre(hoehe: 8))
+    }
+
+    func testDieWerksfirmwareSperrtNichts() throws {
+        let zustand = try mitUhr(werksUhr())
+        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
+        XCTAssertNil(zustand.grafikSperre(hoehe: 8))
+    }
+
+    /// Eine NG **neben** einer Werksfirmware sperrt nichts: Die Sendung geht
+    /// an die uebrige, und die eine meldet sich selbst.
+    func testEineNGNebenEinerWerksfirmwareSperrtNichts() throws {
+        let zustand = try mitUhren([werksUhr(), ngUhr()])
+        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
+    }
+
+    /// Ohne Ziel gibt es nichts zu sperren — was gesperrt waere, weiss man
+    /// erst, wenn feststeht, wohin es geht.
+    func testOhneZielWirdNichtsGesperrt() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        d.removeObject(forKey: "zielIDs")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
+    }
+
     // MARK: - Worauf gehorcht wird
 
     /// **Die Werksfirmware veroeffentlicht ihre Anzeigenliste, NG nicht.**

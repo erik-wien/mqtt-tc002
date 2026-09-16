@@ -1019,6 +1019,29 @@ public final class AppZustand {
         return uhren.filter { zielIDs.contains($0.id) && $0.beschickbar }
     }
 
+    /// **Warum eine Grafik dieser Hoehe an keine der Zieluhren gehen kann** —
+    /// `nil`, wenn wenigstens eine sie nimmt.
+    ///
+    /// Die Frage gilt der **Zielmenge**, nicht der angesehenen Uhr: Gesendet
+    /// wird an `ziele()`. Und gesperrt wird nur, wenn **keine** davon es nimmt
+    /// — dieselbe Entscheidung, die der Editor fuer ein gemaltes Bild schon
+    /// trifft (`EditorBereichView.keineNimmtGemaltes`). Andernfalls verboete
+    /// eine einzelne NG unter fuenf Uhren allen anderen das 16er Icon, obwohl
+    /// die Sendung sie erreicht und allein die eine sich meldet.
+    ///
+    /// Ohne Ziel wird nichts gesperrt: Wohin nichts geht, kann auch nichts zu
+    /// hoch sein.
+    ///
+    /// Die Begruendung selbst steht im Kern (`Geraetetyp.grafikSperre`), damit
+    /// Mac, iPad und Telefon denselben Satz zeigen.
+    public func grafikSperre(hoehe: Int) -> String? {
+        let ziele = ziele()
+        guard !ziele.isEmpty else { return nil }
+        let gruende = ziele.map { $0.gattung.grafikSperre(hoehe: hoehe) }
+        guard gruende.allSatisfy({ $0 != nil }) else { return nil }
+        return gruende.compactMap { $0 }.first
+    }
+
     // MARK: - Zuhören
 
     /// Ein laufendes Abonnement je Uhr, samt der Angaben, unter denen es aufgebaut

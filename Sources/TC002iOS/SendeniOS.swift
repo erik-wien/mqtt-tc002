@@ -312,7 +312,8 @@ struct SendeniOS: View {
             BildauswahliOS(platz: platz, zustand: zustand)
         }
         .sheet(isPresented: $zeigeIcons) {
-            IconauswahliOS(gewaehlt: $gewaehltesIcon)
+            IconauswahliOS(gewaehlt: $gewaehltesIcon,
+                           sperre: { zustand.grafikSperre(hoehe: $0) })
         }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)

@@ -713,7 +713,8 @@ public struct SendenView: View {
             // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
             // Regler hier.
             Section("Icon") {
-                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen)
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen,
+                                sperre: { zustand.grafikSperre(hoehe: $0) })
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
                 // beim Laufen tut.
                 Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)

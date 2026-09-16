@@ -22,23 +22,36 @@ import TC002Core
 /// unten hereinfährt — es ist eine Fußnote, keine Ansicht.
 public struct Hilfezeichen: View {
     private let text: String
+    private let warnung: Bool
     @State private var zeigt = false
 
     /// `text` ist **fertig übersetzt** hereinzugeben (`lok(…)`): Er wird als
     /// gewöhnliches `String` weitergereicht, und das schlägt SwiftUI nicht nach.
-    public init(_ text: String) {
+    ///
+    /// `warnung: true` macht daraus dasselbe Zeichen mit anderer Aussage: ein
+    /// oranges Dreieck statt des Fragezeichens. Es steht dort, wo nicht bloß
+    /// etwas zu erklären, sondern etwas **im Weg** ist — eine Wahl, die so
+    /// nicht ankommen kann. Derselbe Bau, weil der Grund auf beiden
+    /// Oberflächen antippbar sein muss und nicht nur beim Verweilen
+    /// erscheinen darf.
+    public init(_ text: String, warnung: Bool = false) {
         self.text = text
+        self.warnung = warnung
     }
 
     public var body: some View {
         Button { zeigt = true } label: {
-            Image(systemName: "questionmark.circle")
+            Image(systemName: warnung ? "exclamationmark.triangle.fill" : "questionmark.circle")
                 .font(.caption)
         }
         .buttonStyle(.borderless)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(warnung ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
         .help(text)
-        .accessibilityLabel(Text("Hilfe"))
+        // `lok` in beiden Zweigen: Ein Ternär mit zwei Zeichenketten zwingt
+        // `Text` in die `StringProtocol`-Überladung, und die schlägt nichts
+        // nach — beide Wörter stünden in `en.lproj` und blieben trotzdem
+        // deutsch (CLAUDE.md, „Sprachen").
+        .accessibilityLabel(Text(warnung ? lok("Warnung") : lok("Hilfe")))
         .popover(isPresented: $zeigt) {
             Text(text)
                 .font(.callout)

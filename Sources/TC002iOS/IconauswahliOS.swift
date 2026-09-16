@@ -67,6 +67,11 @@ private struct IconRasteriOS: View {
 /// und Löschen.
 struct IconauswahliOS: View {
     @Binding var gewaehlt: Icon?
+    /// **Warum ein Icon dieser Kantenlaenge nicht ankaeme** — `nil`, wenn es
+    /// ankommt. Beantwortet wird die Frage von den Zieluhren
+    /// (`AppZustand.grafikSperre`); die Auswahl stellt sie nur. Dieselbe Naht
+    /// wie am Schreibtisch (`IconAuswahlView`).
+    var sperre: (Int) -> String? = { _ in nil }
     @Environment(\.dismiss) private var schliessen
 
     @State private var vorhandene: [Icon] = []
@@ -193,6 +198,11 @@ struct IconauswahliOS: View {
                             // Icon. Derselbe Fallstrick wie im Editor bei
                             // „Sichern"/„Neu" und in der Blockreihe.
                             .buttonStyle(.plain)
+                            // Gesperrt, nicht verschwunden — dieselbe
+                            // Entscheidung wie am Schreibtisch: Wer sein
+                            // 16×16 sucht, soll sehen, dass es noch da ist.
+                            .disabled(sperre(icon.kante) != nil)
+                            .opacity(sperre(icon.kante) == nil ? 1 : 0.35)
                             .accessibilityLabel(Text(bewegte.contains(icon.kennung)
                                                      ? lokf("%@, bewegt", icon.name) : icon.name))
                             .accessibilityAddTraits(gewaehlt?.kennung == icon.kennung ? [.isSelected] : [])
@@ -223,6 +233,7 @@ struct IconauswahliOS: View {
                 // Der Grundschatz im Buendel liegt das nicht und laesst sich
                 // deshalb weder umbenennen noch loeschen.
                 darfAendern: heimat(von: icon) != nil,
+                sperrgrund: sperre(icon.kante),
                 uebernehmen: { gewaehlt = $0; schliessen() },
                 umbenennen: { umbenennen($0, auf: $1) },
                 loeschen: { loeschen($0) })
@@ -303,6 +314,11 @@ struct IconauswahliOS: View {
 /// wird zudem nur montiert, wenn es tatsächlich mehr als ein Einzelbild gibt.
 private struct IconEinzelansichtiOS: View {
     let darfAendern: Bool
+    /// Warum dieses Icon an keine der Zieluhren gehen kann — `nil`, wenn es
+    /// geht. Steht als Satz unter der grossen Ansicht, und „Uebernehmen" ist
+    /// dann gesperrt: Von hier aus waere es sonst der zweite Weg an der
+    /// Sperre vorbei, den die Kachel schon zumacht.
+    let sperrgrund: String?
     let uebernehmen: (Icon) -> Void
     let umbenennen: (Icon, String) -> Icon?
     let loeschen: (Icon) -> Void
@@ -319,12 +335,13 @@ private struct IconEinzelansichtiOS: View {
     /// Kantenlaenge der grossen Ansicht in Punkten — nicht je Bildpunkt.
     private static let kante = 220.0
 
-    init(icon: Icon, darfAendern: Bool,
+    init(icon: Icon, darfAendern: Bool, sperrgrund: String? = nil,
          uebernehmen: @escaping (Icon) -> Void,
          umbenennen: @escaping (Icon, String) -> Icon?,
          loeschen: @escaping (Icon) -> Void) {
         _icon = State(initialValue: icon)
         self.darfAendern = darfAendern
+        self.sperrgrund = sperrgrund
         self.uebernehmen = uebernehmen
         self.umbenennen = umbenennen
         self.loeschen = loeschen
@@ -346,8 +363,14 @@ private struct IconEinzelansichtiOS: View {
                         .frame(width: Self.kante, height: Self.kante)
                 }
                 Spacer()
+                if let sperrgrund {
+                    Label(sperrgrund, systemImage: "exclamationmark.triangle")
+                        .font(.footnote).foregroundStyle(.orange)
+                        .padding(.bottom, 8)
+                }
                 Button("Übernehmen") { uebernehmen(icon) }
                     .knopfHaupthandlung()
+                    .disabled(sperrgrund != nil)
             }
             .padding()
             .navigationTitle(icon.name)

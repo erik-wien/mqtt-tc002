@@ -27,6 +27,14 @@ struct BildauswahliOS: View {
 
     private var sammlung: Bildersammlung { Bildersammlung(ordner: Bilderordner.eigene) }
 
+    /// **Warum eine ganze 16 × 52-Anzeige an keine der Zieluhren gehen kann.**
+    ///
+    /// Die Fussnote unten sagte das seit je („Eine AWTRIX NG nimmt sie nicht")
+    /// — der Knopf schickte trotzdem, und auf einer NG kam schlicht nichts an.
+    /// Ein Satz, der eine Sperre beschreibt, ohne dass eine da ist, ist
+    /// schlimmer als keiner.
+    private var sperre: String? { zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard) }
+
     var body: some View {
         NavigationStack {
             List {
@@ -42,6 +50,10 @@ struct BildauswahliOS: View {
                         Text("Eine 16 × 52-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8.")
                     }
                 }
+                if let sperre {
+                    Label(sperre, systemImage: "exclamationmark.triangle")
+                        .font(.footnote).foregroundStyle(.orange)
+                }
                 if let meldung {
                     Text(meldung).font(.footnote).foregroundStyle(.secondary)
                 }
@@ -54,7 +66,7 @@ struct BildauswahliOS: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Senden") { senden() }
-                        .disabled(gewaehlt == nil || laeuft)
+                        .disabled(gewaehlt == nil || laeuft || sperre != nil)
                 }
             }
             .onAppear { vorhandene = sammlung.alle() }
