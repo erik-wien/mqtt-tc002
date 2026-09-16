@@ -23,3 +23,11 @@ MQTT-TC002-iOS.entitlements
 # Messwerte gehoeren in die Doku, Kennungen nicht.
 *.provisionprofile
 *.mobileprovision
+
+# Claude-Code-Fernsteuerung: Startskripte und Sitzungsmerker sind
+# maschinenlokal (siehe ~/Git/claude-code-remote-control-setup.md). Die UUID
+# gehoert ohnehin nicht in ein oeffentliches Repo.
+start-claude.sh
+claude-resume.sh
+.claude-session.log
+.claude-session-id
