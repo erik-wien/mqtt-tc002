@@ -33,7 +33,7 @@ public struct SchreibtischView: View {
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", editor = "Editor",
+        case senden = "Senden", editor = "Icons",
              // „Protokoll", nicht „Verlauf": Der Bereich zeigt, was jetzt auf
              // der Uhr liegt, und darunter die technische Mitschrift. „Verlauf"
              // heisst die Liste der gesendeten Meldungen unter den Bloecken.
@@ -42,7 +42,7 @@ public struct SchreibtischView: View {
         var symbol: String {
             switch self {
             case .senden: return "paperplane"
-            case .editor: return "paintpalette"
+            case .editor: return "square.grid.3x3"
             case .protokoll: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }

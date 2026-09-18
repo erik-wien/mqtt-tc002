@@ -42,7 +42,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
     case verbindung = "Einstellungen"
     case senden = "Senden"
-    case editor = "Editor"
+    case editor = "Icons"
     case anzeigen = "Protokoll"
     case fehlersuche = "Wenn nichts erscheint"
 
@@ -57,7 +57,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Bereiche"),
                     .tabelle([
                         ("Senden", "Text und Icon verschicken"),
-                        ("Editor", "Icons und ganze Anzeigen malen"),
+                        ("Icons", "Icons und ganze Anzeigen malen"),
                         ("Protokoll", "was jetzt auf der Uhr liegt, und die Mitschrift"),
                         ("Einstellungen", "Uhren und Broker"),
                     ]),

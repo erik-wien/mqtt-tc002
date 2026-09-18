@@ -34,11 +34,11 @@ final class EditorbereichTests: XCTestCase {
                        "„Bilder“ und „Icons“ sind zu einem Eintrag geworden")
     }
 
-    /// Der Eintrag heißt „Editor" und trägt die Palette — beides ausdrücklich
-    /// so verlangt, und beides ließe sich unbemerkt ändern.
-    func testDerEintragHeisstEditorUndTraegtDiePalette() {
-        XCTAssertEqual(SchreibtischView.Bereich.editor.rawValue, "Editor")
-        XCTAssertEqual(SchreibtischView.Bereich.editor.symbol, "paintpalette")
+    /// Der Eintrag heißt „Icons" und trägt ein Raster. Beim ersten
+    /// Anwendertest wurde der Icon-Editor unter „Editor" nicht gefunden.
+    func testDerEintragHeisstIconsUndTraegtEinRaster() {
+        XCTAssertEqual(SchreibtischView.Bereich.editor.rawValue, "Icons")
+        XCTAssertEqual(SchreibtischView.Bereich.editor.symbol, "square.grid.3x3")
     }
 
     /// Es gibt genau einen Editor. In diesem Projekt ist schon einmal ein

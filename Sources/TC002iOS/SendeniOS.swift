@@ -301,6 +301,12 @@ struct SendeniOS: View {
                 .pickerStyle(.inline)
             }
             .toolbar {
+                // Links die Empfaenger, mittig die angesehene Uhr, rechts
+                // Protokoll und Einstellungen. Neben dem Eingabefeld hielt
+                // der erste Anwender den Empfaengerknopf fuer den Sendeknopf.
+                ToolbarItem(placement: .topBarLeading) {
+                    empfaengermenue
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         zeigeVerlauf = true
@@ -753,6 +759,34 @@ struct SendeniOS: View {
     /// (`angesehene`, `zustand.anMehrereUhren`), nur an einer Stelle, die man
     /// nicht erst am Titel suchen muss. Bei nur einer eingerichteten Uhr gibt
     /// es nichts zu wählen, wie beim Titelmenü, und dort steht dann nichts.
+    /// An wen die naechste Meldung geht. Die Zahl steht immer da, auch die 1:
+    /// „an eine" und „noch nichts gewaehlt" saehen sonst gleich aus.
+    @ViewBuilder
+    private var empfaengermenue: some View {
+        if zustand.uhren.count > 1 {
+            Menu {
+                Section("Senden an") {
+                    ForEach(zustand.uhren) { uhr in
+                        Button {
+                            zustand.zielUmschalten(uhr.id)
+                        } label: {
+                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
+                                  ? "checkmark.circle.fill" : "circle")
+                        }
+                    }
+                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
+                    Button("Nur die angesehene") {
+                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
+                    }
+                }
+            } label: {
+                Label(lokf("Empfänger · %d", zustand.ziele().count),
+                      systemImage: "antenna.radiowaves.left.and.right")
+            }
+            .accessibilityLabel(Text("Ziel wählen"))
+        }
+    }
+
     private var eingabe: some View {
         HStack(spacing: 8) {
             TextField("Text", text: $text, axis: .vertical)
@@ -774,30 +808,6 @@ struct SendeniOS: View {
                 ProgressView()
                     .frame(width: 44, height: 44)
                     .accessibilityLabel(Text("Sende…"))
-            } else if zustand.uhren.count > 1 {
-                Menu {
-                    // Nur die Empfaenger: Was man ansieht, steht im Titel.
-                Section("Senden an") {
-                    ForEach(zustand.uhren) { uhr in
-                        Button {
-                            zustand.zielUmschalten(uhr.id)
-                        } label: {
-                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
-                                  ? "checkmark.circle.fill" : "circle")
-                        }
-                    }
-                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
-                    Button("Nur die angesehene") {
-                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
-                    }
-                }
-                } label: {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .font(.title2)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel(Text("Ziel wählen"))
             }
         }
         .padding(.horizontal)

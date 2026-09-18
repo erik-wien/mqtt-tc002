@@ -482,13 +482,19 @@ public struct EditorBereichView: View {
     private var inspektor: some View {
         VStack(spacing: 0) {
             modusWahl
+                .onChange(of: groesse) { _, neu in
+                    if !neu.eigeneStandzeit, modus == .zeit { modus = .malen }
+                }
             Divider()
             Form {
                 switch modus {
                 case .malen: malenAbschnitte
                 case .animation: animationAbschnitte
                 case .sichern: sichernAbschnitte
-                case .zeit: Zeitabschnitte(zustand: zustand, dauerText: $dauerText)
+                case .zeit:
+                    if groesse.eigeneStandzeit {
+                        Zeitabschnitte(zustand: zustand, dauerText: $dauerText)
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -531,8 +537,12 @@ public struct EditorBereichView: View {
                 .accessibilityLabel(Text("Animation"))
             Image(systemName: "folder").tag(Inspektormodus.sichern)
                 .accessibilityLabel(Text("Bestand"))
-            Image(systemName: "clock").tag(Inspektormodus.zeit)
-                .accessibilityLabel(Text("Zeit"))
+            // Siehe `Leinwandgroesse.eigeneStandzeit`: Ein Icon hat keine,
+            // der Reiter stand dort ohne Gegenstand.
+            if groesse.eigeneStandzeit {
+                Image(systemName: "clock").tag(Inspektormodus.zeit)
+                    .accessibilityLabel(Text("Zeit"))
+            }
         }
         .pickerStyle(.segmented)
         .labelsHidden()

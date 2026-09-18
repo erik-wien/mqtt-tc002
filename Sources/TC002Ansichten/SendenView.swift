@@ -475,21 +475,11 @@ public struct SendenView: View {
             // einmal". Er waechst in den Platz, den das Fenster hergibt.
             Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
 
-            // Feld und Empfaenger in einer Zeile — wie am Telefon, wo das
-            // Antennenzeichen rechts neben dem Eingabefeld sitzt. Das Senden
-            // selbst steckt im Feld (⏎ am rechten Rand); daneben steht die
-            // Frage, an wen.
-            HStack(spacing: 8) {
-                textFeld
-                // Dieselbe Groesse wie das Feld: Bedienelemente in einer
-                // Zeile teilen sich ihre Groesse; ein regulaerer Knopf neben
-                // einem `extraLarge`-Feld sass zu tief und wirkte wie ein
-                // Nachtrag. Hier und nicht in `ZielauswahlView` selbst: Im
-                // Editor steht er neben einem gewoehnlichen Sendeknopf und
-                // haette sich dort mit diesem ueberworfen.
-                ZielauswahlView(zustand: zustand)
-                    .controlSize(.extraLarge)
-            }
+            // Nur das Feld: Das Senden steckt darin (⏎ am rechten Rand).
+            // Der Empfaenger steht links oben in der Werkzeugleiste — neben
+            // dem Eingabefeld wurde er beim ersten Anwendertest fuer einen
+            // Sendeknopf gehalten.
+            textFeld
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -522,12 +512,12 @@ public struct SendenView: View {
             // ausdruecklich nur unter iOS); `.principal` ist die Stelle, die
             // auf beiden Plattformen dasselbe meint — und dieselbe, an der
             // Xcode sein Ziel zeigt.
-            // Was man ansieht, steht mittig im Titel. Der Empfaenger
-            // steht nicht hier: Er gehoert zum Senden, also ans
-            // Eingabefeld — wie am Telefon, wo das Antennenzeichen rechts
-            // daneben sitzt. Drei Zeichen in einer Leiste zusammenzukleben
-            // haette drei verschiedene Dinge nebeneinandergestellt: ansehen,
-            // senden, Inspektor.
+            // Links die Empfaenger, mittig die angesehene Uhr, rechts der
+            // Inspektor. Neben dem Eingabefeld hielt der erste Anwender den
+            // Empfaengerknopf fuer den Sendeknopf.
+            ToolbarItem(placement: .navigation) {
+                ZielauswahlView(zustand: zustand)
+            }
             ToolbarItem(placement: .principal) {
                 Uhrenmenue(zustand: zustand)
             }
@@ -929,6 +919,10 @@ public struct SendenView: View {
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft)
+            // Beschriftet die Eingabetaste der Bildschirmtastatur mit
+            // „Senden" — auf dem iPad sichtbar, am Mac und an einer
+            // angesteckten Tastatur ohne Wirkung.
+            .submitLabel(.send)
             .onSubmit { if sendenMoeglich { senden() } }
     }
 

@@ -913,3 +913,6 @@
 "rechts" = "right";
 "oben" = "top";
 "unten" = "bottom";
+
+/* SchreibtischView.swift — der Bereich heisst seit dem Anwendertest „Icons" */
+"Icons" = "Icons";

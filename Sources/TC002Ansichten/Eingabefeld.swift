@@ -49,7 +49,7 @@ public extension View {
         eingabefeld(loeschbar: text, senden: nil, laeuft: false)
     }
 
-    /// Dasselbe, dazu ein ⏎ am rechten Rand — für das Feld, das die
+    /// Dasselbe, dazu ein Sendeknopf am rechten Rand — für das Feld, das die
     /// Haupthandlung auslöst.
     ///
     /// Es sagt an, was die Eingabetaste tut, und ist zugleich der Knopf: Ohne
@@ -84,17 +84,20 @@ public extension View {
                             .controlSize(.small)
                             .accessibilityLabel(Text("Sende…"))
                     } else if let senden, !text.wrappedValue.isEmpty {
+                        // Ein gefuellter Kreis in der Akzentfarbe, wie der
+                        // Sendepfeil in Nachrichten: Beim ersten Anwendertest
+                        // wurde das blosse Zeichen nicht als Schaltflaeche
+                        // erkannt. Blau ist in diesem Haus die eine
+                        // Haupthandlung einer Ansicht (`Knopfstil.swift`), und
+                        // die ist hier das Senden.
                         Button(action: senden) {
-                            Image(systemName: "return")
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 26, height: 26)
+                                .background(Circle().fill(.tint))
                         }
                         .buttonStyle(.plain)
-                        // In der Akzentfarbe, das (x) daneben gedaempft: Blau
-                        // ist in diesem Haus die eine Haupthandlung einer
-                        // Ansicht (`Knopfstil.swift`), und die ist hier das
-                        // Senden. Ein gefuellter Knopf waere zu viel — im Feld
-                        // ist das Zeichen selbst die Schaltflaeche, wie der
-                        // Pfeil in Nachrichten.
-                        .foregroundStyle(.tint)
                         .help(lok("Senden"))
                         .accessibilityLabel(Text("Senden"))
                     }
