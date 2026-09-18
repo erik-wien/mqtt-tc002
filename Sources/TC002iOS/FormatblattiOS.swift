@@ -21,6 +21,10 @@ struct FormatblattiOS: View {
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
     @Environment(\.dismiss) private var schliessen
+    /// `.numberPad` hat keine Eingabetaste — ohne „Fertig" bleibt die Tastatur
+    /// stehen. Dieselbe Leiste wie am Nummernfeld der Iconauswahl und am Port
+    /// in den Einstellungen.
+    @FocusState private var amDauerfeld: Bool
 
     var body: some View {
         NavigationStack {
@@ -30,6 +34,7 @@ struct FormatblattiOS: View {
                         TextField("Uhr entscheidet", text: $dauerText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
+                            .focused($amDauerfeld)
                     }
                     Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -46,6 +51,12 @@ struct FormatblattiOS: View {
                     Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
                     Text("Gilt nur, wenn der Text nicht ins Display passt.")
                         .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Fertig") { amDauerfeld = false }
                 }
             }
             .navigationTitle("Format")

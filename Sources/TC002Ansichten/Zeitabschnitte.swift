@@ -58,7 +58,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
             LabeledContent("Dauer (Sek.)") {
                 TextField("", text: $dauerText)
                     .eingabefeld()
-                    .frame(width: 70)
+                    .frame(minWidth: 70)
                     #if !os(macOS)
                     .keyboardType(.numberPad)
                     #endif

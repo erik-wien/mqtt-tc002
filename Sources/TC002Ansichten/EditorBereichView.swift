@@ -1255,6 +1255,7 @@ public struct EditorBereichView: View {
                 Spacer()
                 Button("Abbrechen") { zeigeImportBlatt = false }
                     .knopfBefehl()
+                    .keyboardShortcut(.cancelAction)
                 // Der Knopf sagt, was geschieht: „Ersetzen", wo etwas
                 // ueberschrieben wird. `lok` in beiden Zweigen — ein Ternaer
                 // mit `String`-Zweig schlaegt selbst nichts nach.
@@ -1343,6 +1344,7 @@ public struct EditorBereichView: View {
                 Spacer()
                 Button("Abbrechen") { zuBenennen = nil }
                     .knopfBefehl()
+                    .keyboardShortcut(.cancelAction)
                 Button(benennBelegt(eintrag) == nil ? lok("Umbenennen") : lok("Ersetzen")) {
                     umbenennen(eintrag)
                 }

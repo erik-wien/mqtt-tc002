@@ -187,6 +187,7 @@ struct IconAuswahlView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.borderless)
+                            .help(lokf("„%@“ löschen", icon.name))
                             .accessibilityLabel(lokf("„%@“ löschen", icon.name))
                             .offset(x: 2, y: -2)
                         }

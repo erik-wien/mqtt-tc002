@@ -543,20 +543,24 @@ struct SendeniOS: View {
                     // alle vier Knoepfe darin.
                     .buttonStyle(.automatic)
                     .accessibilityLabel("Icon")
+                    // `Picker` und nicht einzelne Knoepfe: Nur so traegt der
+                    // gewaehlte Eintrag sein Haekchen, wie in den Menues der
+                    // Einstellungen auch.
+                    //
+                    // Was die Uhr nicht kann, steht nicht drin — nicht
+                    // gesperrt, sondern nicht vorhanden. Dieselbe Begruendung
+                    // wie in SendenView.swift: Ein Eintrag, der angenommen und
+                    // dann als linksbuendig gesendet wuerde, zeigte etwas
+                    // anderes an, als auf der Uhr steht.
                     Menu {
-                        Button { horizontal = .links } label: {
+                        Picker("Waagrecht", selection: $horizontal) {
                             Label("Linksbündig", systemImage: "text.alignleft")
-                        }
-                        Button { horizontal = .mittig } label: {
+                                .tag(SendenHAusrichtung.links)
                             Label("Zentriert", systemImage: "text.aligncenter")
-                        }
-                        // Nicht gesperrt, sondern nicht vorhanden — dieselbe
-                        // Begruendung wie in SendenView.swift: Ein Eintrag, der
-                        // angenommen und dann als linksbuendig gesendet wuerde,
-                        // zeigte etwas anderes an, als auf der Uhr steht.
-                        if gattung.waagrechteAusrichtungen.contains(.rechts) {
-                            Button { horizontal = .rechts } label: {
+                                .tag(SendenHAusrichtung.mittig)
+                            if gattung.waagrechteAusrichtungen.contains(.rechts) {
                                 Label("Rechtsbündig", systemImage: "text.alignright")
+                                    .tag(SendenHAusrichtung.rechts)
                             }
                         }
                     } label: {
@@ -574,14 +578,13 @@ struct SendeniOS: View {
                         ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
                         : lok("Waagrecht")))
                     Menu {
-                        Button { vertikal = .oben } label: {
+                        Picker("Senkrecht", selection: $vertikal) {
                             Label("Oben", systemImage: "align.vertical.top")
-                        }
-                        Button { vertikal = .mittig } label: {
+                                .tag(SendenVAusrichtung.oben)
                             Label("Mittig", systemImage: "align.vertical.center")
-                        }
-                        Button { vertikal = .unten } label: {
+                                .tag(SendenVAusrichtung.mittig)
                             Label("Unten", systemImage: "align.vertical.bottom")
+                                .tag(SendenVAusrichtung.unten)
                         }
                     } label: {
                         Image(systemName: vertikalSymbol)
@@ -645,41 +648,29 @@ struct SendeniOS: View {
                     .disabled(!gattung.wirkt(.groesse))
                     .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
                     .accessibilityHint(Text(gattung.begruendung(.groesse) ?? lok("Schriftgröße")))
-                    Button { fett.toggle() } label: {
-                        Image(systemName: "bold")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
+                    // `Toggle` im Knopfstil statt eines `Button`, der seinen
+                    // Zustand selbst faerbt: Der getoente Hintergrund im
+                    // Zustand „an" und das Merkmal `.isSelected` fuer die
+                    // Sprachausgabe kommen damit vom System.
+                    //
+                    // Wie am Mac (`fettWirkt`): Auch Schriften und Groessen
+                    // ohne fetten Schnitt sperren den Knopf, sonst waere er
+                    // bedienbar, ohne etwas zu bewirken.
+                    Toggle(isOn: $fett) {
+                        Image(systemName: "bold").frame(width: 44, height: 44)
                     }
-                    .buttonStyle(.automatic)
-                    .foregroundStyle(fett ? Color.accentColor : Color.secondary)
-                    // Nicht allein die Farbe traegt den Zustand — sonst hiesse
-                    // Blau zugleich "tippbar" (wie bei den Menueknoepfen daneben)
-                    // und "eingeschaltet". Ein Hintergrund macht "an" auch ohne
-                    // Farbwahrnehmung sichtbar, dieselbe Bauart wie `formatKnopf`
-                    // in der Mac-Fassung (SendenView.swift).
-                    .background(fett ? Color.accentColor.opacity(0.3) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    // Wie am Mac (`fettWirkt`) statt nur beim Weg „als Text":
-                    // auch Schriften/Groessen ohne fetten Schnitt sperren den
-                    // Knopf, sonst waere er bedienbar, ohne etwas zu bewirken.
+                    .toggleStyle(.button)
                     .disabled(!fettWirkt)
                     .disabled(!gattung.wirkt(.fett))
                     .accessibilityLabel("Fett")
                     .accessibilityHint(Text(fettHinweis))
-                    .accessibilityAddTraits(fett ? [.isSelected] : [])
-                    Button { grossbuchstaben.toggle() } label: {
-                        Image(systemName: "capslock")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
+                    Toggle(isOn: $grossbuchstaben) {
+                        Image(systemName: "capslock").frame(width: 44, height: 44)
                     }
-                    .buttonStyle(.automatic)
-                    .foregroundStyle(grossbuchstaben ? Color.accentColor : Color.secondary)
-                    .background(grossbuchstaben ? Color.accentColor.opacity(0.3) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .toggleStyle(.button)
                     .disabled(!kleinbuchstabenMoeglich)
                     .accessibilityLabel("Großbuchstaben")
                     .accessibilityHint(Text(grossHinweis))
-                    .accessibilityAddTraits(grossbuchstaben ? [.isSelected] : [])
                     Menu {
                         Picker("Rand", selection: $rand) {
                             ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }

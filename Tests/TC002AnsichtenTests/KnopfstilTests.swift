@@ -316,10 +316,12 @@ final class KnopfstilTests: XCTestCase {
         let bekannt: [String: Int] = [
             // Die schiebbare Formatpille: Kapseln in einem `ScrollView`,
             // keine Listenzeilen — dort ist `.automatic` das Aussehen, das
-            // die Pille haben soll (5: Icon, Format, Bild, Fett,
-            // Großbuchstaben). Der Sendeknopf fehlt hier — die Eingabetaste
-            // schickt, wie in Nachrichten.
-            "Sources/TC002iOS/SendeniOS.swift": 5,
+            // die Pille haben soll (3: Icon, Format, Bild). „Fett" und
+            // „Großbuchstaben" sind keine Knöpfe mehr, sondern `Toggle` im
+            // Knopfstil: Der getönte Hintergrund im Zustand „an" kommt damit
+            // vom System statt aus eigener Färbung. Der Sendeknopf fehlt hier
+            // — die Eingabetaste schickt, wie in Nachrichten.
+            "Sources/TC002iOS/SendeniOS.swift": 3,
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/VerbindungiOS.swift": 2,
