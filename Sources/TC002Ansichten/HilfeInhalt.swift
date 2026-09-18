@@ -168,23 +168,23 @@ public enum HilfeInhalt {
     /// deshalb zwei Konstanten statt einer.
     public static let blockwissenSchluss: [Hilfebaustein] = [
         .absatz("Ohne Inhalt bleiben deshalb die Plätze, zu denen es hier nichts zu merken gab — sie zeigen „belegt“, bis dort das nächste Mal etwas mitgelesen oder etwas Merkbares gesendet wird."),
-        .absatz("„Belegt, Inhalt unbekannt“ ist einer von drei gewöhnlichen, harmlosen Fällen: Die Anzeige stammt von einem anderen Gerät oder einer anderen Installation dieser App — dann wurde sie hier weder mitgelesen noch gemerkt. Oder sie ist eine Laufschrift oder ein von der Uhr selbst gesetzter Text (Weg „als Text“) eines fremden Absenders: Aus so einer Nutzlast lässt sich kein Standbild zurückrechnen. Oder sie wurde über die HTTP-Schnittstelle der Uhr angelegt und ist am Broker vorbeigegangen (Gerätereferenz, §3.5) — steht die Uhr selbst auf HTTP, ist das kein Sonderfall mehr, sondern gilt für alles Fremde."),
-        .absatz("Für die eigenen Sendungen gilt das nicht: Dort rechnet die App das Bild aus dem gemerkten Stand, nicht aus der Nutzlast. Eine selbst geschickte Laufschrift zeigt der Block deshalb stehend, mit ihren ersten 52 Pixeln, und beim Weg „als Text“ zeigt er sie in der Schrift dieser App, während die Uhr ihre eigene, eingebaute setzt. Der Block sagt in diesen Fällen, was auf dem Platz liegt — nicht, wie es auf der Uhr aussieht."),
+        .absatz("„Belegt, Inhalt unbekannt“ ist einer von drei gewöhnlichen, harmlosen Fällen: Die Anzeige stammt von einem anderen Gerät oder einer anderen Installation dieser App — dann wurde sie hier weder mitgelesen noch gemerkt. Oder sie ist eine Laufschrift oder ein von der Uhr selbst gesetzter Text eines fremden Absenders: Aus so einer Nutzlast lässt sich kein Standbild zurückrechnen. Oder sie wurde über die HTTP-Schnittstelle der Uhr angelegt und ist am Broker vorbeigegangen (Gerätereferenz, §3.5) — steht die Uhr selbst auf HTTP, ist das kein Sonderfall mehr, sondern gilt für alles Fremde."),
+        .absatz("Für die eigenen Sendungen gilt das nicht: Dort rechnet die App das Bild aus dem gemerkten Stand, nicht aus der Nutzlast. Eine selbst geschickte Laufschrift zeigt der Block deshalb stehend, mit ihren ersten 52 Pixeln. Der Block sagt in diesem Fall, was auf dem Platz liegt — nicht, wie es auf der Uhr aussieht."),
         .absatz("Auch ein Block mit bekanntem Inhalt stellt beim Antippen nicht immer die Regler wieder her: Das gelingt nur, wenn diese Installation die Sendung selbst mitgelesen hat und der Platz seither nicht von anderer Stelle überschrieben wurde — sonst wählt das Antippen nur den Platz, ohne die Regler zu verändern."),
     ]
 
     /// Wann ein Text steht und wann er laeuft — `Meldungsbau.passt` entscheidet
-    /// das auf beiden Geraeten gleich. Wo die Wahl sitzt, sagt jede Oberflaeche
-    /// selbst: am Mac und am iPad im Inspektor rechts („Senden als“), am
-    /// iPhone im Blatt „Format“.
+    /// das auf beiden Geraeten gleich, ohne dass jemand danach gefragt wird.
+    ///
+    /// **Bis zum 18.09.2026 stand hier eine Wahl.** „Senden als: als Pixel /
+    /// als Text" gab es im Inspektor und im Formatblatt; sie ist ersatzlos weg,
+    /// und dieser Abschnitt sagt jetzt, was die App statt dessen tut. Warum,
+    /// steht bei `SendeWeg` im Kern.
     public static let wegeRegel: [Hilfebaustein] = [
-        .absatz("Bei „als Pixel“ entscheidet die App selbst, ob der Text stehenbleibt oder durchläuft — es gibt dafür keinen eigenen Schalter."),
-        .tabelle([
-            ("als Pixel", "Umlaute und „ß“ gehen; die App entscheidet selbst — passt der Text, bleibt er stehen, sonst läuft er als GIF."),
-            ("als Text", "nur `%`, `.`, `-` und `:` als Sonderzeichen; die Uhr setzt ihn selbst — auf der Ulanzi-Werksfirmware bleibt er dabei stehen und wird abgeschnitten, wenn er nicht passt."),
-        ]),
-        .absatz("Dass zu langer Text auf diesem Weg abgeschnitten wird statt durchzulaufen, ist ein Mangel der Werksfirmware und keine Absicht: Die Uhr hat eine Einstellung fürs Lauftempo, sie wirkt auf selbst geschickte Anzeigen aber nicht. Am 11.09.2026 mit drei Fassungen geprüft, keine lief. Wer langen Text will, nimmt „als Pixel“ — dort baut die App den Lauf selbst."),
+        .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die App selbst — es gibt dafür keinen Schalter."),
         .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
+        .absatz("Gerastert wird dabei immer von dieser App, auch bei langem Text. Die Uhr kann Text zwar auch selbst setzen, und bis zum 18.09.2026 gab es dafür die Wahl „als Text“ — sie kostete Schriftart, Größe und Fett, verlor Umlaute und ließ langen Text nicht einmal durchlaufen, sondern schnitt ihn ab (ein Mangel der Werksfirmware, am 11.09.2026 mit drei Fassungen geprüft). Übrig blieb eine kleinere Nutzlast, und die ist den Preis nicht wert."),
+        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst, und die Vorschau sagt dazu, dass sie nur eine Näherung ist."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -215,8 +215,8 @@ public enum HilfeInhalt {
     /// Warnsatz bleibt deshalb bei der Oberflaeche, die wirklich warnt.
     public static let zeichen: [Hilfebaustein] = [
         .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
-        .absatz("Beim Weg „als Pixel“ wird der Text nicht als Zeichenkette verschickt, sondern von der App selbst in Pixel gerastert — deshalb gehen dort auch „ä“, „ö“, „ü“ und „ß“, und die Vorschau zeigt genau das, was gesendet wird: stehend, wenn der Text steht, laufend, wenn er läuft."),
-        .absatz("Beim Weg „als Text“ ist es umgekehrt: Die Uhr setzt den Text mit ihrer eigenen, eingebauten Schrift, und die kennt weder Umlaute noch die meisten Satzzeichen — nur `%`, `.`, `-` und `:` gehen (Gerätereferenz, §1)."),
+        .absatz("An die Ulanzi-Werksfirmware wird der Text nicht als Zeichenkette verschickt, sondern von der App selbst in Pixel gerastert — deshalb gehen dort auch „ä“, „ö“, „ü“ und „ß“, und die Vorschau zeigt genau das, was gesendet wird: stehend, wenn der Text steht, laufend, wenn er läuft."),
+        .absatz("Setzt die Uhr selbst — bei AWTRIX NG immer, bei der Werksfirmware nur, wenn das Kommandozeilenwerkzeug mit `--geraeteschrift` schickt —, gilt ihre eingebaute Schrift, und die kennt weder Umlaute noch die meisten Satzzeichen (Gerätereferenz, §1)."),
     ]
 
     /// Die Schriftauswahl und die drei mitgelieferten Pixelschriften. Beide
@@ -260,10 +260,9 @@ public enum HilfeInhalt {
     /// sperren dieselben Knoepfe.
     public static let fettUndGross: [Hilfebaustein] = [
         .ueberschrift("Fett und Großbuchstaben"),
-        .absatz("Beim Weg „als Text“ sind Schriftart und Fett gesperrt: Die Uhr hat nur eine eingebaute Schrift und keinen fetten Schnitt, beides bliebe dort ohne Wirkung. Größe, Ausrichtung und Farbe wirken dort trotzdem weiter — sie gehen dann nicht mehr in unser Raster, sondern direkt als `fontHeight`, `align`, `valign` und `color` in den Textblock, den die Uhr selbst setzt (Gerätereferenz, §4.3)."),
-        .absatz("Auch beim Weg „als Pixel“ kann „Fett“ ausgegraut sein, und zwar je nach Schrift: Die App rastert beim Wechsel einmal mit und einmal ohne fetten Schnitt und vergleicht — ändert sich nichts, hat die Schrift bei dieser Größe keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner. Von den angebotenen Schriften trifft das auf die meisten zu; nur Menlo und PT Mono haben einen echten fetten Schnitt."),
+        .absatz("„Fett“ kann ausgegraut sein, und zwar je nach Schrift: Die App rastert beim Wechsel einmal mit und einmal ohne fetten Schnitt und vergleicht — ändert sich nichts, hat die Schrift bei dieser Größe keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner. Von den angebotenen Schriften trifft das auf die meisten zu; nur Menlo und PT Mono haben einen echten fetten Schnitt."),
         .absatz("Nach demselben Verfahren ist „Großbuchstaben“ bei Silkscreen gesperrt: Sie kennt überhaupt nur Versalien, der Schalter bliebe folgenlos."),
-        .absatz("„Großbuchstaben“ gilt anders als Schriftart und Fett auf beiden Wegen gleich und lässt das Eingabefeld selbst unangetastet — umgewandelt wird erst beim Senden bzw. für die Vorschau. Auf dem Weg „als Text“ ist der Schalter mit Vorsicht zu genießen: Belegt ist bisher nur, dass die Gerätschrift Kleinbuchstaben und Ziffern kennt — ob sie auch Versalien zeigt, hat noch niemand nachgesehen (Gerätereferenz, §1). Aus „ß“ wird dabei „SS“, „Ä“, „Ö“ und „Ü“ bleiben Umlaute und fehlen dort in jedem Fall."),
+        .absatz("„Großbuchstaben“ lässt das Eingabefeld selbst unangetastet — umgewandelt wird erst beim Senden bzw. für die Vorschau. Aus „ß“ wird dabei „SS“; „Ä“, „Ö“ und „Ü“ bleiben Umlaute. Setzt die Uhr den Text selbst, ist der Schalter mit Vorsicht zu genießen: Belegt ist bisher nur, dass die Gerätschrift Kleinbuchstaben und Ziffern kennt — ob sie auch Versalien zeigt, hat noch niemand nachgesehen (Gerätereferenz, §1)."),
     ]
 
     /// Rand und Abstand. Beide gibt es auf beiden Geraeten mit demselben
@@ -276,7 +275,7 @@ public enum HilfeInhalt {
         .absatz("Ganz rechts liegt „Abstand“, 0 bis 3, Vorgabe 1 — anders als Großbuchstaben nur beim Weg „als Pixel“ wirksam."),
         .absatz("„Abstand“ ist wörtlich die Zahl leerer Spalten zwischen zwei Zeichen — 0 heißt Tinte an Tinte, 1 die Vorgabe, 2 und 3 sind luftiger —, und weil sie sich aus der Tinte ergibt statt aus der Schrift, wird derselbe Text bei gleicher Schrift und Größe meist schmaler als früher, es passt also mehr aufs Display."),
         .absatz("Hier rastert die App nämlich jedes Zeichen einzeln und setzt es nach seiner Tinte ans vorige, statt nach der Vorschubbreite der Schrift: Die ist für gedruckte Größen gemacht und fällt auf sechzehn Pixeln mal zu eng, mal zu weit aus, ein fester Zuschlag verschiebt das Problem nur."),
-        .absatz("Beim Weg „als Text“ bleibt „Abstand“ ohne Wirkung: Dort rastert die Uhr selbst und bringt ihren eigenen, festen Zeichenabstand als `charSpacing` mit (Gerätereferenz, §4.3), unabhängig von dieser Einstellung."),
+        .absatz("Setzt die Uhr den Text selbst, bleibt „Abstand“ ohne Wirkung: Sie bringt ihren eigenen, festen Zeichenabstand als `charSpacing` mit (Gerätereferenz, §4.3), unabhängig von dieser Einstellung."),
     ]
 
     /// Die verfuegbare Breite und was die Ausrichtung darin tut.
@@ -291,7 +290,7 @@ public enum HilfeInhalt {
     public static let iconImLauf: [Hilfebaustein] = [
         .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz, §4.2)."),
         .absatz("Läuft der Text beim Weg „als Pixel“, wird das Icon in die Laufschrift hineingerechnet, statt als zweites Bild danebenzustehen — ob die Uhr zwei Bilder in einem Rahmen nebeneinander zeichnet, hat niemand geprüft, und so stellt sich die Frage nicht. Es steht dann fest links, der Text läuft rechts daneben durch, und seine Spalten bleiben schwarz, damit der Text nicht hinter ihm durchblitzt."),
-        .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Beim Weg „als Text“ gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell die Uhr den Text daneben laufen lässt."),
+        .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Setzt die Uhr den Text selbst, gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell sie den Text daneben laufen lässt."),
     ]
 
     /// Woher die Anzeigenliste kommt und warum der Unterschied zaehlt. Gemeldet

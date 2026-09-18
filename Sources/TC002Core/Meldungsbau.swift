@@ -17,10 +17,25 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Co
 /// Der Weg, auf dem der Text zur Uhr kommt. `.pixel` (Vorgabe) rastert die App
 /// selbst — passt der Text, steht er starr, sonst laeuft er als GIF (siehe
 /// `passt`). `.text` schickt ihn stattdessen als `Textblock`, den die Uhr mit
-/// ihrer eigenen Schrift setzt und selbst zum Laufen bringt, wenn er nicht
-/// passt (`docs/tc002-protokoll.md` §4.3, §5.4). Deren Schrift kennt weder
-/// Schriftartwahl noch Fett — deshalb sind genau diese zwei Regler dort
-/// gesperrt, nicht mehr.
+/// ihrer eigenen Schrift setzt (`docs/tc002-protokoll.md` §4.3, §5.4).
+///
+/// **Die Oberflaechen bieten die Wahl seit dem 18.09.2026 nicht mehr an.** Sie
+/// stand als Segmentschalter „Senden als" in beiden Sendeansichten und war eine
+/// Frage, die niemand beantworten kann, ohne das Geraet zu kennen:
+///
+/// - Auf einer **AWTRIX NG** hatte sie gar keine Wirkung. `Anzeigen.nutzlast`
+///   schickt dorthin in beiden Stellungen den Text samt Reglern; unsere Pixel
+///   sehen diese Uhren nie.
+/// - Auf der **Werksfirmware** kostete `.text` Schriftwahl, Groesse und Fett,
+///   verlor Umlaute und lief nicht einmal durch (gemessen, `docs/
+///   firmware-beobachtungen.md` Nr. 1) — dafuer ein paar Kilobyte weniger
+///   Nutzlast. Das ist kein Gegenwert.
+///
+/// Was bleibt, ist die Gleichheit ueber beide Uhren hinweg: Die App setzt
+/// jeden Text, den sie setzen kann, selbst; wo die Uhr selbst setzt, tut sie es
+/// ohnehin. `.text` steht weiter im Kern, weil `mqtttc002 --geraeteschrift` und
+/// der Kurzbefehl es ausdruecklich verlangen koennen — und weil das Feld Teil
+/// des Dateiformats von Slotgedaechtnis und Verlauf ist.
 public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
     case pixel, text
     public var id: String { rawValue }

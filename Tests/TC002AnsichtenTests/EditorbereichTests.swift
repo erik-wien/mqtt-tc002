@@ -29,7 +29,7 @@ final class EditorbereichTests: XCTestCase {
 
     func testDieSeitenleisteHatVierEintraegeUndDarunterDenEditor() {
         XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor])
-        XCTAssertEqual(SchreibtischView.Bereich.unten, [.verlauf, .einstellungen])
+        XCTAssertEqual(SchreibtischView.Bereich.unten, [.protokoll, .einstellungen])
         XCTAssertEqual(SchreibtischView.Bereich.allCases.count, 4,
                        "„Bilder“ und „Icons“ sind zu einem Eintrag geworden")
     }

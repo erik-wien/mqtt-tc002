@@ -102,14 +102,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.blockwissenSchluss
                 + [
-                    .ueberschrift("Weg: als Pixel oder als Text"),
-                    .absatz("Ganz oben im Inspektor rechts steht unter „Senden als“ die Wahl des Wegs, mit zwei Einträgen: „als Pixel“ (Vorgabe) und „als Text“."),
+                    .ueberschrift("Stehen oder laufen"),
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text beim Weg „als Pixel“, wird im Inspektor der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da. Unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
+                    .absatz("Läuft der Text, wird im Inspektor der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da. Unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
                     .absatz("Die Größe ist der Grund für die Angabe: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage). Wird es auffällig groß, sagt ein zusätzlicher Hinweis das."),
-                    .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Die Nutzlast ist damit winzig, und die Anzeige bleibt auch dann stehen, wenn sie lang ist: Die Werksfirmware lässt selbst geschickten Text nicht durchlaufen, sondern schneidet ihn ab. Deshalb warnt die Ansicht, sobald er voraussichtlich nicht mehr passt — genau schätzen lässt sich das nicht, weil die Uhr ihre eigene Schrift setzt und diese App deren Breiten nicht kennt."),
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
                     .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ bei der aktiven Uhr."),
                 ]
@@ -124,10 +122,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen
                 + [
-                    .absatz("Enthält der Text etwas anderes, sagt die App das vor dem Senden: welche Zeichen betroffen sind, und dass „als Pixel“ sie kann. Ohne diese Warnung würde die Uhr die Zeichen wortlos weglassen."),
                     .ueberschrift("Formatierung"),
-                    .absatz("Alles Formatierende sitzt rechts im Inspektor, in fünf Abschnitten: „Senden als“ (der Weg), „Laufschrift“ (das Tempo), „Icon“, „Schrift“ (Schriftart, Größe und in der Zeile „Stil“ Fett, Großbuchstaben und die Farbe) und „Lage“ (Rand, Abstand, waagrechte und senkrechte Ausrichtung). Der Knopf rechts in der Werkzeugleiste blendet den Inspektor ein und aus; welche Richtung ein Symbolknopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
-                    .absatz("Für den Weg „als Pixel“ gilt der ganze Inspektor, auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
+                    .absatz("Alles Formatierende sitzt rechts im Inspektor, in vier Abschnitten: „Laufschrift“ (das Tempo), „Icon“, „Schrift“ (Schriftart, Größe und in der Zeile „Stil“ Fett, Großbuchstaben und die Farbe) und „Lage“ (Rand, Abstand, waagrechte und senkrechte Ausrichtung). Der Knopf rechts in der Werkzeugleiste blendet den Inspektor ein und aus; welche Richtung ein Symbolknopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
+                    .absatz("Der ganze Inspektor gilt auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
                 ]
                 + HilfeInhalt.schriftart
                 + [
@@ -228,7 +225,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Weitere Symptome"),
                     .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es im Editor nicht geben und bei „Senden“ nur auf dem Weg „als Text“ — dort warnt die App vorher, welche Zeichen betroffen sind. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es auf einer Ulanzi-Werksfirmware nicht geben: Die App rastert dorthin jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht. Auf einer TC001 unter AWTRIX NG setzt die Uhr selbst — dort hängt es an ihrer Schrift."),
                 ]
         }
     }

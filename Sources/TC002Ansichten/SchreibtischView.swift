@@ -112,18 +112,22 @@ public struct SchreibtischView: View {
         List(Bereich.oben, selection: $bereich) { b in
             Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
         }
-        // Verlauf und Einstellungen bleiben unten abgesetzt, statt in
-        // derselben Liste mitzulaufen — eine zweite List traegt dieselbe
+        // Protokoll, Einstellungen und Hilfe bleiben unten abgesetzt, statt
+        // in derselben Liste mitzulaufen — eine zweite List traegt dieselbe
         // Auswahl ($bereich) und dieselbe Reihen-Optik wie die obere.
         .safeAreaInset(edge: .bottom) {
-            List(Bereich.unten, selection: $bereich) { b in
-                Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+            List(selection: $bereich) {
+                ForEach(Bereich.unten) { b in
+                    Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+                }
+                hilfezeile
             }
-            // Zwei Zeilen, kein Rollen: Bei 76 war der Inhalt ein paar
-            // Punkte hoeher als die Liste, und sie bot einen Rollbalken an.
+            // Drei Zeilen, kein Rollen: Bei 76 war der Inhalt fuer zwei ein
+            // paar Punkte hoeher als die Liste, und sie bot einen Rollbalken
+            // an; 44 je Zeile haelt denselben Abstand.
             .scrollDisabled(true)
             .scrollIndicators(.hidden)
-            .frame(height: 88)
+            .frame(height: 132)
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
@@ -138,6 +142,41 @@ public struct SchreibtischView: View {
         #if !os(macOS)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { nebenfensterMenue } }
         #endif
+    }
+
+    /// **Die Hilfe als dritte Zeile unten** (18.09.2026).
+    ///
+    /// Sie waehlt keinen Bereich aus, sondern oeffnet das Dokument — am Mac
+    /// das Fenster der `Window`-Szene, auf dem iPad die ganzflaechige
+    /// Einblendung. Deshalb ein Knopf und keine Zeile mit `tag`: Waere sie ein
+    /// `Bereich`, stuende in der Detailspalte eine `NavigationSplitView` in
+    /// einer `NavigationSplitView`, und die Auswahl bliebe auf „Hilfe" stehen,
+    /// nachdem man sie gelesen hat.
+    ///
+    /// Am Mac steht sie zusaetzlich im Hilfe-Menue (⌘?). Die Doppelung ist der
+    /// Zweck: **Das iPad hat keine Menueleiste** (erst iPadOS 26, die App
+    /// laeuft ab iOS 17), und eine Oberflaeche, die sich beide teilen, darf
+    /// ihren Weg zur Hilfe nicht dort haben, wo ihn nur eines von beiden
+    /// findet.
+    @ViewBuilder
+    private var hilfezeile: some View {
+        Button {
+            #if os(macOS)
+            fensterOeffnen?(Nebenfenster.hilfe.id)
+            #else
+            nebenfenster = .hilfe
+            #endif
+        } label: {
+            Label(Nebenfenster.hilfe.titel, systemImage: Nebenfenster.hilfe.symbol)
+                // Sonst faerbt der Knopfkanon die Zeile blau, waehrend die
+                // beiden darueber in der Schriftfarbe stehen.
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        // **Kein ⌘?.** Das Hilfe-Menue am Mac traegt es schon; zwei Halter
+        // desselben Kuerzels bedienen sich gegenseitig aus.
     }
 
     @ViewBuilder

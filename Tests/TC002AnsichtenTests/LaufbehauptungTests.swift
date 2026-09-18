@@ -9,8 +9,14 @@ import XCTest
 /// er wird abgeschnitten — auch bei `scrollSpeed` über null, geprüft mit drei
 /// Fassungen (`docs/firmware-beobachtungen.md` Nr. 1, Gerätereferenz §4.3).
 ///
-/// Eine falsche Zusage ist schlimmer als eine fehlende: Sie führt dazu, dass
-/// man für langen Text den Weg wählt, auf dem er verschwindet.
+/// Eine falsche Zusage ist schlimmer als eine fehlende: Sie führte dazu, dass
+/// man für langen Text den Weg wählte, auf dem er verschwindet.
+///
+/// **Noch am selben Tag ist die Wahl ganz entfallen** (siehe `SendeWeg` im
+/// Kern): Die App rastert jeden Text selbst, und damit kann diese Zusage in
+/// keiner Oberfläche mehr gegeben werden. Die Messung bleibt trotzdem
+/// geschützt — die Hilfe erklärt jetzt, *warum* es die Wahl nicht mehr gibt,
+/// und dieser Grund darf nicht stillschweigend verschwinden.
 ///
 /// Geprüft wird am Wortlaut, weil genau der das Versprechen war.
 final class LaufbehauptungTests: XCTestCase {
@@ -43,21 +49,29 @@ final class LaufbehauptungTests: XCTestCase {
     }
 
     /// Und die gemeinsame Wegeregel sagt nicht mehr, „als Text" laufe von
-    /// selbst durch.
+    /// selbst durch — sie führt das Abschneiden jetzt als einen der Gründe
+    /// dafür an, dass es diesen Weg in der Oberfläche nicht mehr gibt.
     func testDieWegeregelVersprichtKeinenLauf() throws {
         let text = try quelle("Sources/TC002Ansichten/HilfeInhalt.swift")
         XCTAssertFalse(text.contains("läuft von selbst durch, wenn nötig"),
                        "Die Wegeregel verspricht wieder einen Lauf, den die Werksfirmware nicht leistet.")
-        XCTAssertTrue(text.contains("abgeschnitten"),
+        XCTAssertTrue(text.contains("schnitt ihn ab"),
                       "Die Wegeregel sagt nicht mehr, was wirklich passiert.")
     }
 
-    /// Dafür warnt die Sendeansicht jetzt, wenn der Text auf diesem Weg
-    /// voraussichtlich nicht mehr passt — die Warnung, die es dort
-    /// ausdrücklich **nicht** gab, weil Laufen als Normalfall galt.
-    func testDerTextwegWarntVorDerBreite() throws {
-        let text = try quelle("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(text.contains("Voraussichtlich zu lang"),
-                      "Auf dem Weg „als Text“ fehlt die Breitenwarnung.")
+    /// **Die Wahl selbst gibt es nicht mehr, und sie kommt nicht zurück.**
+    /// Ein Segmentschalter „als Pixel / als Text" in einer Sendeansicht wäre
+    /// genau die Frage, die niemand beantworten kann, ohne das Gerät zu
+    /// kennen; auf einer AWTRIX NG hatte sie obendrein gar keine Wirkung.
+    func testKeineSendeansichtBietetDenWegAn() throws {
+        for pfad in ["Sources/TC002Ansichten/SendenView.swift",
+                     "Sources/TC002iOS/SendeniOS.swift",
+                     "Sources/TC002iOS/FormatblattiOS.swift"] {
+            let text = try quelle(pfad)
+            XCTAssertFalse(text.contains("Picker(\"Weg\""),
+                           "\(pfad) bietet den Weg wieder zur Wahl an.")
+            XCTAssertFalse(text.contains("selection: $weg"),
+                           "\(pfad) bietet den Weg wieder zur Wahl an.")
+        }
     }
 }

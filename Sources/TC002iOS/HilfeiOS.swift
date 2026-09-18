@@ -98,13 +98,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.blockwissenAnfang
                 + HilfeInhalt.blockwissenSchluss
                 + [
-                    .ueberschrift("Weg: als Pixel oder als Text"),
-                    .absatz("Der Pinsel in der Formatpille öffnet das Blatt „Format“; oben darin steht die Wahl „Weg“ mit zwei Einträgen: „als Pixel“ (Vorgabe) und „als Text“."),
+                    .ueberschrift("Stehen oder laufen"),
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text beim Weg „als Pixel“, gilt „Tempo“ aus demselben Blatt — langsam, mittel oder schnell. Unter der Vorschau steht dann, aus wie vielen Einzelbildern der Lauf besteht."),
-                    .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Die Nutzlast ist damit winzig. Zu langer Text läuft dort aber nicht durch: Die Werksfirmware schneidet ihn ab. Wer langen Text will, nimmt „als Pixel“ — dort baut die App den Lauf selbst."),
+                    .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell. Unter der Vorschau steht dann, aus wie vielen Einzelbildern der Lauf besteht."),
 
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
                     .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Fassung stellt ihn nicht ein."),
@@ -191,7 +189,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Weitere Symptome"),
                     .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — diese Fassung stellt ihn nicht ein."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es nur auf dem Weg „als Text“ geben. Beim Weg „als Pixel“ rastert die App jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es auf einer Ulanzi-Werksfirmware nicht geben: Die App rastert dorthin jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht. Auf einer TC001 unter AWTRIX NG setzt die Uhr selbst — dort hängt es an ihrer Schrift."),
                 ]
         }
     }

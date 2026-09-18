@@ -21,8 +21,10 @@ final class HilfezeichenTests: XCTestCase {
     /// Die vier Gruppenüberschriften, die eine Erklärung tragen müssen, samt
     /// ihrer Datei. Zwei im Sendeinspektor, zwei im Editorinspektor — beide
     /// Ansichten gelten für Mac **und** iPad (`SchreibtischView`).
+    /// „Senden als" stand hier bis zum 18.09.2026 mit dazu. Der Abschnitt ist
+    /// weg, weil die Wahl weg ist (siehe `SendeWeg` im Kern) — und damit auch
+    /// die Frage, die sein (?) beantwortet hätte.
     private static let koepfe = [
-        ("Sources/TC002Ansichten/SendenView.swift", "Senden als"),
         ("Sources/TC002Ansichten/SendenView.swift", "Schrift"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Hinzufügen"),

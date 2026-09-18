@@ -38,7 +38,6 @@ public struct SendenView: View {
     /// Platz mit, andere nicht. Ein eigener Rand macht den Eindruck unabhaengig
     /// vom Bau der Schrift. Bei „mittig" wirkt er naturgemaess nicht.
     @AppStorage("senden.rand") private var rand: Int = 1
-    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     /// Nur wirksam, wenn der Text laeuft.
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
     @AppStorage("senden.iconmitlaufend") private var iconLaeuftMit = false
@@ -146,7 +145,6 @@ public struct SendenView: View {
 
     private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
-        weg = o.weg
         schrift = o.schrift
         groesse = o.groesse
         fett = o.fett
@@ -221,7 +219,7 @@ public struct SendenView: View {
     /// Die Optionen dieser Ansicht als Wertetyp — die einzige Stelle, an der
     /// aus Ansichtszustand ein Auftrag wird.
     private var optionen: Meldungsoptionen {
-        Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
+        Meldungsoptionen(text: text, schrift: schrift, groesse: groesse,
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
@@ -268,10 +266,7 @@ public struct SendenView: View {
     /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
     /// Wirkung: `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
     /// ganz aussen durchs Fenster und fragt `horizontal` gar nicht erst ab.
-    /// Nur der Pixel-Weg laeuft in unserer eigenen Rechnung — beim Text-Weg
-    /// entscheidet die Uhr selbst, ob und wie sie laufen laesst, und das
-    /// wissen wir vorher nicht (siehe die Naeherungs-Meldung dort).
-    private var waagrechtWirktNicht: Bool { weg == .pixel && !passt }
+    private var waagrechtWirktNicht: Bool { !passt }
 
     /// **Das vorberechnete GIF geht nur mit, wenn es die Größe hat, in der
     /// gesendet wird.** Die Vorschau rastert auf dem Maß der angesehenen Uhr;
@@ -335,17 +330,16 @@ public struct SendenView: View {
     /// aendert — gemessen, nicht geraten. Sechs der acht angebotenen Schriften
     /// haben keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner.
     private var fettWirkt: Bool {
-        weg != .text && Textraster.kannFett(schrift: schrift, groesse: groesse)
+        Textraster.kannFett(schrift: schrift, groesse: groesse)
     }
 
     /// Ob die Schrift eigene Kleinbuchstaben kennt. Silkscreen etwa setzt alles
     /// in Versalien — dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
-        weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+        Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
     }
 
     private var fettHilfe: String {
-        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
         return fettWirkt ? lok("Fett")
             : lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift)
     }
@@ -379,13 +373,6 @@ public struct SendenView: View {
     /// einem „ß" längst ein darstellbares „SS" geworden, das soll die Warnung
     /// nicht mehr treffen. Jedes betroffene Zeichen nur einmal, in der
     /// Reihenfolge des ersten Auftretens.
-    /// **Die Liste steht im Kern** (`Geraeteschrift`), nicht hier: Sie ist eine
-    /// Aussage ueber die eingebaute Schrift der Uhr, und das Telefon braucht
-    /// dieselbe. Bis zum 18.09.2026 stand sie an dieser Stelle — und das
-    /// Telefon warnte gar nicht.
-    private var unbekannteZeichen: [Character] { Geraeteschrift.unbekannteZeichen(in: gesendeterText) }
-    private var unbekannteZeichenText: String { Geraeteschrift.unbekannteZeichenText(in: gesendeterText) }
-
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Wie ein Nachrichtenfenster: Vorschau oben und sichtbar bleibend
@@ -445,9 +432,9 @@ public struct SendenView: View {
                     VStack(spacing: 6) {
                         VorschauView(feld: feld, kantenlaenge: kante,
                                     typ: geraeteart,
-                                    icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
+                                    icon: passt ? gewaehltesIcon?.datei : nil,
                                     iconKante: iconKante,
-                                    laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                                    laufschriftBilder: passt ? nil : laufschriftFrames)
                             .uhrenwischen(zustand)
                         Uhrenpunkte(zustand: zustand)
                     }
@@ -466,48 +453,18 @@ public struct SendenView: View {
                         Text(lokf("Hinaus geht der Text samt Reglern · %@", Nutzlastzeile.groesse(nutzlastBytes)))
                             .font(.footnote).foregroundStyle(.secondary)
                     }
-                } else {
-                switch weg {
-                case .pixel:
-                    if !passt {
-                        // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
-                        // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
-                        // der Nutzlastgroesse aussteigt (§4.2a).
-                        // Nur der Stand, keine Erklaerung — die steht in der Hilfe
-                        // („Senden", Absatz zur Nutzlastgroesse).
-                        Nutzlastzeile(
-                            art: lok("Laufschrift"),
-                            bilder: laufschriftFrames.count,
-                            bytes: nutzlastBytes,
-                            rat: lok("nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts."))
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                case .text:
-                    // **Doch eine Breitenwarnung.** Bis zum 18.09.2026 stand hier,
-                    // zu langer Text sei auf diesem Weg kein Fehler, weil die Uhr
-                    // ihn von selbst laufen lasse. Das stimmt nicht: Gemessen am
-                    // 11.09.2026 mit drei Fassungen laeuft selbst geschickter Text
-                    // auf der Werksfirmware **nicht**, er wird abgeschnitten
-                    // (`docs/firmware-beobachtungen.md` Nr. 1) — und `scrollSpeed`
-                    // aendert daran nichts. Die Schaetzung ist ungenau, weil die
-                    // Uhr ihre eigene Schrift setzt; deshalb „voraussichtlich".
-                    if !passt {
-                        Label("Voraussichtlich zu lang: Die Uhr schneidet selbst geschickten Text ab, statt ihn durchlaufen zu lassen. Wie viel auf ihre eingebaute Schrift passt, weiß diese App nicht genau — „als Pixel“ lässt ihn laufen.",
-                              systemImage: "exclamationmark.triangle")
-                            .font(.footnote).foregroundStyle(.orange)
-                    }
-                    // Statt
-                    // der Breitenwarnung steht hier, dass unsere Vorschau nur eine
-                    // Naeherung ist: die Uhr rastert selbst, mit ihrer eigenen Schrift.
-                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders.",
-                          systemImage: "info.circle")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    if !unbekannteZeichen.isEmpty {
-                        Label(lokf("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie.", unbekannteZeichenText),
-                              systemImage: "exclamationmark.triangle")
-                            .font(.footnote).foregroundStyle(.orange)
-                    }
-                }
+                } else if !passt {
+                    // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
+                    // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
+                    // der Nutzlastgroesse aussteigt (§4.2a).
+                    // Nur der Stand, keine Erklaerung — die steht in der Hilfe
+                    // („Senden", Absatz zur Nutzlastgroesse).
+                    Nutzlastzeile(
+                        art: lok("Laufschrift"),
+                        bilder: laufschriftFrames.count,
+                        bytes: nutzlastBytes,
+                        rat: lok("nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts."))
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -619,7 +576,7 @@ public struct SendenView: View {
             groesse = Pixelgroessen.naechstgelegene(zu: groesse, fuer: neu)
         }
         .task(id: laufschriftSchluessel) {
-            guard weg == .pixel, !passt else {
+            guard !passt else {
                 laufschriftFrames = []; laufschriftURI = ""
                 nutzlastBytes = await ngNutzlastBytes()
                 return
@@ -654,7 +611,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
+        "\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -703,8 +660,8 @@ public struct SendenView: View {
                 // sie zwar zur Sendung passte, aber nicht zu ihren Nachbarn.
                 //
                 // Der Abschnitt bleibt hier in `SendenView` und wandert nicht
-                // nach `Zeitabschnitte`: Ob er wirkt, haengt an `weg` und
-                // `passt` — Zustand dieser Ansicht. Ihn dorthin zu schieben
+                // nach `Zeitabschnitte`: Ob er wirkt, haengt an `passt` —
+                // Zustand dieser Ansicht. Ihn dorthin zu schieben
                 // hiesse, drei Werte durchzureichen, damit ein Baustein
                 // entscheiden kann, was der Aufrufer laengst weiss.
                 Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
@@ -730,9 +687,9 @@ public struct SendenView: View {
                 Text("schnell").tag(Lauftempo.schnell)
             }
             .pickerStyle(.segmented).labelsHidden()
-            .disabled(!(weg == .pixel && !passt))
-            .help(weg == .pixel && !passt ? lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")
-                                          : lok("Gilt nur, wenn der Text nicht ins Display passt."))
+            .disabled(passt)
+            .help(passt ? lok("Gilt nur, wenn der Text nicht ins Display passt.")
+                        : lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft."))
             // Sagt, was die Ueberschrift nicht mehr sagt: fuer wie viele
             // Anzeigen das gilt, und wann ueberhaupt.
             Text("Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft.")
@@ -742,19 +699,6 @@ public struct SendenView: View {
 
     private var formatinhalt: some View {
         Form {
-            // Segmentschalter ueber die volle Breite, ohne Beschriftung links:
-            // Der Abschnittstitel sagt schon, worum es geht. Eine Beschriftung
-            // daneben quetschte den Schalter zusammen — genau das sah man.
-            Section {
-                Picker("Weg", selection: $weg) {
-                    Text("als Pixel").tag(SendeWeg.pixel)
-                    Text("als Text").tag(SendeWeg.text)
-                }
-                .pickerStyle(.segmented).labelsHidden()
-            } header: {
-                Abschnittskopf("Senden als", hilfe: lok("Als Pixel rechnet die App das Bild selbst; passt der Text nicht, baut sie den Lauf als GIF. Als Text setzt ihn die Uhr mit ihrer eingebauten Schrift und lässt ihn bei Bedarf selbst durchlaufen — das Tempo steht dann in den Einstellungen der Uhr."))
-            }
-
             // Immer da, gesperrt statt versteckt: Ein Abschnitt, der je nach
             // Zustand erscheint und verschwindet, laesst die Seitenleiste
             // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
@@ -765,7 +709,7 @@ public struct SendenView: View {
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
                 // beim Laufen tut.
                 Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
-                    .disabled(gewaehltesIcon == nil || !(weg == .pixel && !passt))
+                    .disabled(gewaehltesIcon == nil || passt)
             }
 
             Section {
@@ -805,10 +749,8 @@ public struct SendenView: View {
                         // Nimmt, was uebrig ist — der Name ist das Lange von
                         // beiden.
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .disabled(weg == .text)
                         .gattungssperre(.schriftart, gattung,
-                            sonst: weg == .text ? lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.")
-                                                : lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
+                            sonst: lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                         // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                         // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke

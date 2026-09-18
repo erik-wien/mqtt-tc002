@@ -459,6 +459,27 @@ Text gezeichnet, rückt nichts ein und ersetzt `backgroundColor` und jeden
 `effect`. Ein fehlendes oder nicht lesbares Icon fällt auf die Anordnung ohne
 Icon zurück, statt eine schwarze Spalte stehen zu lassen.
 
+📘 **Ein voller 32×8-Lauf, geprüft und bewusst nicht genutzt** (18.09.2026).
+Aus den beiden Absätzen darüber folgt ein Weg, den diese App gehen *könnte*:
+ein animiertes 32×8-GIF als Icon einer Anzeige mit leerem Text — also die
+Laufschrift, die sie für die Werksfirmware ohnehin baut, nur auf dem Maß der
+NG (`Anzeigemass`, `Textraster.laufschrift(…, mass:)`). Sie ist dort sogar
+billiger: ein Viertel der Pixel eines 52×16.
+
+Gemacht wird es trotzdem nicht, und zwar aus Gründen, die beim nächsten Mal
+nicht neu gesucht werden müssen:
+
+- **Die NG kann Umlaute** (§4.1: Latin-1, Latin Extended-A, `€`, Kyrillisch)
+  und **scrollt selbst**, mit einstellbarem Tempo. Der Gewinn wäre allein die
+  freie Schriftwahl.
+- Bezahlt würde er mit einer Nutzlast von Kilobytes statt Hunderten Bytes,
+- mit dem Verlust von `backgroundColor` und jedem `effect` — ein GIF über die
+  vollen 32 px **ist** der Hintergrund —,
+- und mit einem zweiten Sendeweg für dieselbe Sache, der gepflegt werden will.
+
+Sollte sich das ändern (eine Schrift, die die NG nicht hat; ein Zeichen, das
+sie zu `?` faltet), steht hier, was zu tun wäre.
+
 📄 Durchsichtige GIF-Pixel sind im **ersten** Bild einer Bewegung schwarz;
 innerhalb der Bewegung behalten sie, was das vorige Bild dort gezeichnet hat.
 

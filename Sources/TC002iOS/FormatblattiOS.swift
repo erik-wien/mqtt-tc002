@@ -6,15 +6,17 @@ import TC002Core
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
 /// gestapelt verdeckte es die Vorschau. Schriftart, beide Ausrichtungen,
 /// Größe, Fett, Großbuchstaben, Rand und Abstand sitzen inzwischen in der
-/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Weg,
-/// Dauer und Laufschrift.
+/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Dauer
+/// und Laufschrift.
+///
+/// **„Senden als" ist am 18.09.2026 ersatzlos weg.** Siehe `SendeWeg` im Kern:
+/// Die App wählt den Weg selbst.
 ///
 /// **Die Dauer kam am 14.09.2026 dazu.** Sie stand als eigene Zeile neben den
 /// fünf Blöcken und nahm dort die Breite weg, die die Blöcke brauchen. Hier
 /// steht sie bei der Laufschrift — beide reisen mit *dieser einen* Meldung
 /// mit, und genau so hält es der Zeit-Reiter am Schreibtisch.
 struct FormatblattiOS: View {
-    @Binding var weg: SendeWeg
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
@@ -23,25 +25,6 @@ struct FormatblattiOS: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Picker("Weg", selection: $weg) {
-                        Text("als Pixel").tag(SendeWeg.pixel)
-                        Text("als Text").tag(SendeWeg.text)
-                    }
-                    .pickerStyle(.segmented)
-                    if weg == .pixel {
-                        Text("Die App rastert selbst. Umlaute gehen, die Schrift ist frei wählbar.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    } else {
-                        Text("Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                } header: {
-                    // Derselbe Wortlaut wie im Inspektor am Schreibtisch —
-                    // eine Konstante waere hier eine ueber zwei Ziele hinweg;
-                    // der Sammler fuehrt beide auf denselben Schluessel.
-                    Abschnittskopf("Senden als", hilfe: lok("Als Pixel rechnet die App das Bild selbst; passt der Text nicht, baut sie den Lauf als GIF. Als Text setzt ihn die Uhr mit ihrer eingebauten Schrift und lässt ihn bei Bedarf selbst durchlaufen — das Tempo steht dann in den Einstellungen der Uhr."))
-                }
                 Section {
                     LabeledContent("Dauer (Sek.)") {
                         TextField("Uhr entscheidet", text: $dauerText)

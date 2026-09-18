@@ -61,7 +61,6 @@ struct SendeniOS: View {
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
     @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
     @AppStorage("senden.rand") private var rand = 1
-    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
     @AppStorage("senden.iconmitlaufend") private var iconLaeuftMit = false
     @AppStorage("senden.icon") private var iconNummer = ""
@@ -145,7 +144,6 @@ struct SendeniOS: View {
 
     private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
-        weg = o.weg
         schrift = o.schrift
         groesse = o.groesse
         fett = o.fett
@@ -171,7 +169,7 @@ struct SendeniOS: View {
 
     /// Die einzige Stelle, an der aus Ansichtszustand ein Auftrag wird.
     private var optionen: Meldungsoptionen {
-        Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
+        Meldungsoptionen(text: text, schrift: schrift, groesse: groesse,
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
@@ -196,21 +194,21 @@ struct SendeniOS: View {
     /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
     /// Wirkung — `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
     /// ganz aussen durchs Fenster. Wortgleich mit `SendenView`.
-    private var waagrechtWirktNicht: Bool { weg == .pixel && !passt }
+    private var waagrechtWirktNicht: Bool { !passt }
 
     /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
     /// aendert — dieselbe Rechnung wie `SendenView.fettWirkt` (Mac). Ein Knopf
     /// ohne Wirkung ist schlimmer als keiner, deshalb wird er gesperrt statt
     /// nur eingefaerbt.
     private var fettWirkt: Bool {
-        weg != .text && Textraster.kannFett(schrift: schrift, groesse: groesse)
+        Textraster.kannFett(schrift: schrift, groesse: groesse)
     }
 
     /// Ob die Schrift eigene Kleinbuchstaben kennt — dieselbe Rechnung wie
     /// `SendenView.kleinbuchstabenMoeglich` (Mac). Silkscreen etwa setzt alles
     /// in Versalien; dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
-        weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+        Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
     }
 
     /// Erklaerung fuer den gesperrten Fett-Knopf. Auf dem Telefon gibt es kein
@@ -218,7 +216,6 @@ struct SendeniOS: View {
     /// (`SendenView.fettHilfe`) als accessibilityHint mit.
     private var fettHinweis: String {
         if let grund = gattung.begruendung(.fett) { return grund }
-        if weg == .text { return lok("Die Uhr kennt keinen fetten Schnitt — das gilt hier nicht.") }
         if !fettWirkt { return lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift) }
         return lok("Fett")
     }
@@ -237,7 +234,6 @@ struct SendeniOS: View {
     /// Mac-Fassung (SendenView.swift).
     private var schriftartHinweis: String {
         if let grund = gattung.begruendung(.schriftart) { return grund }
-        if weg == .text { return lok("Die Uhr hat nur eine eingebaute Schrift — das gilt hier nicht.") }
         return lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
     }
 
@@ -265,50 +261,19 @@ struct SendeniOS: View {
         Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
     }
 
-    var body: some View {
+    /// **Der Rumpf ohne die Blaetter.**
+    ///
+    /// Am 18.09.2026 gab der Uebersetzer bei `body` auf („unable to
+    /// type-check this expression in reasonable time"). Ein SwiftUI-Rumpf ist
+    /// ein einziger Ausdruck: NavigationStack, Titelmenue, Werkzeugleiste,
+    /// fuenf Blaetter und vier Beobachter waren einer zu viel. Die Teilung
+    /// laeuft entlang der Naht, die ohnehin da ist — was man sieht, und was
+    /// sich darueberlegt.
+    private var rumpf: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 FehlerleisteiOS(zustand: zustand)
-                ScrollView {
-                    VStack(spacing: 14) {
-                        // Wischen ueber der Vorschau wechselt die angesehene
-                        // Uhr, die Punktreihe darunter sagt, die wievielte es
-                        // ist — dieselben zwei Bausteine wie am Schreibtisch
-                        // (`Uhrenwahl.swift`).
-                        VorschauiOS(feld: Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, mass: mass),
-                                    icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
-                                    laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil,
-                                    typ: zustand.referenzUhr?.typ)
-                            .uhrenwischen(zustand)
-                        Uhrenpunkte(zustand: zustand)
-                        // **Die Warnung, die dem Telefon fehlte** (18.09.2026).
-                        // Beim Weg „als Text" setzt die Uhr selbst, und ihre
-                        // eingebaute Schrift kennt weder Umlaute noch die
-                        // meisten Satzzeichen — sie zeigt an der Stelle
-                        // einfach nichts, ohne Meldung. Die Liste steht im
-                        // Kern (`Geraeteschrift`), damit hier und am
-                        // Schreibtisch dasselbe gilt.
-                        if weg == .text, !Geraeteschrift.unbekannteZeichen(in: optionen.gesendeterText).isEmpty {
-                            Label(lokf("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie.",
-                                       Geraeteschrift.unbekannteZeichenText(in: optionen.gesendeterText)),
-                                  systemImage: "exclamationmark.triangle")
-                                .font(.caption).foregroundStyle(.orange)
-                        }
-                        if weg == .pixel && !passt {
-                            Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        blockZeile
-                            .padding(.horizontal)
-                        // **Hier stand die leere Flaeche.** Der Verlauf fuellt
-                        // sie mit dem, was man am haeufigsten will: dasselbe
-                        // noch einmal. Feste Hoehe, weil eine Liste in einem
-                        // Scrollbereich sonst keine eigene bekommt.
-                        Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
-                            .frame(height: 260)
-                    }
-                    .padding(.vertical, 12)
-                }
+                mitte
                 Divider()
                 formatleiste
                 eingabe
@@ -356,8 +321,12 @@ struct SendeniOS: View {
                 }
             }
         }
+    }
+
+    var body: some View {
+        rumpf
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(weg: $weg, tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
+            FormatblattiOS(tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
                            dauerText: $dauerText)
         }
         .sheet(isPresented: $zeigeBilder) {
@@ -455,6 +424,44 @@ struct SendeniOS: View {
                         .offset(x: 6, y: -6)
                 }
             }
+        }
+    }
+
+    /// **Die Mitte der Sendeansicht als eigenes Glied.**
+    ///
+    /// Nicht der Ordnung halber: Am 18.09.2026 wuchs der Rumpf ueber die
+    /// Grenze, ab der der Uebersetzer aufgibt — „unable to type-check this
+    /// expression in reasonable time". Ein SwiftUI-Rumpf ist ein einziger
+    /// Ausdruck, und dessen Pruefung waechst ueberproportional; ihn zu teilen
+    /// ist die Loesung, nicht ein Kunstgriff.
+    @ViewBuilder
+    private var mitte: some View {
+        ScrollView {
+            VStack(spacing: 14) {
+                // Wischen ueber der Vorschau wechselt die angesehene
+                // Uhr, die Punktreihe darunter sagt, die wievielte es
+                // ist — dieselben zwei Bausteine wie am Schreibtisch
+                // (`Uhrenwahl.swift`).
+                VorschauiOS(feld: Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, mass: mass),
+                            icon: passt ? gewaehltesIcon?.datei : nil,
+                            laufschriftBilder: passt ? nil : laufschriftFrames,
+                            typ: zustand.referenzUhr?.typ)
+                    .uhrenwischen(zustand)
+                Uhrenpunkte(zustand: zustand)
+                if !passt {
+                    Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                blockZeile
+                    .padding(.horizontal)
+                // **Hier stand die leere Flaeche.** Der Verlauf fuellt
+                // sie mit dem, was man am haeufigsten will: dasselbe
+                // noch einmal. Feste Hoehe, weil eine Liste in einem
+                // Scrollbereich sonst keine eigene bekommt.
+                Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
+                    .frame(height: 260)
+            }
+            .padding(.vertical, 12)
         }
     }
 
@@ -621,7 +628,6 @@ struct SendeniOS: View {
                         Text(schrift)
                     }
                     .frame(minWidth: 44, minHeight: 44)
-                    .disabled(weg == .text)
                     .disabled(!gattung.wirkt(.schriftart))
                     .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                     .accessibilityHint(Text(schriftartHinweis))
@@ -810,14 +816,14 @@ struct SendeniOS: View {
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
     /// ganz billige) Berechnung nur bei einer tatsächlichen Änderung neu läuft.
     private var laufschriftSchluessel: String {
-        "\(weg)|\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
+        "\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64 darüber —
     /// bei jedem Tastendruck. Das gehört nicht auf den Hauptthread, sonst
     /// stockt das Eingabefeld.
     private func laufschriftRechnen() async {
-        guard weg == .pixel, !passt else {
+        guard !passt else {
             laufschriftFrames = []; laufschriftURI = ""; return
         }
         let (o, mass) = (vorschauOptionen, mass)
