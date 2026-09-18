@@ -31,3 +31,11 @@ start-claude.sh
 claude-resume.sh
 .claude-session.log
 .claude-session-id
+
+# Die Planpapiere sind Arbeitsprotokolle: wertvoll waehrend der Arbeit, danach
+# Rauschen — und mit 256 KB die groesste Angriffsflaeche fuer genau die
+# Vorfaelle, die CLAUDE.md festhaelt (zweimal sind Hausnetzangaben ueber solche
+# Papiere hereingekommen; wer misst, schreibt auf, was er sieht). Sie bleiben
+# oertlich liegen. **Entwurf und Rueckstand bleiben eingecheckt**: Auf die
+# verweist der Quelltext, und sie sagen, warum etwas so ist, wie es ist.
+docs/superpowers/plans/
