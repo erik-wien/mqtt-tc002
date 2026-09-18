@@ -48,18 +48,55 @@ public extension View {
     /// ausdrücklichen Stil zeichnete iPadOS blaue Schrift in der Akzentfarbe,
     /// und ein blaues Zeichen im Feld läse sich als Verweis.
     func eingabefeld(loeschbar text: Binding<String>) -> some View {
+        eingabefeld(loeschbar: text, senden: nil, laeuft: false)
+    }
+
+    /// Dasselbe, dazu ein ⏎ am rechten Rand — **für das Feld, das die
+    /// Haupthandlung auslöst.**
+    ///
+    /// Es sagt an, was die Eingabetaste tut, und **ist zugleich der Knopf**:
+    /// Ohne ihn hätte, wer mit der Maus arbeitet, gar keine Stelle mehr zum
+    /// Klicken, seit der eigene Sendeknopf weggefallen ist. Ein Zeichen, das
+    /// nur aussieht wie ein Knopf, wäre die schlechtere Hälfte von beidem.
+    ///
+    /// **Die Reihenfolge ist (x) links, ⏎ rechts.** Das Löschen gehört zum
+    /// Feld, das Senden ist die Handlung danach — von links nach rechts
+    /// gelesen also erst zurücknehmen, dann abschicken.
+    ///
+    /// Während des Sendens tritt ein Fortschrittsdreher an die Stelle des ⏎,
+    /// und das (x) fällt weg: Ein Feld, dessen Inhalt gerade hinausgeht,
+    /// leert man nicht. Ohne den Dreher fehlte jede Rückmeldung — die gab
+    /// vorher der Knopf, der „Sende…" hieß.
+    func eingabefeld(loeschbar text: Binding<String>,
+                     senden: (() -> Void)?,
+                     laeuft: Bool) -> some View {
         eingabefeld()
             .overlay(alignment: .trailing) {
-                if !text.wrappedValue.isEmpty {
-                    Button { text.wrappedValue = "" } label: {
-                        Image(systemName: "xmark.circle.fill")
+                HStack(spacing: 6) {
+                    if !text.wrappedValue.isEmpty, !laeuft {
+                        Button { text.wrappedValue = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .help(lok("Leeren"))
+                        .accessibilityLabel(Text("Leeren"))
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, 4)
-                    .help(lok("Leeren"))
-                    .accessibilityLabel(Text("Leeren"))
+                    if laeuft {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel(Text("Sende…"))
+                    } else if let senden, !text.wrappedValue.isEmpty {
+                        Button(action: senden) {
+                            Image(systemName: "return")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .help(lok("Senden"))
+                        .accessibilityLabel(Text("Senden"))
+                    }
                 }
+                .padding(.trailing, 4)
             }
     }
 }

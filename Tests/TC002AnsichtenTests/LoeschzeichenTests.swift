@@ -45,7 +45,11 @@ final class LoeschzeichenTests: XCTestCase {
     func testDieFluechtigenFelderTragenEinLoeschzeichen() throws {
         for feld in Self.felder {
             let quelle = try ohneKommentare(feld.datei)
-            XCTAssertTrue(quelle.contains("eingabefeld(loeschbar: \(feld.bindung))"),
+            // Ohne die schliessende Klammer: Das Meldungsfeld am Mac reicht
+            // seit dem 18.09.2026 zusaetzlich `senden:` und `laeuft:` herein
+            // (das ⏎ am rechten Rand). Zugesichert ist die **Bindung**, an der
+            // das Loeschzeichen haengt, nicht die Zahl der Argumente.
+            XCTAssertTrue(quelle.contains("eingabefeld(loeschbar: \(feld.bindung)"),
                           "\(feld.wo) (\(feld.bindung)) hat kein Löschzeichen.")
         }
     }

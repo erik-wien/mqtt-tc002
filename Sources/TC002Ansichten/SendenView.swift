@@ -503,22 +503,10 @@ public struct SendenView: View {
             // den Ueberlauf einer ueberladenen Zeile auffangen musste.
             slotZeile
 
-            // Breit: Feld und Knopf in einer Zeile. Schmal: der Knopf rueckt
-            // unter das Feld, rechts — damit die Mitte weiter nachgeben kann,
-            // bevor irgendetwas abgeschnitten wird.
-            ViewThatFits(in: .horizontal) {
-                HStack {
-                    // Ohne Mindestbreite "passt" das Feld immer, weil es sich
-                    // beliebig zusammendruecken laesst — dann kaeme die zweite
-                    // Variante nie zum Zug.
-                    textFeld.frame(minWidth: 320)
-                    sendeKnopf
-                }
-                VStack(alignment: .trailing, spacing: 8) {
-                    textFeld
-                    sendeKnopf
-                }
-            }
+            // **Eine Zeile, kein `ViewThatFits` mehr.** Der fing den Ueberlauf
+            // von Feld **und** Knopf auf; seit das Senden im Feld sitzt, gibt
+            // es nichts mehr, was daneben keinen Platz haette.
+            textFeld
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -938,25 +926,28 @@ public struct SendenView: View {
     /// stand dort so unsichtbar wie unter iPadOS. Der Zweig ist damit
     /// hinfaellig (siehe `Eingabefeld.swift`). Das iPhone setzt seinen Rahmen
     /// weiterhin in `SendeniOS` selbst.
+    /// **Das Feld ist der Knopf.** Bis zum 18.09.2026 stand daneben ein
+    /// eigener „Senden"; jetzt sitzt am rechten Rand des Feldes ein ⏎, das
+    /// ansagt, was die Eingabetaste tut, und selbst anklickbar ist — dieselbe
+    /// Bauart wie am Telefon, wo die Eingabetaste schon seit dem 15.09.2026
+    /// schickt.
+    ///
+    /// `.onSubmit` und nicht mehr `keyboardShortcut(.defaultAction)`: Der
+    /// Kurzbefehl hing am Knopf, und den gibt es nicht mehr. Die Prüfung, ob
+    /// überhaupt gesendet werden kann, steht deshalb hier — vorher tat das
+    /// `.disabled` des Knopfes.
     private var textFeld: some View {
         TextField("Text", text: $text)
             .font(.title2)
-            .eingabefeld(loeschbar: $text)
+            .eingabefeld(loeschbar: $text,
+                         senden: sendenMoeglich ? { senden() } : nil,
+                         laeuft: laeuft)
+            .onSubmit { if sendenMoeglich { senden() } }
     }
 
-    /// Die **eine** Haupthandlung dieser Ansicht. Gesperrt bleibt sie
-    /// sichtbar abgeblendet stehen, nicht verschwunden — wie „Verbinden …"
-    /// neben „Fertig" in der Vorlage.
-    /// `lok` in beiden Zweigen: Ein Ternaer mit zwei blanken `String`-Zweigen
-    /// zwingt SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt
-    /// nichts nach — beide Woerter stuenden in `en.lproj` und blieben auf
-    /// einem englischen Geraet trotzdem deutsch. `--pruefen` sieht das nicht,
-    /// weil die Schluessel ja da sind (so wie es der Editor schon macht).
-    private var sendeKnopf: some View {
-        Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
-            .knopfHaupthandlung()
-            .keyboardShortcut(.defaultAction)
-            .disabled(laeuft || zustand.ziele().isEmpty || text.trimmingCharacters(in: .whitespaces).isEmpty)
+    /// Ob es überhaupt etwas zu senden gibt und jemanden, der es nimmt.
+    private var sendenMoeglich: Bool {
+        !laeuft && !zustand.ziele().isEmpty && !text.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func senden() {

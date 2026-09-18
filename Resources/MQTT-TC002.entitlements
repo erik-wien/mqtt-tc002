@@ -3,17 +3,37 @@
 <plist version="1.0">
 <dict>
 	<!--
-	  Die Berechtigungen fuer den iCloud-Abgleich. Sie liegen hier als Datei,
-	  weil sie ohne Entwicklerkonto nicht wirksam werden koennen: Der Behaelter
-	  „iCloud.cloud.eriks.mqtt-tc002" muss im Konto angelegt und in einem
-	  Bereitstellungsprofil enthalten sein. Ohne das liefert
-	  FileManager.url(forUbiquityContainerIdentifier:) `nil` — und die App
-	  arbeitet weiter oertlich, ohne Fehler.
+	  Die Berechtigungen fuer den iCloud-Abgleich.
+
+	  WARUM DIE DATEI IM BAUM LIEGT: Der Bau braucht sie. `project.yml` fuehrt
+	  sie als CODE_SIGN_ENTITLEMENTS des iOS-Ziels, und `build.sh` nimmt sie am
+	  Mac von selbst (TC002_ENTITLEMENTS). Ohne sie wird ohne iCloud-Berechtigung
+	  signiert, und der Abgleich faellt still aus.
+
+	  (Bis zum 18.09.2026 stand hier als Begruendung, die Berechtigungen koennten
+	  „ohne Entwicklerkonto nicht wirksam werden". Das war doppelt falsch: Es gibt
+	  ein Konto — die Teamkennung unten stammt daraus —, und selbst ohne waere das
+	  kein Grund, warum die Datei hier liegt.)
+
+	  WARUM DAS TROTZ OEFFENTLICHEM REPO UNBEDENKLICH IST: Hier steht nichts
+	  Geheimes. Die Behaelterkennungen leiten sich aus der Buendelkennung ab, die
+	  im App Store ohnehin oeffentlich ist. Die Teamkennung ist ein oeffentlicher
+	  Bezeichner, kein Schluessel: `codesign -dv` gibt sie an jedem signierten
+	  Programm aus. Signieren kann damit niemand — dafuer braucht es den privaten
+	  Schluessel im Schluesselbund und ein von Apple ausgestelltes Profil.
+
+	  WAS HIER NICHT HINEINGEHOERT und auch nicht eingecheckt ist:
+	  Bereitstellungsprofile (.mobileprovision, .provisionprofile — in
+	  `.gitignore`, sie enthalten Geraete-UDIDs und das Entwicklerzertifikat samt
+	  Adresse), Schluessel und Zertifikate.
+
+	  ZUR LAUFZEIT ohne Konto oder Profil: FileManager
+	  .url(forUbiquityContainerIdentifier:) liefert `nil`, und die App arbeitet
+	  oertlich weiter, ohne Fehler.
 
 	  Der Wert von ubiquity-kvstore-identifier ist die Teamkennung vor der
-	  Buendelkennung. Xcode setzt dort dieselben Platzhalter ein; hier stehen
-	  sie ausgeschrieben, damit die Datei auch ausserhalb von Xcode taugt
-	  (build.sh signiert damit).
+	  Buendelkennung. Xcode setzt dort Platzhalter ein; hier stehen sie
+	  ausgeschrieben, damit die Datei auch ausserhalb von Xcode taugt.
 	-->
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
