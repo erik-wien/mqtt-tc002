@@ -149,6 +149,17 @@ public struct VerbindungView: View {
             // als (?) an beiden Stellen.
             Uhreinstellungen(zustand: zustand)
 
+            // **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist
+            // keine technische Mitschrift, sondern das, was man geschickt hat, und
+            // ein Druck darauf stellt es wieder her.
+            Section {
+                Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
+                Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
+                        .knopfZerstoerend()
+                Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
+                        .font(.footnote).foregroundStyle(.secondary)
+            }
+
             // **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
             // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
             // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten

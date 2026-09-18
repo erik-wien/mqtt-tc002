@@ -111,6 +111,38 @@ public final class AppZustand {
         }
     }
     private var protokollAnRoh = false
+
+    /// **Der Verlauf ist an, solange ihn niemand abschaltet** — anders als das
+    /// Protokoll. Er ist keine technische Mitschrift, sondern das, was man
+    /// geschickt hat; wer ihn nicht will, schaltet ihn ab, und dann wird nichts
+    /// aufgezeichnet.
+    public var verlaufAn: Bool {
+        get { verlaufAnRoh }
+        set {
+            guard newValue != verlaufAnRoh else { return }
+            verlaufAnRoh = newValue
+            UserDefaults.standard.set(newValue, forKey: "verlaufAn")
+        }
+    }
+    private var verlaufAnRoh = true
+
+    /// Was von hier und von den anderen Geraeten aus geschickt wurde, das
+    /// Juengste zuerst. Gelesen wird bei jedem Zugriff aus den Dateien —
+    /// dieselbe Ueberlegung wie beim Iconbestand: Der Abgleich legt Dateien
+    /// daneben, ohne dass jemand hier Bescheid saegte.
+    public func verlauf() -> [Verlaufseintrag] {
+        guard verlaufAn else { return [] }
+        return sendeverlauf.alle()
+    }
+
+    /// Die Ablage selbst — gehalten, damit nicht bei jedem Zugriff eine neue
+    /// entsteht (sie legt beim Anlegen einen Ordner an).
+    @ObservationIgnored public lazy var sendeverlauf = Sendeverlauf()
+
+    /// Zaehlt hoch, sobald sich am Verlauf etwas geaendert hat. Die Ansichten
+    /// lesen die Dateien selbst; ohne einen beobachteten Wert wuesste SwiftUI
+    /// nicht, dass es neu zeichnen soll.
+    public private(set) var verlaufstand = 0
     private static let protokollZeit: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss"
@@ -259,6 +291,9 @@ public final class AppZustand {
         // Schluessel ohnehin `false`; hier steht es ausdruecklich, damit es
         // nicht wie ein vergessener Vorgabewert aussieht.
         protokollAn = d.bool(forKey: "protokollAn")
+        // Vorgabe **an**: Ohne Eintrag gaebe `bool(forKey:)` `false`, und das
+        // waere hier die falsche Vorgabe.
+        verlaufAn = d.object(forKey: "verlaufAn") as? Bool ?? true
         // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
         // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren
         // eingerichtet waren. Leer heisst fuer Einstellungen.ziele() "alle",
@@ -900,12 +935,20 @@ public final class AppZustand {
     /// Der Kanal fuer eine Uhr. Welcher es ist, entscheidet `Anzeigen.fuer` —
     /// dieselbe Stelle, aus der auch Werkzeug und Kurzbefehle ihren Kanal
     /// holen, damit die drei nicht auseinanderlaufen.
+    /// **Die Naht fuers Senden ueber HTTP** — dieselbe Sorte wie `sitzung:` bei
+    /// `belegungAbfragen` und `gedaechtnis:` bei den Slots. Die Oberflaeche
+    /// ruehrt sie nie an; der Test schiebt einen `URLProtocol` unter und kann
+    /// damit eine **gelungene** Sendung nachstellen, ohne dass ein Geraet im
+    /// Netz haengt (das waere hier ohnehin verboten, siehe CLAUDE.md).
+    @ObservationIgnored public var netzsitzung: URLSession = .shared
+
     public func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
         // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
         // dieselbe Kennung erneut verbindet. Mit einer festen Kennung wuerfen sich
         // gleichzeitige Sendungen an mehrere Uhren gegenseitig hinaus.
         let kennung = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
-        return Anzeigen.fuer(uhr, brokerzugang: zugang?.mit(clientID: kennung))
+        return Anzeigen.fuer(uhr, brokerzugang: zugang?.mit(clientID: kennung),
+                             sitzung: netzsitzung)
     }
 
     /// Liefert `anzeigen(fuer:)` nichts, fehlt eines von dreien: das Präfix —
@@ -1077,7 +1120,13 @@ public final class AppZustand {
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotIconKante: Int = 8,
                        slotPlatz: Int? = nil) async {
+        // **Wer es genommen hat, steht im Verlauf** — gesammelt waehrend des
+        // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
+        // Der Verlauf erzaehlt, was man geschickt hat, und das war **eine**
+        // Meldung, auch wenn sie an drei Uhren ging.
+        var erreicht: [String] = []
         await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
+            erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
             log(lokf("an %@ gesendet: %@", uhr.name, name))
             guard let slotPlatz else { return }
@@ -1092,6 +1141,40 @@ public final class AppZustand {
                 log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, slotPlatz))
             }
         }
+        verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,
+                         platz: slotPlatz, erreicht: erreicht)
+    }
+
+    /// Traegt eine gelungene Sendung in den Verlauf ein.
+    ///
+    /// **Nur mit Reglern.** Ein gemaltes Bild und eines aus dem Bestand kommen
+    /// ohne `slotOptionen` her; sie liessen sich aus dem Verlauf nicht
+    /// wiederherstellen, und ein Eintrag, den anzutippen nichts taete, waere
+    /// eine Falle. Sie stehen dafuer als Bild auf ihrem Platz.
+    ///
+    /// **Und nur, was angekommen ist.** Erreicht keine Uhr die Sendung, ist
+    /// nichts geschehen, das zu erinnern waere — die Fehlerleiste sagt, was
+    /// los war.
+    private func verlaufEintragen(optionen: Meldungsoptionen?, icon: String?, iconKante: Int,
+                                  platz: Int?, erreicht: [String]) {
+        guard verlaufAn, let optionen, !erreicht.isEmpty else { return }
+        let eintrag = Verlaufseintrag(platz: platz, uhr: erreicht.joined(separator: ", "),
+                                      optionen: optionen, iconNummer: icon, iconKante: iconKante)
+        guard sendeverlauf.merken(eintrag) else {
+            log(lok("Der Verlauf ließ sich nicht schreiben."))
+            return
+        }
+        verlaufstand += 1
+    }
+
+    /// Einen Eintrag wegnehmen — nur eigene, siehe `Sendeverlauf.vergessen`.
+    public func verlaufVergessen(_ id: UUID) {
+        if sendeverlauf.vergessen(id) { verlaufstand += 1 }
+    }
+
+    /// Den ganzen Verlauf wegwerfen, auch die Dateien der anderen Geraete.
+    public func verlaufLeeren() {
+        if sendeverlauf.leeren() { verlaufstand += 1 }
     }
 
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf

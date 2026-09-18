@@ -131,6 +131,20 @@ public struct SendenView: View {
     /// nicht mitgefuehrt werden.
     private func reglerUebernehmen(_ stand: Slotstand) {
         guard let o = stand.optionen else { return }
+        reglerUebernehmen(o, icon: stand.icon, iconKante: stand.iconKanteOderAcht)
+    }
+
+    /// Dasselbe aus einem Verlaufseintrag. **Ein Rumpf fuer beide Quellen**:
+    /// Gedaechtnis und Verlauf tragen dieselben Regler, nur verschieden
+    /// verpackt — zwei Abschriften liefen auseinander, sobald ein Regler
+    /// dazukaeme.
+    private func reglerUebernehmen(_ eintrag: Verlaufseintrag) {
+        reglerUebernehmen(eintrag.optionen, icon: eintrag.iconNummer,
+                          iconKante: eintrag.iconKante)
+        if let platz = eintrag.platz { self.platz = platz }
+    }
+
+    private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
         weg = o.weg
         schrift = o.schrift
@@ -151,9 +165,9 @@ public struct SendenView: View {
         // die Kante gewaenne bei gleichem Schluessel der 8×8-Bestand, weil er
         // vorn steht — und der Block zeigte das falsche Bild. Dieselbe
         // Bedingung wie in `init`, wo der zuletzt gewaehlte Stand gelesen wird.
-        gewaehltesIcon = stand.icon.flatMap { nummer in
+        gewaehltesIcon = icon.flatMap { nummer in
             Self.sammlungen.flatMap { $0.alle() }
-                .first { $0.nummer == nummer && $0.kante == stand.iconKanteOderAcht }
+                .first { $0.nummer == nummer && $0.kante == iconKante }
         }
     }
 
@@ -503,6 +517,11 @@ public struct SendenView: View {
             // Scrolltempo. Damit faellt auch der `ViewThatFits` weg, der hier
             // den Ueberlauf einer ueberladenen Zeile auffangen musste.
             slotZeile
+
+            // **Der Verlauf unter den Bloecken.** Ein Druck stellt die Meldung
+            // samt Reglern wieder her — der haeufigste Fall ist „dasselbe noch
+            // einmal". Er waechst in den Platz, den das Fenster hergibt.
+            Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
 
             // **Feld und Empfaenger in einer Zeile** — wie am Telefon, wo das
             // Antennenzeichen rechts neben dem Eingabefeld sitzt. Das Senden

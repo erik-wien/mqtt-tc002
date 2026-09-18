@@ -30,6 +30,11 @@ public struct Ablageort: Sendable, Equatable {
         case icons16 = "Icons16"
         case bilder = "Bilder"
         case slots = "Slots"
+        /// Der Sendeverlauf (seit 18.09.2026). Eine Datei je Installation,
+        /// nicht je Uhr: Was jemand geschickt hat, ist eine Aussage ueber ihn,
+        /// nicht ueber ein Geraet — und zwei Installationen, die dieselbe Datei
+        /// fortschreiben, verloeren beim Abgleich Eintraege.
+        case verlauf = "Verlauf"
     }
 
     /// Die Kennung des iCloud-Behaelters. Apples Form ist `iCloud.` vor der

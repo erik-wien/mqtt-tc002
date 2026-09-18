@@ -2,14 +2,14 @@ import Foundation
 
 /// Waagrechte Ausrichtung des Textes innerhalb der verfuegbaren Breite (52 Pixel
 /// ohne Icon, ab Spalte 10 mit einem 8×8-Icon, ab Spalte 18 mit einem 16×16).
-public enum SendenHAusrichtung: String, CaseIterable, Identifiable, Sendable {
+public enum SendenHAusrichtung: String, CaseIterable, Identifiable, Sendable, Codable {
     case links, mittig, rechts
     public var id: String { rawValue }
 }
 
 /// Senkrechte Ausrichtung innerhalb der 16 Zeilen, gerechnet ueber die tatsaechlich
 /// gesetzte Hoehe (`Textraster.hoehe`), nicht die Schriftgroesse.
-public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable {
+public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Codable {
     case oben, mittig, unten
     public var id: String { rawValue }
 }
@@ -21,14 +21,14 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable {
 /// passt (`docs/tc002-protokoll.md` §4.3, §5.4). Deren Schrift kennt weder
 /// Schriftartwahl noch Fett — deshalb sind genau diese zwei Regler dort
 /// gesperrt, nicht mehr.
-public enum SendeWeg: String, CaseIterable, Identifiable, Sendable {
+public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
     case pixel, text
     public var id: String { rawValue }
 }
 
 /// Wie schnell die Laufschrift durchlaeuft. Ein Regler statt zweier Zahlen:
 /// Schrittweite und Bilddauer rechnet niemand im Kopf in ein Tempo um.
-public enum Lauftempo: String, CaseIterable, Identifiable, Sendable {
+public enum Lauftempo: String, CaseIterable, Identifiable, Sendable, Codable {
     case langsam, mittel, schnell
     public var id: String { rawValue }
 
@@ -58,7 +58,15 @@ public enum Lauftempo: String, CaseIterable, Identifiable, Sendable {
 /// Die Felder entsprechen eins zu eins den `@AppStorage`-Werten der
 /// Sendeansicht. Wer hier etwas umbenennt, muss dort denselben Namen benutzen,
 /// sonst liest eine laufende Installation ihre Einstellungen nicht mehr.
-public struct Meldungsoptionen: Sendable, Equatable {
+/// **Seit dem 18.09.2026 auch ablegbar** — der Sendeverlauf schreibt sie so,
+/// wie sie sind, in seine Datei.
+///
+/// `Slotstand` (im Slotgedaechtnis) legt dieselben Angaben weiterhin **flach**
+/// ab, Feld fuer Feld. Das ist keine Doppelung aus Nachlaessigkeit: Jene Datei
+/// liegt seit dem iCloud-Abgleich in einem Behaelter, den auch aeltere
+/// Fassungen auf anderen Geraeten lesen — ihr Format zu aendern hiesse, ihnen
+/// das Gedaechtnis wegzunehmen. Ein neues Format faengt dagegen frei an.
+public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var text: String
     public var weg: SendeWeg = .pixel
     public var schrift: String = "Silkscreen"

@@ -133,6 +133,17 @@ struct SendeniOS: View {
     /// Mac (`SendenView.reglerUebernehmen`).
     private func reglerUebernehmen(_ stand: Slotstand) {
         guard let o = stand.optionen else { return }
+        reglerUebernehmen(o, icon: stand.icon, iconKante: stand.iconKanteOderAcht)
+    }
+
+    /// Dasselbe aus einem Verlaufseintrag — ein Rumpf fuer beide Quellen, wie
+    /// am Schreibtisch.
+    private func reglerUebernehmen(_ eintrag: Verlaufseintrag) {
+        reglerUebernehmen(eintrag.optionen, icon: eintrag.iconNummer, iconKante: eintrag.iconKante)
+        if let platz = eintrag.platz { self.platz = platz }
+    }
+
+    private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
         weg = o.weg
         schrift = o.schrift
@@ -153,8 +164,8 @@ struct SendeniOS: View {
         // genau das ist richtig. Ohne den Kantenvergleich wuerde stattdessen
         // ein 8×8-Icon derselben Nummer eingesetzt, und die Vorschau zeigte
         // etwas anderes, als auf der Uhr steht.
-        gewaehltesIcon = stand.icon.flatMap { nummer in
-            sammlung.alle().first { $0.nummer == nummer && $0.kante == stand.iconKanteOderAcht }
+        gewaehltesIcon = icon.flatMap { nummer in
+            sammlung.alle().first { $0.nummer == nummer && $0.kante == iconKante }
         }
     }
 
@@ -289,6 +300,12 @@ struct SendeniOS: View {
                         }
                         blockZeile
                             .padding(.horizontal)
+                        // **Hier stand die leere Flaeche.** Der Verlauf fuellt
+                        // sie mit dem, was man am haeufigsten will: dasselbe
+                        // noch einmal. Feste Hoehe, weil eine Liste in einem
+                        // Scrollbereich sonst keine eigene bekommt.
+                        Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
+                            .frame(height: 260)
                     }
                     .padding(.vertical, 12)
                 }

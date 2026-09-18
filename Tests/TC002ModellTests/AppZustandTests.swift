@@ -37,7 +37,13 @@ final class Schluesselbunddoppelgaenger: Schluesselbundzugriff {
 final class AppZustandTests: XCTestCase {
     private let d = UserDefaults.standard
     private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
-                              "brokerHost", "brokerPort", "benutzer"]
+                              "brokerHost", "brokerPort", "benutzer",
+                              // Zwei Schalter, die Tests umlegen — und die sonst
+                              // in den naechsten Test hinueberleckten: Der
+                              // abgeschaltete Verlauf liess dort jede
+                              // Aufzeichnung ausfallen, und es sah aus, als
+                              // zeichne er gar nicht auf.
+                              "protokollAn", "verlaufAn"]
     private var sicherung: [String: Any?] = [:]
     private var schluesselbund = Schluesselbunddoppelgaenger()
 
@@ -328,6 +334,74 @@ final class AppZustandTests: XCTestCase {
 
         XCTAssertTrue(zustand.belegtePlaetze().isEmpty,
                       "Wer loescht, hat das letzte Wort — auch gegen die eigene Buchfuehrung.")
+    }
+
+    /// **Eine Sendung steht im Verlauf — mit allen Reglern.**
+    ///
+    /// Und mit den Uhren, die sie genommen haben: ein Eintrag je Sendung, nicht
+    /// je Uhr. Der Verlauf erzaehlt, was man geschickt hat, und das war eine
+    /// Meldung, auch wenn sie an drei Uhren ging.
+    func testEineSendungStehtMitAllenReglernImVerlauf() async throws {
+        // Eine HTTP-Uhr samt untergeschobener Sitzung: So laesst sich eine
+        // **gelungene** Sendung nachstellen, ohne dass ein Geraet im Netz
+        // haengt — das waere hier verboten (CLAUDE.md).
+        let uhr = Uhr(name: "Küche", host: "uhr.example", betriebsart: .http)
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([uhr.id])), forKey: "zielIDs")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.netzsitzung = Belegungsdoppelgaenger.sitzung()
+        zustand.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
+        // Ausdruecklich an: Der Schalter liegt in den Einstellungen des
+        // Testprozesses und ueberdauert Laeufe — hier geht es ums Aufzeichnen,
+        // nicht um die Vorgabe (die prueft `testDerVerlaufIstAbWerkAn`).
+        zustand.verlaufAn = true
+        var optionen = Meldungsoptionen(text: "Kaffee?")
+        optionen.farbe = "#FF0000"
+        optionen.tempo = .schnell
+
+        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung3",
+                             slotOptionen: optionen, slotIcon: "4711", slotIconKante: 8,
+                             slotPlatz: 3)
+
+        XCTAssertNil(zustand.fehler, "Die Sendung ist gescheitert — dann steht zu Recht nichts im Verlauf.")
+        let eintrag = try XCTUnwrap(zustand.verlauf().first)
+        XCTAssertEqual(eintrag.optionen.text, "Kaffee?")
+        XCTAssertEqual(eintrag.optionen.farbe, "#FF0000", "Die Regler gehoeren dazu, nicht nur der Text.")
+        XCTAssertEqual(eintrag.optionen.tempo, .schnell)
+        XCTAssertEqual(eintrag.platz, 3)
+        XCTAssertEqual(eintrag.iconNummer, "4711")
+        XCTAssertFalse(eintrag.uhr.isEmpty, "Es gehoert dazu, an wen es ging.")
+    }
+
+    /// **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist keine
+    /// technische Mitschrift, sondern das, was man geschickt hat.
+    func testDerVerlaufIstAbWerkAn() throws {
+        d.removeObject(forKey: "verlaufAn")
+        XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).verlaufAn)
+    }
+
+    /// **Ohne Regler kein Eintrag.** Ein gemaltes Bild kommt ohne sie her; ein
+    /// Eintrag, den anzutippen nichts taete, waere eine Falle.
+    func testEinGemaltesBildStehtNichtImVerlauf() async throws {
+        let zustand = try zustandMitEinerUhr()
+        zustand.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
+
+        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung1", slotPlatz: 1)
+
+        XCTAssertTrue(zustand.verlauf().isEmpty)
+    }
+
+    /// Abgeschaltet wird nichts aufgezeichnet — und nichts gezeigt.
+    func testAbgeschalteterVerlaufZeichnetNichtsAuf() async throws {
+        let zustand = try zustandMitEinerUhr()
+        zustand.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
+        zustand.verlaufAn = false
+
+        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung1",
+                             slotOptionen: Meldungsoptionen(text: "x"), slotPlatz: 1)
+
+        XCTAssertTrue(zustand.verlauf().isEmpty)
     }
 
     /// **Das Protokoll ist aus, solange es niemand einschaltet.**

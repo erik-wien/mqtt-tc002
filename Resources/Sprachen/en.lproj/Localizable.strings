@@ -459,6 +459,13 @@
 "Protokoll führen" = "Keep a log";
 "Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt." = "Records what the app sends and what the clocks report — readable under History. Only needed when something goes wrong; switched off, nothing is recorded and what is there is cleared.";
 "aus — unter „Einstellungen“ einzuschalten" = "off — switch it on under Settings";
+/* Sendeverlauf (18.09.2026) */
+"Verlauf führen" = "Keep a history";
+"Verlauf löschen" = "Delete history";
+"Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät." = "Remembers every message you send, with its settings — under Send it appears below the slots, and a tap restores it. Synced via iCloud when that is switched on, and keeps the last 200 sends per device.";
+"Platz %d" = "Slot %d";
+"Übernimmt diese Meldung samt Einstellungen" = "Takes over this message with its settings";
+"Der Verlauf ließ sich nicht schreiben." = "The history could not be written.";
 /* Uhreinstellungen.swift — Seitenwechsel und Scrolltempo, seit 18.09.2026 hier */
 "Auf der Uhr" = "On the clock";
 "Zwei Einstellungen des Geräts: Sie überdauern jede Meldung, gelten für alles, was auf der Uhr steht, und werden beim Verstellen sofort geschrieben. Was dagegen nur eine einzelne Meldung betrifft — ihre Dauer und ihr Lauftempo —, steht unter „Senden“ im Zeit-Reiter." = "Two settings of the device: they outlast every message, apply to everything on the clock, and are written to it the moment you change them. What concerns a single message — its duration and its scroll speed — is under Send, in the Time tab.";

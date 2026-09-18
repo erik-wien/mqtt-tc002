@@ -29,6 +29,7 @@ struct VerbindungiOS: View {
                     // ein; begruendet war das nie mit Bedienung oder Platz,
                     // sondern nur damit, dass es sie hier nicht gab.
                     Uhreinstellungen(zustand: zustand)
+                    verlaufAbschnitt
                     protokollAbschnitt
                     brokerAbschnitt
                     VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
@@ -171,6 +172,19 @@ struct VerbindungiOS: View {
                 .buttonStyle(.automatic)
             Button("Über Pixel Clock Messenger") { zeigeUeber = true }
                 .buttonStyle(.automatic)
+        }
+    }
+
+    private var verlaufAbschnitt: some View {
+        // **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist
+        // keine technische Mitschrift, sondern das, was man geschickt hat, und
+        // ein Druck darauf stellt es wieder her.
+        Section {
+            Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
+            Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
+                .knopfZerstoerend()
+            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
+                .font(.footnote).foregroundStyle(.secondary)
         }
     }
 

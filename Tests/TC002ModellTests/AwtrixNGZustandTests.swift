@@ -16,7 +16,13 @@ import TC002Core
 final class AwtrixNGZustandTests: XCTestCase {
     private let d = UserDefaults.standard
     private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
-                              "brokerHost", "brokerPort", "benutzer"]
+                              "brokerHost", "brokerPort", "benutzer",
+                              // Zwei Schalter, die Tests umlegen — und die sonst
+                              // in den naechsten Test hinueberleckten: Der
+                              // abgeschaltete Verlauf liess dort jede
+                              // Aufzeichnung ausfallen, und es sah aus, als
+                              // zeichne er gar nicht auf.
+                              "protokollAn", "verlaufAn"]
     private var sicherung: [String: Any?] = [:]
     private var schluesselbund = Schluesselbunddoppelgaenger()
 
