@@ -333,12 +333,7 @@ public struct EditorBereichView: View {
             // Dieselbe Stelle wie unter „Senden": die angesehene Uhr mittig in
             // der Werkzeugleiste. Zwei Orte fuer dieselbe Wahl waeren
             // schlimmer als ein unguenstiger — das stand hier schon einmal.
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: 8) {
-                    Uhrenmenue(zustand: zustand)
-                    ZielauswahlView(zustand: zustand)
-                }
-            }
+            ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
             werkzeugleiste
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
@@ -1018,6 +1013,10 @@ public struct EditorBereichView: View {
     private var sendeteile: some View {
         HStack(spacing: 6) { slotBloecke }
         Spacer()
+        // Der Empfaenger neben dem Knopf, der sendet — dieselbe Nachbarschaft
+        // wie unter „Senden", wo er neben dem Eingabefeld steht. Hier gibt es
+        // kein Feld, wohl aber einen Sendeknopf: Die Leinwand ist der Inhalt.
+        ZielauswahlView(zustand: zustand)
         sendeKnopf
     }
 

@@ -502,10 +502,14 @@ public struct SendenView: View {
             // den Ueberlauf einer ueberladenen Zeile auffangen musste.
             slotZeile
 
-            // **Eine Zeile, kein `ViewThatFits` mehr.** Der fing den Ueberlauf
-            // von Feld **und** Knopf auf; seit das Senden im Feld sitzt, gibt
-            // es nichts mehr, was daneben keinen Platz haette.
-            textFeld
+            // **Feld und Empfaenger in einer Zeile** — wie am Telefon, wo das
+            // Antennenzeichen rechts neben dem Eingabefeld sitzt. Das Senden
+            // selbst steckt im Feld (⏎ am rechten Rand); daneben steht die
+            // Frage, an wen.
+            HStack(spacing: 8) {
+                textFeld
+                ZielauswahlView(zustand: zustand)
+            }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -537,20 +541,18 @@ public struct SendenView: View {
             // ausdruecklich nur unter iOS); `.principal` ist die Stelle, die
             // auf beiden Plattformen dasselbe meint — und dieselbe, an der
             // Xcode sein Ziel zeigt.
+            // **Was man ansieht**, steht mittig im Titel. Der Empfaenger
+            // steht **nicht** hier: Er gehoert zum Senden, also ans
+            // Eingabefeld — wie am Telefon, wo das Antennenzeichen rechts
+            // daneben sitzt. Drei Zeichen in einer Leiste zusammenzukleben
+            // haette drei verschiedene Dinge nebeneinandergestellt: ansehen,
+            // senden, Inspektor.
             ToolbarItem(placement: .principal) {
-                // **Beide nebeneinander.** „Welche sehe ich an" und „an welche
-                // geht es" sind zwei Entscheidungen ueber dieselbe Sache; sie
-                // standen bis zum 18.09.2026 als Paar ueber der Vorschau
-                // („sieht: …" links, „an: …" rechts) und erklaerten sich durch
-                // ihre Nachbarschaft. Beim Umzug ins Titelmenue blieb der
-                // Zielknopf zurueck und schwebte allein ueber der Vorschau —
-                // hier stehen sie wieder beieinander.
-                HStack(spacing: 8) {
-                    Uhrenmenue(zustand: zustand)
-                    ZielauswahlView(zustand: zustand)
-                }
+                Uhrenmenue(zustand: zustand)
             }
-            ToolbarItem {
+            // Ausdruecklich rechts: Der Schalter gehoert zu dem Bereich, den
+            // er ein- und ausblendet, und der liegt rechts.
+            ToolbarItem(placement: .primaryAction) {
                 Button {
                     zeigeInspektor.toggle()
                 } label: {
