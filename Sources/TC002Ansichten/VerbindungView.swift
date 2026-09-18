@@ -140,6 +140,15 @@ public struct VerbindungView: View {
                 Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
+            // **Die Einstellungen der angesehenen Uhr** — Seitenwechsel und
+            // Scrolltempo. Sie standen vom 14. bis zum 18.09.2026 im
+            // Zeit-Reiter des Inspektors, neben Dauer und Lauftempo; dort
+            // standen damit zwei Sorten Zustand nebeneinander, die mit *einer*
+            // Meldung mitreisende und die, die auf dem Geraet bleibt. Der
+            // Unterschied, um dessentwillen sie umgezogen waren, steht jetzt
+            // als (?) an beiden Stellen.
+            Uhreinstellungen(zustand: zustand)
+
             Section("Broker") {
                 // Der Abschnitt wird **nicht** ausgeblendet und nicht
                 // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge

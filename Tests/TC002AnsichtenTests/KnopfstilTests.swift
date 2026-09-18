@@ -261,11 +261,13 @@ final class KnopfstilTests: XCTestCase {
     /// `Schrittwahl`; hier steht, dass die drei Stellen sie auch benutzen und
     /// nicht wieder je einen nackten `Stepper` hinschreiben.
     func testDieDreiSchrittwahlenGehenUeberDasGemeinsameElement() throws {
-        // `VerbindungView` hat seine Schrittwahl am 14.09.2026 an
-        // `Zeitabschnitte` abgegeben — dorthin ist „Scrolltempo" gezogen, zu
-        // Seitenwechsel und Dauer.
+        // „Scrolltempo" ist zweimal umgezogen: am 14.09.2026 aus den
+        // Einstellungen in den Zeit-Reiter (`Zeitabschnitte`) und am
+        // 18.09.2026 zurueck in die Einstellungen (`Uhreinstellungen`) — dort
+        // gehoert es hin, weil es das Geraet einstellt und nicht die Meldung.
+        // Im Zeit-Reiter blieben Dauer und Lauftempo, beide ohne Schrittwahl.
         for (datei, anzahl) in [("Sources/TC002Ansichten/SendenView.swift", 2),
-                                ("Sources/TC002Ansichten/Zeitabschnitte.swift", 1)] {
+                                ("Sources/TC002Ansichten/Uhreinstellungen.swift", 1)] {
             let text = try zeilen(datei).map(\.text).joined(separator: "\n")
             let treffer = text.components(separatedBy: "Schrittwahl(").count - 1
             XCTAssertEqual(treffer, anzahl,

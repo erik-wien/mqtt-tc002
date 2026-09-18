@@ -78,7 +78,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
-                    .absatz("„Seitenwechsel“ und „Scrolltempo“ standen bis September 2026 hier; sie stehen jetzt im Zeit-Reiter des Inspektors, unter „Senden“ und im Editor — bei der „Dauer“, mit der sie zusammengehören."),
+                    .absatz("„Seitenwechsel“ und „Scrolltempo“ stehen hier, bei der Uhr, für die sie gelten: Beides sind Einstellungen des Geräts, sie überdauern jede Meldung und werden beim Verstellen sofort geschrieben. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht. Das Scrolltempo dagegen gilt nur ihren eigenen Anzeigen — auf Meldungen dieser App wirkt es nicht (Gerätereferenz, §4.3). Wie lange eine einzelne Meldung steht und wie schnell sie läuft, entscheidet dagegen der Zeit-Reiter unter „Senden“."),
                     .ueberschrift("Broker"),
                     .absatz("Darunter steht der Broker: Adresse, Port, Benutzer und Kennwort."),
                 ]
