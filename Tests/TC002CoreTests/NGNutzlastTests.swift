@@ -30,7 +30,7 @@ final class NGNutzlastTests: XCTestCase {
     func testDieAnzeigeTraegtGenauDieseSchluessel() throws {
         XCTAssertEqual(
             try NGNutzlast.anzeige(optionen()),
-            ##"{"text":"Grüße","textCase":"asTyped","textColor":"#00FF66","textCenter":false,"scroll":{"speed":100}}"##)
+            ##"{"text":"Grüße","textCase":"asTyped","textColor":"#00FF66","textCenter":false,"scroll":{"speed":60}}"##)
     }
 
     /// **Der Text bleibt, wie er eingetippt wurde.** Auf der Werksfirmware
@@ -81,12 +81,34 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertFalse(try NGNutzlast.anzeige(optionen()).contains("durationMs"))
     }
 
-    /// `scroll.speed` ist ein **Prozentsatz**, unsere Stufen sind Standzeiten.
-    /// Umgerechnet, nicht erfunden: „mittel" ist die 100.
-    func testTempoWirdInProzentUmgerechnet() {
-        XCTAssertEqual(NGNutzlast.tempo(.mittel), 100)
-        XCTAssertEqual(NGNutzlast.tempo(.langsam), 67)
-        XCTAssertEqual(NGNutzlast.tempo(.schnell), 145)
+    /// **Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.**
+    ///
+    /// `scroll.speed` ist ein Prozentsatz der Grundgeschwindigkeit von rund
+    /// 21 Pixeln je Sekunde; unsere Stufen sind Standzeiten je Einzelbild und
+    /// ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird deshalb auf
+    /// **die Geschwindigkeit**, nicht auf das Verhaeltnis der Stufen
+    /// zueinander.
+    ///
+    /// Bis zum 18.09.2026 lag „mittel" auf der Geraetevorgabe 100 — und lief
+    /// damit auf einer NG mit 21 statt 12 Pixeln je Sekunde, also fast doppelt
+    /// so schnell wie dasselbe „mittel" auf der Werksfirmware. Die Vorschau,
+    /// die mit unseren Standzeiten abspielt, zeigte entsprechend zu langsam.
+    func testTempoWirdAufDieGeschwindigkeitUmgerechnet() {
+        XCTAssertEqual(NGNutzlast.tempo(.langsam), 40)
+        XCTAssertEqual(NGNutzlast.tempo(.mittel), 60)
+        XCTAssertEqual(NGNutzlast.tempo(.schnell), 87)
+    }
+
+    /// Die Probe aufs Exempel: Der Prozentsatz mal der Grundgeschwindigkeit
+    /// muss wieder die Pixel je Sekunde des Pixelwegs ergeben — auf ein Pixel
+    /// genau, mehr gibt eine ganze Zahl Prozent nicht her.
+    func testDerProzentsatzTrifftDieGeschwindigkeitDesPixelwegs() {
+        for t in [Lauftempo.langsam, .mittel, .schnell] {
+            let unsere = 1.0 / t.bilddauer                       // Pixel je Sekunde
+            let ihre = Double(NGNutzlast.tempo(t)) / 100 * Geraetetyp.ngGrundgeschwindigkeit
+            XCTAssertEqual(ihre, unsere, accuracy: 1.0,
+                           "\(t): NG liefe mit \(ihre) statt \(unsere) Pixeln je Sekunde")
+        }
     }
 
     /// Ein Text mit Anfuehrungszeichen darf die Nutzlast nicht zerlegen —

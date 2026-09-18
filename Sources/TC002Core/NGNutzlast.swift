@@ -93,15 +93,26 @@ public enum NGThema {
 /// steht sonst still. Ein mitgeschickter Wert waere eine zweite Entscheidung
 /// ueber dieselbe Sache.
 public enum NGNutzlast {
-    /// `scroll.speed` ist bei NG ein **Prozentsatz der Grundgeschwindigkeit**
-    /// (Vorgabe 100), unsere drei Stufen sind Standzeiten je Einzelbild. Also
-    /// umgerechnet statt erfunden: `mittel` ist die 100, die beiden anderen
-    /// stehen im selben Verhaeltnis zu ihr wie ihre Tempi.
+    /// **Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.**
     ///
-    /// Ergibt 66 · 100 · 145 — dieselbe Staffelung wie die 8 · 12 · 18 Pixel je
-    /// Sekunde des Pixelwegs.
+    /// `scroll.speed` ist bei NG ein Prozentsatz der Grundgeschwindigkeit von
+    /// rund 21 Pixeln je Sekunde (§5.2); unsere drei Stufen sind Standzeiten je
+    /// Einzelbild und ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird
+    /// deshalb auf die **Geschwindigkeit** — das ergibt 40 · 60 · 87 Prozent.
+    ///
+    /// Bis zum 18.09.2026 stand hier die Vorgabe des Geraets als Mitte:
+    /// `mittel` war die 100. Das erhielt das Verhaeltnis der drei Stufen
+    /// zueinander, nicht aber die Geschwindigkeit — auf einer NG lief `mittel`
+    /// mit 21 statt 12 Pixeln je Sekunde, also fast doppelt so schnell wie
+    /// dasselbe `mittel` auf der Werksfirmware. Zwei Uhren nebeneinander
+    /// zeigten denselben Text verschieden schnell, und die Vorschau, die mit
+    /// **unseren** Standzeiten abspielt, log bei NG systematisch zu langsam.
+    ///
+    /// Die Lesbarkeitsgrenze (200 auf acht Pixeln Hoehe) ist damit weit
+    /// unterschritten.
     public static func tempo(_ t: Lauftempo) -> Int {
-        Int((Lauftempo.mittel.bilddauer / t.bilddauer * 100).rounded())
+        let unsere = 1.0 / t.bilddauer   // Pixel je Sekunde, ein Pixel je Bild
+        return Int((unsere / Geraetetyp.ngGrundgeschwindigkeit * 100).rounded())
     }
 
     /// Base64 eines Icons ohne den `data:…;base64,`-Vorsatz.

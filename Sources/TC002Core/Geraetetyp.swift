@@ -25,6 +25,15 @@ extension Geraetetyp {
     /// wird beim Abfragen geholt (`Uhr.panelbreite`). Zulaessig ist alles
     /// zwischen 32 und 128; alles andere weist NG mit `422` ab.
     public static let ngVorgabebreite = 32
+
+    /// **Wie schnell NG bei `scroll.speed: 100` laeuft: rund 21 Pixel je
+    /// Sekunde** (bei 40 Bildern je Sekunde, Herstellerdokumentation, siehe
+    /// `docs/awtrix-ng-protokoll.md` §5.2).
+    ///
+    /// Gebraucht wird die Zahl, um unsere drei Stufen in Prozente
+    /// umzurechnen: `scroll.speed` ist ein Prozentsatz **hiervon**, und ohne
+    /// diese Zahl waere jeder Prozentsatz geraten.
+    public static let ngGrundgeschwindigkeit = 21.0
     public static let ngBreitenbereich = 32...128
 
     /// Wieviele Zeilen die Anzeige dieser Gattung hat — die eine Tatsache,
