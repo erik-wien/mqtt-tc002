@@ -49,6 +49,7 @@ public enum HilfeInhalt {
         .ueberschrift("Geräteart: Ulanzi TC002 oder AWTRIX NG"),
         .absatz("Neben der Betriebsart hat jede Uhr eine zweite Wahl: welche Firmware auf ihr läuft. „Abfragen“ stellt das selbst fest und trägt es ein. Von Hand zu wählen ist es nur dort, wo das nicht gelingt — eine AWTRIX kann ihre Schnittstelle hinter eine Anmeldung stellen, und dann antwortet sie auf keine Frage."),
         .absatz("Der Unterschied ist einer im Grundsatz: Die Werksfirmware bekommt von dieser App **fertige Pixel**, eine AWTRIX NG bekommt den **Text** und setzt ihn mit ihrer eigenen Schrift. Alles Weitere folgt daraus."),
+        .abbildung(.geraetegroessen),
         .tabelle([
             ("Besser auf der AWTRIX", "Umlaute, Akzente, das Eurozeichen und Kyrillisch kann ihre Schrift von Haus aus; ein Zeichen, das sie nicht hat, wird zu einem Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst, ohne GIF und ohne Größengrenze. Und sie antwortet auf jede Sendung — eine abgewiesene wird als solche gemeldet, was über MQTT sonst nie vorkommt."),
             ("Fällt dort weg", "Schriftart, Größe, Fett, Rand und Zeichenabstand steuern unsere eigene Rasterung — wo das Gerät selbst setzt, gibt es daran nichts zu drehen. Senkrecht ausrichten geht nicht, ihre Grundlinie liegt fest; rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen im Einblendtext, warum."),
@@ -157,6 +158,7 @@ public enum HilfeInhalt {
     /// keine der Oberflaeche.
     public static let blockwissenAnfang: [Hilfebaustein] = [
         .ueberschrift("Woher die Blöcke wissen, was belegt ist"),
+        .abbildung(.slotzustaende),
         .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes (Gerätereferenz, §3.5) — belegt oder frei ist damit gesichert, der Inhalt nicht. Den gewinnt die App stattdessen daraus, dass sie beim Broker jede Sendung an die Uhr mitliest, gleich von wem sie kommt: von dieser App, vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm."),
         .absatz("**Das gilt nur im MQTT-Betrieb.** Steht die Uhr auf HTTP, gibt es kein Mitlesen — dann zeigt ein Block allein, was diese Installation selbst auf den Platz geschickt und sich dazu gemerkt hat. Jede fremde Sendung bleibt dort „belegt, Inhalt unbekannt“, und zwar dauerhaft und nicht bloß bis zur nächsten Nachricht. Die Belegung selbst ist davon unberührt: Welche Plätze belegt sind, sagt die Uhr auf Nachfrage, und im HTTP-Betrieb obendrein nach jeder eigenen Sendung — sie quittiert sie."),
         .absatz("Mitlesen heißt aber: nur, was gesendet wird, solange die App verbunden ist. Ohne aufbewahrte (RETAIN-)Nachrichten liefert MQTT einem frisch verbundenen Abonnenten keinen Rückstand — das ist kein Fehler dieser App, sondern die normale Stille von MQTT 3.1.1 (siehe auch „Wenn nichts erscheint“). Was diese Installation unter „Senden“ selbst geschickt hat, zeigt der Block nach einem Neustart trotzdem: Dafür merkt sie sich je Platz die Regler und rechnet das Bild daraus neu."),
@@ -182,6 +184,7 @@ public enum HilfeInhalt {
     /// steht bei `SendeWeg` im Kern.
     public static let wegeRegel: [Hilfebaustein] = [
         .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die App selbst — es gibt dafür keinen Schalter."),
+        .abbildung(.stehtOderLaeuft),
         .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
         .absatz("Gerastert wird dabei immer von dieser App, auch bei langem Text. Die Uhr kann Text zwar auch selbst setzen, und bis zum 18.09.2026 gab es dafür die Wahl „als Text“ — sie kostete Schriftart, Größe und Fett, verlor Umlaute und ließ langen Text nicht einmal durchlaufen, sondern schnitt ihn ab (ein Mangel der Werksfirmware, am 11.09.2026 mit drei Fassungen geprüft). Übrig blieb eine kleinere Nutzlast, und die ist den Preis nicht wert."),
         .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst, und die Vorschau sagt dazu, dass sie nur eine Näherung ist."),
@@ -272,7 +275,7 @@ public enum HilfeInhalt {
         .absatz("„Rand“, 0 bis 3, Vorgabe 1: die Zahl Zeilen, die bei „oben“ und „unten“ frei bleiben — bei „mittig“ ist er gesperrt, dort hat er keinen Sinn."),
         .absatz("Ihn braucht es, weil bündig je nach Schrift verschieden aussieht: Manche bringen über der Großbuchstabenhöhe Platz mit, andere nicht, und dieselbe Ausrichtung wirkt dann bei der einen luftig und bei der anderen gequetscht. Der Rand macht den Eindruck davon unabhängig und ist auf den vorhandenen Platz gedeckelt — ein Text, der schon fast die volle Höhe füllt, wird nicht beschnitten."),
         .ueberschrift("Abstand"),
-        .absatz("Ganz rechts liegt „Abstand“, 0 bis 3, Vorgabe 1 — anders als Großbuchstaben nur beim Weg „als Pixel“ wirksam."),
+        .absatz("Ganz rechts liegt „Abstand“, 0 bis 3, Vorgabe 1 — wirksam dort, wo die App selbst rastert."),
         .absatz("„Abstand“ ist wörtlich die Zahl leerer Spalten zwischen zwei Zeichen — 0 heißt Tinte an Tinte, 1 die Vorgabe, 2 und 3 sind luftiger —, und weil sie sich aus der Tinte ergibt statt aus der Schrift, wird derselbe Text bei gleicher Schrift und Größe meist schmaler als früher, es passt also mehr aufs Display."),
         .absatz("Hier rastert die App nämlich jedes Zeichen einzeln und setzt es nach seiner Tinte ans vorige, statt nach der Vorschubbreite der Schrift: Die ist für gedruckte Größen gemacht und fällt auf sechzehn Pixeln mal zu eng, mal zu weit aus, ein fester Zuschlag verschiebt das Problem nur."),
         .absatz("Setzt die Uhr den Text selbst, bleibt „Abstand“ ohne Wirkung: Sie bringt ihren eigenen, festen Zeichenabstand als `charSpacing` mit (Gerätereferenz, §4.3), unabhängig von dieser Einstellung."),
@@ -282,6 +285,7 @@ public enum HilfeInhalt {
     public static let breiteUndAusrichtung: [Hilfebaustein] = [
         .ueberschrift("Breite und Ausrichtung"),
         .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays, mit einem 8×8-Icon 42, weil es die ersten zehn Spalten belegt — daran hängt auch die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
+        .abbildung(.ausrichtung),
     ]
 
     /// Wie das Icon in der Vorschau und in der Laufschrift behandelt wird.

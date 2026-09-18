@@ -13,6 +13,8 @@ public enum Hilfebaustein {
     case absatz(String)
     case punkte([String])
     case tabelle([(String, String)])
+    /// Eine gezeichnete Abbildung (`Hilfebilder.swift`).
+    case abbildung(Hilfebild)
 }
 
 /// Ein Abschnitt der Hilfe: Titel und Bausteine. Welche Abschnitte es gibt und
@@ -84,6 +86,8 @@ public struct HilfeabschnittView: View {
                 }
             }
             .padding(.leading, 8)
+        case .abbildung(let bild):
+            HilfebildView(bild: bild)
         case .tabelle(let zeilen):
             Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 6) {
                 ForEach(Array(zeilen.enumerated()), id: \.offset) { _, zeile in
