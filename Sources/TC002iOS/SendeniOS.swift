@@ -307,11 +307,15 @@ struct SendeniOS: View {
                 ToolbarItem(placement: .topBarLeading) {
                     empfaengermenue
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        zeigeVerlauf = true
-                    } label: {
-                        Label("Protokoll", systemImage: "clock.arrow.circlepath")
+                // Ohne Protokoll kein Knopf dafuer — er fuehrte in eine
+                // leere Ansicht.
+                if zustand.protokollAn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            zeigeVerlauf = true
+                        } label: {
+                            Label("Protokoll", systemImage: "clock.arrow.circlepath")
+                        }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {

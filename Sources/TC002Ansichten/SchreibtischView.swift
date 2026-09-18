@@ -47,9 +47,16 @@ public struct SchreibtischView: View {
             case .einstellungen: return "gearshape"
             }
         }
-        /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
+        /// Die unteren stehen abgesetzt am Fuss der Seitenleiste.
         static let oben: [Bereich] = [.senden, .editor]
         static let unten: [Bereich] = [.protokoll, .einstellungen]
+
+        /// Ohne Protokoll gibt es den Eintrag nicht: Ein Bereich, der nichts
+        /// zeigt, ist kein Bereich — und der Schalter dafuer steht in den
+        /// Einstellungen, eine Zeile darunter.
+        static func unten(protokoll: Bool) -> [Bereich] {
+            protokoll ? unten : unten.filter { $0 != .protokoll }
+        }
 
         /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und Broker
         /// (`AppZustand.eingerichtet`) waere „Senden" eine Sackgasse: keine
@@ -101,17 +108,22 @@ public struct SchreibtischView: View {
         // Auswahl ($bereich) und dieselbe Reihen-Optik wie die obere.
         .safeAreaInset(edge: .bottom) {
             List(selection: $bereich) {
-                ForEach(Bereich.unten) { b in
+                ForEach(Bereich.unten(protokoll: zustand.protokollAn)) { b in
                     Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
                 }
                 hilfezeile
             }
-            // Drei Zeilen, kein Rollen: Bei 76 war der Inhalt fuer zwei ein
-            // paar Punkte hoeher als die Liste, und sie bot einen Rollbalken
-            // an; 44 je Zeile haelt denselben Abstand.
+            // Wer im Protokoll steht, waehrend es abgeschaltet wird, saesse
+            // sonst in einem Bereich, den es nicht mehr gibt.
+            .onChange(of: zustand.protokollAn) { _, an in
+                if !an, bereich == .protokoll { bereich = .senden }
+            }
+            // Kein Rollen: Bei 76 war der Inhalt fuer zwei Zeilen ein paar
+            // Punkte hoeher als die Liste, und sie bot einen Rollbalken an;
+            // 44 je Zeile haelt denselben Abstand.
             .scrollDisabled(true)
             .scrollIndicators(.hidden)
-            .frame(height: 132)
+            .frame(height: zustand.protokollAn ? 132 : 88)
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.

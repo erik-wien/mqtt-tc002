@@ -96,11 +96,40 @@ public extension View {
     /// Am Telefon liegt die Vorschau in einem Scrollbereich, und eine Geste,
     /// die bei jedem Daumenzucken zugreift, macht das Scrollen unbrauchbar.
     func uhrenwischen(_ zustand: AppZustand) -> some View {
-        gesture(DragGesture(minimumDistance: 20)
-            .onEnded { zug in
-                let waagrecht = zug.translation.width
-                guard abs(waagrecht) > abs(zug.translation.height) else { return }
-                zustand.uhrWeiter(um: waagrecht < 0 ? 1 : -1)
-            })
+        modifier(Uhrenwischen(zustand: zustand))
+    }
+}
+
+/// Die Wischgeste über der Vorschau samt Schiebebild: Die alte Uhr geht zur
+/// Seite hinaus, die neue kommt von der anderen nach.
+///
+/// Die Richtung merkt sich der Modifikator, weil sie dem Übergang erst seinen
+/// Sinn gibt — nach links gewischt heißt, die nächste kommt von rechts. Ohne
+/// das führe jeder Wechsel in dieselbe Richtung, gleich wohin man zieht.
+///
+/// `.id` auf der angesehenen Uhr ist der Auslöser: Erst dadurch hält SwiftUI
+/// die alte und die neue Ansicht für zwei verschiedene und blendet die eine
+/// gegen die andere, statt denselben Inhalt still zu ersetzen.
+struct Uhrenwischen: ViewModifier {
+    @Bindable var zustand: AppZustand
+    @State private var richtung = 1
+
+    func body(content: Content) -> some View {
+        content
+            .id(zustand.aktiveID)
+            .transition(.asymmetric(
+                insertion: .move(edge: richtung > 0 ? .trailing : .leading),
+                removal: .move(edge: richtung > 0 ? .leading : .trailing)))
+            // Sonst zeichnet die hinausgehende Uhr über ihre Nachbarn hinweg.
+            .clipped()
+            .gesture(DragGesture(minimumDistance: 20)
+                .onEnded { zug in
+                    let waagrecht = zug.translation.width
+                    guard abs(waagrecht) > abs(zug.translation.height) else { return }
+                    richtung = waagrecht < 0 ? 1 : -1
+                    withAnimation(.snappy(duration: 0.28)) {
+                        zustand.uhrWeiter(um: richtung)
+                    }
+                })
     }
 }

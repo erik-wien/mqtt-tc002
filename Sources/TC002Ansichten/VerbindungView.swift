@@ -33,7 +33,7 @@ public struct VerbindungView: View {
 
     public var body: some View {
         Form {
-            Section("Uhren") {
+            Section {
                 ForEach($zustand.uhren) { $uhr in
                     // Zwei Zeilen, nicht eine: Neun Bedienelemente in einer
                     // Reihe brauchen rund 820 Punkte; der Kasten eines
@@ -49,23 +49,6 @@ public struct VerbindungView: View {
                     // meldet und was man mit ihr tut.
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Button {
-                                zustand.aktiveID = uhr.id
-                            } label: {
-                                Image(systemName: zustand.aktiveID == uhr.id ? "largecircle.fill.circle" : "circle")
-                            }
-                            .buttonStyle(.plain)
-                            // Nicht „das Ziel beim Senden": Das stimmt nur,
-                            // solange niemand unter „Senden" ein eigenes Ziel
-                            // gewaehlt hat (`AppZustand.ziele()` faellt dann
-                            // auf die aktive Uhr zurueck). Die Wahl
-                            // entscheidet immer, welche Uhr die App zeigt —
-                            // und wer das verwechselt, sucht die Erklaerung
-                            // fuer einen falschen Geraeterahmen an der
-                            // falschen Stelle.
-                            .help("Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie")
-                            .accessibilityLabel("Diese Uhr ansehen")
-
                             TextField("Name", text: $uhr.name)
                                 .eingabefeld()
                                 .frame(width: 140)
@@ -134,10 +117,10 @@ public struct VerbindungView: View {
                     Button("Hinzufügen") { uhrHinzufuegen() }
                         .knopfBefehl()
                 }
-                Text("Der Punkt links wählt die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel — das steht unter „Senden“ oben rechts. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr.")
-                    .font(.footnote).foregroundStyle(.secondary)
                 Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
+            } header: {
+                Text("Uhren")
             }
             // Die Einstellungen der angesehenen Uhr — Seitenwechsel und
             // Scrolltempo. Nicht im Zeit-Reiter des Inspektors neben Dauer
@@ -145,6 +128,7 @@ public struct VerbindungView: View {
             // die mit einer Meldung mitreisende und die, die auf dem Geraet
             // bleibt. Der Unterschied steht als (?) an beiden Stellen.
             Uhreinstellungen(zustand: zustand)
+            VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam, ansehen: ansehen)
 
             // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
             // keine technische Mitschrift, sondern das, was man geschickt hat, und
@@ -214,7 +198,6 @@ public struct VerbindungView: View {
                     brokerStandAnzeige
                 }
             }
-            VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam, ansehen: ansehen)
             Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
         }
         .formStyle(.grouped)

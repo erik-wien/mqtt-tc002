@@ -1207,6 +1207,30 @@ public final class AppZustand {
         if sendeverlauf.leeren() { verlaufstand += 1 }
     }
 
+    /// Schaltet die angesehene Uhr auf eine ihrer Anzeigen um.
+    ///
+    /// Im Modell und nicht in der Ansicht: Die Handlung stand zweimal
+    /// wortgleich in `AnzeigenView` und `AnzeigeniOS`, und der Verlauf braucht
+    /// sie jetzt ein drittes Mal.
+    public func umschalten(auf name: String) {
+        guard let uhr = aktiveUhr else {
+            fehler = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
+            return
+        }
+        guard let anzeigen = anzeigen(fuer: uhr) else {
+            fehler = zugangsmeldung(uhr)
+            return
+        }
+        Task.detached {
+            do {
+                try anzeigen.umschalten(auf: name)
+                await MainActor.run { self.log(lokf("umgeschaltet auf %@", name)) }
+            } catch {
+                await MainActor.run { self.melde(error, uhr: uhr) }
+            }
+        }
+    }
+
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
     /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
     public func loeschen(_ name: String, gedaechtnis: Slotgedaechtnis = .gemeinsam) async {

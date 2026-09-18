@@ -1,19 +1,10 @@
 /* Pixel Clock Messenger — English. Keys are the German source strings. */
 
 /* AnzeigenView.swift */
-"Anzeigen" = "Displays";
 "Löschen" = "Delete";
 "Protokoll" = "Log";
 "Leeren" = "Clear";
 "Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen." = "No clock set up. Enter one under Settings and query it.";
-"vom Gerät gemeldet" = "reported by the device";
-"von dieser App angelegt" = "created by this app";
-"· Uhr meldet sich online" = "· clock reports online";
-"· Uhr meldet sich offline" = "· clock reports offline";
-"Die Uhr meldet gerade keine Anzeige." = "The clock is currently reporting no display.";
-"Noch nichts an diese Uhr gesendet." = "Nothing sent to this clock yet.";
-"umgeschaltet auf %@" = "switched to %@";
-"gelöscht: %@" = "deleted: %@";
 /* App.swift */
 "Über Pixel Clock Messenger" = "About Pixel Clock Messenger";
 /* Nebenfenster.swift — Titel des Ueber-Fensters (Mac) bzw. seiner Kopfzeile (iPad) */
@@ -485,13 +476,11 @@
 "Weitere Bedienelemente" = "More controls";
 
 /* TC002iOS/AnzeigeniOS.swift */
-"Nach links wischen löscht, nach rechts schaltet auf die Anzeige um." = "Swipe left to delete, swipe right to switch to the display.";
 
 /* Bereichsnamen der Seitenleiste und Abschnitte der Hilfe. Sie stehen als
    rawValue in einem enum und werden ueber lok(…) nachgeschlagen — der
    Sammler findet sie deshalb nicht im Quelltext, sie sind in ihm als
    DYNAMISCH eingetragen. */
-"Zeigen" = "Show";
 "Einstellungen" = "Settings";
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";
@@ -818,9 +807,6 @@
 "Uhren und Broker" = "Clocks and broker";
 "GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt." = "GPL-3.0. No PixDeck source code is included — what came from there is knowledge about the device, and that is not copyrightable.";
 "Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen." = "Additional permission under section 7 of the GPL: this program may be distributed through an application distribution service (\"app store\") even where its terms impose restrictions on recipients that would otherwise be incompatible. All other terms of the GPL remain in force, in particular the obligation to make the complete source code available.";
-"Diese Uhr ansehen" = "View this clock";
-"Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie" = "The clock being viewed: preview, device frame, the five blocks and the time tab all refer to it";
-"Der Punkt links wählt die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel — das steht unter „Senden“ oben rechts. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr." = "The dot on the left selects the clock being viewed: preview, device frame, the five blocks and the time tab all refer to it. That is not the same as the send target — that one sits at the top right under \"Send\". As long as nothing is chosen there, sending goes to the viewed clock as well.";
 "Unter „Einstellungen“ trägt man zuerst die Adresse einer Uhr ein (das Feld unter der Liste, in dem eine Beispieladresse steht, dann „Hinzufügen“ oder die Eingabetaste im Feld) oder passt eine vorhandene an. Der Punkt links in der Zeile wählt die **angesehene** Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel — das steht unter „Senden“ oben rechts, sobald mehr als eine Uhr eingetragen ist. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr; bei nur einer Uhr fallen beide ohnehin zusammen." = "Under \"Settings\" you first enter a clock's address (the field below the list showing an example address, then \"Add\" or the return key in the field) or adjust an existing one. The dot on the left of the row selects the clock being **viewed**: preview, device frame, the five blocks and the time tab all refer to it. That is not the same as the send target — that one sits at the top right under \"Send\" once more than one clock is entered. As long as nothing is chosen there, sending goes to the viewed clock as well; with only one clock the two coincide anyway.";
 "HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken." = "HTTP reports back whether the clock accepted the display. MQTT never reports that, but it reads along with what others send to the same clock.";
 "Angesehene Uhr" = "Clock being viewed";
@@ -936,3 +922,14 @@
 
 /* EditorBereichView.swift — die Abschlusszeile ueber der Leinwand */
 "Ohne Namen" = "Untitled";
+
+/* EditorBereichView.swift — der Grund der Sendesperre, sichtbar statt nur als Einblendtext */
+"Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild." = "Only the factory firmware accepts a painted image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image.";
+
+/* Verlaufsliste.swift — was gerade auf der Uhr liegt, auch Fremdes */
+"vom Gerät gemeldet" = "reported by the device";
+"von dieser App angelegt" = "created by this app";
+"Zeigen" = "Show";
+
+/* AppZustand.swift — Protokollzeile beim Umschalten */
+"umgeschaltet auf %@" = "switched to %@";

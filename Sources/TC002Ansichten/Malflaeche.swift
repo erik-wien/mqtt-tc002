@@ -27,6 +27,15 @@ struct Malflaeche: View {
     /// jedem einzelnen Pixel — das waeren hunderte Schreibvorgaenge je Strich.
     var nachStrich: () -> Void = {}
 
+    /// Was unten rechts am Raster steht — der Abspielknopf des Editors.
+    ///
+    /// Hier und nicht beim Aufrufer: Das Raster steht mittig in einer Flaeche,
+    /// die viel groesser sein kann als es selbst; bei einem 8 × 8 liegt
+    /// dazwischen fast das ganze Fenster. Nur diese Ansicht weiss, wo das Bild
+    /// wirklich endet. `AnyView` statt eines Typparameters, damit der eine
+    /// Aufrufer ohne Zubehoer nichts anzugeben braucht.
+    var zubehoer: AnyView?
+
     @State private var imStrich = false
 
     var body: some View {
@@ -36,6 +45,9 @@ struct Malflaeche: View {
                                         verfuegbareHoehe: geo.size.height)
             ScrollView(.horizontal) {
                 raster(kante: kante)
+                    .overlay(alignment: .bottomTrailing) {
+                        if let zubehoer { zubehoer.padding(6) }
+                    }
                     // Passt es, steht das Raster mittig in der Spalte; passt es
                     // nicht, ist der Rahmen kleiner als der Inhalt und die
                     // Rolle greift.

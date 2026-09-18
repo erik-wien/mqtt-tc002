@@ -45,7 +45,56 @@ public struct Verlaufsliste: View {
         return f
     }()
 
+    /// Was jetzt auf der angesehenen Uhr liegt — auch, was andere dorthin
+    /// geschickt haben. Die Uhr nennt ihre Anzeigen beim Namen, mehr nicht;
+    /// was darin steht, weiss sie nicht zu sagen (Gerätereferenz, §3.5).
+    private var aufDerUhr: (namen: [String], quelle: AppZustand.Anzeigenquelle) {
+        zustand.anzeigenDerAktivenMitQuelle()
+    }
+
     public var body: some View {
+        if !aufDerUhr.namen.isEmpty {
+            HStack {
+                Text("Auf der Uhr")
+                    .font(.caption).fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Text(aufDerUhr.quelle == .geraet ? lok("vom Gerät gemeldet")
+                                                 : lok("von dieser App angelegt"))
+                    .font(.caption2).foregroundStyle(.tertiary)
+                Spacer()
+            }
+            .padding(.horizontal, 6)
+            List {
+                ForEach(aufDerUhr.namen, id: \.self) { name in
+                    HStack {
+                        Text(name).font(.system(.body, design: .monospaced))
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            Task { await zustand.loeschen(name) }
+                        } label: {
+                            Label("Löschen", systemImage: "trash")
+                        }
+                    }
+                    .swipeActions(edge: .leading) {
+                        Button { zustand.umschalten(auf: name) } label: {
+                            Label("Zeigen", systemImage: "eye")
+                        }
+                        .tint(.blue)
+                    }
+                    .contextMenu {
+                        Button("Zeigen") { zustand.umschalten(auf: name) }
+                        Button("Löschen", role: .destructive) {
+                            Task { await zustand.loeschen(name) }
+                        }
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .frame(maxHeight: 140)
+        }
         if zustand.verlaufAn, !eintraege.isEmpty {
             // Eine Ueberschrift, so klein wie moeglich: Ohne sie stuende
             // dort eine Liste, die man fuer vieles halten kann — die Anzeigen

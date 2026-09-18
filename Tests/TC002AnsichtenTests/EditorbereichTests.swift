@@ -289,10 +289,12 @@ final class EditorbereichTests: XCTestCase {
 
         // Am Bild, nicht im Reiter „Animation" — sonst kaeme man an ein
         // bewegtes, aus dem Bestand geoeffnetes Icon nur ueber einen Umweg.
-        let fuss = ausschnitt(text, von: "private var fusszeile", bis: "private var fusstexte")
-        XCTAssertTrue(fuss.contains("abspielknopf"),
-                      "das Wiedergabesymbol steht nicht mehr unter der Leinwand")
-        XCTAssertTrue(fuss.contains("leinwand.bilder.count > 1"),
+        // Am Bild selbst, als Zubehör der Malfläche: Das Raster steht mittig in
+        // einer Fläche, die viel größer sein kann als es — bei einem 8 × 8 lag
+        // der Knopf sonst fast ein Fenster weit darunter.
+        XCTAssertTrue(text.contains("zubehoer: leinwand.bilder.count > 1"),
+                      "das Wiedergabesymbol hängt nicht mehr am Bild")
+        XCTAssertTrue(text.contains("AnyView(abspielknopf(abspielGross))"),
                       "das Symbol steht auch bei einem einzigen Einzelbild da — dann ist es ein Knopf "
                       + "ohne Wirkung statt einer Auskunft darueber, dass sich hier etwas bewegt")
 
@@ -305,10 +307,14 @@ final class EditorbereichTests: XCTestCase {
         // Zwei Orte, ausdrücklich gewollt: groß unter der Leinwand, klein
         // neben „Bild anhängen" im Reiter „Animation", wo man Einzelbilder
         // aufbaut und den Lauf gleich sehen will.
-        XCTAssertTrue(text.contains("abspielknopf(90)"),
+        XCTAssertTrue(text.contains("abspielknopf(abspielGross)"),
                       "unter der Leinwand steht kein großer Abspielknopf mehr")
-        XCTAssertTrue(text.contains("abspielknopf(22)"),
+        XCTAssertTrue(text.contains("abspielknopf(abspielKlein)"),
                       "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr")
+        // Beide Maße hängen an `@ScaledMetric`: Eine feste Zahl hier hebelte
+        // die Textgrößen-Einstellung des Systems aus.
+        XCTAssertTrue(text.contains("@ScaledMetric(relativeTo: .largeTitle) private var abspielGross"),
+                      "der große Abspielknopf wächst nicht mehr mit der Textgröße")
 
         let knopf = ausschnitt(text, von: "private func abspielknopf", bis: "private var sichernAbschnitte")
         // Play und Pause, nicht Play und Stopp: `stoppeAbspielen` bricht

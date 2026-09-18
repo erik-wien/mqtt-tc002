@@ -79,6 +79,10 @@ public struct EditorBereichView: View {
     /// und bei jedem nummerngefuehrten Icon, damit ein bearbeitetes
     /// LaMetric-Icon das Vorbild nicht stillschweigend ersetzt.
     @State private var zeigeSichernBlatt = false
+    /// Die beiden Groessen des Abspielknopfes, mitwachsend mit der
+    /// eingestellten Textgroesse: gross am Bild, klein neben „Bild anhaengen".
+    @ScaledMetric(relativeTo: .largeTitle) private var abspielGross: Double = 90
+    @ScaledMetric(relativeTo: .body) private var abspielKlein: Double = 22
     @State private var laedt = false
 
     // Rueckfragen.
@@ -323,18 +327,29 @@ public struct EditorBereichView: View {
                 abschlusszeile
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
                            vorStrich: { verlauf.merken(leinwand) },
-                           nachStrich: arbeitsstandSichern)
+                           nachStrich: arbeitsstandSichern,
+                           zubehoer: leinwand.bilder.count > 1
+                               ? AnyView(abspielknopf(abspielGross)) : nil)
                 fusszeile
                 sendezeile
             }
         }
         .padding()
         .toolbar {
-            // Dieselbe Stelle wie unter „Senden": die angesehene Uhr mittig in
-            // der Werkzeugleiste.
-            ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
-            // Der Weg zurueck aus dem Editor in den Bestand.
-            werkzeugleiste
+            // Die Werkzeugleiste gilt der Leinwand: In der Uebersicht gibt es
+            // nichts rueckgaengig zu machen, keinen Inspektor und keine
+            // angesehene Uhr — dort steht nur „Neu".
+            if zeigtUebersicht {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { neuAnfragen() } label: {
+                        Label("Neu", systemImage: "plus")
+                    }
+                    .help(lok("Neu"))
+                }
+            } else {
+                ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
+                werkzeugleiste
+            }
         }
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
                                         set: { zeigeInspektor = $0 })) { inspektor }
@@ -421,7 +436,6 @@ public struct EditorBereichView: View {
             // neben der Verzoegerung, und dorthin kommt man nur mit einem
             // Umweg. Er steht deshalb hier, wo das Bild steht, und nur dann,
             // wenn es ueberhaupt etwas abzuspielen gibt.
-            if leinwand.bilder.count > 1 { abspielknopf(90) }
         }
     }
 
@@ -613,7 +627,7 @@ public struct EditorBereichView: View {
                 Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
                 Spacer()
-                if leinwand.bilder.count > 1 { abspielknopf(22) }
+                if leinwand.bilder.count > 1 { abspielknopf(abspielKlein) }
             }
         }
 
@@ -989,10 +1003,6 @@ public struct EditorBereichView: View {
                 .toggleStyle(.button)
                 .help(lok("Nur bewegte"))
                 Spacer()
-                Button { neuAnfragen() } label: {
-                    Label("Neu", systemImage: "plus")
-                }
-                .knopfBefehl()
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -1126,6 +1136,14 @@ public struct EditorBereichView: View {
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
+            } else if keineNimmtGemaltes {
+                // Sichtbar und nicht nur als Einblendtext: Am iPad gibt es
+                // kein Verweilen, und ein gesperrter Knopf ohne Grund daneben
+                // ist eine Sackgasse.
+                Label("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.",
+                      systemImage: "info.circle")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

@@ -53,6 +53,11 @@ struct IconAuswahlView: View {
         bewegte = sammlungen.flatMap { $0.alle() }.bewegteKennungen()
     }
 
+    /// Das Mindestmass einer Kachel. `@ScaledMetric` laesst es mit der
+    /// eingestellten Textgroesse wachsen — sonst braeche der Name darunter um,
+    /// sobald jemand „Groessere Schrift" waehlt, waehrend die Kachel bliebe.
+    @ScaledMetric(relativeTo: .caption2) private var kachelkante: Double = 72
+
     var body: some View {
         HStack(spacing: 4) {
             Button { zeigeBlatt = true } label: {
@@ -132,7 +137,7 @@ struct IconAuswahlView: View {
                 // dass ein 8×8-Motiv zu raten war. Am Telefon nimmt eine
                 // Kachel ein Fuenftel der Breite; hier ist die entsprechende
                 // Groesse ein Raster, das sich an 72 Punkten ausrichtet.
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 72))], spacing: 10) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: kachelkante))], spacing: 10) {
                     // Waehlen schliesst das Blatt: Es blieb zuvor offen, und
                     // man musste danach noch „Schliessen" druecken — zwei
                     // Handgriffe fuer eine Entscheidung. Ein Blatt, das nur
@@ -166,7 +171,7 @@ struct IconAuswahlView: View {
                                         }
                                         Text(icon.name).lineLimit(1)
                                     }
-                                    .font(.system(size: 9))
+                                    .font(.caption2)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -183,7 +188,7 @@ struct IconAuswahlView: View {
 
                             Button { zuLoeschen = icon } label: {
                                 Image(systemName: "trash")
-                                    .font(.system(size: 9))
+                                    .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.borderless)

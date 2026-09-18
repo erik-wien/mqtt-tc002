@@ -269,9 +269,9 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 12,
+        XCTAssertEqual(anzahl(text, ".help("), 13,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
-                       + "die Werkzeugleiste (3), die Kachel (1), "
+                       + "die Werkzeugleiste (3), „Neu“ in der Übersicht (1), die Kachel (1), "
                        + "der Schalter „Nur bewegte“ (1), das Abspielsymbol (1), das Verschiebekreuz "
                        + "(1), die zwei Knöpfe am Einzelbildstreifen (2), das Nummernfeld (1), der "
                        + "Sendeknopf (1) und das Nachladen-Zeichen der LaMetric-Zeile (1) — eine neue "
