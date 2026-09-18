@@ -444,7 +444,6 @@
 "Präfix" = "Prefix";
 "was jetzt auf der Uhr liegt, und die Mitschrift" = "what is on the clock now, and the log";
 "Protokoll" = "Log";
-"Verlauf" = "History";
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";
@@ -927,9 +926,12 @@
 "Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild." = "Only the factory firmware accepts a painted image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image.";
 
 /* Verlaufsliste.swift — was gerade auf der Uhr liegt, auch Fremdes */
-"vom Gerät gemeldet" = "reported by the device";
-"von dieser App angelegt" = "created by this app";
 "Zeigen" = "Show";
 
 /* AppZustand.swift — Protokollzeile beim Umschalten */
 "umgeschaltet auf %@" = "switched to %@";
+
+/* Verlaufsliste.swift — Verlauf und Uhrenstand in einer Liste */
+"Auf der Uhr und zuletzt geschickt" = "On the clock and recently sent";
+"auf der Uhr" = "on the clock";
+"liegt auf der Uhr" = "is on the clock";
