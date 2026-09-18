@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Core
 
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
@@ -35,8 +36,13 @@ struct FormatblattiOS: View {
                         Text("Die Uhr setzt selbst, mit ihrer eingebauten Schrift. Die kennt keine Umlaute.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
+                } header: {
+                    // Derselbe Wortlaut wie im Inspektor am Schreibtisch —
+                    // eine Konstante waere hier eine ueber zwei Ziele hinweg;
+                    // der Sammler fuehrt beide auf denselben Schluessel.
+                    Abschnittskopf("Senden als", hilfe: lok("Als Pixel rechnet die App das Bild selbst; passt der Text nicht, baut sie den Lauf als GIF. Als Text setzt ihn die Uhr mit ihrer eingebauten Schrift und lässt ihn bei Bedarf selbst durchlaufen — das Tempo steht dann in den Einstellungen der Uhr."))
                 }
-                Section("Nur diese Meldung") {
+                Section {
                     LabeledContent("Dauer (Sek.)") {
                         TextField("Uhr entscheidet", text: $dauerText)
                             .keyboardType(.numberPad)
@@ -44,6 +50,8 @@ struct FormatblattiOS: View {
                     }
                     Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
                         .font(.caption).foregroundStyle(.secondary)
+                } header: {
+                    Abschnittskopf("Nur diese Meldung", hilfe: lok("Dauer und Lauftempo reisen mit dieser einen Meldung mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung des Geräts und steht unter „Einstellungen“ — bei der Uhr, für die sie gilt."))
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {

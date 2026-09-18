@@ -180,6 +180,11 @@ struct SendeniOS: View {
         Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, mass: mass)
     }
 
+    /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
+    /// Wirkung — `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
+    /// ganz aussen durchs Fenster. Wortgleich mit `SendenView`.
+    private var waagrechtWirktNicht: Bool { weg == .pixel && !passt }
+
     /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
     /// aendert — dieselbe Rechnung wie `SendenView.fettWirkt` (Mac). Ein Knopf
     /// ohne Wirkung ist schlimmer als keiner, deshalb wird er gesperrt statt
@@ -263,6 +268,19 @@ struct SendeniOS: View {
                                     typ: zustand.referenzUhr?.typ)
                             .uhrenwischen(zustand)
                         Uhrenpunkte(zustand: zustand)
+                        // **Die Warnung, die dem Telefon fehlte** (18.09.2026).
+                        // Beim Weg „als Text" setzt die Uhr selbst, und ihre
+                        // eingebaute Schrift kennt weder Umlaute noch die
+                        // meisten Satzzeichen — sie zeigt an der Stelle
+                        // einfach nichts, ohne Meldung. Die Liste steht im
+                        // Kern (`Geraeteschrift`), damit hier und am
+                        // Schreibtisch dasselbe gilt.
+                        if weg == .text, !Geraeteschrift.unbekannteZeichen(in: optionen.gesendeterText).isEmpty {
+                            Label(lokf("Diese Zeichen kennt die Gerätschrift nicht und lässt sie einfach weg: %@. „als Pixel“ kann sie.",
+                                       Geraeteschrift.unbekannteZeichenText(in: optionen.gesendeterText)),
+                                  systemImage: "exclamationmark.triangle")
+                                .font(.caption).foregroundStyle(.orange)
+                        }
                         if weg == .pixel && !passt {
                             Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                                 .font(.caption).foregroundStyle(.secondary)
@@ -531,7 +549,16 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    // **Gesperrt, wenn der Text ohnehin laeuft** — dieselbe
+                    // Rechnung wie am Schreibtisch (`waagrechtWirktNicht`):
+                    // Die Laufschrift schiebt ihn von ganz aussen durchs
+                    // Fenster und fragt die Ausrichtung gar nicht ab. Am Mac
+                    // stand das seit dem 15.09.2026, hier fehlte es.
+                    .disabled(waagrechtWirktNicht)
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
+                    .accessibilityHint(Text(waagrechtWirktNicht
+                        ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
+                        : lok("Waagrecht")))
                     Menu {
                         Button { vertikal = .oben } label: {
                             Label("Oben", systemImage: "align.vertical.top")

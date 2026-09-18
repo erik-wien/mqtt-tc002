@@ -363,21 +363,12 @@ public struct SendenView: View {
     /// einem „ß" längst ein darstellbares „SS" geworden, das soll die Warnung
     /// nicht mehr treffen. Jedes betroffene Zeichen nur einmal, in der
     /// Reihenfolge des ersten Auftretens.
-    private var unbekannteZeichen: [Character] {
-        let erlaubteSatzzeichen = Set("%.-:")
-        var gefunden: [Character] = []
-        for zeichen in gesendeterText where !gefunden.contains(zeichen) {
-            if zeichen.isASCII && (zeichen.isLetter || zeichen.isNumber) { continue }
-            if zeichen == " " { continue }
-            if erlaubteSatzzeichen.contains(zeichen) { continue }
-            gefunden.append(zeichen)
-        }
-        return gefunden
-    }
-
-    private var unbekannteZeichenText: String {
-        unbekannteZeichen.map { "„\($0)“" }.joined(separator: ", ")
-    }
+    /// **Die Liste steht im Kern** (`Geraeteschrift`), nicht hier: Sie ist eine
+    /// Aussage ueber die eingebaute Schrift der Uhr, und das Telefon braucht
+    /// dieselbe. Bis zum 18.09.2026 stand sie an dieser Stelle — und das
+    /// Telefon warnte gar nicht.
+    private var unbekannteZeichen: [Character] { Geraeteschrift.unbekannteZeichen(in: gesendeterText) }
+    private var unbekannteZeichenText: String { Geraeteschrift.unbekannteZeichenText(in: gesendeterText) }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {

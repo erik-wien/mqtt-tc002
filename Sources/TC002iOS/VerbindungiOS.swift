@@ -23,6 +23,12 @@ struct VerbindungiOS: View {
                 FehlerleisteiOS(zustand: zustand)
                 Form {
                     uhrenAbschnitt
+                    // **Die Einstellungen der angesehenen Uhr** — derselbe
+                    // Baustein wie am Schreibtisch. Bis zum 18.09.2026 stellte
+                    // diese Fassung Seitenwechsel und Scrolltempo gar nicht
+                    // ein; begruendet war das nie mit Bedienung oder Platz,
+                    // sondern nur damit, dass es sie hier nicht gab.
+                    Uhreinstellungen(zustand: zustand)
                     brokerAbschnitt
                     VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
                                           ansehen: { zeigeVirtuelleUhr = true })

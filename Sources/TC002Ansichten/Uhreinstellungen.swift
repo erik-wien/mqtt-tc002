@@ -20,8 +20,10 @@ import TC002Modell
 /// nicht; dort führt die Uhr beides selbst. Der Aufrufer zeigt diese Ansicht
 /// deshalb gar nicht erst an — sie prüft es zusätzlich, damit sie ohne
 /// Rücksicht auf den Aufrufer wahr bleibt.
-struct Uhreinstellungen: View {
+public struct Uhreinstellungen: View {
     @Bindable var zustand: AppZustand
+
+    public init(zustand: AppZustand) { self.zustand = zustand }
 
     @State private var seitenwechsel = 0
     @State private var scrollTempo = 0
@@ -57,7 +59,7 @@ struct Uhreinstellungen: View {
     /// diesen Pfad gibt es bei AWTRIX NG nicht.
     private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
 
-    var body: some View {
+    public var body: some View {
         if nurUlanzi {
             Section {
                 Picker("Seitenwechsel", selection: $seitenwechsel) {

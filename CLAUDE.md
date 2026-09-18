@@ -51,8 +51,12 @@ ist und bei einem Update nachzuprüfen wäre, in
   `HilfeiOS` (iPhone) setzen ihr Dokument daraus und aus eigenen Absätzen
   zusammen. Ein Absatz gehört nur dann nach `HilfeInhalt`, wenn er für **beide**
   Oberflächen wahr ist — Fenster, Seitenleiste, Inspektor, Finder, Malen und der
-  Icon-Editor gibt es nur am Mac, Seitenwechsel und Scrolltempo stellt die
-  iPhone-Fassung nicht ein, und sie warnt vor unbekannten Zeichen nicht.
+  Icon-Editor gibt es nur am Mac, und das ist mit dem Platz begründet: Ein
+  8×8-Raster mit dem Finger ist keine Arbeitsfläche. Was **beide** können,
+  gehört auch in beide Hilfen; „Seitenwechsel und Scrolltempo stellt die
+  iPhone-Fassung nicht ein" und „sie warnt vor unbekannten Zeichen nicht"
+  standen hier bis zum 18.09.2026 und waren keine Begründung, sondern eine
+  fehlende Funktion.
   Ein zweiter Satz mit derselben Aussage wäre ein zweiter
   Übersetzungsschlüssel; deshalb Konstanten statt zweimal geschrieben.
 - **Das Repo ist öffentlich.** Vor jedem Commit läuft

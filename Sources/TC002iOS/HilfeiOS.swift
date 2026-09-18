@@ -11,7 +11,8 @@ import TC002Core
 /// Leiste — und was diese Fassung **nicht** hat. Eine wortgleiche Fassung der
 /// Mac-Hilfe wäre streckenweise schlicht falsch: Weder Malbereich noch
 /// Icon-Editor, weder Inspektor noch Finder gibt es auf dem Telefon, und
-/// Seitenwechsel und Scrolltempo der Uhr stellt diese Fassung nicht ein.
+/// Seitenwechsel und Scrolltempo stehen seit dem 18.09.2026 auch hier —
+/// unter „Einstellungen“, bei der Uhr, fuer die sie gelten.
 struct HilfeiOS: View {
     @Environment(\.dismiss) private var schliessen
 
@@ -77,7 +78,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("„Entfernen“ in der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
 
                     .ueberschrift("Einstellungen der Uhr selbst"),
-                    .absatz("Seitenwechsel und Scrolltempo der Uhr stellt diese Fassung nicht ein; beides sind Einstellungen des Geräts und betreffen nichts, was diese App sendet."),
+                    .absatz("„Seitenwechsel“ und „Scrolltempo“ stehen unter „Einstellungen“ bei der angesehenen Uhr: Beides sind Einstellungen des Geräts. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht; das Scrolltempo gilt nur ihren eigenen Anzeigen und wirkt auf Meldungen dieser App nicht."),
 
                     .ueberschrift("Broker"),
                     .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
