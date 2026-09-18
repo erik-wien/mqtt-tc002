@@ -75,6 +75,10 @@ public struct EditorBereichView: View {
     /// gewaehlte Einzelbild. Bei einem einzelnen Bild ist die Frage gegen-
     /// standslos, dann steht der Schalter nicht da.
     @State private var verschiebtNurDieses = false
+    /// Fragt vor dem Sichern nach Nummer und Namen — bei einem neuen Stueck
+    /// und bei jedem nummerngefuehrten Icon, damit ein bearbeitetes
+    /// LaMetric-Icon das Vorbild nicht stillschweigend ersetzt.
+    @State private var zeigeSichernBlatt = false
     @State private var laedt = false
 
     // Rueckfragen.
@@ -322,7 +326,7 @@ public struct EditorBereichView: View {
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern)
                 fusszeile
-                if groesse.sendbar { sendezeile }
+                sendezeile
             }
         }
         .padding()
@@ -334,9 +338,15 @@ public struct EditorBereichView: View {
             if !zeigtUebersicht {
                 ToolbarItem(placement: .navigation) {
                     Button { zeigtUebersicht = true } label: {
-                        Label("Alle Icons", systemImage: "chevron.backward")
+                        Label("Fertig", systemImage: "xmark")
                     }
-                    .help(lok("Alle Icons"))
+                    .help(lok("Fertig"))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button { sichernAnfragen() } label: {
+                        Label("Sichern", systemImage: "checkmark")
+                    }
+                    .help(lok("Sichern"))
                 }
             }
             werkzeugleiste
@@ -344,6 +354,7 @@ public struct EditorBereichView: View {
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
                                         set: { zeigeInspektor = $0 })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
+        .sheet(isPresented: $zeigeSichernBlatt) { sichernblatt }
         .onAppear { vorhandene = bestand.alle(); bewegungLesen() }
         .onDisappear { stoppeAbspielen(); arbeitsstandSichern() }
         // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben
@@ -356,7 +367,7 @@ public struct EditorBereichView: View {
         // wirklich hinausginge. Abseits des Hauptthreads und nur bei
         // tatsaechlicher Aenderung, wie die Laufschrift unter „Senden".
         .task(id: laufbildstand) {
-            guard groesse.sendbar, leinwand.bilder.count > 1 else { laufbildBytes = 0; return }
+            guard leinwand.bilder.count > 1 else { laufbildBytes = 0; return }
             let (bilder, breite, hoehe) = (leinwand.bilder, leinwand.breite, leinwand.hoehe)
             let verzoegerung = leinwand.verzoegerung
             let bytes = await Task.detached(priority: .userInitiated) {
@@ -1080,7 +1091,12 @@ public struct EditorBereichView: View {
 
     // MARK: - Sendezeile
 
-    /// Nur bei 16×52 — ein Icon ist fuer sich keine Anzeige.
+    /// Der gerade bearbeitete Stand geht an eine Uhr — in jeder Groesse.
+    ///
+    /// Ein Icon ist fuer sich keine Anzeige, und doch will man sehen, wie es
+    /// auf dem Geraet aussieht: `Bildsendung.rahmen` setzt es als Bild in die
+    /// linke obere Ecke. Fuer eine Probe ist genau das gemeint; wer es als
+    /// Zubehoer einer Meldung will, waehlt es unter „Senden".
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
@@ -1496,6 +1512,63 @@ public struct EditorBereichView: View {
         } catch {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
+    }
+
+    /// Der Haken in der Leiste. Fragt nach Nummer und Namen, wo ein Sichern
+    /// sonst etwas anlegte oder ersetzte, das niemand benannt hat: bei einem
+    /// neuen Stueck und bei jedem nummerngefuehrten Icon — dort ist die
+    /// Nummer der Dateiname, und ein bearbeitetes LaMetric-Icon ersetzte
+    /// sonst sein Vorbild.
+    private func sichernAnfragen() {
+        if name.trimmingCharacters(in: .whitespaces).isEmpty || groesse.nummerIstDateiname {
+            zeigeSichernBlatt = true
+        } else {
+            sichern()
+            zeigtUebersicht = true
+        }
+    }
+
+    /// Nummer und Name vor dem Sichern — an der Stelle, an der man sie
+    /// braucht, statt im Inspektor, wo sie zu suchen waren.
+    private var sichernblatt: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Sichern").font(.headline)
+            if groesse.mitNummer {
+                LabeledContent("Nummer") {
+                    TextField("Nummer", text: $nummer)
+                        .labelsHidden()
+                        .eingabefeld(loeschbar: $nummer)
+                        .frame(width: 120)
+                }
+            }
+            LabeledContent("Name") {
+                TextField("Name", text: $name)
+                    .labelsHidden()
+                    .eingabefeld(loeschbar: $name)
+                    .frame(width: 220)
+            }
+            if let vorhanden = Editorbestand.belegt(in: vorhandene, groesse: groesse,
+                                                    nummer: nummer, name: name) {
+                Label(lokf("Ersetzt „%@“.", vorhanden.name), systemImage: "exclamationmark.triangle")
+                    .font(.footnote).foregroundStyle(.orange)
+            }
+            HStack {
+                Spacer()
+                Button("Abbrechen") { zeigeSichernBlatt = false }
+                    .knopfBefehl()
+                    .keyboardShortcut(.cancelAction)
+                Button("Sichern") {
+                    zeigeSichernBlatt = false
+                    sichern()
+                    zeigtUebersicht = true
+                }
+                .knopfHaupthandlung()
+                .keyboardShortcut(.defaultAction)
+                .disabled(schluessel.isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(minWidth: 360)
     }
 
     private func loeschen(_ eintrag: Editoreintrag) {

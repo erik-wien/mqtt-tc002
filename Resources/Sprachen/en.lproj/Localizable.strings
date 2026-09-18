@@ -918,7 +918,6 @@
 "Icons" = "Icons";
 
 /* EditorBereichView.swift — die Uebersicht des Bestands im Hauptfenster */
-"Alle Icons" = "All icons";
 "Holen" = "Fetch";
 "Im Browser öffnen" = "Open in the browser";
 "Nur bewegte" = "Animated only";
@@ -931,3 +930,6 @@
 /* EditorBereichView.swift — die Verschiebepfeile treffen alle Bilder oder eines */
 "Alle Bilder" = "All frames";
 "Nur dieses" = "This frame only";
+
+/* EditorBereichView.swift — das Sichern-Blatt warnt vor dem Ersetzen */
+"Ersetzt „%@“." = "Replaces \"%@\".";
