@@ -25,7 +25,14 @@ public struct Uhreinstellungen: View {
 
     public init(zustand: AppZustand) { self.zustand = zustand }
 
-    @State private var seitenwechsel = 0
+    /// **Zehn Sekunden, nicht „kein Wechsel".** Solange die Uhr noch nicht
+    /// geantwortet hat, stand hier bis zum 18.09.2026 die 0 — und die heisst
+    /// „blaettert nie", also genau der Zustand, in dem man immer nur die erste
+    /// Meldung sieht (Geraetereferenz §5.4 nennt das ausdruecklich als haeufige
+    /// Ursache). Geschrieben wird dadurch nichts: Kommt die Antwort, gilt sie,
+    /// und `ladeLauf` verhindert, dass der gelesene Wert als Griff des
+    /// Anwenders zurueckgeschrieben wird.
+    @State private var seitenwechsel = 10
     @State private var scrollTempo = 0
     @State private var geladen = false
     /// Ein gelesener Wert darf nicht als Griff des Anwenders gelten und

@@ -47,6 +47,18 @@ public struct Verlaufsliste: View {
 
     public var body: some View {
         if zustand.verlaufAn, !eintraege.isEmpty {
+            // **Eine Ueberschrift, so klein wie moeglich.** Ohne sie stuende
+            // dort eine Liste, die man fuer vieles halten kann — die Anzeigen
+            // auf der Uhr etwa, die es an anderer Stelle wirklich gibt. Mit
+            // ihr ist in einem Wort gesagt, dass dies die eigenen, schon
+            // geschickten Meldungen sind.
+            HStack {
+                Text("Verlauf")
+                    .font(.caption).fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 6)
             List {
                 ForEach(eintraege) { eintrag in
                     Button { uebernehmen(eintrag) } label: {

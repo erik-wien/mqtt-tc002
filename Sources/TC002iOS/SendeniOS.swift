@@ -344,7 +344,7 @@ struct SendeniOS: View {
                     Button {
                         zeigeVerlauf = true
                     } label: {
-                        Label("Verlauf", systemImage: "clock.arrow.circlepath")
+                        Label("Protokoll", systemImage: "clock.arrow.circlepath")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {

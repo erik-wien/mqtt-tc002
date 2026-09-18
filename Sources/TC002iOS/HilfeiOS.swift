@@ -47,7 +47,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
     case verbindung = "Einstellungen"
     case senden = "Senden"
-    case anzeigen = "Verlauf"
+    case anzeigen = "Protokoll"
     case kurzbefehle = "Kurzbefehle"
     case fehlersuche = "Wenn nichts erscheint"
 

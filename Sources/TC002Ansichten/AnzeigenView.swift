@@ -37,30 +37,29 @@ public struct AnzeigenView: View {
                 }
             }
 
-            Divider()
-            HStack {
-                Text("Protokoll").font(.headline)
-                Spacer()
-                // **Ausgeschaltet steht hier, wo der Schalter sitzt** — und
-                // nicht bloss eine leere Liste, die wie ein Fehler aussieht.
-                if !zustand.protokollAn {
-                    Text("aus — unter „Einstellungen“ einzuschalten")
-                        .font(.caption).foregroundStyle(.secondary)
+            // **Ausgeschaltet gar nicht da.** Eine Ueberschrift ueber einer
+            // leeren Liste ist Flaeche ohne Aussage; dass es ein Protokoll
+            // gibt und wie man es einschaltet, sagt der Schalter in den
+            // Einstellungen — dort, wo man ohnehin danach sucht.
+            if zustand.protokollAn {
+                Divider()
+                HStack {
+                    Text("Protokoll").font(.headline)
+                    Spacer()
+                    Button("Leeren", role: .destructive) { zustand.protokoll.removeAll() }
+                        .knopfZerstoerend()
+                        .disabled(zustand.protokoll.isEmpty)
                 }
-                Button("Leeren", role: .destructive) { zustand.protokoll.removeAll() }
-                    .knopfZerstoerend()
-                    .disabled(!zustand.protokollAn)
-                    .disabled(zustand.protokoll.isEmpty)
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(zustand.protokoll.enumerated()), id: \.offset) { _, zeile in
-                        Text(zeile)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(zustand.protokoll.enumerated()), id: \.offset) { _, zeile in
+                            Text(zeile)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .font(.system(.footnote, design: .monospaced))
             }
-            .font(.system(.footnote, design: .monospaced))
         }
         .padding()
     }

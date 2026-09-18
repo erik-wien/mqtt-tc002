@@ -43,7 +43,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case verbindung = "Einstellungen"
     case senden = "Senden"
     case editor = "Editor"
-    case anzeigen = "Verlauf"
+    case anzeigen = "Protokoll"
     case fehlersuche = "Wenn nichts erscheint"
 
     var id: String { rawValue }
@@ -58,7 +58,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .tabelle([
                         ("Senden", "Text und Icon verschicken"),
                         ("Editor", "Icons und ganze Anzeigen malen"),
-                        ("Verlauf", "bereits verschickte Inhalte und das Protokoll"),
+                        ("Protokoll", "was jetzt auf der Uhr liegt, und die Mitschrift"),
                         ("Einstellungen", "Uhren und Broker"),
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),

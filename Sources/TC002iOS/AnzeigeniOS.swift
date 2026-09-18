@@ -18,7 +18,7 @@ struct AnzeigeniOS: View {
                     protokollAbschnitt
                 }
             }
-            .navigationTitle("Verlauf")
+            .navigationTitle("Protokoll")
             // Format- und Icon-Blatt haben "Fertig" bzw. "Abbrechen" in der
             // Titelleiste, dieses hatte nur den Greifer — uneinheitlich, und
             // ohne ausdruecklichen Weg hinaus.

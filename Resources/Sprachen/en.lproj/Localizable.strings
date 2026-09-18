@@ -153,7 +153,6 @@
 "Drittens, ob das Broker-Konto auf dieses Thema schreiben darf. Das steht in der Rechtedatei des Brokers, nicht in dieser App, und lässt sich nur am Broker-Protokoll ablesen." = "Third, whether the broker account may write to this topic. That stands in the broker's permissions file, not in this app, and can only be read off the broker's log.";
 "Viertens, ob unter „Verlauf“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen." = "Fourth, whether an old standing display is still blocking under History — delete that one first, or replace it under the same name.";
 "Text und Icon verschicken" = "send text and an icon";
-"bereits verschickte Inhalte und das Protokoll" = "content already sent, and the log";
 "Umlaute und „ß“ gehen; die App entscheidet selbst — passt der Text, bleibt er stehen, sonst läuft er als GIF." = "umlauts and \"ß\" work; the app decides for itself — if the text fits, it stands still, otherwise it scrolls as a GIF.";
 /* IconAuswahlView.swift */
 "Icon wählen…" = "Choose icon…";
@@ -457,7 +456,6 @@
 "Die fünf Blöcke zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in der Ersatzschrift. Genau steht der Text dort in der eingebauten Schrift der Uhr, die diese App nicht kennt — der Block sagt also, was auf dem Platz liegt, nicht, wie es dort aussieht. Bis September 2026 zeigte er gar nichts, weil er nur ein 52 × 16-Bild rechnen konnte; das war die stärkere Behauptung, nämlich „wir wissen es nicht“, obwohl die App es selbst geschickt hatte. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat." = "On an AWTRIX the five blocks show the same as the preview: an approximation on its 32 × 8, in the substitute font. Exactly, the text there is set in the clock's built-in font, which this app does not know — so the block says what lies on the slot, not how it looks there. Until September 2026 it showed nothing at all, because it could only render a 52 × 16 image; that was the stronger claim — \"we do not know\" — about something the app had sent itself. Occupied is more precise here than on the factory firmware: the AWTRIX names who placed each display.";
 "Protokoll führen" = "Keep a log";
 "Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt." = "Records what the app sends and what the clocks report — readable under History. Only needed when something goes wrong; switched off, nothing is recorded and what is there is cleared.";
-"aus — unter „Einstellungen“ einzuschalten" = "off — switch it on under Settings";
 /* Protokoll: was gesendet wurde, was scheiterte, was uebersprungen wurde (18.09.2026) */
 "%d Rechtecke" = "%d rectangles";
 "%d Bilder" = "%d images";
@@ -479,6 +477,9 @@
 "Belegte Plätze" = "Slots in use";
 "noch nichts" = "nothing yet";
 "Präfix" = "Prefix";
+"was jetzt auf der Uhr liegt, und die Mitschrift" = "what is on the clock now, and the log";
+"Protokoll" = "Log";
+"Verlauf" = "History";
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";
@@ -517,7 +518,6 @@
    Sammler findet sie deshalb nicht im Quelltext, sie sind in ihm als
    DYNAMISCH eingetragen. */
 "Zeigen" = "Show";
-"Verlauf" = "History";
 "Einstellungen" = "Settings";
 "Was das Programm tut" = "What this app does";
 "Wenn nichts erscheint" = "When nothing appears";

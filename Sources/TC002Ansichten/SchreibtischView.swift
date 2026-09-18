@@ -35,19 +35,24 @@ public struct SchreibtischView: View {
 
     enum Bereich: String, CaseIterable, Identifiable {
         case senden = "Senden", editor = "Editor",
-             verlauf = "Verlauf", einstellungen = "Einstellungen"
+             // **„Protokoll", nicht „Verlauf"** (18.09.2026). Der Bereich
+             // zeigt, was **jetzt** auf der Uhr liegt, und darunter die
+             // technische Mitschrift — eine Geschichte war er nie. Den Namen
+             // braucht seit heute etwas anderes: die Liste der gesendeten
+             // Meldungen unter den Bloecken.
+             protokoll = "Protokoll", einstellungen = "Einstellungen"
         var id: String { rawValue }
         var symbol: String {
             switch self {
             case .senden: return "paperplane"
             case .editor: return "paintpalette"
-            case .verlauf: return "clock.arrow.circlepath"
+            case .protokoll: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }
         }
         /// Die beiden unteren stehen abgesetzt am Fuss der Seitenleiste.
         static let oben: [Bereich] = [.senden, .editor]
-        static let unten: [Bereich] = [.verlauf, .einstellungen]
+        static let unten: [Bereich] = [.protokoll, .einstellungen]
 
         /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und ohne
         /// eingetragenen Broker (`AppZustand.eingerichtet`) waere „Senden" eine
@@ -142,7 +147,7 @@ public struct SchreibtischView: View {
             switch gewaehlt {
             case .senden: SendenView(zustand: zustand)
             case .editor: EditorBereichView(zustand: zustand)
-            case .verlauf: AnzeigenView(zustand: zustand)
+            case .protokoll: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
             }
         }
