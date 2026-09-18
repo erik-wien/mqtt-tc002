@@ -41,6 +41,16 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// Nachgeschlagen wird das ueber `lok(...)`, also ueber eine Variable —
     /// deshalb stehen die drei Zeichenketten von Hand als `DYNAMISCH` in
     /// `scripts/texte-sammeln.py`.
+    /// Ob ein Stück dieser Größe ein Icon ist. Ein Icon geht als GIF an jede
+    /// Uhr; eine ganze Anzeige hat sechzehn Zeilen und passt auf eine AWTRIX
+    /// mit acht nicht.
+    public var istIcon: Bool {
+        switch self {
+        case .icon8, .icon16: return true
+        case .anzeige: return false
+        }
+    }
+
     public var beschriftung: String {
         switch self {
         case .icon8: return "8 × 8"

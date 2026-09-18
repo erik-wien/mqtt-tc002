@@ -73,3 +73,48 @@ final class BildsendungBeideWegeTests: XCTestCase {
         XCTAssertTrue(ausDatei.bilder.isEmpty && ausSpeicher.bilder.isEmpty)
     }
 }
+
+extension BildsendungTests {
+    /// Ein gemaltes Icon geht auch an eine AWTRIX NG — als GIF, nicht als
+    /// Pixelfeld. Ohne die Herkunft am Rahmen wies `Anzeigen.nutzlast` es als
+    /// „gemaltes Bild“ ab und begründete das mit 52 × 16, obwohl auf 8 × 8
+    /// gemalt worden war.
+    func testEinGemaltesIconTraegtSeineHerkunftUndGehtAnEineNG() throws {
+        let bilder: [[String?]] = [Array(repeating: "#FF0000", count: 64),
+                                   Array(repeating: "#00FF00", count: 64)]
+        let rahmen = try Bildsendung.rahmen(aus: bilder, breite: 8, hoehe: 8, verzoegerung: 0.1)
+        let herkunft = try XCTUnwrap(rahmen.herkunft, "dem Icon fehlt die Herkunft")
+        XCTAssertEqual(herkunft.iconKante, 8)
+        XCTAssertTrue(herkunft.iconDatenURI?.hasPrefix("data:image/gif;base64,") == true,
+                      "das Icon reist nicht als GIF mit")
+
+        let nutzlast = try NGNutzlast.anzeige(herkunft.optionen,
+                                              iconDatenURI: herkunft.iconDatenURI,
+                                              iconKante: herkunft.iconKante)
+        XCTAssertTrue(nutzlast.contains("\"icon\""), "die NG-Nutzlast trägt kein Icon")
+    }
+
+    /// Eine ganze Anzeige bleibt, was sie war: Sie hat sechzehn Zeilen und
+    /// bekommt keine Herkunft — eine AWTRIX mit acht Zeilen nimmt sie nicht.
+    func testEineGanzeAnzeigeBekommtKeineHerkunft() throws {
+        let bild: [[String?]] = [Array(repeating: "#FFFFFF", count: 52 * 16)]
+        let rahmen = try Bildsendung.rahmen(aus: bild, verzoegerung: 0.1)
+        XCTAssertNil(rahmen.herkunft, "eine ganze Anzeige gibt sich als Icon aus")
+    }
+
+    /// Ein 16×16 trägt seine Herkunft, wird von NG aber mit dem richtigen
+    /// Grund abgewiesen: zu hoch für acht Zeilen — nicht „kein Pixelweg“.
+    func testEinSechzehnerIconWirdMitDemRichtigenGrundAbgewiesen() throws {
+        let bild: [[String?]] = [Array(repeating: "#FFFFFF", count: 256)]
+        let rahmen = try Bildsendung.rahmen(aus: bild, breite: 16, hoehe: 16, verzoegerung: 0.1)
+        let herkunft = try XCTUnwrap(rahmen.herkunft)
+        XCTAssertThrowsError(try NGNutzlast.anzeige(herkunft.optionen,
+                                                    iconDatenURI: herkunft.iconDatenURI,
+                                                    iconKante: herkunft.iconKante)) { fehler in
+            guard case NGFehler.iconZuHoch(let kante) = fehler else {
+                return XCTFail("falscher Grund: \(fehler)")
+            }
+            XCTAssertEqual(kante, 16)
+        }
+    }
+}

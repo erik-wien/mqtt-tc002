@@ -41,14 +41,30 @@ public enum Bildsendung {
                               hoehe: Int = Pixelfeld.hoeheStandard,
                               verzoegerung: Double, dauer: Int? = nil) throws -> Frame {
         guard let erstes = bilder.first else { throw BildrasterFehler.nichtLesbar }
-        guard bilder.count > 1 else {
+        var gebaut: Frame
+        if bilder.count > 1 {
+            let uri = try Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
+                                                 verzoegerung: verzoegerung)
+            gebaut = Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+        } else {
             guard let feld = Pixelfeld(breite: breite, hoehe: hoehe, punkte: erstes) else {
                 throw BildrasterFehler.nichtLesbar
             }
-            return Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
+            gebaut = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
         }
-        let uri = try Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
-                                             verzoegerung: verzoegerung)
-        return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: dauer)
+        // Ein quadratisches Stueck ist ein Icon, und ein Icon nimmt auch eine
+        // AWTRIX NG — als GIF, nicht als Pixelfeld (`NGNutzlast.icon`). Ohne
+        // diese Herkunft haette `Anzeigen.nutzlast` dorthin nichts zu schicken
+        // und wiese es als „gemaltes Bild" ab, obwohl es keines ist.
+        //
+        // Nur die Kante entscheidet, nicht der Bereich, aus dem es kommt: Was
+        // 8 x 8 oder 16 x 16 ist, ist ein Icon, alles andere eine Anzeige.
+        if breite == hoehe, breite == 8 || breite == 16 {
+            let uri = try Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
+                                                 verzoegerung: verzoegerung)
+            gebaut.herkunft = Meldungsherkunft(optionen: Meldungsoptionen(text: ""),
+                                               iconDatenURI: uri, iconKante: breite)
+        }
+        return gebaut
     }
 }

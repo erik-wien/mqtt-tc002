@@ -1215,6 +1215,10 @@ public struct EditorBereichView: View {
     /// Knopf, der auch die tauglichen Ziele mitsperrte. Ohne gewählte Uhr
     /// greift schon `zustand.ziele().isEmpty` davor.
     private var keineNimmtGemaltes: Bool {
+        // Ein Icon nimmt jede Uhr: Es geht als GIF hinaus, nicht als Pixelfeld
+        // (`Bildsendung.rahmen` haengt ihm die Herkunft an). Die Sperre gilt
+        // allein der ganzen Anzeige — die hat 16 Zeilen, eine AWTRIX acht.
+        guard !groesse.istIcon else { return false }
         let ziele = zustand.ziele()
         return !ziele.isEmpty && !ziele.contains { $0.gattung.nimmtGemaltes }
     }
