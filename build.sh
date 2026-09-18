@@ -276,9 +276,18 @@ fi
 # Buendel signiert werden — danach besiegelt die Signatur des Buendels es mit.
 BERECHTIGUNGSARGUMENT=""
 [ -n "$BERECHTIGUNGEN" ] && BERECHTIGUNGSARGUMENT="--entitlements $BERECHTIGUNGEN"
+# Das Werkzeug bekommt die Berechtigungen ausdruecklich NICHT. Die
+# iCloud-Berechtigungen sind eingeschraenkt und gelten nur zusammen mit einem
+# Bereitstellungsprofil; ein Profil laesst sich aber nur in ein Buendel
+# einbetten, nicht in eine einzelne Mach-O-Datei. macOS beendet das so
+# signierte Werkzeug beim Start sofort mit SIGKILL — ohne Meldung, ohne
+# Absturzbericht, „zsh: killed".
+#
+# Ohne die Berechtigung erreicht es den iCloud-Behaelter nicht und arbeitet im
+# oertlichen Ordner (`Ablageort`). Bei eingeschaltetem Abgleich schreibt es sein
+# Slotgedaechtnis damit woanders hin als die App.
 if [ -n "$SIGNATUR" ]; then
-    # shellcheck disable=SC2086
-    codesign --force $BERECHTIGUNGSARGUMENT -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
+    codesign --force -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
 fi
 # shellcheck disable=SC2086
 if [ -n "$SIGNATUR" ] && codesign --force $BERECHTIGUNGSARGUMENT -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then

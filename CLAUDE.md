@@ -252,6 +252,20 @@ Deshalb nach jedem Bau:
     sh scripts/buendel-pruefen.sh                    # iOS
     sh scripts/buendel-pruefen.sh erzeugt/mac/MQTT-TC002.app   # macOS
 
+Und eine dritte, die kein Bündelprüfer sieht: **Das mitreisende Werkzeug darf
+nicht mit den Berechtigungen der App signiert werden.** Die iCloud-Einträge sind
+eingeschränkt und gelten nur zusammen mit einem Bereitstellungsprofil; ein Profil
+lässt sich aber nur in ein Bündel einbetten, nicht in eine einzelne Mach-O-Datei.
+macOS beendet `mqtttc002` dann beim Start sofort mit SIGKILL — ohne Meldung, ohne
+Absturzbericht, `codesign --verify` meldet die Signatur als gültig. Nachgesehen
+wird, indem man es ausführt:
+
+    erzeugt/mac/MQTT-TC002.app/Contents/MacOS/mqtttc002 uhren
+
+Der Preis: Ohne die Berechtigung erreicht es den iCloud-Behälter nicht und
+arbeitet im örtlichen Ordner — bei eingeschaltetem Abgleich schreibt es sein
+Slotgedächtnis damit woanders hin als die App.
+
 Zwei Eigenheiten, die dahinterstecken:
 
 - In XcodeGen gehören Ressourcen unter `sources:` mit `buildPhase: resources`.
