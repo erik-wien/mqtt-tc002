@@ -107,7 +107,7 @@ public final class Uhrenserver: @unchecked Sendable {
         }
 
         var kopf = "HTTP/1.1 \(antwort.status) \(antwort.status == 200 ? "OK" : "Not Found")\r\n"
-        kopf += "Content-Type: application/json\r\n"
+        kopf += "Content-Type: \(antwort.inhaltstyp)\r\n"
         kopf += "Content-Length: \(antwort.koerper.count)\r\n"
         kopf += "Connection: close\r\n\r\n"
         var hinaus = Data(kopf.utf8)

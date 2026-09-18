@@ -472,6 +472,13 @@
 "Sendung „%@“" = "Send \"%@\"";
 "an %@ gesendet: %@ · %@" = "sent to %@: %@ · %@";
 "%@ mitgelesen: %@ · %d Bytes" = "%@ read along: %@ · %d bytes";
+/* Die Seite der virtuellen Uhr im Browser (18.09.2026) */
+"Hier gibt’s leider nichts zu sehen" = "Nothing to see here, sorry";
+"Diese Adresse ist die virtuelle Uhr: Sie beantwortet dieselben Anfragen wie eine echte Ulanzi — für die App, nicht für den Browser." = "This address is the virtual clock: it answers the same requests as a real Ulanzi — for the app, not for a browser.";
+"Was auf einer Uhr stünde, zeigt die App selbst: unter „Senden“ die Vorschau im Geräterahmen, darunter die fünf Plätze mit ihrem Inhalt." = "What would be on a clock is shown by the app itself: under Send, the preview inside the device frame, and below it the five slots with their contents.";
+"Belegte Plätze" = "Slots in use";
+"noch nichts" = "nothing yet";
+"Präfix" = "Prefix";
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";

@@ -229,4 +229,34 @@ final class VirtuelleuhrAmDrahtTests: XCTestCase {
         try Geraet(host: adresse).konfigurationSetzen("carouselSpeed", 30)
         XCTAssertEqual(server.zustand.seitenwechsel, 30)
     }
+
+    /// **Die Wurzel ist fuer Augen, nicht fuer die App.**
+    ///
+    /// Wer die Adresse der virtuellen Uhr in den Browser tippt, bekam bis zum
+    /// 18.09.2026 ein 404 mit JSON darin. Jetzt steht dort, was zu sehen ist —
+    /// und wo das Bild steht: in der Vorschau der App. Ein Nachbau der Anzeige
+    /// waere hier nur halb moeglich (ein Lauf-GIF und ein Textblock liefern
+    /// keine Pixel, dieselbe Grenze wie bei den Bloecken), und eine Seite, die
+    /// mal ein Bild zeigt und mal nicht, erklaert weniger als ein Satz.
+    func testDieWurzelErklaertWoDieVorschauSteht() throws {
+        var zustand = Uhrzustand()
+        let antwort = Virtuelleuhr.beantworten(.init("GET", "/"), &zustand)
+
+        XCTAssertEqual(antwort.status, 200)
+        XCTAssertTrue(antwort.inhaltstyp.hasPrefix("text/html"),
+                      "Ein Browser bekommt HTML, kein JSON.")
+        let text = String(decoding: antwort.koerper, as: UTF8.self)
+        XCTAssertTrue(text.contains("Senden"), "Der Hinweis nennt nicht, wo die Vorschau steht.")
+    }
+
+    /// **Und alles andere bleibt 404.** Daran erkennt die App die Geraeteart:
+    /// Eine virtuelle Werksfirmware, die auf `/api/v1/device` etwas sagte,
+    /// gaelte als AWTRIX NG.
+    func testEinUnbekannterPfadBleibtVierhundertvier() throws {
+        var zustand = Uhrzustand()
+        let antwort = Virtuelleuhr.beantworten(.init("GET", "/api/v1/device"), &zustand)
+        XCTAssertEqual(antwort.status, 404)
+        XCTAssertEqual(antwort.inhaltstyp, "application/json")
+    }
+
 }
