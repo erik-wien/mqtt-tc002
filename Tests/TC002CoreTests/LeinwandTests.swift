@@ -292,3 +292,25 @@ final class LeinwandTests: XCTestCase {
     }
 
 }
+
+extension LeinwandTests {
+    /// Verschieben trifft entweder die ganze Animation oder allein das
+    /// gewählte Einzelbild.
+    func testVerschiebenTrifftWahlweiseNurDasGewaehlteBild() {
+        var leinwand = Leinwand(breite: 2, hoehe: 1)
+        leinwand.setzen(x: 0, y: 0, farbe: "#FF0000")
+        leinwand.anhaengen()
+        leinwand.waehlen(1)
+        leinwand.setzen(x: 0, y: 0, farbe: "#00FF00")
+
+        var alle = leinwand
+        alle.verschieben(dx: 1, dy: 0)
+        XCTAssertEqual(alle.bilder[0], [nil, "#FF0000"], "das erste Bild ist nicht mitgewandert")
+        XCTAssertEqual(alle.bilder[1], [nil, "#00FF00"], "das zweite Bild ist nicht mitgewandert")
+
+        var eines = leinwand
+        eines.verschieben(dx: 1, dy: 0, nurDieses: true)
+        XCTAssertEqual(eines.bilder[0], ["#FF0000", nil], "das erste Bild wurde mitverschoben")
+        XCTAssertEqual(eines.bilder[1], [nil, "#00FF00"], "das gewählte Bild ist nicht gewandert")
+    }
+}

@@ -71,6 +71,10 @@ public struct EditorBereichView: View {
     @State private var meldung: String?
     @State private var lametricNummer = ""
     @State private var zeigeGalerie = false
+    /// Ob die Verschiebepfeile die ganze Animation treffen oder allein das
+    /// gewaehlte Einzelbild. Bei einem einzelnen Bild ist die Frage gegen-
+    /// standslos, dann steht der Schalter nicht da.
+    @State private var verschiebtNurDieses = false
     @State private var laedt = false
 
     // Rueckfragen.
@@ -423,7 +427,7 @@ public struct EditorBereichView: View {
             // neben der Verzoegerung, und dorthin kommt man nur mit einem
             // Umweg. Er steht deshalb hier, wo das Bild steht, und nur dann,
             // wenn es ueberhaupt etwas abzuspielen gibt.
-            if leinwand.bilder.count > 1 { abspielknopf }
+            if leinwand.bilder.count > 1 { abspielknopf(90) }
         }
     }
 
@@ -611,8 +615,12 @@ public struct EditorBereichView: View {
     private var animationAbschnitte: some View {
         Section("Einzelbilder") {
             einzelbildstreifen
-            Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
-                .knopfBefehl()
+            HStack {
+                Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
+                    .knopfBefehl()
+                Spacer()
+                if leinwand.bilder.count > 1 { abspielknopf(22) }
+            }
         }
 
         Section {
@@ -643,10 +651,10 @@ public struct EditorBereichView: View {
     /// durch ein Ternaer kommt, ist jeder Zweig schon uebersetzt (`lok`),
     /// bevor SwiftUI ihn sieht: Ein Ternaer mit `String`-Zweig schlaegt selbst
     /// nichts mehr nach.
-    private var abspielknopf: some View {
+    private func abspielknopf(_ kante: Double) -> some View {
         Button { abspielenUmschalten() } label: {
             Image(systemName: spielAb ? "pause.circle" : "play.circle")
-                .font(.system(size: 30, weight: .light))
+                .font(.system(size: kante, weight: .light))
         }
         .buttonStyle(.plain)
         .help(spielAb ? lok("Pause") : lok("Abspielen"))
@@ -776,6 +784,20 @@ public struct EditorBereichView: View {
     /// Pixel. Ein Kreuz und keine vier Knoepfe in einer Reihe: Richtung ist
     /// raeumlich, und in einer Reihe muesste man jedes Symbol einzeln lesen.
     private var pfeilkreuz: some View {
+        VStack(spacing: 6) {
+            pfeilgitter
+            if leinwand.bilder.count > 1 {
+                Picker("Verschieben", selection: $verschiebtNurDieses) {
+                    Text("Alle Bilder").tag(false)
+                    Text("Nur dieses").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+        }
+    }
+
+    private var pfeilgitter: some View {
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             GridRow {
                 Color.clear.frame(width: 1, height: 1)
@@ -805,7 +827,8 @@ public struct EditorBereichView: View {
     private func pfeil(_ symbol: String, name: String, dx: Int, dy: Int) -> some View {
         Button {
             schritt()
-            leinwand.verschieben(dx: dx, dy: dy)
+            leinwand.verschieben(dx: dx, dy: dy,
+                                 nurDieses: verschiebtNurDieses && leinwand.bilder.count > 1)
             arbeitsstandSichern()
         } label: {
             Label(name, systemImage: symbol).frame(width: 18, height: 18)

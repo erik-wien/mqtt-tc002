@@ -218,7 +218,7 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// noch einmal treffen und nicht bloß einer Regel folgen.
     func testAbspielsymbolTraegtSeinenNamenNurFuerDieSprachausgabe() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
+        let knopf = ausschnitt(text, von: "private func abspielknopf", bis: "private var sichernAbschnitte")
         XCTAssertEqual(anzahl(knopf, ".help("), 1,
                        "das Abspielsymbol hat nicht mehr genau einen Einblendtext")
         XCTAssertEqual(anzahl(knopf, ".accessibilityLabel("), 1,

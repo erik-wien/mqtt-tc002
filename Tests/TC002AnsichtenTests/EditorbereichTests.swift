@@ -300,10 +300,17 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertTrue(sekunden.contains("Text(\"s\")"),
                       "die Sekundenzeile sieht anders aus — dann prüft dieser Test die falsche Stelle")
         XCTAssertFalse(sekunden.contains("abspielknopf"),
-                       "das Symbol steht wieder **zusätzlich** neben dem Sekundenwert — zwei Orte für "
-                       + "dieselbe Handlung")
+                       "das Symbol steht wieder neben dem Sekundenwert — dort war es nicht gemeint")
 
-        let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
+        // Zwei Orte, ausdrücklich gewollt: groß unter der Leinwand, klein
+        // neben „Bild anhängen" im Reiter „Animation", wo man Einzelbilder
+        // aufbaut und den Lauf gleich sehen will.
+        XCTAssertTrue(text.contains("abspielknopf(90)"),
+                      "unter der Leinwand steht kein großer Abspielknopf mehr")
+        XCTAssertTrue(text.contains("abspielknopf(22)"),
+                      "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr")
+
+        let knopf = ausschnitt(text, von: "private func abspielknopf", bis: "private var sichernAbschnitte")
         // Play und Pause, nicht Play und Stopp: `stoppeAbspielen` bricht
         // nur die Schleife ab, das gezeigte Einzelbild bleibt stehen. Ein
         // `stop.fill` verspraeche einen Ruecksprung an den Anfang.

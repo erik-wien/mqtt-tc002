@@ -200,14 +200,17 @@ public struct Leinwand: Equatable, Sendable, Codable {
     /// Alle Einzelbilder zusammen, nicht nur das sichtbare: Eine
     /// Animation, deren Bilder gegeneinander verrutschen, waere kaputt, und
     /// die Bildleiste zeigt zu klein, dass es passiert ist.
-    public mutating func verschieben(dx: Int, dy: Int) {
+    /// `nurDieses` verschiebt allein das gerade gewählte Einzelbild. Bei einer
+    /// Animation sind beide Fälle gemeint: die ganze Grafik ausrichten, oder
+    /// ein einzelnes Bild gegen die übrigen versetzen.
+    public mutating func verschieben(dx: Int, dy: Int, nurDieses: Bool = false) {
         guard breite > 0, hoehe > 0 else { return }
         // Der Rest-Operator von Swift kann negativ werden, ein Index nicht —
         // deshalb einmal die Kante dazu, bevor gerechnet wird.
         let vx = ((dx % breite) + breite) % breite
         let vy = ((dy % hoehe) + hoehe) % hoehe
         guard vx != 0 || vy != 0 else { return }
-        for i in bilder.indices {
+        for i in (nurDieses ? [aktuell] : Array(bilder.indices)) {
             var neu = [String?](repeating: nil, count: breite * hoehe)
             for y in 0..<hoehe {
                 let zy = (y + vy) % hoehe

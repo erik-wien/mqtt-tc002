@@ -927,3 +927,7 @@
 "Duplizieren" = "Duplicate";
 "„%@“ angelegt." = "\"%@\" created.";
 "%@ %d" = "%@ %d";
+
+/* EditorBereichView.swift — die Verschiebepfeile treffen alle Bilder oder eines */
+"Alle Bilder" = "All frames";
+"Nur dieses" = "This frame only";
