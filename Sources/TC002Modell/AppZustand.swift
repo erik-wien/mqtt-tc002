@@ -829,6 +829,17 @@ public final class AppZustand {
     ///
     /// `sitzung` ist wie bei `belegungAbfragen` die Naht fuer den Test —
     /// die Oberflaeche ruft `abfragen(id)`.
+    /// **Alle Uhren auf einmal** — fuer das Oeffnen der Einstellungen.
+    ///
+    /// Bis zum 18.09.2026 stand dort erst etwas, nachdem man je Uhr auf
+    /// „Abfragen" gedrueckt hatte: Praefix, Gattung und Verbindungsstand sind
+    /// aber genau das, was man beim Aufschlagen der Einstellungen wissen will.
+    /// Die Abrufe laufen nebeneinander und blockieren nichts; eine Uhr, die
+    /// nicht antwortet, haelt die uebrigen nicht auf (`Hintergrund`).
+    public func alleAbfragen(sitzung: URLSession = .shared) {
+        for uhr in uhren { abfragen(uhr.id, sitzung: sitzung) }
+    }
+
     public func abfragen(_ id: UUID, sitzung: URLSession = .shared) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
@@ -987,6 +998,14 @@ public final class AppZustand {
     private enum Sendefehler {
         case broker(String)
         case uhr(String)
+
+        /// Der Wortlaut ohne die Unterscheidung — fuer das Protokoll, das
+        /// beides gleich behandelt: Es soll dastehen, was schiefging.
+        var meldung: String {
+            switch self {
+            case .broker(let m), .uhr(let m): return m
+            }
+        }
     }
 
     private enum Sendeausgang {
@@ -1062,10 +1081,23 @@ public final class AppZustand {
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
     private func anZiele(_ tat: @escaping @Sendable (Anzeigen) throws -> Void,
-                         erledigt: (Uhr) -> Void) async {
+                         was: String = "", erledigt: (Uhr) -> Void) async {
         let ziele = ziele()
+        // **Wer uebersprungen wird, steht im Protokoll.** `ziele()` filtert
+        // still heraus, was nicht beschickbar ist — einer MQTT-Uhr fehlt dann
+        // das Praefix, einer HTTP-Uhr die Adresse. Bis zum 18.09.2026 sagte das
+        // nur die Hilfe; wer suchte, warum eine Uhr nichts bekommt, fand im
+        // Protokoll keinen Hinweis, weil dort nur die **gelungenen** Sendungen
+        // standen.
+        for uhr in uhren where !ziele.contains(where: { $0.id == uhr.id }) && istZiel(uhr) {
+            log(lokf("%@ übersprungen: %@", uhr.name,
+                     uhr.wirksameBetriebsart == .http
+                        ? lok("keine Adresse") : lok("kein Präfix — erst abfragen")))
+        }
         guard !ziele.isEmpty else {
-            fehler = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
+            let meldung = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
+            fehler = meldung
+            log(meldung)
             return
         }
         var fehlschlaege: [Sendefehler] = []
@@ -1089,12 +1121,24 @@ public final class AppZustand {
             for await ausgang in gruppe {
                 switch ausgang {
                 case .erfolg(let uhr): erledigt(uhr)
-                case .gescheitert(let f): fehlschlaege.append(f)
+                case .gescheitert(let f):
+                    fehlschlaege.append(f)
+                    // **Fehlschlaege gehoeren ins Protokoll**, nicht nur in die
+                    // Hinweisleiste. Die ist fluechtig: Wer sie wegklickt oder
+                    // wegsieht, hat nichts mehr — und genau dafuer schaltet man
+                    // ein Protokoll ein.
+                    log(was.isEmpty ? f.meldung : lokf("%@ gescheitert: %@", was, f.meldung))
                 case nil: break
                 }
             }
         }
         fehler = zusammengefasst(fehlschlaege)
+    }
+
+    /// Ob diese Uhr ueberhaupt gemeint war — sonst stuende bei jeder Sendung
+    /// jede nicht gewaehlte Uhr als „uebersprungen" im Protokoll.
+    private func istZiel(_ uhr: Uhr) -> Bool {
+        zielIDs.isEmpty ? uhr.id == aktiveID : zielIDs.contains(uhr.id)
     }
 
     /// Schickt einen Rahmen an eine oder alle gewählten Uhren.
@@ -1125,10 +1169,17 @@ public final class AppZustand {
         // Der Verlauf erzaehlt, was man geschickt hat, und das war **eine**
         // Meldung, auch wenn sie an drei Uhren ging.
         var erreicht: [String] = []
-        await anZiele({ try $0.zeigen(frame, auf: name) }) { uhr in
+        await anZiele({ try $0.zeigen(frame, auf: name) },
+                      was: lokf("Sendung „%@“", name)) { uhr in
             erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
-            log(lokf("an %@ gesendet: %@", uhr.name, name))
+            // **Mehr als der Platzname.** Was hinausging, hing an drei
+            // Fragen, die das Protokoll bis zum 18.09.2026 nicht beantwortete:
+            // auf welchem Weg, wie gross, und mit welchem Text. Genau daran
+            // hingen die letzten Fehlersuchen — ein „als Text", das die Uhr
+            // abschneidet, sieht im Protokoll sonst aus wie jede andere
+            // gelungene Sendung.
+            log(lokf("an %@ gesendet: %@ · %@", uhr.name, name, frame.beschreibung))
             guard let slotPlatz else { return }
             if let slotOptionen {
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
@@ -1397,6 +1448,11 @@ public final class AppZustand {
             guard thema.hasPrefix(vorsilbe) else { return }
             let name = String(thema.dropFirst(vorsilbe.count))
             guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
+            // **Mitgelesenes gehoert ins Protokoll.** Es ist die einzige
+            // Auskunft darueber, dass jemand anderes auf die Uhr geschrieben
+            // hat — und die Frage „warum steht da etwas, das ich nicht
+            // geschickt habe" laesst sich sonst gar nicht beantworten.
+            log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, name, nutzlast.count))
             if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
                 slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel)
             } else if nutzlast.isEmpty {
@@ -1484,6 +1540,7 @@ public final class AppZustand {
             return
         }
         slotInhalt[id]?[platz] = nil
+        log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, rest, nutzlast.count))
         anzeigeBestaetigt(rest, fuer: uhr)
     }
 

@@ -38,6 +38,9 @@ struct VerbindungiOS: View {
                     ueberAbschnitt
                 }
             }
+            // Wie am Schreibtisch: beim Aufschlagen fragen, nicht erst auf
+            // Druck (`AppZustand.alleAbfragen`).
+            .task { zustand.alleAbfragen() }
             .navigationTitle("Einstellungen")
             // Format- und Icon-Blatt haben "Fertig" bzw. "Abbrechen" in der
             // Titelleiste, dieses hatte nur den Greifer — uneinheitlich, und

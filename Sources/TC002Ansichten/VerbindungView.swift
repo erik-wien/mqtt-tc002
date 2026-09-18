@@ -221,6 +221,12 @@ public struct VerbindungView: View {
             Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
         }
         .formStyle(.grouped)
+        // **Beim Aufschlagen fragen, nicht erst auf Druck.** Praefix, Gattung
+        // und Verbindungsstand sind genau das, was man hier wissen will; bis
+        // zum 18.09.2026 stand dort nichts, bis man je Uhr auf „Abfragen"
+        // gedrueckt hatte. Die Abrufe laufen nebeneinander, eine stumme Uhr
+        // haelt die uebrigen nicht auf.
+        .task { zustand.alleAbfragen() }
         .padding()
         // `.padding()` legt sich **um** die rollende Flaeche, nicht in sie
         // hinein: Der Inhalt rollt bis an ihre Kante, und der letzte Abschnitt

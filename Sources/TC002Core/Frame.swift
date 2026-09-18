@@ -94,6 +94,27 @@ public struct Frame: Equatable, Sendable {
     public var bilder: [Bild] = []
     public var texte: [Textblock] = []
     public var dauer: Int?
+
+    /// **Was hier hinausgeht, in einem Satz** — fuer das Protokoll.
+    ///
+    /// Drei Angaben, und genau an ihnen hingen die Fehlersuchen der letzten
+    /// Tage: der **Weg** (gerasterte Rechtecke, ein Bild, ein Textblock, den
+    /// die Uhr selbst setzt), die **Groesse** der Nutzlast und, beim Textweg,
+    /// der Text selbst. Ein „als Text", das die Uhr abschneidet, sieht sonst
+    /// aus wie jede andere gelungene Sendung.
+    ///
+    /// Ohne `lok`: Die Teile sind uebersetzt, zusammengesetzt wird mit
+    /// Trennzeichen.
+    public var beschreibung: String {
+        var teile: [String] = []
+        if !draw.isEmpty { teile.append(lokf("%d Rechtecke", draw.count)) }
+        if !bilder.isEmpty { teile.append(lokf("%d Bilder", bilder.count)) }
+        for block in texte { teile.append(lokf("Text „%@“", block.inhalt)) }
+        let bytes = alsJSON().utf8.count
+        teile.append(bytes < 1024 ? lokf("%d Bytes", bytes) : lokf("rund %d KB", bytes / 1024))
+        if let dauer { teile.append(lokf("%d s", dauer)) }
+        return teile.joined(separator: " · ")
+    }
     /// Siehe `Meldungsherkunft` — steht daneben, nicht darin.
     public var herkunft: Meldungsherkunft?
 

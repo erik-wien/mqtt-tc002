@@ -34,7 +34,6 @@
 "Für %@ ist keine Adresse eingetragen. Unter „Einstellungen“ eine eintragen." = "No address is entered for %@. Enter one under “Settings”.";
 "verbunden" = "connected";
 "nicht verbunden" = "not connected";
-"an %@ gesendet: %@" = "sent to %@: %@";
 "%@: Regler für Slot %d nicht gemerkt" = "%@: controls for slot %d not remembered";
 "%@: alte Regler für Slot %d nicht vergessen" = "%@: old controls for slot %d not discarded";
 "auf %@ gelöscht: %@" = "deleted on %@: %@";
@@ -459,6 +458,20 @@
 "Protokoll führen" = "Keep a log";
 "Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt." = "Records what the app sends and what the clocks report — readable under History. Only needed when something goes wrong; switched off, nothing is recorded and what is there is cleared.";
 "aus — unter „Einstellungen“ einzuschalten" = "off — switch it on under Settings";
+/* Protokoll: was gesendet wurde, was scheiterte, was uebersprungen wurde (18.09.2026) */
+"%d Rechtecke" = "%d rectangles";
+"%d Bilder" = "%d images";
+"Text „%@“" = "Text \"%@\"";
+"%d Bytes" = "%d bytes";
+"rund %d KB" = "about %d KB";
+"%d s" = "%d s";
+"%@ übersprungen: %@" = "%@ skipped: %@";
+"keine Adresse" = "no address";
+"kein Präfix — erst abfragen" = "no prefix — query it first";
+"%@ gescheitert: %@" = "%@ failed: %@";
+"Sendung „%@“" = "Send \"%@\"";
+"an %@ gesendet: %@ · %@" = "sent to %@: %@ · %@";
+"%@ mitgelesen: %@ · %d Bytes" = "%@ read along: %@ · %d bytes";
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";
