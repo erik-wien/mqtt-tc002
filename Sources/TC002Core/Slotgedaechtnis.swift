@@ -33,27 +33,24 @@ public struct Slotstand: Codable, Hashable, Sendable {
     public var tempo: String
     public var iconLaeuftMit: Bool
     public var icon: String?
-    /// Die Kantenlaenge des gemerkten Icons — **8 oder 16**, und der Grund,
+    /// Die Kantenlaenge des gemerkten Icons — 8 oder 16, und der Grund,
     /// warum dieser Typ ueberhaupt ein neues Feld bekommen hat.
     ///
     /// Ohne sie rechnete `merken` die Pruefsumme mit der Vorgabe 8
     /// (`Meldungsbau.feld(_:mitIcon:iconKante:)`), waehrend wirklich ein 16×16
     /// gesendet wurde. Die gemerkte Pruefsumme passte dann zu keiner
-    /// mitgelesenen Nutzlast, `slotWaehlen` verwarf den Stand als „da hat
-    /// jemand anderer geschrieben", und **die Regler kamen nie zurueck**. Von
-    /// aussen sah es aus wie ein vergessliches Gedaechtnis; in Wahrheit war es
-    /// eine Rechnung mit der falschen Zahl.
+    /// mitgelesenen Nutzlast, und `slotWaehlen` verwarf den Stand als „da hat
+    /// jemand anderer geschrieben" — die Regler kamen nie zurueck.
     ///
-    /// **`Optional`, und das aus zwei Gruenden zugleich.** Erstens ist dies
-    /// ein Dateiformat: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// `Optional`, aus zwei Gruenden zugleich: Erstens ist dies ein
+    /// Dateiformat: Ein nachtraegliches Pflichtfeld wirft beim Decode
     /// `keyNotFound`, auch mit Vorgabewert, und weil gelesen wird, ohne dass
     /// ein Fehler irgendwo ankaeme, waere die Folge ein leeres Gedaechtnis
-    /// statt einer Meldung. Zweitens liegt diese Datei seit dem
-    /// iCloud-Abgleich moeglicherweise in einem Behaelter, den auch eine
-    /// aeltere Fassung auf einem anderen Geraet liest — dort muss sie lesbar
-    /// bleiben.
+    /// statt einer Meldung. Zweitens liegt diese Datei moeglicherweise im
+    /// iCloud-Behaelter, den auch eine aeltere Fassung auf einem anderen
+    /// Geraet liest — dort muss sie lesbar bleiben.
     ///
-    /// `nil` heisst **8**, nicht „unbekannt": Bis hierher gab es nur
+    /// `nil` heisst 8, nicht „unbekannt": Bis zu diesem Feld gab es nur
     /// 8×8-Icons in gemerkten Staenden. `iconKanteOderAcht` sagt das an einer
     /// Stelle, statt es an dreien zu wiederholen.
     public var iconKante: Int?
@@ -120,7 +117,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
 /// beschrieben wurden — geschrieben von allen drei Absendern (App, Werkzeug,
 /// Kurzbefehle), gelesen beim Antippen eines Slot-Blocks.
 ///
-/// Bewusst **keine** Einstellung: Das Werkzeug schreibt nie in die
+/// Bewusst keine Einstellung: Das Werkzeug schreibt nie in die
 /// Einstellungen der App (zwei Schreiber auf denselben Schluesseln waeren ein
 /// Wettlauf) — diese Ablage ist eine eigene Datei je Uhr, dafuer gebaut, dass
 /// mehrere Absender sie beschreiben.
@@ -132,7 +129,7 @@ public struct Slotgedaechtnis: Sendable {
     /// `Application Support/MQTT-TC002` oder im iCloud-Behaelter. Tests geben
     /// eine eigene, wegwerfbare `ordner` hinein, statt hier zu landen.
     ///
-    /// **Hier haengt die Nebenwirkung, die den ganzen Abgleich traegt.** Zieht
+    /// Hier haengt die Nebenwirkung, die den ganzen Abgleich traegt: Zieht
     /// dieser Ordner mit, weiss das Telefon, was der Mac an die Uhr geschickt
     /// hat — und umgekehrt.
     public static var eigenerOrdner: URL { Ablageort.gemeinsam.ordner(.slots) }
@@ -148,7 +145,7 @@ public struct Slotgedaechtnis: Sendable {
     /// frisch gebaute — jeder Lesezugriff geht ohnehin auf die Platte. Tests
     /// reichen weiterhin ihren eigenen, wegwerfbaren Ordner herein.
     ///
-    /// **Gehalten, aber nicht fuer immer:** Seit der Ordner ueber `Ablageort`
+    /// Gehalten, aber nicht fuer immer: Seit der Ordner ueber `Ablageort`
     /// kommt, kann er sich im Lauf einer Sitzung aendern — wer den
     /// iCloud-Abgleich umschaltet, aendert ihn. Ein `static let` zeigte danach
     /// weiter auf den alten Ort und merkte Sendungen still am falschen Platz.
@@ -212,7 +209,7 @@ public struct Slotgedaechtnis: Sendable {
     /// `@discardableResult`, weil ein Aufrufer ohne eigenes Protokoll
     /// (Werkzeug, Kurzbefehle) den Rueckgabewert nicht braucht.
     @discardableResult
-    /// `iconKante` hat **keine** Vorgabe, und das ist Absicht: Eine Vorgabe von
+    /// `iconKante` hat keine Vorgabe, und das ist Absicht: Eine Vorgabe von
     /// 8 waere genau der Fehler, der hier behoben wurde — ein Aufrufer, der sie
     /// vergisst, bekaeme stillschweigend die falsche Rechnung zurueck. Ohne
     /// Icon ist der Wert gleichgueltig; uebergib dann, was du hast.
@@ -236,7 +233,7 @@ public struct Slotgedaechtnis: Sendable {
             tempo: optionen.tempo.rawValue,
             iconLaeuftMit: optionen.iconLaeuftMit,
             icon: icon,
-            // **Nur was von der Vorgabe abweicht.** Ohne Icon gibt es keine
+            // Nur was von der Vorgabe abweicht: Ohne Icon gibt es keine
             // Kante zu merken, und eine 8 ist die Vorgabe — beides bleibt
             // `nil` und faellt damit aus der Datei (`encodeIfPresent`). Ein
             // gewoehnlicher 8×8-Stand wird so Byte fuer Byte geschrieben wie
@@ -267,7 +264,7 @@ public struct Slotgedaechtnis: Sendable {
         try? FileManager.default.removeItem(at: datei(fuer: uhr))
     }
 
-    /// Wirft die Erinnerung an **einen** Platz weg — aufzurufen, wenn dieser
+    /// Wirft die Erinnerung an einen Platz weg — aufzurufen, wenn dieser
     /// Platz geraeumt oder mit etwas ueberschrieben wird, das sich nicht merken
     /// laesst: Ein gemaltes Bild hat keine Regler (`BilderBereichView`, und damit
     /// `AppZustand.senden` mit `slotPlatz`, aber ohne `slotOptionen`), und eine
@@ -308,7 +305,7 @@ public struct Slotgedaechtnis: Sendable {
     /// keine Pixel, gegen die zu pruefen waere, und der Vergleich findet
     /// nicht statt.
     ///
-    /// Ein **Icon** dagegen faellt auf beiden Seiten gleich heraus: `merken`
+    /// Ein Icon dagegen faellt auf beiden Seiten gleich heraus: `merken`
     /// hasht `Meldungsbau.feld(o, mitIcon: true)`, und der Mitleser liest nur
     /// `draw` — das Icon liegt in `frame.bilder` und geht hier wie dort
     /// verloren. Die Pruefsumme passt also, und die Regler werden

@@ -66,11 +66,9 @@ public struct SendenView: View {
     /// beim ersten Start ausgesehen, als waeren sie weg.
     @State private var zeigeInspektor = true
 
-    /// Welcher Reiter im Inspektor steht. **Neu am 14.09.2026**: Bis dahin gab
-    /// es hier keine Reiter, sondern einen durchgehenden Inspektor. „Wie lange
-    /// ist etwas zu sehen" lag deshalb an drei Stellen verstreut — Dauer in der
-    /// Sendezeile, Seitenwechsel und Scrolltempo unter „Einstellungen". Jetzt
-    /// steht das zusammen, und zwar an derselben Stelle wie im Editor.
+    /// Welcher Reiter im Inspektor steht. Reiter statt eines durchgehenden
+    /// Inspektors, damit „Wie lange ist etwas zu sehen" an einer Stelle steht
+    /// statt verstreut — an derselben Stelle wie im Editor.
     @State private var inspektorreiter = Inspektorreiter.format
 
     enum Inspektorreiter: String, CaseIterable, Identifiable {
@@ -96,10 +94,9 @@ public struct SendenView: View {
     /// mehreren Zieluhren zaehlt jede davon. Dieselbe Grundlage wie die Liste
     /// unter „Verlauf": was die Uhr meldet, sonst was die App sich gemerkt hat.
     /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
-    /// die **angesehene** Uhr, dieselbe, aus der `slotzustand` den Inhalt
-    /// nimmt. Hier stand sie bis zum 18.09.2026 dreimal wortgleich und fragte
-    /// die Zielmenge; das ergab Bloecke, die Belegung und Inhalt aus
-    /// verschiedenen Uhren zusammensetzten.
+    /// die angesehene Uhr, dieselbe, aus der `slotzustand` den Inhalt
+    /// nimmt. Nach der Zielmenge zu fragen ergaebe Bloecke, die Belegung und
+    /// Inhalt aus verschiedenen Uhren zusammensetzen.
     private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
 
     /// Je Uhr eine Datei unter Application Support. Die gehaltene Fassung,
@@ -133,7 +130,7 @@ public struct SendenView: View {
         reglerUebernehmen(o, icon: stand.icon, iconKante: stand.iconKanteOderAcht)
     }
 
-    /// Dasselbe aus einem Verlaufseintrag. **Ein Rumpf fuer beide Quellen**:
+    /// Dasselbe aus einem Verlaufseintrag. Ein Rumpf fuer beide Quellen:
     /// Gedaechtnis und Verlauf tragen dieselben Regler, nur verschieden
     /// verpackt — zwei Abschriften liefen auseinander, sobald ein Regler
     /// dazukaeme.
@@ -158,7 +155,7 @@ public struct SendenView: View {
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon)`.
-        // **Nummer und Kante**, nicht nur die Nummer. Ein 16×16 traegt seinen
+        // Nummer und Kante, nicht nur die Nummer. Ein 16×16 traegt seinen
         // Dateinamen im selben Feld wie ein LaMetric-Icon seine Nummer; ohne
         // die Kante gewaenne bei gleichem Schluessel der 8×8-Bestand, weil er
         // vorn steht — und der Block zeigte das falsche Bild. Dieselbe
@@ -245,14 +242,14 @@ public struct SendenView: View {
         guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
         horizontal = .links
     }
-    /// Auf wie vielen Punkten die **Vorschau** rechnet: den Maßen der Uhr, auf
+    /// Auf wie vielen Punkten die Vorschau rechnet: den Maßen der Uhr, auf
     /// die sie sich bezieht. Ohne eingerichtete Uhr die Werksfirmware — wie bei
     /// `geraeteart` zeigt die Vorschau dann 52×16 und nicht gar nichts.
     private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
 
-    /// Die Optionen, mit denen die **Vorschau** rastert — auf einer NG-Uhr mit
+    /// Die Optionen, mit denen die Vorschau rastert — auf einer NG-Uhr mit
     /// fester Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
-    /// (`Meldungsoptionen.naeherung`). Was **gesendet** wird, sind unverändert
+    /// (`Meldungsoptionen.naeherung`). Was gesendet wird, sind unverändert
     /// `optionen`: `gebauterRahmen` fragt hier nicht.
     private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
 
@@ -268,8 +265,8 @@ public struct SendenView: View {
     /// ganz aussen durchs Fenster und fragt `horizontal` gar nicht erst ab.
     private var waagrechtWirktNicht: Bool { !passt }
 
-    /// **Das vorberechnete GIF geht nur mit, wenn es die Größe hat, in der
-    /// gesendet wird.** Die Vorschau rastert auf dem Maß der angesehenen Uhr;
+    /// Das vorberechnete GIF geht nur mit, wenn es die Größe hat, in der
+    /// gesendet wird. Die Vorschau rastert auf dem Maß der angesehenen Uhr;
     /// gesendet wird an `zustand.ziele()`, und das dürfen mehrere sein
     /// (`ZielauswahlView`). Steht die Vorschau auf einer NG-Uhr, ist ihr GIF
     /// 32×8 — einer gleichzeitig gewählten TC002 hätte das als Nutzlast ein
@@ -322,13 +319,13 @@ public struct SendenView: View {
     /// Wohin der gerasterte Text senkrecht geschoben wird.
     ///
     /// `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie der Schrift sie
-    /// hinlegt — nicht an den oberen Rand. Frueher wurde dieses Feld einfach
-    /// zusaetzlich nach unten geschoben; „oben" hiess damit „lass es, wo es ist",
-    /// und „unten" schob die Tinte unten hinaus. Deshalb wird hier erst gemessen,
+    /// hinlegt — nicht an den oberen Rand. Das Feld einfach zusaetzlich nach
+    /// unten zu schieben hiesse: „oben" bedeutete „lass es, wo es ist", und
+    /// „unten" schoebe die Tinte unten hinaus. Deshalb wird hier erst gemessen,
     /// wo sie liegt, und dann die Verschiebung dorthin gerechnet, wo sie hinsoll.
     /// Ob der fette Schnitt bei dieser Schrift und Groesse ueberhaupt etwas
     /// aendert — gemessen, nicht geraten. Sechs der acht angebotenen Schriften
-    /// haben keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner.
+    /// haben keinen.
     private var fettWirkt: Bool {
         Textraster.kannFett(schrift: schrift, groesse: groesse)
     }
@@ -360,7 +357,7 @@ public struct SendenView: View {
     }
 
     /// Wie groß die nächste Nutzlast wird. Bei der Werksfirmware ist das das
-    /// Lauf-GIF; bei NG geht davon **nichts** hinaus, sondern der Text samt
+    /// Lauf-GIF; bei NG geht davon nichts hinaus, sondern der Text samt
     /// Reglern (`Anzeigen.nutzlast`) — die Zahl wird deshalb im Rechenlauf
     /// unten je nach Gattung verschieden ermittelt.
     @State private var nutzlastBytes = 0
@@ -399,12 +396,11 @@ public struct SendenView: View {
                 // breiter und hoeher als das Pixelfeld darin. Was in Breite und
                 // Hoehe passt, bestimmt die Groesse; die Uhr steht mittig.
                 //
-                // **Die Faktoren kommen aus der Zeichnung, nicht von Hand.**
-                // Bis hierher standen sie als 680/584 und 356/177 abgeschrieben
-                // da — die Masse der TC002-Front. Seit es eine zweite Geraeteart
-                // gibt, waeren sie fuer diese schlicht falsch, und der Rahmen
-                // wuerde still beschnitten: keine Meldung, nur ein Bild, das
-                // nicht ganz passt.
+                // Die Faktoren kommen aus der Zeichnung, nicht von Hand: Fest
+                // abgeschriebene Zahlen (680/584, 356/177, die Masse der
+                // TC002-Front) waeren fuer eine zweite Geraeteart falsch, und
+                // der Rahmen wuerde still beschnitten — keine Meldung, nur ein
+                // Bild, das nicht ganz passt.
                 GeometryReader { geo in
                     let zeichnung = Geraetezeichnung.fuer(geraeteart)
                     // Nicht `breitenFaktor`: Der setzt eine bereits ausgemessene
@@ -423,12 +419,11 @@ public struct SendenView: View {
                     let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
                     let nachHoehe = (geo.size.height - 24 - punktehoehe) / einheit.rahmenHoehe
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
-                    // **Die Punkte gehoeren an die Vorschau, nicht an den
-                    // unteren Rand ihres Bereichs.** Standen sie ausserhalb
-                    // des `GeometryReader`, rutschten sie mit dessen Dehnung
-                    // nach unten weg — beim Abnehmen am 18.09.2026 wurden sie
-                    // dort zuerst gar nicht gesucht. Jetzt sitzen sie im
-                    // selben mittigen Stapel, direkt unter dem Rahmen.
+                    // Die Punkte gehoeren an die Vorschau, nicht an den
+                    // unteren Rand ihres Bereichs: Ausserhalb des
+                    // `GeometryReader` rutschten sie mit dessen Dehnung nach
+                    // unten weg. Sie sitzen im selben mittigen Stapel, direkt
+                    // unter dem Rahmen.
                     VStack(spacing: 6) {
                         VorschauView(feld: feld, kantenlaenge: kante,
                                     typ: geraeteart,
@@ -440,7 +435,7 @@ public struct SendenView: View {
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
-                // **Setzt die Uhr selbst, ist der Weg einerlei.** Eine NG bekommt
+                // Setzt die Uhr selbst, ist der Weg einerlei: Eine NG bekommt
                 // von `Anzeigen.nutzlast` in beiden Faellen den Text samt Reglern,
                 // nie unsere Pixel. Die Zeile „Laufschrift · N Bilder · KB" spraeche
                 // hier von einem GIF, das niemand je sieht; was wirklich hinausgeht,
@@ -469,24 +464,24 @@ public struct SendenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            // Nur noch die fuenf Bloecke: Die Dauer steht seit dem 14.09.2026
-            // im Zeit-Reiter des Inspektors, bei Seitenwechsel und
-            // Scrolltempo. Damit faellt auch der `ViewThatFits` weg, der hier
-            // den Ueberlauf einer ueberladenen Zeile auffangen musste.
+            // Nur noch die fuenf Bloecke: Die Dauer steht im Zeit-Reiter des
+            // Inspektors, bei Seitenwechsel und Scrolltempo. Damit faellt
+            // auch der `ViewThatFits` weg, der hier den Ueberlauf einer
+            // ueberladenen Zeile auffangen musste.
             slotZeile
 
-            // **Der Verlauf unter den Bloecken.** Ein Druck stellt die Meldung
+            // Der Verlauf unter den Bloecken: Ein Druck stellt die Meldung
             // samt Reglern wieder her — der haeufigste Fall ist „dasselbe noch
             // einmal". Er waechst in den Platz, den das Fenster hergibt.
             Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
 
-            // **Feld und Empfaenger in einer Zeile** — wie am Telefon, wo das
+            // Feld und Empfaenger in einer Zeile — wie am Telefon, wo das
             // Antennenzeichen rechts neben dem Eingabefeld sitzt. Das Senden
             // selbst steckt im Feld (⏎ am rechten Rand); daneben steht die
             // Frage, an wen.
             HStack(spacing: 8) {
                 textFeld
-                // **Dieselbe Groesse wie das Feld.** Bedienelemente in einer
+                // Dieselbe Groesse wie das Feld: Bedienelemente in einer
                 // Zeile teilen sich ihre Groesse; ein regulaerer Knopf neben
                 // einem `extraLarge`-Feld sass zu tief und wirkte wie ein
                 // Nachtrag. Hier und nicht in `ZielauswahlView` selbst: Im
@@ -503,11 +498,12 @@ public struct SendenView: View {
         .padding()
         // Die Mitte braucht mindestens so viel wie die Slot-Zeile (Slot,
         // Papierkorb, Dauer); das Eingabefeld gibt weiter nach, weil der
-        // Sendeknopf bei Enge darunterrueckt. Mit Seitenleiste 170 und
-        // Inspektor 340 bleiben bei 980 Fensterbreite 470 — reicht.
+        // Sendeknopf bei Enge darunterrueckt. Mit Seitenleiste 190
+        // (`Seitenleiste.breiteMac`) und Inspektor 340 bleiben bei 980
+        // Fensterbreite 450 — reicht.
         //
-        // Nur am Mac: Dort steht daneben ein `minWidth: 1120` am Fenster, die
-        // Forderung geht also immer auf. Auf dem iPad gibt es kein Fenster zu
+        // Nur am Mac: Dort steht daneben ein `minWidth: 1140` am Fenster
+        // (`SchreibtischView`), die Forderung geht also immer auf. Auf dem iPad gibt es kein Fenster zu
         // ziehen — in Slide Over sind es rund 320 Punkte, und eine Forderung
         // nach 420 schnitte die Slot-Zeile rechts ab. Dort traegt stattdessen
         // der zweite Zweig des `ViewThatFits` oben: „Dauer" rueckt unter die
@@ -521,13 +517,13 @@ public struct SendenView: View {
         // selbst durch `.inspector`. Der Knopf in der Werkzeugleiste blendet
         // ihn ein und aus.
         .toolbar {
-            // **Die angesehene Uhr, mittig.** Am Mac steht im Fenstertitel der
+            // Die angesehene Uhr, mittig: Am Mac steht im Fenstertitel der
             // Programmname (`SchreibtischView` setzt `navigationTitle`
             // ausdruecklich nur unter iOS); `.principal` ist die Stelle, die
             // auf beiden Plattformen dasselbe meint — und dieselbe, an der
             // Xcode sein Ziel zeigt.
-            // **Was man ansieht**, steht mittig im Titel. Der Empfaenger
-            // steht **nicht** hier: Er gehoert zum Senden, also ans
+            // Was man ansieht, steht mittig im Titel. Der Empfaenger
+            // steht nicht hier: Er gehoert zum Senden, also ans
             // Eingabefeld — wie am Telefon, wo das Antennenzeichen rechts
             // daneben sitzt. Drei Zeichen in einer Leiste zusammenzukleben
             // haette drei verschiedene Dinge nebeneinandergestellt: ansehen,
@@ -549,7 +545,7 @@ public struct SendenView: View {
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
         // Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
-        // Wechsel **sichtbar** zurueckgestellt. Sie stehen zu lassen hiesse,
+        // Wechsel sichtbar zurueckgestellt. Sie stehen zu lassen hiesse,
         // im Waehler „rechts" zu zeigen und linksbuendig zu senden — und
         // gerade weil das niemandem auffiele, geschieht es hier oben und
         // nicht erst im Sendeweg. `.task` deckt den ersten Aufbau ab, bei dem
@@ -629,7 +625,7 @@ public struct SendenView: View {
     /// es dafuer nicht mehr.
     private var inspektor: some View {
         VStack(spacing: 0) {
-            // **Symbole statt Woerter**, dieselbe Ueberlegung wie im Editor:
+            // Symbole statt Woerter, dieselbe Ueberlegung wie im Editor:
             // Die Namen stehen als `accessibilityLabel` am Segment, so wie es
             // die Ausrichtungswaehler weiter unten seit je halten.
             Picker("Inspektor", selection: $inspektorreiter) {
@@ -652,12 +648,10 @@ public struct SendenView: View {
         switch inspektorreiter {
         case .zeit:
             Form {
-                // **Die Laufschrift gehoert hierher, nicht zum Format.** Sie
-                // beantwortet dieselbe Frage wie Dauer und Seitenwechsel: wie
-                // lange man etwas sieht — nur bezogen auf einen Text, der
-                // durchlaeuft, statt auf eine Anzeige, die steht. Bis zum
-                // 14.09.2026 stand sie zwischen „Senden als" und „Icon", wo
-                // sie zwar zur Sendung passte, aber nicht zu ihren Nachbarn.
+                // Die Laufschrift gehoert hierher, nicht zum Format: Sie
+                // beantwortet dieselbe Frage wie Dauer und Seitenwechsel — wie
+                // lange man etwas sieht, nur bezogen auf einen Text, der
+                // durchlaeuft, statt auf eine Anzeige, die steht.
                 //
                 // Der Abschnitt bleibt hier in `SendenView` und wandert nicht
                 // nach `Zeitabschnitte`: Ob er wirkt, haengt an `passt` —
@@ -674,7 +668,7 @@ public struct SendenView: View {
         }
     }
 
-    /// **Ein eigener Abschnitt** — die Begruendung steht in `Zeitabschnitte`:
+    /// Ein eigener Abschnitt — die Begruendung steht in `Zeitabschnitte`:
     /// Im schmalen Inspektor faellt die Beschriftung eines Segmentschalters
     /// weg, und ein namenloses „langsam mittel schnell" unter der Dauer las
     /// sich als deren Teil. Die Ueberschrift eines Abschnitts faellt nicht weg.
@@ -718,14 +712,14 @@ public struct SendenView: View {
                 // Zeile selbst — Beschriftung links, Wert im grauen Kaestchen
                 // mit Doppelpfeil rechts. Die Umwicklung nahm ihm genau das
                 // und liess unter iPadOS blanken Text mit Doppelpfeil uebrig.
-                // **Schrift und Groesse in einer Zeile.** Sie gehoeren
+                // Schrift und Groesse in einer Zeile: Sie gehoeren
                 // zusammen — welche Groessen es gibt, haengt an der Schrift
                 // (`angeboteneGroessen`) —, und zwei volle Zeilen fuer eine
                 // Entscheidung sind eine zu viel. `LabeledContent` traegt die
                 // Beschriftung links, die beiden Waehler stehen rechts
                 // nebeneinander; der Groessenwaehler bekommt nur so viel
                 // Breite, wie „16 px" braucht.
-                // **Ohne Beschriftung links.** Der Abschnitt heisst schon
+                // Ohne Beschriftung links: Der Abschnitt heisst schon
                 // „Schrift"; eine Zeile gleichen Namens darunter sagt nichts
                 // und nimmt die halbe Breite. Was hier Platz braucht, ist der
                 // Schriftname — „Silkscreen" stand als „Silk…reen" da, waehrend
@@ -770,9 +764,8 @@ public struct SendenView: View {
 
                 // Beide Schalter und der Farbwaehler in einer Zeile, wie B I U
                 // samt Textfarbe bei Pages — nicht je eine volle Zeile fuer ein
-                // einsames Symbol rechts. Die Farbe stand bis 13.09.2026 in
-                // einer eigenen Zeile darunter; am iPad fiel auf, dass sie dort
-                // eine ganze Zeile fuer einen Kringel verbraucht.
+                // einsames Symbol rechts: Eine eigene Zeile nur fuer den
+                // Farbkringel verbraucht am iPad eine ganze Zeile fuer wenig.
                 LabeledContent("Stil") {
                     HStack(spacing: 4) {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
@@ -785,7 +778,7 @@ public struct SendenView: View {
                             .disabled(!kleinbuchstabenMoeglich)
                             .gattungssperre(.grossbuchstaben, gattung, sonst: grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
-                        // **Kein blankes Systemfeld.** Bei weisser Schrift
+                        // Kein blankes Systemfeld: Bei weisser Schrift
                         // stuende dort ein weisser Fleck auf hellem Grund —
                         // `Farbkreis` legt einen Regenbogenring darum, der zum
                         // Element gehoert und nicht zur Farbe. Die
@@ -819,8 +812,8 @@ public struct SendenView: View {
                 // Auch hier blank: Der Segmentschalter bleibt (die Wahl soll
                 // nebeneinander stehen), aber die Beschriftung setzt die
                 // `Form` selbst links daneben.
-                // **Rechtsbuendig ist hier kein gesperrter Regler, sondern
-                // einer, den es nicht gibt.** Die AWTRIX kennt nur „mittig ja
+                // Rechtsbuendig ist hier kein gesperrter Regler, sondern
+                // einer, den es nicht gibt: Die AWTRIX kennt nur „mittig ja
                 // oder nein"; ein dritter Eintrag wuerde angenommen und dann
                 // als linksbuendig gesendet — die Oberflaeche zeigte etwas
                 // anderes, als auf der Uhr steht. Darum faellt der Eintrag
@@ -885,7 +878,7 @@ public struct SendenView: View {
                               mass: mass)
                 }
                 .buttonStyle(.plain)
-                // Das ⊗ liegt **ueber** dem Block und ausserhalb seines
+                // Das ⊗ liegt ueber dem Block und ausserhalb seines
                 // Knopfes: Innen waere es Teil von dessen Beschriftung und
                 // loeste beim Tippen die Platzwahl aus statt zu loeschen.
                 // Etwas nach aussen versetzt, damit es die Vorschau im Block
@@ -903,24 +896,21 @@ public struct SendenView: View {
     /// des `ViewThatFits` oben dasselbe Feld zeigen — zweimal getippt liefen
     /// Schrift und Rahmen frueher oder spaeter auseinander.
     ///
-    /// **Groesse:** `.title2` statt der Vorgabe — am Mac 17 statt 13 Punkt, auf
+    /// Groesse: `.title2` statt der Vorgabe — am Mac 17 statt 13 Punkt, auf
     /// dem iPad 22 statt 17. Ein benannter Schriftstil, kein fester Wert: Auf
     /// dem iPad waechst das Feld damit weiter mit der eingestellten Textgroesse
     /// mit, eine Zahl in Punkt taete das nicht. Nur dieses eine Feld; „Dauer“
     /// und der Inspektor bleiben bei der Systemgroesse.
     ///
-    /// **Rahmen:** fuer beide Desktop-Oberflaechen derselbe. Bis 13.09.2026
-    /// stand er hinter `#if os(macOS)` — der Mac sollte bei seiner Vorgabe
-    /// bleiben, weil die einen Rahmen zeichnet. Am abgenommenen Bildschirmfoto
-    /// war zu sehen, dass sie das in dieser Flaeche eben nicht tut: Das Feld
-    /// stand dort so unsichtbar wie unter iPadOS. Der Zweig ist damit
-    /// hinfaellig (siehe `Eingabefeld.swift`). Das iPhone setzt seinen Rahmen
-    /// weiterhin in `SendeniOS` selbst.
-    /// **Das Feld ist der Knopf.** Bis zum 18.09.2026 stand daneben ein
-    /// eigener „Senden"; jetzt sitzt am rechten Rand des Feldes ein ⏎, das
-    /// ansagt, was die Eingabetaste tut, und selbst anklickbar ist — dieselbe
-    /// Bauart wie am Telefon, wo die Eingabetaste schon seit dem 15.09.2026
-    /// schickt.
+    /// Rahmen: fuer beide Desktop-Oberflaechen derselbe, nicht hinter
+    /// `#if os(macOS)`: Die macOS-Vorgabe zeichnet in dieser Flaeche keinen
+    /// Rahmen, das Feld stand dort so unsichtbar wie unter iPadOS (siehe
+    /// `Eingabefeld.swift`). Das iPhone setzt seinen Rahmen weiterhin in
+    /// `SendeniOS` selbst.
+    ///
+    /// Das Feld ist der Knopf: Am rechten Rand sitzt ein ⏎, das ansagt, was
+    /// die Eingabetaste tut, und selbst anklickbar ist — dieselbe Bauart wie
+    /// am Telefon.
     ///
     /// `.onSubmit` und nicht mehr `keyboardShortcut(.defaultAction)`: Der
     /// Kurzbefehl hing am Knopf, und den gibt es nicht mehr. Die Prüfung, ob
@@ -929,7 +919,7 @@ public struct SendenView: View {
     private var textFeld: some View {
         TextField("Text", text: $text)
             .font(.title2)
-            // **Die Haupthandlung soll man sehen.** `.title2` vergroesserte
+            // Die Haupthandlung soll man sehen: `.title2` vergroesserte
             // nur die Schrift, nicht die Fassung — uebrig blieb ein flaches
             // Feld mit grossen Buchstaben darin. `.extraLarge` ist der Weg des
             // Systems, ein Bedienelement groesser zu machen (macOS 14, siehe
@@ -975,21 +965,19 @@ public struct SendenView: View {
     }
 }
 
-/// Löscht **diesen** Meldungsplatz auf den gewählten Uhren — ein ⊗ in der Ecke
+/// Löscht diesen Meldungsplatz auf den gewählten Uhren — ein ⊗ in der Ecke
 /// des Blocks, den es betrifft.
 ///
-/// Bis zum 14.09.2026 stand stattdessen **eine** breite rote Schaltfläche
-/// neben der Blockreihe, beschriftet „Slot 3 auf der Uhr löschen". Sie war
-/// aus zwei Gründen schlecht: Sie bezog sich auf den gerade *gewählten* Platz,
-/// den man erst treffen musste, und sie nahm in einer ohnehin engen Zeile mehr
-/// Platz ein als die fünf Blöcke zusammen. Ein Zeichen an dem Block, den es
-/// angeht, braucht keine Beschriftung und keine Erklärung, welcher gemeint
-/// ist.
+/// Eine breite Schaltfläche neben der Blockreihe wäre aus zwei Gründen
+/// schlechter: Sie bezöge sich auf den gerade gewählten Platz, den man erst
+/// treffen müsste, und sie nähme in einer ohnehin engen Zeile mehr Platz ein
+/// als die fünf Blöcke zusammen. Ein Zeichen an dem Block, den es angeht,
+/// braucht keine Beschriftung und keine Erklärung, welcher gemeint ist.
 ///
-/// **Nur an belegten Plätzen.** Ein leerer Platz hat nichts zu löschen; ein
+/// Nur an belegten Plätzen: Ein leerer Platz hat nichts zu löschen; ein
 /// abgeblendetes ⊗ an vier von fünf Blöcken wäre Unruhe ohne Aussage.
 ///
-/// Das Gegenstück zum Einblendtext ist hier ein **Kontextmenü**, nicht
+/// Das Gegenstück zum Einblendtext ist hier ein Kontextmenü, nicht
 /// `namensichtbarAmIPad()`: Der Knopf wiederholt sich fünfmal, und fünf
 /// ausgeschriebene Namen in der Blockreihe wären mehr Text als Bild — dieselbe
 /// Überlegung wie beim Papierkorb im Icon-Raster

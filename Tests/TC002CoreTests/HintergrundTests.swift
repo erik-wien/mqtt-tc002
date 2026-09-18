@@ -1,11 +1,9 @@
 import XCTest
 @testable import TC002Core
 
-/// Der Nachweis, dass blockierende Arbeit **nicht** im kooperativen Pool
-/// landet. Ohne ihn wäre `Hintergrund` eine Behauptung: Ein Rückfall auf
-/// `Task.detached` verhält sich im Kleinen genauso — er fällt erst auf, wenn
-/// mehrere Uhren gleichzeitig nicht antworten, und dann als Hänger, den
-/// niemand einem Commit zuordnet.
+/// Der Nachweis, dass blockierende Arbeit nicht im kooperativen Pool landet.
+/// Ein Rückfall auf `Task.detached` verhält sich im Kleinen genauso — er
+/// fällt erst auf, wenn mehrere Uhren gleichzeitig nicht antworten.
 final class HintergrundTests: XCTestCase {
     func testDieArbeitLaeuftAufDerEigenenWarteschlange() async {
         let drauf = await Hintergrund.lauf { Hintergrund.aufEigenerSchlange }
@@ -41,10 +39,9 @@ final class HintergrundTests: XCTestCase {
         }
     }
 
-    /// **Die Warteschlange ist nebenläufig, nicht seriell.** Wäre sie seriell,
-    /// wäre der Umbau eine Verschlechterung: Fünf Uhren würden nacheinander
-    /// abgefragt statt nebeneinander, und eine tote Uhr hielte die vier
-    /// anderen zehn Sekunden auf.
+    /// Die Warteschlange ist nebenläufig, nicht seriell: Wäre sie seriell,
+    /// würden fünf Uhren nacheinander abgefragt statt nebeneinander, und eine
+    /// tote Uhr hielte die vier anderen zehn Sekunden auf.
     func testMehrereArbeitenLaufenNebeneinander() async {
         let sperre = DispatchSemaphore(value: 0)
         async let eine: Void = Hintergrund.lauf { sperre.wait() }

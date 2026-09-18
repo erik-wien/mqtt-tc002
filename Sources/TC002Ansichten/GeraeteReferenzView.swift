@@ -10,7 +10,7 @@ import TC002Core
 public struct GeraeteReferenzView: View {
     @State private var ausgewaehlt: MarkdownAbschnitt.ID?
 
-    /// **Zwei Geraete, zwei Dokumente.** Welches gilt, waehlt der Leser — nicht
+    /// Zwei Geraete, zwei Dokumente: Welches gilt, waehlt der Leser — nicht
     /// die eingerichtete Uhr: Die Referenz ist Nachschlagewerk, kein Zustand
     /// der App, und wer wissen will, was eine AWTRIX kann, hat meist noch
     /// keine eingetragen.
@@ -151,7 +151,7 @@ private struct MarkdownAbschnitt: Identifiable {
 // MARK: - Zerleger
 //
 // Unterstützte Formen (alles, was in `docs/tc002-protokoll.md` vorkommt):
-// Überschriften `#`/`##`/`###`, Absätze mit `**fett**`/`` `Code` ``/Links,
+// Überschriften `#`/`##`/`###`, Absätze mit `fett`/`` `Code` ``/Links,
 // eingerückte ```-Codeblöcke, Aufzählungen mit `- ` UND mit `1. ` (beides kommt
 // in der Datei vor — §6 zählt durch), Zitatblöcke mit `> `, Tabellen mit `|`
 // und waagrechte Linien `---`. Zeilen, die zu einem Absatz/Listenpunkt/Zitat
@@ -327,7 +327,7 @@ private enum MarkdownDokument {
 // MARK: - Darstellung
 
 /// Wandelt eine einzelne logische Zeile (Absatz, Listenpunkt, Zitat, Tabellenzelle)
-/// mit `**fett**`, `` `Code` `` und `[Text](Adresse)` in klickbaren `Text` um.
+/// mit `fett`, `` `Code` `` und `[Text](Adresse)` in klickbaren `Text` um.
 private func inlineText(_ text: String) -> Text {
     if let attributiert = try? AttributedString(
         markdown: text,

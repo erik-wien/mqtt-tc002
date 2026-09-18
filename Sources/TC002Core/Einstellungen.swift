@@ -5,7 +5,7 @@ import Foundation
 /// Alte Einstellungen bleiben lesbar, weil sie den Schluessel gar nicht erst
 /// enthalten — `Uhr.typ` ist `Optional`, und `nil` heisst `.tc002`.
 ///
-/// **Der umgekehrte Weg traegt nicht.** Eine Datei, in der `awtrixNG` steht,
+/// Der umgekehrte Weg traegt nicht. Eine Datei, in der `awtrixNG` steht,
 /// wirft in einer Fassung vor dieser beim Decode, und weil beide Leser mit
 /// `try?` lesen, waere die Folge eine leere Uhrenliste statt einer Meldung.
 /// Wer also je eine dritte Art eintraegt, aendert damit nichts an heutigen
@@ -24,7 +24,7 @@ public enum Geraetetyp: String, Codable, CaseIterable, Sendable {
 /// Programmschalter: In einem Haus kann die eine Uhr unmittelbar erreichbar
 /// sein und die naechste nur ueber den Broker.
 ///
-/// **Es ist ein Tausch, kein Gewinn** — beide Wege koennen etwas, das der
+/// Es ist ein Tausch, kein Gewinn — beide Wege koennen etwas, das der
 /// andere nicht kann (die Messungen stehen in `docs/tc002-protokoll.md`, §3
 /// und §5):
 ///
@@ -33,17 +33,17 @@ public enum Geraetetyp: String, Codable, CaseIterable, Sendable {
 ///   Sendung ist damit als solche zu erkennen. Ein Broker wird nicht gebraucht,
 ///   ein Praefix auch nicht.
 /// - `.mqtt` schweigt. MQTT 3.1.1 hat keinen Rueckkanal fuer eine abgelehnte
-///   Veroeffentlichung; dafuer liest die App am Broker **mit**, was *andere*
+///   Veroeffentlichung; dafuer liest die App am Broker mit, was *andere*
 ///   an dieselbe Uhr schicken, und kann daraus die fuenf Bloecke fuellen.
 ///
 /// Ein Mitlesen ueber HTTP gibt es nicht, und zwar nicht aus Bequemlichkeit:
 /// Am 13.09.2026 wurde 45 Sekunden lang auf `<praefix>/custom/#`,
 /// `<praefix>/customList` und `<praefix>/status` gehorcht, mit einer
 /// HTTP-Loeschung mittendrin — es kam eine einzige Nachricht, `status online`.
-/// **Die Uhr reicht HTTP-Vorgaenge nicht ueber MQTT weiter.** Ein zusaetzlich
+/// Die Uhr reicht HTTP-Vorgaenge nicht ueber MQTT weiter. Ein zusaetzlich
 /// eingetragener Broker taugt deshalb nicht als Ohr fuer den HTTP-Betrieb.
 public extension Array where Element == Uhr {
-    /// Nach Adresse geordnet — **ziffernbewusst**: `localizedStandardCompare`
+    /// Nach Adresse geordnet — ziffernbewusst: `localizedStandardCompare`
     /// vergleicht Zifferngruppen als Zahlen, sonst stünde `10.0.0.9` hinter
     /// `10.0.0.94`.
     ///
@@ -54,7 +54,7 @@ public extension Array where Element == Uhr {
         sorted { $0.host.localizedStandardCompare($1.host) == .orderedAscending }
     }
 
-    /// Adressen ohne Leerraum am Rand — **beim Lesen**, nicht erst beim Setzen.
+    /// Adressen ohne Leerraum am Rand — beim Lesen, nicht erst beim Setzen.
     ///
     /// `Uhr.host` trimmt in seinem `didSet`, und Beobachter laufen beim
     /// Decodieren nicht: Was eine aeltere Fassung krumm abgelegt hat, bliebe
@@ -86,14 +86,14 @@ public enum Betriebsart: String, Codable, Sendable, CaseIterable {
 public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     public var id = UUID()
     public var name: String
-    /// Die Adresse der Uhr — **ohne Leerraum am Rand**.
+    /// Die Adresse der Uhr — ohne Leerraum am Rand.
     ///
     /// Getrimmt wird beim Setzen und nicht erst beim Senden: Ein Leerzeichen
     /// vorn oder hinten ist unsichtbar und macht aus der Adresse etwas, woraus
-    /// sich keine Anfrage bilden laesst (`URL(string:)` sagt dazu `nil`).
-    /// Gemeldet wurde das bis zum 14.09.2026 erst beim Senden, als Fenster
-    /// mitten in der Arbeit — fuer einen Fehler, der beim Eintippen entstand
-    /// und dort auch hingehoert.
+    /// sich keine Anfrage bilden laesst (`URL(string:)` sagt dazu `nil`). Erst
+    /// beim Senden gemeldet, stuende der Fehler als Fenster mitten in der
+    /// Arbeit — fuer einen Fehler, der beim Eintippen entstand und dort auch
+    /// hingehoert.
     ///
     /// In der Mitte wird nichts angetastet: Ein Leerzeichen dort ist ebenso
     /// falsch, aber sichtbar, und Namen mit Leerzeichen gibt es (`mein
@@ -108,15 +108,15 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     }
     public var praefix: String = ""
     public var mac: String = ""
-    /// **Optional, und das ist der ganze Grund, warum es heute schon da ist.**
+    /// Optional, und das ist der ganze Grund, warum es heute schon da ist.
     ///
-    /// Ein nachtraeglich hinzugefuegtes **Pflichtfeld** macht bestehende
+    /// Ein nachtraeglich hinzugefuegtes Pflichtfeld macht bestehende
     /// Einstellungen unlesbar: Swift setzt beim synthetisierten Decode keine
     /// Vorgabewerte fuer fehlende Schluessel ein — auch ein Feld *mit*
     /// Vorgabewert wirft `keyNotFound`. Gelesen wird die Liste an beiden
     /// Stellen mit `try?` (`Einstellungen.gelesen`, `AppZustand.init`), es
-    /// gaebe also keinen Fehler und keine Meldung, sondern eine **leere
-    /// Uhrenliste** — in der App und im Werkzeug, beim ersten Start nach dem
+    /// gaebe also keinen Fehler und keine Meldung, sondern eine leere
+    /// Uhrenliste — in der App und im Werkzeug, beim ersten Start nach dem
     /// Update. Nur ein `Optional` bekommt `decodeIfPresent`.
     /// `EinstellungenTests` misst beide Richtungen nach.
     ///
@@ -132,26 +132,24 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// Welche Geraeteart fuer diese Uhr gilt. Der einzige Leser von `typ`.
     public var gattung: Geraetetyp { typ ?? .tc002 }
 
-    /// **Woran zwei Geräte dieselbe Uhr erkennen.**
+    /// Woran zwei Geräte dieselbe Uhr erkennen.
     ///
-    /// Die `id` allein taugt dafür nicht, und das war ein teurer Irrtum: Die
-    /// UUID entsteht beim Anlegen **auf dem jeweiligen Gerät**. Dieselbe Uhr,
-    /// auf dem Mac und auf dem iPhone eingetragen, hat zwei verschiedene — der
-    /// Abgleich hielt sie für zwei Uhren und hängte sie aneinander. Am
-    /// 14.09.2026 standen so nach zwanzig Minuten drei Einträge derselben Uhr
-    /// in der Liste, und Entfernen half nicht: Beim nächsten Abgleich kamen sie
-    /// zurück.
+    /// Die `id` allein taugt dafür nicht: Die UUID entsteht beim Anlegen auf
+    /// dem jeweiligen Gerät. Dieselbe Uhr, auf dem Mac und auf dem iPhone
+    /// eingetragen, hat zwei verschiedene — der Abgleich hielt sie für zwei
+    /// Uhren und hängte sie aneinander, und Entfernen half nicht: Beim
+    /// nächsten Abgleich kamen die Einträge zurück.
     ///
-    /// Die `id` **wegzuwerfen** wäre aber der entgegengesetzte Fehler: Wer auf
+    /// Die `id` wegzuwerfen wäre aber der entgegengesetzte Fehler: Wer auf
     /// einem Gerät die Adresse einer Uhr ändert, hat weiterhin dieselbe Uhr,
     /// und nur die Kennung weiß das noch.
     ///
-    /// Darum zählt hier **jede** Übereinstimmung. Zwei Einträge sind dieselbe
-    /// Uhr, wenn sie die Kennung teilen, **oder** die MAC-Adresse, **oder** die
+    /// Darum zählt hier jede Übereinstimmung. Zwei Einträge sind dieselbe
+    /// Uhr, wenn sie die Kennung teilen, oder die MAC-Adresse, oder die
     /// Adresse. `Einrichtungsstand.zusammengefuehrt` legt daraus Gruppen — auch
     /// über Ecken: Trifft sich A mit B über die Adresse und B mit C über die
     /// MAC, sind alle drei dieselbe Uhr.
-    /// Wann dieser Eintrag angelegt wurde — **nur fuer den Abgleich**, und nur
+    /// Wann dieser Eintrag angelegt wurde — nur fuer den Abgleich, und nur
     /// dafuer, damit ein Wiederanlegen einen Grabstein schlagen kann
     /// (`Einrichtungsstand.entfernt`). Ohne das gewaenne die Loeschung fuer
     /// immer: Wer eine Uhr entfernt und spaeter wieder eintraegt, saehe sie
@@ -171,8 +169,8 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         return merkmale
     }
 
-    /// Wie breit die Anzeige dieser Uhr in Pixeln ist — **vom Geraet geholt,
-    /// nicht angenommen**.
+    /// Wie breit die Anzeige dieser Uhr in Pixeln ist — vom Geraet geholt,
+    /// nicht angenommen.
     ///
     /// Betrifft allein AWTRIX NG: Dort ergibt sich die Breite aus
     /// `panelWidth × panels` und muss zwischen 32 und 128 liegen
@@ -188,11 +186,11 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 
     /// Die Masse der Anzeige dieser Uhr, in Pixeln.
     ///
-    /// **Zwei Geraete, zwei Seitenverhaeltnisse:** 52×16 ist 3,25:1, 32×8 ist
+    /// Zwei Geraete, zwei Seitenverhaeltnisse: 52×16 ist 3,25:1, 32×8 ist
     /// 4:1. Wer mit den Konstanten aus `Pixelfeld` rechnet, rechnet fuer die
     /// Werksfirmware — fuer eine NG-Uhr gehoert diese Angabe hierher gefragt.
     ///
-    /// Die Hoehe ist bei NG **fest 8** und nicht einstellbar; nur die Breite
+    /// Die Hoehe ist bei NG fest 8 und nicht einstellbar; nur die Breite
     /// ist eine Frage ans Geraet. Solange sie nicht gestellt wurde, gilt die
     /// dokumentierte Vorgabe `32 × 1` — als Vorgabe benannt, nicht als
     /// Tatsache ueber diese Uhr: Sobald „Abfragen" gelaufen ist, steht die
@@ -204,17 +202,17 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         }
     }
 
-    /// Der Weg, auf dem diese Uhr beschickt wird — **optional aus demselben
-    /// Grund wie `typ`**: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// Der Weg, auf dem diese Uhr beschickt wird — optional aus demselben
+    /// Grund wie `typ`: Ein nachtraegliches Pflichtfeld wirft beim Decode
     /// `keyNotFound`, und weil beide Leser (`Einstellungen.gelesen`,
     /// `AppZustand.init`) mit `try?` lesen, waere die Folge keine Meldung,
-    /// sondern eine leere Uhrenliste in App **und** Werkzeug.
+    /// sondern eine leere Uhrenliste in App und Werkzeug.
     ///
-    /// **`nil` heisst `.mqtt`, nicht `.http` — und das ist eine Entscheidung
-    /// ueber Bestand, keine ueber Vorgaben.** Die Vorgabe ist sehr wohl HTTP:
+    /// `nil` heisst `.mqtt`, nicht `.http` — und das ist eine Entscheidung
+    /// ueber Bestand, keine ueber Vorgaben. Die Vorgabe ist sehr wohl HTTP:
     /// `AppZustand.uhrHinzufuegen` traegt `.http` ausdruecklich ein, jede von
     /// nun an angelegte Uhr hat den Schluessel also in der Datei. `nil` kommt
-    /// damit **nur** in Dateien vor, die eine Fassung vor dieser geschrieben
+    /// damit nur in Dateien vor, die eine Fassung vor dieser geschrieben
     /// hat — und jede dieser Uhren ist nachweislich fuer MQTT eingerichtet:
     /// Sie hat ein abgefragtes Praefix, einen eingetragenen Broker und ein
     /// Kennwort im Schluesselbund, und die App hat bisher ausschliesslich
@@ -266,7 +264,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 /// Die App selbst fuehrt ihre Einstellungen in `AppZustand` und schreibt sie
 /// dort; dieser Typ ist der Weg von aussen hinein — fuer das
 /// Kommandozeilenwerkzeug, das dieselbe Einrichtung benutzen soll, statt eine
-/// zweite zu verlangen. Deshalb hier ausdruecklich **kein** Schreiben: zwei
+/// zweite zu verlangen. Deshalb hier ausdruecklich kein Schreiben: zwei
 /// Schreiber auf denselben Schluesseln waeren ein Wettlauf, und die laufende
 /// App bekaeme von einer Aenderung ohnehin nichts mit.
 public struct Einstellungen: Sendable {
@@ -281,7 +279,7 @@ public struct Einstellungen: Sendable {
     /// gespeicherten Port — und das Kommandozeilenwerkzeug saehe dann keinen
     /// Broker, obwohl die App laengst sendet.
     ///
-    /// **Adresse und Benutzer sind leer, und das ist die Vorgabe.** Ein
+    /// Adresse und Benutzer sind leer, und das ist die Vorgabe. Ein
     /// vorausgefuelltes Feld ist schlechter als ein leeres: Man sieht ihm nicht
     /// an, ob dort ein echter Wert steht, und muss ueberschreiben statt
     /// einzutragen. Ein Platzhalter im Feld sagt dasselbe, ohne es zu
@@ -346,7 +344,7 @@ public struct Einstellungen: Sendable {
     /// steht hier `Bundle.main` und nicht `Programmbuendel`, obwohl beide
     /// sonst dasselbe Buendel meinen.
     /// Nicht `private`: `Ablageort` liest und schreibt hier den Schalter fuer
-    /// den iCloud-Abgleich, und zwar ausdruecklich in **derselben** Ablage —
+    /// den iCloud-Abgleich, und zwar ausdruecklich in derselben Ablage —
     /// nur so sieht das Werkzeug denselben Ort wie die App.
     static func ablage(_ bereich: String) -> UserDefaults? {
         Bundle.main.bundleIdentifier == bereich ? .standard : UserDefaults(suiteName: bereich)

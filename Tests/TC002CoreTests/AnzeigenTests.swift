@@ -31,7 +31,7 @@ final class AnzeigenTests: XCTestCase {
 
     // MARK: - Dieselbe Nutzlast, anderer Kanal
 
-    /// **Der Satz, um den es geht.** Was ueber MQTT auf
+    /// Der Satz, um den es geht. Was ueber MQTT auf
     /// `<praefix>/custom/<name>` geht, geht ueber HTTP als Rumpf von
     /// `POST /api/custom?name=<name>` — und zwar Zeichen fuer Zeichen
     /// dasselbe. Der Rahmenbau kennt die Betriebsart nicht und darf sie nicht
@@ -48,7 +48,7 @@ final class AnzeigenTests: XCTestCase {
         XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=meldung2")
     }
 
-    /// **Gegenlaeufig, und beides gemessen.** Ueber MQTT loescht die leere
+    /// Gegenlaeufig, und beides gemessen. Ueber MQTT loescht die leere
     /// Nutzlast, ueber HTTP der Rumpf `{}` — vertauscht bliebe die Anzeige auf
     /// der Uhr stehen, und die Uhr antwortete trotzdem `ok`.
     func testLoeschenIstAufBeidenWegenDasGegenteilVoneinander() throws {

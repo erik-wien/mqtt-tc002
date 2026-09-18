@@ -56,7 +56,7 @@ public struct Textblock: Equatable, Sendable {
 
 /// Woraus ein Rahmen entstanden ist.
 ///
-/// **Gehoert nicht zur Nutzlast** und kommt in `alsJSON()` nicht vor. Die
+/// Gehoert nicht zur Nutzlast und kommt in `alsJSON()` nicht vor. Die
 /// Werksfirmware bekommt fertige Pixel und braucht nichts weiter; eine AWTRIX
 /// NG setzt den Text dagegen selbst, und ihr nuetzen gerade die Pixel nichts —
 /// sie braucht den Text und die Regler, aus denen er entstand
@@ -95,13 +95,12 @@ public struct Frame: Equatable, Sendable {
     public var texte: [Textblock] = []
     public var dauer: Int?
 
-    /// **Was hier hinausgeht, in einem Satz** — fuer das Protokoll.
+    /// Was hier hinausgeht, in einem Satz — fuer das Protokoll.
     ///
-    /// Drei Angaben, und genau an ihnen hingen die Fehlersuchen der letzten
-    /// Tage: der **Weg** (gerasterte Rechtecke, ein Bild, ein Textblock, den
-    /// die Uhr selbst setzt), die **Groesse** der Nutzlast und, beim Textweg,
-    /// der Text selbst. Ein „als Text", das die Uhr abschneidet, sieht sonst
-    /// aus wie jede andere gelungene Sendung.
+    /// Drei Angaben: der Weg (gerasterte Rechtecke, ein Bild, ein
+    /// Textblock, den die Uhr selbst setzt), die Groesse der Nutzlast und,
+    /// beim Textweg, der Text selbst. Ein „als Text", das die Uhr abschneidet,
+    /// sieht sonst aus wie jede andere gelungene Sendung.
     ///
     /// Ohne `lok`: Die Teile sind uebersetzt, zusammengesetzt wird mit
     /// Trennzeichen.

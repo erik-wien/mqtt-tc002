@@ -1,11 +1,11 @@
 import XCTest
 @testable import TC002Core
 
-/// `Ablageort` entscheidet, wo die vier Bestaende liegen. Was hier schiefgeht,
+/// `Ablageort` entscheidet, wo die fuenf Bestaende liegen. Was hier schiefgeht,
 /// faellt nicht als Fehlermeldung auf, sondern als verschwundener Bestand —
 /// die App legte still einen zweiten an und der alte bliebe unberuehrt liegen.
 ///
-/// **Kein Test hier fasst `Ablageort.gemeinsam` an**: Das waere der echte
+/// Kein Test hier fasst `Ablageort.gemeinsam` an: Das waere der echte
 /// Bestand dieser Installation. Alles laeuft gegen Wegwerfverzeichnisse und
 /// gegen eine Wegwerf-Ablage.
 final class AblageortTests: XCTestCase {
@@ -28,7 +28,7 @@ final class AblageortTests: XCTestCase {
         XCTAssertEqual(ort.ordner(.slots), oertlich.appendingPathComponent("Slots"))
     }
 
-    /// Gewaehlt und moeglich: alle vier im Behaelter, keiner davon vergessen.
+    /// Gewaehlt und moeglich: alle fuenf im Behaelter, keiner davon vergessen.
     func testMitWahlUndBehaelterLiegtAllesDort() {
         let oertlich = temp(), fern = temp()
         let ort = Ablageort(oertlicheWurzel: oertlich, ferneWurzel: fern, gewuenscht: true)
@@ -38,8 +38,8 @@ final class AblageortTests: XCTestCase {
         }
     }
 
-    /// **Der Normalfall, solange die Berechtigung fehlt.** Gewaehlt, aber kein
-    /// Behaelter: Die App arbeitet weiter genau wie vorher, oertlich. Kein
+    /// Der Normalfall, solange die Berechtigung fehlt: Gewaehlt, aber kein
+    /// Behaelter — die App arbeitet weiter genau wie vorher, oertlich. Kein
     /// halber Zustand, kein Fehler.
     func testOhneBehaelterArbeitetDieAppWeiterOertlich() {
         let oertlich = temp()
@@ -73,13 +73,12 @@ final class AblageortTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: oertlich.path))
     }
 
-    /// Angelegt werden alle vier, unter genau diesen Namen. Ein vergessener
-    /// Bestand faellt sonst erst dem Anwender auf.
-    /// **Fuenf seit dem 18.09.2026** — der Sendeverlauf ist dazugekommen. Die
-    /// Zahl steht im Namen, damit ein sechster Bestand hier haengenbleibt und
-    /// nicht stillschweigend durchrutscht: Wer einen anlegt, ohne ihn dem
-    /// Abgleich und dem Umzug bekanntzumachen, merkt es sonst erst, wenn
-    /// jemandem auf dem zweiten Geraet etwas fehlt.
+    /// Angelegt werden alle fünf, unter genau diesen Namen. Ein vergessener
+    /// Bestand faellt sonst erst dem Anwender auf. Die Zahl steht im Namen,
+    /// damit ein sechster Bestand hier haengenbleibt und nicht
+    /// stillschweigend durchrutscht: Wer einen anlegt, ohne ihn dem Abgleich
+    /// und dem Umzug bekanntzumachen, merkt es sonst erst, wenn jemandem auf
+    /// dem zweiten Geraet etwas fehlt.
     func testAngelegtLegtAlleFuenfAn() throws {
         let oertlich = temp()
         defer { try? FileManager.default.removeItem(at: oertlich) }
@@ -91,7 +90,7 @@ final class AblageortTests: XCTestCase {
 
     // MARK: Die Wahl — und warum sie dort liegt, wo sie liegt
 
-    /// Die Wahl liegt in **derselben** Ablage, aus der auch das Werkzeug seine
+    /// Die Wahl liegt in derselben Ablage, aus der auch das Werkzeug seine
     /// Einstellungen liest. Nur deshalb folgt es dem Abgleich, ohne selbst
     /// etwas davon zu wissen. Ein eigener Bereich oder ein anderer Schluessel
     /// hiesse: Die App zieht um, das Werkzeug schreibt weiter am alten Ort.

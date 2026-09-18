@@ -17,7 +17,7 @@ struct IconAuswahlView: View {
     /// wie das Icon aussieht, nicht in welchem Ordner es liegt. Woher es
     /// stammt, weiss es selbst (`Icon.kante`), und das Loeschen fragt danach.
     let sammlungen: [Iconsammlung]
-    /// **Warum ein Icon dieser Kantenlaenge nicht ankaeme** — `nil`, wenn es
+    /// Warum ein Icon dieser Kantenlaenge nicht ankaeme — `nil`, wenn es
     /// ankommt. Gereicht wird die Frage, nicht die Antwort: Wer sie
     /// beantwortet, sind die Zieluhren (`AppZustand.grafikSperre`), und das
     /// weiss die Auswahl nicht. So bleibt sie eine Auswahl und wird nicht
@@ -60,15 +60,15 @@ struct IconAuswahlView: View {
                     if let icon = gewaehltesIcon {
                         Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
                                    kante: 16 / Double(icon.kante))
-                            // Das Bildchen gibt **nicht** nach. Ohne das
-                            // schrumpft es, sobald der Name mehr Platz will —
-                            // und gerade das Bildchen ist die Auskunft, welches
-                            // Icon gewaehlt ist. Der Name ist die Zugabe.
+                            // Das Bildchen gibt nicht nach: Ohne das schrumpft
+                            // es, sobald der Name mehr Platz will — und gerade
+                            // das Bildchen ist die Auskunft, welches Icon
+                            // gewaehlt ist. Der Name ist die Zugabe.
                             .layoutPriority(1)
-                        // **Eine Zeile, abgeschnitten.** „Moon cloud soleil
-                        // nuage" brach im schmalen Inspektor auf vier Zeilen um
-                        // und drueckte das Bildchen zu einem Fleck zusammen.
-                        // Ein Name, der nicht ganz passt, ist als Anfang immer
+                        // Eine Zeile, abgeschnitten: „Moon cloud soleil nuage"
+                        // brach im schmalen Inspektor auf vier Zeilen um und
+                        // drueckte das Bildchen zu einem Fleck zusammen. Ein
+                        // Name, der nicht ganz passt, ist als Anfang immer
                         // noch lesbar; ein Icon, das zum Fleck wird, ist es
                         // nicht mehr.
                         Text(icon.name)
@@ -82,17 +82,16 @@ struct IconAuswahlView: View {
             }
             .knopfBefehl()
             if gewaehltesIcon != nil {
-                // **Das bloße Zeichen, ohne Beschriftung.** Es steht unmittelbar
+                // Das bloße Zeichen, ohne Beschriftung: Es steht unmittelbar
                 // neben dem Namen des gewaehlten Icons; was es tut, sagt dort
-                // seine Form. Eine Beschriftung daneben stand bis zum
-                // 15.09.2026 da und machte aus einer Wertzeile zwei Knoepfe mit
-                // Text.
+                // seine Form. Eine Beschriftung daneben machte zuvor aus einer
+                // Wertzeile zwei Knoepfe mit Text.
                 //
                 // Gedaempft und `.plain`: Der Hauptknopf (Icon wechseln) bleibt
                 // im Vordergrund, und unter iPadOS faerbt ein fehlender Stil die
                 // Beschriftung in der Akzentfarbe — ein blaues Zeichen neben
                 // einem blauen Namen las sich als Verweis mit Schliessknopf.
-                // Gewaehlt ist aber ein **Wert**, kein Verweis.
+                // Gewaehlt ist aber ein Wert, kein Verweis.
                 //
                 // Zwei Trefferflaechen und nicht ein Chip mit (x) darin:
                 // Wechseln und Abwaehlen sind zwei Handlungen.
@@ -104,11 +103,11 @@ struct IconAuswahlView: View {
                 .help(lok("Icon entfernen"))
                 .accessibilityLabel(Text("Icon entfernen"))
             }
-            // **Ein schon gewaehltes Icon wird nicht von selbst abgewaehlt**,
-            // wenn man auf eine Uhr umschaltet, die es nicht nimmt: Eine
-            // stille Aenderung der Wahl waere schlimmer als eine sichtbare
-            // Warnung. Das Dreieck sagt, warum nichts ankaeme; weggenommen
-            // wird die Wahl nur von Hand.
+            // Ein schon gewaehltes Icon wird nicht von selbst abgewaehlt, wenn
+            // man auf eine Uhr umschaltet, die es nicht nimmt: Eine stille
+            // Aenderung der Wahl waere schlimmer als eine sichtbare Warnung.
+            // Das Dreieck sagt, warum nichts ankaeme; weggenommen wird die
+            // Wahl nur von Hand.
             if let icon = gewaehltesIcon, let grund = sperre(icon.kante) {
                 Hilfezeichen(grund, warnung: true)
             }
@@ -128,22 +127,21 @@ struct IconAuswahlView: View {
                                     Leinwandgroesse.icon16.kurzbeschriftung, 16)],
                          nurBewegte: $nurBewegte)
             ScrollView {
-                // **72 statt 44.** Die Kacheln waren so gross wie eine
+                // 72 statt 44: Die Kacheln waren so gross wie eine
                 // Trefferflaeche mindestens sein muss — und damit so klein,
                 // dass ein 8×8-Motiv zu raten war. Am Telefon nimmt eine
-                // Kachel seit dem 14.09.2026 ein Fuenftel der Breite; hier ist
-                // die entsprechende Groesse ein Raster, das sich an 72 Punkten
-                // ausrichtet.
+                // Kachel ein Fuenftel der Breite; hier ist die entsprechende
+                // Groesse ein Raster, das sich an 72 Punkten ausrichtet.
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 72))], spacing: 10) {
-                    // **Waehlen schliesst das Blatt.** Bis zum 14.09.2026
-                    // blieb es offen, und man musste danach noch „Schliessen"
-                    // druecken — zwei Handgriffe fuer eine Entscheidung. Ein
-                    // Blatt, das nur eine Wahl treffen soll, ist mit der Wahl
-                    // fertig; so halten es die Blaetter des Systems auch.
+                    // Waehlen schliesst das Blatt: Es blieb zuvor offen, und
+                    // man musste danach noch „Schliessen" druecken — zwei
+                    // Handgriffe fuer eine Entscheidung. Ein Blatt, das nur
+                    // eine Wahl treffen soll, ist mit der Wahl fertig; so
+                    // halten es die Blaetter des Systems auch.
                     //
                     // Der Papierkorb in der Kachel schliesst ausdruecklich
-                    // **nicht**: Er oeffnet eine Rueckfrage, und ein Blatt,
-                    // das unter seiner eigenen Rueckfrage wegfaellt, nimmt sie
+                    // nicht: Er oeffnet eine Rueckfrage, und ein Blatt, das
+                    // unter seiner eigenen Rueckfrage wegfaellt, nimmt sie
                     // mit.
                     Button { gewaehltesIcon = nil; zeigeBlatt = false } label: { Text("ohne").font(.caption) }
                         .knopfBefehl()
@@ -159,7 +157,7 @@ struct IconAuswahlView: View {
                                     // Dasselbe Zeichen wie in der
                                     // Bestandsliste, nur gibt es hier keine
                                     // Groessenzeile — also neben den Namen.
-                                    // **Nicht** ins Bildchen: Bei 36 Punkten
+                                    // Nicht ins Bildchen: Bei 36 Punkten
                                     // Kantenlaenge verdeckte es das Motiv.
                                     HStack(spacing: 2) {
                                         if bewegte.contains(icon.kennung) {
@@ -172,10 +170,10 @@ struct IconAuswahlView: View {
                                 }
                             }
                             .buttonStyle(.plain)
-                            // **Gesperrt, nicht verschwunden.** Wer sein
-                            // 16×16 sucht, soll sehen, dass es noch da ist —
-                            // und warum es gerade nicht geht. Verschwundenes
-                            // wirkt verloren.
+                            // Gesperrt, nicht verschwunden: Wer sein 16×16
+                            // sucht, soll sehen, dass es noch da ist — und
+                            // warum es gerade nicht geht. Verschwundenes wirkt
+                            // verloren.
                             .disabled(sperre(icon.kante) != nil)
                             .opacity(sperre(icon.kante) == nil ? 1 : 0.35)
                             .help(sperre(icon.kante) ?? icon.name)

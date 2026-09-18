@@ -2,18 +2,18 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Was von hier aus geschickt wurde** — Zeit, Platz, Icon, Text.
+/// Was von hier aus geschickt wurde — Zeit, Platz, Icon, Text.
 ///
 /// Drei Dinge heißen in dieser App ähnlich und sind verschieden:
 ///
-/// - Das **Protokoll** (`AnzeigenView`) ist die technische Ebene: was die App
+/// - Das Protokoll (`AnzeigenView`) ist die technische Ebene: was die App
 ///   getan hat und was die Uhren gemeldet haben. Ab Werk aus.
-/// - **Auf der Uhr** ist der Zustand: was jetzt gerade darauf liegt.
-/// - Der **Verlauf**, dies hier, ist die Geschichte: was man geschickt hat,
+/// - Auf der Uhr ist der Zustand: was jetzt gerade darauf liegt.
+/// - Der Verlauf, dies hier, ist die Geschichte: was man geschickt hat,
 ///   mit allen Reglern. Ein Druck darauf stellt die Meldung wieder her — nicht
 ///   nur ihren Text, sondern Schrift, Farbe, Ausrichtung, Tempo und Icon.
 ///
-/// **Sie steht unter den Blöcken, auf beiden Oberflächen.** Am Telefon füllt
+/// Sie steht unter den Blöcken, auf beiden Oberflächen: Am Telefon füllt
 /// sie die Fläche, die zwischen Blöcken und Eingabefeld leer stand; am
 /// Schreibtisch wächst sie in den Platz, den das Fenster hergibt. Dieselbe
 /// Anordnung, weil es dieselbe Frage ist — und der häufigste Fall ist
@@ -47,7 +47,7 @@ public struct Verlaufsliste: View {
 
     public var body: some View {
         if zustand.verlaufAn, !eintraege.isEmpty {
-            // **Eine Ueberschrift, so klein wie moeglich.** Ohne sie stuende
+            // Eine Ueberschrift, so klein wie moeglich: Ohne sie stuende
             // dort eine Liste, die man fuer vieles halten kann — die Anzeigen
             // auf der Uhr etwa, die es an anderer Stelle wirklich gibt. Mit
             // ihr ist in einem Wort gesagt, dass dies die eigenen, schon

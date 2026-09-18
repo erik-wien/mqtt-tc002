@@ -4,7 +4,7 @@ import XCTest
 /// Die Wege, die auf dem iPad stumm scheitern würden.
 ///
 /// `openWindow(id:)` gibt es unter iOS (ab 16), `Window` als Szene nicht.
-/// Ein Aufruf auf eine Szene, die es dort nicht gibt, **übersetzt** und tut zur
+/// Ein Aufruf auf eine Szene, die es dort nicht gibt, übersetzt und tut zur
 /// Laufzeit nichts — kein Fehler, keine Meldung, ein Knopf, der schweigt. Genau
 /// deshalb prüft hier niemand den Übersetzer, sondern den Quelltext: Der
 /// Übersetzer hat zu dieser Frage nichts zu sagen.
@@ -72,20 +72,17 @@ final class PlattformwegeTests: XCTestCase {
 
     /// Die ganzflächige Einblendung am iPad muss sich schließen lassen.
     ///
-    /// Am 13.09.2026 ließ sie es für zwei der vier Dokumente nicht: Der
-    /// Schließknopf hing an einer `.toolbar`, die von außen auf
-    /// `fenster.inhalt` gelegt wurde. Hilfe und Gerätereferenz bringen ihre
-    /// eigene `NavigationSplitView` mit — dort fand die Werkzeugleiste keinen
-    /// Behälter, der sie aufnimmt, übersetzte klaglos und wurde nie
-    /// gezeichnet. Der Benutzer saß in der Hilfe fest und musste die App
-    /// beenden.
+    /// Ein Schließknopf, der an einer `.toolbar` hängt, die von außen auf
+    /// `fenster.inhalt` gelegt wird, geht schief: Hilfe und Gerätereferenz
+    /// bringen ihre eigene `NavigationSplitView` mit — dort findet die
+    /// Werkzeugleiste keinen Behälter, der sie aufnimmt, übersetzt klaglos
+    /// und wird nie gezeichnet.
     ///
     /// Geprüft wird darum dreierlei am Quelltext — der Übersetzer hat auch zu
     /// dieser Frage nichts zu sagen: Es gibt einen Schließweg, er hängt an
-    /// **keiner** Werkzeugleiste, und er hängt an **keiner**
-    /// Fallunterscheidung über das Dokument. Der letzte Punkt ist der
-    /// eigentliche: Nicht der falsche Zweig war der Fehler, sondern dass es
-    /// Zweige gab.
+    /// keiner Werkzeugleiste, und er hängt an keiner Fallunterscheidung über
+    /// das Dokument. Der letzte Punkt ist der eigentliche: Nicht der falsche
+    /// Zweig war der Fehler, sondern dass es Zweige gab.
     func testDieEinblendungTraegtIhrenSchliessknopfSelbst() throws {
         let text = try quelltext("Sources/TC002Ansichten/SchreibtischView.swift")
         guard let anfang = text.range(of: "struct NebenfensterSchirm") else {

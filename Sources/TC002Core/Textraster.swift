@@ -137,7 +137,7 @@ public enum Textraster {
         return wert
     }
 
-    /// Erste und letzte **Zeile** mit mindestens einem gesetzten Pixel, oder `nil`
+    /// Erste und letzte Zeile mit mindestens einem gesetzten Pixel, oder `nil`
     /// bei leerem Feld. Die Gegenstueck zu `tintenSpalten` — und die Grundlage
     /// jeder senkrechten Ausrichtung: `rasterPuffer` legt die Tinte dorthin, wo
     /// die Grundlinie der Schrift sie hinlegt, nicht an den oberen Rand. Wer sie
@@ -242,7 +242,7 @@ public enum Textraster {
         }
     }
 
-    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig. Kante **und**
+    /// Lage eines Icons im Bild: quadratisch, senkrecht mittig. Kante und
     /// Feldhoehe sind Parameter — bei 8×8 auf sechzehn Zeilen sitzt es auf
     /// Zeile 4, bei 16×16 auf Zeile 0, und auf acht Zeilen fuellt ein 8×8 die
     /// volle Hoehe. Die Rechnung selbst steht in `Anzeigemass`.
@@ -258,7 +258,7 @@ public enum Textraster {
     /// Ausrichtung der Formatleiste gilt also auch hier.
     ///
     /// `iconBilder` sind die Einzelbilder eines Icons (je `iconKante` im Quadrat
-    /// Eintraege, zeilenweise von oben links) oder leer. Sie werden **eingebacken**, statt
+    /// Eintraege, zeilenweise von oben links) oder leer. Sie werden eingebacken, statt
     /// als zweites `image` neben dem Lauf-GIF im Rahmen zu stehen: ob die Uhr
     /// zwei Bilder nebeneinander zeichnet oder das zweite das erste ersetzt, hat
     /// niemand geprueft. Ein animiertes Icon laeuft dabei mit, Bild fuer Bild.
@@ -335,7 +335,7 @@ public enum Textraster {
     /// Ein Punkt des laufenden Bandes: links das mitlaufende Icon, ab `bandTextAb`
     /// der gerasterte Text. Ausserhalb ist nichts — dort bleibt das Bild schwarz.
     ///
-    /// Die Grenze zwischen beiden ist `bandTextAb`, **nicht** `iconKante`: Reserviert
+    /// Die Grenze zwischen beiden ist `bandTextAb`, nicht `iconKante`: Reserviert
     /// `laufschriftEinzelbilder` weniger als die volle Kante (siehe `iconReserviert`
     /// dort), sollen die freiwerdenden Spalten sofort dem Text gehoeren, nicht erst
     /// bei Spalte `iconKante` — sonst bliebe ein schmales Icon trotzdem in seiner

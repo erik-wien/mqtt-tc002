@@ -74,8 +74,8 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     // MARK: - Was zu hoch fuer die Zieluhren ist
 
-    /// **Gefragt wird die Zielmenge, nicht die angesehene Uhr** — gesendet
-    /// wird ja an sie. Und gesperrt wird nur, wenn **keine** davon es nimmt:
+    /// Gefragt wird die Zielmenge, nicht die angesehene Uhr — gesendet
+    /// wird ja an sie. Und gesperrt wird nur, wenn keine davon es nimmt:
     /// Dieselbe Entscheidung, die der Editor fuer ein gemaltes Bild schon
     /// trifft — sonst verbaete eine einzelne NG unter fuenf Uhren allen
     /// anderen das 16er Icon.
@@ -91,7 +91,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertNil(zustand.grafikSperre(hoehe: 8))
     }
 
-    /// Eine NG **neben** einer Werksfirmware sperrt nichts: Die Sendung geht
+    /// Eine NG neben einer Werksfirmware sperrt nichts: Die Sendung geht
     /// an die uebrige, und die eine meldet sich selbst.
     func testEineNGNebenEinerWerksfirmwareSperrtNichts() throws {
         let zustand = try mitUhren([werksUhr(), ngUhr()])
@@ -110,7 +110,7 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     // MARK: - Worauf gehorcht wird
 
-    /// **Die Werksfirmware veroeffentlicht ihre Anzeigenliste, NG nicht.**
+    /// Die Werksfirmware veroeffentlicht ihre Anzeigenliste, NG nicht:
     /// „Eine Liste aller Anzeigen gibt es ueber MQTT nicht" — sie kommt dort
     /// allein ueber HTTP. Ein Abonnement auf `customList` liefe bei NG ins
     /// Leere, und `custom/#` ebenso.
@@ -139,11 +139,10 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertEqual(zustand.geraetOnline[uhr.id], false)
     }
 
-    /// **Der Gewinn, den die Werksfirmware nie hatte — und der einzige Ort, an
-    /// dem eine abgewiesene Sendung ueberhaupt auftaucht.** Auf der MQTT-Ebene
-    /// war alles in Ordnung: Der Broker hat die Veroeffentlichung angenommen,
-    /// das Protokoll sagt „gesendet". Ohne diese Zeile bliebe es dabei, und nur
-    /// die Uhr waere dunkel.
+    /// Der einzige Ort, an dem eine abgewiesene Sendung ueberhaupt auftaucht.
+    /// Auf der MQTT-Ebene war alles in Ordnung: Der Broker hat die
+    /// Veroeffentlichung angenommen, das Protokoll sagt „gesendet". Ohne
+    /// diese Zeile bliebe es dabei, und nur die Uhr waere dunkel.
     func testEineAbweisungAufResultWirdSichtbar() throws {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
@@ -199,17 +198,12 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     // MARK: - Was ein Block zeigen darf
 
-    /// **Der Riegel ist am 18.09.2026 gefallen — weil seine Begruendung
-    /// weggefallen ist.**
-    ///
-    /// Er lautete: Das Gedaechtnis merkt sich Regler, und daraus rechnet
-    /// `slotzustand` ein **52×16**-Bild in **unserer** Schrift; auf einer NG
-    /// steht der Text in ihrer Schrift auf 32×8, das Bild waere also falsch.
-    /// Beide Haelften stimmen nicht mehr: `Anzeigemass` rastert auf den 32×8
-    /// der Uhr, `Meldungsoptionen.naeherung` setzt dieselbe Naeherungsschrift,
-    /// die die Vorschau ohnehin zeigt. Es ist dasselbe Bild mit derselben
-    /// Einschraenkung — und nichts zu zeigen war die staerkere Behauptung:
-    /// „wir wissen es nicht", obwohl wir es selbst geschickt haben.
+    /// Ein NG-Block zeigt ein Bild, weil `Anzeigemass` auf die 32×8 der Uhr
+    /// rastert und `Meldungsoptionen.naeherung` dieselbe Naeherungsschrift
+    /// setzt, die die Vorschau ohnehin zeigt — dasselbe Bild mit derselben
+    /// Einschraenkung wie bei der Werksfirmware. Nichts zu zeigen waere die
+    /// staerkere Behauptung: „wir wissen es nicht", obwohl wir es selbst
+    /// geschickt haben.
     func testEinNGBlockZeigtDasBildAufIhremEigenenMass() throws {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
@@ -225,7 +219,7 @@ final class AwtrixNGZustandTests: XCTestCase {
     }
 
     /// Und die Gegenprobe zur Gegenprobe: Derselbe gemerkte Stand ergibt auf
-    /// den beiden Gattungen **verschieden viele** Punkte. Ohne diese Zusicherung
+    /// den beiden Gattungen verschieden viele Punkte. Ohne diese Zusicherung
     /// ginge der Test oben auch dann durch, wenn das Mass gar nicht ankaeme.
     func testDerselbeStandErgibtAufBeidenGattungenVerschiedeneBilder() throws {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
@@ -247,7 +241,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertEqual(werkPixel.count, 52 * 16)
     }
 
-    /// Die Gegenprobe mit **demselben** Gedaechtnisstand: Auf der
+    /// Die Gegenprobe mit demselben Gedaechtnisstand: Auf der
     /// Werksfirmware ist genau dieses Bild richtig, und der Riegel darf es
     /// nicht mitnehmen.
     func testDerselbeStandZeigtAufDerWerksfirmwareSehrWohlEinBild() throws {
@@ -266,7 +260,7 @@ final class AwtrixNGZustandTests: XCTestCase {
     /// Praefix und MAC gehoeren nach einem Wechsel der anderen Firmware: Die
     /// Werksfirmware haengt die letzten vier MAC-Stellen an, NG nicht. Blieben
     /// sie stehen, ginge die naechste Sendung auf ein Thema, auf dem kein
-    /// Geraet hoert — und **beide** Gattungen schweigen dazu.
+    /// Geraet hoert — und beide Gattungen schweigen dazu.
     func testEinWechselDerGeraeteartWirftDasPraefixWeg() throws {
         var uhr = Uhr(name: "Küche", host: "10.0.0.1", praefix: "awtrix_a86b",
                       mac: "aabbccdda86b", betriebsart: .mqtt)

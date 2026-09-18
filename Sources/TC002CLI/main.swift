@@ -63,10 +63,9 @@ Zu lange Texte laufen von selbst durch; das macht die App genauso.
 
 /// Das Icon, das gemeint ist — oder eine Meldung, warum es das nicht gibt.
 ///
-/// Gesucht wird in **beiden** Bestaenden (`Iconbestaende`); bis heute sah das
-/// Werkzeug nur die 8×8 und meldete „Kein Icon", obwohl es das Icon gab. Ein
-/// 16×16 hat keine LaMetric-Nummer — dort ist der Dateiname der Schluessel,
-/// und darum spricht die Meldung von „Nummer oder Name".
+/// Gesucht wird in beiden Bestaenden (`Iconbestaende`): Ein 16×16 hat keine
+/// LaMetric-Nummer — dort ist der Dateiname der Schluessel, und darum spricht
+/// die Meldung von „Nummer oder Name".
 func iconSuchen(_ nummer: String?, in bestaende: [Iconsammlung]) throws -> Icon? {
     guard let nummer else { return nil }
     guard let icon = Iconbestaende.suchen(nummer, in: bestaende) else {
@@ -263,7 +262,7 @@ func lauf() throws {
         }
 
     case .bild(let name):
-        // **Gesucht wird ueber den Namen, nicht ueber den Dateinamen.** Beides
+        // Gesucht wird ueber den Namen, nicht ueber den Dateinamen. Beides
         // ist bei diesem Bestand dasselbe, aber der Name ist das, was in der
         // App steht und was `mqtttc002 bilder` ausgibt.
         let bestand = Bildersammlung(ordner: Bilderordner.eigene)
@@ -287,7 +286,7 @@ func lauf() throws {
         try anAlle(lokf("„%@“ gesendet an „%@“ (%d Byte)", bild.name, optionen.anzeigename,
                         json.utf8.count)) { anzeigen, uhr in
             try anzeigen.zeigen(rahmen, auf: optionen.anzeigename)
-            // **Vergessen, nicht merken.** Ein Bild hat keine Regler, die sich
+            // Vergessen, nicht merken: Ein Bild hat keine Regler, die sich
             // merken liessen; stand auf dem Platz vorher eine Textsendung,
             // rechnete der Block daraus sonst beim naechsten Start ohne Broker
             // weiter den alten Text. Dieselbe Entscheidung wie bei einem

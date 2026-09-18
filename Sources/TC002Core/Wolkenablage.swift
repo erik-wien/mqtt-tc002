@@ -2,8 +2,8 @@ import Foundation
 
 /// Die Schluessel-Wert-Ablage in iCloud, hinter einem Protokoll — wie
 /// `Schluesselbundzugriff` beim Schluesselbund. Die App reicht nichts mit und
-/// bekommt die echte, die Tests geben einen Doppelgaenger. **Kein Test fasst
-/// iCloud an.**
+/// bekommt die echte, die Tests geben einen Doppelgaenger. Kein Test fasst
+/// iCloud an.
 public protocol Wolkenablage: Sendable {
     func lesen() -> Data?
     @discardableResult func schreiben(_ daten: Data) -> Bool
@@ -12,7 +12,7 @@ public protocol Wolkenablage: Sendable {
     @discardableResult func anstossen() -> Bool
 }
 
-/// `NSUbiquitousKeyValueStore` unter **einem** Schluessel (siehe
+/// `NSUbiquitousKeyValueStore` unter einem Schluessel (siehe
 /// `Einrichtungsstand`).
 ///
 /// Ohne die Berechtigung `com.apple.developer.ubiquity-kvstore-identifier`

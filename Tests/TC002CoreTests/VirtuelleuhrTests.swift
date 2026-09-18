@@ -1,7 +1,7 @@
 import XCTest
 @testable import TC002Core
 
-/// Die virtuelle Uhr soll sich verhalten wie eine echte — und **nicht** wie
+/// Die virtuelle Uhr soll sich verhalten wie eine echte — und nicht wie
 /// eine, gegen die es sich bequem entwickelt. Jeder Test hier hält eine
 /// Eigenheit der Werksfirmware fest, die in `Geraet` schon angeschrieben steht.
 final class VirtuelleuhrTests: XCTestCase {
@@ -11,7 +11,7 @@ final class VirtuelleuhrTests: XCTestCase {
         return (try? JSONSerialization.jsonObject(with: ergebnis.koerper)) as? [String: Any] ?? [:]
     }
 
-    /// **Das Themen-Präfix ist nicht das eingestellte.** Die Firmware hängt
+    /// Das Themen-Präfix ist nicht das eingestellte: Die Firmware hängt
     /// einen Unterstrich und die letzten vier Stellen der MAC an; wer dagegen
     /// entwickelt, ohne dass die virtuelle Uhr das tut, übt an einer
     /// Vereinfachung und scheitert am Gerät.
@@ -32,7 +32,7 @@ final class VirtuelleuhrTests: XCTestCase {
         XCTAssertEqual(d["mqtt_prefix"] as? String, "meins")
     }
 
-    /// **Alles Unbekannte ist 404.** Daran erkennt `Geraet.erkannteArt` die
+    /// Alles Unbekannte ist 404. Daran erkennt `Geraet.erkannteArt` die
     /// Werksfirmware: Antwortete `/api/v1/device` irgendetwas, gälte die
     /// virtuelle Uhr als AWTRIX NG — und die App schickte ihr Nutzlasten, die
     /// eine Ulanzi nie bekäme.
@@ -55,7 +55,7 @@ final class VirtuelleuhrTests: XCTestCase {
         XCTAssertEqual(liste["count"] as? Int, 1)
     }
 
-    /// **`{}` löscht, die leere Nutzlast nicht** — über HTTP. Über MQTT ist es
+    /// `{}` löscht, die leere Nutzlast nicht — über HTTP. Über MQTT ist es
     /// genau umgekehrt. Diese Verwechslung steht in `Geraet.anzeigeLoeschen`
     /// angeschrieben, und die virtuelle Uhr muss sie mitmachen.
     func testEinLeeresObjektLoeschtDieAnzeige() {
@@ -84,7 +84,7 @@ final class VirtuelleuhrTests: XCTestCase {
         XCTAssertEqual(zustand.reihenfolge, ["meldung3", "meldung1", "meldung2"])
     }
 
-    /// `/setConfig` bekommt die **ganze** Konfiguration zurück; gelesen wird
+    /// `/setConfig` bekommt die ganze Konfiguration zurück; gelesen wird
     /// daraus, was diese Uhr führt.
     func testSetConfigAendertDenSeitenwechsel() {
         var zustand = Uhrzustand(seitenwechsel: 10, scrolltempo: 100)
@@ -103,7 +103,7 @@ final class VirtuelleuhrTests: XCTestCase {
         XCTAssertNil(zustand.aktuelle)
     }
 
-    /// Die Quittung der Werksfirmware steht im **Rumpf**, nicht im Status —
+    /// Die Quittung der Werksfirmware steht im Rumpf, nicht im Status —
     /// `Geraet.anAnzeige` liest `code` und wirft erst dann.
     func testDieQuittungStehtImRumpf() {
         var zustand = Uhrzustand()
@@ -132,7 +132,7 @@ final class UhrenserverZerlegenTests: XCTestCase {
         XCTAssertEqual(String(decoding: a.koerper, as: UTF8.self), #"{"text":"hallo"}"#)
     }
 
-    /// **Unvollständig heißt weiterlesen, nicht raten.** Ein Rumpf kommt in
+    /// Unvollständig heißt weiterlesen, nicht raten: Ein Rumpf kommt in
     /// mehreren Paketen; wer beim ersten antwortet, verwirft den Rest.
     func testEinHalberRumpfIstNochKeineAnfrage() {
         let ohneRumpf = bytes("POST /api/custom?name=a HTTP/1.1\r\nContent-Length: 20\r\n\r\n{\"te")
@@ -158,7 +158,7 @@ final class UhrenserverZerlegenTests: XCTestCase {
     }
 }
 
-/// **Die Probe aufs Ganze**: `Geraet` spricht mit der virtuellen Uhr über
+/// Die Probe aufs Ganze: `Geraet` spricht mit der virtuellen Uhr über
 /// einen echten Port — dieselbe `URLSession`, dieselben Pfade, dieselbe
 /// Auswertung wie am Gerät. Nichts daran ist ein Doppelgänger.
 ///
@@ -201,7 +201,7 @@ final class VirtuelleuhrAmDrahtTests: XCTestCase {
         XCTAssertEqual(ergebnis.basis.mac, "aabbccdda86b")
     }
 
-    /// Die Geraeteart wird **erkannt**, nicht angenommen: Die virtuelle Uhr
+    /// Die Geraeteart wird erkannt, nicht angenommen: Die virtuelle Uhr
     /// antwortet auf `/api/v1/device` mit 404, und genau daran haengt es.
     func testDieVirtuelleUhrGiltAlsWerksfirmware() throws {
         let (_, adresse) = try gestartet(Uhrzustand())
@@ -230,11 +230,11 @@ final class VirtuelleuhrAmDrahtTests: XCTestCase {
         XCTAssertEqual(server.zustand.seitenwechsel, 30)
     }
 
-    /// **Die Wurzel ist fuer Augen, nicht fuer die App.**
+    /// Die Wurzel ist fuer Augen, nicht fuer die App.
     ///
-    /// Wer die Adresse der virtuellen Uhr in den Browser tippt, bekam bis zum
-    /// 18.09.2026 ein 404 mit JSON darin. Jetzt steht dort, was zu sehen ist —
-    /// und wo das Bild steht: in der Vorschau der App. Ein Nachbau der Anzeige
+    /// Wer die Adresse der virtuellen Uhr in den Browser tippt, sieht dort,
+    /// was zu sehen ist — und wo das Bild steht: in der Vorschau der App.
+    /// Ein Nachbau der Anzeige
     /// waere hier nur halb moeglich (ein Lauf-GIF und ein Textblock liefern
     /// keine Pixel, dieselbe Grenze wie bei den Bloecken), und eine Seite, die
     /// mal ein Bild zeigt und mal nicht, erklaert weniger als ein Satz.
@@ -249,7 +249,7 @@ final class VirtuelleuhrAmDrahtTests: XCTestCase {
         XCTAssertTrue(text.contains("Senden"), "Der Hinweis nennt nicht, wo die Vorschau steht.")
     }
 
-    /// **Und alles andere bleibt 404.** Daran erkennt die App die Geraeteart:
+    /// Und alles andere bleibt 404. Daran erkennt die App die Geraeteart:
     /// Eine virtuelle Werksfirmware, die auf `/api/v1/device` etwas sagte,
     /// gaelte als AWTRIX NG.
     func testEinUnbekannterPfadBleibtVierhundertvier() throws {

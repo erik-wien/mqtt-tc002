@@ -2,17 +2,17 @@ import Foundation
 
 /// Wie gross ein Kaestchen der Malflaeche wird.
 ///
-/// **Die Leinwand nimmt, was da ist — sie fordert nichts.** Bis zum 13.09.2026
-/// rechnete diese Funktion allein mit der Breite und gab der Ansicht eine feste
-/// Kantenlaenge, die diese in ein starres `.frame(width:)` schrieb. Ein starrer
-/// Rahmen laesst sich nicht zusammendruecken: Wo die Spalte schmaler war als
-/// 52 Kaestchen, zeichnete die Flaeche einfach ueber ihre Grenzen hinaus — am
-/// iPad lief die Bedienzeile links unter die Seitenleiste, die Slot-Zeile
-/// begann sichtbar bei Block 3, und die rechte Spalte blieb ein Streifen.
+/// Die Leinwand nimmt, was da ist — sie fordert nichts. Eine Rechnung allein
+/// mit der Breite, die der Ansicht eine feste Kantenlaenge in ein starres
+/// `.frame(width:)` schreibt, laesst sich nicht zusammendruecken: Wo die
+/// Spalte schmaler war als 52 Kaestchen, zeichnete die Flaeche einfach ueber
+/// ihre Grenzen hinaus — am iPad lief die Bedienzeile links unter die
+/// Seitenleiste, die Slot-Zeile begann sichtbar bei Block 3, und die rechte
+/// Spalte blieb ein Streifen.
 ///
-/// Deshalb gehen jetzt **beide** Maße ein. Wer sie ruft, hat sie von einem
-/// `GeometryReader` **ueber** der Flaeche — nicht von einem Hintergrund
-/// innerhalb dessen, was er gerade bemisst.
+/// Deshalb gehen beide Maße ein. Wer sie ruft, hat sie von einem
+/// `GeometryReader` ueber der Flaeche — nicht von einem Hintergrund innerhalb
+/// dessen, was er gerade bemisst.
 ///
 /// Eine eigene Rechnung und keine Zeile in der Ansicht, weil sie drei Grenzen
 /// gegeneinander abwaegt und sich das pruefen laesst.

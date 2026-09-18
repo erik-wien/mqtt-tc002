@@ -37,10 +37,10 @@ public struct AnzeigenView: View {
                 }
             }
 
-            // **Ausgeschaltet gar nicht da.** Eine Ueberschrift ueber einer
-            // leeren Liste ist Flaeche ohne Aussage; dass es ein Protokoll
-            // gibt und wie man es einschaltet, sagt der Schalter in den
-            // Einstellungen — dort, wo man ohnehin danach sucht.
+            // Ausgeschaltet ist der Bereich gar nicht da: Eine Ueberschrift
+            // ueber einer leeren Liste ist Flaeche ohne Aussage; dass es ein
+            // Protokoll gibt und wie man es einschaltet, sagt der Schalter in
+            // den Einstellungen.
             if zustand.protokollAn {
                 Divider()
                 HStack {

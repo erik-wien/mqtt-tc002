@@ -1,19 +1,16 @@
 import Foundation
 
-/// **Ein Leerzeichen am Rand eines Präfixes ist unsichtbar und entscheidend.**
-///
-/// Am 14.09.2026 stand im `mqttPrefix` einer AWTRIX NG ein abschließendes
-/// Leerzeichen — `"awtrix "`. Das Gerät hörte damit auf
-/// `awtrix /cmd/apps/pushed/#`, die App schrieb auf `awtrix/cmd/…`, und weil
-/// MQTT 3.1.1 keinen Rückkanal für eine verpuffte Veröffentlichung hat und NG
-/// auf ein Thema ohne Route gar nicht antwortet, blieb die Uhr dunkel, ohne
-/// dass irgendwo etwas stand. Gesucht wurde eine Stunde lang an der falschen
-/// Stelle, denn in der Uhrenzeile stand — richtig und nutzlos — `awtrix`.
+/// Ein Leerzeichen am Rand eines Präfixes ist unsichtbar und entscheidend:
+/// Steht im `mqttPrefix` einer AWTRIX NG ein abschließendes Leerzeichen
+/// (`"awtrix "`), hört das Gerät auf `awtrix /cmd/apps/pushed/#`, während die
+/// App auf `awtrix/cmd/…` schreibt. MQTT 3.1.1 hat keinen Rückkanal für eine
+/// verpuffte Veröffentlichung, und NG antwortet auf ein Thema ohne Route gar
+/// nicht — die Uhr bleibt dunkel, ohne dass irgendwo etwas darauf hinweist.
 ///
 /// NG nimmt das Präfix wörtlich, ein Leerzeichen darin ist also erlaubt. Was
-/// fehlte, war nicht eine Regel, sondern die Sichtbarkeit.
+/// fehlt, ist nicht eine Regel, sondern die Sichtbarkeit.
 public enum Themenpraefix {
-    /// Das Präfix so, dass man ein Leerzeichen am Rand **sieht**: Jedes
+    /// Das Präfix so, dass man ein Leerzeichen am Rand sieht: Jedes
     /// Leerraumzeichen vorn und hinten wird zu `␣` (U+2423, „open box“, das
     /// übliche Zeichen dafür). In der Mitte bleibt alles, wie es ist — dort
     /// ist eine Lücke in der dicktengleichen Schrift ohnehin zu sehen.

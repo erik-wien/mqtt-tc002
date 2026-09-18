@@ -4,13 +4,13 @@ import XCTest
 /// Die Versuchsreihe: fuer jede mitgelieferte Schrift und jede gemessene
 /// Groesse, was dagegen spricht.
 ///
-/// Der Schnappschuss haelt fest, **was heute gilt** — und ist damit zugleich
+/// Der Schnappschuss haelt fest, was heute gilt — und ist damit zugleich
 /// der Waechter: Aendert sich eine Schriftdatei oder die Rasterung, faellt es
 /// hier auf, nicht erst am Geraet.
 ///
-/// Er bleibt bei den **mitgelieferten** Schriften, obwohl die Schriftprobe seit
-/// dem 13.09.2026 alle acht misst: Die fuenf Systemschriften gehoeren nicht
-/// diesem Baum. Ihre Fassung haengt am Rechner und am Systemstand, sie koennen
+/// Er bleibt bei den mitgelieferten Schriften, obwohl die Schriftprobe alle
+/// acht misst: Die fuenf Systemschriften gehoeren nicht diesem Baum. Ihre
+/// Fassung haengt am Rechner und am Systemstand, sie koennen
 /// ganz fehlen — ein Schnappschuss ueber sie meldete den naechsten
 /// Systemwechsel als Regression und waere damit kein Waechter mehr, sondern
 /// Laerm.
@@ -89,7 +89,7 @@ final class SchriftprobeTests: XCTestCase {
     // MARK: - Dass die Pruefung ueberhaupt etwas prueft
 
     /// Der wichtigste Fall: Bei fuenf Pixeln verliert Micro 5 seine Umlaute —
-    /// „Grüße“ waere dort „Gruse“. Und zwar als **eigener**, schwerer wiegender
+    /// „Grüße“ waere dort „Gruse“. Und zwar als eigener, schwerer wiegender
     /// Grund, nicht in der allgemeinen Liste untergegangen.
     func testUmlautverlustWirdEigensGemeldet() {
         let gruende = Schriftprobe.ausschlussgruende(schrift: "Micro 5", groesse: 5)
@@ -101,7 +101,7 @@ final class SchriftprobeTests: XCTestCase {
     }
 
     /// Und die Gegenprobe: In den gemessenen Groessen ist
-    /// **kein** Umlaut seines Grundbuchstabens verlustig gegangen. Faellt das
+    /// kein Umlaut seines Grundbuchstabens verlustig gegangen. Faellt das
     /// eines Tages, ist es das Erste, was man wissen will.
     func testInDenAngebotenenGroessenBleibenDieUmlauteErhalten() {
         for schrift in Schriften.mitgeliefert {

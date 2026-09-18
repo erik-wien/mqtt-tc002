@@ -1,6 +1,6 @@
 import Foundation
 
-/// Was auf dem Weg zu einer AWTRIX NG schiefgehen kann, **bevor** etwas
+/// Was auf dem Weg zu einer AWTRIX NG schiefgehen kann, bevor etwas
 /// abgeschickt ist.
 ///
 /// Beide Faelle haetten auf dem Geraet dasselbe Ergebnis: nichts. NG antwortet
@@ -31,7 +31,7 @@ public enum NGFehler: Error, LocalizedError {
 
 /// Was auf `<Thema>/result` stand.
 ///
-/// Drei Faelle und nicht zwei: **Keine Antwort ist selbst eine Auskunft** — wer
+/// Drei Faelle und nicht zwei: Keine Antwort ist selbst eine Auskunft — wer
 /// gar nichts bekommt, hat ein Thema erwischt, das keine Route trifft. Dieser
 /// Fall steht nicht hier drin, sondern darin, dass diese Antwort ausbleibt.
 public enum NGErgebnis: Equatable, Sendable {
@@ -45,8 +45,8 @@ public enum NGErgebnis: Equatable, Sendable {
 
 /// Die Themen einer AWTRIX NG (`docs/awtrix-ng-protokoll.md` §3.2).
 ///
-/// An einer Stelle und nicht im Sendeweg verteilt: **Ein Thema, das keine
-/// Route trifft, erzeugt bei NG gar keine Antwort** — kein Fehler, keine
+/// An einer Stelle und nicht im Sendeweg verteilt: Ein Thema, das keine
+/// Route trifft, erzeugt bei NG gar keine Antwort — kein Fehler, keine
 /// Bestaetigung. Ein Tippfehler waere damit unsichtbar, und die App ist
 /// obendrein ihr eigener Mitleser: Sie hoerte ihre Sendung auf dem falschen
 /// Thema zurueck und bestaetigte eine Anzeige, die es nie gegeben hat.
@@ -62,8 +62,8 @@ public enum NGThema {
     }
 
     /// Wo NG auf ein Kommando antwortet (§3.4). Erfolg ist genau
-    /// `{"ok":true}`; **bleibt die Antwort ganz aus, hat das Thema keine Route
-    /// getroffen.**
+    /// `{"ok":true}`; bleibt die Antwort ganz aus, hat das Thema keine Route
+    /// getroffen.
     public static func ergebnis(zu thema: String) -> String { thema + "/result" }
 
     /// Alles, was auf dieser Uhr an Anzeigen geschickt wird — auch von fremden
@@ -82,33 +82,31 @@ public enum NGThema {
 /// Aus `Meldungsoptionen` wird die Nutzlast einer AWTRIX-NG-Anzeige
 /// (`docs/awtrix-ng-protokoll.md` §5).
 ///
-/// **Eine reine Funktion, wie `Frame.alsJSON()`.** Sie schickt nichts, liest
+/// Eine reine Funktion, wie `Frame.alsJSON()`. Sie schickt nichts, liest
 /// nichts von der Platte und kennt weder Kanal noch Uhr — geprueft wird sie
 /// byteweise gegen die Geraetereferenz.
 ///
-/// Was hier **nicht** steht, ist so wichtig wie das, was dasteht: kein
+/// Was hier nicht steht, ist so wichtig wie das, was dasteht: kein
 /// `scroll.mode`, kein `whenFits`, kein `font`. Die Vorgaben von NG
 /// (`wrap`, `static`, `small`) sind genau das Verhalten, das diese App auf der
 /// Werksfirmware von Hand nachbaut — der Text laeuft, wenn er nicht passt, und
 /// steht sonst still. Ein mitgeschickter Wert waere eine zweite Entscheidung
 /// ueber dieselbe Sache.
 public enum NGNutzlast {
-    /// **Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.**
+    /// Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.
     ///
     /// `scroll.speed` ist bei NG ein Prozentsatz der Grundgeschwindigkeit von
     /// rund 21 Pixeln je Sekunde (§5.2); unsere drei Stufen sind Standzeiten je
     /// Einzelbild und ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird
-    /// deshalb auf die **Geschwindigkeit** — das ergibt 40 · 60 · 87 Prozent.
+    /// auf die Geschwindigkeit, nicht auf `mittel` als Mitte (100): Das
+    /// erhaelt zwar das Verhaeltnis der drei Stufen zueinander, nicht aber die
+    /// Geschwindigkeit — `mittel` liefe auf NG mit 21 statt 12 Pixeln je
+    /// Sekunde, fast doppelt so schnell wie auf der Werksfirmware, und die
+    /// Vorschau (die mit unseren Standzeiten abspielt) laege bei NG
+    /// systematisch zu langsam.
     ///
-    /// Bis zum 18.09.2026 stand hier die Vorgabe des Geraets als Mitte:
-    /// `mittel` war die 100. Das erhielt das Verhaeltnis der drei Stufen
-    /// zueinander, nicht aber die Geschwindigkeit — auf einer NG lief `mittel`
-    /// mit 21 statt 12 Pixeln je Sekunde, also fast doppelt so schnell wie
-    /// dasselbe `mittel` auf der Werksfirmware. Zwei Uhren nebeneinander
-    /// zeigten denselben Text verschieden schnell, und die Vorschau, die mit
-    /// **unseren** Standzeiten abspielt, log bei NG systematisch zu langsam.
-    ///
-    /// Die Lesbarkeitsgrenze (200 auf acht Pixeln Hoehe) ist damit weit
+    /// Umgerechnet auf die Geschwindigkeit ergibt das 40 · 60 · 87 Prozent —
+    /// die Lesbarkeitsgrenze (200 auf acht Pixeln Hoehe) ist damit weit
     /// unterschritten.
     public static func tempo(_ t: Lauftempo) -> Int {
         let unsere = 1.0 / t.bilddauer   // Pixel je Sekunde, ein Pixel je Bild
@@ -117,13 +115,13 @@ public enum NGNutzlast {
 
     /// Base64 eines Icons ohne den `data:…;base64,`-Vorsatz.
     ///
-    /// **NG entscheidet allein nach der Laenge** (§5.3): bis 64 Zeichen eine
+    /// NG entscheidet allein nach der Laenge (§5.3): bis 64 Zeichen eine
     /// Kennung im Dateisystem des Geraets, darueber Base64 unmittelbar im
     /// Text. Bliebe der Vorsatz stehen, waere es zwar weiter lang genug — aber
     /// die Bytes danach waeren kein Bild.
     ///
     /// PNG wird abgewiesen statt stillschweigend geschickt: NG liest nur GIF
-    /// und JPEG und faellt sonst auf die Anordnung **ohne** Icon zurueck, ohne
+    /// und JPEG und faellt sonst auf die Anordnung ohne Icon zurueck, ohne
     /// etwas zu melden.
     public static func icon(ausDatenURI uri: String) throws -> String {
         let teile = uri.split(separator: ",", maxSplits: 1, omittingEmptySubsequences: false)
@@ -142,12 +140,12 @@ public enum NGNutzlast {
     public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil,
                                iconKante: Int = 8) throws -> String {
         var teile: [String] = []
-        // **Nicht `gesendeterText`.** Unser `uppercased()` macht aus „ß" ein
+        // Nicht `gesendeterText`. Unser `uppercased()` macht aus „ß" ein
         // „SS"; NG versalisiert selbst und erhaelt dabei die Zeichen. Der
         // Schalter wandert deshalb nach `textCase`, der Text bleibt, wie er
         // eingetippt wurde.
         teile.append(#""text":"\#(jsonEscape(o.text))""#)
-        // Ausdruecklich in **beide** Richtungen: Am gemessenen Geraet steht die
+        // Ausdruecklich in beide Richtungen: Am gemessenen Geraet steht die
         // globale Einstellung `uppercase` auf `true`. Ohne `asTyped` kaeme also
         // auch bei ausgeschaltetem Schalter Versalschrift heraus.
         teile.append(#""textCase":"\#(o.grossbuchstaben ? "upper" : "asTyped")""#)
@@ -160,10 +158,9 @@ public enum NGNutzlast {
         teile.append(#""textCenter":\#(o.waagrecht == .mittig)"#)
         teile.append(#""scroll":{"speed":\#(tempo(o.tempo))}"#)
         if let iconDatenURI, !iconDatenURI.isEmpty {
-            // **Acht Zeilen sind acht Zeilen.** Ein GIF, dessen erstes Bild
-            // hoeher ist als die Leinwand, spielt auf NG ueberhaupt nicht (§8)
-            // — ohne Meldung, ohne Fehler. Ein 16×16-Icon ist dort also nicht
-            // bloss zu gross, es faellt aus.
+            // Ein GIF, dessen erstes Bild hoeher ist als die Leinwand, spielt
+            // auf NG ueberhaupt nicht (§8) — ohne Meldung, ohne Fehler. Ein
+            // 16×16-Icon ist dort also nicht bloss zu gross, es faellt aus.
             guard Geraetetyp.awtrixNG.iconKanten.contains(iconKante) else {
                 throw NGFehler.iconZuHoch(kante: iconKante)
             }
@@ -173,7 +170,7 @@ public enum NGNutzlast {
             // stehen und den Text daran vorbeilaufen.
             teile.append(#""iconMode":"\#(o.iconLaeuftMit ? "push" : "fixed")""#)
         }
-        // Sekunden bei der Werksfirmware, **Millisekunden** bei NG. Ein
+        // Sekunden bei der Werksfirmware, Millisekunden bei NG. Ein
         // mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.
         if let dauer = o.dauer { teile.append(#""durationMs":\#(dauer * 1000)"#) }

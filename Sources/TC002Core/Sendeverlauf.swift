@@ -1,12 +1,12 @@
 import Foundation
 
-/// **Was von hier aus geschickt wurde** — mit allem, was dazugehoerte.
+/// Was von hier aus geschickt wurde — mit allem, was dazugehoerte.
 ///
 /// Nicht zu verwechseln mit zwei Nachbarn:
 ///
-/// - Das **Protokoll** (`AppZustand.protokoll`) ist die technische Ebene:
+/// - Das Protokoll (`AppZustand.protokoll`) ist die technische Ebene:
 ///   fluechtig, ab Werk aus, fuer den Fall, dass etwas nicht klappt.
-/// - Das **Slotgedaechtnis** merkt sich **einen** Stand je Platz, damit ein
+/// - Das Slotgedaechtnis merkt sich einen Stand je Platz, damit ein
 ///   Block seine Regler wiederherstellen kann. Es weiss nichts von gestern.
 ///
 /// Der Verlauf ist das Dritte: eine Liste der Sendungen, aelteste zuletzt, mit
@@ -18,7 +18,7 @@ public struct Verlaufseintrag: Codable, Identifiable, Equatable, Sendable {
     /// Der Platz, auf den gesendet wurde — `nil`, wo es keinen gab (das
     /// Kommandozeilenwerkzeug ohne `--name`).
     public let platz: Int?
-    /// Name der Uhr **zum Zeitpunkt der Sendung**, nicht ihre Kennung: Eine
+    /// Name der Uhr zum Zeitpunkt der Sendung, nicht ihre Kennung: Eine
     /// geloeschte Uhr soll den Eintrag nicht unlesbar machen.
     public let uhr: String
     public let optionen: Meldungsoptionen
@@ -45,10 +45,10 @@ public struct Verlaufseintrag: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
-/// Die Ablage des Verlaufs: **eine Datei je Installation**, beim Lesen
+/// Die Ablage des Verlaufs: eine Datei je Installation, beim Lesen
 /// zusammengefuehrt.
 ///
-/// **Warum nicht eine gemeinsame Datei.** Sie liegt im iCloud-Behaelter, und
+/// Warum nicht eine gemeinsame Datei: Sie liegt im iCloud-Behaelter, und
 /// Mac und Telefon schreiben unabhaengig voneinander. Zwei Schreiber auf einer
 /// Datei heisst: Wer zuletzt schreibt, hat die Eintraege des anderen
 /// weggeworfen. Je Installation eine Datei ist dieselbe Ueberlegung wie „je Uhr
@@ -59,7 +59,7 @@ public struct Verlaufseintrag: Codable, Identifiable, Equatable, Sendable {
 /// iCloud die Datei gebracht hat.
 public final class Sendeverlauf: @unchecked Sendable {
     /// Mehr als das steht nicht an: Der Verlauf ist eine Erinnerungsstuetze,
-    /// kein Archiv. Die Zahl gilt **je Installation**, nicht zusammengefuehrt.
+    /// kein Archiv. Die Zahl gilt je Installation, nicht zusammengefuehrt.
     public static let obergrenze = 200
 
     private let ordner: URL
@@ -137,7 +137,7 @@ public final class Sendeverlauf: @unchecked Sendable {
         return schreiben(liste)
     }
 
-    /// Alles wegwerfen, **auch das der anderen Geraete**: Wer den Verlauf
+    /// Alles wegwerfen, auch das der anderen Geraete: Wer den Verlauf
     /// loescht, meint ihn ganz — und die fremden Dateien kaemen beim naechsten
     /// Abgleich ohnehin zurueck, wenn dort noch etwas steht.
     @discardableResult

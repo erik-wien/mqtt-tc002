@@ -27,15 +27,11 @@ ist und bei einem Update nachzuprüfen wäre, in
   Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
   ist nur zulässig, wenn ihn die **Bedienung** (Maus und Zeiger gegen Finger)
   oder das **Platzangebot** erzwingt; „das ist eben das Telefon" ist keiner.
-  Entschieden am 18.09.2026 und damit die Regel, die die frühere ablöst
-  („Was auf dem Telefon richtig ist, ist es dort selten") — die stimmte für
-  die *Anordnung* und wurde als Freibrief für fehlende Funktionen gelesen.
 
-  Zwei Familien gibt es weiterhin, aber sie unterscheiden sich in der
-  **Anordnung**, nicht im Umfang: Das iPhone hat Senden als Wurzel, Titelmenü,
-  schiebbare Formatpille und Blätter; Mac und iPad teilen sich die
-  Desktop-Oberfläche mit Seitenleiste und Inspektor. Wer eine Funktion nur an
-  einer Stelle einbaut, hat die Arbeit halb getan.
+  Zwei Oberflächenfamilien gibt es weiterhin, aber sie unterscheiden sich in
+  der **Anordnung**, nicht im Umfang: Das iPhone hat Senden als Wurzel,
+  Titelmenü, schiebbare Formatpille und Blätter; Mac und iPad teilen sich die
+  Desktop-Oberfläche mit Seitenleiste und Inspektor.
 
 - **Bedienelemente so, wie Apple sie festlegt** — ein eigener Nachbau braucht
   eine Begründung, und die gehört an den Nachbau geschrieben. Bisher gibt es
@@ -53,28 +49,22 @@ ist und bei einem Update nachzuprüfen wäre, in
   Oberflächen wahr ist — Fenster, Seitenleiste, Inspektor, Finder, Malen und der
   Icon-Editor gibt es nur am Mac, und das ist mit dem Platz begründet: Ein
   8×8-Raster mit dem Finger ist keine Arbeitsfläche. Was **beide** können,
-  gehört auch in beide Hilfen; „Seitenwechsel und Scrolltempo stellt die
-  iPhone-Fassung nicht ein" und „sie warnt vor unbekannten Zeichen nicht"
-  standen hier bis zum 18.09.2026 und waren keine Begründung, sondern eine
-  fehlende Funktion.
-  Ein zweiter Satz mit derselben Aussage wäre ein zweiter
-  Übersetzungsschlüssel; deshalb Konstanten statt zweimal geschrieben.
+  gehört auch in beide Hilfen. Ein zweiter Satz mit derselben Aussage wäre ein
+  zweiter Übersetzungsschlüssel; deshalb Konstanten statt zweimal
+  geschrieben.
 - **Das Repo ist öffentlich.** Vor jedem Commit läuft
   `scripts/private-spuren.sh` als Haken (`core.hooksPath=.githooks`) und sucht
-  in den vorgemerkten Zeilen nach Hausnetzangaben und Geheimnissen. Zweimal sind
-  solche Angaben über Planpapiere unter `docs/superpowers/` hereingekommen —
-  einmal zwei Adressen, einmal ein wörtlicher Geräteabzug mit MAC und
-  WLAN-Namen. Das ist die Bauart, nicht ein Versehen: Wer misst, schreibt auf,
-  was er sieht. **Messwerte gehören in die Doku, Kennungen nicht** — Adressen,
-  MAC, Host- und Netznamen durch Platzhalter ersetzen.
+  in den vorgemerkten Zeilen nach Hausnetzangaben und Geheimnissen. Der
+  häufigste Weg hinein sind Planpapiere unter `docs/superpowers/`: Wer misst,
+  schreibt auf, was er sieht. **Messwerte gehören in die Doku, Kennungen
+  nicht** — Adressen, MAC, Host- und Netznamen durch Platzhalter ersetzen.
   Ein frisch geklonter Baum hat den Haken nicht; einmalig
   `git config core.hooksPath .githooks`.
 - Das echte Gerät und der Broker im Hausnetz sind in Tests tabu — ebenso in
   jeder Arbeit, die ein Agent ausführt. Ihre Adressen stehen in den
   Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
-  genannt. (Bis 12.09.2026 standen an dieser Stelle zwei Adressen, die längst
-  nicht mehr stimmten — gefährlicher als keine, weil sie die falschen
-  Maschinen schützten.) Dafür gibt es Doppelgänger: `URLProtocol` für die
+  genannt — eine veraltete Adresse hier schützt die falsche Maschine. Dafür
+  gibt es Doppelgänger: `URLProtocol` für die
   HTTP-Schnittstelle des Geräts, `NachrichtSendend` für das MQTT-Senden.
 - **Ohne Gerät ausprobieren: die virtuelle Uhr.** `Virtuelleuhr` beantwortet
   die Anfragen einer Ulanzi-Werksfirmware als reine Funktion, `Uhrenserver`
@@ -97,6 +87,28 @@ ist und bei einem Update nachzuprüfen wäre, in
   wären sie beim nächsten Bau weg, und unter `/Applications` ist der Ordner
   nicht beschreibbar.
 
+## Was in einen Kommentar gehört
+
+Kommentare und Doc-Comments dokumentieren **Verhalten und Entscheidungen samt
+Begründung** — sonst nichts. Der Leser will wissen, was gilt und warum es so
+gewählt wurde, nicht, wie es dazu kam.
+
+Nicht hinein gehören:
+
+- **Geschichtsschreibung.** „Bis zum TT.MM.JJJJ stand hier …, dann fiel auf …"
+  Der alte Zustand steht in der Versionsverwaltung. Ein Datum bleibt nur, wenn
+  es selbst die Information ist: eine Messung am Gerät, eine
+  Firmware-Beobachtung, ein Befund, den man nachprüfen können muss.
+- **Rechtfertigungsprosa.** Rhetorische Wendungen („Das ist die Bauart, nicht
+  ein Versehen"), Steigerungen, Fettung zur Betonung, Sätze, die dieselbe
+  Aussage ein zweites Mal machen.
+- **Erzählung.** Wer was wann bemerkt hat, wie lange gesucht wurde, wie es sich
+  angefühlt hat.
+
+Hinein gehört die Regel selbst, knapp: was der Code tut, welche Alternative
+verworfen wurde und woran sie scheitert, welche Zahl gemessen ist. Zwei Sätze
+reichen fast immer.
+
 ## Sprachen
 
 Deutsch ist die Entwicklungssprache: Der deutsche Wortlaut steht im Quelltext
@@ -114,10 +126,10 @@ deutschen Satz zurück, nicht auf einen Schlüsselnamen.
   `StringProtocol`-Überladung, und die schlägt nichts nach. Der Eintrag steht
   in `en.lproj` und wird nie gefunden. Abhilfe: `lok("Senden")` — dann ist die
   Übersetzung schon geschehen, bevor SwiftUI den Wert sieht.
-- **Der App-Intents-Schritt läuft nicht von selbst neu.** Am 14.09.2026 trug
-  ein frisch gebautes Bündel `Metadata.appintents` vom Vortag: Ein neuer
-  Kurzbefehl war übersetzt, im Bündel aber nicht vorhanden — und wäre auf dem
-  Gerät nie aufgetaucht. `** BUILD SUCCEEDED **` sagt dazu nichts. Wer einen
+- **Der App-Intents-Schritt läuft nicht von selbst neu.** Ein Bündel kann
+  `Metadata.appintents` vom Vortag tragen: Der Kurzbefehl ist übersetzt, im
+  Bündel aber nicht vorhanden, und `** BUILD SUCCEEDED **` sagt dazu nichts.
+  Wer einen
   `AppIntent` hinzufügt oder umbenennt, wirft danach den DerivedData-Ordner
   weg und baut neu; nachgesehen wird in
   `Metadata.appintents/extract.actionsdata`, ob der Typ darin steht.
@@ -163,9 +175,8 @@ wie App und Kurzbefehle auch — es ist eben keine Einstellung, sondern eine
 eigens dafür gebaute Datei mit mehreren Schreibern. Das gilt aber nur, wenn
 `--name` einen der fünf festen Plätze trifft (`meldung1`…`meldung5`); die
 Vorgabe `--name cli` ist keiner davon, und `mqtttc002 senden "…"` ohne
-`--name` schreibt darum **nicht** ins Slotgedächtnis — kein Fehler im
-Schreiber, sondern der fehlende Platzbezug. Gelesen wird die Datei an zwei
-Stellen, und der Unterschied zwischen ihnen ist der Kern der Sache:
+`--name` schreibt darum **nicht** ins Slotgedächtnis. Gelesen wird die Datei
+an zwei Stellen, und sie entscheiden verschieden:
 
 - **Was ein Block zeigt**, entscheidet `AppZustand.slotzustand(_:belegt:)`
   (`Sources/TC002Modell/AppZustand.swift`) für alle drei Ansichten gleich —
@@ -202,8 +213,8 @@ stehen — dort liegt etwas, wir kennen es nur nicht.
 
 `TC002Ansichten/Slotblock.swift` rührt das Gedächtnis nirgends an: Der Block
 zeigt nur, was ihm gereicht wird. Das Werkzeug reist im Bündel mit
-(`Contents/MacOS/mqtttc002`)
-und wird über einen Verweis benutzt. Zwei Fallen, beide schon zugeschnappt:
+(`Contents/MacOS/mqtttc002`) und wird über einen Verweis benutzt. Drei Fallen
+dabei:
 
 - **`Bundle.main` ist über einen Verweis nicht das App-Bündel**, sondern der
   Ordner des Verweises. Fassungsnummer, Schriften und Übersetzungen fehlen dann
@@ -232,12 +243,9 @@ Installation unlesbar (`EinstellungenTests` hält das fest).
 
 `** BUILD SUCCEEDED **` sagt, dass übersetzt wurde — nicht, dass Schriften,
 Icons, das App-Symbol, die Übersetzungen und die `LICENSE` im Programm gelandet
-sind. Am
-12.09.2026 fehlte im iOS-Bündel **jede einzelne** Ressource, weil `project.yml`
-sie unter einem Schlüssel führte, den XcodeGen nicht kennt und stillschweigend
-überliest. Neun Aufgaben und ebenso viele Durchsichten haben das nicht
-gesehen; aufgefallen ist es erst am Gerät, an einer Vorschau in der falschen
-Schrift.
+sind. Im iOS-Bündel kann jede einzelne Ressource fehlen, wenn `project.yml` sie
+unter einem Schlüssel führt, den XcodeGen nicht kennt und stillschweigend
+überliest — am Quelltext ist das nicht zu sehen, erst am Gerät.
 
 Deshalb nach jedem Bau:
 
@@ -266,11 +274,10 @@ die Info.plist gegen sein Argument.
 und zwar **vor** dem Bau (`preBuildScripts`). Xcode kopiert
 `erzeugt/InfoiOS.plist` nämlich mit `ProcessInfoPlistFile` erst **nach** den
 Skriptschritten über das Produkt; ein Nachlauf schreibt gegen etwas an, das
-gleich überbügelt wird. Am 14.09.2026 trug deshalb jedes iOS-Bündel weiterhin
-`1.0 (1)` — bei jedem Bau dieselbe Baunummer, und App Store Connect nimmt
-keine zweimal an. Nachgesehen wird am fertigen Bündel, nicht an der Ausgabe
-des Schritts: Er meldet die richtigen Zahlen auch dann, wenn sie nirgends
-ankommen.
+gleich überbügelt wird; das Bündel trägt dann bei jedem Bau dieselbe
+Baunummer, und App Store Connect nimmt keine zweimal an. Nachgesehen wird am
+fertigen Bündel, nicht an der Ausgabe des Schritts: Er meldet die richtigen
+Zahlen auch dann, wenn sie nirgends ankommen.
 
 ## Die iOS-Fassung
 
@@ -278,10 +285,8 @@ ankommen.
 Die `.xcodeproj` wird **nicht** eingecheckt — wer eine Quelldatei hinzufügt,
 ändert die YAML und erzeugt neu, statt in erzeugtem XML zu schneiden.
 
-**Sie bleibt in der Wurzel, und das ist kein Versäumnis.** Alles andere
-Erzeugte liegt unter `erzeugt/`; für das Xcode-Projekt wurde dasselbe am
-14.09.2026 versucht und wieder zurückgenommen. `xcodegen generate --project
-erzeugt/ios` legt es zwar dort ab, rechnet dabei aber nicht alles um: Der
+**Sie bleibt in der Wurzel**, obwohl alles andere Erzeugte unter `erzeugt/`
+liegt. `xcodegen generate --project erzeugt/ios` legt es zwar dort ab, rechnet dabei aber nicht alles um: Der
 Paketpfad (`packages.TC002.path`) und die Bauvariable
 `CODE_SIGN_ENTITLEMENTS` werden gegen `$(SRCROOT)` aufgelöst, also gegen das
 erzeugte Projekt, und ein Ordnerverweis (`type: folder`, also `Icons` und
@@ -309,7 +314,6 @@ in `project.yml`).
 bei macOS am Programm; ein so ausgetauschtes Buendel gilt leicht als ein anderes.
 Die Freigabe steht dann weiter auf „erteilt", greift aber nicht mehr, und
 nachgefragt wird auch nicht — die App erreicht Uhr und Broker einfach nicht.
-Am 11.09.2026 genau so passiert, nach dreimaligem Austausch.
 
 Stattdessen an Ort und Stelle ersetzen, das erhaelt die Identitaet:
 

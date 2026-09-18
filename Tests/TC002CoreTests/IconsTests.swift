@@ -198,9 +198,9 @@ final class IconsTests: XCTestCase {
         XCTAssertNil(sammlung.alle().first { $0.nummer == "eigen-1" })
     }
 
-    /// Der Rundlauf durch `sichern` und `pixel(fuer:)`: oben links muss oben links
-    /// bleiben. Genau an dieser Stelle stand mit dem Ursprungsunterschied zwischen
-    /// CGContext (unten links) und Raster (oben links) schon einmal etwas auf dem Kopf.
+    /// Der Rundlauf durch `sichern` und `pixel(fuer:)`: oben links muss oben
+    /// links bleiben — der Ursprungsunterschied zwischen CGContext (unten
+    /// links) und Raster (oben links) kann das drehen.
     func testPixelListDenRundlaufZuSichernRichtigHerum() throws {
         let eigen = temp()
         try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
@@ -324,10 +324,10 @@ final class IconsTests: XCTestCase {
         XCTAssertNotNil(sammlung.alle().first { $0.nummer == "kopie" })
     }
 
-    /// `Bildraster` ist seit dem Wegfall von `Bildladen` der einzige Leseweg der
-    /// Mac-Ansichten. Ein animiertes Icon darf dabei keine Einzelbilder
-    /// verlieren: Der Icon-Editor baut aus ihnen wieder ein animiertes GIF, und
-    /// was hier fehlt, ist beim naechsten Sichern endgueltig weg.
+    /// `Bildraster` ist der einzige Leseweg der Mac-Ansichten. Ein animiertes
+    /// Icon darf dabei keine Einzelbilder verlieren: Der Icon-Editor baut aus
+    /// ihnen wieder ein animiertes GIF, und was hier fehlt, ist beim naechsten
+    /// Sichern endgueltig weg.
     ///
     /// Fuenf Bilder, nicht zwei — so faellt auch auf, wer nur das erste und das
     /// letzte durchlaesst.
@@ -347,11 +347,10 @@ final class IconsTests: XCTestCase {
         }
     }
 
-    /// Der einzige Daseinsgrund des entfallenen `Bildladen`: `NSImage(contentsOf:)`
-    /// merkt sich Bilder am Pfad, ein im Editor geaendertes Icon saehe anderswo
-    /// weiter alt aus. `Bildraster` liest ueber `CGImageSource` **aus der Datei**
-    /// und kennt keinen Zwischenspeicher — hier festgehalten, damit niemand den
-    /// Leseweg gegen einen zwischenspeichernden tauscht.
+    /// `Bildraster` liest ueber `CGImageSource` aus der Datei und kennt
+    /// keinen Zwischenspeicher: `NSImage(contentsOf:)` merkt sich Bilder
+    /// dagegen am Pfad, ein im Editor geaendertes Icon saehe anderswo weiter
+    /// alt aus.
     ///
     /// Derselbe Pfad, zweimal beschrieben: Ein Zwischenspeicher am Pfad haette
     /// beim zweiten Lesen noch das rote Pixel.
@@ -497,9 +496,9 @@ final class IconsTests: XCTestCase {
 
     // MARK: - Das Entsorgungsverfahren
 
-    /// Die eine Sache, die niemand am Schreibtisch sieht: Unbeleuchtete Pixel
-    /// muessen im GIF durchsichtig sein, nicht schwarz. ImageIO waehlt danach
-    /// das Entsorgungsverfahren — deckende Bilder ergeben Verfahren 1
+    /// Unbeleuchtete Pixel muessen im GIF durchsichtig sein, nicht schwarz.
+    /// ImageIO waehlt danach das Entsorgungsverfahren — deckende Bilder
+    /// ergeben Verfahren 1
     /// („stehenlassen“), und damit fehlen auf der Uhr einzelne Pixel;
     /// durchsichtige ergeben Verfahren 2 („vor jedem Bild loeschen“). Geprueft
     /// wird direkt im Bytestrom: im dritten Byte jeder Grafiksteuer-Erweiterung
@@ -708,10 +707,10 @@ final class IconsTests: XCTestCase {
 
     // MARK: - Bewegt oder nicht
 
-    /// Die Auskunft, an der in den Listen das Abspielzeichen haengt.
-    /// **Ohne Pixel zu lesen**: `CGImageSourceGetCount` sieht die
-    /// Bildbeschreibungen, nicht den Inhalt — in einer Liste von sechzig Icons
-    /// waere der Unterschied spuerbar.
+    /// Die Auskunft, an der in den Listen das Abspielzeichen haengt — ohne
+    /// Pixel zu lesen: `CGImageSourceGetCount` sieht die Bildbeschreibungen,
+    /// nicht den Inhalt — in einer Liste von sechzig Icons waere der
+    /// Unterschied spuerbar.
     func testBewegtErkenntMehrereEinzelbilder() throws {
         let sammlung = Iconsammlung(schreibordner: temp())
         var eins = [String?](repeating: nil, count: 64); eins[0] = "#FF0000"
@@ -739,15 +738,14 @@ final class IconsTests: XCTestCase {
 
 }
 
-/// **Ein Icon reist als Bytes mit, nie als Nummer** — und daran hängt mehr,
-/// als es aussieht.
+/// Ein Icon reist als Bytes mit, nie als Nummer.
 ///
 /// AWTRIX NG entscheidet allein nach der Länge (`docs/awtrix-ng-protokoll.md`
-/// §5.3): bis 64 Zeichen ist der Wert eine **Kennung**, die gegen das
+/// §5.3): bis 64 Zeichen ist der Wert eine Kennung, die gegen das
 /// Dateisystem des Geräts aufgelöst wird (`/ICONS/<id>.gif`), darüber sind es
 /// die Bytes selbst. Unsere Icons liegen nicht auf dem Gerät — fiele eines
 /// unter die 64, suchte die Uhr eine Datei, die es dort nie gab, und zeigte
-/// **stillschweigend kein Icon**.
+/// stillschweigend kein Icon.
 ///
 /// Gemessen am 14.09.2026: Das kürzeste, was unser GIF-Schreiber hergibt, sind
 /// 100 Zeichen — ein leeres 8×8 ebenso wie ein einfarbiges. Dieser Test hält

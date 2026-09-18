@@ -1,15 +1,11 @@
 import XCTest
 @testable import TC002Core
 
-/// **Was zu hoch für die Anzeige ist, gehört gar nicht erst zur Wahl
-/// gestellt.**
+/// Was zu hoch für die Anzeige ist, gehört gar nicht erst zur Wahl gestellt.
 ///
 /// Eine TC001 unter AWTRIX NG hat acht Zeilen. Ein 16 × 16-Icon ist dort nicht
 /// bloß zu groß — ein GIF, dessen erstes Bild höher ist als die Leinwand,
-/// spielt **überhaupt nicht** (§8 der NG-Referenz), ohne Meldung. Bis hierher
-/// fiel das erst beim Senden auf (`NGFehler.iconZuHoch`), und eine 16 × 52er
-/// Anzeige fiel am Telefon gar nicht auf: Die Fußnote sagte, NG nehme sie
-/// nicht, der Knopf schickte sie trotzdem.
+/// spielt überhaupt nicht (§8 der NG-Referenz), ohne Meldung.
 ///
 /// Die Auskunft liegt im Kern, damit Mac, iPad und Telefon dieselbe geben.
 final class GrafiksperreTests: XCTestCase {
@@ -31,12 +27,10 @@ final class GrafiksperreTests: XCTestCase {
         XCTAssertTrue(grund.contains("acht"), "Der Grund nennt nicht, woran es liegt: \(grund)")
     }
 
-    /// **Eine Tatsache, nicht zwei.** `iconKanten` sagt seit je, welche
-    /// Icongrößen eine Gattung hergibt. Stünde daneben eine zweite Liste für
-    /// die Höhe, liefen die beiden früher oder später auseinander — und die
-    /// abweichende wäre die falsche (`Geraetetyp.swift` hält fest, dass das in
-    /// diesem Projekt schon dreimal vorgekommen ist). Die Kanten leiten sich
-    /// deshalb aus derselben Höhe ab, die auch die Sperre kennt.
+    /// `iconKanten` sagt, welche Icongrößen eine Gattung hergibt. Stünde
+    /// daneben eine zweite Liste für die Höhe, liefen die beiden früher oder
+    /// später auseinander — und die abweichende wäre die falsche. Die Kanten
+    /// leiten sich deshalb aus derselben Höhe ab, die auch die Sperre kennt.
     func testDieIconkantenFolgenDerselbenAuskunft() {
         for gattung in [Geraetetyp.tc002, .awtrixNG] {
             XCTAssertEqual(gattung.iconKanten,

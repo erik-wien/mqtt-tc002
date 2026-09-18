@@ -3,14 +3,11 @@ import UniformTypeIdentifiers
 import XCTest
 @testable import TC002Core
 
-/// „Der iPad Icon Editor kann die beiden maze gifs im Download Ordner nicht
-/// importieren" — gemeldet am 13.09.2026.
-///
-/// Zwei Verdaechtige — und beide waren schuldig. Die Oberflaeche merkte sich
-/// die URL und las erst spaeter, wenn der Zugriff laengst zu war; der Kern
-/// rechnete jede Datei stillschweigend auf die eingestellte Groesse herunter,
-/// und die beiden GIFs waren 16×16. Seit dem 13.09.2026 nimmt er jede der drei
-/// Groessen in ihrer eigenen auf und lehnt jede andere mit Begruendung ab.
+/// Ein GIF wird in seiner eigenen Groesse aufgenommen und lehnt jede andere
+/// Groesse mit Begruendung ab, statt sie stillschweigend herunterzurechnen.
+/// Zusaetzlich liest der Kern Bytes an, statt sich eine URL zu merken und
+/// spaeter zu lesen — dann waere der Zugriff auf eine zugriffsgeschuetzte
+/// Datei laengst zu.
 ///
 /// Geschrieben wird ausschliesslich in ein Wegwerfverzeichnis.
 final class DateiEinlesenTests: XCTestCase {
@@ -58,11 +55,10 @@ final class DateiEinlesenTests: XCTestCase {
 
     // MARK: - C1: die Groesse der Datei entscheidet
 
-    /// **C1.** Eine Datei wird in **ihrer eigenen** Groesse aufgenommen — der
-    /// Editor stellt sich auf sie ein, nicht umgekehrt. Bis zum 13.09.2026
-    /// nahm `einlesen` die gewuenschte Groesse als Argument entgegen und
-    /// rechnete alles darauf herunter; genau daran ist der Auftraggeber mit
-    /// zwei 16×16-`maze`-GIFs haengengeblieben, die als 8×8 landeten.
+    /// C1. Eine Datei wird in ihrer eigenen Groesse aufgenommen — der Editor
+    /// stellt sich auf sie ein, nicht umgekehrt: `einlesen` nimmt nicht die
+    /// gewuenschte Groesse als Argument entgegen und rechnet nichts darauf
+    /// herunter.
     ///
     /// Nachgewiesen an dem, was zurueckkommt, nicht an dem, was der
     /// Rueckgabewert behauptet.
@@ -80,10 +76,9 @@ final class DateiEinlesenTests: XCTestCase {
         }
     }
 
-    /// Und eine Fremdgroesse wird **abgelehnt**, statt auf die naechstliegende
-    /// gerechnet zu werden (entschieden am 13.09.2026). Geprueft wird beides:
-    /// dass es wirft — und dass danach **nichts** auf der Platte liegt. Ein
-    /// Fehler, der trotzdem etwas schreibt, waere schlimmer als keiner.
+    /// Und eine Fremdgroesse wird abgelehnt, statt auf die naechstliegende
+    /// gerechnet zu werden. Geprueft wird beides: dass es wirft — und dass
+    /// danach nichts auf der Platte liegt.
     func testEineFremdeGroesseWirdAbgelehntUndSchreibtNichts() throws {
         for (qb, qh) in [(32, 32), (104, 32), (7, 7)] {
             XCTAssertThrowsError(try bestand.einlesen(daten: try gif(breite: qb, hoehe: qh),
@@ -103,9 +98,8 @@ final class DateiEinlesenTests: XCTestCase {
         }
     }
 
-    /// Die Begruendung nennt beides: **was es ist** und **was ginge**. Eine
-    /// Meldung, die nur „geht nicht" sagt, laesst den Anwender raten, und
-    /// genau darum ging es bei C1.
+    /// Die Begruendung nennt beides: was es ist und was ginge. Eine
+    /// Meldung, die nur „geht nicht" sagt, laesst den Anwender raten.
     func testDieBegruendungNenntDieGroesseUndDieDreiMoeglichen() {
         let text = EditorbestandFehler.fremdeGroesse(breite: 32, hoehe: 32).errorDescription ?? ""
         XCTAssertTrue(text.contains("32×32"), "die Begründung nennt die Größe der Datei nicht: \(text)")
@@ -126,9 +120,8 @@ final class DateiEinlesenTests: XCTestCase {
 
     // MARK: - A4: was das Blatt vorschlaegt und was es warnt
 
-    /// **A4.** Aus `2981_Severe TStorm` wird die Nummer `2981` und der Titel
-    /// `Severe TStorm`. Bis zum 13.09.2026 stand der **ganze** Dateiname in
-    /// beiden Feldern — bei so einer Datei also die Nummer zweimal falsch.
+    /// A4. Aus `2981_Severe TStorm` wird die Nummer `2981` und der Titel
+    /// `Severe TStorm`.
     ///
     /// Geraten wird nur, wo es etwas zu raten gibt: `maze_2` ist keine
     /// Nummer, und wo keine dasteht, bleibt das Feld leer, statt einen
@@ -151,7 +144,7 @@ final class DateiEinlesenTests: XCTestCase {
         }
     }
 
-    /// Und eine schon vergebene Nummer faellt auf, **bevor** gesichert wird.
+    /// Und eine schon vergebene Nummer faellt auf, bevor gesichert wird.
     /// Ersetzt wird sie trotzdem — aber sichtbar: Der Eintrag, den es trifft,
     /// wird beim Namen genannt.
     ///
@@ -184,11 +177,10 @@ final class DateiEinlesenTests: XCTestCase {
 
     // MARK: - Verdacht 2: der Weg ueber die Daten
 
-    /// Der eigentliche Fehler sass in der Ansicht: Sie merkte sich die URL aus
-    /// dem Dateiwaehler und las erst spaeter — da war der Zugriff auf die
-    /// zugriffsgeschuetzte Datei laengst zu. Damit sie sofort lesen **kann**,
-    /// muss der Kern Bytes annehmen und dabei dasselbe liefern wie ueber die
-    /// Datei.
+    /// Damit die Ansicht sofort lesen kann, statt sich eine URL zu merken
+    /// und erst spaeter zu lesen — wenn der Zugriff auf eine
+    /// zugriffsgeschuetzte Datei laengst zu ist —, muss der Kern Bytes
+    /// annehmen und dabei dasselbe liefern wie ueber die Datei.
     func testAusDatenKommtDasselbeHerausWieAusEinerDatei() throws {
         let daten = try gif(breite: 32, hoehe: 32)
         let datei = wurzel.appendingPathComponent("Quelle/maze.gif")
@@ -208,7 +200,7 @@ final class DateiEinlesenTests: XCTestCase {
         XCTAssertEqual(a?.breite, 32)
     }
 
-    /// Was keine Bilddatei ist, muss auffallen — und zwar **bevor** ein Blatt
+    /// Was keine Bilddatei ist, muss auffallen — und zwar bevor ein Blatt
     /// aufgeht, das nach einem Namen fragt. `zielgroesse(fuer:)` ist die Probe,
     /// die die Ansicht dafuer benutzt.
     func testWasKeinBildIstWirdErkannt() {

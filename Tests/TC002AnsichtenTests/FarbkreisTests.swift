@@ -1,13 +1,11 @@
 import XCTest
 
-/// **Warum es diesen Nachbau überhaupt gibt** — und warum er nicht wieder
-/// stillschweigend durch das nackte Systemfeld ersetzt werden soll.
-///
-/// Das Systemfeld zeigt bei weißer Farbe einen weißen Fleck auf hellem Grund;
-/// dass dort ein Bedienelement steht, sieht man dann nicht mehr. Einen
-/// offiziellen Weg, das zu ändern, gibt es nicht: `ColorPicker` hat kein
-/// Gegenstück zu `buttonStyle` oder `pickerStyle` (im SDK nachgesehen am
-/// 18.09.2026), und sein `label` steht *neben* dem Feld statt darin.
+/// Der Nachbau des Systemfelds gibt es, weil das Systemfeld bei weißer
+/// Farbe einen weißen Fleck auf hellem Grund zeigt und dort nicht mehr als
+/// Bedienelement zu erkennen ist. Einen offiziellen Weg, das zu ändern, gibt
+/// es nicht: `ColorPicker` hat kein Gegenstück zu `buttonStyle` oder
+/// `pickerStyle` (im SDK nachgesehen), und sein `label` steht *neben* dem
+/// Feld statt darin.
 ///
 /// Geprüft wird am Quelltext wie in `KnopfstilTests`.
 final class FarbkreisTests: XCTestCase {
@@ -31,10 +29,8 @@ final class FarbkreisTests: XCTestCase {
         return inhalt.filter { $0.hasSuffix(".swift") }.sorted().map { "\(ordner)/\($0)" }
     }
 
-    /// **Die Systempalette bleibt der Auslöser.** Gezeichnet wird nur das
-    /// Gesicht; wer den Kreis anklickt, trifft einen `ColorPicker`. Ein
-    /// selbstgebauter Farbwähler wäre etwas ganz anderes — und viel mehr, als
-    /// hier gewollt ist.
+    /// Die Systempalette bleibt der Auslöser: Gezeichnet wird nur das
+    /// Gesicht; wer den Kreis anklickt, trifft einen `ColorPicker`.
     func testDerKreisLoestDieSystempaletteAus() throws {
         let quelle = try ohneKommentare("Sources/TC002Ansichten/Farbkreis.swift")
         XCTAssertTrue(quelle.contains("ColorPicker(\"Farbe\", selection: $farbe"),
@@ -43,10 +39,9 @@ final class FarbkreisTests: XCTestCase {
                       "Der Regenbogenring fehlt — dann ist der Kreis bei Weiß wieder unsichtbar.")
     }
 
-    /// **Kein blankes Farbfeld ohne Beschriftung mehr.** Wo `labelsHidden()`
-    /// an einem `ColorPicker` steht, bleibt nur das Feld übrig — und genau das
-    /// ist bei Weiß nicht mehr zu erkennen. Ausgenommen ist der Farbkreis
-    /// selbst: Dort ist das Verstecken der Sinn der Sache.
+    /// Wo `labelsHidden()` an einem `ColorPicker` steht, bleibt nur das Feld
+    /// übrig — bei Weiß nicht mehr als Bedienelement zu erkennen. Ausgenommen
+    /// ist der Farbkreis selbst, dort ist das Verstecken der Sinn der Sache.
     func testKeinNacktesSystemfarbfeldInDenSendeansichten() throws {
         for pfad in swiftDateien(unter: "Sources/TC002Ansichten")
             + swiftDateien(unter: "Sources/TC002iOS") {

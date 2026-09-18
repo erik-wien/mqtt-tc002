@@ -9,16 +9,16 @@ import TC002Core
 /// Editor geändertes Icon sieht hier sofort neu aus, weil es zwischen Datei und
 /// Anzeige nichts gibt, das sich etwas merken könnte.
 ///
-/// Gezeigt wird das **erste** Einzelbild. Ein animiertes Icon läuft in einer
+/// Gezeigt wird das erste Einzelbild. Ein animiertes Icon läuft in einer
 /// Liste nicht — das wäre im Raster nur Unruhe; abgespielt wird es in der
 /// Vorschau (`VorschauView`).
 ///
 /// Der Hintergrund bleibt Sache des Aufrufers: „aus" ist durchsichtig, nicht
 /// schwarz, und im Icon-Raster soll die Zelle durchscheinen.
-/// **Öffentlich seit dem 14.09.2026**: Das Telefon zeigt damit die
-/// 16×52-Anzeigen des Bestands, die es schicken kann. Dieselbe Ansicht, nicht
-/// eine zweite daneben — die erste Wahl war ein eigenes `Canvas` im
-/// Auswahlblatt, und zwei Stellen, die dasselbe zeichnen, laufen auseinander.
+///
+/// Dieselbe Ansicht zeigt auch am Telefon die 16×52-Anzeigen des Bestands,
+/// statt eines eigenen `Canvas` im Auswahlblatt — zwei Stellen, die dasselbe
+/// zeichnen, laufen sonst auseinander.
 public struct Rasterbild: View {
     let datei: URL
     var breite: Int = 8

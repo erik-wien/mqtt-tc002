@@ -97,13 +97,10 @@ public struct UeberView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Lizenz").font(.subheadline).fontWeight(.semibold)
-                // **Bis zum 14.09.2026 stand hier „weil die App auf Teilen von
-                // PixDeck aufbaut".** Das war falsch und ausgerechnet an der
-                // Stelle, an der es zaehlt: PixDeck ist Python und war eine
-                // Referenz ueber das Verhalten des Geraets, keine Quelle fuer
-                // Quelltext. Ein Programm, das von sich selbst behauptet, eine
-                // Bearbeitung zu sein, macht seinem Urheber die zusaetzliche
-                // Erlaubnis unten streitig.
+                // PixDeck ist Python und liefert nur Wissen ueber das
+                // Geraeteverhalten, keine Quelle fuer Quelltext. Ein Programm,
+                // das behauptet, eine Bearbeitung eines anderen zu sein, macht
+                // seinem Urheber die zusaetzliche Erlaubnis unten streitig.
                 Text("GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt.")
                 Link("www.gnu.org/licenses/gpl-3.0.html", destination: URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!)
                 textknopf(lok("Lizenztext anzeigen…")) { lizenztextSichtbar = true }
@@ -164,7 +161,7 @@ public struct UeberView: View {
     /// Ein Knopf, der wie ein Verweis aussieht — den Stil `.link` gibt es nur
     /// unter macOS; am Telefon ist die Vorgabe schon ein blauer Text.
     ///
-    /// **Bleibt auch nach dem Knopfdurchgang ein Verweis.** „Lizenztext…"
+    /// Bleibt auch nach dem Knopfdurchgang ein Verweis. „Lizenztext…"
     /// steht mitten in einer Zeile neben echten Verweisen („Micro 5",
     /// „Silkscreen", „Tiny5"); ein grauer Kasten mitten im Satz risse die
     /// Zeile auf. Ausdruecklich `.automatic` statt gar nichts, damit die

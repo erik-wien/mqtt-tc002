@@ -25,18 +25,16 @@ public extension Color {
     /// nach Gerät einen anderen Hexwert. Außerhalb des sRGB-Umfangs liegende
     /// Anteile werden geklammert.
     ///
-    /// **Abgeschnitten, nicht gerundet** — und zwar mit Absicht: Beide
-    /// Oberflächen taten das schon immer, und nur so liefern Mac und Telefon
-    /// für dieselbe Farbe zeichengleiche Hexwerte.
+    /// Abgeschnitten, nicht gerundet, und zwar mit Absicht: Nur so liefern Mac
+    /// und Telefon für dieselbe Farbe zeichengleiche Hexwerte.
     ///
-    /// Der Preis dafür ist gemessen und bekannt: `Color` hält seine Anteile als
-    /// `Float`, und `Float(18/255) * 255` ergibt 17,999998 — abgeschnitten also
-    /// 17. **85 der 256 Stufen überleben den Rundlauf deshalb nicht**, darunter
-    /// die Vorgabefarbe `#00FF66`, die als `#00FF65` zurückkommt. Das ist keine
-    /// Neuerung dieser Zusammenlegung: Die frühere Mac-Fassung
-    /// (`Int(f.redComponent * 255)`) lieferte zeichengleich dasselbe.
-    /// `FarbeTests` hält beides fest — die Stufen, die tragen, und das
-    /// Abschneiden selbst.
+    /// Der Preis dafür ist gemessen: `Color` hält seine Anteile als `Float`,
+    /// und `Float(18/255) * 255` ergibt 17,999998 — abgeschnitten also 17. 85
+    /// der 256 Stufen überleben den Rundlauf deshalb nicht, darunter die
+    /// Vorgabefarbe `#00FF66`, die als `#00FF65` zurückkommt — dieselbe
+    /// Abweichung wie in der früheren Mac-Fassung
+    /// (`Int(f.redComponent * 255)`). `FarbeTests` hält beides fest: die
+    /// Stufen, die tragen, und das Abschneiden selbst.
     var hexWert: String {
         #if canImport(AppKit)
         let quelle = NSColor(self).cgColor

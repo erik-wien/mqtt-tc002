@@ -3,7 +3,7 @@ import XCTest
 @testable import TC002Core
 
 /// Nagelt den Rahmenbau fest. Diese Tests sind nicht dazu da, eine Absicht zu
-/// beschreiben — sie halten fest, was die App **heute** erzeugt, damit das
+/// beschreiben — sie halten fest, was die App heute erzeugt, damit das
 /// Verschieben in den Kern nichts verändert. Weicht ein Schnappschuss ab, ist
 /// das ein Fehler der Verschiebung und keine Verbesserung.
 final class MeldungsbauTests: XCTestCase {
@@ -121,9 +121,6 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertEqual(Meldungsbau.textblock(o, mitIcon: false).flaeche, [0, 0, 52, 16])
     }
 
-    /// Mehr Rand verlangen, als Platz ist, darf nicht abschneiden: Der Wert
-    /// wird auf die Haelfte des freien Raums geklammert. Die Schnappschuesse
-    /// loesen das nie aus, weil dort jeder Rand unter der Grenze liegt.
     /// Mehr Rand verlangen, als Platz ist, darf nicht abschneiden: `r` wird auf
     /// die Haelfte des freien Raums geklammert. Fuer „Hallo" liegt die Tinte
     /// bei Zeile 2 bis 7 (sechs Pixel hoch), also `max(0, (16-6)/2) = 5`; bei

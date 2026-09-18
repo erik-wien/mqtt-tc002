@@ -1,7 +1,7 @@
 import XCTest
 
-/// Der Formatinspektor und das Eingabefeld der Sendeansicht — beides aus der
-/// iPad-Rueckmeldung vom 13.09.2026 (S1, S2, S3).
+/// Der Formatinspektor und das Eingabefeld der Sendeansicht — beides aus
+/// einer iPad-Rueckmeldung (S1, S2, S3).
 ///
 /// Wie in `MindestmasseTests` und `PlattformwegeTests` wird hier der Quelltext
 /// gelesen, nicht der Uebersetzer befragt: Ein Farbwaehler in einer eigenen
@@ -60,11 +60,10 @@ final class SendefeldTests: XCTestCase {
         guard let stil = block(nach: #"LabeledContent("Stil")"#, in: text) else {
             return XCTFail("die Stil-Zeile gibt es nicht mehr")
         }
-        // `Farbkreis` und nicht `ColorPicker`: Seit dem 18.09.2026 steht dort
-        // der Kreis mit Regenbogenring (ein weisses Systemfeld war auf hellem
-        // Grund nicht mehr als Bedienelement zu erkennen). Die Systempalette
-        // loest er weiterhin aus — zugesichert ist hier die **Zeile**, nicht
-        // das Element.
+        // `Farbkreis` und nicht `ColorPicker`: Dort steht der Kreis mit
+        // Regenbogenring (ein weisses Systemfeld war auf hellem Grund nicht
+        // mehr als Bedienelement zu erkennen). Die Systempalette loest er
+        // weiterhin aus — zugesichert ist hier die Zeile, nicht das Element.
         XCTAssertTrue(stil.contains("Farbkreis("),
                       "der Farbwähler steht nicht in der Stil-Zeile")
         XCTAssertTrue(stil.contains(#"Image(systemName: "bold")"#),
@@ -97,18 +96,17 @@ final class SendefeldTests: XCTestCase {
                       "das Eingabefeld ist wieder auf die Systemgröße zurückgefallen")
     }
 
-    /// S2, zweite Fassung: Der Rahmen gilt **beiden** Schreibtischen.
+    /// S2, zweite Fassung: Der Rahmen gilt beiden Schreibtischen.
     ///
-    /// Bis 13.09.2026 stand er hinter `#if os(macOS)` — die Annahme war, die
-    /// Mac-Vorgabe zeichne ohnehin einen. Am abgenommenen Bildschirmfoto war
-    /// zu sehen, dass sie es in dieser Fläche nicht tut: Das Feld stand dort
-    /// so unsichtbar wie am iPad. Seither ein Aufruf für beide
-    /// (`Eingabefeld.swift`).
+    /// Ein `#if os(macOS)`-Zweig ginge von der Annahme aus, die Mac-Vorgabe
+    /// zeichne ohnehin einen Rahmen — am Bildschirmfoto ist zu sehen, dass
+    /// sie es in dieser Fläche nicht tut: Das Feld stünde dort so unsichtbar
+    /// wie am iPad. Deshalb ein Aufruf für beide (`Eingabefeld.swift`).
     ///
     /// Geprüft wird darum beides — dass die Fassung da ist, und dass sie in
-    /// **keinem** Plattformzweig steht. Der zweite Teil ist der eigentliche:
-    /// Ein Zweig übersetzt auf beiden Geräten und fällt auf dem falschen
-    /// stumm aus.
+    /// keinem Plattformzweig steht. Der zweite Teil ist der eigentliche: Ein
+    /// Zweig übersetzt auf beiden Geräten und fällt auf dem falschen stumm
+    /// aus.
     func testDerRahmenGiltFuerBeideSchreibtische() throws {
         let roh = try String(contentsOf: Self.wurzel
             .appendingPathComponent("Sources/TC002Ansichten/SendenView.swift"), encoding: .utf8)
@@ -126,13 +124,13 @@ final class SendefeldTests: XCTestCase {
                 ohneKommentar = String(zeile)
             }
             // `.eingabefeld(` und nicht `.eingabefeld()`: Das Meldungsfeld
-            // traegt seit dem 16.09.2026 die Fassung **mit** Loeschzeichen.
-            // Gemeint war hier immer die Fassung, nie ihre Schreibweise.
+            // traegt die Fassung mit Loeschzeichen. Gemeint war hier immer
+            // die Fassung, nie ihre Schreibweise.
             if ohneKommentar.contains(".eingabefeld(") { treffer.append(nurEinZweig) }
         }
-        // Eines, nicht zwei: Das Dauerfeld ist am 14.09.2026 in den Zeit-Reiter
-        // des Inspektors gezogen (`Zeitabschnitte`), zu Seitenwechsel und
-        // Scrolltempo. Uebrig bleibt hier das Meldungsfeld.
+        // Eines, nicht zwei: Das Dauerfeld liegt im Zeit-Reiter des
+        // Inspektors (`Zeitabschnitte`), zu Seitenwechsel und Scrolltempo.
+        // Uebrig bleibt hier das Meldungsfeld.
         XCTAssertEqual(treffer.count, 1,
                        ".eingabefeld() kommt in SendenView.swift nicht genau einmal vor "
                        + "(das Meldungsfeld) — steht es wieder ohne Fassung da?")
@@ -147,9 +145,9 @@ final class SendefeldTests: XCTestCase {
         guard let eingabe = block(nach: "private var eingabe: some View", in: text) else {
             return XCTFail("das Eingabefeld des iPhones heißt nicht mehr `eingabe`")
         }
-        // `.eingabefeld(…)` **ist** `.roundedBorder`, samt Loeschzeichen seit
-        // dem 18.09.2026 (`Eingabefeld.swift`). Zugesichert ist die Fassung,
-        // nicht ihre Schreibweise.
+        // `.eingabefeld(…)` ist `.roundedBorder`, samt Loeschzeichen
+        // (`Eingabefeld.swift`). Zugesichert ist die Fassung, nicht ihre
+        // Schreibweise.
         XCTAssertTrue(eingabe.contains(".eingabefeld("),
                       "dem iPhone ist der Rahmen seines Eingabefelds abhanden gekommen")
     }

@@ -5,18 +5,18 @@ import TC002Core
 /// auffaellig gross wird.
 ///
 /// Wo die Uhr aussteigt, weiss niemand: Die Geraetereferenz nennt keine Grenze
-/// (§4.2a). Deshalb steht hier der **Stand** und keine Zusage — wie viele
+/// (§4.2a). Deshalb steht hier der Stand und keine Zusage — wie viele
 /// Einzelbilder es sind, wie viele Kilobyte daraus werden, und ab `heikelAb`
 /// ein Satz darueber, was daran kleiner hilft. Eine Zeile, kein Absatz; die
 /// Erklaerung steht in der Hilfe.
 ///
-/// **Eine** Fassung fuer „Senden" und fuer den Editor. Zwei nebeneinander
-/// waeren zwei Schwellen, die auseinanderlaufen, und zwei
-/// Uebersetzungsschluessel fuer dieselbe Aussage. Was sich zwischen den beiden
-/// Stellen wirklich unterscheidet, sind genau zwei Angaben: wie das Gebilde
-/// heisst und was es kleiner macht — die stehen deshalb als Argument da.
+/// Eine Fassung fuer „Senden" und fuer den Editor. Zwei nebeneinander waeren
+/// zwei Schwellen, die auseinanderlaufen, und zwei Uebersetzungsschluessel
+/// fuer dieselbe Aussage. Was sich zwischen den beiden Stellen wirklich
+/// unterscheidet, sind genau zwei Angaben: wie das Gebilde heisst und was es
+/// kleiner macht — die stehen deshalb als Argument da.
 struct Nutzlastzeile: View {
-    /// Ab hier wird gewarnt. Die Zahl ist **gesetzt, nicht gemessen** — ein
+    /// Ab hier wird gewarnt. Die Zahl ist gesetzt, nicht gemessen — ein
     /// Lauf-GIF lag in der Messung bei 23 KB, und die Uhr nahm es. Sie soll
     /// aufmerksam machen, nicht verbieten.
     static let heikelAb = 60_000

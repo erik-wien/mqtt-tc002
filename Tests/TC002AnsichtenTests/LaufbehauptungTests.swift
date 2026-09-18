@@ -1,24 +1,16 @@
 import XCTest
 
-/// **Die App hat behauptet, was das Gerät nicht tut.**
+/// Kein sichtbarer Text der App darf zusagen, die Werksfirmware lasse selbst
+/// geschickten Text durchlaufen: Gemessen am 11.09.2026 mit drei Fassungen
+/// wird er abgeschnitten, auch bei `scrollSpeed` über null
+/// (`docs/firmware-beobachtungen.md` Nr. 1, Gerätereferenz §4.3).
 ///
-/// Bis zum 18.09.2026 stand in Hilfe und Vorschau, beim Weg „als Text" lasse
-/// die Uhr zu langen Text von selbst durchlaufen, und „Scrolltempo" unter
-/// „Einstellungen" bestimme dabei das Tempo. Gemessen wurde am 11.09.2026 das
-/// Gegenteil: Selbst geschickter Text läuft auf der Werksfirmware **nicht**,
-/// er wird abgeschnitten — auch bei `scrollSpeed` über null, geprüft mit drei
-/// Fassungen (`docs/firmware-beobachtungen.md` Nr. 1, Gerätereferenz §4.3).
+/// Die Wahl des Wegs gibt es nicht mehr (siehe `SendeWeg` im Kern): Die App
+/// rastert jeden Text selbst. Die Hilfe erklärt trotzdem, warum es diese
+/// Wahl nicht mehr gibt — dieser Grund darf nicht stillschweigend
+/// verschwinden.
 ///
-/// Eine falsche Zusage ist schlimmer als eine fehlende: Sie führte dazu, dass
-/// man für langen Text den Weg wählte, auf dem er verschwindet.
-///
-/// **Noch am selben Tag ist die Wahl ganz entfallen** (siehe `SendeWeg` im
-/// Kern): Die App rastert jeden Text selbst, und damit kann diese Zusage in
-/// keiner Oberfläche mehr gegeben werden. Die Messung bleibt trotzdem
-/// geschützt — die Hilfe erklärt jetzt, *warum* es die Wahl nicht mehr gibt,
-/// und dieser Grund darf nicht stillschweigend verschwinden.
-///
-/// Geprüft wird am Wortlaut, weil genau der das Versprechen war.
+/// Geprüft wird am Wortlaut, weil genau der die Zusage war.
 final class LaufbehauptungTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
@@ -59,10 +51,9 @@ final class LaufbehauptungTests: XCTestCase {
                       "Die Wegeregel sagt nicht mehr, was wirklich passiert.")
     }
 
-    /// **Die Wahl selbst gibt es nicht mehr, und sie kommt nicht zurück.**
     /// Ein Segmentschalter „als Pixel / als Text" in einer Sendeansicht wäre
-    /// genau die Frage, die niemand beantworten kann, ohne das Gerät zu
-    /// kennen; auf einer AWTRIX NG hatte sie obendrein gar keine Wirkung.
+    /// die Frage, die niemand beantworten kann, ohne das Gerät zu kennen;
+    /// auf einer AWTRIX NG hatte sie obendrein gar keine Wirkung.
     func testKeineSendeansichtBietetDenWegAn() throws {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
                      "Sources/TC002iOS/SendeniOS.swift",

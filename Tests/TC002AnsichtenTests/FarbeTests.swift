@@ -22,11 +22,10 @@ final class FarbeTests: XCTestCase {
 
     /// Die eigentliche Zusicherung hinter dem Rundlauf: abgeschnitten, nicht
     /// gerundet. Ein Anteil, der zwischen zwei Stufen liegt, muss auf die
-    /// **untere** fallen — 17,6 ergibt 0x11, nicht 0x12.
+    /// untere fallen — 17,6 ergibt 0x11, nicht 0x12.
     ///
-    /// Das ist keine Erbsenzählerei: Rundet hier jemand, weichen die Hexwerte
-    /// von Mac und Telefon wieder voneinander ab, und genau dagegen wurde die
-    /// iOS-Fassung seinerzeit korrigiert.
+    /// Rundet hier jemand statt abzuschneiden, weichen die Hexwerte von Mac
+    /// und Telefon wieder voneinander ab.
     func testAbschneidenIstGewollt() {
         XCTAssertEqual(Color(red: 17.6 / 255, green: 0, blue: 0).hexWert, "#110000",
                        "17,6 muss auf 17 (0x11) abgeschnitten werden, nicht auf 18 (0x12) gerundet")

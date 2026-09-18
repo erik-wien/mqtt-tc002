@@ -22,7 +22,7 @@ struct VorschauView: View {
     /// Kantenlaenge des Icons — 8 oder 16. `iconY` folgt ihr, damit die
     /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
     var iconKante: Int = 8
-    /// Senkrecht mittig **im gezeigten Feld**, nicht in festen sechzehn Zeilen:
+    /// Senkrecht mittig im gezeigten Feld, nicht in festen sechzehn Zeilen:
     /// Auf den acht Zeilen einer NG-Uhr saesse ein 8×8 sonst auf Zeile 4 und
     /// waere zur Haelfte abgeschnitten.
     var iconY: Int { Meldungsbau.iconY(kante: iconKante, mass: mass) }

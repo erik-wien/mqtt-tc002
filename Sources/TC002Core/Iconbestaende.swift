@@ -1,17 +1,15 @@
 import Foundation
 
-/// **Es gibt zwei Icon-Bestände, und wer nur einen durchsucht, findet die
-/// Hälfte nicht.**
+/// Es gibt zwei Icon-Bestände, und wer nur einen durchsucht, findet die
+/// Hälfte nicht.
 ///
 /// Die kanonischen 8×8 liegen in `Iconordner.eigene`, die eigenen 16×16 in
 /// `Iconordner.eigene16` — je Größe ein eigener Ordner, aus den Gründen, die
-/// bei `Iconsammlung` stehen. Die App durchsucht seit jeher beide; das
-/// Kommandozeilenwerkzeug und die Kurzbefehle sahen bis heute nur den ersten
-/// und meldeten „Kein Icon", obwohl es das Icon gab — ein Fehler, den nichts
-/// anzeigte, weil die Meldung stimmig klang.
+/// bei `Iconsammlung` stehen. Die App durchsucht beide; ein Aufrufer, der nur
+/// einen absucht, meldet „Kein Icon", obwohl es das Icon gibt — ein Fehler,
+/// den nichts anzeigt, weil die Meldung stimmig klingt.
 ///
-/// Deshalb steht die Entscheidung jetzt hier, an einer Stelle, statt an
-/// dreien.
+/// Deshalb steht die Entscheidung hier, an einer Stelle, statt an dreien.
 public enum Iconbestaende {
     /// Beide Bestände, 8×8 zuerst.
     ///

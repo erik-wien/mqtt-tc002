@@ -3,16 +3,16 @@ import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-/// **Ein fertiges 52×16-Bild aus dem Bestand schicken** — der einzige Weg, auf
+/// Ein fertiges 52×16-Bild aus dem Bestand schicken — der einzige Weg, auf
 /// dem die Anzeigen aus dem Editor am Telefon ankommen.
 ///
 /// Sie liegen längst hier: `Bilderordner.eigene` ist derselbe iCloud-Ordner,
 /// aus dem auch die Icons kommen. Was fehlte, war die Tür — gemalt wird am
 /// Telefon weiterhin nicht, ein Raster mit dem Finger wäre keine
-/// Arbeitsfläche. **Schicken ist etwas anderes als malen.**
+/// Arbeitsfläche. Schicken ist etwas anderes als malen.
 ///
 /// Ein Bild ist dabei kein Icon: Ein Icon steht *neben* dem Text, eine
-/// 52×16-Anzeige ist das **ganze** Display und ersetzt Text und Icon. Deshalb
+/// 52×16-Anzeige ist das ganze Display und ersetzt Text und Icon. Deshalb
 /// geht sie auch nicht durch die Formatpille, sondern hat ihren eigenen
 /// Knopf — und schickt sofort, statt sich in den Sendebildschirm zu setzen.
 struct BildauswahliOS: View {
@@ -27,12 +27,12 @@ struct BildauswahliOS: View {
 
     private var sammlung: Bildersammlung { Bildersammlung(ordner: Bilderordner.eigene) }
 
-    /// **Warum eine ganze 16 × 52-Anzeige an keine der Zieluhren gehen kann.**
+    /// Warum eine ganze 16 × 52-Anzeige an keine der Zieluhren gehen kann.
     ///
-    /// Die Fussnote unten sagte das seit je („Eine AWTRIX NG nimmt sie nicht")
-    /// — der Knopf schickte trotzdem, und auf einer NG kam schlicht nichts an.
-    /// Ein Satz, der eine Sperre beschreibt, ohne dass eine da ist, ist
-    /// schlimmer als keiner.
+    /// Ohne diese Sperre schickte der Knopf trotzdem, und auf einer AWTRIX NG
+    /// kam nichts an — die Fussnote unten sagt zwar „Eine AWTRIX NG nimmt sie
+    /// nicht", aber ein Satz, der eine Sperre beschreibt, ohne dass eine da
+    /// ist, ist schlimmer als keiner.
     private var sperre: String? { zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard) }
 
     var body: some View {
@@ -107,7 +107,7 @@ struct BildauswahliOS: View {
         .accessibilityAddTraits(gewaehlt?.datei == bild.datei ? [.isSelected] : [])
     }
 
-    /// **Der Rahmen wird im Kern gebaut** (`Bildsendung.rahmen`) — ein
+    /// Der Rahmen wird im Kern gebaut (`Bildsendung.rahmen`) — ein
     /// Einzelbild als Rechtecke, mehrere als GIF. Dieselbe Entscheidung wie im
     /// Editor am Schreibtisch, an einer Stelle.
     private func senden() {

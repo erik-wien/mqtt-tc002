@@ -14,12 +14,10 @@ final class EinrichtungsstandTests: XCTestCase {
 
     // MARK: Dieselbe Uhr auf zwei Geraeten
 
-    /// **Der Fehler vom 14.09.2026, als Zusicherung.** Dieselbe Uhr, auf zwei
-    /// Geraeten eingetragen, hat zwei Kennungen — sie entstehen beim Anlegen.
-    /// Zusammengefuehrt wurde ueber genau diese Kennung, also hielt der
-    /// Abgleich sie fuer zwei Uhren und hing sie aneinander. Nach zwanzig
-    /// Minuten standen drei Eintraege derselben Uhr in der Liste, und
-    /// „Entfernen" half nicht: Beim naechsten Abgleich kamen sie zurueck.
+    /// Dieselbe Uhr, auf zwei Geraeten eingetragen, hat zwei Kennungen — sie
+    /// entstehen beim Anlegen. Ein Abgleich ueber genau diese Kennung hielte
+    /// sie fuer zwei Uhren und haengte sie aneinander, statt sie
+    /// zusammenzufuehren.
     func testDieselbeAdresseAufZweiGeraetenIstEineUhr() {
         let ergebnis = Einrichtungsstand.zusammengefuehrt(
             oertlich: Einrichtungsstand(uhren: [uhr("Küche", "10.0.0.1")]),
@@ -40,7 +38,7 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.uhren.first?.host, "10.0.0.77", "die Wolke gewinnt bei den Feldern")
     }
 
-    /// **Ueber Ecken.** A und B teilen die Adresse, B und C die MAC — dann
+    /// Ueber Ecken. A und B teilen die Adresse, B und C die MAC — dann
     /// gehoeren alle drei zusammen, obwohl A und C nichts unmittelbar
     /// gemeinsam haben. Ein Woerterbuch ueber einen einzigen Schluessel kaeme
     /// hier auf zwei Uhren.
@@ -54,10 +52,9 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.uhren.count, 1)
     }
 
-    /// Die Heilung des Bestands: Drei Eintraege derselben Uhr — der Zustand,
-    /// in dem die Liste am Morgen des 14.09. war — fallen beim naechsten
-    /// Abgleich zu einem zusammen, ohne dass jemand etwas von Hand loeschen
-    /// muss.
+    /// Die Heilung des Bestands: Drei Eintraege derselben Uhr fallen beim
+    /// naechsten Abgleich zu einem zusammen, ohne dass jemand etwas von Hand
+    /// loeschen muss.
     func testDreiEintraegeDerselbenUhrFallenZusammen() {
         let drei = [uhr("awtrix_a86b", "10.0.0.1"),
                     uhr("awtrix_a86b", "10.0.0.1"),
@@ -68,7 +65,7 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.uhren.count, 1)
     }
 
-    /// **Beide Geraete muessen auf dieselbe Kennung kommen**, sonst schriebe
+    /// Beide Geraete muessen auf dieselbe Kennung kommen, sonst schriebe
     /// jedes seine eigene in die Wolke und sie wechselten einander ab — ein
     /// Abgleich, der nie zur Ruhe kaeme. Deshalb gewinnt die kleinere, eine
     /// Regel ohne Absprache.
@@ -155,11 +152,9 @@ final class EinrichtungsstandTests: XCTestCase {
 
     // MARK: Grabsteine
 
-    /// **Ohne Grabsteine wird eine Loeschung nie uebertragen.** Der Abgleich
-    /// behaelt jede oertliche Uhr und fuegt jede ferne hinzu — wer eine Uhr auf
-    /// einem Geraet entfernt, bekommt sie vom anderen zurueck. Am 14.09.2026
-    /// genau so erlebt: „Lassen sich zwar entfernen, kommen aber sofort
-    /// wieder."
+    /// Ohne Grabsteine wird eine Loeschung nie uebertragen. Der Abgleich
+    /// behaelt jede oertliche Uhr und fuegt jede ferne hinzu — wer eine Uhr
+    /// auf einem Geraet entfernt, bekommt sie vom anderen zurueck.
     func testEineEntfernteUhrKommtNichtZurueck() {
         let weg = uhr("Küche", "10.0.0.1")
         var oertlich = Einrichtungsstand(uhren: [])
@@ -172,7 +167,7 @@ final class EinrichtungsstandTests: XCTestCase {
     }
 
     /// Und der Grabstein gilt auch, wenn das andere Geraet dieselbe Uhr unter
-    /// **seiner eigenen** Kennung fuehrt. Deshalb werden alle Merkmale
+    /// seiner eigenen Kennung fuehrt. Deshalb werden alle Merkmale
     /// vermerkt, nicht nur die Kennung.
     func testDerGrabsteinGiltAuchFuerDieAndereKennung() {
         var oertlich = Einrichtungsstand(uhren: [])
@@ -184,7 +179,7 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.uhren.count, 0)
     }
 
-    /// **Ein Grabstein ist kein Urteil auf ewig.** Wird dieselbe Adresse
+    /// Ein Grabstein ist kein Urteil auf ewig. Wird dieselbe Adresse
     /// spaeter wieder eingetragen, gilt die Uhr — sonst waere eine einmal
     /// entfernte Adresse fuer immer verbrannt.
     func testWiederEingetragenSchlaegtDenGrabstein() {
@@ -201,7 +196,7 @@ final class EinrichtungsstandTests: XCTestCase {
                      "und der Grabstein ist abgeraeumt, sonst pruefte ihn jede Runde erneut")
     }
 
-    /// Der Gegenfall: Ein Eintrag **ohne** Zeitpunkt stammt aus einer Fassung
+    /// Der Gegenfall: Ein Eintrag ohne Zeitpunkt stammt aus einer Fassung
     /// vor dieser. Er darf einen Grabstein nicht ueberdauern, sonst liesse sich
     /// eine alte Datei nie aufraeumen.
     func testEinEintragOhneZeitpunktUnterliegtDemGrabstein() {

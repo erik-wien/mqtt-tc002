@@ -1,17 +1,14 @@
 import XCTest
 
-/// **Die Wahl der Betriebsart muss es auf beiden Oberflächen geben.**
-///
-/// Sie ist keine Kleinigkeit, sondern entscheidet, ob eine Uhr überhaupt
-/// beschickt werden kann: Eine HTTP-Uhr braucht kein Präfix und keinen
-/// Broker, eine MQTT-Uhr beides. Gäbe es die Wahl nur am Mac, käme jemand am
-/// Telefon aus einer Einrichtung nicht mehr heraus, die dort nicht trägt —
-/// und säße vor einem Sendeknopf, der nirgendwohin führt.
+/// Die Wahl der Betriebsart muss es auf beiden Oberflächen geben: Sie
+/// entscheidet, ob eine Uhr überhaupt beschickt werden kann — eine HTTP-Uhr
+/// braucht kein Präfix und keinen Broker, eine MQTT-Uhr beides. Gäbe es die
+/// Wahl nur am Mac, käme jemand am Telefon aus einer Einrichtung nicht mehr
+/// heraus, die dort nicht trägt.
 ///
 /// Gleicher Weg wie `PlattformwegeTests` und `KnopfstilTests`: nachsehen im
-/// Quelltext. Eine Oberfläche lässt sich ohne Gerät nicht anders prüfen, und
-/// der Übersetzer hat dazu nichts zu sagen — ein Picker, den jemand beim
-/// Bauen der zweiten Fassung vergisst, fällt sonst nirgends auf.
+/// Quelltext, weil sich eine Oberfläche ohne Gerät nicht anders prüfen
+/// lässt.
 final class BetriebsartTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
@@ -39,19 +36,12 @@ final class BetriebsartTests: XCTestCase {
         }
     }
 
-    /// **Diese Ansicht war in diesem Vorhaben schon dreimal falsch**, und die
-    /// Hilfe hat sie jedes Mal mitgetragen. Zwei Sätze halten fest, was heute
-    /// gemessen ist:
-    ///
-    /// Der eine darf nicht mehr dastehen — „alle Nachrichten laufen über den
-    /// MQTT-Broker" gilt seit dem HTTP-Betrieb nicht mehr, und ein Satz, der
-    /// den Leser den falschen Weg suchen lässt, ist schlimmer als keiner.
-    ///
-    /// Der andere muss dastehen: Ein Broker hört HTTP-Sendungen **nicht**
-    /// nebenbei mit. Das war die Hoffnung, an der der ganze Zuschnitt hing,
-    /// und sie ist widerlegt — 45 Sekunden gehorcht, eine einzige Nachricht.
-    /// Bliebe die Hilfe dabei vage, richtete sich jemand einen Broker ein,
-    /// der ihm nichts bringt.
+    /// Zwei Sätze in der Hilfe müssen zusammenpassen: „alle Nachrichten
+    /// laufen über den MQTT-Broker" gilt seit dem HTTP-Betrieb nicht mehr und
+    /// darf nicht mehr dastehen. Dass ein Broker HTTP-Sendungen nicht
+    /// nebenbei mitliest, ist dagegen gemessen (45 Sekunden gehorcht, eine
+    /// einzige Nachricht) und muss dastehen — sonst richtet sich jemand
+    /// einen Broker ein, der ihm nichts bringt.
     func testDieHilfeBehauptetDenBrokerWederAlsUmwegNochAlsOhr() throws {
         let text = try quelle("Sources/TC002Ansichten/HilfeInhalt.swift")
 
@@ -63,19 +53,12 @@ final class BetriebsartTests: XCTestCase {
                       "die Hilfe sagt nicht, dass die Blöcke im HTTP-Betrieb nichts mitlesen")
     }
 
-    /// Der Unterschied ist ein **Tausch**, und beide Hälften davon stehen
-    /// beieinander: was HTTP kann und was MQTT kann. Nur eine Hälfte zu nennen
-    /// wäre eine Empfehlung, keine Auskunft — und die Vorgabe ist ohnehin schon
-    /// gesetzt.
+    /// Der Unterschied ist ein Tausch, und beide Hälften davon stehen
+    /// beieinander: was HTTP kann und was MQTT kann. Nur eine Hälfte zu
+    /// nennen wäre eine Empfehlung, keine Auskunft.
     ///
-    /// **Wo** der Satz steht, ist den beiden Oberflächen überlassen und hat
-    /// sich am 14.09.2026 am Schreibtisch geändert: Dort war er ein Fußtext
-    /// unter der Liste und hat den Platz belegt, an dem jetzt erklärt wird, was
-    /// der Punkt links bedeutet (die angesehene Uhr — eine Verwechslung, die
-    /// den Anwender eine Vorschau mit dem falschen Geräterahmen gekostet hat).
-    /// Jetzt hängt er am Betriebsartschalter selbst: dieselbe Stelle, an der
-    /// gewählt wird, und ohne eine Zeile zu verbrauchen. Geprüft wird deshalb
-    /// der Wortlaut, nicht seine Bauform.
+    /// Wo der Satz steht, ist den beiden Oberflächen überlassen; geprüft
+    /// wird deshalb der Wortlaut, nicht seine Bauform.
     func testDerHinweisNenntBeideHaelftenDesTauschs() throws {
         for pfad in ["Sources/TC002Ansichten/VerbindungView.swift",
                      "Sources/TC002iOS/VerbindungiOS.swift"] {

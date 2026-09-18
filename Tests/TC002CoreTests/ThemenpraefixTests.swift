@@ -1,9 +1,9 @@
 import XCTest
 @testable import TC002Core
 
-/// Ein Leerzeichen am Rand des Praefixes hat am 14.09.2026 eine Stunde
-/// gekostet: Das Geraet hoerte auf `awtrix /cmd/…`, die App schrieb auf
-/// `awtrix/cmd/…`, und in der Uhrenzeile stand beides Mal `awtrix`.
+/// Ein Leerzeichen am Rand des Praefixes bleibt sonst unsichtbar: Das Geraet
+/// hoerte auf `awtrix /cmd/…`, die App schrieb auf `awtrix/cmd/…`, und in
+/// der Uhrenzeile stand beides Mal `awtrix`.
 final class ThemenpraefixTests: XCTestCase {
     func testEinLeerzeichenAmEndeWirdSichtbar() {
         XCTAssertEqual(Themenpraefix.sichtbar("awtrix "), "awtrix␣")

@@ -1,6 +1,6 @@
 import Foundation
 
-/// **Was die eingebaute Schrift der Uhr kennt** — und was sie stillschweigend
+/// Was die eingebaute Schrift der Uhr kennt — und was sie stillschweigend
 /// weglaesst.
 ///
 /// Belegt sind Buchstaben und Ziffern, von den Satzzeichen nur `%`, `.`, `-`
@@ -10,9 +10,9 @@ import Foundation
 /// Gilt nur fuer den Weg „als Text", auf dem die Uhr selbst setzt. Beim Weg
 /// „als Pixel" rastert diese App, und dort gehen Umlaute und alles Uebrige.
 ///
-/// **Im Kern und nicht in der Sendeansicht.** Bis zum 18.09.2026 stand die
-/// Liste in `SendenView`; das Telefon warnte deshalb gar nicht. Zwei
-/// Abschriften derselben Tabelle waeren der naechste Schritt gewesen.
+/// Im Kern und nicht in der Sendeansicht, damit Mac- und
+/// iPhone-Fassung dieselbe Tabelle pruefen, statt zwei Abschriften zu
+/// fuehren, die auseinanderlaufen koennen.
 public enum Geraeteschrift {
     /// Die Satzzeichen, die die Geraetschrift kennt.
     public static let erlaubteSatzzeichen = Set("%.-:")

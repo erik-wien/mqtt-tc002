@@ -162,8 +162,7 @@ final class TextrasterTests: XCTestCase {
         }
     }
 
-    /// Die senkrechte Ausrichtung gilt auch fuer die Laufschrift — vorher rechnete
-    /// sie sich stur die Mitte aus und liess die Einstellung liegen.
+    /// Die senkrechte Ausrichtung gilt auch fuer die Laufschrift.
     func testLaufschriftFolgtDerSenkrechtenAusrichtung() {
         func zeilen(versatzY: Int) -> [Int] {
             let bild = Textraster.laufschriftEinzelbilder("Hallo", schrift: "Menlo", groesse: 11,

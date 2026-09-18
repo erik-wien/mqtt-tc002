@@ -3,18 +3,16 @@ import Foundation
 /// Rueckgaengig und Wiederherstellen fuer den Editor — und der Stand, der im
 /// Bestand liegt.
 ///
-/// **Beides gehoert zusammen und nicht nebeneinander.** Die Frage „weicht die
+/// Beides gehoert zusammen und nicht nebeneinander. Die Frage „weicht die
 /// Leinwand vom Bestand ab?" stellt sich an denselben Stellen, an denen dieser
 /// Stapel geleert wird, und beide Antworten haengen am selben Stand. Ein
-/// zweites Gedaechtnis daneben liefe frueher oder spaeter auseinander —
-/// `slotzustand` gab es in diesem Projekt schon einmal dreimal, und die
-/// abweichende Fassung war die falsche.
+/// zweites Gedaechtnis daneben liefe frueher oder spaeter auseinander.
 ///
-/// **Ein Strich ist ein Schritt, nicht ein Pixel.** Wer mit dem Finger ueber
+/// Ein Strich ist ein Schritt, nicht ein Pixel. Wer mit dem Finger ueber
 /// zwanzig Kaestchen faehrt, hat einmal gemalt und will einmal zurueck. Je ein
 /// Schritt sind ausserdem: „Alles loeschen", jede Bewegung des
 /// Verschiebekreuzes, ein Einzelbild hinzufuegen, verdoppeln oder entfernen,
-/// und ein Groessenwechsel, der die Leinwand verwirft. **Kein Schritt** sind
+/// und ein Groessenwechsel, der die Leinwand verwirft. Kein Schritt sind
 /// Farbwahl, Werkzeugwechsel, Bildwahl, Verzoegerung, Name und Nummer — sie
 /// aendern nichts an der Zeichnung.
 ///
@@ -23,7 +21,7 @@ import Foundation
 /// zurueck stellt damit auch die Groesse wieder her — was ein Groessenwechsel
 /// verworfen hat, kommt zurueck.
 ///
-/// **Was ein Schritt kostet.** Swift-Arrays kopieren erst beim Schreiben: Eine
+/// Was ein Schritt kostet. Swift-Arrays kopieren erst beim Schreiben: Eine
 /// Momentaufnahme kostet zunaechst nichts, und erst die naechste Aenderung
 /// legt das *veraenderte* Einzelbild neu an. Ein 52×16 hat 832 Felder zu je
 /// 16 Byte (ein `String?` mit „#RRGGBB" passt in die kurze Form), also rund
@@ -34,7 +32,7 @@ import Foundation
 /// und rund 13 MB fuer den ungemuetlichsten denkbaren Fall (fuenfzigmal das
 /// Kreuz auf einer zehnbildrigen Anzeige). Deshalb die Grenze.
 ///
-/// **Der Stapel ueberlebt den Programmlauf nicht.** Er ist nicht `Codable` und
+/// Der Stapel ueberlebt den Programmlauf nicht. Er ist nicht `Codable` und
 /// gehoert nicht in den gesicherten Arbeitsstand: Ein Rueckgaengig, das ueber
 /// einen Neustart hinweg gilt, muesste erklaeren, wohin es zurueckfuehrt.
 public struct Leinwandverlauf: Sendable {
@@ -65,18 +63,18 @@ public struct Leinwandverlauf: Sendable {
         gesichert = stand
     }
 
-    /// **Ob die Leinwand vom Bestand abweicht** — die eine Frage vor jedem
+    /// Ob die Leinwand vom Bestand abweicht — die eine Frage vor jedem
     /// Schritt, der Gemaltes verwirft: „Neu", ein Groessenwechsel, ein
     /// geoeffnetes Bild, ein geladenes Icon.
     ///
-    /// Gefragt wird nicht, ob etwas geschehen ist, sondern ob es **jetzt**
+    /// Gefragt wird nicht, ob etwas geschehen ist, sondern ob es jetzt
     /// anders aussieht als das, was im Bestand liegt. Daraus folgt dreierlei
     /// von selbst: Eine geladene und unveraenderte Leinwand weicht nicht ab.
     /// Eine Aenderung, die wieder rueckgaengig gemacht wurde, zaehlt nicht —
     /// es ist wieder derselbe Stand. Und wo es keinen gesicherten Stand gibt,
     /// weicht alles ab, was nicht leer ist.
     ///
-    /// **Ein gezaehlter Stapel taete das nicht.** `kannZurueck` sagt nur, dass
+    /// Ein gezaehlter Stapel taete das nicht. `kannZurueck` sagt nur, dass
     /// jemand etwas getan hat; nach einem Neustart ist der Stapel leer, der
     /// wiederhergestellte Arbeitsstand aber immer noch ungesichert.
     public func weichtAb(_ jetzt: Leinwand) -> Bool {
@@ -84,7 +82,7 @@ public struct Leinwandverlauf: Sendable {
         return !jetzt.gleichesBild(wie: gesichert)
     }
 
-    /// **Vor** jeder Aenderung zu rufen: Der Stand von jetzt kommt auf den
+    /// Vor jeder Aenderung zu rufen: Der Stand von jetzt kommt auf den
     /// Stapel. Ein neuer Schritt macht jedes Wiederherstellen hinfaellig —
     /// von hier aus fuehrt der alte Weg nach vorn nicht mehr weiter.
     public mutating func merken(_ stand: Leinwand) {

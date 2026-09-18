@@ -2,12 +2,12 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Der iCloud-Abgleich in den Einstellungen — **ein** Abschnitt fuer beide
+/// Der iCloud-Abgleich in den Einstellungen — ein Abschnitt fuer beide
 /// Oberflaechenfamilien. Er hat keine Seitenleiste, kein Blatt und keine
 /// Tastatur; was am Mac richtig ist, ist es hier ausnahmsweise auch am
 /// Telefon, weil es nur ein Schalter und eine Zeile ist.
 ///
-/// Der Wortlaut bleibt knapp: **was gilt**, nicht warum. Die Begruendung
+/// Der Wortlaut bleibt knapp: was gilt, nicht warum. Die Begruendung
 /// gehoert in die Hilfe.
 public struct Wolkenabschnitt: View {
     @Bindable var zustand: AppZustand

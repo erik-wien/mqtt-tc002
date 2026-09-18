@@ -1,6 +1,6 @@
 import Foundation
 
-/// **Ein fertiges Bild aus dem Bestand als Sendung** — der Weg von einer Datei
+/// Ein fertiges Bild aus dem Bestand als Sendung — der Weg von einer Datei
 /// zu dem, was über den Draht geht.
 ///
 /// Am Schreibtisch entsteht dieser Rahmen aus der Leinwand, also aus Bildern,
@@ -9,13 +9,13 @@ import Foundation
 /// Datei. Die Entscheidung dahinter ist in beiden Fällen dieselbe und steht
 /// deshalb hier, einmal:
 ///
-/// - **Ein** Einzelbild geht als `draw` hinaus: Rechtecke, klein und exakt.
-/// - **Mehrere** gehen als animiertes GIF — Rechtecke kennen keine Zeit.
+/// - Ein Einzelbild geht als `draw` hinaus: Rechtecke, klein und exakt.
+/// - Mehrere gehen als animiertes GIF — Rechtecke kennen keine Zeit.
 public enum Bildsendung {
     /// Baut den Rahmen zu einer Bilddatei. `dauer` ist die eigene Standzeit
     /// dieser Anzeige in Sekunden; `nil` heißt: keine eigene Angabe.
     ///
-    /// **Die Datei wird gelesen, nicht geraten** — auch die Zeiten zwischen
+    /// Die Datei wird gelesen, nicht geraten — auch die Zeiten zwischen
     /// den Einzelbildern stehen darin, und ein GIF, das mit anderen
     /// Standzeiten neu geschrieben wird, läuft anders als es aussah.
     public static func rahmen(aus datei: URL, breite: Int = Pixelfeld.breiteStandard,
@@ -33,11 +33,10 @@ public enum Bildsendung {
     /// Dasselbe aus Einzelbildern, die schon im Speicher liegen — der Weg des
     /// Editors, dessen Leinwand nicht aus einer Datei kommt.
     ///
-    /// **Eine Stelle für beide Wege.** Bis zum 14.09.2026 stand die
-    /// Entscheidung „eines als `draw`, mehrere als GIF" auch in
-    /// `EditorBereichView.senden` — dieselbe Regel an zwei Stellen, und die
-    /// zweite hätte beim nächsten Griff an den Rahmenbau still etwas anderes
-    /// getan.
+    /// Eine Stelle für beide Wege, statt die Entscheidung „eines als
+    /// `draw`, mehrere als GIF" ein zweites Mal in `EditorBereichView.senden`
+    /// zu treffen: Zwei Abschriften derselben Regel liefen beim nächsten
+    /// Griff an den Rahmenbau sonst auseinander.
     public static func rahmen(aus bilder: [[String?]], breite: Int = Pixelfeld.breiteStandard,
                               hoehe: Int = Pixelfeld.hoeheStandard,
                               verzoegerung: Double, dauer: Int? = nil) throws -> Frame {

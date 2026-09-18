@@ -1,12 +1,11 @@
 import XCTest
 @testable import TC002Core
 
-/// **Rastern auf acht Zeilen.** `Meldungsbau` und `Textraster` rechneten bis
-/// zum 15.09.2026 fest mit 52 × 16; das Maß ist jetzt ein Parameter mit genau
-/// dieser Vorgabe.
+/// `Meldungsbau` und `Textraster` nehmen das Anzeigemaß als Parameter, mit
+/// 52 × 16 als Vorgabe.
 ///
 /// Was hier geprüft wird, ist beides: dass ein anderes Maß wirklich
-/// durchschlägt — **und** dass die Vorgabe hält. Der zweite Teil steht
+/// durchschlägt — und dass die Vorgabe hält. Der zweite Teil steht
 /// größtenteils gar nicht in dieser Datei, sondern in der unveränderten
 /// übrigen Testreihe: Jeder Aufruf dort kommt ohne `mass:` aus, und wäre die
 /// Vorgabe falsch, bräche er.

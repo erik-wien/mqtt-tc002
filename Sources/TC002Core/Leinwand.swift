@@ -12,7 +12,7 @@ import Foundation
 /// Ein Raster ist zeilenweise von oben links abgelegt, `nil` heisst aus — die
 /// Form, in der `Bildraster` liest und schreibt. Kein zweites Format daneben.
 ///
-/// **`Codable` ist hier ein Dateiformat.** Der Bereich „Bilder" sichert seinen
+/// `Codable` ist hier ein Dateiformat. Der Bereich „Bilder" sichert seinen
 /// Arbeitsstand damit in die App-Einstellungen; wer Feldnamen aendert, macht
 /// den gemerkten Stand jeder laufenden Installation unlesbar.
 public struct Leinwand: Equatable, Sendable, Codable {
@@ -81,7 +81,7 @@ public struct Leinwand: Equatable, Sendable, Codable {
     /// Einzelbilder, dieselbe Standzeit — genau das, was beim Sichern in die
     /// Datei geht.
     ///
-    /// **Nicht** dasselbe gewaehlte Einzelbild. Welches davon gerade bearbeitet
+    /// Nicht dasselbe gewaehlte Einzelbild. Welches davon gerade bearbeitet
     /// wird, steht in keiner Datei, und ein Blick auf Bild drei aendert nichts
     /// daran, dass die Leinwand dem Bestand entspricht — `==` wuerde ihn als
     /// Abweichung zaehlen und eine Rueckfrage ausloesen, bei der nichts zu
@@ -153,8 +153,8 @@ public struct Leinwand: Equatable, Sendable, Codable {
 
     /// „Icon einfuegen": setzt ein fertiges Icon in diese Leinwand.
     ///
-    /// **Umrechnen ist ein Befehl, den man aufruft**, kein stiller
-    /// Nebeneffekt eines Imports (C2, entschieden am 13.09.2026). Wohin und
+    /// Umrechnen ist ein Befehl, den man aufruft, kein stiller
+    /// Nebeneffekt eines Imports (C2). Wohin und
     /// mit welchem Faktor, rechnet `Leinwandgroesse.einsatz(in:)`: 8×8 in ein
     /// 16×16 verdoppelt, 8×8 und 16×16 in die Anzeige in ihrer Groesse. Der
     /// umgekehrte Weg ist nicht vorgesehen und liefert `false`.
@@ -164,7 +164,7 @@ public struct Leinwand: Equatable, Sendable, Codable {
     /// bearbeitete Einzelbild — eingesetzt wird ein Ausgangspunkt, nicht eine
     /// Animation.
     ///
-    /// `false` heisst: Es ist **nichts** geschehen. Die Ansicht merkt sich
+    /// `false` heisst: Es ist nichts geschehen. Die Ansicht merkt sich
     /// dann auch keinen Schritt fuer „Rueckgaengig".
     @discardableResult
     public mutating func iconEinsetzen(_ pixel: [String?], groesse quelle: Leinwandgroesse) -> Bool {
@@ -187,9 +187,9 @@ public struct Leinwand: Equatable, Sendable, Codable {
 
     /// Schiebt die Grafik um `dx`/`dy` Pixel — das Pfeilkreuz.
     ///
-    /// **Was am Rand hinausgeschoben wird, kommt auf der anderen Seite wieder
-    /// herein.** Umlaufend, nicht abschneidend, und das ist keine
-    /// Geschmacksfrage: Dieser Editor kennt kein Rueckgaengig. Umlaufend ist
+    /// Was am Rand hinausgeschoben wird, kommt auf der anderen Seite wieder
+    /// herein. Umlaufend, nicht abschneidend: Dieser Editor kennt kein
+    /// Rueckgaengig. Umlaufend ist
     /// jeder Schritt durch den Gegenpfeil genau umkehrbar — viermal nach
     /// rechts und viermal nach links ergeben wieder das Ausgangsbild.
     /// Abschneidend waere jeder Schritt ein Verlust, den nichts zurueckholt,
@@ -197,7 +197,7 @@ public struct Leinwand: Equatable, Sendable, Codable {
     /// das Hereingelaufene nicht will, radiert es weg; wer Abgeschnittenes
     /// zurueckwill, muesste es neu malen.
     ///
-    /// **Alle Einzelbilder zusammen**, nicht nur das sichtbare: Eine
+    /// Alle Einzelbilder zusammen, nicht nur das sichtbare: Eine
     /// Animation, deren Bilder gegeneinander verrutschen, waere kaputt, und
     /// die Bildleiste zeigt zu klein, dass es passiert ist.
     public mutating func verschieben(dx: Int, dy: Int) {

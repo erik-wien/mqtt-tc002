@@ -2,21 +2,19 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Was auf der Uhr eingestellt ist, nicht was diese Meldung mitbringt.**
+/// Was auf der Uhr eingestellt ist, nicht was diese Meldung mitbringt.
 ///
 /// Zwei Werte, die die App über `/getConfig` liest und beim Verstellen sofort
 /// auf das Gerät schreibt. Sie gelten für alles, was auf der Uhr steht —
 /// Uhrzeit und Temperatur eingeschlossen —, und überdauern jede Meldung.
 ///
-/// **Warum sie hier stehen und nicht mehr im Inspektor.** Vom 14. bis zum
-/// 18.09.2026 standen sie im Zeit-Reiter neben „Dauer“ und „Lauftempo“, weil
-/// niemand mehr Dauer von Seitenwechsel unterscheiden konnte. Das war ein
-/// Erklärungsproblem, und die Lösung — beides nebeneinanderstellen —
-/// vermischte zwei Sorten Zustand: Die einen reisen mit *einer* Nutzlast mit,
-/// die anderen sind Fernbedienung. Den Unterschied erklärt jetzt ein (?) an
-/// der Dauer, und die Fernbedienung steht dort, wo Einstellungen stehen.
+/// Warum sie hier stehen und nicht im Inspektor: Zwei Sorten Zustand gehören
+/// nicht nebeneinander — die einen reisen mit einer Nutzlast mit (Dauer,
+/// Lauftempo), die anderen sind Fernbedienung (Seitenwechsel, Scrolltempo).
+/// Den Unterschied erklärt ein (?) an der Dauer, die Fernbedienung steht dort,
+/// wo Einstellungen stehen.
 ///
-/// **Nur bei der Ulanzi-Werksfirmware.** `/getConfig` gibt es bei AWTRIX NG
+/// Nur bei der Ulanzi-Werksfirmware: `/getConfig` gibt es bei AWTRIX NG
 /// nicht; dort führt die Uhr beides selbst. Der Aufrufer zeigt diese Ansicht
 /// deshalb gar nicht erst an — sie prüft es zusätzlich, damit sie ohne
 /// Rücksicht auf den Aufrufer wahr bleibt.
@@ -25,13 +23,12 @@ public struct Uhreinstellungen: View {
 
     public init(zustand: AppZustand) { self.zustand = zustand }
 
-    /// **Zehn Sekunden, nicht „kein Wechsel".** Solange die Uhr noch nicht
-    /// geantwortet hat, stand hier bis zum 18.09.2026 die 0 — und die heisst
-    /// „blaettert nie", also genau der Zustand, in dem man immer nur die erste
-    /// Meldung sieht (Geraetereferenz §5.4 nennt das ausdruecklich als haeufige
-    /// Ursache). Geschrieben wird dadurch nichts: Kommt die Antwort, gilt sie,
-    /// und `ladeLauf` verhindert, dass der gelesene Wert als Griff des
-    /// Anwenders zurueckgeschrieben wird.
+    /// Vorgabe zehn Sekunden, nicht „kein Wechsel" (0): 0 fixiert die Anzeige
+    /// auf die erste Meldung (Geraetereferenz §5.4 nennt das als haeufige
+    /// Ursache), und genau das waere der Zustand, solange die Uhr noch nicht
+    /// geantwortet hat. Geschrieben wird dadurch nichts: Kommt die Antwort,
+    /// gilt sie, und `ladeLauf` verhindert, dass der gelesene Wert als Griff
+    /// des Anwenders zurueckgeschrieben wird.
     @State private var seitenwechsel = 10
     @State private var scrollTempo = 0
     @State private var geladen = false
@@ -45,24 +42,17 @@ public struct Uhreinstellungen: View {
     @State private var nutzerHatGewaehlt = false
     @State private var nutzerHatScrollGewaehlt = false
 
-    /// **Warum die beiden Werte gerade nicht dastehen — als Zeile, nicht als
-    /// Hinweisfenster.**
-    ///
-    /// Bis zum 14.09.2026 setzte das Lesen `zustand.fehler`, also einen
-    /// modalen Dialog. Das ging durch, solange es nur beim Öffnen der
-    /// Einstellungen geschah — ein Griff, den man selbst getan hat. Seit die
-    /// beiden Regler hier stehen, liest die App beim Öffnen des Zeit-Reiters,
-    /// und eine nicht erreichbare Uhr warf einem dann mitten im Senden einen
-    /// Dialog vor die Nase, für eine Auskunft, um die man nicht gebeten hat.
-    ///
+    /// Warum ein Lesefehler hier als Zeile steht, nicht als Hinweisfenster:
     /// Ein Fenster gehört zu einer Handlung, die der Anwender ausgelöst hat.
-    /// Eine Abfrage, die von selbst läuft, meldet sich in ihrer eigenen Zeile
-    /// — und im Protokoll, wo man nachsehen kann.
+    /// Diese Abfrage läuft von selbst beim Öffnen des Zeit-Reiters, und ein
+    /// modaler Dialog mitten im Senden wäre eine Auskunft, um die niemand
+    /// gebeten hat. Sie meldet sich deshalb in ihrer eigenen Zeile — und im
+    /// Protokoll, wo man nachsehen kann.
     @State private var lesefehler: String?
 
 
     /// Ob die aktive Uhr die Werksfirmware fährt. Nur dann sind die beiden
-    /// Regler eine Einstellung **dieser** Uhr: Sie stehen in `/getConfig`, und
+    /// Regler eine Einstellung dieser Uhr: Sie stehen in `/getConfig`, und
     /// diesen Pfad gibt es bei AWTRIX NG nicht.
     private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
 
@@ -89,14 +79,13 @@ public struct Uhreinstellungen: View {
                 }
                 Text("Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen.")
                     .font(.footnote).foregroundStyle(.secondary)
-                // **Warum das Scrolltempo hier trotzdem steht.** Es ist eine
-                // Einstellung der Uhr und laesst sich von hier aus aendern —
-                // nur wirkt sie nicht auf das, was diese App schickt. Das muss
-                // dabeistehen, sonst sucht man den Fehler bei sich.
+                // Das Scrolltempo ist eine Einstellung der Uhr und laesst
+                // sich von hier aus aendern — es wirkt aber nicht auf das,
+                // was diese App schickt.
                 Text("Das Scrolltempo gilt dagegen nur den Anzeigen, die die Uhr selbst verwaltet. Auf Meldungen dieser App wirkt es nicht: Die Werksfirmware lässt selbst geschickten Text gar nicht laufen, sie schneidet ihn ab.")
                     .font(.footnote).foregroundStyle(.secondary)
                 if let lesefehler {
-                    // Angezeigt wird der Grund, **nicht** ein aufgeräumter
+                    // Angezeigt wird der Grund, nicht ein aufgeräumter
                     // Ersatzsatz: Steht dort „keine Verbindung zum lokalen
                     // Netzwerk“, sagt die Meldung des Kerns schon, was zu tun
                     // ist.

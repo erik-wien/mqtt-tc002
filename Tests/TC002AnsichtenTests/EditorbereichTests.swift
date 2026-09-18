@@ -4,7 +4,7 @@ import XCTest
 /// Aus „Bilder" und „Icons" ist ein Bereich geworden: „Editor".
 ///
 /// Zwei Hälften, und beide werden gebraucht: die Seitenleiste selbst und die
-/// Zusicherung, dass es wirklich **eine** Ansicht mit Unterschieden ist und
+/// Zusicherung, dass es wirklich eine Ansicht mit Unterschieden ist und
 /// nicht wieder zwei mit Ähnlichkeiten. Die zweite prüft der Übersetzer nicht —
 /// eine zweite, fast gleiche Datei übersetzt anstandslos. Deshalb derselbe Weg
 /// wie in `PlattformwegeTests`: nachsehen im Quelltext.
@@ -41,7 +41,7 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertEqual(SchreibtischView.Bereich.editor.symbol, "paintpalette")
     }
 
-    /// Es gibt genau **einen** Editor. In diesem Projekt ist schon einmal ein
+    /// Es gibt genau einen Editor. In diesem Projekt ist schon einmal ein
     /// Fehler daraus entstanden, dass es dieselbe Rechnung dreimal gab.
     func testEsGibtNurEineEditoransicht() {
         let fm = FileManager.default
@@ -55,9 +55,9 @@ final class EditorbereichTests: XCTestCase {
             .appendingPathComponent("Sources/TC002Ansichten/EditorBereichView.swift").path))
     }
 
-    /// Die Unterschiede zwischen den drei Größen werden **abgeleitet**
+    /// Die Unterschiede zwischen den drei Größen werden abgeleitet
     /// (`Leinwandgroesse`), nicht als Fallunterscheidung in die Ansicht
-    /// geschrieben. Genau darum geht es bei diesem Umbau.
+    /// geschrieben.
     func testDieUnterschiedeWerdenAbgeleitetUndNichtAufgezaehlt() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         XCTAssertTrue(text.contains("groesse.sendbar"),
@@ -90,10 +90,10 @@ final class EditorbereichTests: XCTestCase {
 
     /// Der Dateiwaehler. Am iPad laeuft die App in der Sandbox, und eine URL
     /// von dort gilt nur zwischen `startAccessingSecurityScopedResource` und
-    /// `stop…`; am Mac gilt die Einschränkung nicht — deshalb **kann** kein
-    /// Test hier die Wirkung zeigen, und deshalb hält dieser fest, dass der
-    /// Weg der richtige bleibt. Genau so ist der Fehler entstanden: Die App
-    /// merkte sich die URL und las erst beim Bestätigen des Blattes.
+    /// `stop…`; am Mac gilt die Einschränkung nicht — deshalb kann kein Test
+    /// hier die Wirkung zeigen, und deshalb hält dieser fest, dass der Weg
+    /// der richtige bleibt: Bytes werden sofort gelesen, nicht die URL für
+    /// später aufbewahrt.
     func testDerDateiwaehlerLiestSofortUndMeldetJedenFehlschlag() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         XCTAssertTrue(text.contains("url.startAccessingSecurityScopedResource()"),
@@ -142,12 +142,12 @@ final class EditorbereichTests: XCTestCase {
         return anzahl
     }
 
-    /// **A1.** „Sichern" und „Neu" stehen in **einer** Zeile der `Form`, und
-    /// eine Formularzeile ist selbst das Bedienelement: Ein Knopf mit dem
+    /// A1. „Sichern" und „Neu" stehen in einer Zeile der `Form`, und eine
+    /// Formularzeile ist selbst das Bedienelement: Ein Knopf mit dem
     /// vorgegebenen Stil bekommt darin die Trefferfläche der ganzen Zeile.
-    /// Zwei davon teilen sich dieselbe Fläche — der Druck auf „Sichern"
-    /// landete bei „Neu", und weil die Zeile auch bei gesperrtem „Sichern"
-    /// antippbar bleibt, traf es dann zwangsläufig den zerstörenden Knopf.
+    /// Teilen sich zwei Knöpfe dieselbe Zeile, trifft ein Druck auf
+    /// „Sichern" stattdessen „Neu" — und weil die Zeile auch bei gesperrtem
+    /// „Sichern" antippbar bleibt, den zerstörenden Knopf.
     ///
     /// Geprüft wird der Quelltext, nicht die Wirkung: Ein Übersetzer hat zur
     /// Trefferfläche nichts zu sagen, und ohne Gerät sieht das niemand.
@@ -166,9 +166,9 @@ final class EditorbereichTests: XCTestCase {
         }
     }
 
-    /// **A1, die zweite Hälfte.** „Neu" ist zerstörend — es leert Leinwand,
+    /// A1, die zweite Hälfte. „Neu" ist zerstörend — es leert Leinwand,
     /// Einzelbilder, Name und Nummer und wirft den Verlauf weg. Es darf
-    /// deshalb **nur** über die Rückfrage erreichbar sein: der Knopf ruft
+    /// deshalb nur über die Rückfrage erreichbar sein: der Knopf ruft
     /// `neuAnfragen()`, und `neu()` selbst steht genau an zwei Stellen — im
     /// Zweig „da ist nichts zu verlieren" und hinter der Bestätigung.
     func testNeuIstNurUeberDieRueckfrageErreichbar() throws {
@@ -187,11 +187,11 @@ final class EditorbereichTests: XCTestCase {
                        "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
     }
 
-    /// **C1.** Der Import richtet sich nach der **Datei**, nicht nach dem
-    /// Editor. Die Größe entscheidet, in welchen Bestand sie geht und ob nach
-    /// einer Nummer gefragt wird — und sie wird geprüft, **bevor** das Blatt
-    /// aufgeht: Wer eine 32×32 gewählt hat, soll das nicht erst erfahren,
-    /// nachdem er einen Namen eingetippt hat.
+    /// C1. Der Import richtet sich nach der Datei, nicht nach dem Editor.
+    /// Die Größe entscheidet, in welchen Bestand sie geht und ob nach einer
+    /// Nummer gefragt wird — und sie wird geprüft, bevor das Blatt aufgeht:
+    /// Wer eine 32×32 gewählt hat, soll das nicht erst erfahren, nachdem er
+    /// einen Namen eingetippt hat.
     ///
     /// Der Rückfall in die alte Fassung ist der stumme: `groesse.mitNummer`
     /// statt `importMitNummer` übersetzt anstandslos und sieht am Mac gleich
@@ -216,12 +216,10 @@ final class EditorbereichTests: XCTestCase {
                        "die eingestellte Leinwandgröße wird wieder an den Bestand durchgereicht")
     }
 
-    /// **C2.** „Icon einfügen" ist der **eine** Weg, auf dem zwischen den
-    /// Größen gerechnet wird — und die Rechnung steht im Kern
-    /// (`Leinwand.iconEinsetzen`), nicht als Schleife in der Ansicht. Die
-    /// Ansicht hatte bis zum 13.09.2026 eine eigene, die fest von 8×8 auf
-    /// Zeile 4 schrieb; ein zweiter Weg daneben wäre nach C1 genau der Fehler,
-    /// den C2 abstellt.
+    /// C2. „Icon einfügen" ist der eine Weg, auf dem zwischen den Größen
+    /// gerechnet wird — und die Rechnung steht im Kern
+    /// (`Leinwand.iconEinsetzen`), nicht als Schleife in der Ansicht. Ein
+    /// zweiter Weg daneben wäre nach C1 derselbe Fehler.
     func testIconEinfuegenRechnetImKernUndBietetAlleKleinerenAn() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
 
@@ -240,14 +238,14 @@ final class EditorbereichTests: XCTestCase {
                        "das Menü liest wieder am Bestand vorbei unmittelbar in der 8×8-Sammlung")
     }
 
-    /// **A4.** Das Blatt hinter „Öffnen…" sagt, was dort einzutragen ist —
-    /// beschriftete Zeilen statt zweier nackter Felder —, es belegt Nummer und
-    /// Titel aus dem Dateinamen vor, und es warnt **vor** dem Sichern, wenn
+    /// A4. Das Blatt hinter „Öffnen…" sagt, was dort einzutragen ist —
+    /// beschriftete Zeilen statt zweier nackter Felder —, es belegt Nummer
+    /// und Titel aus dem Dateinamen vor, und es warnt vor dem Sichern, wenn
     /// der Platz schon belegt ist.
     ///
-    /// Der Rückfall ist auch hier still: Der ganze Dateiname in beiden Feldern
-    /// übersetzt, baut und sieht am Mac ordentlich aus — nur steht die Nummer
-    /// dann zweimal falsch da.
+    /// Der Rückfall ist auch hier still: Der ganze Dateiname in beiden
+    /// Feldern übersetzt, baut und sieht am Mac ordentlich aus — nur steht
+    /// die Nummer dann zweimal falsch da.
     func testDasImportblattBelegtVorUndWarntVorDemErsetzen() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
 
@@ -278,22 +276,19 @@ final class EditorbereichTests: XCTestCase {
                       + "Tastendruck im Dateisystem gesucht")
     }
 
-    /// **B3.** „Abspielen" ist kein eigener Knopf mehr, sondern ein Symbol
-    /// **unmittelbar rechts neben dem Sekundenwert** — so verlangt. Es
-    /// schaltet um und muss deshalb beide Zustände zeigen; und weil ein
-    /// Symbol für sich stumm ist, braucht es in **beiden** eine Beschriftung
-    /// für die Sprachausgabe.
+    /// B3. „Abspielen" ist kein eigener Knopf mehr, sondern ein Symbol unter
+    /// der Leinwand, nicht neben dem Verzögerungswert — und nur dort, wenn
+    /// es überhaupt etwas abzuspielen gibt. Es schaltet um und muss deshalb
+    /// beide Zustände zeigen; und weil ein Symbol für sich stumm ist,
+    /// braucht es in beiden eine Beschriftung für die Sprachausgabe.
     ///
     /// Nichts davon sieht ein Übersetzer, ein Bau oder ein Blick auf den Mac:
     /// Ein Symbol ohne Beschriftung baut und zeichnet anstandslos.
     func testDasAbspielsymbolStehtAnDerLeinwandUndNenntBeideZustaende() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
 
-        // **Am Bild, nicht im Reiter** (14.09.2026). Bis dahin sass das
-        // Symbol neben dem Sekundenwert im Reiter „Animation"; wer ein
-        // bewegtes Icon aus dem Bestand oeffnete, kam nur ueber einen Umweg
-        // daran. Es steht jetzt unter der Leinwand — und nur dann, wenn es
-        // ueberhaupt etwas abzuspielen gibt.
+        // Am Bild, nicht im Reiter „Animation" — sonst kaeme man an ein
+        // bewegtes, aus dem Bestand geoeffnetes Icon nur ueber einen Umweg.
         let fuss = ausschnitt(text, von: "private var fusszeile", bis: "private var fusstexte")
         XCTAssertTrue(fuss.contains("abspielknopf"),
                       "das Wiedergabesymbol steht nicht mehr unter der Leinwand")
@@ -309,7 +304,7 @@ final class EditorbereichTests: XCTestCase {
                        + "dieselbe Handlung")
 
         let knopf = ausschnitt(text, von: "private var abspielknopf", bis: "private var sichernAbschnitte")
-        // Play und **Pause**, nicht Play und Stopp: `stoppeAbspielen` bricht
+        // Play und Pause, nicht Play und Stopp: `stoppeAbspielen` bricht
         // nur die Schleife ab, das gezeigte Einzelbild bleibt stehen. Ein
         // `stop.fill` verspraeche einen Ruecksprung an den Anfang.
         for zustand in ["\"play.circle\"", "\"pause.circle\""] {
@@ -332,15 +327,13 @@ final class EditorbereichTests: XCTestCase {
                       "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
     }
 
-    /// **Ein geladenes Bild will man auch sehen.** Aus einer Datei wie von
-    /// LaMetric: Beide Wege enden bei `geladenUebernehmen`, und der entscheidet
-    /// an **einer** Stelle, ob gefragt wird. Bis zum 14.09.2026 wanderte eine
-    /// eingelesene Datei nur in den Bestand — auf der Leinwand geschah nichts,
-    /// aus Sorge um Ungesichertes. Der Auftraggeber hat das abgelehnt.
+    /// Ein geladenes Bild will man auch sehen. Aus einer Datei wie von
+    /// LaMetric: Beide Wege enden bei `geladenUebernehmen`, und der
+    /// entscheidet an einer Stelle, ob gefragt wird.
     ///
     /// Der Rückfall ist still: Ein Weg, der den Eintrag nur ablegt, übersetzt
-    /// und baut anstandslos; dass die Leinwand nicht mitgeht, sieht man nur am
-    /// Gerät.
+    /// und baut anstandslos; dass die Leinwand nicht mitgeht, sieht man nur
+    /// am Gerät.
     ///
     /// Mutation: in `nachladen` `geladenUebernehmen(eintrag)` durch eine
     /// Meldung ersetzen — dann liegt das geholte Icon wieder nur im Bestand.
@@ -365,9 +358,9 @@ final class EditorbereichTests: XCTestCase {
                       "das Geladene kommt auf einem zweiten Weg auf die Leinwand statt über „Öffnen“")
     }
 
-    /// **Die Rückfrage nach dem Laden hat drei Wege** — so verlangt: ersetzen,
-    /// nur in den Bestand, abbrechen. Sie ist die einzige der vier mit dem
-    /// mittleren Weg: Nur dort liegt das Stück schon im Bestand.
+    /// Die Rückfrage nach dem Laden hat drei Wege: ersetzen, nur in den
+    /// Bestand, abbrechen. Sie ist die einzige der vier mit dem mittleren
+    /// Weg: Nur dort liegt das Stück schon im Bestand.
     ///
     /// Mutation: `Button("Nur in den Bestand")` aus dem Zweig `.geladen`
     /// entfernen — dann bleibt nur „ersetzen oder gar nicht“, und wer beides
@@ -386,12 +379,12 @@ final class EditorbereichTests: XCTestCase {
                        "„Abbrechen“ steht mehrfach da — es gilt für alle vier Anlässe gemeinsam")
     }
 
-    /// **Eine Rückfrage, nicht fünf.** Alle vier Anlässe — „Neu“,
-    /// Größenwechsel, Öffnen, Laden — stellen dieselbe Frage und hängen an
-    /// **einem** Zustand. Zwei Bedienelemente, die gleichzeitig aufgehen
-    /// wollen, schließen einander aus: SwiftUI zeigt eines und verschluckt das
-    /// andere stillschweigend. Genau deshalb steht auch die Frage nach dem
-    /// Blatt in `onDismiss` und nicht im Knopf, der das Blatt schließt.
+    /// Eine Rückfrage, nicht fünf. Alle vier Anlässe — „Neu“, Größenwechsel,
+    /// Öffnen, Laden — stellen dieselbe Frage und hängen an einem Zustand.
+    /// Zwei Bedienelemente, die gleichzeitig aufgehen wollen, schließen
+    /// einander aus: SwiftUI zeigt eines und verschluckt das andere
+    /// stillschweigend. Deshalb steht auch die Frage nach dem Blatt in
+    /// `onDismiss` und nicht im Knopf, der das Blatt schließt.
     ///
     /// Mutation: `onDismiss: blattGeschlossen` aus dem `.sheet` entfernen und
     /// `blattGeschlossen()` am Ende von `einlesen()` rufen — baut, übersetzt,
@@ -414,11 +407,11 @@ final class EditorbereichTests: XCTestCase {
         }
     }
 
-    /// **Woran „ungesichert“ hängt.** Nicht an „ist die Leinwand leer“ — das
-    /// war zweimal falsch: Eine gemalte, nie gesicherte Zeichnung ist nicht
-    /// leer, und ein eben geöffnetes Bild ist nicht ungesichert. Gerechnet
-    /// wird es im Kern, gegen den Stand, der im Bestand liegt; die Ansicht
-    /// sagt nur, **wann** dieser Stand ein anderer wird.
+    /// Woran „ungesichert“ hängt: Nicht an „ist die Leinwand leer“ — eine
+    /// gemalte, nie gesicherte Zeichnung ist nicht leer, und ein eben
+    /// geöffnetes Bild ist nicht ungesichert. Gerechnet wird es im Kern,
+    /// gegen den Stand, der im Bestand liegt; die Ansicht sagt nur, wann
+    /// dieser Stand ein anderer wird.
     ///
     /// Mutation: `verlauf.gesichertMerken(leinwand)` aus `sichern()` entfernen
     /// — dann gilt frisch Gesichertes weiter als ungesichert, und jedes
@@ -439,10 +432,10 @@ final class EditorbereichTests: XCTestCase {
         }
     }
 
-    /// **Der Stift neben dem Papierkorb.** Gleiche Bauart, gleiche
-    /// Trefferfläche, eigene Beschriftung für die Sprachausgabe — aber
-    /// **nicht** gefärbt und nicht als zerstörend gekennzeichnet: Der
-    /// Papierkorb wirft weg, Umbenennen nicht.
+    /// Der Stift neben dem Papierkorb: gleiche Bauart, gleiche
+    /// Trefferfläche, eigene Beschriftung für die Sprachausgabe — aber nicht
+    /// gefärbt und nicht als zerstörend gekennzeichnet, denn der Papierkorb
+    /// wirft weg, Umbenennen nicht.
     ///
     /// Nichts davon sieht ein Übersetzer: Ein rot eingefärbter Stift mit
     /// zerstörender Rolle baut und zeichnet anstandslos.
@@ -473,10 +466,10 @@ final class EditorbereichTests: XCTestCase {
                       "das Kontextmenü der Zeile bietet kein Umbenennen an")
     }
 
-    /// **Umbenennen benennt eine Datei um** — also dieselben Fragen wie beim
-    /// Sichern, und dieselbe Antwort wie beim Import: sichtbar ersetzen statt
-    /// abweisen, mit umbenanntem Knopf. Ohne Namen bleibt er gesperrt und
-    /// sichtbar abgeblendet stehen.
+    /// Umbenennen benennt eine Datei um — also dieselben Fragen wie beim
+    /// Sichern, und dieselbe Antwort wie beim Import: sichtbar ersetzen
+    /// statt abweisen, mit umbenanntem Knopf. Ohne Namen bleibt er gesperrt
+    /// und sichtbar abgeblendet stehen.
     ///
     /// Der stille Rückfall ist der gesperrte Knopf: Beim 8×8 trägt die Nummer
     /// den Schlüssel — ein leerer Name allein ließe ihn dort offen, und das
@@ -506,10 +499,11 @@ final class EditorbereichTests: XCTestCase {
                       + "sobald man nur die Nummer ändert")
     }
 
-    /// **Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit.**
-    /// Sonst legte das nächste „Sichern“ es unter dem alten Namen ein zweites
-    /// Mal an. Beim Löschen zieht derselbe Vergleich den umgekehrten Schluss —
-    /// dort wird der Bezug geleert; **eine** Rechnung, zwei Folgerungen.
+    /// Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit.
+    /// Sonst legte das nächste „Sichern“ es unter dem alten Namen ein
+    /// zweites Mal an. Beim Löschen zieht derselbe Vergleich den
+    /// umgekehrten Schluss — dort wird der Bezug geleert; eine Rechnung,
+    /// zwei Folgerungen.
     ///
     /// Mutation: `if offen { … }` aus `umbenennen` streichen — baut und
     /// übersetzt, und wer nach dem Umbenennen sichert, hat sein Bild zweimal.
@@ -534,15 +528,16 @@ final class EditorbereichTests: XCTestCase {
                       + "weil der Dateiname der bereinigte Name ist")
     }
 
-    /// **A3.** Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
+    /// A3. Ein Satz Bedienelemente in der Leiste, nicht zwei übereinander.
     ///
-    /// Am Mac gehört die Werkzeugleiste dem **Fenster** (mindestens 1140 Punkte,
-    /// Titel woanders, Überlaufmenü) — dort passte alles. Am iPad gehört sie der
-    /// Navigationsleiste der **Detailspalte**: Fenster minus Seitenleiste minus
-    /// Inspektor, mit Seitenleistenknopf links und Titel in der Mitte. Sie läuft
-    /// nicht über, sie schiebt übereinander; die Segmentleiste war das breiteste
-    /// Stück darin und hat den Seitenleistenknopf verdeckt, „Rückgängig“ fiel
-    /// ganz heraus. Die drei Modi sitzen deshalb am Kopf des Inspektors.
+    /// Am Mac gehört die Werkzeugleiste dem Fenster (mindestens 1140 Punkte,
+    /// Titel woanders, Überlaufmenü) — dort passte alles. Am iPad gehört sie
+    /// der Navigationsleiste der Detailspalte: Fenster minus Seitenleiste
+    /// minus Inspektor, mit Seitenleistenknopf links und Titel in der Mitte.
+    /// Sie läuft nicht über, sie schiebt übereinander; die Segmentleiste war
+    /// das breiteste Stück darin und hat den Seitenleistenknopf verdeckt,
+    /// „Rückgängig“ fiel ganz heraus. Die drei Modi sitzen deshalb am Kopf
+    /// des Inspektors.
     ///
     /// Der Übersetzer hat dazu nichts zu sagen — beide Fassungen übersetzen.
     func testDieModuswahlStehtImInspektorUndNichtInDerWerkzeugleiste() throws {
@@ -563,10 +558,10 @@ final class EditorbereichTests: XCTestCase {
         let wahl = ausschnitt(text, von: "private var modusWahl", bis: "private var malenAbschnitte")
         XCTAssertTrue(wahl.contains(".pickerStyle(.segmented)"),
                       "die Moduswahl ist keine Segmentwahl mehr")
-        // **Symbole statt Woerter** seit dem 14.09.2026: Vier ausgeschriebene
-        // Namen passen in 330 Punkte nicht mehr, ohne abgeschnitten zu werden.
-        // Die Namen duerfen deshalb nicht verschwinden, sondern wandern an die
-        // Bedienungshilfen — geprueft wird beides, Symbol **und** Name.
+        // Symbole statt Woerter: Vier ausgeschriebene Namen passen in 330
+        // Punkte nicht mehr, ohne abgeschnitten zu werden. Die Namen duerfen
+        // deshalb nicht verschwinden, sondern wandern an die
+        // Bedienungshilfen — geprueft wird beides, Symbol und Name.
         for (modus, symbol) in [("Malen", "paintpalette"), ("Animation", "film"),
                                 ("Bestand", "folder"), ("Zeit", "clock")] {
             XCTAssertTrue(wahl.contains("Image(systemName: \"\(symbol)\").tag("),
@@ -576,17 +571,16 @@ final class EditorbereichTests: XCTestCase {
         }
     }
 
-    /// **F5.** Im Fenster gibt es genau **einen** Anwaerter auf die Eingabetaste.
+    /// F5. Im Fenster gibt es genau einen Anwaerter auf die Eingabetaste.
     ///
-    /// „Sichern" und „Senden" trugen bis zum 14.09.2026 beide
-    /// `.keyboardShortcut(.defaultAction)`. Welchen von zweien SwiftUI dann
-    /// nimmt, ist nicht festgelegt — und genau so ein Gleichstand hat kurz
-    /// zuvor „Sichern" das zerstoerende „Neu" ausloesen lassen. Der Uebersetzer
-    /// hat dazu nichts zu sagen: Zwei Vorgabetasten uebersetzen anstandslos.
+    /// Zwei Knoepfe mit `.keyboardShortcut(.defaultAction)` lassen SwiftUI
+    /// frei entscheiden, welcher gewinnt — ein solcher Gleichstand kann
+    /// „Sichern" das zerstoerende „Neu" ausloesen lassen. Der Uebersetzer hat
+    /// dazu nichts zu sagen: Zwei Vorgabetasten uebersetzen anstandslos.
     ///
-    /// Gezaehlt wird nur, was im **Fenster** steht. Die beiden Blaetter
-    /// dahinter („Oeffnen", „Umbenennen") sind eigene, modale Zusammenhaenge
-    /// und haben ihre Vorgabetaste zu Recht.
+    /// Gezaehlt wird nur, was im Fenster steht. Die beiden Blaetter dahinter
+    /// („Oeffnen", „Umbenennen") sind eigene, modale Zusammenhaenge und haben
+    /// ihre Vorgabetaste zu Recht.
     func testImFensterGibtEsGenauEinenAnwaerterAufDieEingabetaste() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         let fenster = ausschnitt(text, von: "public var body", bis: "private var importBlatt")

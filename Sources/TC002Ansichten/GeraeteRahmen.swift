@@ -1,14 +1,14 @@
 import SwiftUI
 import TC002Core
 
-/// Rahmen um die Vorschau: die Frontansicht des Geraets, **gezeichnet** aus den
+/// Rahmen um die Vorschau: die Frontansicht des Geraets, gezeichnet aus den
 /// Daten in `Geraetezeichnung`, mit der fertigen Pixelvorschau (`inhalt`)
 /// unveraendert in deren schwarzes Displayfeld eingesetzt.
 ///
 /// Geteilt zwischen allen Oberflaechen (Mac, iPhone, kuenftig iPad) — deshalb
 /// keine plattformeigenen Typen hier, nur SwiftUI.
 ///
-/// **Eine Komponente, zwei Geraetearten.** Welche Front erscheint, entscheidet
+/// Eine Komponente, zwei Geraetearten: Welche Front erscheint, entscheidet
 /// allein `typ`; der Weg zum Bild ist fuer beide derselbe `Canvas`. Was sich
 /// unterscheidet, sind die Zahlen in `Geraetezeichnung` — eine dritte Art
 /// braucht hier keine Zeile.

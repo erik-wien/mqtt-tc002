@@ -125,10 +125,9 @@ final class EditorbestandTests: XCTestCase {
     }
 
     /// Der Weg fuer ein eben geholtes Icon, das auf die Leinwand soll: Die
-    /// Groesse kommt aus der **Kante des Icons**. Ein LaMetric-Icon ist zwar
-    /// immer 8×8, aber dieselbe Annahme hat den Import bis zum 13.09.2026 auf
-    /// die eingestellte Leinwandgroesse heruntergerechnet — sie steht hier
-    /// nirgends mehr.
+    /// Groesse kommt aus der Kante des Icons, nicht aus der eingestellten
+    /// Leinwandgroesse — ein LaMetric-Icon ist zwar immer 8×8, aber dieselbe
+    /// Annahme wuerde ein 16×16 fest auf 8×8 herunterrechnen.
     ///
     /// Mutation: in `eintrag(fuer:)` die Groesse fest auf `.icon8` setzen —
     /// dann landet ein 16×16 als 8×8 auf der Leinwand und traegt eine Nummer,
@@ -153,7 +152,7 @@ final class EditorbestandTests: XCTestCase {
                      "eine fremde Kante ist keine der drei Groessen")
     }
 
-    /// **Ulanzi vergibt auch fuer 16×52 Nummern** — eine Anzeige hat also eine,
+    /// Ulanzi vergibt auch fuer 16×52 Nummern — eine Anzeige hat also eine,
     /// *heisst* aber weiter nach ihrem Namen. Die Nummer steht daneben in
     /// `names.json`; der Dateiname bleibt unberuehrt, sonst laege jede
     /// bestehende Bildersammlung unter neuen Schluesseln.
@@ -161,7 +160,7 @@ final class EditorbestandTests: XCTestCase {
     /// Mutation: in `Editorbestand.sichern` die Nummer nicht mehr an
     /// `bilder.sichern` durchreichen — dann ist die Werknummer nach dem
     /// naechsten Sichern weg, ohne dass jemand sie geloescht haette.
-    /// (Dass der **Dateiname** von der Nummer unberuehrt bleibt, haelt
+    /// (Dass der Dateiname von der Nummer unberuehrt bleibt, haelt
     /// `BildersammlungTests.testDieWerknummerAendertDenDateinamenNicht` fest,
     /// und dass `schluessel` weiter den Namen liefert,
     /// `LeinwandgroesseTests.testNurDasAchtmalAchtHeisstNachSeinerNummer`.)
@@ -176,7 +175,7 @@ final class EditorbestandTests: XCTestCase {
         XCTAssertEqual(gelesen.nummer, "318", "die Werknummer überlebt das Zurücklesen nicht")
     }
 
-    /// Die Nummer ist bei 16×52 **wahlfrei**: Ohne sie laesst sich sichern,
+    /// Die Nummer ist bei 16×52 wahlfrei: Ohne sie laesst sich sichern,
     /// und dann steht auch keine da — nicht eine leere.
     ///
     /// Mutation: in `Bildersammlung.sichern` die Nummer ungeprueft
@@ -190,7 +189,7 @@ final class EditorbestandTests: XCTestCase {
 
     // MARK: - Umbenennen
 
-    /// **Umbenennen benennt eine Datei um.** Beim 8×8 ist die Nummer der
+    /// Umbenennen benennt eine Datei um. Beim 8×8 ist die Nummer der
     /// Dateiname: Eine neue Nummer verschiebt die Datei, ein neuer Name
     /// alleine nicht.
     ///
@@ -213,7 +212,7 @@ final class EditorbestandTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: vorher.datei.path))
     }
 
-    /// Bei 16×52 heisst die Datei nach dem **Namen**: Ein neuer Name
+    /// Bei 16×52 heisst die Datei nach dem Namen: Ein neuer Name
     /// verschiebt sie, eine neue Werknummer nicht.
     ///
     /// Mutation: in `Bildersammlung.umbenennen` den Schluessel aus der Nummer
@@ -235,7 +234,7 @@ final class EditorbestandTests: XCTestCase {
     }
 
     /// Wie beim Sichern und beim Einlesen: Ein belegter Schluessel wird
-    /// **ersetzt**, nicht abgewiesen — sichtbar angekuendigt tut das die
+    /// ersetzt, nicht abgewiesen — sichtbar angekuendigt tut das die
     /// Oberflaeche.
     ///
     /// Mutation: das `try? FileManager.default.removeItem(at: ziel)` vor dem

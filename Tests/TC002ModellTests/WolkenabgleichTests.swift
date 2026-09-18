@@ -4,7 +4,7 @@ import TC002Core
 @testable import TC002Modell
 
 /// Die Ablage der Tests. Sie merkt sich, was geschrieben wurde, und faehrt
-/// `NSUbiquitousKeyValueStore` **nie** an — dort haengt ein iCloud-Konto dran,
+/// `NSUbiquitousKeyValueStore` nie an — dort haengt ein iCloud-Konto dran,
 /// und in Tests gibt es kein Netz.
 final class Wolkendoppelgaenger: Wolkenablage, @unchecked Sendable {
     var inhalt: Data?
@@ -102,8 +102,8 @@ final class WolkenabgleichTests: XCTestCase {
 
     // MARK: Herein — und warum das Werkzeug folgt
 
-    /// **Der Kern der Sache.** Was aus der Wolke kommt, wird zusammengefuehrt
-    /// *und in die gewoehnlichen Einstellungen geschrieben*. Nur deshalb sieht
+    /// Der Kern der Sache: Was aus der Wolke kommt, wird zusammengefuehrt und
+    /// in die gewoehnlichen Einstellungen geschrieben. Nur deshalb sieht
     /// das Kommandozeilenwerkzeug dieselben Uhren wie die App: Es liest
     /// weiterhin `UserDefaults` und faehrt iCloud nie an. Ein Werkzeug, das
     /// andere Uhren saehe als die App, waere eine Falle.
@@ -198,7 +198,7 @@ final class WolkenschalterTests: XCTestCase {
         XCTAssertTrue(zustand(gewaehlt: false, bereit: false).wolkenschalterGesperrt)
     }
 
-    /// **Der umgekehrte Fall, und er ist die Ausnahme:** Abgleich an, Behaelter
+    /// Der umgekehrte Fall, und er ist die Ausnahme: Abgleich an, Behaelter
     /// weg. Waere der Schalter auch dann gesperrt, saesse man darin fest.
     func testMitAbgleichAberOhneBehaelterKommtManHeraus() {
         XCTAssertFalse(zustand(gewaehlt: true, bereit: false).wolkenschalterGesperrt)

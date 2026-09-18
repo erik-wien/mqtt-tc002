@@ -5,8 +5,8 @@ import XCTest
 /// Dass jeder gebaute Rahmen seine Herkunft mitfuehrt — und was daran haengt.
 ///
 /// Ohne sie kann eine AWTRIX NG mit einer Sendung nichts anfangen: Sie setzt
-/// den Text selbst und braucht die Regler, nicht die Pixel. **Genau daran
-/// erkennt `Anzeigen` auch den Gegenfall** — ein gemaltes Bild kommt nicht
+/// den Text selbst und braucht die Regler, nicht die Pixel. Genau daran
+/// erkennt `Anzeigen` auch den Gegenfall — ein gemaltes Bild kommt nicht
 /// durch `Meldungsbau.rahmen` und hat deshalb keine.
 final class MeldungsherkunftTests: XCTestCase {
 
@@ -25,7 +25,7 @@ final class MeldungsherkunftTests: XCTestCase {
         XCTAssertEqual(rahmen.herkunft?.optionen, o)
     }
 
-    /// **Der laufende Fall ist der wichtigere.** Dort ist der Rahmen ein
+    /// Der laufende Fall ist der wichtigere: Dort ist der Rahmen ein
     /// einziges GIF, aus dem sich nichts mehr herausloesen liesse — ohne die
     /// Herkunft waere eine lange Meldung auf einer AWTRIX gar nicht zu
     /// schicken.
@@ -37,7 +37,7 @@ final class MeldungsherkunftTests: XCTestCase {
         XCTAssertEqual(rahmen.herkunft?.optionen.text, o.text)
     }
 
-    /// Die Herkunft gehoert **nicht** zur Nutzlast. Stuende sie im JSON, waere
+    /// Die Herkunft gehoert nicht zur Nutzlast. Stuende sie im JSON, waere
     /// jede Sendung an die Werksfirmware unnoetig groesser — und truege Felder,
     /// ueber die das Geraet stolpert.
     func testDieHerkunftStehtNichtInDerNutzlast() throws {
@@ -57,7 +57,7 @@ final class MeldungsherkunftTests: XCTestCase {
 /// Die Lesart von `Uhr.typ` — dieselbe Bauart wie `wirksameBetriebsart`.
 final class UhrGattungTests: XCTestCase {
 
-    /// **`nil` heisst TC002, nicht „unbekannt".** Jede Einrichtung, die vor
+    /// `nil` heisst TC002, nicht „unbekannt". Jede Einrichtung, die vor
     /// dieser Fassung entstanden ist, ist eine.
     func testOhneEingetrageneArtGiltDieWerksfirmware() {
         XCTAssertEqual(Uhr(name: "a", host: "h").gattung, .tc002)
@@ -90,7 +90,7 @@ final class UhrGattungTests: XCTestCase {
     }
 
     /// Die Gegenprobe zu `EinstellungenTests.testUhrBleibtLesbar`: Eine Zeile
-    /// ohne `typ` ergibt **eine** Uhr mit `nil`, nicht null Uhren.
+    /// ohne `typ` ergibt eine Uhr mit `nil`, nicht null Uhren.
     func testEineAlteZeileOhneTypErgibtEineUhrUndKeineLeereListe() throws {
         let alt = #"[{"id":"3F2504E0-4F89-11D3-9A0C-0305E82C3301","name":"Küche","host":"10.0.0.1","praefix":"awtrix_a86b","mac":"aabbccdda86b"}]"#
         let uhren = try JSONDecoder().decode([Uhr].self, from: Data(alt.utf8))

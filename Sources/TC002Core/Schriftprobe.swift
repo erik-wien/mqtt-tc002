@@ -3,7 +3,7 @@ import Foundation
 /// Schliesst maschinell aus, ob ein Paar aus Schrift und Groesse fuer die
 /// 52×16-Anzeige taugt — und sagt, woran es liegt.
 ///
-/// **Die Pruefung sagt nur Nein, nie Ja.** Eine leere Liste heisst „nicht
+/// Die Pruefung sagt nur Nein, nie Ja. Eine leere Liste heisst „nicht
 /// ausgeschlossen", nicht „brauchbar": Zwei Zeichen koennen sich um ein
 /// einziges Pixel unterscheiden und trotzdem unlesbar sein. Darueber urteilt
 /// nur ein Augenpaar — dafuer gibt es die Schriftprobe in der App und die
@@ -11,7 +11,7 @@ import Foundation
 ///
 /// Das Verfahren ist das von `Textraster.kannKleinbuchstaben` und
 /// `Textraster.kannFett`, nur nicht mehr auf einen Sonderfall beschraenkt:
-/// rastern, die Pixel vergleichen, und aus **gleichen** Pixeln auf eine
+/// rastern, die Pixel vergleichen, und aus gleichen Pixeln auf eine
 /// verlorene Unterscheidung schliessen.
 public enum Schriftprobe {
     /// Gemessen wird, was die Sendeansicht anbietet — alle acht Schriften, die
@@ -24,9 +24,8 @@ public enum Schriftprobe {
     ///
     /// Nur sie werden gemessen. Fehlt eine Schrift, rastert CoreText klaglos
     /// mit einer Ersatzschrift — das Ergebnis waere dann nicht falsch, sondern
-    /// **ueber etwas anderes gemacht als behauptet**, und das ist schlimmer.
-    /// Nicht jedes System bringt jede dieser Schriften mit; iOS etwa kennt
-    /// weder Geneva noch Andale Mono.
+    /// ueber etwas anderes gemacht als behauptet. Nicht jedes System bringt
+    /// jede dieser Schriften mit; iOS etwa kennt weder Geneva noch Andale Mono.
     public static func vorhandeneSchriften() -> [String] {
         schriften.filter(Schriften.vorhanden)
     }
@@ -96,7 +95,7 @@ public enum Schriftprobe {
     /// App wie auf der Musterseite, damit beide dasselbe zeigen.
     ///
     /// Die Zahl ist zugleich die Grenze zwischen den beiden Lagen (siehe
-    /// `lage(_:)`): Bis hierher sieht man **jede** Gruppe und kann sie
+    /// `lage(_:)`): Bis hierher sieht man jede Gruppe und kann sie
     /// abwaegen; darueber hinaus faellt so viel zusammen, dass keine einzelne
     /// Gruppe mehr den Ausschlag gibt — und eine Wand aus Rastern liest
     /// niemand. Vier, weil das die groesste Zahl ist, die in den gemessenen
@@ -148,7 +147,7 @@ public enum Schriftprobe {
         /// Sonst erschluegen allein die sechsundzwanzig Paare A=a, B=b, … in
         /// jeder Zeile alles andere.
         case nurGrossbuchstaben
-        /// Gruppen von Zeichen, die zu **demselben** Pixelbild rastern. Jede
+        /// Gruppen von Zeichen, die zu demselben Pixelbild rastern. Jede
         /// Gruppe fuer sich ist eine verlorene Unterscheidung; die groessten
         /// stehen vorn.
         case zeichenFallenZusammen([[Character]])
@@ -290,10 +289,10 @@ public enum Schriftprobe {
     ///
     /// Gemerkt, weil sie teuer und deterministisch ist: acht Schriften mal elf
     /// Groessen mal dreiundsiebzig Zeichen kosten in der ausgelieferten Fassung
-    /// rund sechs Zehntelsekunden (gemessen am 13.09.2026; mit den drei
-    /// mitgelieferten Schriften allein waren es zweieinhalb Zehntel, ohne
-    /// Optimierung das Vier- bis Fuenffache). Das ist zu lang fuer einen
-    /// Fensteraufbau und waere beim zweiten Oeffnen genau dieselbe Antwort.
+    /// rund sechs Zehntelsekunden (mit den drei mitgelieferten Schriften allein
+    /// zweieinhalb Zehntel, ohne Optimierung das Vier- bis Fuenffache). Das ist
+    /// zu lang fuer einen Fensteraufbau und waere beim zweiten Oeffnen genau
+    /// dieselbe Antwort.
     public static func alleMessungen(abstand: Int = 1) -> [Messung] {
         tabellensperre.lock(); defer { tabellensperre.unlock() }
         if let da = tabelle[abstand] { return da }
@@ -381,7 +380,7 @@ public enum Schriftprobe {
     /// Wie viele Zeilen Tinte oben und unten aus dem sechzehn Zeilen hohen
     /// Fenster herausfallen. `nil`, wenn der Text ueberhaupt keine Tinte hat.
     ///
-    /// Gemessen wird in einem **dreifach hohen** Feld mit sechzehn Zeilen
+    /// Gemessen wird in einem dreifach hohen Feld mit sechzehn Zeilen
     /// Vorlauf: `Textraster.rastern` setzt die Grundlinie auf
     /// `hoehe − y − groesse` von unten, also immer `groesse` Zeilen unter den
     /// oberen Rand des Feldes — mit `y = 16` liegt derselbe Satz sechzehn

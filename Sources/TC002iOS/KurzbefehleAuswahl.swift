@@ -3,13 +3,13 @@ import TC002Core
 
 /// Die Auswahllisten der Kurzbefehle.
 ///
-/// **Warum Listen und nicht Text.** Ein Textfeld „Schriftart" nimmt auch
+/// Warum Listen und nicht Text: Ein Textfeld „Schriftart" nimmt auch
 /// „Silkscren" entgegen, und der Kurzbefehl liefe damit durch, ohne dass sich
 /// etwas änderte — der Fehler fiele erst an der Uhr auf, und auch dort nur
 /// dem, der genau hinsieht. Ein `AppEnum` ist in der Kurzbefehle-App ein
 /// Aufklappmenü: Was nicht darin steht, lässt sich gar nicht erst eintragen.
 ///
-/// **Warum eigene Typen und nicht die des Kerns.** `SendeWeg`, `Lauftempo` und
+/// Warum eigene Typen und nicht die des Kerns: `SendeWeg`, `Lauftempo` und
 /// die beiden Ausrichtungen liegen in `TC002Core`, und der bleibt
 /// plattformfrei — AppIntents gehörte dort nicht hin. Die Umrechnung ist je
 /// ein `kern`, und die Rohwerte sind absichtlich dieselben Wörter: Sie stehen

@@ -3,7 +3,7 @@ import SwiftUI
 /// Ein Symbolknopf, dessen Name am Mac im Einblendtext steht und am iPad
 /// gleich daneben — dort gibt es kein Verweilen, das ihn zeigen könnte.
 ///
-/// Gilt nur für Knöpfe, die **für sich allein** stehen und nichts als ihr
+/// Gilt nur für Knöpfe, die für sich allein stehen und nichts als ihr
 /// Symbol zeigen — eine Werkzeugleiste etwa, oder ein einzelnes Zeichen neben
 /// einer Liste. Ein Regler in einer `Form` zeigt seinen Wert ohnehin als
 /// Text; was er bedeutet, steht dort in der Hilfe, nicht hier.

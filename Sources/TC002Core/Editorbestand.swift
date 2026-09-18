@@ -43,11 +43,10 @@ public extension Array where Element == Editoreintrag {
 
 /// Die drei Bestaende unter einem Dach.
 ///
-/// **Sie bleiben, wie sie sind** — `Icons`, `Icons16` und `Bilder`, jeder mit
+/// Sie bleiben, wie sie sind — `Icons`, `Icons16` und `Bilder`, jeder mit
 /// seinem eigenen Ordner und seiner eigenen `names.json`. Bestehende Dateien
-/// muessen lesbar bleiben; in diesem Projekt hat ein Formatwechsel schon
-/// einmal beinahe alle Einstellungen unlesbar gemacht. Zusammengefasst wird
-/// allein die **Anzeige**: eine Liste, die Groesse am Eintrag.
+/// muessen lesbar bleiben. Zusammengefasst wird allein die Anzeige: eine
+/// Liste, die Groesse am Eintrag.
 ///
 /// Wohin etwas gehoert, entscheidet die Groesse — nirgends sonst.
 public struct Editorbestand {
@@ -105,10 +104,10 @@ public struct Editorbestand {
     /// Der Eintrag zu einem Icon einer Sammlung — fuer den Weg, der ein Icon
     /// holt und es danach auf die Leinwand legen soll.
     ///
-    /// Die Groesse kommt aus der **Kante des Icons**, nicht aus der Annahme,
-    /// ein geholtes sei immer 8×8: Dieselbe Annahme hat den Import bis zum
-    /// 13.09.2026 auf die eingestellte Leinwandgroesse heruntergerechnet.
-    /// `nil`, wenn die Kante keine der drei Groessen ist.
+    /// Die Groesse kommt aus der Kante des Icons, nicht aus der Annahme,
+    /// ein geholtes sei immer 8×8 — sonst rechnet der Import ein 16×16 auf die
+    /// eingestellte Leinwandgroesse herunter. `nil`, wenn die Kante keine der
+    /// drei Groessen ist.
     public static func eintrag(fuer icon: Icon) -> Editoreintrag? {
         guard let groesse = Leinwandgroesse.fuer(breite: icon.kante, hoehe: icon.kante) else {
             return nil
@@ -125,13 +124,13 @@ public struct Editorbestand {
     /// Unter welchem Namen etwas abgelegt wird: bei 8×8 die Nummer, sonst der
     /// Name als Dateiname. Leer heisst, dass sich so nichts sichern laesst.
     ///
-    /// **Eine Stelle, weil drei davon abhaengen:** das Sichern, das Einlesen
+    /// Eine Stelle, weil drei davon abhaengen: das Sichern, das Einlesen
     /// und die Frage, ob dort schon etwas liegt. Liefen sie auseinander,
     /// warnte das Blatt vor einer Belegung, die es nicht gibt — oder schwiege
     /// zu einer, die es gibt.
-    /// **`nummerIstDateiname`, nicht `mitNummer`:** Ein 16×52 *hat* seit dem
-    /// 14.09.2026 eine Nummer, *heisst* aber weiter nach seinem Namen — sonst
-    /// laege jede bestehende Bildersammlung unter neuen Schluesseln.
+    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 *hat* eine
+    /// Nummer, *heisst* aber weiter nach seinem Namen — sonst laege jede
+    /// bestehende Bildersammlung unter neuen Schluesseln.
     public static func schluessel(groesse: Leinwandgroesse,
                                   nummer: String, name: String) -> String {
         groesse.nummerIstDateiname ? nummer.trimmingCharacters(in: .whitespaces)
@@ -139,7 +138,7 @@ public struct Editorbestand {
     }
 
     /// Was unter diesem Schluessel schon liegt — der Eintrag, den ein Sichern
-    /// oder Einlesen **ersetzen** wuerde, sonst `nil`.
+    /// oder Einlesen ersetzen wuerde, sonst `nil`.
     ///
     /// Gesucht wird in einer schon gelesenen Liste und nicht im Dateisystem:
     /// Die Ansicht fragt bei jedem Tastendruck.
@@ -160,13 +159,12 @@ public struct Editorbestand {
     ///
     /// LaMetric-Icons heissen ueblicherweise `<Nummer>_<Titel>`: Aus
     /// `2981_Severe TStorm` wird die Nummer `2981` und der Titel
-    /// `Severe TStorm`. Bis zum 13.09.2026 stand der **ganze** Dateiname in
-    /// beiden Feldern — bei so einer Datei also die Nummer zweimal falsch.
+    /// `Severe TStorm`.
     ///
-    /// Nur eine reine Ziffernfolge vor dem **ersten** Unterstrich zaehlt;
+    /// Nur eine reine Ziffernfolge vor dem ersten Unterstrich zaehlt;
     /// `maze_2` ist keine Nummer, sondern ein Name. Besteht der Dateiname aus
     /// nichts als Ziffern, ist er beides. Und wo nichts zu erraten ist, bleibt
-    /// die Nummer **leer**, statt einen Dateinamen als LaMetric-Nummer
+    /// die Nummer leer, statt einen Dateinamen als LaMetric-Nummer
     /// auszugeben: „Öffnen" bleibt dann gesperrt, bis jemand eine eintraegt.
     public static func vorschlag(fuerDateinamen basis: String) -> (nummer: String, name: String) {
         let sauber = basis.trimmingCharacters(in: .whitespaces)
@@ -232,11 +230,11 @@ public struct Editorbestand {
 
     /// Benennt einen Eintrag um — Name und, wo es eine gibt, Nummer.
     ///
-    /// **Eine Umbenennung benennt eine Datei um**, und deshalb gelten dieselben
+    /// Eine Umbenennung benennt eine Datei um, und deshalb gelten dieselben
     /// Regeln wie beim Sichern: Wohin es gehoert, entscheidet die Groesse;
     /// unter welchem Schluessel es liegt, `schluessel(groesse:nummer:name:)`;
     /// und was dort schon liegt, wird ersetzt statt abgewiesen (die Oberflaeche
-    /// sagt es vorher). Bei 16×52 aendert eine neue Werknummer **nichts** am
+    /// sagt es vorher). Bei 16×52 aendert eine neue Werknummer nichts am
     /// Dateinamen — sie heisst weiter nach ihrem Namen.
     @discardableResult
     public func umbenennen(_ eintrag: Editoreintrag, name: String,
@@ -276,17 +274,15 @@ public struct Editorbestand {
         }
     }
 
-    /// In welchem Bestand eine Datei landet: in dem **ihrer eigenen Groesse**.
+    /// In welchem Bestand eine Datei landet: in dem ihrer eigenen Groesse.
     ///
-    /// **Der Editor stellt sich auf die Datei ein, nicht umgekehrt.** Bis zum
-    /// 13.09.2026 wurde jede Datei auf die gerade eingestellte Leinwandgroesse
-    /// heruntergerechnet — ein 16×16-GIF landete als 8×8, wenn der Editor auf
-    /// 8×8 stand, ohne dass jemand danach gefragt haette. Genau daran ist der
-    /// Auftraggeber mit zwei `maze`-GIFs haengengeblieben.
+    /// Der Editor stellt sich auf die Datei ein, nicht umgekehrt. Ein
+    /// Herunterrechnen auf die gerade eingestellte Leinwandgroesse liesse ein
+    /// 16×16-GIF unbemerkt als 8×8 landen, sobald der Editor auf 8×8 steht.
     ///
-    /// Eine Groesse, die keine der drei ist, wird **abgelehnt** und nicht auf
-    /// die naechstliegende gerechnet (entschieden am 13.09.2026): Verkleinern
-    /// zerstoert, und es geschah bisher unsichtbar.
+    /// Eine Groesse, die keine der drei ist, wird abgelehnt und nicht auf
+    /// die naechstliegende gerechnet: Verkleinern zerstoert, und unsichtbar
+    /// geschehen darf das nicht.
     public static func zielgroesse(fuer daten: Data) throws -> Leinwandgroesse {
         guard let masse = Bildraster.groesse(daten) else {
             throw EditorbestandFehler.keinBild
@@ -297,10 +293,10 @@ public struct Editorbestand {
         return groesse
     }
 
-    /// Liest eine schon gelesene Bilddatei in den Bestand **ihrer eigenen**
+    /// Liest eine schon gelesene Bilddatei in den Bestand ihrer eigenen
     /// Groesse (siehe `zielgroesse(fuer:)`). Gerechnet wird dabei nichts mehr.
     ///
-    /// **`Data`, nicht `URL`.** Eine URL aus dem Dateiwaehler gilt nur zwischen
+    /// `Data`, nicht `URL`. Eine URL aus dem Dateiwaehler gilt nur zwischen
     /// `startAccessingSecurityScopedResource` und `stop…`; wer sie sich merkt
     /// und hier noch einmal liest, greift am iPad ins Leere. Die Ansicht liest
     /// die Datei deshalb sofort und reicht die Bytes weiter.

@@ -1,14 +1,13 @@
 import XCTest
 @testable import TC002Core
 
-/// **Das Maß, auf dem gerastert wird** — bis hierher überall die beiden
+/// Das Maß, auf dem gerastert wird — bis hierher überall die beiden
 /// Konstanten aus `Pixelfeld`, also immer die Werksfirmware.
 ///
 /// `Uhr.anzeigemass` kennt die Zahlen längst; was fehlte, war ein Wert, der
 /// sie durch `Meldungsbau` und `Textraster` trägt. Zwei lose Zahlen wären
 /// dafür das Falsche: Wer eine davon an einer Stelle vergisst, rastert 52
-/// breit in ein Feld, das 32 ist — ein Fehler, der genau wie der aussieht, den
-/// dieser Durchgang behebt.
+/// breit in ein Feld, das 32 ist.
 final class AnzeigemassTests: XCTestCase {
     func testDieVorgabeIstDieWerksfirmware() {
         XCTAssertEqual(Anzeigemass.tc002.breite, 52)

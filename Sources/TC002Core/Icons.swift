@@ -28,9 +28,9 @@ public struct Icon: Equatable, Sendable, Identifiable {
     /// `Identifiable` ueber genau diese Kennung — damit eine Liste, die beide
     /// Bestaende zeigt, nicht zwei Eintraege unter derselben Kennung fuehrt.
     /// SwiftUI beantwortet doppelte Kennungen nicht mit einem Fehler, sondern
-    /// mit der falschen Zeile: Am 14.09.2026 lieferte das Auswahlraster am
-    /// Telefon bei jedem Tippen dasselbe Icon, weil es `nummer` als Kennung
-    /// nahm und die 8×8- und 16×16-Bestaende Nummern teilen.
+    /// mit der falschen Zeile: Ueber `nummer` allein als Kennung liefert das
+    /// Auswahlraster am Telefon bei jedem Tippen dasselbe Icon, weil die
+    /// 8×8- und 16×16-Bestaende Nummern teilen.
     public var id: String { kennung }
 }
 
@@ -92,10 +92,10 @@ public enum Bildraster {
         return try lesen(quelle: quelle, breite: breite, hoehe: hoehe)
     }
 
-    /// **Bewegt sich das Bild?** — also hat die Datei mehr als ein Einzelbild.
+    /// Bewegt sich das Bild? — also hat die Datei mehr als ein Einzelbild.
     ///
     /// Billig zu haben: `CGImageSourceGetCount` liest den Kopf und die
-    /// Bildbeschreibungen, aber **keine Pixel**. Das ist der Unterschied zu
+    /// Bildbeschreibungen, aber keine Pixel. Das ist der Unterschied zu
     /// `lesen`, das jedes Einzelbild dekodiert und rastert — in einer Liste
     /// von sechzig Icons waere das spuerbar.
     ///
@@ -109,7 +109,7 @@ public enum Bildraster {
 
     /// Dasselbe aus dem Speicher.
     ///
-    /// **Gebraucht wird das fuer den Dateiwaehler.** Eine URL von dort zeigt in
+    /// Gebraucht wird das fuer den Dateiwaehler. Eine URL von dort zeigt in
     /// die Dateien-App und ist zugriffsgeschuetzt: Lesen darf man sie nur
     /// zwischen `startAccessingSecurityScopedResource` und `stop…`. Wer sie sich
     /// merkt und spaeter noch einmal liest, greift ins Leere — am iPad, wo die
@@ -330,7 +330,7 @@ public enum Bildraster {
     }
 
     /// Wieviele Spalten von links ein Icon wirklich braucht — die Spalte nach
-    /// der letzten mit andersfarbiger Tinte, ueber **alle** uebergebenen
+    /// der letzten mit andersfarbiger Tinte, ueber alle uebergebenen
     /// Einzelbilder hinweg vereinigt. 0, wenn keins Tinte hat.
     ///
     /// Vereinigt und nicht je Einzelbild einzeln gemessen: Sonst wanderte die
@@ -377,8 +377,8 @@ public enum BildrasterFehler: Error, LocalizedError {
 /// erweiterbar ueber LaMetric-Nummern und eigene Zeichnungen.
 ///
 /// `kante` sagt, welche Groesse in diesem Ordner liegt — 8 fuer die
-/// kanonischen LaMetric-Icons, 16 fuer die eigenen 16×16. **Je Groesse ein
-/// eigener Ordner** (`Iconordner.eigene`, `Iconordner.eigene16`): Ein 16×16
+/// kanonischen LaMetric-Icons, 16 fuer die eigenen 16×16. Je Groesse ein
+/// eigener Ordner (`Iconordner.eigene`, `Iconordner.eigene16`): Ein 16×16
 /// ist kein LaMetric-Icon, hat keine Nummer und gehoerte nie in denselben
 /// Bestand. Und — der eigentliche Grund — der vorhandene Ordner bleibt so, wie
 /// er ist: Wer eine aeltere Fassung startet, findet dort genau seine Icons
@@ -564,13 +564,13 @@ public struct Iconsammlung {
 
     /// Benennt ein Icon um: neue Nummer, neuer Name.
     ///
-    /// **Die Datei wird verschoben, nicht neu geschrieben.** Ein Umbenennen
+    /// Die Datei wird verschoben, nicht neu geschrieben. Ein Umbenennen
     /// ueber Lesen und Sichern liefe durch die GIF-Kodierung — aus
     /// Durchsichtigem wuerde Schwarz, und das waere eine Aenderung am Bild,
     /// die niemand verlangt hat. Verschieben laesst die Bytes, wie sie sind,
     /// und behaelt die Endung: Der Bestand enthaelt auch PNG und JPEG.
     ///
-    /// Liegt unter der neuen Nummer schon etwas, wird es **ersetzt** — wie
+    /// Liegt unter der neuen Nummer schon etwas, wird es ersetzt — wie
     /// beim Sichern und beim Einlesen. Die Oberflaeche sagt das vorher.
     @discardableResult
     public func umbenennen(_ icon: Icon, nummer: String, name: String) throws -> Icon {

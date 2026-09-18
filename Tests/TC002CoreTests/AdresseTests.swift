@@ -1,12 +1,11 @@
 import XCTest
 @testable import TC002Core
 
-/// **Ein Leerzeichen am Rand der Adresse ist unsichtbar und toedlich.**
-///
-/// Am 14.09.2026 stand in einer Uhrenzeile ` 127.0.0.1:8752`. Zu sehen war
-/// nichts; gemeldet wurde es erst beim Senden, als Fenster mitten in der
-/// Arbeit. Beides ist hier abgestellt: Getrimmt wird beim Setzen, und ob eine
-/// Adresse ueberhaupt taugt, laesst sich vorher fragen.
+/// Ein Leerzeichen am Rand der Adresse ist unsichtbar: In einer Uhrenzeile
+/// ` 127.0.0.1:8752` sieht man nichts falsch, gemeldet wird es erst beim
+/// Senden, mitten in der Arbeit. Beides ist hier abgestellt: Getrimmt wird
+/// beim Setzen, und ob eine Adresse ueberhaupt taugt, laesst sich vorher
+/// fragen.
 final class AdresseTests: XCTestCase {
     func testDerRandWirdBeimSetzenGetrimmt() {
         var uhr = Uhr(name: "x", host: " 127.0.0.1:8752 ")
@@ -37,21 +36,20 @@ final class AdresseTests: XCTestCase {
     func testEineAdresseDieNichtTaugt() {
         XCTAssertFalse(Geraet.adresseTaugt(""))
         XCTAssertFalse(Geraet.adresseTaugt("   "))
-        // Der Fall aus dem Bildschirmfoto.
         XCTAssertFalse(Geraet.adresseTaugt(" 127.0.0.1:8752"))
         XCTAssertFalse(Geraet.adresseTaugt("10.0.0.5 /pfad"))
     }
 
-    /// Was `URL(string:)` allein **nicht** faengt: ein Schema ohne
+    /// Was `URL(string:)` allein nicht faengt: ein Schema ohne
     /// Rechnernamen. `http:///getBase` ist gueltig und zeigt nirgendwohin.
     func testEinLeererRechnernameFaelltAuf() {
         XCTAssertFalse(Geraet.adresseTaugt("/uhr"))
     }
 }
 
-/// **Auch das Werkzeug und die Kurzbefehle lesen diese Datei.** Sie gehen
-/// nicht ueber `AppZustand`, sondern ueber `Einstellungen.gelesen()` — und
-/// zwar moeglicherweise, bevor die App das naechste Mal laeuft und die Adresse
+/// Auch das Werkzeug und die Kurzbefehle lesen diese Datei. Sie gehen nicht
+/// ueber `AppZustand`, sondern ueber `Einstellungen.gelesen()` — und zwar
+/// moeglicherweise, bevor die App das naechste Mal laeuft und die Adresse
 /// von selbst heilt.
 final class GelesenAdresseTests: XCTestCase {
     func testDerLeserTrimmtDieAdressen() {
@@ -59,13 +57,10 @@ final class GelesenAdresseTests: XCTestCase {
         XCTAssertEqual(krumm.mitSauberenAdressen().map(\.host), ["10.0.0.5", "10.0.0.6"])
     }
 
-    /// **Und zwar wirklich beim Lesen**, nicht nur als Funktion, die niemand
-    /// aufruft. Geprueft wird durch `Einstellungen.gelesen` hindurch, mit einem
-    /// eigenen Ablagebereich — die Einrichtung des Auftraggebers bleibt
-    /// unberuehrt.
-    ///
-    /// **Mutationsprobe** (14.09.2026): `.mitSauberenAdressen()` in `gelesen`
-    /// entfernt → dieser Test faellt; wieder eingesetzt → gruen.
+    /// Und zwar wirklich beim Lesen, nicht nur als Funktion, die niemand
+    /// aufruft. Geprueft wird durch `Einstellungen.gelesen` hindurch, mit
+    /// einem eigenen Ablagebereich — die Einrichtung des Auftraggebers
+    /// bleibt unberuehrt.
     func testEinstellungenGelesenTrimmtDieAdressen() throws {
         let bereich = "cloud.eriks.mqtt-tc002.test." + UUID().uuidString
         let ablage = try XCTUnwrap(UserDefaults(suiteName: bereich))

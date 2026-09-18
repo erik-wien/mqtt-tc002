@@ -1,9 +1,9 @@
 import XCTest
 @testable import TC002Core
 
-/// **Der Verlauf ist das Dritte neben Protokoll und Slotgedaechtnis.**
+/// Der Verlauf ist das Dritte neben Protokoll und Slotgedaechtnis.
 ///
-/// Das Protokoll ist technisch und fluechtig, das Gedaechtnis haelt **einen**
+/// Das Protokoll ist technisch und fluechtig, das Gedaechtnis haelt einen
 /// Stand je Platz. Der Verlauf haelt die Sendungen — mit allen Reglern, damit
 /// ein Druck darauf dieselbe Meldung wiederherstellt und nicht nur ihren Text.
 final class SendeverlaufTests: XCTestCase {
@@ -26,7 +26,7 @@ final class SendeverlaufTests: XCTestCase {
         XCTAssertEqual(alle.first?.platz, 1)
     }
 
-    /// **Das Juengste zuerst** — gelesen wird von oben nach unten.
+    /// Das Juengste zuerst — gelesen wird von oben nach unten.
     func testDasJuengsteStehtOben() {
         let verlauf = Sendeverlauf(ordner: temp(), kennung: "A")
         let frueher = Date(timeIntervalSinceNow: -60)
@@ -36,7 +36,7 @@ final class SendeverlaufTests: XCTestCase {
     }
 
     /// Wer dreimal dasselbe schickt, will keine drei Zeilen lesen. Zwei
-    /// **gleiche hintereinander** werden zu einer — die Zeit ist die der
+    /// gleiche hintereinander werden zu einer — die Zeit ist die der
     /// letzten Sendung.
     func testZweiGleicheHintereinanderStehenNurEinmalDa() {
         let verlauf = Sendeverlauf(ordner: temp(), kennung: "A")
@@ -45,7 +45,7 @@ final class SendeverlaufTests: XCTestCase {
         XCTAssertEqual(verlauf.alle().count, 1)
     }
 
-    /// Dasselbe **mit etwas dazwischen** bleibt zweimal stehen: Der Verlauf
+    /// Dasselbe mit etwas dazwischen bleibt zweimal stehen: Der Verlauf
     /// erzaehlt, was geschah, und dazu gehoert die Wiederholung.
     func testMitEtwasDazwischenStehtEsZweimalDa() {
         let verlauf = Sendeverlauf(ordner: temp(), kennung: "A")
@@ -55,8 +55,8 @@ final class SendeverlaufTests: XCTestCase {
         XCTAssertEqual(verlauf.alle().map(\.optionen.text), ["Kaffee", "Bus", "Kaffee"])
     }
 
-    /// **Zwei Installationen, zwei Dateien, eine Liste.** Genau dafuer ist je
-    /// Installation eine eigene Datei da: Eine gemeinsame haette der zuletzt
+    /// Zwei Installationen, zwei Dateien, eine Liste: Genau dafuer ist je
+    /// Installation eine eigene Datei da. Eine gemeinsame haette der zuletzt
     /// schreibende ueberbuegelt.
     func testZweiGeraeteWerdenZusammengefuehrt() {
         let ordner = temp()
@@ -69,7 +69,7 @@ final class SendeverlaufTests: XCTestCase {
                        "Beide Dateien gehoeren in eine Liste, das Juengste zuerst.")
     }
 
-    /// Ein einzelner Eintrag laesst sich nur aus der **eigenen** Datei
+    /// Ein einzelner Eintrag laesst sich nur aus der eigenen Datei
     /// nehmen — die des anderen Geraets gehoert ihm.
     func testEinzelnesVergessenGiltNurFuerDieEigeneDatei() {
         let ordner = temp()

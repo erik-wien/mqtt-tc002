@@ -13,7 +13,7 @@ import TC002Core
 /// 60 bis 120 mal je Sekunde auf dem Hauptthread. `TimelineView` wird
 /// ausserdem nur montiert, wenn tatsaechlich mehr als ein Einzelbild
 /// abzuspielen ist; ein stehendes Bild zeichnet sich einmal und bleibt dann
-/// in Ruhe. Nebeneffekt: ein animiertes Icon spielt jetzt auch hier, wie am Mac.
+/// in Ruhe. Nebeneffekt: ein animiertes Icon spielt auch hier, wie am Mac.
 struct VorschauiOS: View {
     let feld: Pixelfeld
     let icon: URL?
@@ -62,7 +62,7 @@ struct VorschauiOS: View {
     }
 
     /// Zeichnet das volle Punkteraster — so gross wie die Anzeige der Uhr, auf
-    /// die sich die Vorschau bezieht. **Nicht mehr fest 52×16:** Eine NG-Uhr hat
+    /// die sich die Vorschau bezieht. Nicht fest 52×16: Eine NG-Uhr hat
     /// 32×8, und ein Raster der falschen Groesse liefe hier ins Leere und im
     /// Rahmen ueber (siehe `Anzeigemass`).
     private func anzeige(_ punkte: [String?]) -> some View {
@@ -81,7 +81,7 @@ struct VorschauiOS: View {
     /// Das stehende Feld mit eingesetztem Icon-Einzelbild, falls eines da ist.
     ///
     /// Die Zeile, auf der es sitzt, ist die senkrechte Mitte des Feldes und
-    /// **nicht** die feste 4: Auf den acht Zeilen einer NG-Uhr saesse ein 8×8
+    /// nicht die feste 4: Auf den acht Zeilen einer NG-Uhr saesse ein 8×8
     /// dort halb ausserhalb — geschrieben wuerde dabei hinter das Ende des
     /// Rasters, und das ist kein schiefes Bild, sondern ein Absturz.
     private func mitIcon(_ iconBild: Bildraster.Einzelbild?) -> [String?] {

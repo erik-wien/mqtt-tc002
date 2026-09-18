@@ -1,14 +1,14 @@
 import XCTest
 @testable import TC002Core
 
-/// Schreibt die Musterseite `erzeugt/schriftprobe.html` — das **Werkzeug**.
+/// Schreibt die Musterseite `erzeugt/schriftprobe.html` — das Werkzeug.
 ///
 /// Die Schriftprobe in der App zeigt dieselbe Messung fuer Anwender; diese
 /// Seite ist die Fassung zum Abhaken: Sie traegt je Block ein Kreuz „brauchbar"
 /// und baut daraus unten die Swift-Zeile, die in `sauberePixelgroessen`
 /// gehoerte. Das ist der Unterschied, und nur er — gemessen wird dasselbe.
 ///
-/// Gezeigt werden die **Kollisionsgruppen als Raster**, nicht ein festes Wort:
+/// Gezeigt werden die Kollisionsgruppen als Raster, nicht ein festes Wort:
 /// Die Frage lautet je Zeile „sind genau diese zusammengefallenen Zeichen noch
 /// auseinanderzuhalten?", und die beantwortet nur, wer die Mitglieder
 /// unmittelbar nebeneinander sieht. Ein festes Wort zeigt in jeder Zeile
@@ -16,7 +16,7 @@ import XCTest
 ///
 /// Die Seite kommt ohne Netz aus (kein CDN, keine Webschrift), liest sich auf
 /// einem Telefon und folgt dem hellen wie dem dunklen Erscheinungsbild. Ihre
-/// Texte sind **nicht** uebersetzt: Sie ist ein Werkzeug fuer die Entwicklung,
+/// Texte sind nicht uebersetzt: Sie ist ein Werkzeug fuer die Entwicklung,
 /// keine Programmoberflaeche. Die Ausschlussgruende kommen aus
 /// `Grund.beschreibung` und sind es doch — sie stehen auch in der App.
 final class SchriftprobeSeiteTests: XCTestCase {
@@ -173,7 +173,7 @@ final class SchriftprobeSeiteTests: XCTestCase {
     /// weil es einige zehntausend davon werden und die Seite auch auf einem
     /// Telefon aufgehen soll.
     ///
-    /// Beide **muessen** geschlossen werden: `<i>` und `<b>` sind keine leeren
+    /// Beide muessen geschlossen werden: `<i>` und `<b>` sind keine leeren
     /// Elemente, ein offenes verschachtelt das naechste in sich hinein. Aus
     /// zehntausend Geschwistern wuerden zehntausend Ebenen, und das Gitter legt
     /// nur seine unmittelbaren Kinder aus — die Seite zeigte dann eine einzige

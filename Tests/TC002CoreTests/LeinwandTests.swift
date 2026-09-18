@@ -229,7 +229,7 @@ final class LeinwandTests: XCTestCase {
 
     // MARK: - Icon einsetzen (C2)
 
-    /// **C2.** Hochrechnen ist ein Befehl: Ein 8×8 in einem 16×16 wird
+    /// C2: Hochrechnen ist ein Befehl: Ein 8×8 in einem 16×16 wird
     /// verdoppelt — jedes Pixel ein Viererblock, und zwar an der richtigen
     /// Stelle. Ein Faktor, der nur die Zahl vergroessert, aber nicht die
     /// Ecke mitrechnet, saehe fast richtig aus.
@@ -275,8 +275,8 @@ final class LeinwandTests: XCTestCase {
         XCTAssertEqual(leinwand.farbe(x: 3, y: 6), "#00FF66")
     }
 
-    /// Und was nicht hineingehoert, richtet **nichts** an: kein halb
-    /// gesetztes Bild, kein Schritt fuer „Rueckgaengig".
+    /// Und was nicht hineingehoert, richtet nichts an: kein halb gesetztes
+    /// Bild, kein Schritt fuer „Rueckgaengig".
     func testWasNichtHineingehoertVeraendertNichts() {
         var klein = Leinwandgroesse.icon8.leereLeinwand
         XCTAssertFalse(klein.iconEinsetzen([String?](repeating: "#FFFFFF", count: 256),

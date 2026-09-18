@@ -9,7 +9,7 @@ import Foundation
 /// Aufgerufen beim Start der App und beim Start des Kommandozeilenwerkzeugs —
 /// beide rastern Text, und beide sollen dieselben Schriften kennen.
 public enum Schriften {
-    /// Die mitgelieferten Pixelschriften unter ihrem **registrierten**
+    /// Die mitgelieferten Pixelschriften unter ihrem registrierten
     /// Familiennamen. Micro 5 traegt ein Leerzeichen im Namen — im Font-Editor
     /// gepruefte Tatsache, kein Tippfehler.
     public static let mitgeliefert = ["Micro 5", "Silkscreen", "Tiny5"]
@@ -20,9 +20,9 @@ public enum Schriften {
     /// deshalb stehen sie nicht in `Pixelgroessen.abgesegnet`.
     public static let systemschriften = ["Geneva", "Monaco", "Andale Mono", "Menlo", "PT Mono"]
 
-    /// Was die Sendeansicht zur Wahl stellt — **eine** Liste fuer alle
-    /// Oberflaechen und fuer die Schriftprobe. Sie stand frueher dreimal da
-    /// (Mac, iPhone, Messung), und die Messung kannte nur drei der acht Namen.
+    /// Was die Sendeansicht zur Wahl stellt — eine Liste fuer alle
+    /// Oberflaechen und fuer die Schriftprobe. Getrennte Listen liefen
+    /// auseinander: Eine fruehere Messung kannte nur drei der acht Namen.
     public static let auswahl = mitgeliefert + systemschriften
 
     /// Ist die Schrift auf diesem Geraet wirklich da?

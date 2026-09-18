@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import TC002Core
 
-/// **Die virtuelle Uhr im Betrieb** — der Dienst, sein Zustand und der
+/// Die virtuelle Uhr im Betrieb — der Dienst, sein Zustand und der
 /// Schalter dafür, an einer Stelle für alle drei Oberflächen.
 ///
 /// Eine gemeinsame Instanz und nicht je Ansicht eine: Es gibt genau einen

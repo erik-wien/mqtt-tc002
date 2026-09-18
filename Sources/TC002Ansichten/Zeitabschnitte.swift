@@ -2,26 +2,21 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Wie lange etwas zu sehen ist** — die drei Regler, die diese eine Frage
-/// beantworten, an einer Stelle statt an dreien.
-///
-/// Sie standen bis zum 14.09.2026 auseinander: „Seitenwechsel" und
-/// „Scrolltempo" unter „Einstellungen", die „Dauer" in der Sendezeile ganz
-/// unten. Zusammengehört haben sie trotzdem immer, und dass niemand mehr sagen
-/// konnte, worin sich Seitenwechsel und Dauer unterscheiden, war die Folge
-/// dieser Streuung.
+/// Wie lange etwas zu sehen ist — die drei Regler, die diese eine Frage
+/// beantworten, an einer Stelle statt an dreien: Getrennt liesse sich nicht
+/// mehr sagen, worin sich Seitenwechsel und Dauer unterscheiden.
 ///
 /// Der Unterschied, damit er nicht wieder verlorengeht:
 ///
-/// - **Seitenwechsel** ist eine Einstellung **des Geräts** (`carouselSpeed` in
-///   `/getConfig`): wie lange *irgendeine* Anzeige steht, bevor die Uhr zur
+/// - Seitenwechsel ist eine Einstellung des Geräts (`carouselSpeed` in
+///   `/getConfig`): wie lange irgendeine Anzeige steht, bevor die Uhr zur
 ///   nächsten blättert. Gilt für alle fünf Plätze zugleich.
-/// - **Scrolltempo** ebenso (`scrollSpeed`), und nur für Text, den die **Uhr
-///   selbst** setzt — den Weg „als Text".
-/// - **Dauer** reist mit *einer* Meldung mit (`duration` in der Nutzlast): die
+/// - Scrolltempo ebenso (`scrollSpeed`), und nur für Text, den die Uhr
+///   selbst setzt — den Weg „als Text".
+/// - Dauer reist mit einer Meldung mit (`duration` in der Nutzlast): die
 ///   eigene Standzeit dieser einen Anzeige.
 ///
-/// **Wie Dauer und Seitenwechsel zusammenwirken, ist nicht dokumentiert.** Ob
+/// Wie Dauer und Seitenwechsel zusammenwirken, ist nicht dokumentiert: Ob
 /// die Dauer den Seitenwechsel für ihre Anzeige überschreibt oder der kleinere
 /// Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4).
 /// Das steht so auch in der Hilfe; hier wird es nicht besser geraten.
@@ -34,7 +29,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
     /// dort zusammengestellt wird, und nicht Zustand dieses Bausteins.
     @Binding var dauerText: String
 
-    /// **Was die Ansicht sonst noch zur einzelnen Meldung zu sagen hat** — bei
+    /// Was die Ansicht sonst noch zur einzelnen Meldung zu sagen hat — bei
     /// „Senden“ das Lauftempo, im Editor nichts.
     ///
     /// Als Platz statt als Parameter, weil das Tempo an `weg` und `passt`
@@ -42,24 +37,23 @@ struct Zeitabschnitte<Zusatz: View>: View {
     /// Werte durchzugeben, damit dieser Baustein entscheiden kann, was der
     /// Aufrufer längst weiß.
     ///
-    /// Und **innerhalb** von „Nur diese Meldung“, nicht darüber: Das Tempo
+    /// Und innerhalb von „Nur diese Meldung“, nicht darüber: Das Tempo
     /// reist mit der Meldung mit wie die Dauer. Ein eigener Abschnitt daneben
     /// ließe offen, für wie viele Anzeigen er gilt — und genau diese Frage war
     /// hier schon einmal die falsch beantwortete.
     @ViewBuilder let zusatz: Zusatz
 
     /// Ob die aktive Uhr die Werksfirmware fährt. Nur dann sind die beiden
-    /// oberen Regler eine Einstellung **dieser** Uhr: Sie stehen in
+    /// oberen Regler eine Einstellung dieser Uhr: Sie stehen in
     /// `/getConfig`, und diesen Pfad gibt es bei AWTRIX NG nicht.
     private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
 
     var body: some View {
-        // **Die Ueberschriften nennen die Reichweite, nicht den Gegenstand.**
-        // „Diese Anzeige" und „Diese Uhr" standen hier zuerst, und der
-        // Anwender hat den Unterschied zweimal nicht verstanden — zu Recht:
+        // Die Ueberschriften nennen die Reichweite, nicht den Gegenstand:
         // Beide Abschnitte handeln von Sekunden, und woran die Sekunden
-        // haengen, sagten die Woerter nicht. „Nur diese Meldung" gegen „Alles,
-        // was diese Uhr zeigt" sagt es in der Ueberschrift selbst.
+        // haengen, sagt der Gegenstand allein nicht. „Nur diese Meldung"
+        // gegen „Alles, was diese Uhr zeigt" sagt es in der Ueberschrift
+        // selbst.
         Section {
             LabeledContent("Dauer (Sek.)") {
                 TextField("", text: $dauerText)
@@ -74,22 +68,20 @@ struct Zeitabschnitte<Zusatz: View>: View {
         } header: {
             Abschnittskopf("Nur diese Meldung", hilfe: lok("Dauer und Lauftempo reisen mit dieser einen Meldung mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung des Geräts und steht unter „Einstellungen“ — bei der Uhr, für die sie gilt."))
         } footer: {
-            // **Ein Satz unter der Karte, keine zweite Karte.** Bei einer
-            // AWTRIX NG blieb von „Alles, was diese Uhr zeigt" nichts uebrig
-            // als diese Begruendung — eine Ueberschrift, die die Reichweite
-            // von nichts nannte. Als Fusstext steht der Satz da, wo Fusstexte
+            // Ein Satz unter der Karte, keine zweite Karte: Bei einer
+            // AWTRIX NG bliebe von „Alles, was diese Uhr zeigt" nichts als
+            // diese Begruendung — eine Ueberschrift, die die Reichweite von
+            // nichts nennt. Als Fusstext steht der Satz da, wo Fusstexte
             // stehen, und verspricht keine Regler.
             if !nurUlanzi {
                 Text("Eine AWTRIX NG führt den Seitenwechsel selbst; unter „Einstellungen“ steht er deshalb nur bei einer Ulanzi-Werksfirmware.")
             }
         }
 
-        // **Ein eigener Abschnitt, keine Zeile im vorigen.** Am 14.09.2026
-        // stand das Lauftempo als Zeile unter der Dauer — und im schmalen
-        // Inspektor faellt die Beschriftung eines Segmentschalters weg. Uebrig
-        // blieb ein namenloses „langsam mittel schnell" unter „Dauer (Sek.)",
-        // mit einem Fusstext darunter, der von der Dauer handelt. Es las sich
-        // als Teil der Dauer.
+        // Ein eigener Abschnitt, keine Zeile im vorigen: Im schmalen
+        // Inspektor faellt die Beschriftung eines Segmentschalters weg — als
+        // Zeile unter „Dauer (Sek.)" waere er ein namenloses „langsam mittel
+        // schnell" und laese sich als Teil der Dauer.
         //
         // Der Abschnitt bringt seine Ueberschrift selbst mit, und die faellt
         // nicht weg. Was er dabei einbuesst — die Naehe zur Dauer, mit der er

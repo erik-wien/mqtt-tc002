@@ -9,13 +9,13 @@ import TC002Core
 /// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Dauer
 /// und Laufschrift.
 ///
-/// **„Senden als" ist am 18.09.2026 ersatzlos weg.** Siehe `SendeWeg` im Kern:
-/// Die App wählt den Weg selbst.
+/// „Senden als" gibt es hier nicht: Die App wählt den Weg selbst, siehe
+/// `SendeWeg` im Kern.
 ///
-/// **Die Dauer kam am 14.09.2026 dazu.** Sie stand als eigene Zeile neben den
-/// fünf Blöcken und nahm dort die Breite weg, die die Blöcke brauchen. Hier
-/// steht sie bei der Laufschrift — beide reisen mit *dieser einen* Meldung
-/// mit, und genau so hält es der Zeit-Reiter am Schreibtisch.
+/// Die Dauer steht bei der Laufschrift, nicht als eigene Zeile neben den
+/// fünf Blöcken — dort nähme sie die Breite weg, die die Blöcke brauchen.
+/// Beide reisen mit dieser einen Meldung mit, genau so wie der Zeit-Reiter
+/// am Schreibtisch.
 struct FormatblattiOS: View {
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool

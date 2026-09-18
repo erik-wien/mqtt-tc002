@@ -2,9 +2,9 @@ import Foundation
 
 /// Welche Schriftgroessen die Sendeansicht anbietet.
 ///
-/// **Eine Entscheidung, keine Messung.** Die Listen unten stammen aus der
-/// durchgesehenen Schriftprobe vom 13.09.2026: Ein Augenpaar hat jede Groesse
-/// jeder mitgelieferten Schrift angesehen und diese hier abgesegnet.
+/// Eine Entscheidung, keine Messung. Die Listen unten stammen aus einer
+/// durchgesehenen Schriftprobe: Ein Augenpaar hat jede Groesse jeder
+/// mitgelieferten Schrift angesehen und diese hier abgesegnet.
 /// `Schriftprobe` rechnet daran nicht mit — sie kann eine Groesse
 /// ausschliessen, nie eine empfehlen. Was angeboten wird, steht deshalb hier
 /// und nicht dort; die Schriftprobe zeigt beides nebeneinander, damit man den
@@ -15,7 +15,7 @@ public enum Pixelgroessen {
     public static let freierBereich: [Double] = Array(stride(from: 6.0, through: 16.0, by: 1.0))
 
     /// Die abgesegneten Groessen der drei mitgelieferten Pixelschriften —
-    /// durchgesehene Schriftprobe, 13.09.2026.
+    /// durchgesehene Schriftprobe.
     ///
     /// Alle drei haben Luecken. Eine arithmetische Folge ist das nicht, ein
     /// Schieber mit Schrittweite kann sie also nicht ausdruecken; das

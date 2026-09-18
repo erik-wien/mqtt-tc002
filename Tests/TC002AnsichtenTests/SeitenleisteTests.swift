@@ -1,17 +1,16 @@
 import XCTest
 @testable import TC002Ansichten
 
-/// Die Breite der Seitenleiste, **je Plattform eine**.
+/// Die Breite der Seitenleiste, je Plattform eine.
 ///
-/// Zweimal hat hier eine Zahl nicht gereicht: 170 brachen am iPad zu
-/// „Einstel-lungen" um, und am 14.09.2026 die 190 zu „Einstellun-gen". Beide
-/// Male war die Rechnung dieselbe Summe aus Einzelposten, und beide Male war
-/// sie zu klein — iPadOS legt um eine Seitenleistenzeile mehr herum, als sich
-/// aus den sichtbaren Teilen zusammenzaehlen laesst.
+/// 170 Punkte brechen am iPad zu „Einstel-lungen" um, 190 zu
+/// „Einstellun-gen" (gemessen am 14.09.2026): iPadOS legt um eine
+/// Seitenleistenzeile mehr herum, als sich aus den sichtbaren Teilen
+/// zusammenzählen lässt.
 ///
-/// Diese Tests pruefen **beide** Plattformen, gleich auf welcher sie laufen.
-/// Eine Zahl, die nur unter `#if os(macOS)` geprueft wird, ist für die
-/// iPad-Fassung ungeprueft — und genau dort ist es zweimal schiefgegangen.
+/// Diese Tests prüfen beide Plattformen, gleich auf welcher sie laufen.
+/// Eine Zahl, die nur unter `#if os(macOS)` geprüft wird, ist für die
+/// iPad-Fassung ungeprüft.
 final class SeitenleisteTests: XCTestCase {
 
     func testDerLaengsteEintragPasstAmMacInEineZeile() {
@@ -39,10 +38,9 @@ final class SeitenleisteTests: XCTestCase {
             Seitenleiste.breiteTouch, "am iPad bricht es bei der nächsten Textgröße um")
     }
 
-    /// **Die Messung selbst.** Ohne diese Zusicherung koennte jemand den
-    /// Verbrauch kleinrechnen und die Tests oben gruen bekommen, ohne dass die
-    /// Leiste breiter wuerde — die 190 haben am iPad nachweislich nicht
-    /// gereicht.
+    /// Ohne diese Zusicherung koennte jemand den Verbrauch kleinrechnen und
+    /// die Tests oben gruen bekommen, ohne dass die Leiste breiter wuerde —
+    /// die 190 haben am iPad nachweislich nicht gereicht.
     func testDieAlteBreiteWaereAmIPadZuSchmalGewesen() {
         XCTAssertGreaterThan(
             Seitenleiste.zeilenverbrauchTouch + Seitenleiste.laengsterEintragTouch, 190,
@@ -50,9 +48,9 @@ final class SeitenleisteTests: XCTestCase {
     }
 
     /// Und die Fensterforderung am Mac muss die dortige Leiste tragen:
-    /// Seitenleiste plus die gemessenen 600 Punkte Detailspalte plus Inspektor.
-    /// **Die iPad-Breite gehoert hier ausdruecklich nicht hinein** — auf dem
-    /// iPad gibt es kein Fenster zu ziehen.
+    /// Seitenleiste plus die gemessenen 600 Punkte Detailspalte plus
+    /// Inspektor. Die iPad-Breite gehoert hier nicht hinein — auf dem iPad
+    /// gibt es kein Fenster zu ziehen.
     func testDieMacFensterbreiteTraegtDieMacLeiste() {
         XCTAssertGreaterThanOrEqual(1140, Seitenleiste.breiteMac + 600 + 340,
                                     "das Fenster schneidet am Mac wieder eine der beiden Leisten an")

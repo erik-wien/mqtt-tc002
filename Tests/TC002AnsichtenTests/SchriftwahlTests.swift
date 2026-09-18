@@ -3,8 +3,8 @@ import XCTest
 
 /// Die Schriftwahl in der Kopfzeile der Schriftprobe.
 ///
-/// Zwei Haelften, und beide werden gebraucht: **was** gezeigt wird
-/// (`Schriftwahl.schriften(aus:)`) und dass die Wahl die Messung **nicht**
+/// Zwei Haelften, und beide werden gebraucht: was gezeigt wird
+/// (`Schriftwahl.schriften(aus:)`) und dass die Wahl die Messung nicht
 /// erneut anstoesst. Die zweite prueft der Uebersetzer nicht — ein
 /// `.task(id: wahl)` uebersetzt anstandslos und rastert danach bei jedem
 /// Wechsel der Wahl anderthalb Sekunden lang neu. Deshalb hier derselbe Weg wie

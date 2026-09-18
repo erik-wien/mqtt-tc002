@@ -1,15 +1,14 @@
 import XCTest
 
-/// **Die beiden Sendeansichten müssen das Maß auch wirklich durchreichen.**
+/// Die beiden Sendeansichten müssen das Maß auch wirklich durchreichen.
 ///
 /// Der Kern kann es seit `Anzeigemass` — aber ein Parameter mit Vorgabe ist
 /// genau deshalb gefährlich: Wer ihn an einer Stelle vergisst, bekommt keinen
-/// Übersetzerfehler, sondern wieder 52 × 16. Genau so ist der Fehler
-/// entstanden, den dieser Durchgang behebt.
+/// Übersetzerfehler, sondern wieder 52 × 16.
 ///
 /// Geprüft wird am Quelltext, wie in `KnopfstilTests`: Ob die Vorschau danach
-/// richtig **aussieht**, sieht man am Gerät; ob sie überhaupt danach fragt,
-/// steht hier.
+/// richtig aussieht, sieht man am Gerät; ob sie überhaupt danach fragt, steht
+/// hier.
 final class VorschaumassTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
@@ -68,12 +67,12 @@ final class VorschaumassTests: XCTestCase {
         }
     }
 
-    /// **Das vorberechnete GIF darf nicht in der falschen Größe ans Senden
-    /// gehen.** Beide Oberflächen können an mehrere Uhren senden (am Mac über
-    /// `ZielauswahlView`, am Telefon über „An alle Uhren senden"), während die
-    /// Vorschau immer nur einer Uhr gilt. Steht sie auf einer NG, ist ihr GIF
-    /// 32 × 8 — einer gleichzeitig beschickten TC002 füllte das ein Viertel
-    /// ihrer Anzeige.
+    /// Das vorberechnete GIF darf nicht in der falschen Größe ans Senden
+    /// gehen. Beide Oberflächen können an mehrere Uhren senden (am Mac über
+    /// `ZielauswahlView`, am Telefon über „An alle Uhren senden"), während
+    /// die Vorschau immer nur einer Uhr gilt. Steht sie auf einer NG, ist ihr
+    /// GIF 32 × 8 — einer gleichzeitig beschickten TC002 füllte das ein
+    /// Viertel ihrer Anzeige.
     func testDasVorberechneteGifGehtNurInDerSendegroesseMit() throws {
         for pfad in Self.stellen {
             let quelle = try ohneKommentare(pfad)

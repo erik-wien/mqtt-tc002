@@ -1,22 +1,21 @@
 import Foundation
 
-/// **Auf wie vielen Punkten gerastert wird** — Breite und Höhe der Anzeige,
+/// Auf wie vielen Punkten gerastert wird — Breite und Höhe der Anzeige,
 /// als ein Wert.
 ///
-/// Bis zum 15.09.2026 rechnete alles mit `Pixelfeld.breiteStandard` und
-/// `hoeheStandard`, also immer mit den 52 × 16 der Werksfirmware. Für eine
-/// AWTRIX NG ist das falsch: Ihre Anzeige hat acht Zeilen, und die Vorschau
-/// zeigte bis dahin ein Sechzehn-Zeilen-Bild in einem Rahmen, der auf 32 × 8
-/// gezeichnet ist — rechts blieb knapp ein Fünftel des Displayfeldes leer
+/// Fest mit `Pixelfeld.breiteStandard`/`hoeheStandard`, also mit den 52 × 16
+/// der Werksfirmware, zu rechnen ist für eine AWTRIX NG falsch: Ihre Anzeige
+/// hat acht Zeilen, ein Sechzehn-Zeilen-Bild in einem auf 32 × 8 gezeichneten
+/// Rahmen liesse rechts knapp ein Fünftel des Displayfeldes leer
 /// (`docs/superpowers/specs/2026-09-15-vorschau-feldgroesse-design.md`
 /// rechnet es vor).
 ///
-/// **Ein Wert und nicht zwei Zahlen.** Wer `breite:` und `hoehe:` einzeln
+/// Ein Wert und nicht zwei Zahlen. Wer `breite:` und `hoehe:` einzeln
 /// durchreicht, vergisst eine davon an einer Stelle und rastert dann 52 breit
 /// in ein Feld, das 32 ist — ein Fehler, der genau wie der jetzige aussähe und
 /// schwerer zu finden wäre.
 ///
-/// **Die Zahlen selbst stehen nicht hier**, sondern in `Uhr.anzeigemass`: Dort
+/// Die Zahlen selbst stehen nicht hier, sondern in `Uhr.anzeigemass`: Dort
 /// gehören sie hin, weil dort die Gattung und die vom Gerät gemeldete
 /// Panelbreite bekannt sind. `fuer(_:)` ist nur der Weg von dort hierher.
 public struct Anzeigemass: Equatable, Sendable {

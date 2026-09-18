@@ -85,7 +85,7 @@ final class LeinwandverlaufTests: XCTestCase {
 
 // MARK: - Weicht die Leinwand vom Bestand ab?
 
-/// „Ungesichert" heisst **nicht** „geht beim Beenden verloren" — der
+/// „Ungesichert" heisst nicht „geht beim Beenden verloren" — der
 /// Arbeitsstand ueberlebt den Programmlauf ohnehin —, sondern „weicht vom
 /// Bestand ab". Genau das entscheidet, ob „Neu", ein Groessenwechsel, ein
 /// geoeffnetes Bild oder ein geladenes Icon vorher fragen muessen.
@@ -120,7 +120,7 @@ extension LeinwandverlaufTests {
         XCTAssertTrue(verlauf.weichtAb(veraendert))
     }
 
-    /// Gefragt wird nicht, ob etwas geschehen ist, sondern ob es **jetzt**
+    /// Gefragt wird nicht, ob etwas geschehen ist, sondern ob es jetzt
     /// anders aussieht. Wer seinen Strich zuruecknimmt, steht wieder auf dem
     /// gesicherten Stand.
     ///
@@ -168,7 +168,7 @@ extension LeinwandverlaufTests {
                       "die Standzeit steht in der Datei — sie zu aendern weicht ab")
     }
 
-    /// „Neu" wirft den Weg weg **und** den Bezug zum Bestand: Danach liegt
+    /// „Neu" wirft den Weg weg und den Bezug zum Bestand: Danach liegt
     /// eine leere Flaeche auf dem Tisch, die in keiner Datei steht.
     ///
     /// Mutation: `gesichert = nil` aus `leeren()` entfernen — dann gilt nach

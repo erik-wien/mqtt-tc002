@@ -56,8 +56,8 @@ final class GeraetNGTests: XCTestCase {
         XCTAssertEqual(try geraet(.tc002).erkannteArt(), .tc002)
     }
 
-    /// **Ein `401` wird nicht geraten.** NG kann seine ganze Schnittstelle
-    /// hinter eine Anmeldung stellen; dann ist der Typ nicht festzustellen, und
+    /// Ein `401` wird nicht geraten: NG kann seine ganze Schnittstelle hinter
+    /// eine Anmeldung stellen; dann ist der Typ nicht festzustellen, und
     /// „also eine TC002" waere die falsche Antwort auf eine Frage, die gar
     /// nicht beantwortet wurde.
     func testEineAnmeldepflichtWirdGemeldetUndNichtGeraten() {
@@ -71,11 +71,10 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Das Praefix
 
-    /// **Der gefaehrlichste Unterschied der beiden Firmwares.** Die
-    /// Werksfirmware haengt `_` und die letzten vier MAC-Stellen an; NG nimmt
-    /// `mqttPrefix` genau so, wie es dasteht. Bliebe die Formel stehen,
+    /// Die Werksfirmware haengt `_` und die letzten vier MAC-Stellen an; NG
+    /// nimmt `mqttPrefix` genau so, wie es dasteht. Bliebe die Formel stehen,
     /// schriebe die App auf ein Thema, das kein Geraet abonniert — und NG
-    /// antwortet darauf **gar nicht**.
+    /// antwortet darauf gar nicht.
     func testDasNGPraefixBekommtKeinenMacAnhang() throws {
         let ergebnis = try geraet().praefixUndBasis()
         XCTAssertEqual(ergebnis.praefix, "wohnzimmer/uhr")
@@ -90,8 +89,8 @@ final class GeraetNGTests: XCTestCase {
     }
 
     /// Ist `mqttPrefix` leer, tritt die uid an seine Stelle — die
-    /// zwoelfstellige MAC. **Es gibt also, anders als bei der Werksfirmware,
-    /// keinen Fall „kein Praefix eingestellt".**
+    /// zwoelfstellige MAC. Anders als bei der Werksfirmware gibt es also
+    /// keinen Fall „kein Praefix eingestellt".
     func testOhneEingestelltesPraefixGiltDieUid() throws {
         Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":""}"#
         XCTAssertEqual(try geraet().themenPraefix(), "a4cf12ab34cd")
@@ -114,9 +113,9 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Die Masse der Anzeige
 
-    /// **Geholt und nicht angenommen.** Die Hoehe ist fest 8, die Breite ist
-    /// `panelWidth × panels` — eine 64er Kette ist vorgesehen, und eine App,
-    /// die 32 einprogrammiert, zeigte dort das falsche Bild.
+    /// Die Breite wird geholt, nicht angenommen: Die Hoehe ist fest 8, die
+    /// Breite ist `panelWidth × panels` — eine 64er Kette ist vorgesehen, und
+    /// eine App, die 32 einprogrammiert, zeigte dort das falsche Bild.
     func testDieAnzeigenbreiteKommtVomGeraet() throws {
         XCTAssertEqual(try geraet().praefixUndBasis().breite, 32)
 
@@ -151,10 +150,10 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Die Belegung
 
-    /// **Genauer als `customList` der Werksfirmware.** `origin` trennt unsere
-    /// Anzeigen von den eingebauten und von Berry-Skripten; die eingebauten
-    /// mitzuzaehlen hiesse, Bloecke als belegt zu zeigen, weil das Geraet eine
-    /// Uhrzeit anzeigt.
+    /// `origin` trennt unsere Anzeigen von den eingebauten und von
+    /// Berry-Skripten — genauer als `customList` der Werksfirmware; die
+    /// eingebauten mitzuzaehlen hiesse, Bloecke als belegt zu zeigen, weil das
+    /// Geraet eine Uhrzeit anzeigt.
     func testNurDieSelbstAbgelegtenAnzeigenZaehlen() throws {
         XCTAssertEqual(try geraet().anzeigennamen(), ["meldung2"])
     }
@@ -177,7 +176,7 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Anlegen, loeschen, umschalten
 
-    /// Der Name steht bei NG **im Pfad**, nicht in einer Abfrage, und die
+    /// Der Name steht bei NG im Pfad, nicht in einer Abfrage, und die
     /// Methode ist `PUT`. `Content-Type: application/json` ist dabei Pflicht:
     /// Ohne ihn wird abgewiesen, bevor der Rumpf gelesen wird.
     func testAnlegenGehtPerPutAufDenNamenImPfad() throws {
@@ -189,9 +188,9 @@ final class GeraetNGTests: XCTestCase {
                        #"{"text":"hallo"}"#)
     }
 
-    /// **Wieder gegenlaeufig.** Ueber HTTP loescht bei der Werksfirmware der
-    /// Rumpf `{}`; bei NG antwortet genau das `422` und verweist auf eine
-    /// eigene Route — `DELETE /api/v1/apps/{name}`, ohne Rumpf.
+    /// Ueber HTTP loescht bei der Werksfirmware der Rumpf `{}`; bei NG
+    /// antwortet genau das `422` und verweist auf eine eigene Route —
+    /// `DELETE /api/v1/apps/{name}`, ohne Rumpf.
     func testLoeschenGehtPerDeleteUndOhneRumpf() throws {
         try geraet().anzeigeLoeschen(name: "meldung1")
         XCTAssertEqual(Doppelgaenger.pfade, ["/api/v1/apps/meldung1"])
@@ -200,7 +199,7 @@ final class GeraetNGTests: XCTestCase {
     }
 
     /// Umschalten ist ein `PUT` auf `/api/v1/apps/active` mit dem Namen im
-    /// **Rumpf** — dieselben Bytes, die ueber MQTT auf `cmd/apps/switch` gingen.
+    /// Rumpf — dieselben Bytes, die ueber MQTT auf `cmd/apps/switch` gingen.
     func testUmschaltenGehtPerPutMitDemNamenImRumpf() throws {
         try geraet().umschalten(auf: "meldung2")
         XCTAssertEqual(Doppelgaenger.pfade, ["/api/v1/apps/active"])
@@ -208,9 +207,9 @@ final class GeraetNGTests: XCTestCase {
         XCTAssertEqual(Doppelgaenger.gesendeteRuempfe["/api/v1/apps/active"], #"{"name":"meldung2"}"#)
     }
 
-    /// **Die Begruendung steht im Rumpf einer Antwort mit Fehlerstatus.** Wer
-    /// den Status vorher zum Fehler macht, wirft sie weg und meldet „Status
-    /// 422" statt „validationFailed im Feld durationMs".
+    /// Die Begruendung steht im Rumpf einer Antwort mit Fehlerstatus. Wer den
+    /// Status vorher zum Fehler macht, wirft sie weg und meldet „Status 422"
+    /// statt „validationFailed im Feld durationMs".
     func testDieBegruendungAusDemFehlerrumpfKommtDurch() {
         Doppelgaenger.statusCodes["/api/v1/apps/pushed/meldung1"] = 422
         Doppelgaenger.antworten["/api/v1/apps/pushed/meldung1"] =
@@ -231,7 +230,7 @@ final class GeraetNGTests: XCTestCase {
         XCTAssertNoThrow(try geraet().anzeigeSetzen(#"{"text":"x"}"#, name: "meldung1"))
     }
 
-    /// **Eine ungueltige Adresse ist kein Befund.** Sie stillschweigend zur
+    /// Eine ungueltige Adresse ist kein Befund. Sie stillschweigend zur
     /// Werksfirmware zu erklaeren verdeckte den eigentlichen Fehler — und der
     /// Anwender saehe „ist eine Ulanzi TC002" statt „da steht ein Leerzeichen
     /// in der Adresse".

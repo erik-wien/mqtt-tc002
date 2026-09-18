@@ -15,7 +15,7 @@ public struct VerbindungView: View {
     @FocusState private var kennwortFokus: Bool
 
     /// Wo die virtuelle Uhr aufgeht: am Mac als eigenes Fenster, am iPad als
-    /// Einblendung. Die Handlung kommt **herein** und wird hier nicht
+    /// Einblendung. Die Handlung kommt herein und wird hier nicht
     /// gewaehlt: `openWindow` gibt es unter iOS zwar als Aufruf, aber er tut
     /// dort nichts — deshalb steht er allein in der Mac-App, und diese
     /// Ansicht weiss gar nicht, dass es Fenster gibt (`PlattformwegeTests`).
@@ -35,18 +35,18 @@ public struct VerbindungView: View {
         Form {
             Section("Uhren") {
                 ForEach($zustand.uhren) { $uhr in
-                    // **Zwei Zeilen, nicht eine.** Neun Bedienelemente in einer
+                    // Zwei Zeilen, nicht eine: Neun Bedienelemente in einer
                     // Reihe brauchen rund 820 Punkte; der Kasten eines
                     // gruppierten Formulars ist am Mac aber bei 704 gedeckelt
-                    // und zentriert — gemessen am 14.09.2026 offscreen, bei 900
-                    // und bei 1200 Punkten Fensterbreite derselbe Kasten.
-                    // `.frame(maxWidth: .infinity)` hilft nicht, der Deckel
-                    // sitzt im Stil. Uebrig blieb eine Zeile, in der „Abfragen"
-                    // und „Entfernen" zu „A…" und „E…" zusammenschnurrten und
-                    // das Praefix ueber zwei Zeilen brach.
+                    // und zentriert, gleich ob das Fenster 900 oder 1200
+                    // Punkte breit ist. `.frame(maxWidth: .infinity)` hilft
+                    // nicht, der Deckel sitzt im Stil. Eine Zeile liesse
+                    // „Abfragen" und „Entfernen" zu „A…" und „E…"
+                    // zusammenschnurren und das Praefix ueber zwei Zeilen
+                    // brechen.
                     //
-                    // Oben steht, was die Uhr **ist**, unten, was sie gerade
-                    // **meldet** und was man mit ihr **tut**.
+                    // Oben steht, was die Uhr ist, unten, was sie gerade
+                    // meldet und was man mit ihr tut.
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Button {
@@ -55,14 +55,14 @@ public struct VerbindungView: View {
                                 Image(systemName: zustand.aktiveID == uhr.id ? "largecircle.fill.circle" : "circle")
                             }
                             .buttonStyle(.plain)
-                            // **Nicht „das Ziel beim Senden"**, und genau so stand
-                            // es bis zum 14.09.2026 hier. Das stimmt nur, solange
-                            // niemand unter „Senden" ein eigenes Ziel gewaehlt hat
-                            // (`AppZustand.ziele()` faellt dann auf die aktive Uhr
-                            // zurueck). Wovon die Wahl **immer** entscheidet, ist,
-                            // welche Uhr die App zeigt — und wer das verwechselt,
-                            // sucht die Erklaerung fuer einen falschen
-                            // Geraeterahmen an der falschen Stelle.
+                            // Nicht „das Ziel beim Senden": Das stimmt nur,
+                            // solange niemand unter „Senden" ein eigenes Ziel
+                            // gewaehlt hat (`AppZustand.ziele()` faellt dann
+                            // auf die aktive Uhr zurueck). Die Wahl
+                            // entscheidet immer, welche Uhr die App zeigt —
+                            // und wer das verwechselt, sucht die Erklaerung
+                            // fuer einen falschen Geraeterahmen an der
+                            // falschen Stelle.
                             .help("Die angesehene Uhr: Vorschau, Geräterahmen, die fünf Blöcke und der Zeit-Reiter beziehen sich auf sie")
                             .accessibilityLabel("Diese Uhr ansehen")
 
@@ -81,13 +81,12 @@ public struct VerbindungView: View {
                             .labelsHidden()
                             .pickerStyle(.segmented)
                             .frame(width: 116)
-                            // **Der Tausch gehoert an den Schalter, nicht unter die
-                            // Liste.** Als Fusstext stand er bis zum 14.09.2026 da
-                            // und nahm den Platz weg, an dem jetzt steht, was der
-                            // Punkt links bedeutet. Am Schalter kostet er keine
-                            // Zeile — und er steht dort, wo die Wahl getroffen
-                            // wird. Ausfuehrlich steht beides in der Hilfe
-                            // (`HilfeInhalt`, „Betriebsart: HTTP oder MQTT").
+                            // Der Tausch-Hinweis gehoert an den Schalter,
+                            // nicht als Fusstext unter die Liste — dort
+                            // kostet er keine Zeile und steht, wo die Wahl
+                            // getroffen wird. Ausfuehrlich steht beides in
+                            // der Hilfe (`HilfeInhalt`, „Betriebsart: HTTP
+                            // oder MQTT").
                             .help("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
                             Picker("Geräteart", selection: geraeteart($uhr)) {
                                 ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
@@ -140,16 +139,14 @@ public struct VerbindungView: View {
                 Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            // **Die Einstellungen der angesehenen Uhr** — Seitenwechsel und
-            // Scrolltempo. Sie standen vom 14. bis zum 18.09.2026 im
-            // Zeit-Reiter des Inspektors, neben Dauer und Lauftempo; dort
-            // standen damit zwei Sorten Zustand nebeneinander, die mit *einer*
-            // Meldung mitreisende und die, die auf dem Geraet bleibt. Der
-            // Unterschied, um dessentwillen sie umgezogen waren, steht jetzt
-            // als (?) an beiden Stellen.
+            // Die Einstellungen der angesehenen Uhr — Seitenwechsel und
+            // Scrolltempo. Nicht im Zeit-Reiter des Inspektors neben Dauer
+            // und Lauftempo: Dort stuenden zwei Sorten Zustand nebeneinander,
+            // die mit einer Meldung mitreisende und die, die auf dem Geraet
+            // bleibt. Der Unterschied steht als (?) an beiden Stellen.
             Uhreinstellungen(zustand: zustand)
 
-            // **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist
+            // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
             // keine technische Mitschrift, sondern das, was man geschickt hat, und
             // ein Druck darauf stellt es wieder her.
             Section {
@@ -160,7 +157,7 @@ public struct VerbindungView: View {
                         .font(.footnote).foregroundStyle(.secondary)
             }
 
-            // **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
+            // Ab Werk aus: Das Protokoll ist ein Werkzeug fuer den Fall, dass
             // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
             // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
             // raeumt das Vorhandene weg.
@@ -171,13 +168,13 @@ public struct VerbindungView: View {
             }
 
             Section("Broker") {
-                // Der Abschnitt wird **nicht** ausgeblendet und nicht
+                // Der Abschnitt wird nicht ausgeblendet und nicht
                 // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge
                 // das Formular bei jedem Griff an die Betriebsart; abgeblendet
-                // liesse sich ein Broker nicht mehr eintragen, **bevor** man
+                // liesse sich ein Broker nicht mehr eintragen, bevor man
                 // eine Uhr auf MQTT stellt — und genau in der Reihenfolge geht
                 // man vor. Die Felder sind auch nicht wirkungslos: Sie wirken,
-                // sobald eine Uhr sie benutzt. Nur das gehört gesagt.
+                // sobald eine Uhr sie benutzt.
                 if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
                     Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
                         .font(.footnote).foregroundStyle(.secondary)
@@ -221,14 +218,13 @@ public struct VerbindungView: View {
             Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
         }
         .formStyle(.grouped)
-        // **Beim Aufschlagen fragen, nicht erst auf Druck.** Praefix, Gattung
-        // und Verbindungsstand sind genau das, was man hier wissen will; bis
-        // zum 18.09.2026 stand dort nichts, bis man je Uhr auf „Abfragen"
-        // gedrueckt hatte. Die Abrufe laufen nebeneinander, eine stumme Uhr
-        // haelt die uebrigen nicht auf.
+        // Beim Aufschlagen fragen, nicht erst auf Druck: Praefix, Gattung
+        // und Verbindungsstand sind genau das, was man hier wissen will. Die
+        // Abrufe laufen nebeneinander, eine stumme Uhr haelt die uebrigen
+        // nicht auf.
         .task { zustand.alleAbfragen() }
         .padding()
-        // `.padding()` legt sich **um** die rollende Flaeche, nicht in sie
+        // `.padding()` legt sich um die rollende Flaeche, nicht in sie
         // hinein: Der Inhalt rollt bis an ihre Kante, und der letzte Abschnitt
         // endete buendig am Fensterrand. Ein Rand innerhalb der Rollflaeche
         // endet dagegen mit dem Inhalt.

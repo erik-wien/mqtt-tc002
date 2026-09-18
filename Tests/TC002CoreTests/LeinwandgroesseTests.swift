@@ -19,7 +19,7 @@ final class LeinwandgroesseTests: XCTestCase {
         XCTAssertTrue(Leinwandgroesse.anzeige.sendbar)
     }
 
-    /// Eine Nummer gibt es beim 8×8 (LaMetric) **und** beim 16×52 (Ulanzi
+    /// Eine Nummer gibt es beim 8×8 (LaMetric) und beim 16×52 (Ulanzi
     /// vergibt sie fuer seine „Pixel Art 16×52"), nicht aber beim 16×16 —
     /// diese Groesse ist nicht kanonisch, sie stammt von uns.
     ///
@@ -31,7 +31,7 @@ final class LeinwandgroesseTests: XCTestCase {
         XCTAssertTrue(Leinwandgroesse.anzeige.mitNummer)
     }
 
-    /// **Eine Nummer haben und nach ihr heissen ist zweierlei.** Nur das 8×8
+    /// Eine Nummer haben und nach ihr heissen ist zweierlei: Nur das 8×8
     /// liegt unter seiner Nummer; die Anzeige heisst weiter nach ihrem Namen,
     /// sonst waere jede bestehende Bildersammlung unlesbar.
     ///
@@ -68,9 +68,8 @@ final class LeinwandgroesseTests: XCTestCase {
         }
     }
 
-    /// **C2.** Eingesetzt wird nur, was **kleiner oder gleich gross** ist.
-    /// Der umgekehrte Weg ist ausdruecklich nicht gemeint: Verkleinern
-    /// zerstoert, und genau das war der Mangel, den C1 und C2 beheben.
+    /// C2: Eingesetzt wird nur, was kleiner oder gleich gross ist. Der
+    /// umgekehrte Weg ist ausdruecklich nicht gemeint: Verkleinern zerstoert.
     func testNurKleineresLaesstSichEinsetzen() {
         XCTAssertEqual(Leinwandgroesse.icon8.aufnehmbar, [],
                        "8×8 ist die kleinste — dort gibt es nichts einzusetzen")
@@ -88,7 +87,7 @@ final class LeinwandgroesseTests: XCTestCase {
         XCTAssertNil(Leinwandgroesse.icon8.einsatz(in: .icon8), "in sich selbst auch nicht")
     }
 
-    /// Hochgerechnet wird **nur in ein Icon**. In die Anzeige geht ein Icon in
+    /// Hochgerechnet wird nur in ein Icon. In die Anzeige geht ein Icon in
     /// seiner Groesse, an genau der Stelle, an der es auch unter „Senden"
     /// laege — dieselbe Rechnung wie `Meldungsbau.iconY`, und nicht daneben
     /// noch einmal hingeschrieben.

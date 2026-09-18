@@ -4,7 +4,7 @@ import Foundation
 /// Dateien liegt: eine JSON-Liste flacher Woerterbuecher, je Eintrag entweder
 /// `nummer` (Icons) oder `datei` (Bilder) als Schluessel.
 ///
-/// Beim Umzug darf sie **nicht** wie eine gewoehnliche Datei behandelt werden.
+/// Beim Umzug darf sie nicht wie eine gewoehnliche Datei behandelt werden.
 /// Sie ueberschreiben hiesse, den Namen jedes Icons zu verlieren, das nur die
 /// andere Seite kennt — die Datei waere da, ihr Name nicht, und im Bestand
 /// stuende die nackte Nummer.
@@ -50,20 +50,17 @@ public enum Namensliste {
 
 /// Der Hinweg in den iCloud-Behaelter und der Rueckweg heraus.
 ///
-/// **Kopiert wird, nicht verschoben** — in beide Richtungen. Das ist der ganze
-/// Grund, warum der Umzug ungefaehrlich ist: Nach dem Einschalten liegt der
-/// oertliche Bestand unveraendert da, wo er lag, und wer den Abgleich wieder
-/// abschaltet, findet ihn vor. In diesem Projekt hat ein Formatwechsel schon
-/// einmal beinahe alle Einstellungen unlesbar gemacht; ein Umzug, der den
-/// Ursprung wegraeumt, waere derselbe Fehler noch einmal.
+/// Kopiert wird, nicht verschoben — in beide Richtungen. Nach dem
+/// Einschalten liegt der oertliche Bestand unveraendert da, wo er lag, und
+/// wer den Abgleich wieder abschaltet, findet ihn vor.
 ///
-/// **Der Behaelter fuehrt, in beide Richtungen.** Beim Einschalten, weil dort
+/// Der Behaelter fuehrt, in beide Richtungen. Beim Einschalten, weil dort
 /// schon der Bestand des anderen Geraets liegen kann — ihn zu ueberschreiben
 /// waere genau das Gegenteil eines Abgleichs. Beim Abschalten, weil der
 /// oertliche Bestand seither nur noch eine Momentaufnahme vom Tag des
 /// Einschaltens ist.
 ///
-/// **Was das kostet, ehrlich benannt:** Eine Datei, die im Behaelter geloescht
+/// Was das kostet, ehrlich benannt: Eine Datei, die im Behaelter geloescht
 /// wurde, liegt oertlich noch und kommt beim Abschalten zurueck. Ein
 /// aufgetauchtes Icon ist der Preis dafuer, dass Abschalten nie etwas
 /// wegnimmt — und das ist die Richtung, in der ein Fehler verzeihlich ist.
@@ -100,16 +97,15 @@ public enum Bestandsumzug {
     /// Unterordner gibt es in diesen Bestaenden nicht; einer, den doch jemand
     /// anlegt, bleibt liegen, statt den Umzug abzubrechen.
     @discardableResult
-    /// **Liegt dort schon etwas — auch wenn es noch nicht heruntergeladen
-    /// ist?**
+    /// Liegt dort schon etwas — auch wenn es noch nicht heruntergeladen
+    /// ist?
     ///
     /// `FileManager.fileExists` sagt im iCloud-Behaelter nein zu einer Datei,
     /// die dort sehr wohl liegt, aber nur als Platzhalter: Der heisst
-    /// `.82.gif.icloud` und traegt den Inhalt noch nicht. Genau daran ist der
-    /// Umzug am 14.09.2026 gescheitert — das zweite Geraet hielt den Behaelter
-    /// fuer leer, kopierte seinen ganzen Bestand hinein, und iCloud machte aus
-    /// den doppelten Schreibvorgaengen Konfliktkopien: `82 2.gif`, `Scan 2`,
-    /// und im Bestand standen sie als eigene Icons.
+    /// `.82.gif.icloud` und traegt den Inhalt noch nicht. Haelt ein Geraet den
+    /// Behaelter deshalb fuer leer und kopiert seinen ganzen Bestand hinein,
+    /// macht iCloud aus den doppelten Schreibvorgaengen Konfliktkopien —
+    /// `82 2.gif`, `Scan 2` — die im Bestand als eigene Icons stehen.
     ///
     /// Ein Platzhalter zaehlt deshalb als vorhanden. Lieber einmal zu wenig
     /// kopiert — die Datei ist ja da — als eine Kopie zu erzeugen, die niemand
@@ -122,14 +118,14 @@ public enum Bestandsumzug {
         return fm.fileExists(atPath: platzhalter.path)
     }
 
-    /// Legt die vier Ordner im Behaelter an — **koordiniert**.
+    /// Legt die vier Ordner im Behaelter an — koordiniert.
     ///
     /// `NSFileCoordinator` mit `.forMerging` wartet, bis der Stand des Ortes
     /// wirklich bekannt ist, und haelt andere Schreiber derweil auf. Ohne das
     /// legten zwei Geraete dieselben vier Ordner unabhaengig an, jedes bevor
     /// der Behaelter bei ihm angekommen war, und iCloud machte acht daraus.
     ///
-    /// **Blockiert** und gehoert deshalb nicht auf den Zeichenweg — gerufen
+    /// Blockiert und gehoert deshalb nicht auf den Zeichenweg — gerufen
     /// wird nur beim Umschalten und beim Vorwaermen, beides ohnehin im
     /// Hintergrund.
     @discardableResult

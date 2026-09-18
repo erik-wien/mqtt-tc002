@@ -215,7 +215,7 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.slotzustand(2, belegt: false, gedaechtnis: gedaechtnis), .frei)
     }
 
-    /// Die Bloecke richten sich nach der **aktiven** Uhr, nicht nach der
+    /// Die Bloecke richten sich nach der aktiven Uhr, nicht nach der
     /// ersten Zieluhr: Bei mehreren Zieluhren waere „die erste" willkuerlich,
     /// und zwei Ansichten derselben Sitzung zeigten verschiedene Bilder.
     func testSlotzustandRichtetSichNachDerAktivenUhr() throws {
@@ -238,7 +238,7 @@ final class AppZustandTests: XCTestCase {
     }
 
     /// Der eine Griff des iPhone-Titelmenues: Umschalten wechselt die
-    /// angesehene Uhr **und** das Sendeziel. Setzte es nur `zielIDs` — so war
+    /// angesehene Uhr und das Sendeziel. Setzte es nur `zielIDs` — so war
     /// es —, zeigten die fuenf Bloecke weiter den Stand der vorigen Uhr,
     /// waehrend an die neue gesendet wird.
     func testUmschaltenNimmtBloeckeUndZielMit() throws {
@@ -261,19 +261,18 @@ final class AppZustandTests: XCTestCase {
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufB),
                        "Die Blöcke müssen der angesehenen Uhr folgen, nicht der vorher angesehenen.")
-        // **Das Ziel zieht nicht mehr mit** (18.09.2026). Es bleibt auf der
-        // Uhr, die gewaehlt war; wer anderswohin senden will, waehlt das
-        // ausdruecklich. Die Bloecke oben folgen dem Blick, das Ziel der Wahl
-        // — zwei Griffe, zwei Wirkungen.
+        // Das Ziel zieht nicht mehr mit: Es bleibt auf der Uhr, die gewaehlt
+        // war; wer anderswohin senden will, waehlt das ausdruecklich. Die
+        // Bloecke oben folgen dem Blick, das Ziel der Wahl — zwei Griffe,
+        // zwei Wirkungen.
         XCTAssertEqual(zustand.ziele(), [a],
                        "Nachsehen darf das gewählte Ziel nicht verschieben.")
     }
 
-    /// **Ein gewaehltes Ziel bleibt stehen**, auch wenn man anderswohin sieht.
-    /// Bis zum 18.09.2026 zog das Umschalten am Telefon das Ziel mit — dort
-    /// waren beide dasselbe. Seit die Zielwahl auf jeder Oberflaeche ihren
-    /// eigenen Griff hat, waere das Mitziehen eine stille Aenderung an etwas,
-    /// das jemand von Hand gesetzt hat.
+    /// Ein gewaehltes Ziel bleibt stehen, auch wenn man anderswohin sieht:
+    /// Jede Oberflaeche hat ihren eigenen Griff fuer die Zielwahl, und ein
+    /// Mitziehen beim Ansehen waere eine stille Aenderung an etwas, das
+    /// jemand von Hand gesetzt hat.
     func testEinGewaehltesZielBleibtBeimUmschaltenStehen() throws {
         let a = Uhr(name: "Küche", host: "kueche.example", praefix: "pa")
         let b = Uhr(name: "Büro", host: "buero.example", praefix: "pb")
@@ -288,8 +287,8 @@ final class AppZustandTests: XCTestCase {
                        "Nachsehen darf die Zielmenge nicht anruehren.")
     }
 
-    /// **Eine Meldung, die aelter ist als die eigene Sendung, kennt sie noch
-    /// nicht.**
+    /// Eine Meldung, die aelter ist als die eigene Sendung, kennt sie noch
+    /// nicht.
     ///
     /// Die gemeldete Liste der Uhr ist die bessere Auskunft und ueberstimmt
     /// deshalb die eigene Buchfuehrung (`anzeigenAufUhr`). Nur kommt sie zu
@@ -298,7 +297,7 @@ final class AppZustandTests: XCTestCase {
     /// aus der Liste — der Block fiel auf „frei" zurueck und wurde weiss.
     /// Beobachtet am 18.09.2026.
     ///
-    /// Die Rangfolge bleibt; nur was wir **selbst** gerade bestaetigt haben,
+    /// Die Rangfolge bleibt; nur was wir selbst gerade bestaetigt haben,
     /// ueberlebt eine Meldung, die es nicht kennt. Bis die Uhr es entweder
     /// meldet oder ausdruecklich widerspricht (leere Nutzlast, Loeschen).
     func testEineVeralteteMeldungLoeschtDieFrischeSendungNicht() throws {
@@ -317,7 +316,7 @@ final class AppZustandTests: XCTestCase {
                        "Die eigene Sendung darf eine Meldung, die sie nicht kennt, ueberleben.")
     }
 
-    /// **Aber nicht gegen einen Widerspruch.** Loescht jemand die Anzeige —
+    /// Aber nicht gegen einen Widerspruch: Loescht jemand die Anzeige —
     /// hier ueber `anzeigeGeloescht`, wie es eine leere Nutzlast ausloest —,
     /// ist sie weg und bleibt weg.
     func testEinAusdrueecklichesLoeschenSchlaegtDieFrischeSendung() throws {
@@ -336,14 +335,14 @@ final class AppZustandTests: XCTestCase {
                       "Wer loescht, hat das letzte Wort — auch gegen die eigene Buchfuehrung.")
     }
 
-    /// **Eine Sendung steht im Verlauf — mit allen Reglern.**
+    /// Eine Sendung steht im Verlauf — mit allen Reglern.
     ///
     /// Und mit den Uhren, die sie genommen haben: ein Eintrag je Sendung, nicht
     /// je Uhr. Der Verlauf erzaehlt, was man geschickt hat, und das war eine
     /// Meldung, auch wenn sie an drei Uhren ging.
     func testEineSendungStehtMitAllenReglernImVerlauf() async throws {
         // Eine HTTP-Uhr samt untergeschobener Sitzung: So laesst sich eine
-        // **gelungene** Sendung nachstellen, ohne dass ein Geraet im Netz
+        // gelungene Sendung nachstellen, ohne dass ein Geraet im Netz
         // haengt — das waere hier verboten (CLAUDE.md).
         let uhr = Uhr(name: "Küche", host: "uhr.example", betriebsart: .http)
         d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
@@ -374,14 +373,14 @@ final class AppZustandTests: XCTestCase {
         XCTAssertFalse(eintrag.uhr.isEmpty, "Es gehoert dazu, an wen es ging.")
     }
 
-    /// **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist keine
+    /// Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist keine
     /// technische Mitschrift, sondern das, was man geschickt hat.
     func testDerVerlaufIstAbWerkAn() throws {
         d.removeObject(forKey: "verlaufAn")
         XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).verlaufAn)
     }
 
-    /// **Ohne Regler kein Eintrag.** Ein gemaltes Bild kommt ohne sie her; ein
+    /// Ohne Regler kein Eintrag: Ein gemaltes Bild kommt ohne sie her; ein
     /// Eintrag, den anzutippen nichts taete, waere eine Falle.
     func testEinGemaltesBildStehtNichtImVerlauf() async throws {
         let zustand = try zustandMitEinerUhr()
@@ -404,7 +403,7 @@ final class AppZustandTests: XCTestCase {
         XCTAssertTrue(zustand.verlauf().isEmpty)
     }
 
-    /// **Das Protokoll ist aus, solange es niemand einschaltet.**
+    /// Das Protokoll ist aus, solange es niemand einschaltet.
     ///
     /// Es ist ein Werkzeug fuer den Fall, dass etwas nicht klappt — und kein
     /// Mitschnitt, den eine App von sich aus fuehrt. Ausgeschaltet kostet es
@@ -429,16 +428,14 @@ final class AppZustandTests: XCTestCase {
         XCTAssertTrue(zustand.protokoll.isEmpty)
     }
 
-    /// **Die Bloecke gehoeren der angesehenen Uhr — auch beim Belegtsein.**
+    /// Die Bloecke gehoeren der angesehenen Uhr — auch beim Belegtsein.
     ///
     /// Sie zeigen den Stand der angesehenen Uhr (`slotzustand` fragt
-    /// `referenzUhr`), aber **ob** ein Platz belegt ist, rechneten die drei
-    /// Sendeansichten bis zum 18.09.2026 aus `ziele()` — den Empfaengern.
-    /// Solange Ansehen und Senden dasselbe waren, fiel das nie auf; seit sie
-    /// getrennt sind, zeigte ein Block die Belegung der einen und den Inhalt
-    /// der anderen Uhr. Wer eine Uhr ansah, an die er gerade nicht sendet, sah
-    /// fuenf leere Plaetze — auch fuer das, was er selbst darauf geschickt
-    /// hatte.
+    /// `referenzUhr`), und ob ein Platz belegt ist, muss ebenfalls von ihr
+    /// kommen, nicht von `ziele()` — den Empfaengern. Rechnete die Belegung
+    /// aus den Empfaengern, saehe, wer eine Uhr ansieht, an die er gerade
+    /// nicht sendet, fuenf leere Plaetze — auch fuer das, was er selbst
+    /// darauf geschickt hat.
     func testDieBelegtenPlaetzeGehoerenDerAngesehenenUhr() throws {
         let angesehen = Uhr(name: "Angesehen", host: "a.example", praefix: "pa")
         let ziel = Uhr(name: "Ziel", host: "b.example", praefix: "pb")
@@ -462,16 +459,15 @@ final class AppZustandTests: XCTestCase {
         XCTAssertTrue(zustand.belegtePlaetze().isEmpty)
     }
 
-    /// **Die App schreibt nie eine leere Zielmenge** — und das ist keine
+    /// Die App schreibt nie eine leere Zielmenge — und das ist keine
     /// Schoenheitsfrage, sondern eine Verstaendigung mit dem
     /// Kommandozeilenwerkzeug.
     ///
     /// Beide lesen dieselben Schluessel, aber verschieden: `ziele()` hier
     /// liest leer als „die angesehene Uhr", `Einstellungen.ziele` (Werkzeug
-    /// und Kurzbefehle) liest leer als **alle**. Bis zum 18.09.2026 schrieb
-    /// der Knopf „Keine" im Zielblatt genau diese leere Menge: Die App sendete
-    /// danach an eine Uhr, das Werkzeug an alle — dieselbe Einstellung, zwei
-    /// Bedeutungen, und keine davon stand irgendwo.
+    /// und Kurzbefehle) liest leer als alle. Eine leere Zielmenge waere also
+    /// fuer die App eine Uhr, fuer das Werkzeug alle — dieselbe Einstellung,
+    /// zwei Bedeutungen.
     ///
     /// Das letzte Ziel abzuwaehlen faellt deshalb auf die angesehene Uhr
     /// zurueck, statt nichts zu hinterlassen.
@@ -700,10 +696,10 @@ final class AppZustandTests: XCTestCase {
     /// Mit der Uhr geht auch ihre Slotdatei. Die Kennung einer entfernten Uhr
     /// kommt nicht zurueck — die Datei laege sonst fuer immer unter
     /// Application Support, ohne dass sie noch jemand liest.
-    /// Woran „noch nichts eingerichtet" haengt: an einer Uhr **und** an einer
-    /// eingetragenen Brokeradresse. Seit die Vorgabe leer ist, sagt der Wert
-    /// das selbst — eine frische Installation hat keine Adresse, und nur eine
-    /// Eingabe macht daraus eine.
+    /// Woran „noch nichts eingerichtet" haengt: an einer Uhr und an einer
+    /// eingetragenen Brokeradresse. Die Vorgabe ist leer, der Wert sagt das
+    /// also selbst — eine frische Installation hat keine Adresse, und nur
+    /// eine Eingabe macht daraus eine.
     func testEingerichtetVerlangtUhrUndEingetragenenBroker() throws {
         let uhr = Uhr(name: "Küche", host: "10.0.0.5")
 
@@ -735,7 +731,7 @@ final class AppZustandTests: XCTestCase {
 
     // MARK: - Betriebsart
 
-    /// **Die Vorgabe steht hier und nirgends sonst.** `Uhr.betriebsart` ist ein
+    /// Die Vorgabe steht hier und nirgends sonst. `Uhr.betriebsart` ist ein
     /// Optional, und `nil` heisst dort `.mqtt` — das darf es, weil jede neu
     /// angelegte Uhr `.http` ausdruecklich mitbekommt. Bliebe es hier weg,
     /// waere `nil` zweideutig: einmal „aus dem Bestand", einmal „eben
@@ -778,7 +774,7 @@ final class AppZustandTests: XCTestCase {
 
     /// Der Praefix-Filter in `ziele()` war fuer eine HTTP-Uhr falsch: Sie wird
     /// unter ihrer Adresse angesprochen und hat womoeglich nie ein Praefix
-    /// gesehen — uebersprungen wuerde sie **stillschweigend**.
+    /// gesehen — uebersprungen wuerde sie stillschweigend.
     func testHttpUhrOhnePraefixBleibtEinZiel() throws {
         d.removeObject(forKey: "uhren")
         d.removeObject(forKey: "aktiveID")
@@ -809,7 +805,7 @@ final class AppZustandTests: XCTestCase {
         XCTAssertFalse(meldung.contains("Abfragen"), "war: \(meldung)")
     }
 
-    /// **Was ohne diese Buchung geschaehe:** Ueber MQTT veroeffentlicht die Uhr
+    /// Was ohne diese Buchung geschaehe: Ueber MQTT veroeffentlicht die Uhr
     /// nach einer Aenderung ihre `customList` von selbst, die Auskunft kommt
     /// also gleich nach. Ueber HTTP reicht sie nichts nach (gemessen) — ein
     /// eben gefuellter Platz zeigte „frei", solange die alte Auskunft steht.
@@ -912,9 +908,9 @@ final class AppZustandTests: XCTestCase {
     // MARK: - Die Uhr nach ihrem Stand fragen
 
     /// Was die Uhr selbst sagt, schlaegt die eigene Buchfuehrung — auch wenn
-    /// darin ein Name steht, den diese App nie vergeben hat. Genau das war
-    /// vorher in beide Richtungen falsch: ein fremder Absender erschien als
-    /// „frei", eine Loeschung ueber ein anderes Programm als „belegt".
+    /// darin ein Name steht, den diese App nie vergeben hat. Ohne das
+    /// erschiene ein fremder Absender als „frei", eine Loeschung ueber ein
+    /// anderes Programm als „belegt".
     func testAuskunftDerUhrSchlaegtDieEigeneBuchfuehrung() throws {
         let zustand = try zustandMitEinerUhr()
         let id = try XCTUnwrap(zustand.aktiveID)
@@ -979,8 +975,8 @@ final class AppZustandTests: XCTestCase {
     /// Beim Start sind Uhren aus oder noch nicht im Netz.
     func testStummeUhrRaeumtDieAuskunftAbUndMeldetNurInsProtokoll() throws {
         let zustand = try zustandMitEinerUhr()
-        // Seit dem 18.09.2026 ist das Protokoll ab Werk aus. Hier geht es
-        // darum, **was** hineingeschrieben wird — also anschalten.
+        // Das Protokoll ist ab Werk aus. Hier geht es darum, was
+        // hineingeschrieben wird — also anschalten.
         zustand.protokollAn = true
         let id = try XCTUnwrap(zustand.aktiveID)
         zustand.belegungGemeldet(["wetter"], fuer: id)
@@ -995,15 +991,15 @@ final class AppZustandTests: XCTestCase {
                       "der Fehlschlag gehört ins Protokoll")
     }
 
-    /// **Der Riegel gegen das Flackern selbst** (siehe
-    /// `Belegungsdoppelgaenger.marke`). Ohne ihn schrieb ein Nachzuegler aus
-    /// einem frueheren Test in die Aufzeichnung des laufenden, und
-    /// `testOhneAdresseWirdNichtGefragt` fiel etwa jeden zehnten Lauf ueber ein
-    /// `/api/customList`, das es nicht bestellt hatte.
+    /// Der Riegel gegen das Flackern selbst (siehe
+    /// `Belegungsdoppelgaenger.marke`): Ohne ihn kann ein Nachzuegler aus
+    /// einem frueheren Test in die Aufzeichnung des laufenden schreiben, und
+    /// `testOhneAdresseWirdNichtGefragt` faellt dann sporadisch ueber ein
+    /// `/api/customList`, das es nicht bestellt hat.
     ///
-    /// Statistisch war das nicht zu belegen; hier steht es deterministisch:
-    /// eine Anfrage aus einer **frueheren** Sitzung gegen eine aus der
-    /// laufenden, beide unmittelbar hintereinander.
+    /// Hier steht die Unterscheidung deterministisch: eine Anfrage aus einer
+    /// frueheren Sitzung gegen eine aus der laufenden, beide unmittelbar
+    /// hintereinander.
     func testNurDieLaufendeProbeSchreibtInDieAufzeichnung() async throws {
         let frueher = Belegungsdoppelgaenger.sitzung()
         let jetzt = Belegungsdoppelgaenger.sitzung()
@@ -1038,8 +1034,9 @@ final class AppZustandTests: XCTestCase {
 
     /// Der Fall, um den es geht: Die App startet, ein Broker ist nicht
     /// eingetragen — also kein Abonnement, kein Mitlesen. Trotzdem steht die
-    /// Belegung sofort da, weil die Uhr selbst gefragt wird. Vorher zeigte die
-    /// App hier ihre eigene Buchfuehrung, und die war in beide Richtungen falsch.
+    /// Belegung sofort da, weil die Uhr selbst gefragt wird. Ohne das zeigte
+    /// die App hier nur ihre eigene Buchfuehrung, die in beide Richtungen
+    /// falsch sein kann.
     func testBeimStartOhneBrokerKommtDieBelegungTrotzdemVonDerUhr() throws {
         d.removeObject(forKey: "brokerHost")
         let zustand = try zustandMitEinerUhr()
@@ -1072,8 +1069,8 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung5"])
     }
 
-    /// „Abfragen" holt seit F nicht mehr nur Praefix und Verbindungsstand,
-    /// sondern im selben Zug auch, was auf der Uhr steht.
+    /// „Abfragen" holt nicht nur Praefix und Verbindungsstand, sondern im
+    /// selben Zug auch, was auf der Uhr steht.
     func testAbfragenHoltAuchDieBelegung() throws {
         d.removeObject(forKey: "brokerHost")
         let zustand = try zustandMitEinerUhr()
@@ -1183,18 +1180,17 @@ final class Belegungsdoppelgaenger: URLProtocol {
     nonisolated(unsafe) static var weitere: [String: String] = [:]
     nonisolated(unsafe) static var pfade: [String] = []
 
-    /// **Die Aufzeichnung gehoert der Probe, nicht dem Prozess.**
+    /// Die Aufzeichnung gehoert der Probe, nicht dem Prozess.
     ///
     /// `pfade` ist statisch und wird von fuenfzehn Stellen benutzt. Die Abrufe
     /// laufen losgeloest (`Task.detached`), und ein Test ist zu Ende, bevor
     /// sein letzter Abruf angekommen ist — der landete dann in der
-    /// Aufzeichnung des **naechsten** Tests, nachdem der sie geleert hat.
-    /// `testOhneAdresseWirdNichtGefragt` sah so etwa jeden zehnten Lauf ein
-    /// `/api/customList`, das es nicht bestellt hatte. Ein Flackern, das wie
-    /// ein Fehler in `AppZustand` aussah und keiner war.
+    /// Aufzeichnung des naechsten Tests, nachdem der sie geleert hat. Ein
+    /// solcher Nachzuegler saehe aus wie ein Fehler in `AppZustand`, waere
+    /// aber keiner.
     ///
     /// Jede `sitzung()` traegt darum eine eigene Marke im Kopf der Anfrage,
-    /// und aufgezeichnet wird nur, was die **aktuelle** Marke traegt. Kein
+    /// und aufgezeichnet wird nur, was die aktuelle Marke traegt. Kein
     /// Warten, keine Frist: Ein Nachzuegler aus einem frueheren Test traegt
     /// eine alte Marke und faellt einfach weg.
     nonisolated(unsafe) static var marke = ""

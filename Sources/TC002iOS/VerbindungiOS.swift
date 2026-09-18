@@ -23,11 +23,10 @@ struct VerbindungiOS: View {
                 FehlerleisteiOS(zustand: zustand)
                 Form {
                     uhrenAbschnitt
-                    // **Die Einstellungen der angesehenen Uhr** — derselbe
-                    // Baustein wie am Schreibtisch. Bis zum 18.09.2026 stellte
-                    // diese Fassung Seitenwechsel und Scrolltempo gar nicht
-                    // ein; begruendet war das nie mit Bedienung oder Platz,
-                    // sondern nur damit, dass es sie hier nicht gab.
+                    // Die Einstellungen der angesehenen Uhr — derselbe
+                    // Baustein wie am Schreibtisch: Seitenwechsel und
+                    // Scrolltempo sind Einstellungen des Geraets, keine Frage
+                    // der Bedienung, und gehoeren darum auch hier hin.
                     Uhreinstellungen(zustand: zustand)
                     verlaufAbschnitt
                     protokollAbschnitt
@@ -89,15 +88,13 @@ struct VerbindungiOS: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    // **Am Telefon war die Geraeteart bis zum 14.09.2026 gar
-                    // nicht zu stellen.** Am Mac gibt es den Waehler, hier gab
-                    // es nur „Abfragen" — und das kommt an eine Uhr, die nur
-                    // ueber MQTT erreichbar ist oder deren Schnittstelle eine
-                    // Anmeldung verlangt, gar nicht heran. Wer die AWTRIX NG
-                    // hier eintrug, hatte damit eine Uhr, die als Werksfirmware
-                    // galt: Die App schickte auf `<Praefix>/custom/…` statt auf
-                    // `<Praefix>/cmd/apps/pushed/…`, NG antwortet auf ein Thema
-                    // ohne Route nicht, und auf der Uhr erschien nichts.
+                    // Ohne diesen Waehler kommt „Abfragen" an eine Uhr nicht
+                    // heran, die nur ueber MQTT erreichbar ist oder deren
+                    // Schnittstelle eine Anmeldung verlangt. Eine so
+                    // eingetragene AWTRIX NG gilt sonst als Werksfirmware: Die
+                    // App schickte auf `<Praefix>/custom/…` statt auf
+                    // `<Praefix>/cmd/apps/pushed/…`, NG antwortet auf ein
+                    // Thema ohne Route nicht, und auf der Uhr erschien nichts.
                     Picker("Geräteart", selection: geraeteart($uhr)) {
                         ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
                             Text(art.beschriftung).tag(art)
@@ -179,7 +176,7 @@ struct VerbindungiOS: View {
     }
 
     private var verlaufAbschnitt: some View {
-        // **Der Verlauf ist ab Werk an** — anders als das Protokoll. Er ist
+        // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
         // keine technische Mitschrift, sondern das, was man geschickt hat, und
         // ein Druck darauf stellt es wieder her.
         Section {
@@ -192,7 +189,7 @@ struct VerbindungiOS: View {
     }
 
     private var protokollAbschnitt: some View {
-        // **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
+        // Ab Werk aus. Das Protokoll ist ein Werkzeug fuer den Fall, dass
         // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
         // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
         // raeumt das Vorhandene weg.
@@ -208,7 +205,7 @@ struct VerbindungiOS: View {
             // Weiter sichtbar und weiter benutzbar — nur eingeordnet. Die
             // Begruendung steht bei der Mac-Fassung, sie gilt hier genauso:
             // Ein verschwindender Abschnitt liesse das Formular springen, ein
-            // abgeblendeter verhinderte, den Broker **vor** dem Umstellen
+            // abgeblendeter verhinderte, den Broker vor dem Umstellen
             // einer Uhr einzutragen.
             if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
                 Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")

@@ -5,8 +5,8 @@ import UniformTypeIdentifiers
 /// Ein gesichertes 52×16-Bild in der Sammlung.
 public struct Gemaltes: Equatable, Sendable {
     public var name: String
-    /// Die Ulanzi-Werknummer, falls es eine gibt — **wahlfrei**, und anders als
-    /// beim Icon **nicht** der Dateiname: Die Datei heisst weiter nach dem
+    /// Die Ulanzi-Werknummer, falls es eine gibt — wahlfrei, und anders als
+    /// beim Icon nicht der Dateiname: Die Datei heisst weiter nach dem
     /// Namen, die Nummer steht daneben in `names.json`. Alte Dateien ohne
     /// diesen Eintrag bleiben lesbar, sie haben eben keine.
     public var nummer: String?
@@ -165,12 +165,12 @@ public struct Bildersammlung {
 
     /// Benennt ein Bild um: neuer Name, neue Werknummer.
     ///
-    /// **Die Datei wird verschoben, nicht neu geschrieben** — ein Rundlauf
+    /// Die Datei wird verschoben, nicht neu geschrieben — ein Rundlauf
     /// durch die GIF-Kodierung waere eine Aenderung am Bild, die niemand
     /// verlangt hat. Die Nummer benennt dabei nichts: Sie steht in
     /// `names.json`, und wer nur sie aendert, ruehrt die Datei nicht an.
     ///
-    /// Liegt unter dem neuen Namen schon etwas, wird es **ersetzt** — wie
+    /// Liegt unter dem neuen Namen schon etwas, wird es ersetzt — wie
     /// beim Sichern. Die Oberflaeche sagt das vorher.
     @discardableResult
     public func umbenennen(_ gemaltes: Gemaltes, name: String,
@@ -206,9 +206,9 @@ public struct Bildersammlung {
 
     private func namenDatei() -> URL { ordner.appendingPathComponent("names.json") }
 
-    /// `names.json` traegt je Datei den Namen und — seit dem 14.09.2026 —
-    /// wahlfrei die Werknummer. Ein Eintrag ohne sie ist kein Fehler, sondern
-    /// der Normalfall aller bis dahin gesicherten Bilder.
+    /// `names.json` traegt je Datei den Namen und wahlfrei die Werknummer.
+    /// Ein Eintrag ohne sie ist kein Fehler, sondern der Normalfall aelterer
+    /// gesicherter Bilder.
     private func geladeneNamen() -> [String: (name: String, nummer: String?)] {
         guard let daten = try? Data(contentsOf: namenDatei()),
               let liste = try? JSONSerialization.jsonObject(with: daten) as? [[String: String]]

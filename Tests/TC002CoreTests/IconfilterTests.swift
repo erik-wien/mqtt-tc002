@@ -34,7 +34,7 @@ final class IconfilterTests: XCTestCase {
         XCTAssertEqual(laufend.map(\.name), ["Stern groß", "Wolke"])
     }
 
-    /// **Die drei wirken zusammen, nicht wahlweise.** Ein bewegtes 16×16 mit
+    /// Die drei wirken zusammen, nicht wahlweise: Ein bewegtes 16×16 mit
     /// „stern" im Namen ist genau eines.
     func testAlleDreiZusammen() {
         let eng = bestand().gefiltert(Iconfilter(suche: "stern", kante: 16, nurBewegte: true),
@@ -42,8 +42,8 @@ final class IconfilterTests: XCTestCase {
         XCTAssertEqual(eng.map(\.name), ["Stern groß"])
     }
 
-    /// Die Suche greift auf Name **und** Nummer — dieselbe Regel wie vorher,
-    /// hier nur durch den Filter hindurch.
+    /// Die Suche greift auf Name und Nummer — dieselbe Regel wie vorher, hier
+    /// nur durch den Filter hindurch.
     func testDieSucheGreiftAufNameUndNummer() {
         XCTAssertEqual(bestand().gefiltert(Iconfilter(suche: "12246"), bewegt: bewegt).map(\.name),
                        ["Wolke"])
@@ -60,7 +60,7 @@ final class IconfilterTests: XCTestCase {
         XCTAssertFalse(Iconfilter(suche: "   ").schraenktEin)
     }
 
-    /// **Die Bewegung kommt aus der Datei, nicht aus der Einrichtung.**
+    /// Die Bewegung kommt aus der Datei, nicht aus der Einrichtung:
     /// `bewegteKennungen` liest sie einmal; der Filter bekommt sie danach
     /// gereicht. Hier mit echten GIFs, damit nicht nur die Verdrahtung
     /// stimmt, sondern auch das Lesen.

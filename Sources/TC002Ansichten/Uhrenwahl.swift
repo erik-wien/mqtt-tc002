@@ -2,19 +2,18 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Welche Uhr man ansieht** — als Menü, das ihren Namen trägt.
+/// Welche Uhr man ansieht — als Menü, das ihren Namen trägt.
 ///
-/// Dieselbe Bauart wie am Telefon, wo die Wahl seit je im Titel sitzt, und am
-/// Mac dieselbe Form, die Xcode für sein Ziel benutzt: ein Menü in der Mitte
-/// der Werkzeugleiste. Es ersetzt die Pille „sieht: …“, die bis zum 18.09.2026
-/// über der Vorschau stand.
+/// Dieselbe Bauart wie am Telefon, wo die Wahl im Titel sitzt, und am Mac
+/// dieselbe Form, die Xcode für sein Ziel benutzt: ein Menü in der Mitte der
+/// Werkzeugleiste, statt einer Pille über der Vorschau.
 ///
-/// **Nicht der Fenstertitel.** Am Mac steht dort der Programmname, und das
+/// Nicht der Fenstertitel: Am Mac steht dort der Programmname, und das
 /// bleibt so (`SchreibtischView` setzt `navigationTitle` ausdrücklich nur
 /// unter iOS). `.principal` ist die Stelle, die auf beiden Plattformen
 /// dasselbe meint.
 ///
-/// **Das Ziel steht nicht hier.** Angesehen und beschickt sind zwei
+/// Das Ziel steht nicht hier: Angesehen und beschickt sind zwei
 /// Entscheidungen; die zweite trifft `ZielauswahlView` daneben. Sie in ein
 /// Menü zu legen hätte sie billiger gemacht, als sie ist — man ändert damit,
 /// wohin etwas hinausgeht.
@@ -42,7 +41,7 @@ public struct Uhrenmenue: View {
     }
 }
 
-/// **Eine Punktreihe unter der Vorschau, ein Punkt je Uhr** — der gefüllte ist
+/// Eine Punktreihe unter der Vorschau, ein Punkt je Uhr — der gefüllte ist
 /// die angesehene.
 ///
 /// Sie beantwortet eine Frage, die bisher nirgends stand: wie viele Uhren es
@@ -50,7 +49,7 @@ public struct Uhrenmenue: View {
 /// jeder kennt — Home-Bildschirm, Wetter, Fotos —, und es kommt ohne die
 /// schwarzen Dreiecke aus, die man sonst danebenstellen müsste.
 ///
-/// **Am Zeiger anklickbar, am Finger wischbar.** Das ist der eine Unterschied
+/// Am Zeiger anklickbar, am Finger wischbar: Das ist der eine Unterschied
 /// zwischen den Bedienungen, den die Regel zulässt: Ein Punkt von acht Punkten
 /// Durchmesser ist mit der Maus ein Ziel und mit dem Finger keines. Deshalb
 /// trägt die Reihe hier die Klicks, und `uhrenwischen` daneben die Wischgeste
@@ -89,7 +88,7 @@ public extension View {
     /// Wischen über der Vorschau wechselt die angesehene Uhr — nach links die
     /// nächste, nach rechts die vorige, in Schleife.
     ///
-    /// **Über der Vorschau und nicht über der ganzen Ansicht:** Darunter
+    /// Über der Vorschau und nicht über der ganzen Ansicht: Darunter
     /// liegen die fünf Blöcke, die selbst auf Wischen reagieren (umschalten
     /// und löschen), und eine Geste, die beides fängt, nähme ihnen ihre.
     ///

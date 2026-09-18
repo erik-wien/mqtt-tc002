@@ -1,6 +1,6 @@
 import Foundation
 
-/// **Eine Uhr, die es nicht gibt** — damit sich die App ohne Gerät ausprobieren
+/// Eine Uhr, die es nicht gibt — damit sich die App ohne Gerät ausprobieren
 /// lässt.
 ///
 /// Der Zustand einer Ulanzi mit Werksfirmware, so weit diese App ihn anfasst:
@@ -8,13 +8,12 @@ import Foundation
 /// Themen-Präfix), die beiden Zeitwerte aus `/getConfig` und die benannten
 /// Anzeigen.
 ///
-/// **AWTRIX NG spricht sie nicht.** Das war eine Entscheidung des
-/// Auftraggebers am 14.09.2026: Die Werksfirmware ist der Weg, an dem die fünf
+/// AWTRIX NG spricht sie nicht: Die Werksfirmware ist der Weg, an dem die fünf
 /// Plätze, das Mitlesen und der Rahmenbau hängen. Für NG bräuchte es die
 /// zweite Hälfte der Schnittstelle — nachzutragen, wenn es gebraucht wird;
-/// `Geraetetyp` und die Routen dafür stehen alle schon.
+/// `Geraetetyp` und die Routen dafür stehen bereits.
 public struct Uhrzustand: Equatable, Sendable {
-    /// Was in der Uhr als Präfix eingetragen ist. Das **Themen**-Präfix ist
+    /// Was in der Uhr als Präfix eingetragen ist. Das Themen-Präfix ist
     /// etwas anderes: Die Firmware hängt einen Unterstrich und die letzten
     /// vier Stellen der MAC an (siehe `Geraet.praefixUndBasis`). Genau das
     /// soll die virtuelle Uhr auch tun, sonst übt man an einer Vereinfachung.
@@ -50,7 +49,7 @@ public struct Uhrzustand: Equatable, Sendable {
     public var themenpraefix: String { praefix + "_" + String(mac.suffix(4)) }
 }
 
-/// Beantwortet die Anfragen einer Uhr — **als reine Funktion**.
+/// Beantwortet die Anfragen einer Uhr — als reine Funktion.
 ///
 /// Das Zuhören am Port ist Beiwerk (`Uhrenserver`); was eine Uhr auf welche
 /// Anfrage antwortet, steht hier und lässt sich ohne Steckdose prüfen.
@@ -73,8 +72,7 @@ public enum Virtuelleuhr {
     public struct Antwort: Equatable, Sendable {
         public var status: Int
         public var koerper: Data
-        /// **Bis zum 18.09.2026 war er fest JSON.** Das stimmte, solange nur
-        /// die App fragte; seit die Wurzel eine Seite fuer den Browser
+        /// Nicht fest JSON: Seit die Wurzel eine Seite fuer den Browser
         /// ausliefert, muss die Antwort sagen koennen, was sie ist.
         public var inhaltstyp: String
 
@@ -93,7 +91,7 @@ public enum Virtuelleuhr {
         /// Die Quittung der Werksfirmware: `200` im Rumpf, nicht im Status.
         static let angenommen = Antwort.json(["code": 200, "message": "ok"])
 
-        /// Die Seite an der Wurzel — **für Augen, nicht für die App.**
+        /// Die Seite an der Wurzel — für Augen, nicht für die App.
         ///
         /// Wer die Adresse der virtuellen Uhr in den Browser tippt, erwartet
         /// etwas zu sehen. Hier steht deshalb kein Nachbau der Anzeige: Der
@@ -170,7 +168,7 @@ public enum Virtuelleuhr {
                           "scrollSpeed": zustand.scrolltempo])
 
         case "/setConfig":
-            // Die Firmware bekommt **die ganze** Konfiguration zurück, nicht
+            // Die Firmware bekommt die ganze Konfiguration zurück, nicht
             // nur das geänderte Feld (siehe `Geraet.konfigurationSetzen`) —
             // gelesen wird daraus, was diese Uhr führt.
             if let objekt = try? JSONSerialization.jsonObject(with: anfrage.koerper),
@@ -184,7 +182,7 @@ public enum Virtuelleuhr {
             guard let name = anfrage.abfrage["name"], !name.isEmpty else {
                 return .json(["code": 400, "message": "no name"])
             }
-            // **`{}` löscht, leer nicht.** Über MQTT ist es genau umgekehrt;
+            // `{}` löscht, leer nicht. Über MQTT ist es genau umgekehrt;
             // diese Verwechslung steht in `Geraet.anzeigeLoeschen` schon
             // angeschrieben, und die virtuelle Uhr muss sie mitmachen, sonst
             // übt man gegen eine Uhr, die es so nicht gibt.
@@ -213,7 +211,7 @@ public enum Virtuelleuhr {
             return .angenommen
 
         case "", "/", "/index.html":
-            // **Ein Hinweis, kein Nachbau.** Ein Bild dessen, was die Uhr
+            // Ein Hinweis, kein Nachbau. Ein Bild dessen, was die Uhr
             // zeigte, liesse sich hier zwar rechnen — aber nur halb: Ein
             // Lauf-GIF und ein Textblock, den die Uhr selbst setzt, liefern
             // keine Pixel (dieselbe Grenze, an der die Bloecke in der App
@@ -223,7 +221,7 @@ public enum Virtuelleuhr {
             return .seite(zustand)
 
         default:
-            // **Alles andere ist 404, und das ist wichtig.** Die App erkennt
+            // Alles andere ist 404: Die App erkennt
             // die Geräteart daran, ob `/api/v1/device` antwortet
             // (`Geraet.erkannteArt`). Eine virtuelle Werksfirmware, die dort
             // irgendetwas sagte, gälte als AWTRIX NG.

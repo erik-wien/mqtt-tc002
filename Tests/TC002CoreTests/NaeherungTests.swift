@@ -1,11 +1,11 @@
 import XCTest
 @testable import TC002Core
 
-/// **Was die Vorschau einer NG-Uhr zeigt, ist eine Näherung** — und eine, die
+/// Was die Vorschau einer NG-Uhr zeigt, ist eine Näherung — und eine, die
 /// immer dieselbe ist.
 ///
 /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl ist
-/// dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der **gespeicherte** Wert
+/// dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der gespeicherte Wert
 /// bleibt davon unberührt und kann „Tiny5, 16 px" sein — auf acht Zeilen
 /// gerastert wäre das abgeschnitten, und die Vorschau zeigte einen Fehler, den
 /// das Gerät gar nicht hat.
@@ -29,7 +29,7 @@ final class NaeherungTests: XCTestCase {
         XCTAssertEqual(genaehert.groesse, 8)
     }
 
-    /// Die Näherung greift **nur** an Schrift und Größe: Farbe, Text,
+    /// Die Näherung greift nur an Schrift und Größe: Farbe, Text,
     /// Ausrichtung und alles Übrige sind Regler, die auch NG kennt.
     func testDieUebrigenReglerBleibenStehen() {
         var o = Meldungsoptionen(text: "Hallo")

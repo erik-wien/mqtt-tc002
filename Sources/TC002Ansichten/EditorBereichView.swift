@@ -5,21 +5,18 @@ import UniformTypeIdentifiers
 
 /// Der Bereich „Editor": Pixel malen.
 ///
-/// **Ein Bereich statt zweier.** Bis zum 13.09.2026 gab es „Icons" (8×8, 16×16)
-/// und „Bilder" (52×16) nebeneinander. Der Auftraggeber hat beim Testen gesagt,
-/// er verstehe den Unterschied zwischen Malen und Icons nicht — und hatte
-/// recht: Es ist eine Taetigkeit. Was dabei herauskommt, entscheidet allein die
-/// Leinwandgroesse, und was daraus folgt, steht abgeleitet in
-/// `Leinwandgroesse`, nicht als Fallunterscheidung hier.
+/// Ein Bereich statt zweier: „Icons" (8×8, 16×16) und „Bilder" (52×16) sind
+/// dieselbe Taetigkeit, nur die Leinwandgroesse unterscheidet sie. Was daraus
+/// folgt, steht abgeleitet in `Leinwandgroesse`, nicht als Fallunterscheidung
+/// hier.
 ///
-/// **Aufbau nach dem Muster von Pages:** Seitenleiste — Leinwand — Inspektor.
-/// Der Inspektor hat drei Modi (Malen, Animation, Bestand), umgeschaltet ueber
-/// die Segmentwahl an seinem Kopf. Unter der Leinwand steht die Sendezeile —
-/// **nur bei 16×52**, denn ein Icon ist fuer sich keine Anzeige.
+/// Aufbau nach dem Muster von Pages: Seitenleiste — Leinwand — Inspektor. Der
+/// Inspektor hat drei Modi (Malen, Animation, Bestand), umgeschaltet ueber die
+/// Segmentwahl an seinem Kopf. Unter der Leinwand steht die Sendezeile — nur
+/// bei 16×52, denn ein Icon ist fuer sich keine Anzeige.
 ///
-/// Eine Ansicht mit Unterschieden, nicht zwei mit Aehnlichkeiten: In diesem
-/// Projekt ist genau daraus schon ein Fehler entstanden (`slotzustand` gab es
-/// dreimal, und die abweichende Fassung war die falsche).
+/// Eine Ansicht mit Unterschieden, nicht zwei mit Aehnlichkeiten: `slotzustand`
+/// gab es einmal dreimal, mit einer abweichenden, falschen Fassung.
 public struct EditorBereichView: View {
     @Bindable var zustand: AppZustand
 
@@ -75,29 +72,28 @@ public struct EditorBereichView: View {
     @State private var laedt = false
 
     // Rueckfragen.
-    /// **Eine** Frage, vier Anlaesse — siehe `Rueckfrage`. Bis zum 14.09.2026
-    /// lagen hier drei `.alert` nebeneinander, jeder mit eigenem Zustand.
+    /// Eine Frage, vier Anlaesse — siehe `Rueckfrage`.
     @State private var rueckfrage: Rueckfrage?
     @State private var zuLoeschen: Editoreintrag?
 
     /// „Oeffnen…": erst die Dateiauswahl, danach ein Blatt fuer Nummer
     /// und Namen mit dem Dateinamen als Vorschlag.
     ///
-    /// Gemerkt wird der **Inhalt**, nicht die URL — warum, steht bei
+    /// Gemerkt wird der Inhalt, nicht die URL — warum, steht bei
     /// `dateiUebernehmen`.
     @State private var zeigeDateiImport = false
     @State private var zeigeImportBlatt = false
     @State private var importDaten: Data?
     @State private var importNummer = ""
     @State private var importName = ""
-    /// Die Groesse, in der die gewaehlte Datei aufgenommen wird — **ihre
-    /// eigene**, nicht die des Editors (`Editorbestand.zielgroesse(fuer:)`).
+    /// Die Groesse, in der die gewaehlte Datei aufgenommen wird — ihre
+    /// eigene, nicht die des Editors (`Editorbestand.zielgroesse(fuer:)`).
     /// Daran haengt auch, ob das Blatt nach einer Nummer fragt.
     @State private var importZiel: Leinwandgroesse?
     /// Was im Blatt steht, wenn das Einlesen nicht klappt. Im Blatt und nicht
     /// unter der Leinwand: Eine Meldung dahinter saehe niemand.
     @State private var importMeldung: String?
-    /// Was das Blatt aufgenommen hat — abzuholen, **sobald es zu ist**
+    /// Was das Blatt aufgenommen hat — abzuholen, sobald es zu ist
     /// (`blattGeschlossen`). `nil` heisst: abgebrochen.
     @State private var eingelesen: Editoreintrag?
 
@@ -125,7 +121,7 @@ public struct EditorBereichView: View {
         #endif
     }
 
-    /// Die Erklärung hinter dem (?) an **beiden** Stellen, an denen eine
+    /// Die Erklärung hinter dem (?) an beiden Stellen, an denen eine
     /// LaMetric-Nummer vorkommt: am Abschnitt des bearbeiteten Bildes und
     /// unter „Hinzufügen“. Ein Wortlaut, einmal hingeschrieben — zweimal wären
     /// es zwei Übersetzungsschlüssel, die auseinanderlaufen können, für
@@ -140,18 +136,16 @@ public struct EditorBereichView: View {
         var id: String { rawValue }
     }
 
-    /// **Eine Frage, vier Anlaesse.** Sie lautet immer gleich: Auf der Leinwand
+    /// Eine Frage, vier Anlaesse. Sie lautet immer gleich: Auf der Leinwand
     /// steht etwas, das nicht im Bestand liegt, und der naechste Schritt wuerde
     /// es verwerfen. Gestellt wird sie nur dann — `ungesichert` entscheidet
     /// das, und zwar fuer alle vier gleich.
     ///
-    /// **Warum eine statt vier.** Bis zum 14.09.2026 lagen auf dieser Ansicht
-    /// drei `.alert` und ein `.confirmationDialog` nebeneinander, jeder mit
-    /// eigenem Zustand. Zwei Bedienelemente, die gleichzeitig aufgehen wollen,
-    /// schliessen einander aus: SwiftUI zeigt einen davon und verschluckt den
-    /// anderen stillschweigend — und es faellt nicht auf, weil beide fuer sich
-    /// funktionieren. Ein einziger Zustand kann gar nicht erst zweierlei
-    /// gleichzeitig meinen.
+    /// Eine statt vier: Mehrere `.alert`/`.confirmationDialog` mit eigenem
+    /// Zustand schliessen einander aus, wenn sie gleichzeitig aufgehen wollen —
+    /// SwiftUI zeigt einen davon und verschluckt den anderen stillschweigend,
+    /// ohne dass es auffaellt, weil beide fuer sich funktionieren. Ein
+    /// einziger Zustand kann nicht zweierlei gleichzeitig meinen.
     enum Rueckfrage {
         /// „Neu" — Leinwand, Einzelbilder, Name und Nummer von vorn.
         case neu
@@ -160,7 +154,7 @@ public struct EditorBereichView: View {
         /// Ein Stueck aus dem Bestand soll auf die Leinwand.
         case oeffnen(Editoreintrag)
         /// Ein eben geladenes Stueck — aus einer Datei oder von LaMetric. Es
-        /// **liegt schon** im Bestand; zur Frage steht allein die Leinwand,
+        /// liegt schon im Bestand; zur Frage steht allein die Leinwand,
         /// und deshalb hat nur dieser Fall den dritten Weg.
         case geladen(Editoreintrag)
 
@@ -188,7 +182,7 @@ public struct EditorBereichView: View {
     // MARK: - Arbeitsstand
 
     /// Der gemerkte Arbeitsstand: erst der Schluessel mit der ganzen Leinwand,
-    /// ersatzweise das einzelne Raster der Fassungen bis 13.09.2026, sonst
+    /// ersatzweise das einzelne Raster frueherer Fassungen, sonst
     /// eine leere Anzeige.
     private static func gelesenerArbeitsstand() -> Leinwand {
         let ablage = UserDefaults.standard
@@ -236,42 +230,41 @@ public struct EditorBereichView: View {
     /// Unter welchem Schluessel gesichert wird — bei 8×8 die Nummer, sonst der
     /// Name. Leer heisst: „Sichern" bleibt gesperrt.
     ///
-    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 hat seit dem
-    /// 14.09.2026 eine Werknummer, heisst aber weiter nach seinem Namen — mit
-    /// `mitNummer` liesse es sich ohne Nummer gar nicht mehr sichern.
+    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 hat eine Werknummer,
+    /// heisst aber weiter nach seinem Namen — mit `mitNummer` liesse es sich
+    /// ohne Nummer gar nicht mehr sichern.
     private var schluessel: String {
         Editorbestand.schluessel(groesse: groesse, nummer: nummer, name: name)
     }
 
-    /// Ob dieser Eintrag gerade **der** auf der Leinwand ist. Verglichen wird
+    /// Ob dieser Eintrag gerade der auf der Leinwand ist. Verglichen wird
     /// der Schluessel, unter dem er liegt, mit dem, unter dem ein „Sichern"
     /// jetzt ablegen wuerde — nicht Name gegen Name: Bei 16×52 ist der
     /// Dateiname der bereinigte Name („Mario/Luigi" liegt als „Mario-Luigi"),
     /// und ein Vergleich der Namen ginge dort daneben.
     ///
     /// Zwei Handlungen haengen daran, und sie ziehen entgegengesetzte
-    /// Schluesse: Beim **Loeschen** verliert die Leinwand ihren Bezug (Name
+    /// Schluesse: Beim Loeschen verliert die Leinwand ihren Bezug (Name
     /// und Nummer werden geleert, sonst legte das naechste „Sichern" das
-    /// Geloeschte wieder an), beim **Umbenennen** zieht er mit.
+    /// Geloeschte wieder an), beim Umbenennen zieht er mit.
     private func istGeoeffnet(_ eintrag: Editoreintrag) -> Bool {
         !schluessel.isEmpty && eintrag.groesse == groesse
             && eintrag.schluessel.caseInsensitiveCompare(schluessel) == .orderedSame
     }
 
-    /// **Ob auf der Leinwand etwas steht, das nirgends liegt.** Die eine Frage
-    /// vor allem, was sie verwirft — „Neu", ein Groessenwechsel, ein
-    /// geoeffnetes Bild, ein geladenes Icon.
+    /// Ob auf der Leinwand etwas steht, das nirgends liegt. Die eine Frage vor
+    /// allem, was sie verwirft — „Neu", ein Groessenwechsel, ein geoeffnetes
+    /// Bild, ein geladenes Icon.
     ///
     /// Gerechnet wird sie im Kern (`Leinwandverlauf.weichtAb`), wo auch der
-    /// gesicherte Stand liegt. Bis zum 14.09.2026 stand hier `istLeer`, und
-    /// das war zweimal falsch: Eine gemalte, nie gesicherte Zeichnung ist
-    /// nicht leer — gefragt wurde trotzdem nicht, wenn nur Name oder Nummer
-    /// leer waren; und ein eben geoeffnetes Bild ist nicht ungesichert —
-    /// gefragt wurde trotzdem.
+    /// gesicherte Stand liegt. `istLeer` taugt dafuer nicht: Eine gemalte, nie
+    /// gesicherte Zeichnung ist nicht leer, faellt bei leerem Name oder Nummer
+    /// aber trotzdem nicht auf; und ein eben geoeffnetes Bild ist nicht leer,
+    /// aber auch nicht ungesichert.
     ///
-    /// Name und Nummer zaehlen dabei **nicht** mit. Sie stehen in keiner
-    /// Datei, solange nicht gesichert wurde, und ein Name ohne Zeichnung ist
-    /// in zwei Anschlaegen wieder eingetippt.
+    /// Name und Nummer zaehlen dabei nicht mit. Sie stehen in keiner Datei,
+    /// solange nicht gesichert wurde, und ein Name ohne Zeichnung ist in zwei
+    /// Anschlaegen wieder eingetippt.
     private var ungesichert: Bool { verlauf.weichtAb(leinwand) }
 
     /// Das gerade bearbeitete Bild als Pixelfeld — fuer die Rechteckzahl und
@@ -285,9 +278,9 @@ public struct EditorBereichView: View {
     /// Dieselbe Grundlage wie unter „Senden" und „Verlauf": was die Uhr
     /// meldet, sonst was die App sich gemerkt hat.
     /// Woran die Nutzlast des Laufbilds haengt: die Einzelbilder und ihre
-    /// Standzeit — **nicht** die Auswahl. Zwischen den Bildern zu blaettern
-    /// aendert an dem, was hinausginge, nichts, soll die Rechnung also auch
-    /// nicht noch einmal anstossen.
+    /// Standzeit, nicht die Auswahl. Zwischen den Bildern zu blaettern aendert
+    /// an dem, was hinausginge, nichts, soll die Rechnung also auch nicht noch
+    /// einmal anstossen.
     private struct Laufbildstand: Equatable {
         let bilder: [[String?]]
         let verzoegerung: Double
@@ -298,10 +291,10 @@ public struct EditorBereichView: View {
     }
 
     /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
-    /// die **angesehene** Uhr, dieselbe, aus der `slotzustand` den Inhalt
-    /// nimmt. Hier stand sie bis zum 18.09.2026 dreimal wortgleich und fragte
-    /// die Zielmenge; das ergab Bloecke, die Belegung und Inhalt aus
-    /// verschiedenen Uhren zusammensetzten.
+    /// die angesehene Uhr, dieselbe, aus der `slotzustand` den Inhalt nimmt.
+    /// Hier stand sie zuvor dreimal wortgleich und fragte die Zielmenge; das
+    /// ergab Bloecke, die Belegung und Inhalt aus verschiedenen Uhren
+    /// zusammensetzten.
     private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
@@ -315,12 +308,11 @@ public struct EditorBereichView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // **Dieselbe Stelle wie unter „Senden"**: oben rechts ueber der
-            // Leinwand, nicht unten in der Sendezeile. Dort stand sie bis zum
-            // 14.09.2026 zwischen Dauerfeld, Zwischenraum und Sendeknopf — bei
-            // wenig Platz gequetscht und abgeschnitten, und vor allem an einer
-            // anderen Stelle als in der Ansicht daneben. Zwei Orte fuer
-            // dieselbe Wahl sind schlimmer als ein unguenstiger.
+            // Dieselbe Stelle wie unter „Senden": oben rechts ueber der
+            // Leinwand, nicht unten in der Sendezeile — dort war sie zwischen
+            // Dauerfeld, Zwischenraum und Sendeknopf gequetscht und
+            // abgeschnitten, und an einer anderen Stelle als in der Ansicht
+            // daneben.
             //
             // Ohne zweite Uhr zeigt `ZielauswahlView` nichts, die Zeile bleibt
             // dann leer.
@@ -333,8 +325,7 @@ public struct EditorBereichView: View {
         .padding()
         .toolbar {
             // Dieselbe Stelle wie unter „Senden": die angesehene Uhr mittig in
-            // der Werkzeugleiste. Zwei Orte fuer dieselbe Wahl waeren
-            // schlimmer als ein unguenstiger — das stand hier schon einmal.
+            // der Werkzeugleiste.
             ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
             werkzeugleiste
         }
@@ -368,7 +359,7 @@ public struct EditorBereichView: View {
         // Zwei Blaetter an derselben Ansicht, aber nie zwei zugleich: Der
         // Stift steht in der Liste, und die liegt hinter dem Importblatt.
         .sheet(item: $zuBenennen) { umbenennenBlatt($0) }
-        // Die **eine** Rueckfrage vor allem, was Ungesichertes verwirft
+        // Die eine Rueckfrage vor allem, was Ungesichertes verwirft
         // (siehe `Rueckfrage`). `titleVisibility: .visible`, weil hier die
         // Frage im Titel steht und nicht bloss ein Name.
         .confirmationDialog(
@@ -399,7 +390,7 @@ public struct EditorBereichView: View {
         // `LocalizedStringKey` mit Interpolation traegt zur Laufzeit den
         // Schluessel „%@ löschen?", im Quelltext steht aber der interpolierte
         // Ausdruck — `scripts/texte-sammeln.py` sieht ihn nicht, und der
-        // Titel bliebe still deutsch. (So war es in beiden Vorgaengerbereichen.)
+        // Titel bliebe still deutsch.
         .confirmationDialog(
             Text(lokf("„%@“ löschen?", zuLoeschen?.name ?? "")),
             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
@@ -418,11 +409,10 @@ public struct EditorBereichView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) { fusstexte }
             Spacer()
-            // **Am Bild, nicht im Reiter.** Wer ein bewegtes Icon aus dem
-            // Bestand oeffnet, will es laufen sehen; der Knopf sass aber im
-            // Reiter Animation neben der Verzoegerung, und dorthin kommt man
-            // nur mit einem Umweg. Er steht deshalb hier, wo das Bild steht —
-            // und nur dann, wenn es ueberhaupt etwas abzuspielen gibt.
+            // Am Bild, nicht im Reiter: Der Knopf sass im Reiter Animation
+            // neben der Verzoegerung, und dorthin kommt man nur mit einem
+            // Umweg. Er steht deshalb hier, wo das Bild steht, und nur dann,
+            // wenn es ueberhaupt etwas abzuspielen gibt.
             if leinwand.bilder.count > 1 { abspielknopf }
         }
     }
@@ -434,14 +424,10 @@ public struct EditorBereichView: View {
                       feld.alsDrawBefehle().count))
                 .font(.footnote).foregroundStyle(.secondary)
         }
-        // **Nur noch als Auffangnetz.** Die Meldung stand bis zum 14.09.2026
-        // allein hier — unter der Leinwand, waehrend der Knopf, der sie
-        // ausloest, rechts im Inspektor sitzt. Wer „Sichern" drueckte, sah
-        // dort nichts geschehen und hielt es fuer wirkungslos. Sie steht
-        // deshalb jetzt im Abschnitt „Dieses Bild", gleich unter den
-        // Knoepfen. Hier bleibt sie fuer den einen Fall, in dem es den
-        // Abschnitt gerade nicht gibt: Der Inspektor ist ausgeblendet, und
-        // „Sichern" kam ueber ⌘↩.
+        // Nur als Auffangnetz: Die Meldung steht im Abschnitt „Dieses Bild",
+        // gleich unter den Knoepfen — hier bleibt sie fuer den einen Fall, in
+        // dem es den Abschnitt gerade nicht gibt: Der Inspektor ist
+        // ausgeblendet, und „Sichern" kam ueber ⌘↩.
         if let meldung, !zeigeInspektor {
             Text(meldung).font(.callout).foregroundStyle(.secondary)
         }
@@ -450,24 +436,22 @@ public struct EditorBereichView: View {
     // MARK: - Werkzeugleiste
 
     /// Rueckgaengig, Wiederherstellen und der Schalter fuer den Inspektor —
-    /// **drei** Symbole, nicht vier plus eine Segmentleiste.
+    /// drei Symbole, nicht vier plus eine Segmentleiste.
     ///
-    /// Die Modi standen bis 13.09.2026 hier mit drin und haben am iPad den
-    /// Knopf „Seitenleiste schliessen" ueberdeckt; „Rueckgaengig" fiel dabei
-    /// ganz aus der Leiste. Der Unterschied zum Mac ist nicht das Zeichnen,
-    /// sondern **wem die Leiste gehoert**: Am Mac ist es die Werkzeugleiste
-    /// des **Fensters** — mindestens 1140 Punkte breit, der Titel steht
-    /// woanders, und was nicht mehr hineinpasst, wandert in ein
-    /// Ueberlaufmenue. Am iPad ist es die Navigationsleiste der
-    /// **Detailspalte**: Fenster minus Seitenleiste minus Inspektor, also im
-    /// Hochformat und in geteilter Ansicht nur ein paar hundert Punkte, mit
-    /// dem Seitenleistenknopf links und dem Titel in der Mitte. Sie laeuft
-    /// nicht ueber, sie schiebt uebereinander — und die Segmentleiste war
-    /// mit Abstand das breiteste Stueck darin.
+    /// Die Modi standen zuvor hier mit drin und haben am iPad den Knopf
+    /// „Seitenleiste schliessen" ueberdeckt; „Rueckgaengig" fiel dabei ganz aus
+    /// der Leiste. Der Unterschied zum Mac ist nicht das Zeichnen, sondern wem
+    /// die Leiste gehoert: Am Mac ist es die Werkzeugleiste des Fensters —
+    /// mindestens 1140 Punkte breit, der Titel steht woanders, und was nicht
+    /// mehr hineinpasst, wandert in ein Ueberlaufmenue. Am iPad ist es die
+    /// Navigationsleiste der Detailspalte: Fenster minus Seitenleiste minus
+    /// Inspektor, also im Hochformat und in geteilter Ansicht nur ein paar
+    /// hundert Punkte, mit dem Seitenleistenknopf links und dem Titel in der
+    /// Mitte. Sie laeuft nicht ueber, sie schiebt uebereinander — und die
+    /// Segmentleiste war mit Abstand das breiteste Stueck darin.
     ///
-    /// Die Modi sitzen deshalb jetzt in `modusWahl`, am Kopf des Inspektors.
-    /// Das ist nicht der Notausgang, sondern die Vorlage: Numbers haelt genau
-    /// **eine** Kapsel mit Symbolen (Rueckgaengig, Teilen, Mitarbeit) und
+    /// Die Modi sitzen deshalb in `modusWahl`, am Kopf des Inspektors — wie in
+    /// Numbers: eine Kapsel mit Symbolen (Rueckgaengig, Teilen, Mitarbeit) und
     /// darunter eine Segmentwahl fuer den Bereich des Inspektors.
     @ToolbarContentBuilder
     private var werkzeugleiste: some ToolbarContent {
@@ -522,26 +506,24 @@ public struct EditorBereichView: View {
     /// Die zweite Ebene der Vorlage: eine Segmentwahl fuer den Bereich, am Kopf
     /// des Inspektors und nicht in der Werkzeugleiste (warum, steht dort).
     ///
-    /// **Woerter statt Symbolen.** In der Leiste war Platz nur fuer drei
-    /// Zeichen, und `tray.and.arrow.down` fuer „Bestand" hat niemand geraten.
-    /// Hier ist die Spalte mindestens 240 Punkte breit — Numbers beschriftet
-    /// seine Segmentwahl aus demselben Grund („Tabelle · Zelle · Format ·
-    /// Anordnen") und haelt die Symbole der Kapsel vor.
+    /// Woerter statt Symbolen: In der Leiste war Platz nur fuer drei Zeichen,
+    /// und `tray.and.arrow.down` fuer „Bestand" hat niemand geraten. Hier ist
+    /// die Spalte mindestens 240 Punkte breit — Numbers beschriftet seine
+    /// Segmentwahl aus demselben Grund („Tabelle · Zelle · Format · Anordnen")
+    /// und haelt die Symbole der Kapsel vor.
     ///
-    /// Ist der Inspektor ausgeblendet, ist auch die Wahl weg. Das ist richtig
-    /// und kein Verlust: Sie sagt, was **er** zeigt, und der Knopf, der ihn
-    /// zurueckholt, steht in der Leiste.
+    /// Ist der Inspektor ausgeblendet, ist auch die Wahl weg: Sie sagt, was er
+    /// zeigt, und der Knopf, der ihn zurueckholt, steht in der Leiste.
     private var modusWahl: some View {
         // `.tag` ganz aussen: Ein Kennzeichen, das noch ein Modifikator
         // umhuellt, findet die Auswahl nicht mehr verlaesslich — und ein
         // Segmentschalter, dessen Wahl ins Leere greift, faellt beim
         // Uebersetzen nicht auf.
-        // **Symbole statt Woerter.** Vier Reiter mit ausgeschriebenen Namen
-        // passen in einen Segmentschalter von 330 Punkten nicht mehr, ohne
-        // dass die Namen abgeschnitten werden — und ein abgeschnittenes Wort
-        // sagt weniger als ein Bild. Die Namen gehen dabei nicht verloren: Sie
-        // stehen als `accessibilityLabel` an jedem Segment, so wie es die
-        // Ausrichtungswaehler in `SendenView` seit je halten.
+        // Symbole statt Woerter: Vier Reiter mit ausgeschriebenen Namen passen
+        // in einen Segmentschalter von 330 Punkten nicht mehr, ohne dass die
+        // Namen abgeschnitten werden. Sie gehen dabei nicht verloren: Sie
+        // stehen als `accessibilityLabel` an jedem Segment, wie es die
+        // Ausrichtungswaehler in `SendenView` halten.
         Picker("Inspektor", selection: $modus) {
             Image(systemName: "paintpalette").tag(Inspektormodus.malen)
                 .accessibilityLabel(Text("Malen"))
@@ -642,7 +624,7 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// **Play und Pause, nicht Play und Stopp.** Das Anhalten laesst das
+    /// Play und Pause, nicht Play und Stopp. Das Anhalten laesst das
     /// gerade gezeigte Einzelbild stehen — `stoppeAbspielen` bricht nur die
     /// Schleife ab, es springt nichts an den Anfang zurueck. Das ist eine
     /// Pause, und `stop.fill` versprach etwas anderes.
@@ -650,7 +632,7 @@ public struct EditorBereichView: View {
     /// Rund und gross, unmittelbar unter der Leinwand: So hat es der
     /// Auftraggeber aufgezeichnet, und so halten es Abspielknoepfe sonst
     /// ueberall. Ein Symbol allein sagt der Sprachausgabe nichts — die
-    /// Beschriftung steht deshalb in **beiden** Zustaenden da, und weil sie
+    /// Beschriftung steht deshalb in beiden Zustaenden da, und weil sie
     /// durch ein Ternaer kommt, ist jeder Zweig schon uebersetzt (`lok`),
     /// bevor SwiftUI ihn sieht: Ein Ternaer mit `String`-Zweig schlaegt selbst
     /// nichts mehr nach.
@@ -680,18 +662,18 @@ public struct EditorBereichView: View {
                               : lok("Die Ulanzi-Werknummer, falls es eine gibt — sie merkt sich nur, woher das Bild stammt."))
                 }
             }
-            // Der ausdrueckliche Knopfstil ist hier **kein Aussehen, sondern
-            // die Trefferflaeche.** Eine Zeile einer `Form` ist selbst das
-            // Bedienelement: Ein Knopf mit dem vorgegebenen Stil bekommt
-            // darin die Flaeche der **ganzen Zeile**. Stehen zwei darin,
-            // teilen sie sich dieselbe — ein Druck auf „Sichern" landete bei
-            // „Neu". Und weil eine Zeile antippbar bleibt, auch wenn der
-            // Knopf darin gesperrt ist, traf es bei noch leerer Nummer
-            // zwangslaeufig „Neu", also den zerstoerenden von beiden.
-            // Derselbe Grund wie beim Einzelbildstreifen und in der
-            // Bestandszeile, wo der Stil deshalb schon steht.
+            // Der ausdrueckliche Knopfstil ist hier kein Aussehen, sondern die
+            // Trefferflaeche. Eine Zeile einer `Form` ist selbst das
+            // Bedienelement: Ein Knopf mit dem vorgegebenen Stil bekommt darin
+            // die Flaeche der ganzen Zeile. Stehen zwei darin, teilen sie sich
+            // dieselbe — ein Druck auf „Sichern" landete bei „Neu". Und weil
+            // eine Zeile antippbar bleibt, auch wenn der Knopf darin gesperrt
+            // ist, traf es bei noch leerer Nummer zwangslaeufig „Neu", also
+            // den zerstoerenden von beiden. Derselbe Grund wie beim
+            // Einzelbildstreifen und in der Bestandszeile, wo der Stil
+            // deshalb schon steht.
             //
-            // „Sichern" ist die **eine** Haupthandlung des Editors. Ohne Namen
+            // „Sichern" ist die eine Haupthandlung des Editors. Ohne Namen
             // bleibt es sichtbar abgeblendet stehen statt zu verschwinden —
             // wie „Verbinden …" neben „Fertig" in der Vorlage.
             HStack {
@@ -715,17 +697,16 @@ public struct EditorBereichView: View {
                  : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
         }
 
-        // Was hier steht, sind Handlungen am **Bestand**, nicht an der
-        // Leinwand: Ein geholtes LaMetric-Icon ist immer ein 8×8 im
-        // 8×8-Bestand, gleich was gerade auf dem Tisch liegt. Bis zum
-        // 13.09.2026 hing der ganze Abschnitt an `groesse.mitNummer` — wer
-        // auf 16×16 stand, fand die LaMetric-Wahl nicht mehr und konnte
-        // nicht erraten, warum.
+        // Was hier steht, sind Handlungen am Bestand, nicht an der Leinwand:
+        // Ein geholtes LaMetric-Icon ist immer ein 8×8 im 8×8-Bestand, gleich
+        // was gerade auf dem Tisch liegt. Der ganze Abschnitt hing zuvor an
+        // `groesse.mitNummer` — wer auf 16×16 stand, fand die LaMetric-Wahl
+        // nicht mehr und konnte nicht erraten, warum.
         Section {
-            // **Eine Zeile fuer eine Handlung.** Feld, Knopf und der Verweis
-            // auf die Gallery standen untereinander und nahmen drei Zeilen
-            // fuer eine einzige Sache. Der Knopf traegt jetzt nur noch sein
-            // Symbol — als Wort waren Feld und Knopf zusammen breiter als die
+            // Eine Zeile fuer eine Handlung: Feld, Knopf und der Verweis auf
+            // die Gallery standen untereinander und nahmen drei Zeilen fuer
+            // eine einzige Sache. Der Knopf traegt nur noch sein Symbol — als
+            // Wort waren Feld und Knopf zusammen breiter als die
             // Inspektorspalte, und SwiftUI stapelte sie deshalb doch wieder
             // untereinander.
             LabeledContent("LaMetric-Nummer") {
@@ -746,17 +727,17 @@ public struct EditorBereichView: View {
             }
             Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
                 .font(.caption)
-            // **Der Knopf sagt, wo gesucht wird.** „Öffnen…" liess offen, ob
-            // der Bestand der App gemeint ist oder das Dateisystem.
+            // Der Knopf sagt, wo gesucht wird: „Öffnen…" liess offen, ob der
+            // Bestand der App gemeint ist oder das Dateisystem.
             Button(Self.dateiwahlname) { zeigeDateiImport = true }
                 .knopfBefehl()
                 .fileImporter(isPresented: $zeigeDateiImport,
                               allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
                     switch ergebnis {
                     case .success(let url): dateiUebernehmen(url)
-                    // Bis 13.09.2026 stand hier `guard case .success … else
-                    // { return }`: Wer eine Datei waehlte und scheiterte, sah
-                    // nichts geschehen und konnte nicht wissen, woran es lag.
+                    // `guard case .success … else { return }` taugte hier
+                    // nicht: Wer eine Datei waehlte und scheiterte, sah nichts
+                    // geschehen und konnte nicht wissen, woran es lag.
                     case .failure(let fehler):
                         zustand.fehler = lokf("Die Datei ließ sich nicht öffnen: %@",
                                               fehler.localizedDescription)
@@ -771,8 +752,8 @@ public struct EditorBereichView: View {
         Section("Vorhandene") {
             TextField("Suchen", text: $suche)
                 .eingabefeld(loeschbar: $suche)
-            // **Dieselbe Leiste wie im Auswahlblatt**, nur mit drei Groessen
-            // statt zwei: Hier steht auch die ganze Anzeige im Bestand.
+            // Dieselbe Leiste wie im Auswahlblatt, nur mit drei Groessen statt
+            // zwei: Hier steht auch die ganze Anzeige im Bestand.
             Filterleiste(wert: $filtergroesse,
                          angebot: Leinwandgroesse.allCases.map { ($0.beschriftung, $0.kurzbeschriftung, $0) },
                          nurBewegte: $nurBewegte)
@@ -843,8 +824,8 @@ public struct EditorBereichView: View {
         .accessibilityLabel(name)
     }
 
-    /// Die Leiste der Einzelbilder. „Verdoppeln" und „Entfernen" stehen **am
-    /// Bild, auf das sie wirken** — beim gewaehlten unter seinem Vorschaubild
+    /// Die Leiste der Einzelbilder. „Verdoppeln" und „Entfernen" stehen am
+    /// Bild, auf das sie wirken — beim gewaehlten unter seinem Vorschaubild
     /// und bei jedem im Kontextmenue; in einer gemeinsamen Zeile darunter war
     /// nicht zu sehen, welches Bild gemeint ist.
     private var einzelbildstreifen: some View {
@@ -938,12 +919,11 @@ public struct EditorBereichView: View {
                 .background(Color.black)
             VStack(alignment: .leading, spacing: 1) {
                 Text(eintrag.name).lineLimit(1)
-                // **Das Abspielzeichen neben die Groesse, nicht ins Bild.**
+                // Das Abspielzeichen neben die Groesse, nicht ins Bild:
                 // LaMetric und AWTRIX legen es durchscheinend ueber das
                 // Vorschaubildchen; bei 8×8 verdeckt es damit ein Viertel des
-                // Motivs, und gerade das Motiv soll man ja erkennen. In der
-                // Beschriftungszeile kostet es nichts und steht bei den
-                // uebrigen Angaben ueber die Datei.
+                // Motivs. In der Beschriftungszeile kostet es nichts und
+                // steht bei den uebrigen Angaben ueber die Datei.
                 HStack(spacing: 4) {
                     Text(lok(eintrag.groesse.beschriftung) + (eintrag.nummer.map { " · \($0)" } ?? ""))
                     if bewegte.contains(eintrag.datei.path) {
@@ -955,9 +935,9 @@ public struct EditorBereichView: View {
             }
             Spacer()
             // Derselbe Stil wie der Papierkorb daneben — gleiche Groesse,
-            // gleiche Trefferflaeche —, aber **nicht gefaerbt und ohne
-            // zerstoerende Rolle**: Umbenennen wirft nichts weg. Der Name
-            // steht in beiden Beschriftungen, weil zwei gleiche Symbole
+            // gleiche Trefferflaeche —, aber nicht gefaerbt und ohne
+            // zerstoerende Rolle: Umbenennen wirft nichts weg. Der Name steht
+            // in beiden Beschriftungen, weil zwei gleiche Symbole
             // untereinander sonst nicht auseinanderzuhalten sind.
             Button { umbenennenBeginnen(eintrag) } label: { Image(systemName: "pencil") }
                 .buttonStyle(.borderless)
@@ -1001,7 +981,7 @@ public struct EditorBereichView: View {
             // darunter, statt dass die Zeile rechts abgeschnitten wird.
             // Nur noch Bloecke und Sendeknopf: Die Dauer steht im Zeit-Reiter
             // des Inspektors, die Zielauswahl oben. Was hier bleibt, passt
-            // damit auch schmal in **eine** Zeile — das `ViewThatFits` von
+            // damit auch schmal in eine Zeile — das `ViewThatFits` von
             // vorher war die Folge einer ueberladenen Zeile, nicht ihre Kur.
             HStack(alignment: .bottom, spacing: 16) { sendeteile }
             if zustand.ziele().isEmpty {
@@ -1047,19 +1027,19 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// **Ohne `.defaultAction`** — die Eingabetaste gehoert „Sichern".
+    /// Ohne `.defaultAction` — die Eingabetaste gehoert „Sichern".
     ///
-    /// Beide standen bis zum 14.09.2026 darauf, und welcher von zweien SwiftUI
-    /// dann nimmt, ist nicht festgelegt. Genau so ein Gleichstand hat kurz
-    /// zuvor „Sichern" das zerstoerende „Neu" ausloesen lassen.
+    /// Standen beide darauf, ist nicht festgelegt, welche von zweien SwiftUI
+    /// nimmt — ein solcher Gleichstand hat „Sichern" schon einmal das
+    /// zerstoerende „Neu" ausloesen lassen.
     ///
-    /// „Sichern" bekommt sie aus drei Gruenden: Es ist die **eine**
-    /// Haupthandlung des Editors (`knopfHaupthandlung`, dieser hier ist ein
-    /// Befehl unter mehreren). Es gibt es bei **jeder** Leinwandgroesse,
-    /// diese Zeile nur bei 16×52 — eine Taste, die je nach Leinwand etwas
-    /// anderes tut, waere schlimmer als keine. Und es steht in einem Formular
-    /// mit Name und Nummer, wo die Eingabetaste ohnehin „uebernehmen" heisst,
-    /// waehrend hier der irreversible Weg auf die Uhr begaenne.
+    /// „Sichern" bekommt sie aus drei Gruenden: Es ist die eine Haupthandlung
+    /// des Editors (`knopfHaupthandlung`, dieser hier ist ein Befehl unter
+    /// mehreren). Es gibt es bei jeder Leinwandgroesse, diese Zeile nur bei
+    /// 16×52 — eine Taste, die je nach Leinwand etwas anderes tut, waere
+    /// schlimmer als keine. Und es steht in einem Formular mit Name und
+    /// Nummer, wo die Eingabetaste ohnehin „uebernehmen" heisst, waehrend hier
+    /// der irreversible Weg auf die Uhr begaenne.
     ///
     /// `lok` in beiden Zweigen: Ein Ternaer mit einem `String`-Zweig zwingt
     /// SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
@@ -1073,7 +1053,7 @@ public struct EditorBereichView: View {
                   : lok("Auf die Uhr senden"))
     }
 
-    /// **Keine** der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf
+    /// Keine der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf
     /// gesperrt, statt ins Leere zu senden.
     ///
     /// Absichtlich „keine" und nicht „eine": Sind mehrere Uhren gewählt und ist
@@ -1088,14 +1068,14 @@ public struct EditorBereichView: View {
 
     // MARK: - Blatt „Oeffnen"
 
-    /// **Eine** Ansicht fuer alle drei Groessen, nicht zwei Fassungen: Ob nach
-    /// einer Nummer gefragt wird, leitet sich aus der Groesse **der Datei** ab
-    /// — bei 16×16 und 16×52 gibt es keine.
+    /// Eine Ansicht fuer alle drei Groessen, nicht zwei Fassungen: Ob nach
+    /// einer Nummer gefragt wird, leitet sich aus der Groesse der Datei ab —
+    /// bei 16×16 und 16×52 gibt es keine.
     ///
     /// Gebaut wie der Inspektor: Beschriftung links, gefasstes Feld rechts,
-    /// eine Karte mit Kopf und Fuss. Bis zum 13.09.2026 standen hier zwei
-    /// nackte Felder unter einer kleinen grauen Ueberschrift, und **dass**
-    /// LaMetric-Nummer und Titel gemeint waren, stand nirgends.
+    /// eine Karte mit Kopf und Fuss. Zuvor standen hier zwei nackte Felder
+    /// unter einer kleinen grauen Ueberschrift, ohne dass stand, dass
+    /// LaMetric-Nummer und Titel gemeint waren.
     private var importBlatt: some View {
         VStack(alignment: .leading, spacing: 0) {
             Form {
@@ -1122,7 +1102,7 @@ public struct EditorBereichView: View {
                          : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
                 }
 
-                // **Vor** dem Sichern, nicht danach: Wer eine vergebene Nummer
+                // Vor dem Sichern, nicht danach: Wer eine vergebene Nummer
                 // eintippt, ersetzt etwas — das soll er wissen, bevor er es
                 // tut, und er soll sehen, was.
                 if let vorhanden = importBelegt {
@@ -1153,7 +1133,7 @@ public struct EditorBereichView: View {
         .frame(minWidth: 360)
     }
 
-    /// Wonach das Blatt fragt, haengt an der Groesse **der Datei** — nicht an
+    /// Wonach das Blatt fragt, haengt an der Groesse der Datei — nicht an
     /// der des Editors. Bei 16×16 und 16×52 gibt es keine Nummer.
     private var importMitNummer: Bool { importZiel?.mitNummer ?? false }
 
@@ -1212,7 +1192,7 @@ public struct EditorBereichView: View {
                          : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
                 }
 
-                // Wie im Importblatt: **vor** dem Bestaetigen, und mit Namen.
+                // Wie im Importblatt: vor dem Bestaetigen, und mit Namen.
                 if let vorhanden = benennBelegt(eintrag) {
                     Label(lokf("„%@“ liegt dort schon und wird ersetzt.", vorhanden.name),
                           systemImage: "exclamationmark.triangle")
@@ -1247,7 +1227,7 @@ public struct EditorBereichView: View {
                                  nummer: benennNummer, name: benennName)
     }
 
-    /// Was eine Umbenennung ersetzen wuerde — **er selbst zaehlt nicht**: Wer
+    /// Was eine Umbenennung ersetzen wuerde — er selbst zaehlt nicht: Wer
     /// nur die Nummer aendert, ersetzt nichts, und eine Warnung darueber waere
     /// genau die, die man kuenftig wegklickt.
     private func benennBelegt(_ eintrag: Editoreintrag) -> Editoreintrag? {
@@ -1283,7 +1263,7 @@ public struct EditorBereichView: View {
         if ungesichert { rueckfrage = .groesse(neue) } else { groesseSetzen(neue) }
     }
 
-    /// Umgerechnet wird zwischen den Groessen **nichts**. Der Wechsel ist ein
+    /// Umgerechnet wird zwischen den Groessen nichts. Der Wechsel ist ein
     /// Schritt — „Rueckgaengig" holt die verworfene Leinwand samt ihrer Groesse
     /// zurueck, weil `Leinwand` sie selbst traegt.
     private func groesseSetzen(_ neue: Leinwandgroesse) {
@@ -1354,13 +1334,13 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// **Ein geladenes Stueck kommt auf die Leinwand** — aus einer Datei wie
-    /// von LaMetric. Im Bestand liegt es da schon; steht auf der Leinwand
-    /// etwas Ungesichertes, entscheidet die Rueckfrage, ob es mitgeht.
+    /// Ein geladenes Stueck kommt auf die Leinwand — aus einer Datei wie von
+    /// LaMetric. Im Bestand liegt es da schon; steht auf der Leinwand etwas
+    /// Ungesichertes, entscheidet die Rueckfrage, ob es mitgeht.
     ///
-    /// Bis zum 14.09.2026 wanderte eine geladene Datei nur in den Bestand und
-    /// war nirgends zu sehen — aus Sorge um genau dieses Gemalte. Die Sorge
-    /// war richtig, das Schweigen die falsche Antwort darauf: Man fragt.
+    /// Eine geladene Datei wanderte zuvor nur in den Bestand und war nirgends
+    /// zu sehen, aus Sorge um genau dieses Gemalte — die Sorge war richtig,
+    /// das Schweigen aber die falsche Antwort darauf.
     private func geladenUebernehmen(_ eintrag: Editoreintrag) {
         if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }
     }
@@ -1425,11 +1405,11 @@ public struct EditorBereichView: View {
         zuBenennen = eintrag
     }
 
-    /// **Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit.**
-    /// Das Bild ist dasselbe geblieben, nur sein Name ist ein anderer; bliebe
-    /// der alte in den Feldern stehen, legte das naechste „Sichern" es unter
-    /// dem alten Namen ein zweites Mal an — genau der Fall, den das Leeren
-    /// beim Loeschen verhindert, nur andersherum.
+    /// Liegt das Umbenannte gerade auf der Leinwand, zieht sein Name mit: Das
+    /// Bild ist dasselbe geblieben, nur sein Name ist ein anderer; bliebe der
+    /// alte in den Feldern stehen, legte das naechste „Sichern" es unter dem
+    /// alten Namen ein zweites Mal an — genau der Fall, den das Leeren beim
+    /// Loeschen verhindert, nur andersherum.
     private func umbenennen(_ eintrag: Editoreintrag) {
         let offen = istGeoeffnet(eintrag)
         do {
@@ -1479,19 +1459,19 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// Nimmt die gewaehlte Datei entgegen — und liest sie **sofort**.
+    /// Nimmt die gewaehlte Datei entgegen — und liest sie sofort.
     ///
     /// Eine URL aus dem Dateiwaehler zeigt in die Dateien-App und ist
     /// zugriffsgeschuetzt: Lesen darf man sie nur zwischen
     /// `startAccessingSecurityScopedResource` und `stop…`. Die App merkte sich
-    /// bis 13.09.2026 die URL und las erst beim Bestaetigen des Blattes — da
-    /// war der Zugriff laengst zu, und am iPad schlug jeder Import fehl. Am
-    /// Mac fiel es nicht auf: Die App laeuft dort nicht in der Sandbox, und
-    /// ohne Sandbox gilt die Einschraenkung nicht.
+    /// zuvor nur die URL und las erst beim Bestaetigen des Blattes — da war
+    /// der Zugriff laengst zu, und am iPad schlug jeder Import fehl. Am Mac
+    /// fiel es nicht auf: Die App laeuft dort nicht in der Sandbox, und ohne
+    /// Sandbox gilt die Einschraenkung nicht.
     ///
     /// `startAccessingSecurityScopedResource` gibt ausserhalb der Sandbox
     /// `false` zurueck, obwohl das Lesen dort klappt — deshalb ist der
-    /// Rueckgabewert **kein** Grund abzubrechen, sondern nur die Frage, ob
+    /// Rueckgabewert kein Grund abzubrechen, sondern nur die Frage, ob
     /// hinterher abzumelden ist.
     private func dateiUebernehmen(_ url: URL) {
         let zugriff = url.startAccessingSecurityScopedResource()
@@ -1524,7 +1504,7 @@ public struct EditorBereichView: View {
         zeigeImportBlatt = true
     }
 
-    /// Legt die gelesenen Daten im Bestand **ihrer eigenen** Groesse ab. Die
+    /// Legt die gelesenen Daten im Bestand ihrer eigenen Groesse ab. Die
     /// Meldung nennt sie: Der Eintrag kann in einem anderen Bestand liegen als
     /// dem, auf den der Editor gerade eingestellt ist, und dann faende ihn
     /// niemand.
@@ -1550,11 +1530,11 @@ public struct EditorBereichView: View {
 
     /// Was nach dem Blatt geschieht — und zwar erst, wenn es zu ist.
     ///
-    /// **Ein Dialog, der im selben Durchlauf aufgeht, in dem ein Blatt zugeht,
-    /// wird verschluckt.** SwiftUI hat dann ein Bedienelement zu schliessen und
+    /// Ein Dialog, der im selben Durchlauf aufgeht, in dem ein Blatt zugeht,
+    /// wird verschluckt: SwiftUI hat dann ein Bedienelement zu schliessen und
     /// eines zu zeigen und tut nur das erste; die Rueckfrage stuende nirgends,
-    /// und „Öffnen" haette scheinbar nichts getan. `onDismiss` ist der Ort,
-    /// an dem das Blatt nachweislich weg ist.
+    /// und „Öffnen" haette scheinbar nichts getan. `onDismiss` ist der Ort, an
+    /// dem das Blatt nachweislich weg ist.
     ///
     /// `nil` heisst abgebrochen — dann ist hier nichts zu tun.
     private func blattGeschlossen() {
@@ -1577,8 +1557,8 @@ public struct EditorBereichView: View {
             : lok("Nichts zu holen — der Grundschatz ist vollständig da.")
     }
 
-    /// **C2.** „Icon einfuegen" ist der **eine** Weg, auf dem zwischen den
-    /// Groessen gerechnet wird — ein Befehl, den man aufruft, kein stiller
+    /// C2. „Icon einfuegen" ist der eine Weg, auf dem zwischen den Groessen
+    /// gerechnet wird — ein Befehl, den man aufruft, kein stiller
     /// Nebeneffekt: 8×8 in ein 16×16 verdoppelt, 8×8 und 16×16 in die Anzeige
     /// eingesetzt. Der umgekehrte Weg kommt nicht vor; Verkleinern zerstoert.
     ///
@@ -1627,7 +1607,7 @@ public struct EditorBereichView: View {
     /// Ein einzelnes Bild geht als `draw` hinaus — klein und exakt. Mehrere
     /// gehen als ein animiertes GIF: Rechtecke kennen keine Zeit.
     private func senden() {
-        // **Die Entscheidung steht im Kern** (`Bildsendung.rahmen`), nicht hier:
+        // Die Entscheidung steht im Kern (`Bildsendung.rahmen`), nicht hier:
         // Dasselbe trifft das Telefon, wenn es ein Bild aus dem Bestand
         // schickt, und zwei Stellen mit derselben Regel laufen auseinander.
         let frame: Frame

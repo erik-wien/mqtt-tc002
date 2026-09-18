@@ -1,7 +1,7 @@
 import SwiftUI
 import TC002Core
 
-/// Die Frontansicht eines Geraets als **Daten** — Flaechen, Schriftzuege,
+/// Die Frontansicht eines Geraets als Daten — Flaechen, Schriftzuege,
 /// Displayfeld und Pixelstil in einem eigenen Zeichenraum.
 ///
 /// Gezeichnet wird das in `GeraeteRahmen`, und zwar fuer jede Geraeteart mit
@@ -9,13 +9,12 @@ import TC002Core
 /// dorthin. Eine dritte Geraeteart waere ein dritter Eintrag in `fuer(_:)` und
 /// sonst nichts.
 ///
-/// **Warum gezeichnet und nicht als Bild eingesetzt.** Bis hierher kam die
-/// TC002-Front als SVG aus dem Bildkatalog. Das taugte fuer **eine** Art: Eine
-/// zweite haette eine zweite Datei gebraucht, und die Feldmasse waeren
-/// weiterhin von Hand an der Zeichnung abgelesene Zahlen im Quelltext gewesen
-/// — zwei Wahrheiten, die auseinanderlaufen koennen, ohne dass es auffaellt.
-/// Hier sind Zeichnung und Masse dieselbe Angabe: `feld` wird gezeichnet
-/// *und* gerechnet.
+/// Warum gezeichnet und nicht als Bild eingesetzt: Eine SVG aus dem
+/// Bildkatalog taugt fuer eine Art. Eine zweite braeuchte eine zweite Datei,
+/// und die Feldmasse blieben von Hand an der Zeichnung abgelesene Zahlen im
+/// Quelltext — zwei Wahrheiten, die auseinanderlaufen koennen, ohne dass es
+/// auffaellt. Hier sind Zeichnung und Masse dieselbe Angabe: `feld` wird
+/// gezeichnet und gerechnet.
 ///
 /// Kein Kernwissen, sondern Bildschirmgeometrie — deshalb liegt der Typ in
 /// `TC002Ansichten` und nicht in `TC002Core`, und deshalb haengt an
@@ -43,22 +42,22 @@ public struct Geraetezeichnung: Equatable, Sendable {
     public enum Teil: Equatable, Sendable {
         /// Eine gefuellte Flaeche mit runden Ecken. `radius` 0 heisst eckig.
         case flaeche(Rechteck, radius: Double, farbe: String)
-        /// Ein aufgedruckter Schriftzug. **Teil der Zeichnung, nicht der
-        /// Oberflaeche**: Auf dem Geraet steht dieser Wortlaut aufgedruckt, er
+        /// Ein aufgedruckter Schriftzug. Teil der Zeichnung, nicht der
+        /// Oberflaeche: Auf dem Geraet steht dieser Wortlaut aufgedruckt, er
         /// wird darum nicht uebersetzt (`Text(verbatim:)` in `GeraeteRahmen`).
         /// `y` ist die Grundlinie, wie in einer SVG.
         case schrift(String, x: Double, grundlinie: Double, groesse: Double,
                      farbe: String, rechtsbuendig: Bool)
     }
 
-    /// Wie ein einzelnes Displaypixel gezeichnet wird — mit **zwei** Lesarten
+    /// Wie ein einzelnes Displaypixel gezeichnet wird — mit zwei Lesarten
     /// fuer die Luecke zwischen zwei Punkten, weil eine von beiden nicht reicht.
     public struct Pixelstil: Equatable, Sendable {
 
         /// Wieviel zwischen zwei Punkten frei bleibt. Es gibt beide Formen,
         /// und der Unterschied ist keine Geschmacksfrage:
         ///
-        /// - `.punkte` ist eine **Haarlinie fester Breite**, unabhaengig von
+        /// - `.punkte` ist eine Haarlinie fester Breite, unabhaengig von
         ///   der Zellenkante. Das ist, was die Werksfirmware-Vorschau immer
         ///   gezeichnet hat (`kantenlaenge - 1`), und was sie weiter zeichnen
         ///   soll: Am Mac laeuft die Kante von 4 bis 14 (`SendenView`), und
@@ -66,7 +65,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
         ///   Punkt an (0,125 · 14 = 1,75 statt 1 Punkt, die Anzeige wirkt
         ///   duenner und schwaecher), bei Kante 4 verschwindet die Trennlinie.
         ///   Der feste Punkt Luft kann es.
-        /// - `.anteil` ist eine Fuge, die **mit** der Zelle waechst. Fuer ein
+        /// - `.anteil` ist eine Fuge, die mit der Zelle waechst. Fuer ein
         ///   grobes Panel, dessen Punkte schon von Weitem als Kaestchen zu
         ///   erkennen sein sollen, ist das die richtige Angabe — die Fuge soll
         ///   dort im Verhaeltnis stehen, nicht in Punkten.
@@ -98,16 +97,15 @@ public struct Geraetezeichnung: Equatable, Sendable {
             punktKante(zelle: zelle) * eckenAnteil
         }
 
-        /// Das Kaestchen eines einzelnen Punktes — **mittig** in seiner Zelle,
+        /// Das Kaestchen eines einzelnen Punktes — mittig in seiner Zelle,
         /// nicht links oben angeschlagen: Sonst liegt die ganze Luecke rechts
         /// und unten, und das Raster sitzt um einen halben Punkt schief im
         /// Feld.
         ///
-        /// Das ist die **eine bewusst behaltene Abweichung** vom Stand vor der
+        /// Das ist die eine bewusst behaltene Abweichung vom Stand vor der
         /// Ablösung der SVG; alles andere am Punktstil der Werksfirmware ist
-        /// buchstaeblich der alte. Bei `.punkte(1)` geht es um einen halben
-        /// Punkt Versatz, und dafuer sitzt das ganze Raster mittig statt
-        /// links oben angeschlagen im Feld.
+        /// buchstaeblich der alte. Bei `.punkte(1)` geht es dabei nur um einen
+        /// halben Punkt Versatz.
         public func kaestchen(spalte: Int, zeile: Int, zelle: Double) -> CGRect {
             let kante = punktKante(zelle: zelle)
             let rand = (zelle - kante) / 2
@@ -178,7 +176,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
 
     /// Die Zeichnung wird so gross gezeichnet, dass ihr Displayfeld genau
     /// `inhaltHoehe` hoch ist. Damit passt die Pixelvorschau in der Hoehe
-    /// **exakt** hinein, ohne Skalierung und ohne Verzerrung; weil Breite und
+    /// exakt hinein, ohne Skalierung und ohne Verzerrung; weil Breite und
     /// Hoehe mit demselben `massstab` wachsen, bleibt auch alles andere im
     /// Verhaeltnis.
     public func masse(inhaltHoehe: Double) -> Masse {
@@ -200,21 +198,20 @@ public struct Geraetezeichnung: Equatable, Sendable {
     public var hoehenFaktor: Double { hoehe / feld.hoehe }
 
     /// Wo die Pixelvorschau im Rahmen sitzt: an der Feldhoehe ausgerichtet,
-    /// oben **und links** buendig — wie auf dem Geraet selbst, das eine
-    /// Anzeige immer bei Spalte 0 beginnt.
+    /// oben und links buendig — wie auf dem Geraet selbst, das eine Anzeige
+    /// immer bei Spalte 0 beginnt.
     ///
-    /// **Nicht zentriert** — das war der erste Stand, und er hat einen Fehler
-    /// verdeckt: Die Vorschau rasterte auf jedem Geraet 52×16, waehrend die
-    /// AWTRIX-Zeichnung auf ihre echten 32×8 gerechnet ist (siehe `awtrixNG`).
-    /// Zentriert legte das einen unbeabsichtigten schwarzen Rand **vor** jedes
-    /// Icon und jeden Text, links wie rechts je zur Haelfte.
+    /// Nicht zentriert: Zentriert hatte einen Fehler verdeckt, bei dem die
+    /// Vorschau auf jedem Geraet 52×16 rasterte, waehrend die AWTRIX-Zeichnung
+    /// auf ihre echten 32×8 gerechnet ist (siehe `awtrixNG`) — das legte einen
+    /// unbeabsichtigten schwarzen Rand vor jedes Icon und jeden Text, links
+    /// wie rechts je zur Haelfte.
     ///
-    /// Seit dem 15.09.2026 rastert die Vorschau auf dem Mass der Uhr
-    /// (`Anzeigemass`), der Inhalt fuellt das Feld also wieder aus.
-    /// Buendig bleibt es trotzdem: Ein Geraet beginnt eine Anzeige bei Spalte
-    /// 0, und wo doch einmal etwas uebrigbleibt — eine NG mit gemeldeter
-    /// Panelbreite ueber 32 —, gehoert der Rest nach rechts und nicht je zur
-    /// Haelfte auf beide Seiten.
+    /// Die Vorschau rastert inzwischen auf dem Mass der Uhr (`Anzeigemass`),
+    /// der Inhalt fuellt das Feld also wieder aus. Buendig bleibt es trotzdem:
+    /// Ein Geraet beginnt eine Anzeige bei Spalte 0, und wo doch einmal etwas
+    /// uebrigbleibt — eine NG mit gemeldeter Panelbreite ueber 32 —, gehoert
+    /// der Rest nach rechts und nicht je zur Haelfte auf beide Seiten.
     public func inhaltEcke(inhaltHoehe: Double) -> (x: Double, y: Double) {
         let m = masse(inhaltHoehe: inhaltHoehe)
         return (m.feldX, m.feldY)
@@ -287,7 +284,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
                          farbe: "#77777B", rechtsbuendig: true),
             ],
             // Buchstaeblich der Stand vor der Ablösung der SVG: ein hartes
-            // Quadrat mit genau einem Punkt Luft, bei **jeder** Kantenlaenge.
+            // Quadrat mit genau einem Punkt Luft, bei jeder Kantenlaenge.
             // Siehe `Luecke` — ein Anteil taete es hier nicht.
             pixelstil: Pixelstil(luecke: .punkte(1), eckenAnteil: 0))
     }()
@@ -295,7 +292,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
     // MARK: - Die Ulanzi TC001 mit AWTRIX NG
 
     /// Die Front der TC001 unter AWTRIX NG: gerade Ansicht, heller Koerper,
-    /// runde Ecken, **keine Tasten oben**.
+    /// runde Ecken, keine Tasten oben.
     ///
     /// Das Geraet ist im Wesentlichen ein schmaler weisser Rand um ein
     /// schwarzes Feld — von vorn und ohne Knopf ist da wenig zu zeichnen.
@@ -316,7 +313,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
             feld: feld,
             gehaeuse: gehaeuse, gehaeuseRadius: 28,
             teile: [
-                // Aussenkante und Fusskante in **einem** Stueck: derselbe
+                // Aussenkante und Fusskante in einem Stueck: derselbe
                 // Koerper, eine Spur groesser und nach unten versetzt. Ein
                 // waagrechter Balken taete es nicht — seine Enden stuenden bei
                 // einem Radius von 28 ueber die runden Ecken hinaus, und genau

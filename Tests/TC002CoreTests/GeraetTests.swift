@@ -11,7 +11,7 @@ final class Doppelgaenger: URLProtocol {
     nonisolated(unsafe) static var abfragen: [String: String] = [:]
     nonisolated(unsafe) static var methoden: [String: String] = [:]
     /// Der `Content-Type` je Pfad. Bei AWTRIX NG ist er bei `PUT` und `PATCH`
-    /// **Pflicht**: Ohne ihn wird die Anfrage mit `415` abgewiesen, bevor der
+    /// Pflicht: Ohne ihn wird die Anfrage mit `415` abgewiesen, bevor der
     /// Rumpf ueberhaupt gelesen wird.
     nonisolated(unsafe) static var inhaltstypen: [String: String] = [:]
     nonisolated(unsafe) static var pfade: [String] = []
@@ -76,8 +76,8 @@ final class GeraetTests: XCTestCase {
         Doppelgaenger.pfade = []
     }
 
-    /// Der Kern: das tatsaechliche Praefix ist das eingestellte plus die letzten
-    /// vier Stellen der MAC. Genau hieran sind heute Stunden verlorengegangen.
+    /// Das tatsaechliche Praefix ist das eingestellte plus die letzten vier
+    /// Stellen der MAC.
     func testThemenPraefixWirdAusPraefixUndMacGebildet() throws {
         XCTAssertEqual(try geraet().themenPraefix(), "awtrix_a86b")
     }
@@ -121,8 +121,8 @@ final class GeraetTests: XCTestCase {
     }
 
     /// Welche Anzeigen auf der Uhr stehen, sagt sie ueber HTTP — und zwar unter
-    /// `/api/customList`. `/customList` ohne `/api` liefert nichts; dass das ein
-    /// Mangel der Firmware sei, war unser eigener Pfadfehler.
+    /// `/api/customList`. `/customList` ohne `/api` liefert nichts, ist aber
+    /// kein Mangel der Firmware, sondern der falsche Pfad.
     func testAnzeigennamenKommenVomApiPfad() throws {
         XCTAssertEqual(try geraet().anzeigennamen(), ["meldung2", "meldung5", "meldung3"])
     }
@@ -168,9 +168,9 @@ final class GeraetTests: XCTestCase {
         XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=a%20b%26c")
     }
 
-    /// **Die Falle.** Ueber HTTP loescht der Rumpf `{}` — ein leerer Rumpf
-    /// antwortet zwar dasselbe `ok`, laesst die Anzeige aber stehen (§5.6).
-    /// Ueber MQTT ist es genau umgekehrt.
+    /// Ueber HTTP loescht der Rumpf `{}` — ein leerer Rumpf antwortet zwar
+    /// dasselbe `ok`, laesst die Anzeige aber stehen (§5.6). Ueber MQTT ist es
+    /// genau umgekehrt.
     func testAnzeigeLoeschenSchicktGeschweifteKlammernUndNichtsLeeres() throws {
         Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
         try geraet().anzeigeLoeschen(name: "meldung2")
@@ -190,11 +190,10 @@ final class GeraetTests: XCTestCase {
         XCTAssertEqual(Doppelgaenger.methoden["/api/switchDiyApp"], "POST")
     }
 
-    /// **Der eigentliche Gewinn des HTTP-Wegs, und die Stelle, an der er zu
-    /// verspielen waere.** Die gemessene Ablehnung steht im **Rumpf**, nicht im
-    /// HTTP-Status: `{"code":404,"message":"custom app not found"}` kommt mit
-    /// Status 200 daher. Wer nur auf den Status sieht, meldet eine Ablehnung
-    /// als Erfolg — und waere damit genauso stumm wie MQTT.
+    /// Die gemessene Ablehnung steht im Rumpf, nicht im HTTP-Status:
+    /// `{"code":404,"message":"custom app not found"}` kommt mit Status 200
+    /// daher. Wer nur auf den Status sieht, meldet eine Ablehnung als Erfolg —
+    /// und waere damit genauso stumm wie MQTT.
     func testAblehnungImRumpfWirdErkanntObwohlDerStatusStimmt() {
         Doppelgaenger.antworten["/api/switchDiyApp"] = #"{"code":404,"message":"custom app not found"}"#
         Doppelgaenger.statusCodes["/api/switchDiyApp"] = 200
@@ -243,16 +242,12 @@ final class GeraetTests: XCTestCase {
 
     // MARK: - Eine Adresse, die keine ist
 
-    /// **Der Absturz vom 14.09.2026.** An drei Stellen stand
-    /// `URL(string: "http://\(host)\(pfad)")!`. Ein **Leerzeichen** in der
-    /// eingetragenen Adresse laesst `URL(string:)` `nil` liefern, und das
-    /// Ausrufezeichen dahinter beendet die App — auf dem iPad mitten im
-    /// Abfragen, mit „Unexpectedly found nil while unwrapping an Optional
-    /// value" und ohne dass der Anwender je erfaehrt, dass es an seiner
-    /// Eingabe lag.
-    ///
-    /// Eine Adresse kommt aus den Einstellungen und ist von Hand eingetippt.
-    /// Sie muss eine **Meldung** ergeben koennen, keinen Absturz.
+    /// Ein Leerzeichen in der eingetragenen Adresse laesst `URL(string:)`
+    /// `nil` liefern; ein Zwangsauspacken dahinter (`!`) beendet dann die App
+    /// mit „Unexpectedly found nil while unwrapping an Optional value", ohne
+    /// dass der Anwender erfaehrt, dass es an seiner Eingabe lag. Eine
+    /// Adresse kommt aus den Einstellungen und ist von Hand eingetippt und
+    /// muss eine Meldung ergeben koennen, keinen Absturz.
     func testEineAdresseMitLeerzeichenWirftStattAbzustuerzen() {
         XCTAssertThrowsError(try geraet(host: "awtrix a86b").basis()) { fehler in
             guard case GeraetFehler.ungueltigeAdresse(let genannt) = fehler else {
@@ -275,10 +270,8 @@ final class GeraetTests: XCTestCase {
             .anzeigeSetzen("{}", name: "meldung1"))
     }
 
-    /// Die Gegenprobe: Ein **leerer** Host stuerzt nicht ab und wirft auch
-    /// nicht hier — `http:///getBase` ist eine gueltige URL. Nachgemessen,
-    /// nicht vermutet; wer das umdreht, baut eine Falle ein, die erst auf dem
-    /// Geraet zuschnappt.
+    /// Die Gegenprobe: Ein leerer Host stuerzt nicht ab und wirft auch nicht
+    /// hier — `http:///getBase` ist eine gueltige URL.
     func testEinLeererHostErgibtEineGueltigeURL() {
         XCTAssertNotNil(URL(string: "http:///getBase"))
     }

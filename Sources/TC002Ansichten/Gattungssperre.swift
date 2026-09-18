@@ -3,9 +3,9 @@ import TC002Core
 
 /// Einen Regler sperren, den die Geräteart gar nicht kennt — und sagen warum.
 ///
-/// **Zwei Achsen, zwei Stellen.** Ob ein Regler zum gewählten Weg passt,
+/// Zwei Achsen, zwei Stellen: Ob ein Regler zum gewählten Weg passt,
 /// entscheidet die Ansicht selbst und hat es schon immer über `.disabled`
-/// getan. Ob die *Geräteart* ihn überhaupt hergibt, entscheidet
+/// getan. Ob die Geräteart ihn überhaupt hergibt, entscheidet
 /// `Geraetetyp.wirkt` im Kern. Beides greift nebeneinander: `.disabled` ist
 /// kumulativ, ein zweites `true` weiter außen sperrt zusätzlich, und die
 /// Ansicht behält ihre eigene Bedingung unverändert.
@@ -15,12 +15,12 @@ import TC002Core
 /// begründet: Ein Abschnitt, der je nach Zustand erscheint und verschwindet,
 /// lässt die Seitenleiste springen.
 ///
-/// **Was dieser Weg nicht löst:** Am iPad und am iPhone gibt es kein
+/// Was dieser Weg nicht löst: Am iPad und am iPhone gibt es kein
 /// Mauszeigerschweben, der Grund bleibt dort also unsichtbar — ein gesperrter
-/// Regler ohne erkennbaren Anlass. Das ist kein neues Loch, sondern dasselbe,
-/// das schon für `fettWirkt` und `kleinbuchstabenMoeglich` offen ist; es
-/// betrifft jetzt nur mehr Zeilen. Eine sichtbare Fassung davon ist eine
-/// eigene Entscheidung über die Oberfläche und steht im Rückstandsdokument.
+/// Regler ohne erkennbaren Anlass. Das betrifft auch `fettWirkt` und
+/// `kleinbuchstabenMoeglich`, hier nur mehr Zeilen. Eine sichtbare Fassung
+/// davon ist eine eigene Entscheidung über die Oberfläche und steht im
+/// Rückstandsdokument.
 extension View {
     @ViewBuilder
     func gattungssperre(_ regler: Regler, _ art: Geraetetyp,

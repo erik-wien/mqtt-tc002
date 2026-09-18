@@ -3,7 +3,7 @@ import TC002Core
 
 /// Ein kleines (?) mit einer Erklärung dahinter — sichtbar und antippbar.
 ///
-/// **Warum es das gibt.** Der Inspektor erklärt seine Regler seit jeher über
+/// Warum es das gibt: Der Inspektor erklärt seine Regler seit jeher über
 /// `.help(…)`: ein Einblendtext beim Verweilen mit der Maus. Am Mac genügt
 /// das. Am iPad gibt es ohne Zeiger kein Verweilen, und damit war jede
 /// Erklärung dort unerreichbar — `Gattungssperre.swift` hält denselben Mangel
@@ -11,7 +11,7 @@ import TC002Core
 /// Entscheidung über die Oberfläche. Dies ist die Antwort darauf: derselbe
 /// Text, aber zusätzlich hinter einem Zeichen, das man sieht und trifft.
 ///
-/// Der Text steht deshalb **zweimal** dran — als `.help` fürs Verweilen und im
+/// Der Text steht deshalb zweimal dran — als `.help` fürs Verweilen und im
 /// Blatt für den Klick. Das ist kein zweiter Übersetzungsschlüssel: Er wird
 /// einmal gereicht und einmal nachgeschlagen (die Aufrufer geben ihn schon
 /// durch `lok(…)` gegangen herein, weil ein gewöhnliches `String` sonst
@@ -25,15 +25,14 @@ public struct Hilfezeichen: View {
     private let warnung: Bool
     @State private var zeigt = false
 
-    /// `text` ist **fertig übersetzt** hereinzugeben (`lok(…)`): Er wird als
+    /// `text` ist fertig übersetzt hereinzugeben (`lok(…)`): Er wird als
     /// gewöhnliches `String` weitergereicht, und das schlägt SwiftUI nicht nach.
     ///
     /// `warnung: true` macht daraus dasselbe Zeichen mit anderer Aussage: ein
     /// oranges Dreieck statt des Fragezeichens. Es steht dort, wo nicht bloß
-    /// etwas zu erklären, sondern etwas **im Weg** ist — eine Wahl, die so
-    /// nicht ankommen kann. Derselbe Bau, weil der Grund auf beiden
-    /// Oberflächen antippbar sein muss und nicht nur beim Verweilen
-    /// erscheinen darf.
+    /// etwas zu erklären, sondern etwas im Weg ist — eine Wahl, die so nicht
+    /// ankommen kann. Derselbe Bau, weil der Grund auf beiden Oberflächen
+    /// antippbar sein muss und nicht nur beim Verweilen erscheinen darf.
     public init(_ text: String, warnung: Bool = false) {
         self.text = text
         self.warnung = warnung

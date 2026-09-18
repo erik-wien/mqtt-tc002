@@ -6,12 +6,11 @@ import TC002Modell
 /// iPad teilen sie sich — das iPad bekommt nicht das vergrößerte Telefon,
 /// sondern den Schreibtisch.
 ///
-/// Was **nur** der Mac hat, steht weiterhin in `TC002App/App.swift`:
-/// Menübefehle, die vier `Window`-Szenen, „im Finder zeigen", die
-/// Netzfreigabe und das Starten des Mithörens. Was **nur** das iPad braucht,
-/// steht hier hinter `#if !os(macOS)`: ein Weg zu den vier Nebenfenstern (die
-/// es dort als Fenster nicht gibt) und ein Titel über dem Bereich, weil die
-/// Seitenleiste hochkant hinter einem Knopf verschwindet.
+/// Nur der Mac: Menübefehle, `Window`-Szenen, „im Finder zeigen", Netzfreigabe
+/// und das Mithören — die stehen in `TC002App/App.swift`. Nur das iPad: der Weg
+/// zu den Nebenfenstern (dort keine Fenster) und ein Titel über dem Bereich,
+/// weil die Seitenleiste hochkant hinter einem Knopf verschwindet; beides hier
+/// hinter `#if !os(macOS)`.
 public struct SchreibtischView: View {
     @Bindable var zustand: AppZustand
     @State private var bereich: Bereich?
@@ -35,11 +34,9 @@ public struct SchreibtischView: View {
 
     enum Bereich: String, CaseIterable, Identifiable {
         case senden = "Senden", editor = "Editor",
-             // **„Protokoll", nicht „Verlauf"** (18.09.2026). Der Bereich
-             // zeigt, was **jetzt** auf der Uhr liegt, und darunter die
-             // technische Mitschrift — eine Geschichte war er nie. Den Namen
-             // braucht seit heute etwas anderes: die Liste der gesendeten
-             // Meldungen unter den Bloecken.
+             // „Protokoll", nicht „Verlauf": Der Bereich zeigt, was jetzt auf
+             // der Uhr liegt, und darunter die technische Mitschrift. „Verlauf"
+             // heisst die Liste der gesendeten Meldungen unter den Bloecken.
              protokoll = "Protokoll", einstellungen = "Einstellungen"
         var id: String { rawValue }
         var symbol: String {
@@ -54,13 +51,10 @@ public struct SchreibtischView: View {
         static let oben: [Bereich] = [.senden, .editor]
         static let unten: [Bereich] = [.protokoll, .einstellungen]
 
-        /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und ohne
-        /// eingetragenen Broker (`AppZustand.eingerichtet`) waere „Senden" eine
-        /// Sackgasse — keine Vorschau, kein Ziel, ein Sendeknopf, der
-        /// nirgendwohin fuehrt. Wer eingerichtet ist, beginnt wie bisher.
-        ///
-        /// Gesperrt wird dabei nichts: Die Seitenleiste steht offen, und ein
-        /// Klick fuehrt sofort woandershin.
+        /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und Broker
+        /// (`AppZustand.eingerichtet`) waere „Senden" eine Sackgasse: keine
+        /// Vorschau, kein Ziel. Gesperrt ist nichts, die Seitenleiste steht
+        /// offen.
         static func start(eingerichtet: Bool) -> Bereich {
             eingerichtet ? .senden : .einstellungen
         }
@@ -72,25 +66,15 @@ public struct SchreibtischView: View {
         } detail: {
             bereichsansicht
         }
-        // Mindestbreite des Fensters. GEMESSEN, nicht gerechnet (12.09.2026,
-        // Bildschirmfoto bei 980): Die Detailspalte des Split-View geht nicht
-        // unter rund 600 Punkte, gleich was ihr Inhalt an Mindestbreite
-        // angibt. Mit fester Seitenleiste und festem Inspektor (340) fehlten
-        // bei 980 genau 128 Punkte — beide Leisten wurden angeschnitten, nicht
-        // die Mitte.
-        //
-        // 190 + 600 + 340 = 1130, mit Luft 1140. Die Seitenleiste ist am
-        // 13.09.2026 von 170 auf 190 gewachsen (siehe `Seitenleiste`), die
-        // Forderung deshalb von 1120 auf 1140 — sonst verschoebe sich der
-        // Anschnitt dorthin zurueck, wo er schon einmal war.
-        //
-        // Die Leinwand des Editors fordert nichts mehr: Sie nimmt, was ihre
-        // Spalte hergibt (`Malflaeche`), und rollt bei Enge waagrecht.
+        // Mindestbreite: 190 (Seitenleiste) + 600 + 340 (Inspektor) = 1130,
+        // mit Luft 1140. Die 600 sind gemessen, nicht gerechnet — die
+        // Detailspalte eines NavigationSplitView geht nicht darunter, gleich
+        // was ihr Inhalt fordert; bei einem 980 breiten Fenster wurden beide
+        // Leisten angeschnitten, nicht die Mitte.
         //
         // Nur am Mac: Kein iPad erreicht 1140 im Hochformat (das groesste hat
-        // 1024), und in geteilter Ansicht bricht es immer. Die Forderung ist am
-        // Mac gemessen und gilt fuer ein Fenster, das man ziehen kann — auf dem
-        // iPad gibt es nichts zu ziehen, dort schnitte sie nur ab.
+        // 1024), und geteilt bricht es immer. Dort gibt es kein Fenster zu
+        // ziehen, die Forderung schnitte nur ab.
         #if os(macOS)
         .frame(minWidth: 1140, minHeight: 640)
         #endif
@@ -135,7 +119,7 @@ public struct SchreibtischView: View {
         // rund 320 laesst quer genug fuer Mitte und Inspektor uebrig.
         //
         // Woher die Zahlen kommen, steht in `Seitenleiste` — gemessen an
-        // „Einstellungen", das bei 170 **und bei 190** auf dem iPad umbrach.
+        // „Einstellungen", das bei 170 und bei 190 auf dem iPad umbrach.
         // Am Mac bleibt es bei 190: Dort ist die Zeilenschrift 13 statt 17
         // Punkte gross, und die Mindestbreite des Fensters unten haengt daran.
         .navigationSplitViewColumnWidth(Seitenleiste.breite)
@@ -144,20 +128,16 @@ public struct SchreibtischView: View {
         #endif
     }
 
-    /// **Die Hilfe als dritte Zeile unten** (18.09.2026).
+    /// Oeffnet die Hilfe — am Mac das Fenster der `Window`-Szene, auf dem iPad
+    /// die ganzflaechige Einblendung.
     ///
-    /// Sie waehlt keinen Bereich aus, sondern oeffnet das Dokument — am Mac
-    /// das Fenster der `Window`-Szene, auf dem iPad die ganzflaechige
-    /// Einblendung. Deshalb ein Knopf und keine Zeile mit `tag`: Waere sie ein
-    /// `Bereich`, stuende in der Detailspalte eine `NavigationSplitView` in
-    /// einer `NavigationSplitView`, und die Auswahl bliebe auf „Hilfe" stehen,
-    /// nachdem man sie gelesen hat.
+    /// Ein Knopf und keine Zeile mit `tag`: Als `Bereich` stuende in der
+    /// Detailspalte eine `NavigationSplitView` in einer `NavigationSplitView`,
+    /// und die Auswahl bliebe auf „Hilfe" stehen.
     ///
-    /// Am Mac steht sie zusaetzlich im Hilfe-Menue (⌘?). Die Doppelung ist der
-    /// Zweck: **Das iPad hat keine Menueleiste** (erst iPadOS 26, die App
-    /// laeuft ab iOS 17), und eine Oberflaeche, die sich beide teilen, darf
-    /// ihren Weg zur Hilfe nicht dort haben, wo ihn nur eines von beiden
-    /// findet.
+    /// Am Mac steht die Hilfe zusaetzlich im Hilfe-Menue. Die Doppelung ist
+    /// beabsichtigt: Das iPad hat keine Menueleiste (erst iPadOS 26, die App
+    /// laeuft ab iOS 17).
     @ViewBuilder
     private var hilfezeile: some View {
         Button {
@@ -175,8 +155,8 @@ public struct SchreibtischView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        // **Kein ⌘?.** Das Hilfe-Menue am Mac traegt es schon; zwei Halter
-        // desselben Kuerzels bedienen sich gegenseitig aus.
+        // Kein ⌘?: Das Hilfe-Menue am Mac traegt es schon, und zwei Halter
+        // desselben Kuerzels schliessen einander aus.
     }
 
     @ViewBuilder
@@ -225,19 +205,13 @@ public struct SchreibtischView: View {
 /// Fensterverwaltung einen Schließknopf; hier muss er mitkommen, sonst ist die
 /// ganzflächige Einblendung eine Sackgasse.
 ///
-/// **Gezeichnet, nicht angemeldet.** Bis 13.09.2026 hing der Knopf an einer
-/// `.toolbar`, und die fand bei Hilfe und Gerätereferenz keine Stelle: Beide
-/// bringen eine eigene `NavigationSplitView` mit, und eine Werkzeugleiste, die
-/// von *außen* darauf gelegt wird, hat keinen Navigationsbehälter, der sie
-/// aufnimmt — sie übersetzt klaglos und wird nie gezeichnet. Am Gerät saß der
-/// Benutzer dann in der Hilfe fest und musste die App beenden.
-///
-/// Deshalb eine eigene Kopfzeile, für alle vier gleich und **ohne
-/// Fallunterscheidung**: `safeAreaInset` ist reine Anordnung — sie hängt an
-/// keinem Behälter, den es geben muss, und kann darum nicht still ausfallen.
-/// Die Fallunterscheidung war der Fehler, nicht bloß ihr falscher Zweig; mit
-/// ihr fiele der Schließknopf beim nächsten Dokument mit eigenem Rahmen
-/// wieder weg. `PlattformwegeTests` hält beides fest.
+/// Die Kopfzeile ist gezeichnet, nicht als `.toolbar` angemeldet, und gilt ohne
+/// Fallunterscheidung für alle Nebenfenster: Eine Werkzeugleiste, die von außen
+/// auf eine Ansicht mit eigener `NavigationSplitView` gelegt wird (Hilfe,
+/// Gerätereferenz), findet keinen Navigationsbehälter, übersetzt klaglos und
+/// wird nie gezeichnet — der Schließknopf fehlt dann, ohne dass es auffällt.
+/// `safeAreaInset` ist reine Anordnung und kann nicht still ausfallen.
+/// `PlattformwegeTests` hält beides fest.
 private struct NebenfensterSchirm: View {
     let fenster: Nebenfenster
     @Environment(\.dismiss) private var schliessen

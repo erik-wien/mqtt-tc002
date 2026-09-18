@@ -1,11 +1,10 @@
 import SwiftUI
 import TC002Core
 
-/// **Der Weg zur Uhr selbst.** Beide Firmwares bringen eine Web-Oberfläche
-/// mit, und alles, was diese App nicht einstellt — WLAN, Helligkeit, die
+/// Der Weg zur Uhr selbst. Beide Firmwares bringen eine Web-Oberfläche mit,
+/// und alles, was diese App nicht einstellt — WLAN, Helligkeit, die
 /// eingebauten Anzeigen, bei AWTRIX NG der MQTT-Broker samt Präfix —, wird
-/// dort eingestellt. Bis zum 14.09.2026 musste man die Adresse dafür aus den
-/// Einstellungen abschreiben und von Hand in den Browser tippen.
+/// dort eingestellt.
 ///
 /// Kein `URL(string:)!`: Ein Hostname aus einem Eingabefeld ist beliebiger
 /// Text, und ein Ausrufezeichen darauf wäre ein Absturz, den ein Tippfehler

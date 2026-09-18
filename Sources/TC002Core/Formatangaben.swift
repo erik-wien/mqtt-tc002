@@ -3,7 +3,7 @@ import Foundation
 /// Die Formatangaben, die ein Kurzbefehl mitgeben kann — jede einzelne
 /// wahlfrei.
 ///
-/// **Warum das im Kern steht und nicht bei den Kurzbefehlen.** Was hier
+/// Warum das im Kern steht und nicht bei den Kurzbefehlen. Was hier
 /// geschieht, ist eine Rechnung ueber `Meldungsoptionen`: Vorgaben nehmen,
 /// Angegebenes darueberlegen, die Groesse gegen die abgesegnete Liste halten.
 /// Der Intent in `TC002iOS` liefert nur die Werte — er hat die Auswahllisten
@@ -11,7 +11,7 @@ import Foundation
 /// hier laesst sich das mit `swift test` pruefen; das iOS-Ziel baut SwiftPM
 /// nicht.
 ///
-/// Was **nicht** angegeben ist, bleibt bei der Vorgabe des Aufrufers — beim
+/// Was nicht angegeben ist, bleibt bei der Vorgabe des Aufrufers — beim
 /// Intent also bei dem, was zuletzt unter „Senden" eingestellt war
 /// (`Meldungsoptionen.ausAblage`). Eine hier erfundene Vorgabe gaebe es nicht:
 /// Dieselbe Meldung saehe aus einem Kurzbefehl anders aus als aus der App.
@@ -81,17 +81,17 @@ public struct Formatangaben {
     ///
     /// Die Groesse zuletzt, und das ist keine Formsache: Welche Groessen
     /// angeboten werden, haengt an der Schrift (`Pixelgroessen`). Geprueft
-    /// wird deshalb gegen die Schrift, die **nachher** gilt — wer „Micro 5"
+    /// wird deshalb gegen die Schrift, die nachher gilt — wer „Micro 5"
     /// und acht Pixel zusammen angibt, bekommt den Fehler, obwohl acht bei der
     /// vorher eingestellten Schrift zu haben waere.
     ///
     /// Zwei Faelle, und beide bilden ab, was die Sendeansicht tut:
     ///
-    /// - **Groesse ausdruecklich angegeben** — sie muss auf der Liste stehen,
+    /// - Groesse ausdruecklich angegeben — sie muss auf der Liste stehen,
     ///   sonst ein Fehler. Das Groessenmenue der Ansicht bietet nichts
     ///   anderes an; stillschweigend etwas anderes zu senden, als im
     ///   Kurzbefehl steht, waere schlimmer als die Absage.
-    /// - **Nur die Schrift gewechselt** — die geerbte Groesse faellt auf die
+    /// - Nur die Schrift gewechselt — die geerbte Groesse faellt auf die
     ///   naechstgelegene der neuen Liste, genau wie `.onChange(of: schrift)`
     ///   in `SendenView` und `SendeniOS`. Hier hat niemand eine Groesse
     ///   verlangt, es gibt also auch nichts abzuweisen.

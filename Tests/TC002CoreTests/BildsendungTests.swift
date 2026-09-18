@@ -16,7 +16,7 @@ final class BildsendungTests: XCTestCase {
         return f
     }
 
-    /// **Ein Einzelbild geht als `draw`** — Rechtecke, klein und exakt.
+    /// Ein Einzelbild geht als `draw` — Rechtecke, klein und exakt.
     func testEinStehendesBildGehtAlsRechtecke() throws {
         let sammlung = Bildersammlung(ordner: temp())
         let gemaltes = try sammlung.sichern(name: "Einer", feld: feld(punkt: (3, 2), farbe: "#FF8800"))
@@ -27,7 +27,7 @@ final class BildsendungTests: XCTestCase {
         XCTAssertNil(rahmen.dauer)
     }
 
-    /// **Mehrere gehen als GIF** — Rechtecke kennen keine Zeit.
+    /// Mehrere gehen als GIF — Rechtecke kennen keine Zeit.
     func testMehrereEinzelbilderGehenAlsGif() throws {
         let sammlung = Bildersammlung(ordner: temp())
         var eins = [String?](repeating: nil, count: 52 * 16); eins[0] = "#FF0000"
@@ -51,7 +51,7 @@ final class BildsendungTests: XCTestCase {
     }
 }
 
-/// **Beide Wege müssen dasselbe ergeben** — der Editor reicht Einzelbilder aus
+/// Beide Wege müssen dasselbe ergeben — der Editor reicht Einzelbilder aus
 /// dem Speicher, das Telefon eine Datei. Liefen sie auseinander, sähe dieselbe
 /// Anzeige auf der Uhr verschieden aus, je nachdem, von wo sie geschickt wurde.
 final class BildsendungBeideWegeTests: XCTestCase {

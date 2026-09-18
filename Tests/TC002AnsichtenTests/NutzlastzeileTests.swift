@@ -1,7 +1,7 @@
 import XCTest
 @testable import TC002Ansichten
 
-/// Die Nutzlastzeile gibt es **einmal**, für „Senden" und für den Editor.
+/// Die Nutzlastzeile gibt es einmal, für „Senden" und für den Editor.
 ///
 /// Zwei Fassungen nebeneinander wären zwei Schwellen, die auseinanderlaufen —
 /// und genau das war der Anlass: Im Editor fehlte die Warnung ganz, obwohl ein
@@ -41,7 +41,7 @@ final class NutzlastzeileTests: XCTestCase {
         XCTAssertEqual(Nutzlastzeile.groesse(23_000), "rund 22 KB Nutzlast")
     }
 
-    /// Gewarnt wird erst **über** der Schwelle, nicht schon darauf — und das
+    /// Gewarnt wird erst über der Schwelle, nicht schon darauf — und das
     /// gemessene Lauf-GIF von 23 KB löst noch nichts aus.
     func testGewarntWirdErstUeberDerSchwelle() {
         XCTAssertEqual(Nutzlastzeile.heikelAb, 60_000)
@@ -49,7 +49,7 @@ final class NutzlastzeileTests: XCTestCase {
                        "ein gewöhnliches Lauf-GIF von 23 KB darf nicht warnen — die Uhr nimmt es")
     }
 
-    /// **B6.** Beide Stellen benutzen dieselbe Zeile, und keine von beiden
+    /// B6. Beide Stellen benutzen dieselbe Zeile, und keine von beiden
     /// kennt die Schwelle selbst. Stünde die Zahl noch einmal in einer Ansicht,
     /// wäre es wieder eine zweite Fassung daneben.
     func testBeideStellenBenutzenDieselbeZeile() throws {

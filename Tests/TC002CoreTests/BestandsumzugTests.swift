@@ -38,7 +38,7 @@ final class BestandsumzugTests: XCTestCase {
 
     // MARK: Hinweg
 
-    /// **Der Kern des Rueckwegs liegt im Hinweg.** Kopiert wird, nicht
+    /// Der Kern des Rueckwegs liegt im Hinweg. Kopiert wird, nicht
     /// verschoben: Nach dem Einschalten liegt der oertliche Bestand
     /// unveraendert da, wo er lag.
     func testHinwegKopiertUndLaesstDenOertlichenBestandStehen() {
@@ -51,7 +51,7 @@ final class BestandsumzugTests: XCTestCase {
                        "der oertliche Bestand bleibt — er ist der Rueckweg")
     }
 
-    /// Im Behaelter kann schon der Bestand des **anderen** Geraets liegen. Ihn
+    /// Im Behaelter kann schon der Bestand des anderen Geraets liegen. Ihn
     /// zu ueberschreiben waere das Gegenteil eines Abgleichs.
     func testHinwegLaesstDenBehaelterInRuhe() {
         let o = ort()
@@ -130,7 +130,7 @@ final class BestandsumzugTests: XCTestCase {
         XCTAssertEqual(liste.first?["name"], "neu")
     }
 
-    /// **Auch der Rueckweg fuehrt zusammen.** Er ueberschreibt Dateien, und
+    /// Auch der Rueckweg fuehrt zusammen. Er ueberschreibt Dateien, und
     /// waere `names.json` eine davon, ginge dabei jeder Name verloren, den nur
     /// der oertliche Bestand kennt — ausgerechnet beim Abschalten, dem
     /// Vorgang, der nichts wegnehmen darf.
@@ -171,11 +171,11 @@ final class BestandsumzugTests: XCTestCase {
 
     // MARK: - Platzhalter im Behaelter
 
-    /// **Der Fehler vom 14.09.2026.** Eine Datei, die im iCloud-Behaelter
-    /// liegt, aber auf diesem Geraet noch nicht heruntergeladen ist, gibt es
-    /// dort nur als Platzhalter `.82.gif.icloud`. `FileManager.fileExists` auf
-    /// `82.gif` sagt dann **nein** — und der Umzug hielt den Behaelter fuer
-    /// leer und kopierte seinen ganzen Bestand hinein. iCloud machte aus den
+    /// Eine Datei, die im iCloud-Behaelter liegt, aber auf diesem Geraet
+    /// noch nicht heruntergeladen ist, gibt es dort nur als Platzhalter
+    /// `.82.gif.icloud`. `FileManager.fileExists` auf `82.gif` sagt dann
+    /// nein — ein Umzug, der das nicht beachtet, haelt den Behaelter fuer
+    /// leer und kopiert seinen ganzen Bestand hinein. iCloud macht aus den
     /// doppelten Schreibvorgaengen Konfliktkopien: `82 2.gif`, im Bestand
     /// sichtbar als eigenes Icon namens „82 2".
     /// Ein Wegwerfordner unter der Wurzel dieses Laufs.
@@ -273,7 +273,7 @@ final class UmschaltenTests: XCTestCase {
         XCTAssertEqual(inhalt(wolke.appendingPathComponent("Icons"), "1673.gif"), "BUS")
     }
 
-    /// **Der Normalfall ohne Berechtigung.** Kein Behaelter: Die Wahl bleibt
+    /// Der Normalfall ohne Berechtigung. Kein Behaelter: Die Wahl bleibt
     /// aus, statt auf „an" zu stehen und nichts zu tun — und kopiert wird
     /// nichts.
     func testOhneBehaelterBleibtDieWahlAus() {
@@ -284,7 +284,7 @@ final class UmschaltenTests: XCTestCase {
         XCTAssertEqual(inhalt(oertlich.appendingPathComponent("Icons"), "1673.gif"), "BUS")
     }
 
-    /// **Der Rueckweg.** Wer abschaltet, behaelt seine Sachen — auch die, die
+    /// Der Rueckweg. Wer abschaltet, behaelt seine Sachen — auch die, die
     /// erst nach dem Einschalten dazugekommen sind.
     func testAbschaltenBringtAllesZurueck() {
         schreiben("alt", oertlich.appendingPathComponent("Bilder"), "nacht.gif")

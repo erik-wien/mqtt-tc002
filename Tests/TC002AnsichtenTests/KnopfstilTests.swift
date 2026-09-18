@@ -1,9 +1,9 @@
 import XCTest
 
-/// **B1.** Ein Stil lässt sich schlecht prüfen — der Übersetzer hat dazu
-/// nichts zu sagen, und ohne Gerät sieht es niemand. Der Quelltext lässt sich
-/// dagegen prüfen, und genau darum geht es hier: **Kein Befehlsknopf steht
-/// ohne Stil da, und kein Eingabefeld ohne Fassung.**
+/// B1. Ein Stil lässt sich schlecht prüfen — der Übersetzer hat dazu nichts
+/// zu sagen, und ohne Gerät sieht es niemand. Der Quelltext lässt sich
+/// dagegen prüfen, und genau darum geht es hier: Kein Befehlsknopf steht
+/// ohne Stil da, und kein Eingabefeld ohne Fassung.
 ///
 /// Der Mangel, den das abfängt, ist der stumme: Ohne ausdrücklichen Stil
 /// nimmt SwiftUI `.automatic`, und die sieht auf den beiden Geräten
@@ -12,9 +12,9 @@ import XCTest
 /// neuer Knopf, den jemand ohne Stil hinschreibt, fällt beim Übersetzen nicht
 /// auf und auf dem Mac auch beim Ansehen nicht.
 ///
-/// Geprüft wird nicht, **welcher** Stil dasteht, sondern **dass** einer
-/// dasteht. `.plain`, `.borderless` und das ausdrückliche `.automatic` zählen
-/// mit: Sie sind Entscheidungen — für eine Kachel, ein Löschzeichen, eine
+/// Geprüft wird nicht, welcher Stil dasteht, sondern dass einer dasteht.
+/// `.plain`, `.borderless` und das ausdrückliche `.automatic` zählen mit:
+/// Sie sind Entscheidungen — für eine Kachel, ein Löschzeichen, eine
 /// Listenzeile — und stehen als solche im Quelltext. Vergessen zählt nicht.
 ///
 /// Gleicher Weg wie `PlattformwegeTests` und `EditorbereichTests`: nachsehen
@@ -25,7 +25,7 @@ final class KnopfstilTests: XCTestCase {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
 
-    /// Wo ein Knopf **keinen** eigenen Stil braucht, weil ihn das System
+    /// Wo ein Knopf keinen eigenen Stil braucht, weil ihn das System
     /// setzt und ein eigener dort falsch wäre: Rückfragen, Menüs,
     /// Werkzeug- und Tastaturleisten, Wischgesten, das Mac-Menü.
     private static let ausnahmen = [
@@ -84,7 +84,7 @@ final class KnopfstilTests: XCTestCase {
     // MARK: - Der Scanner
 
     /// Steht dieser Knopf in einer der Ausnahmen? Dafür wird von der
-    /// Knopfzeile aus nach **außen** gegangen: die jeweils nächste Zeile mit
+    /// Knopfzeile aus nach außen gegangen: die jeweils nächste Zeile mit
     /// geringerem Einzug ist der umschließende Aufruf. Abgebrochen wird an
     /// der Deklaration, in der der Knopf steht — weiter außen steht nur noch
     /// der Typ.
@@ -104,7 +104,7 @@ final class KnopfstilTests: XCTestCase {
             if z.einzug > einzug { i -= 1; continue }
             // Gleich tief zählt mit: Ein Aufruf über mehrere Zeilen
             // (`confirmationDialog(` … `) { eintrag in`) trägt seinen Namen in
-            // der **ersten** davon, und die steht nicht flacher als der Rest.
+            // der ersten davon, und die steht nicht flacher als der Rest.
             if woerter.contains(where: { z.nackt.contains($0) }) { return true }
             if z.nackt.hasPrefix("var ") || z.nackt.hasPrefix("private var ")
                 || z.nackt.hasPrefix("func ") || z.nackt.hasPrefix("private func ")
@@ -121,7 +121,7 @@ final class KnopfstilTests: XCTestCase {
     /// Die Modifikatorenkette eines Knopfes: alles, was tiefer eingerückt
     /// folgt, dazu die Zeilen auf seiner eigenen Höhe, die mit `.` oder `}`
     /// beginnen. Der erste Geschwisterausdruck beendet sie — so schlägt der
-    /// Stil des **nächsten** Knopfes nicht auf diesen durch.
+    /// Stil des nächsten Knopfes nicht auf diesen durch.
     private func kette(_ alle: [Zeile], ab stelle: Int) -> String {
         var stuecke = [alle[stelle].nackt]
         var i = stelle + 1
@@ -144,10 +144,6 @@ final class KnopfstilTests: XCTestCase {
 
     /// Jeder Knopf, der nicht in einer Ausnahme steht, trägt einen
     /// ausdrücklichen Stil.
-    ///
-    /// **Mutationsprobe** (13.09.2026): `.knopfBefehl()` bei „Bild anhängen"
-    /// entfernt → dieser Test fällt mit genau dieser Zeile durch; wieder
-    /// eingesetzt → grün.
     func testKeinBefehlsknopfOhneStil() throws {
         var ohneStil: [String] = []
         for ordner in Self.ordner {
@@ -173,20 +169,16 @@ final class KnopfstilTests: XCTestCase {
     /// Und auf den beiden Schreibtischen (`TC002Ansichten` — Mac und iPad)
     /// trägt jedes Eingabefeld seine Fassung.
     ///
-    /// **Warum nicht auch `TC002iOS`:** Das Telefon zeigt seine Felder in
-    /// einer `Form` oder einem Blatt, und dort ist der Kanon Beschriftung
-    /// links, rechts angeschlagener Wert **ohne** Kasten — wie in den
-    /// Systemeinstellungen. Ein Rahmen wäre dort der falsche Kanon, nicht die
-    /// fehlende Fassung.
+    /// Warum nicht auch `TC002iOS`: Das Telefon zeigt seine Felder in einer
+    /// `Form` oder einem Blatt, und dort ist der Kanon Beschriftung links,
+    /// rechts angeschlagener Wert ohne Kasten — wie in den
+    /// Systemeinstellungen. Ein Rahmen wäre dort der falsche Kanon, nicht
+    /// die fehlende Fassung.
     ///
-    /// **Mutationsprobe** (13.09.2026): `.eingabefeld()` bei „Suchen" im
-    /// Editor entfernt → durchgefallen; wieder eingesetzt → grün.
-    ///
-    /// Seit dem 16.09.2026 zählt `.eingabefeld(loeschbar:)` mit: Dieselbe
-    /// Fassung, dazu ein (x) für die flüchtigen Felder. Geprüft wird auf
-    /// `.eingabefeld(` und nicht mehr auf die leere Klammer — die Zusicherung
-    /// ist „jedes Feld trägt die Fassung", nicht „jedes trägt genau diese
-    /// Schreibweise".
+    /// `.eingabefeld(loeschbar:)` zählt mit: Dieselbe Fassung, dazu ein (x)
+    /// für die flüchtigen Felder. Geprüft wird auf `.eingabefeld(` und nicht
+    /// auf die leere Klammer — die Zusicherung ist „jedes Feld trägt die
+    /// Fassung", nicht „jedes trägt genau diese Schreibweise".
     func testKeinEingabefeldOhneFassung() throws {
         var ohneFassung: [String] = []
         for datei in swiftDateien(unter: "Sources/TC002Ansichten") {
@@ -203,7 +195,7 @@ final class KnopfstilTests: XCTestCase {
                       + "dem Hineinklicken:\n" + ohneFassung.joined(separator: "\n"))
     }
 
-    /// **Nicht nachbauen, was das System zeichnet.**
+    /// Nicht nachbauen, was das System zeichnet.
     ///
     /// Ein blanker `Picker("Schriftart", selection:)` in einem gruppierten
     /// `Form` zeichnet die kanonische Zeile selbst: Beschriftung links, Wert
@@ -211,22 +203,16 @@ final class KnopfstilTests: XCTestCase {
     /// hell und dunkel, bei jeder Textgröße und in jeder Sprache. Wickelt man
     /// ihn in `LabeledContent` und nimmt ihm mit `labelsHidden()` seine
     /// Beschriftung, verliert er genau diese Darstellung und fällt unter
-    /// iPadOS auf blanken Text mit Doppelpfeil zurück. So war es bis zum
-    /// 13.09.2026 bei „Schriftart", „Größe", „Seitenwechsel", „Waagrecht",
-    /// „Senkrecht" und „Stift".
+    /// iPadOS auf blanken Text mit Doppelpfeil zurück.
     ///
     /// Der Fehler ist unsichtbar: Am Mac sieht die Umwicklung fast gleich
     /// aus, und der Übersetzer hat dazu nichts zu sagen.
     ///
-    /// Für `TextField` gilt das **nicht** — dort ist die Umwicklung
-    /// begründet: Unter iPadOS macht SwiftUI aus der Beschriftung eines
-    /// Feldes den Platzhalter, und der verschwindet, sobald etwas darin
-    /// steht (siehe `VerbindungView.brokerAbschnitt`). Deshalb prüft dieser
-    /// Test nur Wähler.
-    ///
-    /// **Mutationsprobe** (13.09.2026): „Schriftart" wieder in
-    /// `LabeledContent` gewickelt und `.labelsHidden()` gesetzt → dieser Test
-    /// fällt mit dieser Zeile durch; zurückgenommen → grün.
+    /// Für `TextField` gilt das nicht — dort ist die Umwicklung begründet:
+    /// Unter iPadOS macht SwiftUI aus der Beschriftung eines Feldes den
+    /// Platzhalter, und der verschwindet, sobald etwas darin steht (siehe
+    /// `VerbindungView.brokerAbschnitt`). Deshalb prüft dieser Test nur
+    /// Wähler.
     func testKeinWaehlerWirdUmwickeltUndEntwertet() throws {
         var umwickelt: [String] = []
         for datei in swiftDateien(unter: "Sources/TC002Ansichten") {
@@ -235,19 +221,19 @@ final class KnopfstilTests: XCTestCase {
                 guard z.nackt.contains("LabeledContent(") else { continue }
                 let block = kette(alle, ab: i)
                 guard block.contains("labelsHidden()") else { continue }
-                // **Genau einer.** Die Regel zielt auf den Waehler, der allein
+                // Genau einer. Die Regel zielt auf den Waehler, der allein
                 // in einer Zeile steht: Der zeichnet sie in einer gruppierten
                 // `Form` selbst, und die Umwicklung nimmt ihm genau das.
                 //
-                // Stehen **zwei** Waehler in einer Zeile — „Schrift" traegt
-                // seit dem 14.09.2026 Schriftart und Groesse nebeneinander,
-                // wie es Pages haelt —, geht es ohne Klammer nicht, und dann
-                // gehoert die Beschriftung ihr. Die Ausnahme ist am
-                // Doppelpunkt abzulesen und nicht zu erschleichen: Wer einen
-                // einzelnen Waehler umwickelt, faellt hier weiterhin.
-                // Mit Wortgrenze gezaehlt, sonst zaehlte `ColorPicker(` mit —
-                // und die Zeile „Stil", die zwei Schalter und den Farbwaehler
-                // traegt, faellt faelschlich.
+                // Stehen zwei Waehler in einer Zeile — „Schrift" traegt
+                // Schriftart und Groesse nebeneinander, wie es Pages haelt
+                // —, geht es ohne Klammer nicht, und dann gehoert die
+                // Beschriftung ihr. Die Ausnahme ist am Doppelpunkt
+                // abzulesen und nicht zu erschleichen: Wer einen einzelnen
+                // Waehler umwickelt, faellt hier weiterhin. Mit Wortgrenze
+                // gezaehlt, sonst zaehlte `ColorPicker(` mit — und die Zeile
+                // „Stil", die zwei Schalter und den Farbwaehler traegt,
+                // faellt faelschlich.
                 let waehler = block.ranges(of: #/\bPicker\(/#).count
                 guard waehler == 1 else { continue }
                 umwickelt.append("\(datei):\(i + 1)  \(z.nackt)")
@@ -260,16 +246,15 @@ final class KnopfstilTests: XCTestCase {
                       + umwickelt.joined(separator: "\n"))
     }
 
-    /// Die Schrittwahl ist **ein** Element mit Trennstrich, nicht zwei
-    /// Knöpfe, und ihr Wert steht in einem eigenen Kästchen. Beides steckt in
+    /// Die Schrittwahl ist ein Element mit Trennstrich, nicht zwei Knöpfe,
+    /// und ihr Wert steht in einem eigenen Kästchen. Beides steckt in
     /// `Schrittwahl`; hier steht, dass die drei Stellen sie auch benutzen und
     /// nicht wieder je einen nackten `Stepper` hinschreiben.
     func testDieDreiSchrittwahlenGehenUeberDasGemeinsameElement() throws {
-        // „Scrolltempo" ist zweimal umgezogen: am 14.09.2026 aus den
-        // Einstellungen in den Zeit-Reiter (`Zeitabschnitte`) und am
-        // 18.09.2026 zurueck in die Einstellungen (`Uhreinstellungen`) — dort
-        // gehoert es hin, weil es das Geraet einstellt und nicht die Meldung.
-        // Im Zeit-Reiter blieben Dauer und Lauftempo, beide ohne Schrittwahl.
+        // „Scrolltempo" gehoert in die Einstellungen (`Uhreinstellungen`),
+        // weil es das Geraet einstellt und nicht die Meldung. Im Zeit-Reiter
+        // (`Zeitabschnitte`) bleiben Dauer und Lauftempo, beide ohne
+        // Schrittwahl.
         for (datei, anzahl) in [("Sources/TC002Ansichten/SendenView.swift", 2),
                                 ("Sources/TC002Ansichten/Uhreinstellungen.swift", 1)] {
             let text = try zeilen(datei).map(\.text).joined(separator: "\n")
@@ -285,22 +270,17 @@ final class KnopfstilTests: XCTestCase {
 
     // MARK: - Die Kachelregel
 
-    /// **Ein Knopf in einer Rasterkachel ist `.plain`, nie `.automatic`.**
+    /// Ein Knopf in einer Rasterkachel ist `.plain`, nie `.automatic`.
     ///
-    /// Der Fehler, den das abfängt, hat am 14.09.2026 einen halben Tag
-    /// gekostet und war vorher schon zweimal da: Eine Zeile einer `List` oder
-    /// `Form` ist am Telefon **selbst** ein Bedienelement. Knöpfe mit dem
-    /// vorgegebenen Stil darin teilen sich ihre Trefferfläche, und ein Tipp
-    /// landet beim ersten. Im Editor traf „Neu“ statt „Sichern“; im
-    /// Auswahlraster öffneten vierzig Kacheln dasselbe Icon.
+    /// Eine Zeile einer `List` oder `Form` ist am Telefon selbst ein
+    /// Bedienelement. Knöpfe mit dem vorgegebenen Stil darin teilen sich
+    /// ihre Trefferfläche, und ein Tipp landet beim ersten: Im Editor traf
+    /// „Neu“ statt „Sichern“; im Auswahlraster öffneten vierzig Kacheln
+    /// dasselbe Icon.
     ///
     /// Geprüft wird die Umgebung, nicht die Datei: Jeder Knopf, der von einem
     /// `LazyVGrid` umschlossen ist, muss einen Stil tragen, der ihn als
     /// eigenes Bedienelement stehen lässt.
-    ///
-    /// **Mutationsprobe** (14.09.2026): `.plain` im Auswahlraster des Telefons
-    /// auf `.automatic` gedreht → dieser Test fällt mit genau dieser Zeile
-    /// durch; zurückgedreht → grün.
     func testEinKnopfInEinerRasterkachelTraegtKeinenVorgegebenenStil() throws {
         var beanstandet: [String] = []
         for ordner in Self.ordner {
@@ -323,7 +303,7 @@ final class KnopfstilTests: XCTestCase {
 
     // MARK: - Der Sperrklinken-Bestand
 
-    /// **Wo `.automatic` ausdrücklich richtig ist** — und nirgends sonst.
+    /// Wo `.automatic` ausdrücklich richtig ist — und nirgends sonst.
     ///
     /// `.automatic` ist eine Entscheidung, keine Vergesslichkeit (siehe oben),
     /// aber eine, die nur an wenigen Stellen stimmt: bei einer Listenzeile,
@@ -331,18 +311,14 @@ final class KnopfstilTests: XCTestCase {
     /// Formatpille, die keine Listenzeile sind, und beim plattformabhängigen
     /// Rückfall in `UeberView`. Diese Summe hält den Bestand fest: Eine neue
     /// Stelle fällt auf und will begründet werden, statt still dazuzukommen.
-    ///
-    /// **Mutationsprobe** (14.09.2026): ein zusätzliches
-    /// `.buttonStyle(.automatic)` in `FehlerleisteiOS` → 2 statt 1 in der
-    /// Datei, durchgefallen; wieder entfernt → grün.
     func testDerBestandAnVorgegebenenStilenIstBekannt() throws {
         // Datei → Anzahl, mit dem Grund in einem Wort.
         let bekannt: [String: Int] = [
             // Die schiebbare Formatpille: Kapseln in einem `ScrollView`,
             // keine Listenzeilen — dort ist `.automatic` das Aussehen, das
             // die Pille haben soll (5: Icon, Format, Bild, Fett,
-            // Großbuchstaben). Der Sendeknopf ist seit 15.09.2026 weg — die
-            // Eingabetaste schickt, wie in Nachrichten.
+            // Großbuchstaben). Der Sendeknopf fehlt hier — die Eingabetaste
+            // schickt, wie in Nachrichten.
             "Sources/TC002iOS/SendeniOS.swift": 5,
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.

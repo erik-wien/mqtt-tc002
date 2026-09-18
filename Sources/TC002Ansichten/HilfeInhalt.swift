@@ -2,15 +2,15 @@ import TC002Core
 
 /// Die Absätze der Hilfe, die auf beiden Geräten gelten.
 ///
-/// Jeder Satz hier muss für **beide** Oberflächen wahr sein — was nur einen
-/// Knopf einer bestimmten Oberfläche beschreibt, gehört in deren eigenes
-/// Dokument (`HilfeView` am Mac, `HilfeiOS` am iPhone). Geteilt ist, was an
-/// der Uhr, am Protokoll oder am gemeinsamen Kern hängt.
+/// Jeder Satz hier muss für beide Oberflächen wahr sein — was nur einen Knopf
+/// einer bestimmten Oberfläche beschreibt, gehört in deren eigenes Dokument
+/// (`HilfeView` am Mac, `HilfeiOS` am iPhone). Geteilt ist, was an der Uhr,
+/// am Protokoll oder am gemeinsamen Kern hängt.
 ///
 /// Warum als Konstanten und nicht zweimal geschrieben: Der deutsche Wortlaut
-/// **ist** der Übersetzungsschlüssel. Ein zweiter Satz mit derselben Aussage
-/// wäre ein zweiter Schlüssel und müsste ein zweites Mal übersetzt werden —
-/// und könnte beim nächsten Mal nur an einer der beiden Stellen berichtigt
+/// ist der Übersetzungsschlüssel. Ein zweiter Satz mit derselben Aussage wäre
+/// ein zweiter Schlüssel und müsste ein zweites Mal übersetzt werden — und
+/// könnte beim nächsten Mal nur an einer der beiden Stellen berichtigt
 /// werden.
 public enum HilfeInhalt {
     /// Was die App ueberhaupt tut und wo die Nachrichten langlaufen. Seit es
@@ -21,7 +21,7 @@ public enum HilfeInhalt {
     ]
 
     /// Die Wahl selbst — was sie bedeutet und was sie kostet. Gehoert hierher
-    /// und nicht in die Oberflaeche: Dort steht **ein** Satz, der den Tausch
+    /// und nicht in die Oberflaeche: Dort steht ein Satz, der den Tausch
     /// benennt, und alles Weitere hier.
     ///
     /// Der Absatz ueber den Broker als Ohr ist kein Nebensatz, sondern der
@@ -38,7 +38,7 @@ public enum HilfeInhalt {
         .absatz("Für neue Uhren ist HTTP die Vorgabe. Eine Uhr, die vor dieser Fassung eingerichtet wurde, bleibt auf MQTT: Sie wurde so eingerichtet, und ein stiller Wechsel nähme ihr das Mitlesen, ohne dass jemand darum gebeten hätte. Umstellen lässt sich beides jederzeit; der Wechsel wirkt sofort."),
     ]
 
-    /// Die zweite Achse neben der Betriebsart: **was** fuer ein Geraet
+    /// Die zweite Achse neben der Betriebsart: was fuer ein Geraet
     /// antwortet. Gilt fuer beide Oberflaechen — es ist eine Aussage ueber die
     /// Uhr, nicht ueber ein Fenster.
     ///
@@ -113,9 +113,9 @@ public enum HilfeInhalt {
     /// Dort stehen ein Schalter und eine Zeile, die sagt, was gilt — warum es
     /// so gilt, steht hier. Jeder Satz ist auf beiden Geraeten wahr, der
     /// Abschnitt sieht auf Mac und Telefon gleich aus (`Wolkenabschnitt`).
-    /// **Ausprobieren ohne Geraet.** Steht in `HilfeInhalt` und nicht in einer
-    /// der beiden Hilfen: Den Schalter gibt es auf allen drei Oberflaechen,
-    /// und was er tut, ist ueberall dasselbe.
+    /// Ausprobieren ohne Geraet: Steht in `HilfeInhalt` und nicht in einer
+    /// der beiden Hilfen, weil den Schalter es auf allen drei Oberflaechen
+    /// gibt und was er tut ueberall dasselbe ist.
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
         .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
@@ -178,10 +178,9 @@ public enum HilfeInhalt {
     /// Wann ein Text steht und wann er laeuft — `Meldungsbau.passt` entscheidet
     /// das auf beiden Geraeten gleich, ohne dass jemand danach gefragt wird.
     ///
-    /// **Bis zum 18.09.2026 stand hier eine Wahl.** „Senden als: als Pixel /
-    /// als Text" gab es im Inspektor und im Formatblatt; sie ist ersatzlos weg,
-    /// und dieser Abschnitt sagt jetzt, was die App statt dessen tut. Warum,
-    /// steht bei `SendeWeg` im Kern.
+    /// Die Wahl „Senden als: als Pixel / als Text" im Inspektor und im
+    /// Formatblatt ist ersatzlos weg; dieser Abschnitt sagt, was die App statt
+    /// dessen tut. Warum, steht bei `SendeWeg` im Kern.
     public static let wegeRegel: [Hilfebaustein] = [
         .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die App selbst — es gibt dafür keinen Schalter."),
         .abbildung(.stehtOderLaeuft),
@@ -199,8 +198,8 @@ public enum HilfeInhalt {
     /// Das ⊗ an den fuenf Bloecken. Steht auf beiden Geraeten an derselben
     /// Stelle und erscheint nur an belegten Plaetzen.
     ///
-    /// Bis zum 14.09.2026 war es **ein** Papierkorb neben der Reihe, der sich
-    /// auf den gerade gewaehlten Platz bezog — man musste ihn erst treffen.
+    /// Zuvor war es ein Papierkorb neben der Reihe, der sich auf den gerade
+    /// gewaehlten Platz bezog — man musste ihn erst treffen.
     public static let papierkorb: [Hilfebaustein] = [
         .absatz("Das ⊗ in der Ecke eines Blocks löscht genau diesen Platz auf den gewählten Uhren. Es erscheint nur an belegten Plätzen — ein leerer hat nichts zu löschen. Ein langer Druck darauf nennt den Platz beim Namen, bevor man ihn trifft."),
     ]
@@ -307,7 +306,7 @@ public enum HilfeInhalt {
 
     /// Wie die Liste zustande kommt: die Uhr veroeffentlicht, die App hoert mit —
     /// und fragt zusaetzlich selbst nach. Beides ist dieselbe Auskunft derselben
-    /// Quelle; der Inhalt eines Platzes gehoert ausdruecklich **nicht** dazu.
+    /// Quelle; der Inhalt eines Platzes gehoert ausdruecklich nicht dazu.
     public static let verlaufEntstehung: [Hilfebaustein] = [
         .ueberschrift("Wie die Liste entsteht"),
         .absatz("Die App fragt die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/customList`, Gerätereferenz §5.7) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Das gilt in beiden Betriebsarten: Dafür braucht es keinen Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),

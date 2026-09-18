@@ -3,20 +3,20 @@ import Foundation
 /// Die Einrichtung dieser Installation als ein Stueck — genau das, was ueber
 /// iCloud abgeglichen wird.
 ///
-/// **Zwei Mechanismen, nicht einer.** Dateien gehoeren in einen Behaelter
+/// Zwei Mechanismen, nicht einer. Dateien gehoeren in einen Behaelter
 /// (`Ablageort`), Einstellungen liegen in `UserDefaults` und gehen nur ueber
 /// `NSUbiquitousKeyValueStore`. Das ist keine Umstaendlichkeit, sondern Apples
 /// Aufteilung: Ein Behaelter kennt keine Schluessel, und die
 /// Schluessel-Wert-Ablage kennt keine Dateien.
 ///
-/// **Ein Schluessel, nicht sieben.** Die Ablage erlaubt 1024 Schluessel und 1 MB
+/// Ein Schluessel, nicht sieben. Die Ablage erlaubt 1024 Schluessel und 1 MB
 /// im ganzen. Sieben einzelne Schluessel kaemen einzeln an, und zwischendurch
 /// stuende eine Einrichtung da, deren Uhrenliste schon neu und deren Auswahl
 /// noch alt ist. Ein Schluessel kommt als Ganzes oder gar nicht —
 /// `zusammenfuehren` bekommt damit immer zwei vollstaendige Staende zu sehen.
 ///
-/// **Was hier nicht drinsteht, und warum:**
-/// - Das **Brokerkennwort** — es liegt im Schluesselbund. Es mitzunehmen hiesse
+/// Was hier nicht drinsteht, und warum:
+/// - Das Brokerkennwort — es liegt im Schluesselbund. Es mitzunehmen hiesse
 ///   iCloud-Schluesselbund, also einen dritten Mechanismus mit eigener
 ///   Berechtigung, eigenem Dialog und eigenem Versagensfall. Der Preis dafuer,
 ///   es wegzulassen, ist ein Kennwort, das man je Geraet einmal eintraegt.
@@ -37,25 +37,25 @@ public struct Einrichtungsstand: Codable, Equatable, Sendable {
     /// Woerterbuch keine UUID-Schluessel kennt.
     public var bekannteAnzeigen: [String: [String]]
 
-    /// **Grabsteine.** Ohne sie wird eine Loeschung nie uebertragen: Der
+    /// Grabsteine. Ohne sie wird eine Loeschung nie uebertragen: Der
     /// Abgleich behaelt jede oertliche Uhr und fuegt jede ferne hinzu, entfernt
     /// wird nirgends etwas — wer eine Uhr auf einem Geraet loescht, bekommt sie
-    /// vom anderen zurueck. Am 14.09.2026 genau so erlebt.
+    /// vom anderen zurueck.
     ///
     /// Je Eintrag ein Merkmal der entfernten Uhr (`Uhr.abgleichmerkmale`) und
     /// der Zeitpunkt. Merkmale statt der blossen Kennung, weil das andere
     /// Geraet die Uhr unter einer anderen Kennung fuehrt — dieselbe Ueberlegung
     /// wie beim Zusammenfuehren.
     ///
-    /// **Ein Grabstein ist kein Urteil auf ewig:** Wird dieselbe Uhr spaeter
+    /// Ein Grabstein ist kein Urteil auf ewig: Wird dieselbe Uhr spaeter
     /// wieder eingetragen, ist ihr `angelegt` juenger als der Grabstein, und
     /// dann gilt die Uhr. Sonst koennte man eine einmal entfernte Adresse nie
     /// wieder benutzen.
-    /// **`Optional`, und der vorhandene Test hat mich daran erinnert:** Ein
-    /// nachtraegliches Pflichtfeld wirft beim Decode `keyNotFound`, auch mit
-    /// Vorgabewert — `testDieAbgelegteFormBleibtLesbar` fiel sofort. `nil`
-    /// heisst „keine Grabsteine"; leer wird auch wieder `nil` geschrieben,
-    /// damit eine aeltere Fassung die Datei weiterhin liest.
+    /// `Optional`: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// `keyNotFound`, auch mit Vorgabewert (`testDieAbgelegteFormBleibtLesbar`
+    /// haelt das fest). `nil` heisst „keine Grabsteine"; leer wird auch wieder
+    /// `nil` geschrieben, damit eine aeltere Fassung die Datei weiterhin
+    /// liest.
     public var entfernt: [String: Date]?
 
     public init(uhren: [Uhr] = [], zielIDs: [UUID] = [], brokerHost: String = "",
@@ -91,10 +91,10 @@ public struct Einrichtungsstand: Codable, Equatable, Sendable {
 
 extension Einrichtungsstand {
     /// Was `NSUbiquitousKeyValueStore` traegt: 1 MB im ganzen, und ebenso viel
-    /// je Schluessel. Bei **einem** Schluessel ist beides dieselbe Grenze.
+    /// je Schluessel. Bei einem Schluessel ist beides dieselbe Grenze.
     public static let hoechstmass = 1_024 * 1_024
 
-    /// **Mit sortierten Schluesseln**, und das ist kein Schoenheitswunsch:
+    /// Mit sortierten Schluesseln, und das ist kein Schoenheitswunsch:
     /// `bekannteAnzeigen` ist ein Woerterbuch und schriebe sonst bei gleichem
     /// Inhalt mal so und mal so. Der Vergleich „hat sich etwas geaendert"
     /// (`AppZustand.zuletztGeschrieben`) verglich dann Bytes, die sich
@@ -121,31 +121,31 @@ extension Einrichtungsstand {
 extension Einrichtungsstand {
     /// Fuehrt den eigenen Stand mit dem zusammen, der aus der Wolke kam.
     ///
-    /// **Warum nicht einfach „letzter gewinnt".** Die ganze Einrichtung liegt
+    /// Warum nicht einfach „letzter gewinnt". Die ganze Einrichtung liegt
     /// unter einem Schluessel; „letzter gewinnt" hiesse: Wer am Mac eine Uhr
     /// hinzufuegt, waehrend am Telefon eine Betriebsart umgestellt wird,
     /// verliert eine der beiden Aenderungen vollstaendig — und zwar wortlos.
-    /// Zusammengefuehrt wird deshalb **je Uhr**, nicht je Einrichtung.
+    /// Zusammengefuehrt wird deshalb je Uhr, nicht je Einrichtung.
     ///
     /// Die Regeln, jede mit ihrem Grund:
     ///
-    /// - **Uhren**: vereinigt ueber die Kennung. Was beide kennen, nimmt die
+    /// - Uhren: vereinigt ueber die Kennung. Was beide kennen, nimmt die
     ///   Fassung aus der Wolke — sie ist die spaetere, denn sie ist eben
     ///   angekommen. Was nur eine Seite kennt, bleibt; eine neu eingetragene
     ///   Uhr verschwindet nicht, weil das andere Geraet sie noch nicht kennt.
     ///   Der eigene Bestand behaelt seine Reihenfolge, Fremdes kommt hinten an.
-    /// - **Auswahl**: die aus der Wolke, beschraenkt auf Uhren, die es noch
+    /// - Auswahl: die aus der Wolke, beschraenkt auf Uhren, die es noch
     ///   gibt. Bleibt nichts uebrig, gelten alle — dieselbe Lesart, die
     ///   `AppZustand.init` und `Einstellungen.ziele` schon haben.
-    /// - **Broker**: ein gefuellter Wert aus der Wolke gewinnt, ein leerer
+    /// - Broker: ein gefuellter Wert aus der Wolke gewinnt, ein leerer
     ///   loescht nichts. Sonst raeumte ein Geraet, auf dem nie ein Broker
     ///   eingetragen wurde, dem anderen seinen weg.
-    /// - **Bekannte Anzeigen**: vereinigt. Das ist die Buchfuehrung darueber,
+    /// - Bekannte Anzeigen: vereinigt. Das ist die Buchfuehrung darueber,
     ///   was auf einer Uhr stehen koennte; faellt ein Name weg, bleibt die
     ///   Anzeige auf der Uhr stehen, ohne dass es noch einen Weg gaebe, sie zu
     ///   loeschen.
     ///
-    /// **Was bleibt: Aendern beide Geraete dieselbe Uhr, gewinnt die Wolke.**
+    /// Was bleibt: Aendern beide Geraete dieselbe Uhr, gewinnt die Wolke.
     /// Das ist nicht wegzurechnen — eine Konfliktkopie einer Uhr waere eine
     /// zweite Uhr mit derselben Adresse, und die waere schlimmer als der
     /// verlorene Griff.
@@ -153,14 +153,14 @@ extension Einrichtungsstand {
                                         fern: Einrichtungsstand) -> Einrichtungsstand {
         var ergebnis = oertlich
 
-        // **Zusammengefuehrt wird ueber `Uhr.abgleichmerkmale`, nicht ueber
-        // `id` allein.** Dort steht, warum: Die Kennung entsteht je Geraet,
+        // Zusammengefuehrt wird ueber `Uhr.abgleichmerkmale`, nicht ueber
+        // `id` allein. Dort steht, warum: Die Kennung entsteht je Geraet,
         // dieselbe Uhr hat also zwei — wer darueber zusammenfuehrt, haengt sie
-        // aneinander statt sie zu vereinen (nachgewiesen am 14.09.2026 an drei
-        // Eintraegen derselben Uhr). Die Kennung wegzuwerfen waere der
+        // aneinander statt sie zu vereinen, und zwei Geraete tragen so
+        // dieselbe Uhr mehrfach ein. Die Kennung wegzuwerfen waere der
         // Gegenfehler: Wer eine Adresse aendert, hat weiterhin dieselbe Uhr.
         //
-        // Darum zaehlt jede Uebereinstimmung, und zwar **ueber Ecken**: Trifft
+        // Darum zaehlt jede Uebereinstimmung, und zwar ueber Ecken: Trifft
         // sich A mit B ueber die Adresse und B mit C ueber die MAC, gehoeren
         // alle drei zusammen. Das ist eine Vereinigungssuche, kein Woerterbuch.
         //
@@ -193,7 +193,7 @@ extension Einrichtungsstand {
             gruppen[w, default: []].append(i)
         }
 
-        // Welche Kennung die zusammengefallene Uhr behaelt, muss auf **beiden**
+        // Welche Kennung die zusammengefallene Uhr behaelt, muss auf beiden
         // Geraeten gleich ausgehen — sonst schriebe jedes seine eigene in die
         // Wolke und sie wechselten einander ab. Die kleinere gewinnt: eine
         // Regel, die ohne Absprache ueberall dasselbe ergibt.
@@ -211,7 +211,7 @@ extension Einrichtungsstand {
             for i in mitglieder { neueKennung[alle[i].id] = kanonisch }
             uhren.append(uhr)
         }
-        // **Grabsteine, vereinigt und dann angewandt.** Der juengere gewinnt:
+        // Grabsteine, vereinigt und dann angewandt. Der juengere gewinnt:
         // Loescht ein Geraet und traegt das andere spaeter wieder ein, zaehlt
         // der spaetere Handgriff.
         var grabsteine = oertlich.entfernt ?? [:]
@@ -219,7 +219,7 @@ extension Einrichtungsstand {
             if let bisher = grabsteine[merkmal], bisher > zeit { continue }
             grabsteine[merkmal] = zeit
         }
-        // Ein Grabstein zaehlt nur, solange die Uhr nicht **danach** wieder
+        // Ein Grabstein zaehlt nur, solange die Uhr nicht danach wieder
         // eingetragen wurde. `angelegt == nil` heisst „von frueher" — dann
         // gewinnt der Grabstein, sonst koennte eine alte Datei jede Loeschung
         // ueberdauern.

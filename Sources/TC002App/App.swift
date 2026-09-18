@@ -6,7 +6,7 @@ import TC002Modell
 
 @main
 struct TC002App: App {
-    /// Die mitgelieferten Schriften muessen angemeldet sein, **bevor** irgendeine
+    /// Die mitgelieferten Schriften muessen angemeldet sein, bevor irgendeine
     /// Ansicht ihre Schriftliste aufbaut — die wird einmal berechnet und bleibt
     /// dann stehen. In .onAppear waere es zu spaet gewesen.
     ///
@@ -76,7 +76,7 @@ struct TC002App: App {
         }
         .windowResizability(.contentSize)
 
-        // **Nicht `.contentSize`.** Die virtuelle Uhr zeigt etwas Laufendes,
+        // Nicht `.contentSize`: Die virtuelle Uhr zeigt etwas Laufendes,
         // kein Dokument: Wer sie neben dem Sendebildschirm stehen hat, will
         // sie zurechtziehen koennen.
         Window(Nebenfenster.virtuelleUhr.titel, id: Nebenfenster.virtuelleUhr.id) {

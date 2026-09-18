@@ -5,8 +5,8 @@ import TC002Core
 /// radiert. Sonst nichts: Werkzeuge, Bildleiste und alles Weitere stehen
 /// woanders (`EditorBereichView`).
 ///
-/// **Sie macht ihre Spalte nie breiter, als diese ist.** Der `GeometryReader`
-/// steht **ueber** dem Raster, nicht als Hintergrund darunter: So bekommt die
+/// Sie macht ihre Spalte nie breiter, als diese ist. Der `GeometryReader`
+/// steht ueber dem Raster, nicht als Hintergrund darunter: So bekommt die
 /// Rechnung den Platz, den der Bereich hergibt, und nicht die Breite, die das
 /// Raster sich selbst schon genommen hat. Ein `GeometryReader` gibt die
 /// Groesse seines Inhalts auch nicht nach oben weiter — er kann die Spalte
@@ -19,7 +19,7 @@ struct Malflaeche: View {
     @Binding var leinwand: Leinwand
     let farbe: Color
     let radiert: Bool
-    /// Einmal je Strich, **vor** dem ersten Pixel — der Platz fuer einen
+    /// Einmal je Strich, vor dem ersten Pixel — der Platz fuer einen
     /// Schritt im Rueckgaengig-Stapel. Ein Strich ueber zwanzig Kaestchen ist
     /// ein Schritt, nicht zwanzig.
     var vorStrich: () -> Void = {}

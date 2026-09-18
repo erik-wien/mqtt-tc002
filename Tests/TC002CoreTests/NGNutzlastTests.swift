@@ -5,7 +5,7 @@ import XCTest
 /// Die Nutzlast einer AWTRIX-NG-Anzeige, byteweise gegen
 /// `docs/awtrix-ng-protokoll.md` §5 geprueft.
 ///
-/// **Ohne Geraet und ohne Broker.** Diese Datei rechnet nur; geschickt wird
+/// Ohne Geraet und ohne Broker: Diese Datei rechnet nur; geschickt wird
 /// nichts. Das ist genau der Grund, warum sie so streng sein darf: Auf dem
 /// Geraet liesse sich ein falscher Schluessel nicht nachweisen — NG verwirft
 /// eine Nachricht auf einem Thema ohne Route ohne jede Antwort, und ein
@@ -23,7 +23,7 @@ final class NGNutzlastTests: XCTestCase {
 
     /// Der Schnappschuss: Schluessel, Reihenfolge und Schreibweise in einem.
     ///
-    /// Jeder Schluessel darin steht **ausdruecklich** da, obwohl NG fuer alle
+    /// Jeder Schluessel darin steht ausdruecklich da, obwohl NG fuer alle
     /// eine Vorgabe hat — und zwar, weil die Vorgabe jedes Mal eine andere ist
     /// als unsere: `textCase` erbt sonst das global eingeschaltete `uppercase`,
     /// `textCenter` ist bei NG `true` und bei uns linksbuendig.
@@ -33,7 +33,7 @@ final class NGNutzlastTests: XCTestCase {
             ##"{"text":"Grüße","textCase":"asTyped","textColor":"#00FF66","textCenter":false,"scroll":{"speed":60}}"##)
     }
 
-    /// **Der Text bleibt, wie er eingetippt wurde.** Auf der Werksfirmware
+    /// Der Text bleibt, wie er eingetippt wurde: Auf der Werksfirmware
     /// macht `Meldungsoptionen.gesendeterText` aus „Großbuchstaben“ ein
     /// `uppercased()` — und damit aus „ß“ ein „SS“. NG versalisiert selbst und
     /// erhaelt dabei die Zeichen; der Schalter gehoert deshalb nach `textCase`
@@ -52,8 +52,8 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertTrue(try NGNutzlast.anzeige(optionen()).contains(#""textCase":"asTyped""#))
     }
 
-    /// `textCenter` ist ein bool. „mittig" ist `true`, **alles andere ist
-    /// `false`** — auch „rechts", das NG nicht kennt und das die Ansicht auf
+    /// `textCenter` ist ein bool. „mittig" ist `true`, alles andere ist
+    /// `false` — auch „rechts", das NG nicht kennt und das die Ansicht auf
     /// einer NG-Uhr deshalb gar nicht anbietet
     /// (`Geraetetyp.waagrechteAusrichtungen`). Eine stille Umdeutung nach
     /// mittig waere schlimmer als linksbuendig.
@@ -66,7 +66,7 @@ final class NGNutzlastTests: XCTestCase {
             .contains(#""textCenter":false"#))
     }
 
-    /// **Sekunden bei der Werksfirmware, Millisekunden bei NG.** Ein
+    /// Sekunden bei der Werksfirmware, Millisekunden bei NG: Ein
     /// mitgeschicktes `duration` waere ein unbekannter oberster Schluessel und
     /// damit `422` — laut, aber nur auf `/result`.
     func testDauerGehtInMillisekunden() throws {
@@ -81,18 +81,14 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertFalse(try NGNutzlast.anzeige(optionen()).contains("durationMs"))
     }
 
-    /// **Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.**
+    /// Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.
     ///
     /// `scroll.speed` ist ein Prozentsatz der Grundgeschwindigkeit von rund
     /// 21 Pixeln je Sekunde; unsere Stufen sind Standzeiten je Einzelbild und
-    /// ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird deshalb auf
-    /// **die Geschwindigkeit**, nicht auf das Verhaeltnis der Stufen
-    /// zueinander.
-    ///
-    /// Bis zum 18.09.2026 lag „mittel" auf der Geraetevorgabe 100 — und lief
-    /// damit auf einer NG mit 21 statt 12 Pixeln je Sekunde, also fast doppelt
-    /// so schnell wie dasselbe „mittel" auf der Werksfirmware. Die Vorschau,
-    /// die mit unseren Standzeiten abspielt, zeigte entsprechend zu langsam.
+    /// ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird deshalb auf die
+    /// Geschwindigkeit, nicht auf das Verhaeltnis der Stufen zueinander — bei
+    /// der Geraetevorgabe 100 liefe „mittel" auf NG mit 21 statt 12 Pixeln je
+    /// Sekunde, fast doppelt so schnell wie auf der Werksfirmware.
     func testTempoWirdAufDieGeschwindigkeitUmgerechnet() {
         XCTAssertEqual(NGNutzlast.tempo(.langsam), 40)
         XCTAssertEqual(NGNutzlast.tempo(.mittel), 60)
@@ -121,7 +117,7 @@ final class NGNutzlastTests: XCTestCase {
 
     // MARK: - Das Icon
 
-    /// **NG entscheidet allein nach der Laenge** (§5.3): bis 64 Zeichen eine
+    /// NG entscheidet allein nach der Laenge (§5.3): bis 64 Zeichen eine
     /// Kennung im Dateisystem des Geraets, darueber Base64 unmittelbar im
     /// Text. Bliebe der `data:`-Vorsatz stehen, waere die Nutzlast zwar lang
     /// genug — aber die Bytes waeren kein Bild.
@@ -132,7 +128,7 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertFalse(json.contains("data:image"))
     }
 
-    /// **NG liest kein PNG** (§5.3) und faellt bei einem unlesbaren Icon
+    /// NG liest kein PNG (§5.3) und faellt bei einem unlesbaren Icon
     /// stillschweigend auf die Anordnung ohne Icon zurueck. Gesagt ist besser
     /// als geschickt.
     func testPngWirdAbgewiesenStattStillVerworfen() {
@@ -151,10 +147,9 @@ final class NGNutzlastTests: XCTestCase {
             .contains(#""icon":"/9j/4A""#))
     }
 
-    /// **Acht Zeilen sind acht Zeilen.** Ein 16×16-Icon ist auf NG nicht bloss
-    /// gross: Ein GIF, dessen erstes Bild hoeher ist als die Leinwand, spielt
-    /// dort **gar nicht** — ohne Meldung, ohne Fehler. Also gesagt statt
-    /// geschickt.
+    /// Ein 16×16-Icon ist auf NG nicht bloss gross: Ein GIF, dessen erstes
+    /// Bild hoeher ist als die Leinwand, spielt dort gar nicht — ohne
+    /// Meldung, ohne Fehler. Also gesagt statt geschickt.
     func testEinSechzehnerIconWirdAbgewiesen() {
         XCTAssertThrowsError(try NGNutzlast.anzeige(optionen(),
                                                     iconDatenURI: "data:image/gif;base64,R0lGODlh",
@@ -193,8 +188,7 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertEqual(NGNutzlast.umschalten(auf: "meldung3"), #"{"name":"meldung3"}"#)
     }
 
-    /// **Der Gewinn, den die Werksfirmware nie hatte.** Erfolg ist genau
-    /// `{"ok":true}`; alles andere traegt seinen Code.
+    /// Erfolg ist genau `{"ok":true}`; alles andere traegt seinen Code.
     func testErgebnisWirdGelesen() {
         XCTAssertEqual(NGNutzlast.ergebnis(Data(#"{"ok":true}"#.utf8)), .gelungen)
         XCTAssertEqual(
@@ -216,7 +210,7 @@ final class NGNutzlastTests: XCTestCase {
 
     // MARK: - Die Themen
 
-    /// **Kein `_<MAC4>`, kein `custom`.** Die beiden Firmwares haben an
+    /// Kein `_<MAC4>`, kein `custom`: Die beiden Firmwares haben an
     /// derselben Stelle voellig verschiedene Themen, und beide schweigen zu
     /// einem falschen.
     func testDieThemenSindDieVonNGUndNichtDieDerWerksfirmware() {
@@ -243,7 +237,7 @@ final class GeraetetypTests: XCTestCase {
         }
     }
 
-    /// **Auf NG fallen genau die Regler weg, die unsere Rasterung steuern** —
+    /// Auf NG fallen genau die Regler weg, die unsere Rasterung steuern —
     /// und keiner mehr. Farbe, Dauer und das mitlaufende Icon wirken dort
     /// unveraendert, Tempo und Großbuchstaben in anderer Gestalt.
     func testAufNGFallenGenauDieRasterreglerWeg() {
@@ -263,8 +257,8 @@ final class GeraetetypTests: XCTestCase {
         }
     }
 
-    /// **Der einzige halbe Fall.** `textCenter` ist ein bool: mittig oder
-    /// linksbuendig. Rechtsbuendig ginge nur ueber eine Verschiebung in Pixeln,
+    /// `textCenter` ist ein bool: mittig oder linksbuendig. Rechtsbuendig
+    /// ginge nur ueber eine Verschiebung in Pixeln,
     /// und dafuer muesste die App die Breite des Textes in einer Schrift
     /// kennen, die sie nicht hat.
     func testRechtsbuendigGibtEsNurAufDerWerksfirmware() {

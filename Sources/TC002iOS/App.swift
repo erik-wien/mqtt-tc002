@@ -28,7 +28,7 @@ struct TC002iOSApp: App {
             .onAppear {
                 // Ohne diesen Aufruf bleibt `horchenErlaubt` false, und
                 // `horchenAbgleichen()` kehrt an seinem guard sofort zurueck:
-                // Die App baut dann **kein einziges** Abonnement auf, hoert die
+                // Die App baut dann kein einziges Abonnement auf, hoert die
                 // Uhr nie und sieht aus, als kaeme sie nicht ins Netz. Am Mac
                 // steht derselbe Aufruf in `.onAppear` (App.swift).
                 // Erst hier, nicht im Konstruktor: ein AppZustand allein soll
@@ -67,7 +67,7 @@ struct TC002iOSApp: App {
     /// als Blatt auf. `SendeniOS` bringt ihren eigenen `NavigationStack` mit;
     /// hier darf deshalb keiner mehr herum.
     ///
-    /// Am **Idiom**, nicht an der Groessenklasse: Die wechselt in der geteilten
+    /// Am Idiom, nicht an der Groessenklasse: Die wechselt in der geteilten
     /// Ansicht und beim Schieben eines Fensters im Stage Manager. Eine
     /// Oberflaeche, die dabei die Familie wechselt, wirft jedes Mal ihren
     /// Zustand weg — und die beiden Familien teilen sich zwar dieselben

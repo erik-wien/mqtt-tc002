@@ -2,7 +2,7 @@ import Foundation
 
 // `Geraetetyp` selbst steht in `Einstellungen.swift`, weil es dort als Feld von
 // `Uhr` gebraucht wird und `Uhr` ein Dateiformat ist. Was die Gattung
-// **bedeutet**, steht hier: der Name in der Oberflaeche, und welche Regler der
+// bedeutet, steht hier: der Name in der Oberflaeche, und welche Regler der
 // Sendeansicht auf ihr ueberhaupt etwas bewirken.
 
 extension Geraetetyp {
@@ -15,23 +15,23 @@ extension Geraetetyp {
         }
     }
 
-    /// Die Hoehe einer AWTRIX-NG-Anzeige: **fest 8 Pixel, nicht einstellbar**
+    /// Die Hoehe einer AWTRIX-NG-Anzeige: fest 8 Pixel, nicht einstellbar
     /// (`docs/awtrix-ng-protokoll.md` §1).
     public static let ngHoehe = 8
 
-    /// Die dokumentierte **Vorgabe** der Breite (`panelWidth × panels`, ab Werk
+    /// Die dokumentierte Vorgabe der Breite (`panelWidth × panels`, ab Werk
     /// `32 × 1`). Ausdruecklich eine Vorgabe und keine Tatsache ueber ein
     /// bestimmtes Geraet: Die wirkliche Breite steht in `/api/v1/system` und
     /// wird beim Abfragen geholt (`Uhr.panelbreite`). Zulaessig ist alles
     /// zwischen 32 und 128; alles andere weist NG mit `422` ab.
     public static let ngVorgabebreite = 32
 
-    /// **Wie schnell NG bei `scroll.speed: 100` laeuft: rund 21 Pixel je
-    /// Sekunde** (bei 40 Bildern je Sekunde, Herstellerdokumentation, siehe
+    /// Wie schnell NG bei `scroll.speed: 100` laeuft: rund 21 Pixel je
+    /// Sekunde (bei 40 Bildern je Sekunde, Herstellerdokumentation, siehe
     /// `docs/awtrix-ng-protokoll.md` §5.2).
     ///
     /// Gebraucht wird die Zahl, um unsere drei Stufen in Prozente
-    /// umzurechnen: `scroll.speed` ist ein Prozentsatz **hiervon**, und ohne
+    /// umzurechnen: `scroll.speed` ist ein Prozentsatz hiervon, und ohne
     /// diese Zahl waere jeder Prozentsatz geraten.
     public static let ngGrundgeschwindigkeit = 21.0
     public static let ngBreitenbereich = 32...128
@@ -39,7 +39,7 @@ extension Geraetetyp {
     /// Wieviele Zeilen die Anzeige dieser Gattung hat — die eine Tatsache,
     /// aus der `iconKanten` und `grafikSperre` beide folgen.
     ///
-    /// **Die Werksfirmware hat sechzehn Zeilen, NG hat acht** (§1). Die Breite
+    /// Die Werksfirmware hat sechzehn Zeilen, NG hat acht (§1). Die Breite
     /// steht ausdruecklich nicht hier: Sie ist bei NG einstellbar und deshalb
     /// eine Frage an die einzelne Uhr (`Uhr.anzeigemass`, `Anzeigemass`). Die
     /// Hoehe ist eine Eigenschaft der Gattung.
@@ -52,12 +52,12 @@ extension Geraetetyp {
 
     /// Warum eine Grafik dieser Hoehe hier nicht geht — `nil`, wenn sie geht.
     ///
-    /// **Ein 16×16-Icon ist auf NG nicht bloss gross, es geht gar nicht:** Die
+    /// Ein 16×16-Icon ist auf NG nicht bloss gross, es geht gar nicht: Die
     /// Leinwand fuer Icons ist 32×8, und ein GIF, dessen erstes Bild hoeher
-    /// ist, **spielt ueberhaupt nicht** (§8) — ohne jede Meldung. Dasselbe gilt
+    /// ist, spielt ueberhaupt nicht (§8) — ohne jede Meldung. Dasselbe gilt
     /// fuer eine ganze 16×52-Anzeige. Das ist eine Eigenschaft des Geraets und
     /// kein Fehler, der sich glattbuegeln liesse; gesagt gehoert er trotzdem,
-    /// und zwar **bevor** jemand waehlt, was nicht ankommen kann.
+    /// und zwar bevor jemand waehlt, was nicht ankommen kann.
     ///
     /// Der Satz geht als gewoehnliches `String` an `.help(_:)` und an das
     /// Hilfezeichen weiter — beide schlagen in dieser Ueberladung nichts nach,
@@ -70,7 +70,7 @@ extension Geraetetyp {
 
     /// Welche Icon-Kantenlaengen auf dieser Gattung ueberhaupt Platz haben.
     ///
-    /// **Abgeleitet und nicht abgeschrieben:** Eine zweite Liste neben
+    /// Abgeleitet und nicht abgeschrieben: Eine zweite Liste neben
     /// `grafikhoehe` liefe frueher oder spaeter auseinander, und die
     /// abweichende waere die falsche (siehe `Regler` unten). Die bekannten
     /// Werte — [8, 16] und [8] — stehen unveraendert in `MeldungsherkunftTests`
@@ -90,15 +90,14 @@ extension Geraetetyp {
 
 /// Die Regler der Sendeansicht, soweit die Geraeteart ueber sie entscheidet.
 ///
-/// **Eine Aussage ueber das Geraet, keine ueber die Oberflaeche.** Ob ein
+/// Eine Aussage ueber das Geraet, keine ueber die Oberflaeche. Ob ein
 /// Regler zusaetzlich am gewaehlten Weg (`SendeWeg`) haengt, steht weiter in
 /// der Ansicht; hier steht nur, was die Gattung hergibt. Zwei Achsen, zwei
 /// Stellen — die Ansicht sperrt, sobald eine davon nein sagt.
 ///
 /// Liegt im Kern und wird dort geprueft, damit Mac- und iPhone-Fassung
 /// dieselbe Antwort bekommen. Zwei Abschriften derselben Tabelle liefen
-/// frueher oder spaeter auseinander, und die abweichende waere die falsche —
-/// in diesem Projekt schon dreimal vorgekommen.
+/// frueher oder spaeter auseinander, und die abweichende waere die falsche.
 public enum Regler: String, CaseIterable, Sendable {
     case schriftart, groesse, fett, grossbuchstaben, waagrecht, senkrecht
     case rand, abstand, tempo, farbe, dauer, iconLaeuftMit
@@ -109,7 +108,7 @@ extension Geraetetyp {
     ///
     /// Auf der TC002 bewirken alle etwas — die App rastert dort selbst, jeder
     /// Regler formt das Bild. Auf AWTRIX NG rastert das Geraet, und damit
-    /// fallen genau die Regler weg, die **unsere** Rasterung steuern.
+    /// fallen genau die Regler weg, die unsere Rasterung steuern.
     public func wirkt(_ regler: Regler) -> Bool {
         switch self {
         case .tc002: return true
@@ -150,7 +149,7 @@ extension Geraetetyp {
 
     /// Welche waagrechten Ausrichtungen diese Gattung kennt.
     ///
-    /// **Der einzige halbe Fall.** NG kennt `textCenter` als bool: mittig oder
+    /// Der einzige halbe Fall. NG kennt `textCenter` als bool: mittig oder
     /// linksbuendig. Rechtsbuendig ginge nur ueber eine Verschiebung in Pixeln
     /// — und dafuer muesste diese App die Breite des Textes in einer Schrift
     /// kennen, die sie nicht hat. Ein Eintrag, der nichts taete, waere

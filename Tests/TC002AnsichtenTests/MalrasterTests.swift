@@ -31,8 +31,7 @@ final class MalrasterTests: XCTestCase {
         }
     }
 
-    /// Dasselbe fuer die Hoehe — und das ist neu: Bis zum 13.09.2026 ging sie
-    /// gar nicht ein, sondern eine feste Obergrenze von 420 Punkten.
+    /// Dasselbe fuer die Hoehe.
     func testDieFlaechePasstInDieVerfuegbareHoehe() {
         for (breite, hoehe) in [(8, 8), (16, 16), (52, 16)] {
             for platz in [120.0, 300.0, 700.0] {

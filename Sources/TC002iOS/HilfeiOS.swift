@@ -8,11 +8,11 @@ import TC002Core
 /// Die Darstellung (`HilfeabschnittView`) und alle Absätze, die auf beiden
 /// Geräten gelten (`HilfeInhalt`), kommen aus `TC002Ansichten`. Hier steht
 /// nur, was diese Oberfläche auszeichnet: Blätter, die Formatpille, die obere
-/// Leiste — und was diese Fassung **nicht** hat. Eine wortgleiche Fassung der
+/// Leiste — und was diese Fassung nicht hat. Eine wortgleiche Fassung der
 /// Mac-Hilfe wäre streckenweise schlicht falsch: Weder Malbereich noch
-/// Icon-Editor, weder Inspektor noch Finder gibt es auf dem Telefon, und
-/// Seitenwechsel und Scrolltempo stehen seit dem 18.09.2026 auch hier —
-/// unter „Einstellungen“, bei der Uhr, fuer die sie gelten.
+/// Icon-Editor, weder Inspektor noch Finder gibt es auf dem Telefon.
+/// Seitenwechsel und Scrolltempo stehen auch hier — unter „Einstellungen“,
+/// bei der Uhr, fuer die sie gelten.
 struct HilfeiOS: View {
     @Environment(\.dismiss) private var schliessen
 

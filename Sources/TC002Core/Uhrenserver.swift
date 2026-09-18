@@ -1,14 +1,14 @@
 import Foundation
 import Network
 
-/// **Das Beiwerk zur virtuellen Uhr**: ein winziger HTTP-Dienst, der auf einem
+/// Das Beiwerk zur virtuellen Uhr: ein winziger HTTP-Dienst, der auf einem
 /// Port des eigenen Rechners zuhört und jede Anfrage an `Virtuelleuhr`
 /// weiterreicht.
 ///
 /// Hier steht nur Netz und Bytes. Was eine Uhr auf welche Anfrage antwortet,
 /// steht in `Virtuelleuhr` — und ist dort ohne Steckdose geprüft.
 ///
-/// **HTTP/1.1, eine Anfrage je Verbindung.** Nach der Antwort wird geschlossen
+/// HTTP/1.1, eine Anfrage je Verbindung. Nach der Antwort wird geschlossen
 /// (`Connection: close`). Das ist die einfachste Form, die `URLSession`
 /// anstandslos mitmacht, und spart die Buchführung über offene Verbindungen —
 /// bei einer Uhr, die auf demselben Rechner steht, kostet der Aufbau nichts.

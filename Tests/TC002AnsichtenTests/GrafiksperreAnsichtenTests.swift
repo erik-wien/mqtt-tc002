@@ -1,12 +1,12 @@
 import XCTest
 
-/// **Die Sperre muss dort ankommen, wo gewählt wird.** Der Kern weiß seit
+/// Die Sperre muss dort ankommen, wo gewählt wird. Der Kern weiß seit
 /// `Geraetetyp.grafikSperre`, was zu hoch ist, und `AppZustand.grafikSperre`
 /// weiß, ob es für die Zieluhren gilt — beides nützt nichts, solange die
 /// Auswahl weiter alles anbietet und der Fehler erst beim Senden auffällt.
 ///
 /// Geprüft wird am Quelltext, wie in `KnopfstilTests`: Ob die gesperrte Kachel
-/// richtig **aussieht**, sieht man am Gerät; dass sie überhaupt gesperrt wird,
+/// richtig aussieht, sieht man am Gerät; dass sie überhaupt gesperrt wird,
 /// steht hier.
 final class GrafiksperreAnsichtenTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
@@ -36,7 +36,7 @@ final class GrafiksperreAnsichtenTests: XCTestCase {
         }
     }
 
-    /// Und die Frage geht an die **Zielmenge**, nicht an die angesehene Uhr:
+    /// Und die Frage geht an die Zielmenge, nicht an die angesehene Uhr:
     /// Gesendet wird an `ziele()`.
     func testDieSperreKommtVonDenZieluhren() throws {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
@@ -47,8 +47,8 @@ final class GrafiksperreAnsichtenTests: XCTestCase {
         }
     }
 
-    /// **Das Gegenstück am Telefon zur Fußnote, die es schon gab.** Sie sagte
-    /// „Eine AWTRIX NG nimmt sie nicht" — und der Knopf schickte trotzdem.
+    /// Die Bildauswahl am Telefon darf nicht senden, ohne vorher zu prüfen,
+    /// ob die Zieluhr die Höhe überhaupt annimmt.
     func testDieBildauswahlSchicktNichtInsLeere() throws {
         let quelle = try ohneKommentare("Sources/TC002iOS/BildauswahliOS.swift")
         XCTAssertTrue(quelle.contains("zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard)"),

@@ -1,14 +1,9 @@
 import XCTest
 
-/// **Ansehen und Senden sind zwei Entscheidungen, und sie haben zwei Griffe.**
-///
-/// Bis zum 18.09.2026 standen über der Vorschau zwei Pillen nebeneinander:
-/// „sieht: Küche“ und „an: Küche“. Sie erklärten den Unterschied dadurch, dass
-/// sie nebeneinanderstanden — und kosteten dafür eine Zeile über jeder
-/// Ansicht. Jetzt steht die angesehene Uhr im Titelmenü der Werkzeugleiste (wo
-/// das Telefon sie seit je hat und Xcode sein Ziel zeigt), und eine Punktreihe
-/// unter der Vorschau sagt, wie viele Uhren es gibt und die wievielte man
-/// sieht.
+/// Ansehen und Senden sind zwei Entscheidungen, und sie haben zwei Griffe:
+/// Die angesehene Uhr steht im Titelmenü der Werkzeugleiste (wo das Telefon
+/// sie seit je hat und Xcode sein Ziel zeigt), eine Punktreihe unter der
+/// Vorschau sagt, wie viele Uhren es gibt und die wievielte man sieht.
 ///
 /// Geprüft wird am Quelltext wie in `KnopfstilTests`: Wie es aussieht, sieht
 /// man am Gerät; dass jede Oberfläche beide Griffe hat, steht hier.
@@ -34,7 +29,7 @@ final class UhrenwahlTests: XCTestCase {
     }
 
     /// Beide Bereiche des Schreibtischs tragen das Titelmenü, und zwar an der
-    /// **selben** Stelle: `.principal`. Zwei Orte für dieselbe Wahl wären
+    /// selben Stelle: `.principal`. Zwei Orte für dieselbe Wahl wären
     /// schlimmer als ein ungünstiger.
     func testBeideSchreibtischbereicheTragenDasTitelmenue() throws {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
@@ -48,7 +43,7 @@ final class UhrenwahlTests: XCTestCase {
     }
 
     /// Wo eine Vorschau steht, steht auch die Punktreihe — und die Wischgeste
-    /// darüber. Auf **beiden** Oberflächenfamilien: Der Unterschied zwischen
+    /// darüber. Auf beiden Oberflächenfamilien: Der Unterschied zwischen
     /// Zeiger und Finger rechtfertigt, dass das eine leichter zu treffen ist
     /// als das andere, nicht dass eines fehlt.
     func testWoEineVorschauStehtLaesstSichDieUhrWechseln() throws {
@@ -62,9 +57,7 @@ final class UhrenwahlTests: XCTestCase {
         }
     }
 
-    /// **Jede Uhr einzeln waehlbar, auf jeder Oberfläche.** Am Telefon gab es
-    /// bis zum 18.09.2026 nur „eine oder alle“ (`anMehrereUhren`); am
-    /// Schreibtisch längst die Teilmenge. Beide gehen jetzt über
+    /// Jede Uhr einzeln wählbar, auf jeder Oberfläche: Beide gehen über
     /// `zielUmschalten`, wo die Regel steht, dass die Menge nie leer wird.
     func testJedeOberflaecheKannJedeUhrEinzelnWaehlen() throws {
         for pfad in ["Sources/TC002Ansichten/ZielauswahlView.swift",
@@ -86,10 +79,9 @@ final class UhrenwahlTests: XCTestCase {
         }
     }
 
-    /// **Keine leere Zielmenge aus der Oberfläche.** Sie hätte zwei
-    /// Bedeutungen: Diese App liest sie als „die angesehene Uhr“, Werkzeug und
-    /// Kurzbefehle als **alle** (`Einstellungen.ziele`). Der Knopf „Keine“ hat
-    /// bis zum 18.09.2026 genau die geschrieben.
+    /// Keine leere Zielmenge aus der Oberfläche: Sie hätte zwei Bedeutungen —
+    /// diese App liest sie als „die angesehene Uhr“, Werkzeug und Kurzbefehle
+    /// als alle (`Einstellungen.ziele`).
     func testKeineAnsichtSchreibtEineLeereZielmenge() throws {
         for pfad in swiftDateien(unter: "Sources/TC002Ansichten")
             + swiftDateien(unter: "Sources/TC002iOS") {

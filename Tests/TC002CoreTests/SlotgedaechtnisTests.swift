@@ -197,7 +197,7 @@ final class SlotgedaechtnisTests: XCTestCase {
     /// Ablage. Der Dateiname ist Dateiformat: Danach sucht `gemerkt(fuer:)`
     /// und `vergessen(fuer:)`.
     ///
-    /// **Was dieser Test nicht haelt:** dass `.atomic` gesetzt ist. Ein
+    /// Was dieser Test nicht haelt: dass `.atomic` gesetzt ist. Ein
     /// Einzelprozess-Test kann das nicht ehrlich beweisen — er bliebe auch
     /// mit `options: []` gruen. Ein Test, der in beiden Faellen gruen ist,
     /// waere schlimmer als keiner; deshalb steht die Zusicherung, die er
@@ -260,8 +260,8 @@ final class SlotgedaechtnisTests: XCTestCase {
 
     // MARK: - Die Kante des Icons
 
-    /// **Der Fehler, der wie Vergesslichkeit aussah.** `merken` rechnete die
-    /// Pruefsumme mit `Meldungsbau.feld(_:mitIcon:)` — und dessen Vorgabe fuer
+    /// `merken` rechnete die Pruefsumme mit `Meldungsbau.feld(_:mitIcon:)` —
+    /// und dessen Vorgabe fuer
     /// `iconKante` ist 8. Wer ein 16×16 sendete, bekam eine Pruefsumme ueber
     /// ein Bild, das so nie auf der Uhr stand; beim naechsten Tippen auf den
     /// Block verwarf `slotWaehlen` den Stand als „da hat jemand anderer
@@ -307,12 +307,12 @@ final class SlotgedaechtnisTests: XCTestCase {
                      "ohne Icon gibt es keine Kante zu merken")
     }
 
-    /// **Das Dateiformat.** Ein Stand aus einer Fassung vor dieser hat den
-    /// Schluessel gar nicht — er muss lesbar bleiben und als 8 gelten. Ein
-    /// Pflichtfeld wuerde hier `keyNotFound` werfen; gelesen wird mit `try?`,
-    /// die Folge waere also ein leeres Gedaechtnis statt einer Meldung. Seit
-    /// dem iCloud-Abgleich liegt diese Datei ausserdem moeglicherweise in einem
-    /// Behaelter, den auch eine aeltere Fassung auf einem anderen Geraet liest.
+    /// Ein Stand aus einer Fassung vor dieser hat den Schluessel gar nicht —
+    /// er muss lesbar bleiben und als 8 gelten. Ein Pflichtfeld wuerde hier
+    /// `keyNotFound` werfen; gelesen wird mit `try?`, die Folge waere also ein
+    /// leeres Gedaechtnis statt einer Meldung. Diese Datei kann zudem in einem
+    /// iCloud-Behaelter liegen, den auch eine aeltere Fassung auf einem
+    /// anderen Geraet liest.
     func testEinStandOhneKanteBleibtLesbarUndGiltAlsAcht() throws {
         let ordner = temp()
         let gedaechtnis = Slotgedaechtnis(ordner: ordner)

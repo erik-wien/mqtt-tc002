@@ -100,7 +100,7 @@ final class OptionenTests: XCTestCase {
         XCTAssertEqual(o.befehl, .senden(text: "Hallo"))
     }
 
-    /// Und vor allem: auch **vor** dem Befehlswort. Genau das ging schief —
+    /// Und vor allem: auch vor dem Befehlswort. Genau das ging schief —
     /// `-AppleLanguages` stand an der Stelle des Befehls, also galt alles als
     /// Text, und `mqtttc002 -AppleLanguages "(en)" uhren` schickte das Wort
     /// „uhren" an die Uhr, statt die Liste zu zeigen.
@@ -188,9 +188,9 @@ final class OptionenTests: XCTestCase {
     }
 }
 
-/// Die beiden Befehle fuer den Bilderbestand (14.09.2026). Ein Bild ist eine
-/// ganze Anzeige und ersetzt Text und Icon — deshalb ein eigener Befehl und
-/// nicht eine Option an `senden`.
+/// Die beiden Befehle fuer den Bilderbestand. Ein Bild ist eine ganze
+/// Anzeige und ersetzt Text und Icon — deshalb ein eigener Befehl und nicht
+/// eine Option an `senden`.
 final class BildbefehlTests: XCTestCase {
     func testBildMitNamen() throws {
         let o = try Optionen.zerlegt(["bild", "Herz"])
@@ -218,8 +218,8 @@ final class BildbefehlTests: XCTestCase {
         XCTAssertEqual(try Optionen.zerlegt(["images"]).befehl, .bilder)
     }
 
-    /// `--name` und `--dauer` gelten auch fuer ein Bild: Sie sagen, **wohin**
-    /// und **wie lange**, nicht wie etwas gesetzt wird.
+    /// `--name` und `--dauer` gelten auch fuer ein Bild: Sie sagen, wohin
+    /// und wie lange, nicht wie etwas gesetzt wird.
     func testPlatzUndDauerGeltenAuchFuerEinBild() throws {
         let o = try Optionen.zerlegt(["bild", "Herz", "--name", "meldung3", "--dauer", "7"])
         XCTAssertEqual(o.befehl, .bild(name: "Herz"))

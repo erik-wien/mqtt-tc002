@@ -19,23 +19,16 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Co
 /// `passt`). `.text` schickt ihn stattdessen als `Textblock`, den die Uhr mit
 /// ihrer eigenen Schrift setzt (`docs/tc002-protokoll.md` §4.3, §5.4).
 ///
-/// **Die Oberflaechen bieten die Wahl seit dem 18.09.2026 nicht mehr an.** Sie
-/// stand als Segmentschalter „Senden als" in beiden Sendeansichten und war eine
-/// Frage, die niemand beantworten kann, ohne das Geraet zu kennen:
+/// Die Oberflaechen bieten die Wahl nicht an: Auf einer AWTRIX NG hat sie
+/// keine Wirkung (`Anzeigen.nutzlast` schickt in beiden Stellungen den Text
+/// samt Reglern; unsere Pixel sehen diese Uhren nie), auf der Werksfirmware
+/// kostet `.text` Schriftwahl, Groesse und Fett, verliert Umlaute und laeuft
+/// nicht durch (gemessen, `docs/firmware-beobachtungen.md` Nr. 1) — gegen ein
+/// paar Kilobyte weniger Nutzlast kein Gewinn.
 ///
-/// - Auf einer **AWTRIX NG** hatte sie gar keine Wirkung. `Anzeigen.nutzlast`
-///   schickt dorthin in beiden Stellungen den Text samt Reglern; unsere Pixel
-///   sehen diese Uhren nie.
-/// - Auf der **Werksfirmware** kostete `.text` Schriftwahl, Groesse und Fett,
-///   verlor Umlaute und lief nicht einmal durch (gemessen, `docs/
-///   firmware-beobachtungen.md` Nr. 1) — dafuer ein paar Kilobyte weniger
-///   Nutzlast. Das ist kein Gegenwert.
-///
-/// Was bleibt, ist die Gleichheit ueber beide Uhren hinweg: Die App setzt
-/// jeden Text, den sie setzen kann, selbst; wo die Uhr selbst setzt, tut sie es
-/// ohnehin. `.text` steht weiter im Kern, weil `mqtttc002 --geraeteschrift` und
-/// der Kurzbefehl es ausdruecklich verlangen koennen — und weil das Feld Teil
-/// des Dateiformats von Slotgedaechtnis und Verlauf ist.
+/// `.text` bleibt im Kern, weil `mqtttc002 --geraeteschrift` und der
+/// Kurzbefehl es ausdruecklich verlangen koennen und weil das Feld Teil des
+/// Dateiformats von Slotgedaechtnis und Verlauf ist.
 public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
     case pixel, text
     public var id: String { rawValue }
@@ -47,14 +40,11 @@ public enum Lauftempo: String, CaseIterable, Identifiable, Sendable, Codable {
     case langsam, mittel, schnell
     public var id: String { rawValue }
 
-    /// Pixel Versatz je Einzelbild — immer einer.
-    ///
-    /// „Schnell" nahm frueher Zweierschritte, mit der Begruendung, das halte die
-    /// Nutzlast klein. Die Rechnung stimmte nicht: Die Zahl der Einzelbilder
-    /// haengt allein an der Schrittweite, nicht an der Standzeit — Zweierschritte
-    /// halbieren also die Nutzlast, kosten aber die Ruhe im Bild. Und zusammen
-    /// mit der kuerzeren Standzeit ergab das fast das Dreifache von „mittel",
-    /// also einen Sprung statt einer Stufe. Jetzt unterscheidet nur die Standzeit.
+    /// Pixel Versatz je Einzelbild — immer einer. Zweierschritte wuerden die
+    /// Zahl der Einzelbilder und damit die Nutzlast halbieren, kosten aber die
+    /// Ruhe im Bild; zusammen mit einer kuerzeren Standzeit ergaebe das fast
+    /// das Dreifache von „mittel" statt einer Stufe. Die Stufen unterscheiden
+    /// sich deshalb nur in der Standzeit.
     public var schrittweite: Int { 1 }
 
     /// Standzeit je Einzelbild in Sekunden. Die Stufen liegen rund das
@@ -72,15 +62,13 @@ public enum Lauftempo: String, CaseIterable, Identifiable, Sendable, Codable {
 ///
 /// Die Felder entsprechen eins zu eins den `@AppStorage`-Werten der
 /// Sendeansicht. Wer hier etwas umbenennt, muss dort denselben Namen benutzen,
-/// sonst liest eine laufende Installation ihre Einstellungen nicht mehr.
-/// **Seit dem 18.09.2026 auch ablegbar** — der Sendeverlauf schreibt sie so,
-/// wie sie sind, in seine Datei.
+/// sonst liest eine laufende Installation ihre Einstellungen nicht mehr. Der
+/// Sendeverlauf schreibt diesen Typ unveraendert in seine Datei.
 ///
-/// `Slotstand` (im Slotgedaechtnis) legt dieselben Angaben weiterhin **flach**
-/// ab, Feld fuer Feld. Das ist keine Doppelung aus Nachlaessigkeit: Jene Datei
-/// liegt seit dem iCloud-Abgleich in einem Behaelter, den auch aeltere
-/// Fassungen auf anderen Geraeten lesen — ihr Format zu aendern hiesse, ihnen
-/// das Gedaechtnis wegzunehmen. Ein neues Format faengt dagegen frei an.
+/// `Slotstand` (im Slotgedaechtnis) legt dieselben Angaben weiterhin flach ab,
+/// Feld fuer Feld: Jene Datei liegt in einem iCloud-Behaelter, den auch
+/// aeltere Fassungen auf anderen Geraeten lesen — ihr Format zu aendern hiesse,
+/// ihnen das Gedaechtnis wegzunehmen. Ein neues Format faengt dagegen frei an.
 public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var text: String
     public var weg: SendeWeg = .pixel
@@ -142,7 +130,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
 }
 
 extension Meldungsoptionen {
-    /// **Die Vorschau einer NG-Uhr ist eine Näherung, und zwar immer dieselbe.**
+    /// Die Vorschau einer NG-Uhr ist eine Näherung, immer dieselbe.
     ///
     /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl
     /// ist dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der gespeicherte
@@ -155,14 +143,13 @@ extension Meldungsoptionen {
     /// vollständig Platz hat.
     ///
     /// Angerührt werden nur Schrift und Größe. Farbe, Ausrichtung, Abstand und
-    /// das mitlaufende Icon sind Regler, die NG sehr wohl kennt
-    /// (`Geraetetyp.wirkt`) — sie zu ersetzen hieße, die Vorschau von der
-    /// Einstellung abzukoppeln, die wirklich gesendet wird.
+    /// das mitlaufende Icon sind Regler, die NG kennt (`Geraetetyp.wirkt`) —
+    /// sie zu ersetzen hieße, die Vorschau von der Einstellung abzukoppeln,
+    /// die wirklich gesendet wird.
     ///
-    /// **Im Kern und nicht in den Ansichten**: Mac und iPhone rufen dasselbe.
-    /// Zwei Abschriften derselben Tabelle laufen früher oder später
-    /// auseinander, und die abweichende wäre die falsche — in diesem Projekt
-    /// schon dreimal vorgekommen (siehe `Regler` in `Geraetetyp.swift`).
+    /// Im Kern und nicht in den Ansichten: Mac und iPhone rufen dasselbe, sonst
+    /// laufen zwei Abschriften derselben Tabelle früher oder später auseinander
+    /// (siehe `Regler` in `Geraetetyp.swift`).
     public func naeherung(fuer gattung: Geraetetyp) -> Meldungsoptionen {
         guard gattung.setztSelbst else { return self }
         var o = self
@@ -303,15 +290,15 @@ public enum Meldungsbau {
     public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
                        vorberechnet: String? = nil) throws -> Frame {
         var gebaut = try gebauterRahmen(o, icon: icon, sammlung: sammlung, vorberechnet: vorberechnet)
-        // **Die Herkunft haengt an jedem Rahmen, den diese Funktion baut** —
-        // und nur an ihnen. Ein gemaltes Bild kommt nicht hier vorbei, hat
-        // keine Regler und kann deshalb auch keine mitgeben; genau daran
-        // erkennt `Anzeigen`, dass es an eine AWTRIX NG nicht zu schicken ist.
+        // Die Herkunft haengt an jedem Rahmen, den diese Funktion baut, und nur
+        // an ihnen. Ein gemaltes Bild kommt nicht hier vorbei, hat keine Regler
+        // und kann deshalb auch keine mitgeben; genau daran erkennt `Anzeigen`,
+        // dass es an eine AWTRIX NG nicht zu schicken ist.
         //
-        // Das Icon wird hier **noch einmal** gelesen, obwohl der stehende Fall
-        // es schon in `bilder` traegt: Im laufenden Fall steckt es im GIF und
-        // liesse sich von dort nicht mehr herausloesen. Eine Stelle, an der es
-        // immer dasteht, ist eine Icondatei je Sendung wert.
+        // Das Icon wird hier noch einmal gelesen, obwohl der stehende Fall es
+        // schon in `bilder` traegt: Im laufenden Fall steckt es im GIF und
+        // liesse sich von dort nicht mehr herausloesen. Eine Icondatei je
+        // Sendung ist der Preis dafuer, dass es immer an derselben Stelle steht.
         gebaut.herkunft = Meldungsherkunft(
             optionen: o,
             iconDatenURI: try icon.map { try sammlung.datenURI(fuer: $0) },

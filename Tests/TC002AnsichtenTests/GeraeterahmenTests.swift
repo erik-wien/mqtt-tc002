@@ -3,7 +3,7 @@ import TC002Core
 @testable import TC002Ansichten
 
 /// Der Geraeterahmen ist eine Zeichnung, und eine Zeichnung sieht man sich an.
-/// Was ein Blick aufs Bild aber **nicht** sieht, ist eine um zwei Prozent
+/// Was ein Blick aufs Bild aber nicht sieht, ist eine um zwei Prozent
 /// falsche Feldbreite: Die Pixel stehen dann nicht mehr quadratisch im Feld
 /// oder werden am Rand angeschnitten, und beides faellt erst auf, wenn jemand
 /// die Vorschau mit dem Geraet vergleicht. Deshalb stehen die Masse hier in
@@ -25,7 +25,7 @@ final class GeraeterahmenTests: XCTestCase {
         (.awtrixNG, 32, 8),                                            // docs/awtrix-ng-protokoll.md §1
     ]
 
-    /// Der Kern der Sache: Der Rahmen skaliert seine **Zeichnung** an die
+    /// Der Kern der Sache: Der Rahmen skaliert seine Zeichnung an die
     /// Hoehe des Inhalts — den Inhalt selbst skaliert er nie. Ein Pixel ist
     /// darum so breit wie hoch, an jeder Kantenlaenge und bei jeder Geraeteart.
     func testFeldNimmtDenInhaltQuadratischUndUnverzerrtAuf() {
@@ -55,13 +55,13 @@ final class GeraeterahmenTests: XCTestCase {
                                             "Inhalt ragt aus dem Feld — \(wo)")
 
                 // 4. …und auch nicht nennenswert breiter: Was uebrig bleibt,
-                //    muss unter **einer** Pixelbreite liegen, sonst bliebe
+                //    muss unter einer Pixelbreite liegen, sonst bliebe
                 //    rechts im Feld ein schwarzer Streifen, den kein Inhalt
                 //    je erreicht.
                 XCTAssertLessThan(m.feldBreite - inhaltBreite, kante,
                                   "schwarzer Rest im Feld breiter als ein Pixel — \(wo)")
 
-                // 5. Der Inhalt sitzt oben **und links** buendig — wie auf dem
+                // 5. Der Inhalt sitzt oben und links buendig — wie auf dem
                 //    Geraet selbst, das eine Anzeige immer bei Spalte 0 beginnt.
                 //    Nicht zentriert: Bleibt doch einmal etwas uebrig, gehoert
                 //    der Rest nach rechts und nicht je zur Haelfte auf beide
@@ -73,15 +73,14 @@ final class GeraeterahmenTests: XCTestCase {
         }
     }
 
-    /// **Der Beweis, der gefehlt hat.** Der Test oben misst die Zeichnung
-    /// gegen die Spaltenzahl, die das Geraet *hat* — und ging deshalb auch
-    /// durch, solange die App etwas ganz anderes rasterte: Bis zum 15.09.2026
-    /// kannte `Meldungsbau.feld` die Geraeteart nicht und lieferte immer
-    /// 52×16. Im Rahmen einer TC001 blieben davon zwoelf Spalten des
-    /// Displayfeldes schwarz, und kein Test sagte etwas.
+    /// Der Test oben misst die Zeichnung gegen die Spaltenzahl, die das
+    /// Geraet *hat* — und ging deshalb auch durch, solange die App etwas
+    /// ganz anderes rasterte: `Meldungsbau.feld` kannte die Geraeteart nicht
+    /// und lieferte immer 52×16. Im Rahmen einer TC001 blieben davon zwoelf
+    /// Spalten des Displayfeldes schwarz, und kein Test sagte etwas.
     ///
-    /// Hier haengt beides zusammen: Was die App **wirklich** rastert, gegen
-    /// das, was die Zeichnung dafuer vorsieht.
+    /// Hier haengt beides zusammen: Was die App wirklich rastert, gegen das,
+    /// was die Zeichnung dafuer vorsieht.
     func testDasGerasterteFeldFuelltDasDisplayfeldWirklichAus() {
         let uhren: [(Uhr, Geraetetyp)] = [
             (Uhr(name: "Werk", host: "a.example", typ: .tc002), .tc002),
@@ -102,9 +101,9 @@ final class GeraeterahmenTests: XCTestCase {
         }
     }
 
-    /// **Gegenprobe, damit der Test oben Zaehne hat.** Genau der Stand von
-    /// gestern — ein 52×16-Raster im Rahmen der TC001 — muss hier
-    /// durchfallen. Ginge auch er durch, pruefte der Test nichts.
+    /// Gegenprobe, damit der Test oben Zaehne hat: Ein 52×16-Raster im
+    /// Rahmen der TC001 (der frühere Fehlerstand) muss hier durchfallen.
+    /// Ginge auch er durch, pruefte der Test nichts.
     func testEinRasterInDerFalschenGroesseFaelltAuf() {
         let z = Geraetezeichnung.fuer(.awtrixNG)
         let falsch = Meldungsbau.feld(Meldungsoptionen(text: "Hallo"), mitIcon: false)  // 52×16
@@ -143,7 +142,7 @@ final class GeraeterahmenTests: XCTestCase {
     /// „Rundere Ecken und keine Tasten oben" — beides gemessen, nicht als
     /// Merkzettel im Kommentar.
     ///
-    /// „Keine Tasten oben" heisst: Bei der AWTRIX-Front liegt **nichts** ueber
+    /// „Keine Tasten oben" heisst: Bei der AWTRIX-Front liegt nichts ueber
     /// der Oberkante des Gehaeuses. Bei der TC002 liegt sehr wohl etwas
     /// darueber (Drehknopf und Abdeckplatte) — und das steht hier mit, weil
     /// der Test sonst auch dann durchginge, wenn die TC002 ihren Knopf
@@ -171,16 +170,15 @@ final class GeraeterahmenTests: XCTestCase {
                              "die AWTRIX-Front hat keine runderen Ecken als die TC002")
     }
 
-    /// **Der Punktstil der Werksfirmware ist buchstaeblich der alte** — ein
-    /// hartes Quadrat mit genau einem Punkt Luft, bei **jeder** Kantenlaenge.
+    /// Der Punktstil der Werksfirmware ist buchstaeblich der alte: ein
+    /// hartes Quadrat mit genau einem Punkt Luft, bei jeder Kantenlaenge.
     ///
-    /// Diese Zusicherung fehlte, und genau darum ist der alte Stand einmal
-    /// verlorengegangen, ohne dass etwas gemeldet haette: Ein Anteil von 0,125
+    /// Ohne diese Zusicherung faellt das unbemerkt weg: Ein Anteil von 0,125
     /// trifft bei Kante 8 zufaellig denselben Punkt Luft und weicht ueberall
-    /// sonst ab — bei Kante 14 auf 1,75 Punkte, und die Anzeige wirkt duenner
-    /// und schwaecher als zuvor. Am Mac laeuft die Kante von 4 bis 14
-    /// (`SendenView`, `min(14, …)`), deshalb stehen hier drei Werte und nicht
-    /// einer.
+    /// sonst ab — bei Kante 14 auf 1,75 Punkte, und die Anzeige wirkt
+    /// duenner und schwaecher. Am Mac laeuft die Kante von 4 bis 14
+    /// (`SendenView`, `min(14, …)`), deshalb stehen hier drei Werte und
+    /// nicht einer.
     func testWerksfirmwareZeichnetWeiterHarteQuadrateMitEinemPunktLuft() {
         let tc = Geraetezeichnung.tc002.pixelstil
         for zelle in [4.0, 8, 14] {
@@ -208,7 +206,7 @@ final class GeraeterahmenTests: XCTestCase {
                            "eckig heisst Radius null")
         }
 
-        // Die Fuge der AWTRIX waechst **mit** der Zelle — das ist der
+        // Die Fuge der AWTRIX waechst mit der Zelle — das ist der
         // Unterschied zur festen Haarlinie der Werksfirmware, und ohne diese
         // Zeile ginge der Test auch dann durch, wenn beide dasselbe taeten.
         let fuge = { (zelle: Double) in zelle - ng.punktKante(zelle: zelle) }
@@ -219,10 +217,9 @@ final class GeraeterahmenTests: XCTestCase {
                        "die Haarlinie der Werksfirmware haengt an der Zelle")
     }
 
-    /// Der Punkt sitzt mittig in seiner Zelle, nicht links oben angeschlagen —
-    /// die **eine** bewusst behaltene Abweichung vom Stand vor der Ablösung
-    /// der SVG. Vorher lag die ganze Luecke rechts und unten, und das Raster
-    /// sass um einen halben Punkt schief im Feld.
+    /// Der Punkt sitzt mittig in seiner Zelle, nicht links oben angeschlagen:
+    /// Läge die ganze Luecke rechts und unten, saesse das Raster um einen
+    /// halben Punkt schief im Feld.
     func testPunkteSitzenMittigInIhrerZelle() {
         for z in [Geraetezeichnung.tc002, Geraetezeichnung.awtrixNG] {
             for zelle in [4.0, 8, 14] {
@@ -233,7 +230,7 @@ final class GeraeterahmenTests: XCTestCase {
         }
     }
 
-    /// Der Aufdruck auf dem Geraet ist eine **Zeichnung**, kein Text der
+    /// Der Aufdruck auf dem Geraet ist eine Zeichnung, kein Text der
     /// Oberflaeche: Auf dem echten Geraet steht „Ulanzi TC001" aufgedruckt,
     /// und aufgedruckte Buchstaben uebersetzt niemand. Wuerde er als
     /// `LocalizedStringKey` gesetzt, legte das einen Uebersetzungsschluessel

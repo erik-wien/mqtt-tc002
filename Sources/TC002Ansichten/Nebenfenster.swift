@@ -7,7 +7,7 @@ import TC002Core
 /// Am Mac ist jedes ein eigenes Fenster (`Window`-Szene in
 /// `TC002App/App.swift`), auf dem iPad eine ganzflächige Einblendung aus dem
 /// Menü der Seitenleiste (`SchreibtischView`). Der Grund für die zwei Wege:
-/// **`Window` gibt es unter iOS nicht**, und `openWindow(id:)` übersetzt dort
+/// `Window` gibt es unter iOS nicht, und `openWindow(id:)` übersetzt dort
 /// klaglos und tut zur Laufzeit nichts — ein Knopf, der schweigt.
 ///
 /// Damit die zwei Wege nicht auseinanderlaufen, liest keine Seite ihre eigene

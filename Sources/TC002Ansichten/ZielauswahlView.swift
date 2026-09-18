@@ -41,13 +41,12 @@ struct ZielauswahlView: View {
                 if zustand.zielIDs.isEmpty { zustand.zielIDs = gewaehlteIDs }
                 zeigeBlatt = true
             } label: {
-                // **Dasselbe Zeichen wie am Telefon** (dort das Antennensymbol
-                // neben dem Eingabefeld), dazu das Wort. Bis zum 18.09.2026
-                // stand hier ein ganzer Satz als Beschriftung — „an: Küche",
-                // „an 2 Uhren" —, der neben dem Titelmenue wie ein zweiter
-                // Titel las. Wohin es geht, sagt jetzt der Einblendtext und das
-                // Blatt selbst.
-                // **Die Zahl steht immer da, auch die 1.** Sie wegzulassen
+                // Dasselbe Zeichen wie am Telefon (dort das Antennensymbol
+                // neben dem Eingabefeld), dazu das Wort — nicht ein ganzer
+                // Satz als Beschriftung („an: Küche", „an 2 Uhren"), der
+                // neben dem Titelmenue wie ein zweiter Titel laese. Wohin es
+                // geht, sagt der Einblendtext und das Blatt selbst.
+                // Die Zahl steht immer da, auch die 1: Sie wegzulassen
                 // hiess, zwei Zustaende auf dasselbe Bild abzubilden: „an eine"
                 // und „noch nichts gewaehlt" saehen gleich aus, und wer die
                 // Zahl sucht, faende bei genau einem Empfaenger nichts und
@@ -69,12 +68,12 @@ struct ZielauswahlView: View {
             HStack {
                 Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
                     .knopfBefehl()
-                // **„Nur die angesehene" statt „Keine".** Der alte Knopf
-                // schrieb die leere Menge — und die heisst fuer diese App „die
-                // angesehene Uhr", fuer Werkzeug und Kurzbefehle aber **alle**
+                // „Nur die angesehene" statt „Keine": Ein Knopf, der die
+                // leere Menge schreibt, heisst fuer diese App „die
+                // angesehene Uhr", fuer Werkzeug und Kurzbefehle aber alle
                 // (`Einstellungen.ziele`). Dieselbe Einstellung, zwei
-                // Bedeutungen: Wer hier „Keine" drueckte, schickte den naechsten
-                // Kurzbefehl an jede eingerichtete Uhr.
+                // Bedeutungen — mit „Keine" ginge der naechste Kurzbefehl an
+                // jede eingerichtete Uhr.
                 Button("Nur die angesehene") {
                     if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
                 }
@@ -121,7 +120,7 @@ struct ZielauswahlView: View {
                                 // Nur die abweichende Gattung steht da. „Ulanzi
                                 // TC002" an jeder Zeile waere eine Angabe, die
                                 // nichts unterscheidet — und die Zeile soll
-                                // sagen, was **diese** Uhr von den anderen
+                                // sagen, was diese Uhr von den anderen
                                 // trennt.
                                 if uhr.gattung != .tc002 {
                                     Text(uhr.gattung.beschriftung)

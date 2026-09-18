@@ -1,6 +1,6 @@
 import XCTest
 
-/// **Die sichtbare Fassung des Einblendtexts.** Bis hierher hing jede
+/// Die sichtbare Fassung des Einblendtexts. Bis hierher hing jede
 /// Erklärung im Inspektor an `.help(…)` — am Mac beim Verweilen mit der Maus
 /// zu sehen, am iPad ohne Zeiger überhaupt nicht (`Gattungssperre.swift`
 /// begründet das, und Punkt 2 des Rückstandsdokuments führte es als offen).
@@ -8,7 +8,7 @@ import XCTest
 /// Gruppenüberschrift.
 ///
 /// Geprüft wird wie in `KnopfstilTests` am Quelltext, denn hier gibt es
-/// nichts zu rechnen: **Dass** die vier Überschriften einen Kopf mit Hilfe
+/// nichts zu rechnen: Dass die vier Überschriften einen Kopf mit Hilfe
 /// tragen, steht im Quelltext, und nur dort fällt es auf, wenn jemand einen
 /// Abschnitt umbaut und die Erklärung dabei verliert. Wie das (?) aussieht,
 /// prüft das nicht — das sieht man am Gerät.
@@ -20,10 +20,10 @@ final class HilfezeichenTests: XCTestCase {
 
     /// Die vier Gruppenüberschriften, die eine Erklärung tragen müssen, samt
     /// ihrer Datei. Zwei im Sendeinspektor, zwei im Editorinspektor — beide
-    /// Ansichten gelten für Mac **und** iPad (`SchreibtischView`).
-    /// „Senden als" stand hier bis zum 18.09.2026 mit dazu. Der Abschnitt ist
-    /// weg, weil die Wahl weg ist (siehe `SendeWeg` im Kern) — und damit auch
-    /// die Frage, die sein (?) beantwortet hätte.
+    /// Ansichten gelten für Mac und iPad (`SchreibtischView`). „Senden als"
+    /// gehört nicht mehr dazu: Der Abschnitt ist weg, weil die Wahl weg ist
+    /// (siehe `SendeWeg` im Kern) — und damit auch die Frage, die sein (?)
+    /// beantwortet hätte.
     private static let koepfe = [
         ("Sources/TC002Ansichten/SendenView.swift", "Schrift"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
@@ -75,11 +75,11 @@ final class HilfezeichenTests: XCTestCase {
         }
     }
 
-    /// **Ein Text, zweimal benutzt.** Die LaMetric-Nummer wird an zwei Stellen
-    /// erklärt — im Abschnitt des Bildes und unter „Hinzufügen“ —, und beide
-    /// Male mit demselben Wortlaut. Zweimal hingeschrieben wären es zwei
-    /// Übersetzungsschlüssel, die auseinanderlaufen können; deshalb eine
-    /// Konstante, die genau einmal im Quelltext steht.
+    /// Die LaMetric-Nummer wird an zwei Stellen erklärt — im Abschnitt des
+    /// Bildes und unter „Hinzufügen“ —, beide Male mit demselben Wortlaut.
+    /// Zweimal hingeschrieben wären es zwei Übersetzungsschlüssel, die
+    /// auseinanderlaufen können; deshalb eine Konstante, die genau einmal im
+    /// Quelltext steht.
     func testDieLaMetricErklaerungStehtNurEinmalDa() throws {
         let anfang = "Icons für solche Uhren werden über LaMetric-Nummern angesprochen."
         var stellen = 0

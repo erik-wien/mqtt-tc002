@@ -1,19 +1,16 @@
 import XCTest
 @testable import TC002Core
 
-/// **Eine Tabelle, die nirgends greift, ist schlimmer als keine.**
-///
 /// `Geraetetyp.wirkt` sagt je Regler, ob die Geräteart ihn überhaupt hergibt,
 /// und `begruendung` liefert den einen Satz dazu. Beides steht im Kern, damit
-/// Mac- und iPhone-Fassung dieselbe Antwort bekommen. Nur: Ein Regler, der in
-/// der Tabelle steht, aber in keiner der beiden Sendeansichten abgefragt wird,
-/// bleibt bedienbar — und schickt dann eine Einstellung an ein Gerät, das sie
-/// nicht kennt. Nichts am Bau oder an den übrigen Tests würde das bemerken;
-/// es fiele erst am Gerät auf, an einer Anzeige, die anders aussieht als die
-/// Vorschau.
+/// Mac- und iPhone-Fassung dieselbe Antwort bekommen. Ein Regler, der in der
+/// Tabelle steht, aber in keiner der beiden Sendeansichten abgefragt wird,
+/// bleibt bedienbar und schickt dann eine Einstellung an ein Gerät, das sie
+/// nicht kennt — das fiele erst am Gerät auf, an einer Anzeige, die anders
+/// aussieht als die Vorschau.
 ///
-/// Deshalb wird hier der Quelltext der beiden Sendeansichten nachgesehen — wie
-/// in `EinblendtextGegenstueckTests`, `PlattformwegeTests` und
+/// Geprüft wird deshalb am Quelltext der beiden Sendeansichten, wie in
+/// `EinblendtextGegenstueckTests`, `PlattformwegeTests` und
 /// `EditorbereichTests`. Kommentare fallen weg; ein Regler, der nur in einem
 /// Kommentar vorkommt, zählt nicht als verdrahtet.
 final class GattungssperreTests: XCTestCase {
@@ -33,7 +30,7 @@ final class GattungssperreTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    /// Die Regler, die mindestens eine Gattung **nicht** kennt. Wächst die
+    /// Die Regler, die mindestens eine Gattung nicht kennt. Wächst die
     /// Tabelle im Kern, wächst diese Menge von selbst mit — genau darum wird
     /// sie berechnet und nicht abgeschrieben.
     private var gesperrte: [Regler] {
@@ -60,7 +57,7 @@ final class GattungssperreTests: XCTestCase {
     }
 
     /// Der halbe Fall, und der gefährlichste: Rechtsbündig wird von NG
-    /// **angenommen** und als linksbündig gesendet. Ein Wähler, der es
+    /// angenommen und als linksbündig gesendet. Ein Wähler, der es
     /// trotzdem anbietet, zeigte etwas anderes an, als auf der Uhr steht.
     /// Beide Ansichten müssen den Eintrag darum an `waagrechteAusrichtungen`
     /// hängen, statt ihn fest hinzuschreiben.

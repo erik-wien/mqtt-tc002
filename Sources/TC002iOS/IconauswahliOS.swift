@@ -5,20 +5,19 @@ import TC002Core
 /// Ein Icon als stehende Vorschau. Zeigt das erste Einzelbild; animierte Icons
 /// laufen hier nicht, das wäre im Raster nur Unruhe.
 ///
-/// **Nimmt die Fläche, die es bekommt, und rechnet die Punktgröße daraus** —
-/// wie `Slotraster` es im Block tut. Bis zum 14.09.2026 bekam es die Kante je
-/// Bildpunkt von außen gereicht, und die stammte aus einer gemessenen
-/// Rasterbreite; wo die Messung zu klein ausfiel, standen die Icons in
-/// Originalauflösung da, also stecknadelkopfgroß. Eine Ansicht, deren Größe
-/// von einer Messung abhängt, die ihrerseits von der Größe abhängt, ist eine
-/// Falle — der Aufrufer setzt jetzt einen Rahmen, und das Bild füllt ihn.
+/// Nimmt die Fläche, die es bekommt, und rechnet die Punktgröße daraus — wie
+/// `Slotraster` es im Block tut. Die Kante je Bildpunkt von außen gereicht zu
+/// bekommen, aus einer gemessenen Rasterbreite, ist eine Falle: Eine Ansicht,
+/// deren Größe von einer Messung abhängt, die ihrerseits von der Größe
+/// abhängt, kann bei zu kleiner Messung Icons in Originalauflösung zeigen,
+/// also stecknadelkopfgroß. Der Aufrufer setzt darum einen Rahmen, und das
+/// Bild füllt ihn.
 struct IconbildiOS: View {
     let datei: URL
-    /// **Die Kantenlaenge des Icons in Pixeln — 8 oder 16.**
-    ///
-    /// Bis zum 14.09.2026 stand hier ueberall die 8 fest. Das ging, solange
-    /// das Telefon nur den 8×8-Bestand kannte; seit die eigenen 16×16 ueber
-    /// iCloud auch dort ankommen, zeigte es sie gar nicht erst an.
+    /// Die Kantenlaenge des Icons in Pixeln — 8 oder 16: Fest auf 8 zu
+    /// stellen ginge nur, solange das Telefon ausschliesslich den
+    /// 8×8-Bestand kennt — die eigenen 16×16 kommen ueber iCloud aber auch
+    /// hierher.
     var pixelkante: Int = 8
 
     var body: some View {
@@ -59,15 +58,15 @@ private struct IconRasteriOS: View {
 /// über die LaMetric-Nummer nachladen. Malen geht hier nicht — Icons werden am
 /// Mac bearbeitet, ein 8×8-Raster mit dem Finger wäre keine Arbeitsfläche.
 ///
-/// Die Icons stehen als Raster zu fünf je Zeile, darunter der Name. Bis zum
-/// 14.09.2026 waren es acht — dort war unter der Kachel nur Platz für die
-/// Nummer, und die sagt bei einem eigenen Icon nichts. Antippen öffnet die
+/// Die Icons stehen als Raster zu fünf je Zeile, darunter der Name — mehr
+/// Spalten liessen unter der Kachel nur Platz für die Nummer, und die sagt
+/// bei einem eigenen Icon nichts. Antippen öffnet die
 /// Einzelansicht (`IconEinzelansichtiOS`) mit Namen, großer — bei laufenden
 /// Icons auch laufender — Ansicht, „Übernehmen“ und dem Menü zum Umbenennen
 /// und Löschen.
 struct IconauswahliOS: View {
     @Binding var gewaehlt: Icon?
-    /// **Warum ein Icon dieser Kantenlaenge nicht ankaeme** — `nil`, wenn es
+    /// Warum ein Icon dieser Kantenlaenge nicht ankaeme — `nil`, wenn es
     /// ankommt. Beantwortet wird die Frage von den Zieluhren
     /// (`AppZustand.grafikSperre`); die Auswahl stellt sie nur. Dieselbe Naht
     /// wie am Schreibtisch (`IconAuswahlView`).
@@ -83,7 +82,7 @@ struct IconauswahliOS: View {
     /// Die Filterleiste: Größe und Bewegung.
     @State private var filterkante: Int?
     @State private var nurBewegte = false
-    /// **Einmal gelesen, nicht bei jedem Tastendruck.** Welche Icons sich
+    /// Einmal gelesen, nicht bei jedem Tastendruck: Welche Icons sich
     /// bewegen, steht in den Dateien; `bewegteKennungen()` fragt sie beim
     /// Laden des Bestands, danach ist es ein Nachschlagen.
     @State private var bewegte: Set<String> = []
@@ -99,10 +98,9 @@ struct IconauswahliOS: View {
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
     }
 
-    /// **Beide Bestaende**, wie am Schreibtisch und wie im Werkzeug seit
-    /// `224ad3f`. Ein eigenes 16×16 entsteht zwar nur im Editor am Mac — ueber
-    /// den iCloud-Abgleich liegt es danach aber auch hier, und bis zum
-    /// 14.09.2026 zeigte das Telefon es gar nicht erst an.
+    /// Beide Bestaende, wie am Schreibtisch und im Werkzeug. Ein eigenes
+    /// 16×16 entsteht nur im Editor am Mac — ueber den iCloud-Abgleich liegt
+    /// es danach aber auch hier.
     ///
     /// `sammlung` behaelt dabei ihren zusaetzlichen Leseordner
     /// (`Iconordner.mitgeliefert`); den Unterschied zum Schreibtisch taste ich
@@ -149,7 +147,7 @@ struct IconauswahliOS: View {
                          nurBewegte: $nurBewegte)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.zwischenraum), count: Self.spalten),
                               spacing: 14) {
-                        // **Die Kennung, nicht die Nummer.** Beide Bestaende
+                        // Die Kennung, nicht die Nummer: Beide Bestaende
                         // zaehlen ihre Nummern getrennt; ein 8×8 und ein 16×16
                         // duerfen „82" heissen. Mit `nummer` als Kennung
                         // standen im Raster doppelte Kennungen, und SwiftUI
@@ -170,8 +168,8 @@ struct IconauswahliOS: View {
                                             RoundedRectangle(cornerRadius: 3)
                                                 .stroke(Color.accentColor, lineWidth: gewaehlt?.kennung == icon.kennung ? 2 : 0)
                                         )
-                                    // **Das Abspielzeichen neben den Namen,
-                                    // nicht ins Bild** — dieselbe Entscheidung
+                                    // Das Abspielzeichen neben den Namen,
+                                    // nicht ins Bild — dieselbe Entscheidung
                                     // wie in den Listen am Schreibtisch.
                                     // LaMetric und AWTRIX legen es
                                     // durchscheinend ueber das Vorschaubildchen
@@ -189,8 +187,8 @@ struct IconauswahliOS: View {
                                 }
                                 .contentShape(Rectangle())
                             }
-                            // **`.plain`, und daran haengt, ob ueberhaupt das
-                            // getroffene Icon aufgeht.** Eine Listenzeile ist
+                            // `.plain`, und daran haengt, ob ueberhaupt das
+                            // getroffene Icon aufgeht. Eine Listenzeile ist
                             // selbst ein Bedienelement: Knoepfe mit dem
                             // vorgegebenen Stil darin teilen sich ihre Flaeche,
                             // und ein Tipp landet beim ersten. Vierzig Kacheln
@@ -221,7 +219,7 @@ struct IconauswahliOS: View {
             .onAppear { neuLesen() }
         }
         .presentationDragIndicator(.visible)
-        // **`item:` und nicht `isPresented:`.** Ein Blatt, das ueber einen
+        // `item:` und nicht `isPresented:`: Ein Blatt, das ueber einen
         // Merker aufgeht und seinen Inhalt aus einem zweiten Zustand liest,
         // baut ihn in dem Augenblick, in dem SwiftUI den Merker sieht — und
         // das war hier einmal zu frueh: Es zeigte das zuvor angetippte Icon.
@@ -252,7 +250,7 @@ struct IconauswahliOS: View {
         bestaende.first { $0.istEigen(icon) }
     }
 
-    /// Gibt dem Icon einen neuen Namen. **Die Nummer bleibt** — sie ist der
+    /// Gibt dem Icon einen neuen Namen. Die Nummer bleibt — sie ist der
     /// Dateiname und das, worauf sich ein Kurzbefehl oder das
     /// Kommandozeilenwerkzeug beruft. Zurück kommt das umbenannte Icon, damit
     /// die Einzelansicht ihren Titel nachziehen kann.

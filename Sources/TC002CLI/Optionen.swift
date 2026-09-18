@@ -65,7 +65,7 @@ struct Optionen {
         }
     }
 
-    /// Zerlegt die Argumente **ohne** das Programm selbst (also `dropFirst`).
+    /// Zerlegt die Argumente ohne das Programm selbst (also `dropFirst`).
     static func zerlegt(_ rohe: [String]) throws -> Optionen {
         // Zuerst heraus, was Foundation fuer sich beansprucht — sonst stuende
         // `-AppleLanguages` an der Stelle des Befehlsworts, und aus

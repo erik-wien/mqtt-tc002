@@ -3,20 +3,20 @@ import XCTest
 
 /// Der Knopf „Konfigurieren" in den Einstellungen führt zur Web-Oberfläche der
 /// Uhr. Die Adresse dafür stammt aus einem Eingabefeld — auf solche Eingaben
-/// gehört kein `URL(string:)!`, und genau das hat am 14.09.2026 schon einmal
-/// die iPad-Fassung umgebracht.
+/// gehört kein `URL(string:)!`: Eine ungültige Eingabe würde die App
+/// abstürzen lassen statt eine Meldung zu ergeben.
 final class WeboberflaecheTests: XCTestCase {
     func testAusEinerAdresseWirdEineHttpAdresse() {
         XCTAssertEqual(Geraet.weboberflaeche(host: "10.0.0.1")?.absoluteString, "http://10.0.0.1")
     }
 
-    /// **Der wichtigste Fall.** `URL(string: "http://")` liefert eine gültige
+    /// Der wichtigste Fall: `URL(string: "http://")` liefert eine gültige
     /// URL — nur zeigt sie nirgendwohin. Ohne die Prüfung auf den Rechnernamen
     /// stünde neben einer Uhr ohne Adresse ein Knopf, der ins Leere führt.
     func testEinLeererHostGibtKeineAdresse() {
         XCTAssertNil(Geraet.weboberflaeche(host: ""))
         XCTAssertNil(Geraet.weboberflaeche(host: "   "))
-        // Und der Fall, den die Leerprüfung allein **nicht** fängt: ein
+        // Und der Fall, den die Leerprüfung allein nicht fängt: ein
         // Schema ohne Rechnernamen. `URL(string: "http://")` ist gültig.
         XCTAssertNil(Geraet.weboberflaeche(host: "http://"))
     }
@@ -32,7 +32,7 @@ final class WeboberflaecheTests: XCTestCase {
         XCTAssertEqual(Geraet.weboberflaeche(host: "  10.0.0.1 ")?.absoluteString, "http://10.0.0.1")
     }
 
-    /// Ein Leerzeichen **in** der Adresse ergibt keine URL — dann steht kein
+    /// Ein Leerzeichen in der Adresse ergibt keine URL — dann steht kein
     /// Knopf da, statt dass einer abstürzt.
     func testEineUnmoeglicheAdresseGibtNichts() {
         XCTAssertNil(Geraet.weboberflaeche(host: "10.0.0.1 /pfad"))

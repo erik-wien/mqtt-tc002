@@ -96,14 +96,14 @@ final class EinstellungenTests: XCTestCase {
 
     /// Warum `typ` ein `Optional` ist — nachgemessen, nicht geglaubt.
     ///
-    /// Swift setzt beim synthetisierten Decode **keine** Vorgabewerte fuer
+    /// Swift setzt beim synthetisierten Decode keine Vorgabewerte fuer
     /// fehlende Schluessel ein. Ein Pflichtfeld mit Vorgabe wirft deshalb
     /// genauso `keyNotFound` wie eines ohne. Und weil beide Leser (`gelesen`
     /// hier, `AppZustand.init` in der App) mit `try?` lesen und auf `?? []`
     /// fallen, waere die Folge keine Fehlermeldung, sondern eine leere
     /// Uhrenliste: alle eingerichteten Uhren still weg.
     func testNurEinOptionalHaeltDieAlteDateiLesbar() throws {
-        /// Dieselbe Uhr, nur mit `typ` als Pflichtfeld **samt Vorgabewert**.
+        /// Dieselbe Uhr, nur mit `typ` als Pflichtfeld samt Vorgabewert.
         struct UhrMitPflichtfeld: Codable {
             var id = UUID()
             var name: String
@@ -140,7 +140,7 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertTrue(String(decoding: mitTyp, as: UTF8.self).contains("\"typ\":\"tc002\""))
     }
 
-    /// Der Rohwert von `awtrixNG` ist ein **Dateiformat**, kein Bezeichner:
+    /// Der Rohwert von `awtrixNG` ist ein Dateiformat, kein Bezeichner:
     /// Ein spaeter umbenannter Fall macht jede Uhr, die schon so eingetragen
     /// ist, beim Lesen zum Fehler — und weil beide Leser mit `try?` lesen,
     /// waere die Uhrenliste dann leer statt fehlerhaft. Deshalb hier
@@ -156,7 +156,7 @@ final class EinstellungenTests: XCTestCase {
 
     // MARK: - Betriebsart
 
-    /// **Die Entscheidung ueber den Bestand.** Eine Datei ohne `betriebsart`
+    /// Die Entscheidung ueber den Bestand. Eine Datei ohne `betriebsart`
     /// hat eine Fassung vor dieser Aenderung geschrieben — und jede dort
     /// eingerichtete Uhr ist eine MQTT-Uhr: Sie hat ein abgefragtes Praefix,
     /// einen eingetragenen Broker, ein Kennwort im Schluesselbund, und
@@ -164,7 +164,7 @@ final class EinstellungenTests: XCTestCase {
     ///
     /// Wuerde `nil` als `.http` gelesen, verloere jede bestehende Installation
     /// beim ersten Start nach dem Update stillschweigend das Mitlesen. Die
-    /// Vorgabe HTTP gilt fuer **neue** Uhren, und die traegt
+    /// Vorgabe HTTP gilt fuer neue Uhren, und die traegt
     /// `AppZustand.uhrHinzufuegen` ausdruecklich ein.
     func testAlteUhrOhneBetriebsartBleibtBeiMqtt() throws {
         let uhren = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteZeile.utf8))
@@ -186,8 +186,8 @@ final class EinstellungenTests: XCTestCase {
     }
 
     /// Woran eine Uhr beschickbar ist, haengt an ihrer Betriebsart: Die
-    /// HTTP-Uhr wird unter ihrer **Adresse** angesprochen und braucht kein
-    /// Praefix, die MQTT-Uhr unter ihrem **Thema** und braucht eines. Der alte,
+    /// HTTP-Uhr wird unter ihrer Adresse angesprochen und braucht kein
+    /// Praefix, die MQTT-Uhr unter ihrem Thema und braucht eines. Der alte,
     /// einheitliche Praefix-Filter haette jede HTTP-Uhr stillschweigend
     /// uebersprungen.
     func testBeschickbarFragtDieBetriebsart() {
@@ -224,7 +224,7 @@ final class EinstellungenTests: XCTestCase {
     /// Die Vorgaben muessen dieselben sein wie in der App — sie legt einen
     /// unveraenderten Wert gar nicht erst ab, und dann gilt hier der Rueckfall.
     ///
-    /// Adresse und Benutzer sind **leer**, und das ist die Zusicherung: Eine
+    /// Adresse und Benutzer sind leer, und das ist die Zusicherung: Eine
     /// erfundene Vorgabe stuende auf einer frischen Installation im Feld, ohne
     /// dass jemand sie eingetragen haette — und `brokerEingerichtet` waere dort
     /// wahr, obwohl es keinen Broker gibt. Der Port ist der Gegenfall: 1883 ist
@@ -237,7 +237,7 @@ final class EinstellungenTests: XCTestCase {
                       "eine erfundene Brokeradresse taeuscht eine Einrichtung vor")
     }
 
-    /// Und was daraus folgt: Aus einem leeren Bereich kommt **kein**
+    /// Und was daraus folgt: Aus einem leeren Bereich kommt kein
     /// eingerichteter Broker. Das Werkzeug meldet dann, dass keiner eingetragen
     /// ist, statt an eine Adresse zu senden, die niemand genannt hat.
     func testFrischeInstallationHatKeinenBroker() {

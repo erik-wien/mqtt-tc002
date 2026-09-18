@@ -3,15 +3,14 @@ import Foundation
 /// Die drei Dinge, die man mit einer benannten Anzeige auf der Uhr tun kann —
 /// auf dem Kanal, den die Uhr eingestellt hat (`Uhr.wirksameBetriebsart`).
 ///
-/// **Dieselbe Nutzlast, anderer Kanal.** Der Rahmenbau (`Meldungsbau`) weiss
+/// Dieselbe Nutzlast, anderer Kanal. Der Rahmenbau (`Meldungsbau`) weiss
 /// von dieser Unterscheidung nichts und soll es nicht: Was ueber MQTT auf
 /// `<praefix>/custom/<name>` geht, geht ueber HTTP als Rumpf von
 /// `POST /api/custom?name=<name>` — Byte fuer Byte dasselbe (§3.1, §5.6).
 ///
-/// Nur das **Loeschen** faellt auseinander, und zwar gegenlaeufig: Ueber MQTT
-/// loescht die **leere** Nutzlast und `{}` richtet nichts aus, ueber HTTP
-/// loescht `{}` und ein leerer Rumpf richtet nichts aus. Beides ist gemessen;
-/// die Verwechslung hat uns drei Eintraege in der Maengelliste gekostet.
+/// Nur das Loeschen faellt auseinander, und zwar gegenlaeufig: Ueber MQTT
+/// loescht die leere Nutzlast und `{}` richtet nichts aus, ueber HTTP
+/// loescht `{}` und ein leerer Rumpf richtet nichts aus. Beides ist gemessen.
 public struct Anzeigen {
     /// Wohin die Bytes gehen. Ein Aufzaehlungstyp und nicht zwei Klassen: Die
     /// drei Taetigkeiten sind auf beiden Wegen dieselben, und jeder Aufrufer
@@ -21,7 +20,7 @@ public struct Anzeigen {
         case http(Geraet)
     }
     private let kanal: Kanal
-    /// Welche Firmware am anderen Ende steht. **Zwei Achsen, nicht eine:** Der
+    /// Welche Firmware am anderen Ende steht. Zwei Achsen, nicht eine: Der
     /// Kanal sagt, wie die Bytes hinkommen, die Gattung, welche Bytes es sind.
     /// Beide zusammen ergeben vier Faelle, und alle vier kommen vor.
     public let gattung: Geraetetyp
@@ -62,7 +61,7 @@ public struct Anzeigen {
     /// Die Werksfirmware bekommt den fertigen Rahmen. AWTRIX NG setzt den Text
     /// selbst; ihr nuetzen unsere Pixel nichts, sie braucht die Regler, aus
     /// denen sie entstanden (`Frame.herkunft`). Fehlen die — ein gemaltes Bild,
-    /// ein Bild aus der Sammlung —, **wird nichts geschickt und gesagt, warum**.
+    /// ein Bild aus der Sammlung —, wird nichts geschickt und gesagt, warum.
     /// Ein auf acht Zeilen gestauchtes 52×16-Bild waere nicht dasselbe Bild,
     /// und stillschweigend nichts zu tun ist das Gegenteil einer Loesung.
     private func nutzlast(_ frame: Frame) throws -> String {
@@ -90,7 +89,7 @@ public struct Anzeigen {
     /// ueber HTTP mit dem Rumpf `{}`. Siehe oben: Die beiden Wege meinen mit
     /// „leer" genau das Gegenteil voneinander.
     ///
-    /// **Ueber MQTT gilt das fuer beide Gattungen gleich**: genau null Bytes
+    /// Ueber MQTT gilt das fuer beide Gattungen gleich: genau null Bytes
     /// loeschen, bei der Werksfirmware wie bei NG. Nur das Thema wechselt.
     /// Ueber HTTP gehen die beiden auseinander, und zwar wieder gegenlaeufig —
     /// das erledigt `Geraet.anzeigeLoeschen`.
@@ -121,7 +120,7 @@ public struct Anzeigen {
     /// Ob dieser Kanal eine Rueckmeldung gibt — ueber HTTP heisst „kein
     /// Fehler" wirklich „angekommen", ueber MQTT nur „abgeschickt".
     ///
-    /// **Nur die Tests fragen das heute**, und sie brauchen es: `kanal` ist
+    /// Nur die Tests fragen das heute, und sie brauchen es: `kanal` ist
     /// privat, und ohne diese Naht liesse sich gar nicht nachmessen, ob
     /// `fuer(_:brokerzugang:)` den richtigen Weg gewaehlt hat. Dieselbe Sorte
     /// Zugang wie `gedaechtnis:` bei den Slots und `sitzung:` bei den
@@ -131,7 +130,7 @@ public struct Anzeigen {
         return false
     }
 
-    /// Der Kanal einer Uhr — **die eine Stelle**, an der aus einer `Uhr` ein
+    /// Der Kanal einer Uhr — die eine Stelle, an der aus einer `Uhr` ein
     /// `Anzeigen` wird. App (`AppZustand.anzeigen(fuer:)`), Werkzeug und
     /// Kurzbefehle rufen alle hierher: Ein Werkzeug, das anders sendet als die
     /// App, waere eine Falle, und drei Abschriften derselben Regel liefen
@@ -141,7 +140,7 @@ public struct Anzeigen {
     /// HTTP-Betrieb, ohne Praefix oder ohne Brokerzugang im MQTT-Betrieb.
     /// Warum — das sagt der Aufrufer, der den Fall besser kennt
     /// (`AppZustand.zugangsmeldung`).
-    /// **`brokerzugang` ist ein `@autoclosure`, und das ist kein Feinschliff.**
+    /// `brokerzugang` ist ein `@autoclosure`, und das ist kein Feinschliff.
     /// `Einstellungen.zugang(clientID:)` liest das Kennwort aus dem
     /// Schluesselbund, und das oeffnet auf dem Rechner eines Menschen einen
     /// Dialog. Eifrig ausgewertet fragte eine reine HTTP-Sendung aus dem
@@ -173,7 +172,7 @@ extension Anzeigen {
         return namenAusAppsFeld(woerterbuch["apps"])
     }
 
-    /// Das Feld `apps` — in **zwei** Schreibweisen, denn dieselbe Liste kommt
+    /// Das Feld `apps` — in zwei Schreibweisen, denn dieselbe Liste kommt
     /// ueber die beiden Wege verschieden herein (§3.5, §5.7):
     ///
     ///   - MQTT: `[{"appName":"scrolltest"}]`
@@ -191,7 +190,7 @@ extension Anzeigen {
     /// [{"name":"Time","origin":"builtin"}, {"name":"meldung1","origin":"pushed"}]
     /// ```
     ///
-    /// **Genauer als `customList` der Werksfirmware**, und deshalb ein eigener
+    /// Genauer als `customList` der Werksfirmware, und deshalb ein eigener
     /// Leser statt einer dritten Schreibweise in `namenAusAppsFeld`: Was dort
     /// eine Liste von Namen ist, ist hier eine Liste von Apps mit Herkunft, und
     /// nur `pushed` sind unsere. Die eingebauten (`Time`, `Battery`, …) und die
@@ -258,7 +257,7 @@ public struct Slotbild: Equatable, Sendable {
 /// Was die App über einen der fünf festen Plätze weiß — nicht zwei bequeme
 /// Fälle, sondern drei ehrliche (Entwurf, Abschnitt „Drei Zustände je Block“).
 ///
-/// Die Uhr verrät über `customList` nur **Namen**, nie den Inhalt. Belegt
+/// Die Uhr verrät über `customList` nur Namen, nie den Inhalt. Belegt
 /// oder frei ist damit Tatsache; was darauf steht, weiß die App nur, wenn sie
 /// die Sendung mitgelesen hat oder sich die Regler gemerkt hat:
 ///
@@ -266,7 +265,7 @@ public struct Slotbild: Equatable, Sendable {
 /// - `.bekannt(punkte)` — ein Name ist da, und die App hat ein Bild dazu.
 ///   `punkte` sind die 52×16 Pixel in derselben Form, die
 ///   `Meldungsbau.feld(...).punkteRoh` liefert — genau diese Form gibt auch
-///   das Zerlegen einer mitgelesenen Nutzlast zurück. **Woher** das Bild
+///   das Zerlegen einer mitgelesenen Nutzlast zurück. Woher das Bild
 ///   stammt, steht nicht mehr darin: mitgelesen (Tatsache) oder aus dem
 ///   Slotgedächtnis neu gerechnet (Erinnerung). Wer darauf angewiesen ist,
 ///   fragt das Gedächtnis und die Prüfsumme selbst — siehe `slotWaehlen` in

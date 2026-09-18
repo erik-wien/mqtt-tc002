@@ -1,7 +1,7 @@
 import SwiftUI
 import TC002Core
 
-/// **Die Filterleiste über einem Bestand** — Größe und Bewegung, für alle
+/// Die Filterleiste über einem Bestand — Größe und Bewegung, für alle
 /// Oberflächen und beide Bestände dieselbe.
 ///
 /// Sie steht hier und nicht dreimal in den Blättern: Was ein Filter anbietet,
@@ -9,7 +9,7 @@ import TC002Core
 /// eingebettet wird — Listenzeile am Telefon, Zeile unter dem Suchfeld am
 /// Schreibtisch —, bleibt dem Aufrufer überlassen.
 ///
-/// Über den Wert **allgemein**, weil die beiden Bestände verschieden zählen:
+/// Über den Wert allgemein, weil die beiden Bestände verschieden zählen:
 /// Das Auswahlblatt kennt Kantenlängen (8, 16), der Bestand im Editor
 /// Leinwandgrößen (8 × 8, 16 × 16, 16 × 52). `nil` heißt in beiden Fällen
 /// „alle“.
@@ -28,8 +28,8 @@ public struct Filterleiste<Wert: Hashable>: View {
         self._nurBewegte = nurBewegte
     }
 
-    /// **Nachgebend, nicht abschneidend.** Im Inspektor des Editors sind es
-    /// vier Segmente und ein Schalter auf rund 280 Punkten — am iPad, wo die
+    /// Nachgebend, nicht abschneidend: Im Inspektor des Editors sind es vier
+    /// Segmente und ein Schalter auf rund 280 Punkten — am iPad, wo die
     /// Zeilenschrift 17 statt 13 Punkte misst, wurde daraus
     /// „alle · 8… · 16… · 16…". Zwei abgeschnittene Beschriftungen, die
     /// dasselbe zeigen, sind schlimmer als eine kurze, die unterscheidet.
@@ -55,12 +55,11 @@ public struct Filterleiste<Wert: Hashable>: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .fixedSize()
-            // **Nur das Zeichen, kein Wort** — Entscheidung des Auftraggebers
-            // am 14.09.2026, nachdem „bewegte" am Mac zu „b…" und am iPad zu
-            // „beweg-te" über zwei Zeilen geworden war. Es ist dasselbe
-            // Zeichen, das in jeder Zeile der Liste die bewegten Einträge
-            // markiert; daneben steht kein zweites, mit dem es zu verwechseln
-            // wäre. Für die Sprachausgabe steht der Name weiterhin da.
+            // Nur das Zeichen, kein Wort: „bewegte" wurde am Mac zu „b…" und
+            // am iPad zu „beweg-te" über zwei Zeilen. Es ist dasselbe Zeichen,
+            // das in jeder Zeile der Liste die bewegten Einträge markiert;
+            // daneben steht kein zweites, mit dem es zu verwechseln wäre. Für
+            // die Sprachausgabe steht der Name weiterhin da.
             Toggle(isOn: $nurBewegte) {
                 Label("bewegte", systemImage: "play.fill")
                     .labelStyle(.iconOnly)

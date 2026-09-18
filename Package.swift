@@ -19,7 +19,7 @@ let package = Package(
         .target(name: "TC002Core", swiftSettings: [.swiftLanguageMode(.v5)]),
         .target(name: "TC002Modell", dependencies: ["TC002Core"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
-        // **Ohne Ressourcen.** Bis zum 14.09.2026 lag hier ein Bildkatalog mit
+        // Ohne Ressourcen. Bis zum 14.09.2026 lag hier ein Bildkatalog mit
         // einer einzigen SVG — der Geraetefront der TC002. Sie wird seit
         // `97f22ea` gezeichnet statt eingesetzt, und mit ihr ist die ganze
         // Kette gefallen: `Bilder.swift` (das Ressourcenbuendel suchen), der

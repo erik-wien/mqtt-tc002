@@ -112,12 +112,9 @@ final class BildersammlungTests: XCTestCase {
     }
 
 
-    /// **Eine `names.json` ohne Nummernfeld bleibt lesbar** — so sieht jede
-    /// Sammlung aus, die vor dem 14.09.2026 gesichert wurde. Der Name kommt
+    /// Eine `names.json` ohne Nummernfeld bleibt lesbar — so sieht eine
+    /// Sammlung aus, die vor der Werknummer gesichert wurde. Der Name kommt
     /// weiter von dort, die Nummer gibt es eben nicht.
-    ///
-    /// In diesem Projekt hat ein Formatwechsel schon einmal beinahe alle
-    /// Einstellungen unlesbar gemacht; dies ist derselbe Fall im Kleinen.
     ///
     /// Mutation: in `geladeneNamen` die Nummer verlangen
     /// (`let schluessel = e["datei"], let nummer = e["nummer"]`) — dann faellt
@@ -126,7 +123,7 @@ final class BildersammlungTests: XCTestCase {
     func testEineAlteNamensdateiOhneNummerBleibtLesbar() throws {
         let ordner = temp()
         let sammlung = Bildersammlung(ordner: ordner)
-        // Ein Name, den der Dateiname **nicht** hergibt: „/" wird zu „-".
+        // Ein Name, den der Dateiname nicht hergibt: „/" wird zu „-".
         // Nur so haengt der Name wirklich an der Namensdatei und nicht am
         // Dateinamen — sonst ginge dieser Test auch ohne sie durch.
         _ = try sammlung.sichern(name: "Mario/Luigi", feld: Pixelfeld())
@@ -141,7 +138,7 @@ final class BildersammlungTests: XCTestCase {
         XCTAssertNil(gelesen.nummer)
     }
 
-    /// Die Werknummer steht **neben** dem Namen, nicht an seiner Stelle: Die
+    /// Die Werknummer steht neben dem Namen, nicht an seiner Stelle: Die
     /// Datei heisst weiter nach dem Namen.
     ///
     /// Mutation: in `sichern` `ordner.appendingPathComponent("\(nummer).gif")`

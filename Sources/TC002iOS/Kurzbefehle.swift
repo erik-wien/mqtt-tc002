@@ -133,12 +133,11 @@ struct MeldungSendenIntent: AppIntent {
 
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])
-        // **Beide Bestaende.** Die App durchsucht seit jeher die kanonischen
-        // 8×8 *und* die eigenen 16×16 (`SendenView.sammlungen`); der Kurzbefehl
-        // sah bis heute nur den ersten und meldete „Kein Icon", obwohl es das
-        // Icon gab. Fuer `Meldungsbau.rahmen` bleibt `sammlung` die richtige:
-        // Der liest daraus nur die Daten-URI der Datei, und die haengt am Icon
-        // (`Icon.datei`, `Icon.kante`), nicht am Ordner.
+        // Beide Bestaende: Die App durchsucht die kanonischen 8×8 und die
+        // eigenen 16×16 (`SendenView.sammlungen`). Fuer `Meldungsbau.rahmen`
+        // bleibt `sammlung` die richtige: Der liest daraus nur die Daten-URI
+        // der Datei, und die haengt am Icon (`Icon.datei`, `Icon.kante`),
+        // nicht am Ordner.
         var icon: Icon?
         if let nummer = iconNummer?.trimmingCharacters(in: .whitespaces), !nummer.isEmpty {
             // Ein 16×16 hat keine LaMetric-Nummer; dort ist der Dateiname der
@@ -286,10 +285,10 @@ struct MeldungLoeschenIntent: AppIntent {
     }
 }
 
-/// **Ein fertiges Bild aus dem Bestand schicken.**
+/// Ein fertiges Bild aus dem Bestand schicken.
 ///
 /// Eigener Kurzbefehl und nicht eine Angabe an „Meldung schicken": Eine
-/// 16 × 52-Anzeige ist das **ganze** Display und ersetzt Text und Icon. Von
+/// 16 × 52-Anzeige ist das ganze Display und ersetzt Text und Icon. Von
 /// den Angaben dort gelten hier nur die, die sagen *wohin* und *wie lange* —
 /// alles Übrige formatiert Text, den es hier nicht gibt.
 ///
@@ -346,7 +345,7 @@ struct BildSendenIntent: AppIntent {
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: e.zugang(
                     clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
                 try anzeigen.zeigen(rahmen, auf: anzeigenname)
-                // **Vergessen, nicht merken**: Ein Bild hat keine Regler, die
+                // Vergessen, nicht merken: Ein Bild hat keine Regler, die
                 // sich merken liessen. Bliebe die Erinnerung an eine fruehere
                 // Textsendung liegen, zeigte der Block in der App nach dem
                 // naechsten Start ohne Broker wieder den alten Text.

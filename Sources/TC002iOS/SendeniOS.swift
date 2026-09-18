@@ -32,7 +32,7 @@ struct SendeniOS: View {
     /// Vorschau, kein Ziel, und der einzige Weg zu den Einstellungen ist hier
     /// ein Zahnrad in der oberen Leiste — keine Seitenleiste wie am Mac.
     ///
-    /// **Ein Blatt und kein Wurzelwechsel**, obwohl der Schreibtisch dort den
+    /// Ein Blatt und kein Wurzelwechsel, obwohl der Schreibtisch dort den
     /// Bereich wechselt: `VerbindungiOS` bringt „Fertig" und den Greifer mit
     /// und ist damit auf dem Telefon der eingebuergerte Weg, Fehlendes
     /// nachzutragen. Als Wurzel gaebe es hinter „Fertig" nichts, und der
@@ -101,11 +101,10 @@ struct SendeniOS: View {
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt —
     /// dieselbe Grundlage wie am Mac (`SendenView.belegtePlaetze`).
-    /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
-    /// die **angesehene** Uhr, dieselbe, aus der `slotzustand` den Inhalt
-    /// nimmt. Hier stand sie bis zum 18.09.2026 dreimal wortgleich und fragte
-    /// die Zielmenge; das ergab Bloecke, die Belegung und Inhalt aus
-    /// verschiedenen Uhren zusammensetzten.
+    /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) und fragt
+    /// die angesehene Uhr, dieselbe, aus der `slotzustand` den Inhalt nimmt:
+    /// Gegen die Zielmenge gefragt, setzte ein Block Belegung und Inhalt aus
+    /// verschiedenen Uhren zusammen.
     private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
 
     /// Je Uhr eine Datei unter Application Support. Die gehaltene Fassung,
@@ -157,7 +156,7 @@ struct SendeniOS: View {
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon?.nummer)`.
-        // Nummer **und** Kante: Das Telefon kennt nur den 8×8-Bestand. Ein am
+        // Nummer und Kante: Das Telefon kennt nur den 8×8-Bestand. Ein am
         // Mac gemerkter Stand mit einem 16×16 findet hier also nichts — und
         // genau das ist richtig. Ohne den Kantenvergleich wuerde stattdessen
         // ein 8×8-Icon derselben Nummer eingesetzt, und die Vorschau zeigte
@@ -182,7 +181,7 @@ struct SendeniOS: View {
     /// Uhr. Dieselbe Überlegung wie in `SendenView` am Schreibtisch.
     private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
 
-    /// Womit die **Vorschau** rastert: Auf einer NG-Uhr mit fester
+    /// Womit die Vorschau rastert: Auf einer NG-Uhr mit fester
     /// Näherungsschrift, weil das Gerät den Text selbst setzt. Gesendet werden
     /// unverändert `optionen`.
     private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
@@ -242,7 +241,7 @@ struct SendeniOS: View {
     private var gattung: Geraetetyp { zustand.referenzUhr?.typ ?? .tc002 }
 
     /// Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
-    /// Wechsel **sichtbar** zurueckgestellt — sonst zeigte das Menue
+    /// Wechsel sichtbar zurueckgestellt — sonst zeigte das Menue
     /// „rechtsbuendig" und die Uhr setzte linksbuendig.
     private func ausrichtungPruefen() {
         guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
@@ -261,14 +260,14 @@ struct SendeniOS: View {
         Pixelgroessen.auswahl(fuer: schrift, mit: groesse)
     }
 
-    /// **Der Rumpf ohne die Blaetter.**
+    /// Der Rumpf ohne die Blaetter.
     ///
-    /// Am 18.09.2026 gab der Uebersetzer bei `body` auf („unable to
-    /// type-check this expression in reasonable time"). Ein SwiftUI-Rumpf ist
-    /// ein einziger Ausdruck: NavigationStack, Titelmenue, Werkzeugleiste,
-    /// fuenf Blaetter und vier Beobachter waren einer zu viel. Die Teilung
-    /// laeuft entlang der Naht, die ohnehin da ist — was man sieht, und was
-    /// sich darueberlegt.
+    /// Ein SwiftUI-Rumpf ist ein einziger Ausdruck: NavigationStack,
+    /// Titelmenue, Werkzeugleiste, fuenf Blaetter und vier Beobachter
+    /// zusammen bringen den Uebersetzer bei `body` zum Aufgeben („unable to
+    /// type-check this expression in reasonable time"). Die Teilung laeuft
+    /// entlang der Naht, die ohnehin da ist — was man sieht, und was sich
+    /// darueberlegt.
     private var rumpf: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -287,16 +286,13 @@ struct SendeniOS: View {
             // funktioniert dort genauso — Dateien und Notizen machen es so.
             .navigationBarTitleDisplayMode(.inline)
             .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
-                // **Nur, was man ansieht.** Die Empfaenger stehen im
+                // Nur, was man ansieht: Die Empfaenger stehen im
                 // Antennenmenue neben dem Eingabefeld — wie am Schreibtisch,
                 // wo der Titel die angesehene Uhr traegt und ein eigener Knopf
-                // die Empfaenger.
-                //
-                // Beides hier stand bis zum 18.09.2026 nebeneinander, und iOS
-                // zeigt in diesem Menue **keine** Abschnittsueberschriften:
-                // Uebrig blieben zwei unbeschriftete Listen derselben Uhren,
-                // in umgekehrter Reihenfolge, weil das Menue nach oben
-                // aufklappt. Es sah aus wie ein Fehler und war einer.
+                // die Empfaenger. Beides in einem Menue ginge nicht: iOS zeigt
+                // hier keine Abschnittsueberschriften, uebrig blieben zwei
+                // unbeschriftete Listen derselben Uhren, in umgekehrter
+                // Reihenfolge, weil das Menue nach oben aufklappt.
                 Picker("Angesehene Uhr", selection: angesehene) {
                     ForEach(zustand.uhren) { uhr in
                         Text(uhr.name).tag(Optional(uhr.id))
@@ -362,7 +358,7 @@ struct SendeniOS: View {
         .task(id: laufschriftSchluessel) { await laufschriftRechnen() }
     }
 
-    /// Der Titel nennt die **angesehene** Uhr — dieselbe, deren Stand die
+    /// Der Titel nennt die angesehene Uhr — dieselbe, deren Stand die
     /// fuenf Bloecke und der Verlauf zeigen. Geht die Sendung darueber hinaus,
     /// sagt er zusaetzlich, an wie viele Uhren; sonst stuende hier ein einzelner
     /// Name, waehrend anderswohin gesendet wird. Bei nur einer eingerichteten
@@ -388,15 +384,13 @@ struct SendeniOS: View {
     /// Block zeigt, rechnet `AppZustand.slotzustand` fuer alle Oberflaechen
     /// gleich.
     ///
-    /// **Die Bloecke nehmen die ganze Breite.** Bis zum 14.09.2026 waren sie
-    /// auf 44×44 festgenagelt — die Zeile war damit 294 Punkte breit und
-    /// stand mit dem Dauer-Feld daneben. Ein Block zeigt aber das Display der
-    /// Uhr, und das ist 52 zu 16: In 44 Punkten Breite blieben 13 Punkte
-    /// Hoehe, auf denen nichts zu erkennen war. Seit das Dauer-Feld im
-    /// Formatblatt sitzt, hat die Zeile die Breite fuer sich; jeder Block
-    /// nimmt ein Fuenftel davon und wird dadurch um die Haelfte groesser.
-    /// Die 44 Punkte bleiben als **Mindestmass** in `Slotblock` stehen, wo
-    /// sie hingehoeren.
+    /// Die Bloecke nehmen die ganze Breite: Auf 44×44 festgenagelt waere die
+    /// Zeile nur 294 Punkte breit. Ein Block zeigt aber das Display der Uhr,
+    /// und das ist 52 zu 16 — bei 44 Punkten Breite blieben 13 Punkte Hoehe,
+    /// auf denen nichts zu erkennen ist. Mit der Zeile fuer sich allein nimmt
+    /// jeder Block ein Fuenftel der Breite und wird dadurch um die Haelfte
+    /// groesser. Die 44 Punkte bleiben als Mindestmass in `Slotblock` stehen,
+    /// wo sie hingehoeren.
     private var blockZeile: some View {
         HStack(spacing: 8) {
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
@@ -408,14 +402,14 @@ struct SendeniOS: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
-                // **Dieselbe Entscheidung wie am Schreibtisch**: Das Loeschen
+                // Dieselbe Entscheidung wie am Schreibtisch: Das Loeschen
                 // gehoert an den Block, den es betrifft, nicht als sechster
-                // Knopf daneben. Der Papierkorb bezog sich auf den gerade
-                // *gewaehlten* Platz — man musste ihn erst treffen — und nahm
-                // in einer Zeile, die auf 44 Punkte je Platz gerechnet ist,
-                // einen ganzen weiteren Platz ein.
+                // Knopf daneben. Ein Papierkorb, der sich auf den gerade
+                // gewaehlten Platz bezieht, muss erst getroffen werden und
+                // nimmt in einer Zeile, die auf 44 Punkte je Platz gerechnet
+                // ist, einen ganzen weiteren Platz ein.
                 //
-                // Das ⊗ liegt **ausserhalb** des Blockknopfes: Innen waere es
+                // Das ⊗ liegt ausserhalb des Blockknopfes: Innen waere es
                 // Teil von dessen Beschriftung und loeste beim Tippen die
                 // Platzwahl aus statt zu loeschen.
                 .overlay(alignment: .topTrailing) {
@@ -427,13 +421,13 @@ struct SendeniOS: View {
         }
     }
 
-    /// **Die Mitte der Sendeansicht als eigenes Glied.**
+    /// Die Mitte der Sendeansicht als eigenes Glied.
     ///
-    /// Nicht der Ordnung halber: Am 18.09.2026 wuchs der Rumpf ueber die
-    /// Grenze, ab der der Uebersetzer aufgibt — „unable to type-check this
-    /// expression in reasonable time". Ein SwiftUI-Rumpf ist ein einziger
-    /// Ausdruck, und dessen Pruefung waechst ueberproportional; ihn zu teilen
-    /// ist die Loesung, nicht ein Kunstgriff.
+    /// Nicht der Ordnung halber: Ein SwiftUI-Rumpf ist ein einziger Ausdruck,
+    /// und dessen Pruefung waechst ueberproportional — ueber eine gewisse
+    /// Groesse gibt der Uebersetzer bei `body` auf („unable to type-check
+    /// this expression in reasonable time"). Ihn zu teilen ist die Loesung,
+    /// nicht ein Kunstgriff.
     @ViewBuilder
     private var mitte: some View {
         ScrollView {
@@ -454,10 +448,10 @@ struct SendeniOS: View {
                 }
                 blockZeile
                     .padding(.horizontal)
-                // **Hier stand die leere Flaeche.** Der Verlauf fuellt
-                // sie mit dem, was man am haeufigsten will: dasselbe
-                // noch einmal. Feste Hoehe, weil eine Liste in einem
-                // Scrollbereich sonst keine eigene bekommt.
+                // Der Verlauf fuellt die Flaeche unter den Bloecken mit dem,
+                // was man am haeufigsten will: dasselbe noch einmal. Feste
+                // Hoehe, weil eine Liste in einem Scrollbereich sonst keine
+                // eigene bekommt.
                 Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
                     .frame(height: 260)
             }
@@ -564,11 +558,10 @@ struct SendeniOS: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
-                    // **Gesperrt, wenn der Text ohnehin laeuft** — dieselbe
+                    // Gesperrt, wenn der Text ohnehin laeuft — dieselbe
                     // Rechnung wie am Schreibtisch (`waagrechtWirktNicht`):
                     // Die Laufschrift schiebt ihn von ganz aussen durchs
-                    // Fenster und fragt die Ausrichtung gar nicht ab. Am Mac
-                    // stand das seit dem 15.09.2026, hier fehlte es.
+                    // Fenster und fragt die Ausrichtung gar nicht ab.
                     .disabled(waagrechtWirktNicht)
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
                     .accessibilityHint(Text(waagrechtWirktNicht
@@ -606,7 +599,7 @@ struct SendeniOS: View {
                     }
                     .buttonStyle(.automatic)
                     .accessibilityLabel("Format")
-                    // **Hier und nicht am Ende der Pille.** Die fuenf davor
+                    // Hier und nicht am Ende der Pille: Die fuenf davor
                     // (Icon, waagrecht, senkrecht, Farbe, Pinsel) muessen
                     // ohne Schieben sichtbar bleiben; ein sechstes Zeichen
                     // von 44 Punkten passt daneben noch in die Breite —
@@ -749,27 +742,25 @@ struct SendeniOS: View {
         .padding(.vertical, 8)
     }
 
-    /// **Kein Sendeknopf — wie in Nachrichten.** Die Eingabetaste schickt.
+    /// Kein Sendeknopf — wie in Nachrichten. Die Eingabetaste schickt.
     /// `axis: .vertical` fuegt bei Return sonst einen Zeilenumbruch ein, statt
     /// abzuschicken; das `.onChange` unten faengt genau dieses eine Zeichen ab,
     /// bevor es im Feld erscheint, und sendet an seiner Stelle. Ein echter
     /// Zeilenumbruch laesst sich damit nicht mehr eintippen — gewollt, die Uhr
     /// zeigt ohnehin nur eine Zeile.
     ///
-    /// **An seiner Stelle steht jetzt die Zielwahl**, wo vorher der Pfeil war
-    /// — dasselbe Ziel wie im Titelmenü (`angesehene`, `zustand.anMehrereUhren`),
-    /// nur an einer Stelle, die man nicht erst am Titel suchen muss. Bei nur
-    /// einer eingerichteten Uhr gibt es nichts zu wählen, wie beim Titelmenü,
-    /// und dort steht dann nichts.
+    /// Daneben steht die Zielwahl — dasselbe Ziel wie im Titelmenü
+    /// (`angesehene`, `zustand.anMehrereUhren`), nur an einer Stelle, die man
+    /// nicht erst am Titel suchen muss. Bei nur einer eingerichteten Uhr gibt
+    /// es nichts zu wählen, wie beim Titelmenü, und dort steht dann nichts.
     private var eingabe: some View {
         HStack(spacing: 8) {
             TextField("Text", text: $text, axis: .vertical)
                 .lineLimit(1...3)
-                // **Dieselbe Fassung wie am Schreibtisch, samt (x).** Bis zum
-                // 18.09.2026 stand hier `.textFieldStyle(.roundedBorder)` und
-                // kein Loeschzeichen, mit der Ueberlegung, dieses Feld sei
-                // Nachrichten nachgebaut und Nachrichten habe keines. Was die
-                // eine Oberflaeche kann, soll die andere aber auch koennen.
+                // Dieselbe Fassung wie am Schreibtisch, samt (x): Was die
+                // eine Oberflaeche kann, soll die andere auch koennen — ein
+                // Feld ohne Loeschzeichen, weil es Nachrichten nachgebaut
+                // ist, waere kein Grund, es hier vorzuenthalten.
                 .eingabefeld(loeschbar: $text)
                 .submitLabel(.send)
                 .disabled(laeuft)
@@ -846,8 +837,8 @@ struct SendeniOS: View {
         laeuft = true
         defer { laeuft = false }
         do {
-            // **Das vorberechnete GIF nur, wenn es die Größe hat, in der
-            // gesendet wird.** Die Vorschau rastert auf dem Maß der angesehenen
+            // Das vorberechnete GIF nur, wenn es die Größe hat, in der
+            // gesendet wird: Die Vorschau rastert auf dem Maß der angesehenen
             // Uhr; „An alle Uhren senden" schickt aber an jede eingerichtete,
             // und eine TC002 bekäme das 32×8-GIF einer NG als Nutzlast.
             // `Meldungsbau.rahmen` rastert dann eben selbst.
@@ -884,7 +875,7 @@ private struct MeldungLoeschenKnopf: View {
     private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
 
     var body: some View {
-        // **Nur an belegten Plaetzen.** Ein leerer Platz hat nichts zu
+        // Nur an belegten Plaetzen: Ein leerer Platz hat nichts zu
         // loeschen; ein abgeblendetes ⊗ an vier von fuenf Bloecken waere
         // Unruhe ohne Aussage.
         if belegt {

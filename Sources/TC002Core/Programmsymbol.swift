@@ -1,9 +1,9 @@
 import Foundation
 
-/// **Das App-Symbol als SVG, zusammengesetzt aus seinen vier Ebenen.**
+/// Das App-Symbol als SVG, zusammengesetzt aus seinen vier Ebenen.
 ///
 /// Es liegt hier als Zeichenkette und nicht als Datei im Buendel, weil es der
-/// **Server** ausliefert, nicht die Oberflaeche: `Virtuelleuhr` beantwortet
+/// Server ausliefert, nicht die Oberflaeche: `Virtuelleuhr` beantwortet
 /// Anfragen im Kern, und der Kern hat keine Ressourcen — eine Datei
 /// nachzuschlagen hiesse, ihm welche zu geben und sie in zwei Buendel (Mac und
 /// iOS) einzupflegen, fuer ein Bild auf einer Seite, die einmal im Leben

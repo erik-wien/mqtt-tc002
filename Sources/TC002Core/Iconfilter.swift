@@ -1,10 +1,10 @@
 import Foundation
 
-/// **Was von einem Icon-Bestand zu sehen ist.** Suche, Größe, Bewegung — drei
+/// Was von einem Icon-Bestand zu sehen ist. Suche, Größe, Bewegung — drei
 /// Fragen an dieselbe Liste, an einer Stelle beantwortet statt in jeder
 /// Oberfläche neu.
 ///
-/// Die Bewegung steht **nicht** im `Icon`: Ob eine Datei mehr als ein
+/// Die Bewegung steht nicht im `Icon`: Ob eine Datei mehr als ein
 /// Einzelbild hat, steht in der Datei, nicht in der Einrichtung, und ein
 /// Bestand von sechzig Icons bei jedem Tastendruck neu zu befragen wäre
 /// Verschwendung. Der Filter bekommt sie deshalb als Funktion gereicht; die
@@ -42,7 +42,7 @@ public extension Array where Element == Icon {
 }
 
 public extension Array where Element == Icon {
-    /// Die Kennungen der **bewegten** Icons, einmal gelesen.
+    /// Die Kennungen der bewegten Icons, einmal gelesen.
     ///
     /// Dafür wird jede Datei angefasst — `Bildraster.bewegt` liest zwar nur
     /// den Kopf und keine Pixel, aber eben doch die Datei. Einmal beim Laden

@@ -10,7 +10,7 @@ public enum Schriftwahl: Hashable {
     case alle
     case nur(String)
 
-    /// Was zu zeigen ist. **Gefiltert wird nur**: Die Messung liegt fertig vor,
+    /// Was zu zeigen ist. Gefiltert wird nur: Die Messung liegt fertig vor,
     /// die Wahl sucht daraus aus und rechnet nichts nach. Eine Schrift, die es
     /// im Vorrat nicht gibt, ergibt nichts — und nicht sich selbst.
     public func schriften(aus vorrat: [String]) -> [String] {
@@ -24,7 +24,7 @@ public enum Schriftwahl: Hashable {
 /// Die Schriftprobe: warum das Größenmenü diese Größen anbietet und jene nicht.
 ///
 /// Ein Nachschlagewerk, keine Bedienoberfläche — deshalb steht hier Erklärung.
-/// Sie **entscheidet nichts**: Gezeigt wird die Messung, und was daraus folgt,
+/// Sie entscheidet nichts: Gezeigt wird die Messung, und was daraus folgt,
 /// sieht man mit eigenen Augen. „Nichts fällt zusammen“ heißt nicht „gut“.
 ///
 /// Plattformfrei wie alles in diesem Ziel: Die Pixel zeichnet `Canvas`, nicht
@@ -33,7 +33,7 @@ public enum Schriftwahl: Hashable {
 public struct SchriftprobeView: View {
     /// Welche Größen das Größenmenü je Schrift anbietet — dieselbe Form wie
     /// `Pixelgroessen.abgesegnet`: Eine Schrift, die nicht darin steht, ist in
-    /// jeder Größe zu haben. Die Ansicht **kennt die Regel nicht**, sie bekommt
+    /// jeder Größe zu haben. Die Ansicht kennt die Regel nicht, sie bekommt
     /// sie gereicht; entschieden hat darüber ein Augenpaar beim Durchsehen
     /// dieser Seite, nicht die Messung darunter.
     private let angeboteneGroessen: [String: [Double]]

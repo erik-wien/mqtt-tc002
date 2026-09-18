@@ -65,6 +65,25 @@ public struct HilfeabschnittView: View {
         }
     }
 
+    /// Der uebersetzte Text mit ausgewerteter Markdown-Auszeichnung: `fett`
+    /// und `` `Bezeichner` `` kommen in den Hilfetexten vor.
+    ///
+    /// `Text(String)` wertet sie nicht aus — Markdown liest SwiftUI nur aus
+    /// einem `LocalizedStringKey`-Literal oder einem `AttributedString`, und ein
+    /// zur Laufzeit uebersetzter Text ist beides nicht. Ohne diesen Umweg stehen
+    /// die Sternchen und Akzente woertlich in der Hilfe.
+    ///
+    /// `inlineOnlyPreservingWhitespace`, weil jeder Baustein fuer sich ein
+    /// Absatz ist: Die Blockebene von Markdown (Listen, Ueberschriften)
+    /// besorgt `Hilfebaustein`, nicht der Text darin.
+    static func ausgezeichnet(_ text: String) -> AttributedString {
+        let uebersetzt = lok(text)
+        return (try? AttributedString(
+            markdown: uebersetzt,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(uebersetzt)
+    }
+
     /// Baut einen einzelnen Hilfebaustein. Zwischenüberschriften bekommen
     /// zusätzliche Luft davor, Aufzählungen und Tabellen einen Einzug.
     @ViewBuilder
@@ -75,13 +94,13 @@ public struct HilfeabschnittView: View {
                 .font(.headline)
                 .padding(.top, 10)
         case .absatz(let text):
-            Text(lok(text)).lineSpacing(zeilenabstand)
+            Text(Self.ausgezeichnet(text)).lineSpacing(zeilenabstand)
         case .punkte(let eintraege):
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(eintraege.enumerated()), id: \.offset) { _, eintrag in
                     HStack(alignment: .top, spacing: 8) {
                         Text(verbatim: "•")
-                        Text(lok(eintrag)).lineSpacing(zeilenabstand)
+                        Text(Self.ausgezeichnet(eintrag)).lineSpacing(zeilenabstand)
                     }
                 }
             }
@@ -92,8 +111,8 @@ public struct HilfeabschnittView: View {
             Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 6) {
                 ForEach(Array(zeilen.enumerated()), id: \.offset) { _, zeile in
                     GridRow {
-                        Text(lok(zeile.0)).fontWeight(.semibold)
-                        Text(lok(zeile.1)).lineSpacing(zeilenabstand)
+                        Text(Self.ausgezeichnet(zeile.0)).fontWeight(.semibold)
+                        Text(Self.ausgezeichnet(zeile.1)).lineSpacing(zeilenabstand)
                     }
                 }
             }

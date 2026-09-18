@@ -1,7 +1,7 @@
 import XCTest
 @testable import TC002Core
 
-/// **Die eine Stelle, die den echten Schlüsselbund befragen muss.**
+/// Die eine Stelle, die den echten Schlüsselbund befragen muss.
 ///
 /// Überall sonst tritt `Schluesselbundzugriff` als Doppelgänger an, aus dem
 /// Grund, der dort steht. Hier geht das nicht: Geprüft wird gerade, ob unsere
@@ -10,11 +10,11 @@ import XCTest
 /// klassische Test, der grün bleibt, während die Sache kaputt ist.
 ///
 /// Eingegrenzt wird das deshalb nicht durch Vermeiden, sondern durch einen
-/// **eigenen Dienst**: `dienst` weicht hier von `Einstellungen.kennung` ab, und
-/// damit liegt kein Testeintrag je im Namensraum der App. Vorher trugen diese
-/// Tests ein Wegwerfkonto, aber den echten Dienst der App — im Schlüsselbund
-/// des Menschen, der sie laufen lässt. `testDerDienstDerAppBleibtUnberuehrt`
-/// hält das fest, damit ein weggelassenes `dienst:` auffällt und nicht still
+/// eigenen Dienst: `dienst` weicht hier von `Einstellungen.kennung` ab, und
+/// damit liegt kein Testeintrag je im Namensraum der App — sonst schriebe ein
+/// Testlauf in den echten Schlüsselbund-Eintrag der App, im Schlüsselbund des
+/// Menschen, der sie laufen lässt. `testDerDienstDerAppBleibtUnberuehrt` hält
+/// das fest, damit ein weggelassenes `dienst:` auffällt und nicht still
 /// wieder in die App hineinschreibt.
 final class SchluesselbundTests: XCTestCase {
     private let konto = "test-\(UUID().uuidString)"

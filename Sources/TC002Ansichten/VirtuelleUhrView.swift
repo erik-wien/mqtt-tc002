@@ -2,14 +2,14 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Was auf der virtuellen Uhr steht** — der Geräterahmen, das zuletzt
+/// Was auf der virtuellen Uhr steht — der Geräterahmen, das zuletzt
 /// Angekommene, und das Blättern durch die belegten Plätze.
 ///
 /// Gezeigt wird, was wirklich über den Draht kam: Die Nutzlast wird zurück in
 /// Pixel zerlegt (`Anzeigen.pixelAusCustomNutzlast`), auf demselben Weg, den
 /// die App beim Mitlesen über MQTT geht. Das ist der Unterschied zur Vorschau
-/// im Sendebildschirm — die zeigt, was die App **schicken will**, diese
-/// Ansicht, was **angekommen ist**.
+/// im Sendebildschirm — die zeigt, was die App schicken will, diese
+/// Ansicht, was angekommen ist.
 public struct VirtuelleUhrView: View {
     private let betrieb: Virtuelleuhrbetrieb
     /// Welcher Platz gerade dran ist. Eine neue Anzeige holt sich die Ansicht
@@ -94,7 +94,7 @@ public struct VirtuelleUhrView: View {
         .multilineTextAlignment(.center)
     }
 
-    /// Blättert im Takt weiter — **in der Reihenfolge des Eintreffens**, die
+    /// Blättert im Takt weiter — in der Reihenfolge des Eintreffens, die
     /// der Zustand führt. Ohne Takt (`kein Wechsel`) läuft nichts.
     private func blaettern() async {
         guard let takt else { return }

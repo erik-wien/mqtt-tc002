@@ -2,7 +2,7 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// **Der Abschnitt „Virtuelle Uhr" in den Einstellungen** — für alle drei
+/// Der Abschnitt „Virtuelle Uhr" in den Einstellungen — für alle drei
 /// Oberflächen derselbe. Wo die Anzeige aufgeht, entscheidet die jeweilige
 /// Oberfläche: am Mac ein eigenes Fenster, am iPad eine Einblendung, am
 /// Telefon ein Blatt. Deshalb kommt das Aufmachen als Handlung herein.
@@ -40,7 +40,7 @@ public struct VirtuelleUhrAbschnitt: View {
                         .foregroundStyle(.secondary)
                 }
                 if !eingetragen {
-                    // Der Knopf legt die Uhr an **und** fragt sie ab: Ohne
+                    // Der Knopf legt die Uhr an und fragt sie ab: Ohne
                     // Abfrage fehlte ihr das Praefix, und sie waere eine Uhr,
                     // die beim Senden stillschweigend uebersprungen wird.
                     Button("Als Uhr eintragen") {

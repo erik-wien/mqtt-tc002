@@ -8,15 +8,15 @@ private final class NGMitschreiber: NachrichtSendend {
     }
 }
 
-/// **Zwei Achsen, vier Faelle.** Der Kanal (HTTP oder MQTT) sagt, wie die Bytes
-/// hinkommen; die Gattung, welche Bytes es sind. Diese Datei prueft, dass beide
-/// unabhaengig voneinander wirken — und dass eine Sendung, die auf einer AWTRIX
-/// nichts ergeben kann, gar nicht erst abgeschickt wird.
+/// Zwei Achsen, vier Faelle. Der Kanal (HTTP oder MQTT) sagt, wie die Bytes
+/// hinkommen; die Gattung, welche Bytes es sind. Diese Datei prueft, dass
+/// beide unabhaengig voneinander wirken — und dass eine Sendung, die auf
+/// einer AWTRIX nichts ergeben kann, gar nicht erst abgeschickt wird.
 final class AnzeigenNGTests: XCTestCase {
     private let zugang = MQTTZugang(host: "127.0.0.1", benutzer: "u", kennwort: "p")
 
     /// Ein Rahmen, wie ihn `Meldungsbau.rahmen` baut: Pixel fuer die
-    /// Werksfirmware **und** die Regler, aus denen sie entstanden.
+    /// Werksfirmware und die Regler, aus denen sie entstanden.
     private func rahmenMitHerkunft(_ text: String = "hallo") -> Frame {
         Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 2, hoehe: 1, farbe: "#00FF66")],
               herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: text)))
@@ -56,7 +56,7 @@ final class AnzeigenNGTests: XCTestCase {
         XCTAssertTrue(neu.gesendet.first?.nutzlast.contains(#""text":"Grüße""#) == true)
     }
 
-    /// **Ueber MQTT loeschen beide Gattungen gleich** — genau null Bytes. Nur
+    /// Ueber MQTT loeschen beide Gattungen gleich — genau null Bytes. Nur
     /// das Thema wechselt.
     func testLoeschenIstAufBeidenGattungenDieLeereNutzlast() throws {
         let sender = NGMitschreiber()
@@ -76,8 +76,8 @@ final class AnzeigenNGTests: XCTestCase {
 
     // MARK: - Was auf einer AWTRIX nicht geht
 
-    /// **Der Kern der Regel „die Oberflaeche sagt es, statt still zu
-    /// scheitern".** Ein gemaltes Bild bringt keine Regler mit; auf 32×8
+    /// Der Kern der Regel „die Oberflaeche sagt es, statt still zu
+    /// scheitern". Ein gemaltes Bild bringt keine Regler mit; auf 32×8
     /// gestaucht waere es nicht dasselbe Bild. Also wird nichts geschickt und
     /// gesagt, warum.
     func testEinGemaltesBildGehtNichtAnEineAwtrixUndSagtDas() {

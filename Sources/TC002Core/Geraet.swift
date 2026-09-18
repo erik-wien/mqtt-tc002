@@ -48,7 +48,7 @@ public enum GeraetFehler: Error, LocalizedError {
 
 /// Die HTTP-Schnittstelle der Uhr.
 ///
-/// **Zwei Firmwares, eine Schnittstelle nach aussen.** Die der Werksfirmware
+/// Zwei Firmwares, eine Schnittstelle nach aussen. Die der Werksfirmware
 /// ist nirgends dokumentiert; ihre Endpunkte stammen aus deren eigener
 /// Weboberflaeche (`docs/tc002-protokoll.md` §5). Die der AWTRIX NG ist
 /// dokumentiert und voellig anders geschnitten — andere Pfade, andere
@@ -72,35 +72,19 @@ public struct Geraet {
 
     /// Was fuer ein Geraet unter dieser Adresse antwortet.
     ///
-    /// **Eine Frage, eine Antwort:** `GET /api/v1/device` gibt es nur bei
-    /// AWTRIX NG, und nur dort steht `boardType` darin. Alles andere — ein
-    /// 404, die Weboberflaeche, irgendein JSON ohne dieses Feld — ist keine
-    /// NG-Antwort und damit die Werksfirmware.
+    /// `GET /api/v1/device` gibt es nur bei AWTRIX NG, und nur dort steht
+    /// `boardType` darin. Alles andere — ein 404, die Weboberflaeche,
+    /// irgendein JSON ohne dieses Feld — ist keine NG-Antwort und damit die
+    /// Werksfirmware: Jede Antwort ist eine Feststellung, jedes Ausbleiben
+    /// ein Fehler.
     ///
-    /// Zwei Faelle werden ausdruecklich **nicht** geraten, sondern gemeldet:
+    /// Drei Ausnahmen werfen, statt zu raten:
     ///
-    /// - Es antwortet gar nichts. Daraus „TC002" zu machen hiesse, eine
-    ///   ausgeschaltete AWTRIX beim naechsten Abfragen zur Ulanzi zu erklaeren.
-    /// - Es antwortet `401`. NG kann seine ganze Schnittstelle hinter eine
-    ///   Anmeldung stellen (§4.1); dann ist der Typ nicht festzustellen, und
-    ///   der Ausweg ist die Wahl von Hand.
-    /// **Jede Antwort ist eine Feststellung, jedes Ausbleiben ein Fehler.**
-    ///
-    /// NG kennt `/api/v1/device` und legt dort `boardType` hinein. Alles
-    /// andere — ein `404`, eine Weboberflaeche in HTML, ein JSON ohne das Feld
-    /// — beantwortet die Frage ebenso: Das Geraet antwortet, und es ist keine
-    /// NG. Am 14.09.2026 habe ich daraus kurzzeitig ein `Optional` gemacht,
-    /// um „nicht feststellbar" auszudruecken; `testEineAntwortOhneBoardTypeIst
-    /// DieWerksfirmware` hat gezeigt, dass es diesen Fall kaum gibt und die
-    /// Unterscheidung nur Entschlusskraft kostet.
-    ///
-    /// Drei Ausnahmen, und die werfen:
-    ///
-    /// - **nicht erreichbar** — gar keine Antwort, also kein Befund;
-    /// - **401** — NG kann die ganze Schnittstelle hinter eine Anmeldung
-    ///   stellen; „also eine TC002" waere die falsche Antwort auf eine Frage,
-    ///   die nicht beantwortet wurde;
-    /// - **ungueltige Adresse** — daran ist nichts festzustellen, und sie
+    /// - nicht erreichbar — gar keine Antwort, also kein Befund;
+    /// - 401 — NG kann die ganze Schnittstelle hinter eine Anmeldung
+    ///   stellen (§4.1); „also eine TC002" waere die falsche Antwort auf eine
+    ///   Frage, die nicht beantwortet wurde;
+    /// - ungueltige Adresse — daran ist nichts festzustellen, und sie
     ///   stillschweigend zur Werksfirmware zu erklaeren verdeckte den
     ///   eigentlichen Fehler.
     public func erkannteArt() throws -> Geraetetyp {
@@ -142,8 +126,8 @@ public struct Geraet {
 
     /// Praefix und Basisdaten in einem Zug. Getrennt geholt wuerde `/getBase`
     /// zweimal abgefragt — einmal fuer das Praefix, einmal fuer die MAC.
-    /// `breite` ist die Anzeigenbreite in Pixeln und **nur bei AWTRIX NG eine
-    /// Frage** — die Werksfirmware ist fest 52×16. Sie faellt hier mit an, weil
+    /// `breite` ist die Anzeigenbreite in Pixeln und nur bei AWTRIX NG eine
+    /// Frage — die Werksfirmware ist fest 52×16. Sie faellt hier mit an, weil
     /// sie in derselben Antwort steht: getrennt geholt waere `/api/v1/system`
     /// ein zweites Mal abgefragt, genau der Fehler, den dieser Aufruf fuer
     /// `/getBase` vermeidet.
@@ -157,14 +141,14 @@ public struct Geraet {
         return (eingestellt + "_" + String(b.mac.suffix(4)), b, nil)
     }
 
-    /// Dasselbe fuer AWTRIX NG — und **hier wird nichts angehaengt**.
+    /// Dasselbe fuer AWTRIX NG — und hier wird nichts angehaengt.
     ///
     /// Das ist der gefaehrlichste Unterschied der beiden Firmwares. Die
     /// Werksfirmware haengt `_` und die letzten vier Stellen der MAC an ihr
     /// eingestelltes Praefix; NG nimmt `mqttPrefix` genau so, wie es dasteht
     /// (`docs/awtrix-ng-protokoll.md` §2). Liefe die Formel der Werksfirmware
     /// auch hier, schriebe die App auf ein Thema, das kein Geraet abonniert —
-    /// und NG antwortet auf ein Thema ohne Route **gar nicht**: kein Fehler,
+    /// und NG antwortet auf ein Thema ohne Route gar nicht: kein Fehler,
     /// keine Bestaetigung, ein gruener Bau und eine dunkle Uhr.
     ///
     /// Ist `mqttPrefix` leer, tritt die uid an seine Stelle — die zwoelfstellige
@@ -193,7 +177,7 @@ public struct Geraet {
 
     /// Wie breit die Anzeige dieser AWTRIX ist: `panelWidth × panels`.
     ///
-    /// **Geholt und nicht angenommen.** Die Hoehe ist fest 8, die Breite muss
+    /// Geholt und nicht angenommen. Die Hoehe ist fest 8, die Breite muss
     /// zwischen 32 und 128 liegen (§1) — eine 64er oder 128er Kette ist
     /// vorgesehen, und eine App, die 32 einprogrammiert, zeigte dort das
     /// falsche Bild. Was ausserhalb des Bereichs steht, gilt als nicht
@@ -208,13 +192,11 @@ public struct Geraet {
 
     public func verbunden() throws -> Bool { try brokerstand().steht }
 
-    /// Ob die Uhr am Broker haengt — **und warum nicht**.
+    /// Ob die Uhr am Broker haengt — und warum nicht.
     ///
-    /// Der Grund ist die eigentliche Auskunft. Am 14.09.2026 stand in den
-    /// Einstellungen ein Warndreieck an einer AWTRIX, und was fehlte, war
-    /// nicht das Zeichen, sondern der Satz dahinter: Das Geraet meldete
-    /// `badCredentials` — neun Versuche, keine Verbindung. Das stand in der
-    /// Antwort und wurde weggeworfen.
+    /// Der Grund ist die eigentliche Auskunft: Ein Warndreieck allein sagt
+    /// nichts ueber die Ursache, etwa `badCredentials` nach mehreren
+    /// Verbindungsversuchen.
     ///
     /// Die Werksfirmware nennt keinen Grund (`/getMqttStatus` hat nur
     /// `connected`); dort bleibt er `nil`.
@@ -241,11 +223,11 @@ public struct Geraet {
     /// Welche benannten Anzeigen gerade auf der Uhr stehen (§5.7):
     /// `{"apps":["meldung2","meldung5","meldung3"],"count":3}`.
     ///
-    /// Der Pfad ist `/api/customList`, **nicht** `/customList` — letzterer
+    /// Der Pfad ist `/api/customList`, nicht `/customList` — letzterer
     /// liefert nichts, und das hat uns lange wie ein Mangel der Firmware
     /// ausgesehen.
     ///
-    /// Es sind **nur Namen**. Was auf einem Platz steht, verraet die Uhr auch
+    /// Es sind nur Namen. Was auf einem Platz steht, verraet die Uhr auch
     /// hierueber nicht; belegt oder frei ist damit Tatsache, der Inhalt bleibt
     /// geraten.
     public func anzeigennamen() throws -> [String] {
@@ -257,7 +239,7 @@ public struct Geraet {
         return namen
     }
 
-    /// Dasselbe fuer AWTRIX NG — und **genauer als bei der Werksfirmware**.
+    /// Dasselbe fuer AWTRIX NG — und genauer als bei der Werksfirmware.
     ///
     /// `GET /api/v1/apps` nennt das ganze Inventar, je App mit `origin`
     /// (`builtin`, `pushed`, `script`, `module`). Auf `pushed` gefiltert sind
@@ -287,13 +269,12 @@ public struct Geraet {
         try _ = anAnzeige("/api/custom", name: name, koerper: Data(json.utf8))
     }
 
-    /// Entfernt eine benannte Anzeige — **mit dem Rumpf `{}`**, nicht mit einem
+    /// Entfernt eine benannte Anzeige — mit dem Rumpf `{}`, nicht mit einem
     /// leeren (§5.6). Ueber MQTT ist es genau umgekehrt: Dort loescht die
-    /// **leere** Nutzlast, und `{}` richtet nichts aus. Diese Verwechslung
-    /// stand bis zum 13.09.2026 als Firmwaremangel in unserer eigenen Liste.
+    /// leere Nutzlast, und `{}` richtet nichts aus.
     public func anzeigeLoeschen(name: String) throws {
         guard typ == .tc002 else {
-            // Bei NG ist es **wieder umgekehrt**: `{}` auf `PUT` loescht dort
+            // Bei NG ist es wieder umgekehrt: `{}` auf `PUT` loescht dort
             // gerade nicht, sondern antwortet `422` und verweist auf diese
             // Route hier. Ueber MQTT loescht bei NG dagegen genau das, was auch
             // bei der Werksfirmware loescht — die leere Nutzlast.
@@ -326,20 +307,17 @@ public struct Geraet {
     /// Der gemeinsame Rumpf der drei: POST auf einen `/api`-Pfad mit dem
     /// Anzeigenamen in der Abfrage.
     ///
-    /// **Zwei Fehlerquellen, nicht eine.** Der HTTP-Status faengt `fuehreAus`
+    /// Zwei Fehlerquellen, nicht eine. Der HTTP-Status faengt `fuehreAus`
     /// ab; die Uhr meldet aber auch im Rumpf einen eigenen `code` — die
     /// gemessene 404 fuer einen unbekannten Namen steht genau dort (§5.8).
     /// Wer nur auf den Status sieht, haelt eine Ablehnung fuer einen Erfolg.
     @discardableResult
     private func anAnzeige(_ pfad: String, name: String, koerper: Data?) throws -> [String: Any] {
-        // **Ueber `url(_:)`, nicht ueber `teile.host`.** Wer die Adresse in
+        // Ueber `url(_:)`, nicht ueber `teile.host`. Wer die Adresse in
         // `URLComponents.host` legt, verliert jede mit Portangabe: `host`
         // haelt genau einen Rechnernamen, ein Doppelpunkt darin ergibt keine
-        // URL, und der Aufruf endete in `unerwarteteAntwort` — als haette die
+        // URL, und der Aufruf endet in `unerwarteteAntwort` — als haette die
         // Uhr Unsinn geantwortet, obwohl nie eine Anfrage hinausging.
-        // Aufgefallen am 14.09.2026 an der virtuellen Uhr
-        // (`127.0.0.1:8752`); eine eingetippte Adresse mit Port traf es
-        // genauso, an genau diesem einen Pfad.
         guard var teile = URLComponents(url: try url(pfad), resolvingAgainstBaseURL: false) else {
             throw GeraetFehler.ungueltigeAdresse(host)
         }
@@ -380,7 +358,7 @@ public struct Geraet {
 
     /// Eine Anfrage an die Schnittstelle von AWTRIX NG.
     ///
-    /// **Andere Methoden und eine andere Fehlerform.** Wo die Werksfirmware
+    /// Andere Methoden und eine andere Fehlerform. Wo die Werksfirmware
     /// alles mit `POST` erledigt und ihre Ablehnung im Rumpf einer `200`
     /// versteckt, benutzt NG `PUT` und `DELETE` und antwortet mit einem echten
     /// Status und einem einheitlichen Rumpf
@@ -388,7 +366,7 @@ public struct Geraet {
     /// `code` — `message` ist englische Prosa fuer Menschen.
     ///
     /// `Content-Type: application/json` ist bei `PUT` Pflicht: Ohne ihn wird
-    /// die Anfrage abgewiesen, **bevor** der Rumpf ueberhaupt gelesen wird.
+    /// die Anfrage abgewiesen, bevor der Rumpf ueberhaupt gelesen wird.
     private func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws {
         var anfrage = URLRequest(url: try url(pfad))
         anfrage.httpMethod = methode
@@ -406,12 +384,12 @@ public struct Geraet {
                                         feld: (feld?.isEmpty ?? true) ? nil : feld)
     }
 
-    /// **Taugt diese Adresse überhaupt für eine Anfrage?** — dieselbe Prüfung,
+    /// Taugt diese Adresse überhaupt für eine Anfrage? — dieselbe Prüfung,
     /// die `url(_:)` zur Sendezeit macht, nur früher.
     ///
     /// Die Oberfläche kann damit beim Eintragen sagen, dass etwas nicht
     /// stimmt, statt es beim Senden als Fenster vorzuwerfen. Ein leerer Host
-    /// ist dabei der Fall, den `URL(string:)` **nicht** fängt:
+    /// ist dabei der Fall, den `URL(string:)` nicht fängt:
     /// `http:///getBase` ist eine gültige URL, die nirgendwohin zeigt.
     public static func adresseTaugt(_ host: String) -> Bool {
         guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
@@ -419,7 +397,7 @@ public struct Geraet {
         return !(url.host ?? "").isEmpty
     }
 
-    /// **Die Web-Oberfläche dieser Uhr** — für den Knopf „Konfigurieren" in
+    /// Die Web-Oberfläche dieser Uhr — für den Knopf „Konfigurieren" in
     /// den Einstellungen. Beide Firmwares bringen eine mit, und alles, was
     /// diese App nicht einstellt (WLAN, Helligkeit, die eingebauten Anzeigen,
     /// bei NG der Broker samt Präfix), wird dort eingestellt.
@@ -441,14 +419,12 @@ public struct Geraet {
         return url
     }
 
-    /// **Die einzige Stelle, an der aus Adresse und Pfad eine URL wird.**
+    /// Die einzige Stelle, an der aus Adresse und Pfad eine URL wird.
     ///
-    /// Vorher stand an drei Stellen `URL(string: …)!`, und am 14.09.2026 hat
-    /// genau das die iPad-Fassung umgebracht: Ein **Leerzeichen** in der
-    /// eingetragenen Adresse laesst `URL(string:)` `nil` liefern, und das
-    /// Ausrufezeichen dahinter macht daraus einen Absturz statt einer Meldung.
-    /// (Ein *leerer* Host tut das uebrigens nicht — `http:///api/v1/apps` ist
-    /// eine gueltige URL. Nachgemessen, nicht vermutet.)
+    /// Ein Leerzeichen in der eingetragenen Adresse laesst
+    /// `URL(string:)` `nil` liefern; ein `!` dahinter macht daraus einen
+    /// Absturz statt einer Meldung. Ein *leerer* Host tut das nicht — gemessen:
+    /// `http:///api/v1/apps` ist eine gueltige URL.
     ///
     /// Eine Adresse kommt aus den Einstellungen, ist also von Hand eingetippt.
     /// Auf solche Eingaben gehoert kein `!`.
@@ -459,7 +435,7 @@ public struct Geraet {
         return url
     }
 
-    /// Wie `hole`, nur fuer eine Antwort, die oben ein **Feld** ist statt eines
+    /// Wie `hole`, nur fuer eine Antwort, die oben ein Feld ist statt eines
     /// Objekts — `GET /api/v1/apps` ist die einzige, die diese App liest.
     private func holeFeld(_ pfad: String) throws -> [Any] {
         let daten = try fuehreAus(URLRequest(url: try url(pfad)))
@@ -496,7 +472,7 @@ public struct Geraet {
 
     /// Dasselbe, aber mit dem Status statt eines Fehlers daraus.
     ///
-    /// Fuer AWTRIX NG unentbehrlich: Dort steht die Begruendung im **Rumpf**
+    /// Fuer AWTRIX NG unentbehrlich: Dort steht die Begruendung im Rumpf
     /// einer Antwort mit Fehlerstatus, und wer den Status vorher zum Fehler
     /// macht, wirft die Begruendung weg und meldet „Status 422" statt
     /// „validationFailed im Feld durationMs".

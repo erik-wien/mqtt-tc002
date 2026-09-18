@@ -8,7 +8,7 @@ import TC002Core
 /// nichts selbst: Antippen wird von außen verdrahtet
 /// (`Button { … } label: { Slotblock(…) } `), siehe die Sendeansichten.
 ///
-/// Zustand hängt **nicht allein an der Farbe**: `.frei` (gestrichelter,
+/// Zustand hängt nicht allein an der Farbe: `.frei` (gestrichelter,
 /// leerer Rahmen) und `.unbekannt` (gefüllter Rahmen mit dem Wort „belegt“)
 /// unterscheiden sich auch in der Form; `.bekannt` zeigt Pixel. Ob die
 /// mitgelesen oder aus dem Slotgedächtnis gerechnet sind, entscheidet
@@ -16,7 +16,7 @@ import TC002Core
 /// gewählte Block trägt zusätzlich einen eigenen, sichtbaren Rahmen — keine
 /// bloße Tönung.
 ///
-/// Die Trefferfläche (`.frame(minWidth:minHeight:)`) sitzt **in** dieser
+/// Die Trefferfläche (`.frame(minWidth:minHeight:)`) sitzt in dieser
 /// Ansicht, nicht um sie herum — sonst träfe ein Fingertipp nur die kleine
 /// Glyphe bzw. Pixelfläche, sobald ein Aufrufer diese Ansicht als Label eines
 /// `Button` verwendet.
@@ -25,11 +25,10 @@ public struct Slotblock: View {
     public let platz: Int
     public let zustand: Slotzustand
     public let gewaehlt: Bool
-    /// **Das Mass der Uhr, deren Stand dieser Block zeigt.** Bis zum
-    /// 18.09.2026 war es fest 52×16; seit die Bloecke auch fuer eine NG ein
-    /// Bild zeigen duerfen, muessen sie deren 32×8 kennen — sonst faende die
-    /// Wache in `Slotraster` die falsche Punktzahl vor und liesse den Block
-    /// leer.
+    /// Das Mass der Uhr, deren Stand dieser Block zeigt: Eine NG kann ein
+    /// 32×8-Bild zeigen statt der TC002-Groesse 52×16, und `Slotraster`
+    /// braucht das richtige Mass — sonst erwartet es die falsche Punktzahl
+    /// und der Block bleibt leer.
     public let mass: Anzeigemass
 
     public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .tc002) {
@@ -59,7 +58,7 @@ public struct Slotblock: View {
     /// … `meldung5`) zusammenfinden. Ein Bezeichner, kein Erklärtext —
     /// erklärt wird in der Hilfe, nicht hier.
     ///
-    /// **Unter** dem Block, nicht darin: Sie darf das Pixelbild nicht
+    /// Unter dem Block, nicht darin: Sie darf das Pixelbild nicht
     /// verdecken. Und schmaler als er, damit die Zeile am iPhone weiterhin
     /// 6 × 44pt + 5 × 6pt = 294pt misst — zusätzliche Höhe ist dort frei,
     /// zusätzliche Breite nicht.

@@ -1,6 +1,6 @@
 import XCTest
 
-/// Die Fensterforderungen der Mac-Fassung sind **gemessen** — an einem Fenster,
+/// Die Fensterforderungen der Mac-Fassung sind gemessen — an einem Fenster,
 /// das man ziehen kann. Auf dem iPad gibt es nichts zu ziehen: Kein Gerät
 /// erreicht hochkant 1140 Punkte (das größte hat 1024), und in geteilter
 /// Ansicht bleiben schnell 678 oder 320 übrig. Eine Mindestbreite, die dort
@@ -55,7 +55,7 @@ final class MindestmasseTests: XCTestCase {
         return ergebnis
     }
 
-    /// Jedes dieser Maße ist eine Forderung an das **Fenster**, nicht an einen
+    /// Jedes dieser Maße ist eine Forderung an das Fenster, nicht an einen
     /// Inhalt: Wird sie nicht erfüllt, schneidet SwiftUI ab, statt umzubrechen.
     /// Am Mac ist sie gemessen und abgenommen; überall sonst muss sie fehlen.
     func testFensterforderungenStehenNurUnterMacOS() throws {
@@ -86,11 +86,9 @@ final class MindestmasseTests: XCTestCase {
 
     /// Die Leinwand darf ihre Spalte nie breiter machen, als sie ist.
     ///
-    /// Der gemeldete Fehler war genau das: ein starres `.frame(width:)` ueber
-    /// einer Breite, die aus einem `GeometryReader` **innerhalb** derselben
-    /// Flaeche kam — gemessen wurde damit, was die Flaeche sich schon genommen
-    /// hatte, nicht was die Spalte hergab. Sichtbar wurde es erst am Geraet:
-    /// Bedienzeile unter der Seitenleiste, Slot-Zeile ab Block 3.
+    /// Ein starres `.frame(width:)` ueber einer Breite, die aus einem
+    /// `GeometryReader` innerhalb derselben Flaeche kommt, misst, was die
+    /// Flaeche sich schon genommen hat, nicht was die Spalte hergibt.
     ///
     /// Der Uebersetzer sieht davon nichts, beide Fassungen uebersetzen.
     func testDieLeinwandMisstVonAussenUndRolltStattUeberzulaufen() throws {

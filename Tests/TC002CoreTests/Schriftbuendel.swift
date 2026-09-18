@@ -10,8 +10,8 @@ import Foundation
 /// Buendel, also aus dem Quellbaum ueber `#filePath`, wie die Schnappschuesse
 /// des Rahmenbaus auch.
 enum Schriftbuendel {
-    /// Die drei mitgelieferten Pixelschriften unter ihrem **registrierten
-    /// Familiennamen**. Micro5 traegt ein Leerzeichen im Namen — im
+    /// Die drei mitgelieferten Pixelschriften unter ihrem registrierten
+    /// Familiennamen. Micro5 traegt ein Leerzeichen im Namen — im
     /// Font-Editor geprueft, kein Tippfehler (siehe `SendenView`).
     static let schriften = ["Micro 5", "Silkscreen", "Tiny5"]
 

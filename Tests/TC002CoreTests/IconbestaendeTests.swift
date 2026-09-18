@@ -1,9 +1,8 @@
 import XCTest
 @testable import TC002Core
 
-/// Dass ein 16×16 vom Werkzeug und von den Kurzbefehlen aus gefunden wird —
-/// bis heute wurde dort nur der 8×8-Bestand durchsucht, und die Meldung
-/// „Kein Icon" klang dabei so stimmig, dass niemand nachsah.
+/// Dass ein 16×16 vom Werkzeug und von den Kurzbefehlen aus gefunden wird,
+/// nicht nur ein 8×8 — sonst antwortet „Kein Icon" für ein vorhandenes Icon.
 final class IconbestaendeTests: XCTestCase {
     /// Ein Wegwerfordner mit genau einer Icondatei. Das kleinste gueltige
     /// GIF-Kopfstueck genuegt: geprueft wird das Finden, nicht das Bild.
@@ -16,7 +15,7 @@ final class IconbestaendeTests: XCTestCase {
         return ordner
     }
 
-    /// Der Fall, um den es geht: Der Schluessel liegt im **zweiten** Bestand.
+    /// Der Fall, um den es geht: Der Schluessel liegt im zweiten Bestand.
     func testEinSechzehnerWirdGefunden() throws {
         let achter = Iconsammlung(ordner: try ordner(mit: "1673.gif"))
         let sechzehner = Iconsammlung(ordner: try ordner(mit: "Sonne.gif"), kante: 16)
