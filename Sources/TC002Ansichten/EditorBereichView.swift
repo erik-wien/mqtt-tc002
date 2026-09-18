@@ -897,19 +897,24 @@ public struct EditorBereichView: View {
 
     /// Eine Zeile der Liste der Vorhandenen — mit der Groesse als Merkmal, weil
     /// alle drei Bestaende in derselben Liste stehen.
-    /// Die LaMetric Icon Gallery als Blatt statt als Sprung in den Browser.
-    ///
-    /// Die Seite selbst steht nicht darin: Eine eingebettete Webansicht
-    /// braeuchte `WKWebView` und damit AppKit bzw. UIKit — dieses Ziel kennt
-    /// keine Plattform (CLAUDE.md). Das Blatt traegt stattdessen, was man
-    /// wirklich braucht: das Nummernfeld, die Erklaerung und den Weg hinaus.
+    /// Die LaMetric Icon Gallery im Blatt, samt der Seite selbst
+    /// (`Webansicht`). Wer dort eine Nummer findet, traegt sie unten ein und
+    /// holt das Icon, ohne die App zu verlassen.
     private var galerieblatt: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("LaMetric Icon Gallery").font(.headline)
-            Text(Self.lametricHilfe)
-                .font(.callout).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(spacing: 0) {
+            HStack {
+                Text("LaMetric Icon Gallery").font(.headline)
+                Spacer()
+                Button("Fertig") { zeigeGalerie = false }
+                    .knopfBefehl()
+                    .keyboardShortcut(.cancelAction)
+            }
+            .padding(12)
+            Divider()
+            Webansicht(adresse: Self.galerie)
+            Divider()
             HStack(spacing: 8) {
+                Text("Nummer")
                 TextField("Nummer", text: $lametricNummer)
                     .eingabefeld(loeschbar: $lametricNummer)
                     .frame(width: 110)
@@ -917,19 +922,14 @@ public struct EditorBereichView: View {
                 Button("Holen") { nachladen(); zeigeGalerie = false }
                     .knopfHaupthandlung()
                     .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            Link("Gallery im Browser öffnen",
-                 destination: URL(string: "https://developer.lametric.com/icons")!)
-            HStack {
                 Spacer()
-                Button("Fertig") { zeigeGalerie = false }
-                    .knopfBefehl()
-                    .keyboardShortcut(.cancelAction)
             }
+            .padding(12)
         }
-        .padding(20)
-        .frame(minWidth: 380)
+        .frame(minWidth: 620, minHeight: 520)
     }
+
+    private static let galerie = URL(string: "https://developer.lametric.com/icons")!
 
     // MARK: - Uebersicht
 

@@ -920,7 +920,7 @@
 /* EditorBereichView.swift — die Uebersicht des Bestands im Hauptfenster */
 "Alle Icons" = "All icons";
 "Holen" = "Fetch";
-"Gallery im Browser öffnen" = "Open the gallery in the browser";
+"Im Browser öffnen" = "Open in the browser";
 "Nur bewegte" = "Animated only";
 "Nichts gefunden. Unter „Hinzufügen“ im Inspektor kommt Neues herein." = "Nothing found. New pieces come in under \"Add\" in the inspector.";
 "%@ · %@" = "%@ · %@";

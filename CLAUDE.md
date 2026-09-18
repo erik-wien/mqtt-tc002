@@ -22,7 +22,12 @@ ist und bei einem Update nachzuprüfen wäre, in
   plattformfreie SwiftUI-Bausteine für alle Oberflächen, `TC002App` ist die
   Mac-App, `TC002iOS` die iPhone-App, `TC002CLI` das Werkzeug. Die ersten
   drei kennen **keine** Plattform: kein `import AppKit`, kein `import UIKit`,
-  kein `NSColor`, kein `UIColor`.
+  kein `NSColor`, kein `UIColor`. Eine Ausnahme braucht einen Grund, und der
+  gehört an die Stelle geschrieben. Bisher gibt es genau eine:
+  `TC002Ansichten/Webansicht.swift` — SwiftUI hat bis macOS 26 keine eigene
+  Webansicht, und `WKWebView` ist nur über `NSViewRepresentable` bzw.
+  `UIViewRepresentable` einzusetzen. Der Unterschied betrifft vier Zeilen und
+  bleibt in dieser Datei.
 - **Dieselbe App, überall dasselbe Können — Unterschiede brauchen einen
   Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
   ist nur zulässig, wenn ihn die **Bedienung** (Maus und Zeiger gegen Finger)
