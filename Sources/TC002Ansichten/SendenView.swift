@@ -393,9 +393,14 @@ public struct SendenView: View {
                 // uebernimmt dieselbe Stelle, ohne die Bauart des Knopfs
                 // (samt seinem Blatt) anzutasten. Ohne zweite Uhr zeigt
                 // ZielauswahlView nichts, die Zeile bleibt dann leer.
+                // **Nur noch das Ziel.** „sieht: …" ist am 18.09.2026 ins
+                // Titelmenue der Werkzeugleiste gezogen (`Uhrenmenue`), wo die
+                // iPhone-Fassung es seit je hat; unter der Vorschau sagt
+                // stattdessen eine Punktreihe, wie viele Uhren es gibt und die
+                // wievielte man sieht. Das Ziel bleibt hier, weil es eine
+                // andere Entscheidung ist als der Blick.
                 HStack {
                     Spacer()
-                    AngeseheneUhrView(zustand: zustand)
                     ZielauswahlView(zustand: zustand)
                 }
                 // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
@@ -437,7 +442,9 @@ public struct SendenView: View {
                                 iconKante: iconKante,
                                 laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+                        .uhrenwischen(zustand)
                 }
+                Uhrenpunkte(zustand: zustand)
                 // **Setzt die Uhr selbst, ist der Weg einerlei.** Eine NG bekommt
                 // von `Anzeigen.nutzlast` in beiden Faellen den Text samt Reglern,
                 // nie unsere Pixel. Die Zeile „Laufschrift · N Bilder · KB" spraeche
@@ -533,6 +540,14 @@ public struct SendenView: View {
         // selbst durch `.inspector`. Der Knopf in der Werkzeugleiste blendet
         // ihn ein und aus.
         .toolbar {
+            // **Die angesehene Uhr, mittig.** Am Mac steht im Fenstertitel der
+            // Programmname (`SchreibtischView` setzt `navigationTitle`
+            // ausdruecklich nur unter iOS); `.principal` ist die Stelle, die
+            // auf beiden Plattformen dasselbe meint — und dieselbe, an der
+            // Xcode sein Ziel zeigt.
+            ToolbarItem(placement: .principal) {
+                Uhrenmenue(zustand: zustand)
+            }
             ToolbarItem {
                 Button {
                     zeigeInspektor.toggle()

@@ -53,18 +53,25 @@ struct ZielauswahlView: View {
             HStack {
                 Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
                     .knopfBefehl()
-                Button("Keine") { zustand.zielIDs = [] }
-                    .knopfBefehl()
+                // **„Nur die angesehene" statt „Keine".** Der alte Knopf
+                // schrieb die leere Menge — und die heisst fuer diese App „die
+                // angesehene Uhr", fuer Werkzeug und Kurzbefehle aber **alle**
+                // (`Einstellungen.ziele`). Dieselbe Einstellung, zwei
+                // Bedeutungen: Wer hier „Keine" drueckte, schickte den naechsten
+                // Kurzbefehl an jede eingerichtete Uhr.
+                Button("Nur die angesehene") {
+                    if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
+                }
+                .knopfBefehl()
                 Spacer()
             }
 
             List(zustand.uhren) { uhr in
+                // Ueber `zielUmschalten` und nicht ueber `insert`/`remove`:
+                // Dort steht die Regel, dass die Menge nie leer wird.
                 Toggle(isOn: Binding(
                     get: { zustand.zielIDs.contains(uhr.id) },
-                    set: { gewaehlt in
-                        if gewaehlt { zustand.zielIDs.insert(uhr.id) }
-                        else { zustand.zielIDs.remove(uhr.id) }
-                    }
+                    set: { _ in zustand.zielUmschalten(uhr.id) }
                 )) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {

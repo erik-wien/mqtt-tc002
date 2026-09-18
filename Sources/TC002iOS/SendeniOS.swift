@@ -253,10 +253,16 @@ struct SendeniOS: View {
                 FehlerleisteiOS(zustand: zustand)
                 ScrollView {
                     VStack(spacing: 14) {
+                        // Wischen ueber der Vorschau wechselt die angesehene
+                        // Uhr, die Punktreihe darunter sagt, die wievielte es
+                        // ist — dieselben zwei Bausteine wie am Schreibtisch
+                        // (`Uhrenwahl.swift`).
                         VorschauiOS(feld: Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, mass: mass),
                                     icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
                                     laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil,
                                     typ: zustand.referenzUhr?.typ)
+                            .uhrenwischen(zustand)
+                        Uhrenpunkte(zustand: zustand)
                         if weg == .pixel && !passt {
                             Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                                 .font(.caption).foregroundStyle(.secondary)
@@ -279,13 +285,34 @@ struct SendeniOS: View {
             // funktioniert dort genauso — Dateien und Notizen machen es so.
             .navigationBarTitleDisplayMode(.inline)
             .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
-                Picker("Angesehene Uhr", selection: angesehene) {
+                // **Zwei Gruppen, zwei Fragen.** Oben, welche Uhr man
+                // ansieht — daran haengen Vorschau, Bloecke und Verlauf.
+                // Darunter, an welche gesendet wird: seit dem 18.09.2026 jede
+                // einzeln, statt „eine oder alle". Getrennt, weil es zwei
+                // Entscheidungen sind; in einem Menue, weil es dieselbe Frage
+                // an dieselben Uhren ist.
+                Section("Angesehen") {
+                    Picker("Angesehene Uhr", selection: angesehene) {
+                        ForEach(zustand.uhren) { uhr in
+                            Text(uhr.name).tag(Optional(uhr.id))
+                        }
+                    }
+                    .pickerStyle(.inline)
+                }
+                Section("Senden an") {
                     ForEach(zustand.uhren) { uhr in
-                        Text(uhr.name).tag(Optional(uhr.id))
+                        Button {
+                            zustand.zielUmschalten(uhr.id)
+                        } label: {
+                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
+                                  ? "checkmark.circle.fill" : "circle")
+                        }
+                    }
+                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
+                    Button("Nur die angesehene") {
+                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
                     }
                 }
-                .pickerStyle(.inline)
-                Toggle("An alle Uhren senden", isOn: $zustand.anMehrereUhren)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -717,12 +744,27 @@ struct SendeniOS: View {
                     .accessibilityLabel(Text("Sende…"))
             } else if zustand.uhren.count > 1 {
                 Menu {
-                    Picker("Angesehene Uhr", selection: angesehene) {
-                        ForEach(zustand.uhren) { uhr in
-                            Text(uhr.name).tag(Optional(uhr.id))
+                    Section("Angesehen") {
+                        Picker("Angesehene Uhr", selection: angesehene) {
+                            ForEach(zustand.uhren) { uhr in
+                                Text(uhr.name).tag(Optional(uhr.id))
+                            }
                         }
                     }
-                    Toggle("An alle Uhren senden", isOn: $zustand.anMehrereUhren)
+                Section("Senden an") {
+                    ForEach(zustand.uhren) { uhr in
+                        Button {
+                            zustand.zielUmschalten(uhr.id)
+                        } label: {
+                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
+                                  ? "checkmark.circle.fill" : "circle")
+                        }
+                    }
+                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
+                    Button("Nur die angesehene") {
+                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
+                    }
+                }
                 } label: {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .font(.title2)

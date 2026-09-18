@@ -32,6 +32,10 @@ final class KnopfstilTests: XCTestCase {
         "alert(", "confirmationDialog(", "contextMenu", "swipeActions",
         "toolbar", "ToolbarItem", "ToolbarItemGroup",
         "Menu {", "Menu(", "commands", "CommandGroup(", "CommandMenu(",
+        // Das Titelmenue des Telefons: `toolbarTitleMenu` unter einem eigenen
+        // Namen (`SendeniOS.swift`). Was darin steht, ist ein Menueeintrag —
+        // ein Knopfstil waere dort so falsch wie in jedem anderen Menue.
+        "titelmenuFallsMehrereUhren",
     ]
 
     /// Was als ausdrücklicher Stil gilt.

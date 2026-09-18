@@ -255,35 +255,74 @@ final class AppZustandTests: XCTestCase {
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufB),
                        "Die Blöcke müssen der angesehenen Uhr folgen, nicht der vorher angesehenen.")
-        XCTAssertEqual(zustand.ziele(), [b],
-                       "Wer am Telefon umschaltet, sendet auch dorthin.")
+        // **Das Ziel zieht nicht mehr mit** (18.09.2026). Es bleibt auf der
+        // Uhr, die gewaehlt war; wer anderswohin senden will, waehlt das
+        // ausdruecklich. Die Bloecke oben folgen dem Blick, das Ziel der Wahl
+        // — zwei Griffe, zwei Wirkungen.
+        XCTAssertEqual(zustand.ziele(), [a],
+                       "Nachsehen darf das gewählte Ziel nicht verschieben.")
     }
 
-    /// Beim Senden an mehrere Uhren laesst das Umschalten die Zielmenge
-    /// stehen — sonst schruempfte „an alle“ beim blossen Nachsehen unbemerkt
-    /// auf eine Uhr zusammen. Angesehen wird trotzdem die neue, und das
-    /// Abschalten faellt auf genau sie zurueck, nie auf eine leere Menge.
-    func testUmschaltenLaesstMehrereZieleStehen() throws {
-        let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
-        let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
+    /// **Ein gewaehltes Ziel bleibt stehen**, auch wenn man anderswohin sieht.
+    /// Bis zum 18.09.2026 zog das Umschalten am Telefon das Ziel mit — dort
+    /// waren beide dasselbe. Seit die Zielwahl auf jeder Oberflaeche ihren
+    /// eigenen Griff hat, waere das Mitziehen eine stille Aenderung an etwas,
+    /// das jemand von Hand gesetzt hat.
+    func testEinGewaehltesZielBleibtBeimUmschaltenStehen() throws {
+        let a = Uhr(name: "Küche", host: "kueche.example", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "buero.example", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(a.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([a.id, b.id])), forKey: "zielIDs")
+
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhrAnsehen(b.id)
+        XCTAssertEqual(zustand.aktiveID, b.id)
+        XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]),
+                       "Nachsehen darf die Zielmenge nicht anruehren.")
+    }
+
+    /// **Die App schreibt nie eine leere Zielmenge** — und das ist keine
+    /// Schoenheitsfrage, sondern eine Verstaendigung mit dem
+    /// Kommandozeilenwerkzeug.
+    ///
+    /// Beide lesen dieselben Schluessel, aber verschieden: `ziele()` hier
+    /// liest leer als „die angesehene Uhr", `Einstellungen.ziele` (Werkzeug
+    /// und Kurzbefehle) liest leer als **alle**. Bis zum 18.09.2026 schrieb
+    /// der Knopf „Keine" im Zielblatt genau diese leere Menge: Die App sendete
+    /// danach an eine Uhr, das Werkzeug an alle — dieselbe Einstellung, zwei
+    /// Bedeutungen, und keine davon stand irgendwo.
+    ///
+    /// Das letzte Ziel abzuwaehlen faellt deshalb auf die angesehene Uhr
+    /// zurueck, statt nichts zu hinterlassen.
+    func testDasLetzteZielAbzuwaehlenFaelltAufDieAngeseheneUhrZurueck() throws {
+        let a = Uhr(name: "Küche", host: "kueche.example", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "buero.example", praefix: "pb")
+        d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
+        d.set(b.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
+
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.zielUmschalten(a.id)
+
+        XCTAssertEqual(zustand.zielIDs, [b.id],
+                       "Leer haette das Werkzeug als „alle Uhren“ gelesen.")
+        XCTAssertEqual(zustand.ziele(), [b])
+    }
+
+    /// Und das Umschalten selbst nimmt auf und heraus.
+    func testZielUmschaltenNimmtAufUndHeraus() throws {
+        let a = Uhr(name: "Küche", host: "kueche.example", praefix: "pa")
+        let b = Uhr(name: "Büro", host: "buero.example", praefix: "pb")
         d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
         d.set(a.id.uuidString, forKey: "aktiveID")
         d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
 
         let zustand = AppZustand(schluesselbund: schluesselbund)
-        XCTAssertFalse(zustand.anMehrereUhren)
-        zustand.anMehrereUhren = true
+        zustand.zielUmschalten(b.id)
         XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]))
-
-        zustand.uhrAnsehen(b.id)
-
-        XCTAssertEqual(zustand.aktiveID, b.id)
-        XCTAssertEqual(zustand.zielIDs, Set([a.id, b.id]),
-                       "Nachsehen darf die Zielmenge nicht zusammenstreichen.")
-
-        zustand.anMehrereUhren = false
-        XCTAssertEqual(zustand.zielIDs, [b.id],
-                       "Abschalten fällt auf die angesehene Uhr zurück, nicht auf die vorige.")
+        zustand.zielUmschalten(b.id)
+        XCTAssertEqual(zustand.zielIDs, [a.id])
     }
 
     /// Eine Uhr, eine Zieluhr, sie selbst aktiv — die uebliche Buehne fuer die

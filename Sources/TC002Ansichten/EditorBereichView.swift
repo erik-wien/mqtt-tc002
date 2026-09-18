@@ -322,9 +322,12 @@ public struct EditorBereichView: View {
             //
             // Ohne zweite Uhr zeigt `ZielauswahlView` nichts, die Zeile bleibt
             // dann leer.
+            // Nur noch das Ziel: Die angesehene Uhr steht seit dem 18.09.2026
+            // im Titelmenue der Werkzeugleiste (`Uhrenmenue`), an derselben
+            // Stelle wie unter „Senden". Eine Punktreihe gibt es hier nicht —
+            // sie gehoert unter eine Vorschau, und hier steht eine Leinwand.
             HStack {
                 Spacer()
-                AngeseheneUhrView(zustand: zustand)
                 ZielauswahlView(zustand: zustand)
             }
             Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
@@ -334,7 +337,13 @@ public struct EditorBereichView: View {
             if groesse.sendbar { sendezeile }
         }
         .padding()
-        .toolbar { werkzeugleiste }
+        .toolbar {
+            // Dieselbe Stelle wie unter „Senden": die angesehene Uhr mittig in
+            // der Werkzeugleiste. Zwei Orte fuer dieselbe Wahl waeren
+            // schlimmer als ein unguenstiger — das stand hier schon einmal.
+            ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
+            werkzeugleiste
+        }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
         .onAppear { vorhandene = bestand.alle(); bewegungLesen() }
         .onDisappear { stoppeAbspielen(); arbeitsstandSichern() }

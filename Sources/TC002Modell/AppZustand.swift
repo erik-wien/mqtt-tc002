@@ -452,45 +452,47 @@ public final class AppZustand {
     /// Wechselt die angesehene Uhr — und mit ihr das Sendeziel, solange nicht
     /// an mehrere gesendet wird.
     ///
-    /// Fuer das Titelmenue der iPhone-Fassung, die **einen** Griff dafuer hat:
-    /// Auf 393 Punkten Breite waeren eine Ziel- und eine Ansichtsauswahl
-    /// nebeneinander nicht unterzubringen, und eine Uhr anzusehen, an die man
-    /// gerade nicht sendet, ist am Telefon kein Fall, den jemand braucht.
-    /// Ansehen und Senden sind dort deshalb dieselbe Entscheidung.
+    /// **Ansehen ist nicht Senden.** Diese Methode setzt allein die angesehene
+    /// Uhr; die Zielmenge bleibt, wie sie ist.
     ///
-    /// Ausgenommen ist das Senden an mehrere Uhren: Dort bleibt die Zielmenge
-    /// stehen, denn die fuenf Bloecke und der Verlauf koennen nur den Stand
-    /// **einer** Uhr zeigen — welcher das ist, sagt der Titel.
+    /// Bis zum 18.09.2026 zog sie das Ziel mit, solange nur eine Uhr gewaehlt
+    /// war — am Telefon gab es fuer beides einen Griff, und dort waren Ansehen
+    /// und Senden dieselbe Entscheidung. Seit beide Oberflaechen eine eigene
+    /// Zielwahl haben, waere das Mitziehen eine stille Aenderung an etwas, das
+    /// jemand von Hand gesetzt hat.
     ///
-    /// Am Mac aendert das nichts: Dort bleiben Zielauswahl und aktive Uhr zwei
-    /// Bedienelemente, weil dort Platz fuer beide ist.
+    /// Dass das Senden trotzdem dem Blick folgt, solange niemand ein Ziel
+    /// gewaehlt hat, besorgt `ziele()`: **Eine leere Zielmenge heisst „an die
+    /// angesehene Uhr".**
     public func uhrAnsehen(_ id: UUID) {
         aktiveID = id
-        if !anMehrereUhren { zielIDs = [id] }
     }
 
-    /// Ob an mehr als die angesehene Uhr gesendet wird.
+    /// Eine Uhr weiter oder zurueck ansehen, in Schleife — fuer die
+    /// Wischgeste ueber der Vorschau und die Tasten daneben.
     ///
-    /// Kein eigener gesicherter Zustand: Er waere eine zweite Wahrheit neben
-    /// `zielIDs` und koennte ihr widersprechen. Das Setzen schreibt darum
-    /// `zielIDs` selbst — beim Einschalten alle eingerichteten Uhren, beim
-    /// Abschalten die angesehene, damit keine leere Menge entsteht, die
-    /// `ziele()` und `Einstellungen.ziele()` verschieden lesen.
+    /// In Schleife und nicht am Ende stehenbleibend: Bei zwei Uhren waere
+    /// „weiter" sonst bei jedem zweiten Mal wirkungslos, und bei einer gibt es
+    /// ohnehin nichts zu wechseln.
+    public func uhrWeiter(um schritte: Int) {
+        guard uhren.count > 1, let aktiveID,
+              let jetzt = uhren.firstIndex(where: { $0.id == aktiveID }) else { return }
+        let naechste = ((jetzt + schritte) % uhren.count + uhren.count) % uhren.count
+        uhrAnsehen(uhren[naechste].id)
+    }
+
+    /// Nimmt eine Uhr in die Zielmenge auf oder heraus.
     ///
-    /// Gelesen wird „mehr als eine", nicht „genau alle": Eine Installation von
-    /// vor dem Titelmenue kann eine gemischte Teilmenge stehen haben, und die
-    /// gehoert nicht als „eine Uhr" ausgegeben. Wie viele es wirklich sind,
-    /// sagt der Titel; der naechste Griff an dieses Menue macht daraus wieder
-    /// eine der beiden sauberen Mengen.
-    public var anMehrereUhren: Bool {
-        get { zielIDs.count > 1 }
-        set {
-            if newValue {
-                zielIDs = Set(uhren.map(\.id))
-            } else if let aktiveID {
-                zielIDs = [aktiveID]
-            }
-        }
+    /// **Nie leer.** Das letzte Ziel abzuwaehlen faellt auf die angesehene Uhr
+    /// zurueck. Der Grund liegt ausserhalb dieser App: Werkzeug und
+    /// Kurzbefehle lesen dieselben Schluessel, aber `Einstellungen.ziele`
+    /// liest eine leere Auswahl als **alle Uhren**, waehrend `ziele()` hier
+    /// sie als die angesehene liest. Eine leere Menge waere damit eine
+    /// Einstellung mit zwei Bedeutungen — bis zum 18.09.2026 schrieb der Knopf
+    /// „Keine" im Zielblatt genau die.
+    public func zielUmschalten(_ id: UUID) {
+        if zielIDs.contains(id) { zielIDs.remove(id) } else { zielIDs.insert(id) }
+        if zielIDs.isEmpty, let aktiveID { zielIDs = [aktiveID] }
     }
 
     /// Was ein Slot-Block zeigt — drei ehrliche Faelle (siehe `Slotzustand`):
