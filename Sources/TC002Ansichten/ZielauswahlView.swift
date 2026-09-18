@@ -34,14 +34,24 @@ struct ZielauswahlView: View {
 
     var body: some View {
         if zustand.uhren.count > 1 {
-            Button(beschriftung) {
+            Button {
                 // Vor dem Oeffnen konkretisieren: sonst zeigte das Blatt bei
                 // leerer Auswahl keine Uhr angehakt, obwohl der Knopf eben
                 // noch die aktive Uhr als Ziel genannt hat.
                 if zustand.zielIDs.isEmpty { zustand.zielIDs = gewaehlteIDs }
                 zeigeBlatt = true
+            } label: {
+                // **Dasselbe Zeichen wie am Telefon** (dort das Antennensymbol
+                // neben dem Eingabefeld), dazu das Wort. Bis zum 18.09.2026
+                // stand hier ein ganzer Satz als Beschriftung — „an: Küche",
+                // „an 2 Uhren" —, der neben dem Titelmenue wie ein zweiter
+                // Titel las. Wohin es geht, sagt jetzt der Einblendtext und das
+                // Blatt selbst.
+                Label("Empfänger", systemImage: "antenna.radiowaves.left.and.right")
             }
             .knopfBefehl()
+            .help(beschriftung)
+            .accessibilityLabel(Text(beschriftung))
             .sheet(isPresented: $zeigeBlatt) { blatt }
         }
     }

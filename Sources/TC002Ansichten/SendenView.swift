@@ -384,16 +384,6 @@ public struct SendenView: View {
                 // uebernimmt dieselbe Stelle, ohne die Bauart des Knopfs
                 // (samt seinem Blatt) anzutasten. Ohne zweite Uhr zeigt
                 // ZielauswahlView nichts, die Zeile bleibt dann leer.
-                // **Nur noch das Ziel.** „sieht: …" ist am 18.09.2026 ins
-                // Titelmenue der Werkzeugleiste gezogen (`Uhrenmenue`), wo die
-                // iPhone-Fassung es seit je hat; unter der Vorschau sagt
-                // stattdessen eine Punktreihe, wie viele Uhren es gibt und die
-                // wievielte man sieht. Das Ziel bleibt hier, weil es eine
-                // andere Entscheidung ist als der Blick.
-                HStack {
-                    Spacer()
-                    ZielauswahlView(zustand: zustand)
-                }
                 // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
                 // passt, laufend, wenn nicht — bei der Laufschrift steckt das Icon
                 // schon in den Einzelbildern, deshalb dort kein zweites. Beim Weg
@@ -424,18 +414,29 @@ public struct SendenView: View {
                     // aufzufangen. `masse(inhaltHoehe:)` rechnet dieselbe Formel
                     // wie `GeraeteRahmen` selbst.
                     let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
+                    // Die Punktreihe braucht Platz unter dem Rahmen, sonst
+                    // schoebe sie ihn beim Erscheinen um ihre Hoehe hinauf.
+                    let punktehoehe: Double = zustand.uhren.count > 1 ? 20 : 0
                     let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
-                    let nachHoehe = (geo.size.height - 24) / einheit.rahmenHoehe
+                    let nachHoehe = (geo.size.height - 24 - punktehoehe) / einheit.rahmenHoehe
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
-                    VorschauView(feld: feld, kantenlaenge: kante,
-                                typ: geraeteart,
-                                icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
-                                iconKante: iconKante,
-                                laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
-                        .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
-                        .uhrenwischen(zustand)
+                    // **Die Punkte gehoeren an die Vorschau, nicht an den
+                    // unteren Rand ihres Bereichs.** Standen sie ausserhalb
+                    // des `GeometryReader`, rutschten sie mit dessen Dehnung
+                    // nach unten weg — beim Abnehmen am 18.09.2026 wurden sie
+                    // dort zuerst gar nicht gesucht. Jetzt sitzen sie im
+                    // selben mittigen Stapel, direkt unter dem Rahmen.
+                    VStack(spacing: 6) {
+                        VorschauView(feld: feld, kantenlaenge: kante,
+                                    typ: geraeteart,
+                                    icon: (weg == .text || passt) ? gewaehltesIcon?.datei : nil,
+                                    iconKante: iconKante,
+                                    laufschriftBilder: (weg == .pixel && !passt) ? laufschriftFrames : nil)
+                            .uhrenwischen(zustand)
+                        Uhrenpunkte(zustand: zustand)
+                    }
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
-                Uhrenpunkte(zustand: zustand)
                 // **Setzt die Uhr selbst, ist der Weg einerlei.** Eine NG bekommt
                 // von `Anzeigen.nutzlast` in beiden Faellen den Text samt Reglern,
                 // nie unsere Pixel. Die Zeile „Laufschrift · N Bilder · KB" spraeche
@@ -537,7 +538,17 @@ public struct SendenView: View {
             // auf beiden Plattformen dasselbe meint — und dieselbe, an der
             // Xcode sein Ziel zeigt.
             ToolbarItem(placement: .principal) {
-                Uhrenmenue(zustand: zustand)
+                // **Beide nebeneinander.** „Welche sehe ich an" und „an welche
+                // geht es" sind zwei Entscheidungen ueber dieselbe Sache; sie
+                // standen bis zum 18.09.2026 als Paar ueber der Vorschau
+                // („sieht: …" links, „an: …" rechts) und erklaerten sich durch
+                // ihre Nachbarschaft. Beim Umzug ins Titelmenue blieb der
+                // Zielknopf zurueck und schwebte allein ueber der Vorschau —
+                // hier stehen sie wieder beieinander.
+                HStack(spacing: 8) {
+                    Uhrenmenue(zustand: zustand)
+                    ZielauswahlView(zustand: zustand)
+                }
             }
             ToolbarItem {
                 Button {
@@ -945,6 +956,13 @@ public struct SendenView: View {
     private var textFeld: some View {
         TextField("Text", text: $text)
             .font(.title2)
+            // **Die Haupthandlung soll man sehen.** `.title2` vergroesserte
+            // nur die Schrift, nicht die Fassung — uebrig blieb ein flaches
+            // Feld mit grossen Buchstaben darin. `.extraLarge` ist der Weg des
+            // Systems, ein Bedienelement groesser zu machen (macOS 14, siehe
+            // `ControlSize`); von Hand eine Hoehe zu setzen haette Fokusring
+            // und Innenabstaende auseinanderlaufen lassen.
+            .controlSize(.extraLarge)
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft)
