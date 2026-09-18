@@ -149,6 +149,16 @@ public struct VerbindungView: View {
             // als (?) an beiden Stellen.
             Uhreinstellungen(zustand: zustand)
 
+            // **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
+            // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
+            // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
+            // raeumt das Vorhandene weg.
+            Section {
+                Toggle("Protokoll führen", isOn: $zustand.protokollAn)
+                Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
+                        .font(.footnote).foregroundStyle(.secondary)
+            }
+
             Section("Broker") {
                 // Der Abschnitt wird **nicht** ausgeblendet und nicht
                 // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge

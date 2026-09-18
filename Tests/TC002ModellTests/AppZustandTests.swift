@@ -282,6 +282,79 @@ final class AppZustandTests: XCTestCase {
                        "Nachsehen darf die Zielmenge nicht anruehren.")
     }
 
+    /// **Eine Meldung, die aelter ist als die eigene Sendung, kennt sie noch
+    /// nicht.**
+    ///
+    /// Die gemeldete Liste der Uhr ist die bessere Auskunft und ueberstimmt
+    /// deshalb die eigene Buchfuehrung (`anzeigenAufUhr`). Nur kommt sie zu
+    /// spaet: Nach dem Senden antwortet eine AWTRIX NG auf `/api/v1/apps` noch
+    /// eine Weile ohne den frischen Eintrag, und die Antwort loeschte ihn dann
+    /// aus der Liste — der Block fiel auf „frei" zurueck und wurde weiss.
+    /// Beobachtet am 18.09.2026.
+    ///
+    /// Die Rangfolge bleibt; nur was wir **selbst** gerade bestaetigt haben,
+    /// ueberlebt eine Meldung, die es nicht kennt. Bis die Uhr es entweder
+    /// meldet oder ausdruecklich widerspricht (leere Nutzlast, Loeschen).
+    func testEineVeralteteMeldungLoeschtDieFrischeSendungNicht() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        let uhr = try XCTUnwrap(zustand.uhren.first)
+
+        zustand.belegungGemeldet(["meldung2"], fuer: id)
+        zustand.anzeigeBestaetigt("meldung1", fuer: uhr)
+        XCTAssertEqual(zustand.belegtePlaetze(), [1, 2])
+
+        // Die Uhr antwortet — mit dem Stand von vor der Sendung.
+        zustand.belegungGemeldet(["meldung2"], fuer: id)
+
+        XCTAssertEqual(zustand.belegtePlaetze(), [1, 2],
+                       "Die eigene Sendung darf eine Meldung, die sie nicht kennt, ueberleben.")
+    }
+
+    /// **Aber nicht gegen einen Widerspruch.** Loescht jemand die Anzeige —
+    /// hier ueber `anzeigeGeloescht`, wie es eine leere Nutzlast ausloest —,
+    /// ist sie weg und bleibt weg.
+    func testEinAusdrueecklichesLoeschenSchlaegtDieFrischeSendung() throws {
+        let zustand = try zustandMitEinerUhr()
+        let id = try XCTUnwrap(zustand.aktiveID)
+        let uhr = try XCTUnwrap(zustand.uhren.first)
+
+        zustand.belegungGemeldet([], fuer: id)
+        zustand.anzeigeBestaetigt("meldung1", fuer: uhr)
+        XCTAssertEqual(zustand.belegtePlaetze(), [1])
+
+        zustand.anzeigeGeloescht("meldung1", fuer: uhr)
+        zustand.belegungGemeldet([], fuer: id)
+
+        XCTAssertTrue(zustand.belegtePlaetze().isEmpty,
+                      "Wer loescht, hat das letzte Wort — auch gegen die eigene Buchfuehrung.")
+    }
+
+    /// **Das Protokoll ist aus, solange es niemand einschaltet.**
+    ///
+    /// Es ist ein Werkzeug fuer den Fall, dass etwas nicht klappt — und kein
+    /// Mitschnitt, den eine App von sich aus fuehrt. Ausgeschaltet kostet es
+    /// weder Speicher noch die Frage, was da eigentlich mitgeschrieben wird.
+    func testDasProtokollIstAbWerkAus() throws {
+        d.removeObject(forKey: "protokollAn")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        XCTAssertFalse(zustand.protokollAn)
+        zustand.log("etwas")
+        XCTAssertTrue(zustand.protokoll.isEmpty, "Ausgeschaltet wird nichts mitgeschrieben.")
+    }
+
+    /// Eingeschaltet schreibt es wieder mit — und beim Ausschalten faellt weg,
+    /// was schon dasteht: Ein Schalter, der das Vorhandene stehen laesst, sagt
+    /// nicht, was er abstellt.
+    func testEingeschaltetSchreibtEsMitUndAusschaltenRaeumtAuf() throws {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.protokollAn = true
+        zustand.log("etwas")
+        XCTAssertEqual(zustand.protokoll.count, 1)
+        zustand.protokollAn = false
+        XCTAssertTrue(zustand.protokoll.isEmpty)
+    }
+
     /// **Die Bloecke gehoeren der angesehenen Uhr — auch beim Belegtsein.**
     ///
     /// Sie zeigen den Stand der angesehenen Uhr (`slotzustand` fragt
@@ -832,6 +905,9 @@ final class AppZustandTests: XCTestCase {
     /// Beim Start sind Uhren aus oder noch nicht im Netz.
     func testStummeUhrRaeumtDieAuskunftAbUndMeldetNurInsProtokoll() throws {
         let zustand = try zustandMitEinerUhr()
+        // Seit dem 18.09.2026 ist das Protokoll ab Werk aus. Hier geht es
+        // darum, **was** hineingeschrieben wird — also anschalten.
+        zustand.protokollAn = true
         let id = try XCTUnwrap(zustand.aktiveID)
         zustand.belegungGemeldet(["wetter"], fuer: id)
         Belegungsdoppelgaenger.antwort = "das ist kein JSON"

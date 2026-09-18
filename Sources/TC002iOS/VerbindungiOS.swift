@@ -29,6 +29,7 @@ struct VerbindungiOS: View {
                     // ein; begruendet war das nie mit Bedienung oder Platz,
                     // sondern nur damit, dass es sie hier nicht gab.
                     Uhreinstellungen(zustand: zustand)
+                    protokollAbschnitt
                     brokerAbschnitt
                     VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
                                           ansehen: { zeigeVirtuelleUhr = true })
@@ -170,6 +171,18 @@ struct VerbindungiOS: View {
                 .buttonStyle(.automatic)
             Button("Über Pixel Clock Messenger") { zeigeUeber = true }
                 .buttonStyle(.automatic)
+        }
+    }
+
+    private var protokollAbschnitt: some View {
+        // **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
+        // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
+        // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
+        // raeumt das Vorhandene weg.
+        Section {
+            Toggle("Protokoll führen", isOn: $zustand.protokollAn)
+            Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
+                .font(.footnote).foregroundStyle(.secondary)
         }
     }
 

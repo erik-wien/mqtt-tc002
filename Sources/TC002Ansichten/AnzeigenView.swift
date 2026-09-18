@@ -41,8 +41,15 @@ public struct AnzeigenView: View {
             HStack {
                 Text("Protokoll").font(.headline)
                 Spacer()
+                // **Ausgeschaltet steht hier, wo der Schalter sitzt** — und
+                // nicht bloss eine leere Liste, die wie ein Fehler aussieht.
+                if !zustand.protokollAn {
+                    Text("aus — unter „Einstellungen“ einzuschalten")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Button("Leeren", role: .destructive) { zustand.protokoll.removeAll() }
                     .knopfZerstoerend()
+                    .disabled(!zustand.protokollAn)
                     .disabled(zustand.protokoll.isEmpty)
             }
             ScrollView {

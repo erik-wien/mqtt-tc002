@@ -35,6 +35,25 @@ public final class AppZustand {
     /// Kein Eintrag heisst: keine Auskunft — dann gilt `bekannteAnzeigen`, und
     /// die Ansicht sagt, dass sie nur die eigene Buchfuehrung zeigt.
     public var gemeldeteAnzeigen: [UUID: [String]] = [:]
+
+    /// **Was wir gerade selbst geschickt haben und die Uhr noch nicht gemeldet
+    /// hat.**
+    ///
+    /// Die gemeldete Liste ist die bessere Auskunft und ueberstimmt deshalb die
+    /// eigene Buchfuehrung (`anzeigenAufUhr`). Nur kommt sie zu spaet: Nach dem
+    /// Senden antwortet eine AWTRIX NG auf `/api/v1/apps` noch eine Weile ohne
+    /// den frischen Eintrag, und die Werksfirmware veroeffentlicht ihre
+    /// `customList` erst nach einem Augenblick. Die Antwort loeschte den
+    /// Eintrag dann wieder aus der Liste — der eben gefuellte Block fiel auf
+    /// „frei" zurueck (beobachtet am 18.09.2026).
+    ///
+    /// **Geduldet wird genau eine Meldung, nicht eine Zeitspanne.** Eine Uhr
+    /// ist keine Uhr im Sinne von Sekunden: Sie kann schnell oder langsam
+    /// antworten, und eine Frist waere geraten. Die erste Meldung nach unserer
+    /// Sendung kann sie noch nicht kennen — sie laesst den Eintrag stehen und
+    /// verbraucht dabei die Karenz; die zweite gilt. Widerspricht jemand
+    /// ausdruecklich (Loeschen, leere Nutzlast), ist er sofort weg.
+    private var frischBestaetigt: [UUID: Set<String>] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
     /// Was zuletzt auf einem Slot zu sehen war — mitgelesen von `<praefix>/custom/#`,
@@ -70,6 +89,28 @@ public final class AppZustand {
         }
     }
     public var protokoll: [String] = []
+
+    /// **Ab Werk aus.** Das Protokoll ist ein Werkzeug fuer den Fall, dass
+    /// etwas nicht klappt — kein Mitschnitt, den eine App von sich aus fuehrt.
+    /// Ausgeschaltet kostet es weder Speicher noch die Frage, was da eigentlich
+    /// mitgeschrieben wird.
+    ///
+    /// Das Ausschalten raeumt auf: Ein Schalter, der das Vorhandene stehen
+    /// laesst, sagt nicht, was er abstellt.
+    /// **Gerechnet, nicht gespeichert-mit-`didSet`.** `@Observable` schreibt
+    /// eine gespeicherte Eigenschaft mit Beobachter nicht um; sie waere damit
+    /// ueber `Bindable` nicht erreichbar, und ein `Toggle(isOn: $zustand.…)`
+    /// uebersetzt nicht. Derselbe Bau wie bei den uebrigen Schaltern hier.
+    public var protokollAn: Bool {
+        get { protokollAnRoh }
+        set {
+            guard newValue != protokollAnRoh else { return }
+            protokollAnRoh = newValue
+            UserDefaults.standard.set(newValue, forKey: "protokollAn")
+            if !newValue { protokoll.removeAll() }
+        }
+    }
+    private var protokollAnRoh = false
     private static let protokollZeit: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss"
@@ -214,6 +255,10 @@ public final class AppZustand {
         // `uhren[i]` ist schon ein Zugriff auf `self`.
         uhren = uhren.mitSauberenAdressen().nachAdresse()
         if aktiveID == nil { aktiveID = uhren.first?.id }
+        // Ohne Eintrag aus. `bool(forKey:)` gaebe fuer einen fehlenden
+        // Schluessel ohnehin `false`; hier steht es ausdruecklich, damit es
+        // nicht wie ein vergessener Vorgabewert aussieht.
+        protokollAn = d.bool(forKey: "protokollAn")
         // Installationen von vor dem Zielmenue haben nie eine ausdrueckliche
         // Auswahl geschrieben: zielIDs blieb leer, obwohl schon Uhren
         // eingerichtet waren. Leer heisst fuer Einstellungen.ziele() "alle",
@@ -260,8 +305,15 @@ public final class AppZustand {
     /// Es sind **nur Namen**: belegt oder frei ist damit Tatsache, was auf
     /// einem Platz steht, bleibt geraten (`slotzustand`).
     func belegungGemeldet(_ namen: [String]?, fuer id: UUID) {
-        guard let uhr = uhren.first(where: { $0.id == id }),
-              gemeldeteAnzeigen[id] != namen else { return }
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return }
+        // Was die Uhr meldet, ist bestaetigt — es braucht keine Karenz mehr.
+        // Was sie **nicht** meldet, obwohl wir es gerade geschickt haben,
+        // ueberlebt diese eine Meldung und verbraucht dabei seine Karenz.
+        if let namen {
+            frischBestaetigt[id] = frischBestaetigt[id]?.subtracting(namen)
+            if frischBestaetigt[id]?.isEmpty == true { frischBestaetigt[id] = nil }
+        }
+        guard gemeldeteAnzeigen[id] != namen else { return }
         gemeldeteAnzeigen[id] = namen
         guard let namen else { return }
         log(lokf("%@ meldet: %@", uhr.name,
@@ -318,7 +370,9 @@ public final class AppZustand {
     /// gemerkt hat. Beides zugleich gibt es nicht — die Meldung ist die bessere
     /// Auskunft, sobald es eine gibt.
     public func anzeigenAufUhr(_ id: UUID) -> [String] {
-        gemeldeteAnzeigen[id] ?? bekannteAnzeigen[id] ?? []
+        let grundlage = gemeldeteAnzeigen[id] ?? bekannteAnzeigen[id] ?? []
+        guard let frisch = frischBestaetigt[id] else { return grundlage }
+        return grundlage + frisch.subtracting(grundlage).sorted()
     }
 
     /// Wie `anzeigenAufUhr`, aber mit der Herkunft — die Ansicht muss den
@@ -345,6 +399,7 @@ public final class AppZustand {
     /// ohnehin die eigene Buchfuehrung, und die schreibt `anzeigeGemerkt`.
     func anzeigeBestaetigt(_ name: String, fuer uhr: Uhr) {
         anzeigeGemerkt(name, fuer: uhr.id)
+        frischBestaetigt[uhr.id, default: []].insert(name)
         // **Wann die gemeldete Liste von selbst nachkommt — und wann nicht.**
         // Allein die Werksfirmware ueber MQTT veroeffentlicht ihre `customList`
         // nach einer Aenderung; im HTTP-Betrieb reicht sie nichts nach
@@ -360,6 +415,8 @@ public final class AppZustand {
 
     public func anzeigeVergessen(_ name: String, fuer id: UUID) {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
+        // Wer loescht, hat das letzte Wort — auch gegen die eigene Karenz.
+        frischBestaetigt[id]?.remove(name)
         // Auch aus der gemeldeten Liste: ob die Uhr ihre `customList` nach dem
         // Loeschen von sich aus erneut veroeffentlicht, ist nicht belegt — bliebe
         // der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht mehr gibt.
@@ -607,6 +664,7 @@ public final class AppZustand {
     }
 
     public func log(_ zeile: String) {
+        guard protokollAn else { return }
         protokoll.append("\(Self.protokollZeit.string(from: Date())) \(zeile)")
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }
     }
