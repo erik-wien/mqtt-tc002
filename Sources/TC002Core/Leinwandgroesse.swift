@@ -41,16 +41,6 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// Nachgeschlagen wird das ueber `lok(...)`, also ueber eine Variable —
     /// deshalb stehen die drei Zeichenketten von Hand als `DYNAMISCH` in
     /// `scripts/texte-sammeln.py`.
-    /// Ob ein Stück dieser Größe selbst als Anzeige auf die Uhr geht — dann
-    /// hat es eine eigene Standzeit. Ein Icon ist Zubehör einer Meldung; seine
-    /// Dauer bestimmt die Meldung, nicht das Icon.
-    public var eigeneStandzeit: Bool {
-        switch self {
-        case .icon8, .icon16: return false
-        case .anzeige: return true
-        }
-    }
-
     public var beschriftung: String {
         switch self {
         case .icon8: return "8 × 8"

@@ -38,7 +38,6 @@ public struct EditorBereichView: View {
     /// Dauer weg.
     @AppStorage("malen.farbe") private var farbeHex = "#00FF66"
     @AppStorage("malen.meldungsplatz") private var platz = 1
-    @AppStorage("malen.dauer") private var dauerText = ""
 
     /// Der Bestand steht am Anfang, nicht die Werkzeuge: Wer den Editor
     /// oeffnet, will meist etwas Vorhandenes weiterbearbeiten, nicht auf einer
@@ -132,7 +131,7 @@ public struct EditorBereichView: View {
 
     /// Was der Inspektor zeigt.
     enum Inspektormodus: String, CaseIterable, Identifiable {
-        case malen, animation, sichern, zeit
+        case malen, animation, sichern
         var id: String { rawValue }
     }
 
@@ -296,13 +295,6 @@ public struct EditorBereichView: View {
     /// ergab Bloecke, die Belegung und Inhalt aus verschiedenen Uhren
     /// zusammensetzten.
     private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
-
-    /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
-    /// Nutzlast.
-    private var dauer: Int? {
-        guard let n = Int(dauerText.trimmingCharacters(in: .whitespaces)), n > 0 else { return nil }
-        return n
-    }
 
     // MARK: - Aufbau
 
@@ -482,19 +474,12 @@ public struct EditorBereichView: View {
     private var inspektor: some View {
         VStack(spacing: 0) {
             modusWahl
-                .onChange(of: groesse) { _, neu in
-                    if !neu.eigeneStandzeit, modus == .zeit { modus = .malen }
-                }
             Divider()
             Form {
                 switch modus {
                 case .malen: malenAbschnitte
                 case .animation: animationAbschnitte
                 case .sichern: sichernAbschnitte
-                case .zeit:
-                    if groesse.eigeneStandzeit {
-                        Zeitabschnitte(zustand: zustand, dauerText: $dauerText)
-                    }
                 }
             }
             .formStyle(.grouped)
@@ -537,12 +522,6 @@ public struct EditorBereichView: View {
                 .accessibilityLabel(Text("Animation"))
             Image(systemName: "folder").tag(Inspektormodus.sichern)
                 .accessibilityLabel(Text("Bestand"))
-            // Siehe `Leinwandgroesse.eigeneStandzeit`: Ein Icon hat keine,
-            // der Reiter stand dort ohne Gegenstand.
-            if groesse.eigeneStandzeit {
-                Image(systemName: "clock").tag(Inspektormodus.zeit)
-                    .accessibilityLabel(Text("Zeit"))
-            }
         }
         .pickerStyle(.segmented)
         .labelsHidden()
@@ -1624,7 +1603,7 @@ public struct EditorBereichView: View {
         do {
             frame = try Bildsendung.rahmen(aus: leinwand.bilder,
                                            breite: leinwand.breite, hoehe: leinwand.hoehe,
-                                           verzoegerung: leinwand.verzoegerung, dauer: dauer)
+                                           verzoegerung: leinwand.verzoegerung, dauer: nil)
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return
