@@ -71,35 +71,22 @@ struct VerbindungiOS: View {
                             Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
                         }
                     }
-                    Text(uhr.host).font(.caption).foregroundStyle(.secondary)
+                    // Adresse, Praefix und Geraeteart in einer Zeile: Drei
+                    // Angaben, die man liest und nicht bedient. Das Praefix
+                    // nur im MQTT-Betrieb — bei einer HTTP-Uhr stuende dort
+                    // „noch nicht abgefragt" und schickte jemanden hinter
+                    // etwas her, das diese Uhr nie braucht.
+                    Text(kennzeile(uhr))
+                        .font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(1).minimumScaleFactor(0.8)
                     Adresswarnung(host: uhr.host)
                     Brokergrund(grund: zustand.brokergrund[uhr.id])
-                    // Nur im MQTT-Betrieb: Bei einer HTTP-Uhr stuende hier
-                    // „noch nicht abgefragt" und schickte jemanden hinter ein
-                    // Praefix her, das diese Uhr nie braucht.
-                    if uhr.wirksameBetriebsart == .mqtt {
-                        Text(uhr.praefix.isEmpty ? lok("noch nicht abgefragt") : Themenpraefix.sichtbar(uhr.praefix))
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
                     Picker("Betriebsart", selection: betriebsart($uhr)) {
                         Text("HTTP").tag(Betriebsart.http)
                         Text("MQTT").tag(Betriebsart.mqtt)
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    // Ohne diesen Waehler kommt „Abfragen" an eine Uhr nicht
-                    // heran, die nur ueber MQTT erreichbar ist oder deren
-                    // Schnittstelle eine Anmeldung verlangt. Eine so
-                    // eingetragene AWTRIX NG gilt sonst als Werksfirmware: Die
-                    // App schickte auf `<Praefix>/custom/…` statt auf
-                    // `<Praefix>/cmd/apps/pushed/…`, NG antwortet auf ein
-                    // Thema ohne Route nicht, und auf der Uhr erschien nichts.
-                    Picker("Geräteart", selection: geraeteart($uhr)) {
-                        ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
-                            Text(art.beschriftung).tag(art)
-                        }
-                    }
                     HStack {
                         Button("Abfragen") { zustand.abfragen(uhr.id) }
                             .knopfBefehl()
@@ -109,6 +96,20 @@ struct VerbindungiOS: View {
                             .knopfZerstoerend()
                     }
                     .font(.callout)
+                }
+                // Die Geraeteart stellt „Abfragen" selbst fest. Von Hand
+                // gebraucht wird sie nur dort, wo das nicht gelingt: Eine
+                // AWTRIX NG hinter einer Anmeldung antwortet auf keine Frage
+                // und gilt sonst als Werksfirmware — die App schickte dann auf
+                // `<Praefix>/custom/…` statt auf `<Praefix>/cmd/apps/pushed/…`,
+                // und auf der Uhr erschiene nichts. Darum im Kontextmenue und
+                // nicht in der Liste: ein Ausweg, kein Regelfall.
+                .contextMenu {
+                    Picker("Geräteart", selection: geraeteart($uhr)) {
+                        ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
+                            Text(art.beschriftung).tag(art)
+                        }
+                    }
                 }
             }
             HStack {
@@ -145,6 +146,18 @@ struct VerbindungiOS: View {
                     uhr.wrappedValue.typ = neu
                     zustand.geraeteartGeaendert(uhr.wrappedValue.id)
                 })
+    }
+
+    /// Adresse, Themenpraefix und Geraeteart in einer Zeile — mit Mittelpunkt
+    /// getrennt, wie es Listen in den Systemeinstellungen halten.
+    private func kennzeile(_ uhr: Uhr) -> String {
+        var teile = [uhr.host]
+        if uhr.wirksameBetriebsart == .mqtt {
+            teile.append(uhr.praefix.isEmpty ? lok("noch nicht abgefragt")
+                                             : Themenpraefix.sichtbar(uhr.praefix))
+        }
+        teile.append(lok(uhr.gattung.beschriftung))
+        return teile.joined(separator: " · ")
     }
 
     private func betriebsart(_ uhr: Binding<Uhr>) -> Binding<Betriebsart> {
