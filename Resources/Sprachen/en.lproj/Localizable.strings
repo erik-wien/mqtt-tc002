@@ -933,3 +933,6 @@
 
 /* EditorBereichView.swift — das Sichern-Blatt warnt vor dem Ersetzen */
 "Ersetzt „%@“." = "Replaces \"%@\".";
+
+/* EditorBereichView.swift — die Abschlusszeile ueber der Leinwand */
+"Ohne Namen" = "Untitled";

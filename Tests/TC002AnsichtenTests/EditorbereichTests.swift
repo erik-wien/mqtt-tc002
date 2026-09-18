@@ -408,10 +408,14 @@ final class EditorbereichTests: XCTestCase {
 
         for zweig in ["if ungesichert { rueckfrage = .groesse(neue) } else { groesseSetzen(neue) }",
                       "if ungesichert { rueckfrage = .neu } else { neu() }",
-                      "if ungesichert { rueckfrage = .oeffnen(eintrag) } else { oeffnen(eintrag) }",
                       "if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }"] {
             XCTAssertTrue(text.contains(zweig), "„\(zweig)“ fehlt — dieser Anlass fragt wieder nach eigener Regel")
         }
+        // Das Öffnen fragt nicht: Die Übersicht ist der Einstieg in den
+        // Bereich, und ein Stück dort anzutippen heißt, es zu wollen. Gesichert
+        // wird seit dem Haken über der Leinwand ausdrücklich.
+        XCTAssertFalse(text.contains("rueckfrage = .oeffnen"),
+                       "das Öffnen fragt wieder nach — beim Einstieg in den Bereich ist das keine Frage")
     }
 
     /// Woran „ungesichert“ hängt: Nicht an „ist die Leinwand leer“ — eine

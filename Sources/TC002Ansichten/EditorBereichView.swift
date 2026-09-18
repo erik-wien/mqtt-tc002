@@ -161,8 +161,6 @@ public struct EditorBereichView: View {
         case neu
         /// Ein Groessenwechsel. Umgerechnet wird zwischen den Groessen nichts.
         case groesse(Leinwandgroesse)
-        /// Ein Stueck aus dem Bestand soll auf die Leinwand.
-        case oeffnen(Editoreintrag)
         /// Ein eben geladenes Stueck — aus einer Datei oder von LaMetric. Es
         /// liegt schon im Bestand; zur Frage steht allein die Leinwand,
         /// und deshalb hat nur dieser Fall den dritten Weg.
@@ -172,13 +170,13 @@ public struct EditorBereichView: View {
             switch self {
             case .neu: return lok("Neu anfangen?")
             case .groesse: return lok("Größe wechseln?")
-            case .oeffnen, .geladen: return lok("Gemaltes ersetzen?")
+            case .geladen: return lok("Gemaltes ersetzen?")
             }
         }
 
         var text: String {
             switch self {
-            case .neu, .oeffnen:
+            case .neu:
                 return lok("Das Gemalte ist nicht gesichert und geht dabei verloren.")
             case .groesse:
                 return lok("Zwischen den Größen wird nichts umgerechnet — das Gemalte geht dabei verloren. „Rückgängig“ holt es zurück.")
@@ -322,6 +320,7 @@ public struct EditorBereichView: View {
             if zeigtUebersicht {
                 uebersicht
             } else {
+                abschlusszeile
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern)
@@ -335,20 +334,6 @@ public struct EditorBereichView: View {
             // der Werkzeugleiste.
             ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
             // Der Weg zurueck aus dem Editor in den Bestand.
-            if !zeigtUebersicht {
-                ToolbarItem(placement: .navigation) {
-                    Button { zeigtUebersicht = true } label: {
-                        Label("Fertig", systemImage: "xmark")
-                    }
-                    .help(lok("Fertig"))
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button { sichernAnfragen() } label: {
-                        Label("Sichern", systemImage: "checkmark")
-                    }
-                    .help(lok("Sichern"))
-                }
-            }
             werkzeugleiste
         }
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
@@ -398,15 +383,13 @@ public struct EditorBereichView: View {
                 Button("Neu anfangen", role: .destructive) { neu() }
             case .groesse(let neue):
                 Button("Wechseln", role: .destructive) { groesseSetzen(neue) }
-            case .oeffnen(let eintrag):
-                Button("Öffnen", role: .destructive) { oeffnen(eintrag) }
             case .geladen(let eintrag):
                 Button("Ersetzen", role: .destructive) { aufDieLeinwand(eintrag) }
                 // Der zweite Weg, den es nur hier gibt: Das Stueck liegt schon
                 // im Bestand, die Leinwand bleibt stehen.
                 Button("Nur in den Bestand") { imBestandLassen(eintrag) }
             }
-            // Fuer alle vier: Eine Rueckfrage ohne Ausweg ist keine.
+            // Fuer alle drei: Eine Rueckfrage ohne Ausweg ist keine.
             Button("Abbrechen", role: .cancel) {}
         } message: { frage in
             Text(frage.text)
@@ -965,6 +948,27 @@ public struct EditorBereichView: View {
 
     private static let galerie = URL(string: "https://developer.lametric.com/icons")!
 
+    /// Abbrechen links, Sichern rechts — über der Leinwand und nicht in der
+    /// Werkzeugleiste: Dort saessen sie am rechten Fensterrand, also über dem
+    /// Inspektor, und nicht über dem Stueck, das sie betreffen.
+    private var abschlusszeile: some View {
+        HStack {
+            Button { zeigtUebersicht = true } label: {
+                Label("Fertig", systemImage: "xmark")
+            }
+            .knopfBefehl()
+            .keyboardShortcut(.cancelAction)
+            Spacer()
+            Text(name.isEmpty ? lok("Ohne Namen") : name)
+                .font(.headline).lineLimit(1)
+            Spacer()
+            Button { sichernAnfragen() } label: {
+                Label("Sichern", systemImage: "checkmark")
+            }
+            .knopfHaupthandlung()
+        }
+    }
+
     // MARK: - Uebersicht
 
     /// Der ganze Bestand im Hauptfenster, nach Groesse gruppiert. Ein Druck
@@ -1435,7 +1439,7 @@ public struct EditorBereichView: View {
     }
 
     private func anklicken(_ eintrag: Editoreintrag) {
-        if ungesichert { rueckfrage = .oeffnen(eintrag) } else { oeffnen(eintrag) }
+        oeffnen(eintrag)
     }
 
     /// Holt einen Eintrag des Bestands auf die Leinwand. `meldung` sagt, was
