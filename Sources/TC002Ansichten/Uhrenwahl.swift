@@ -52,9 +52,9 @@ public struct Uhrenmenue: View {
 /// Am Zeiger anklickbar, am Finger wischbar: Das ist der eine Unterschied
 /// zwischen den Bedienungen, den die Regel zulässt: Ein Punkt von acht Punkten
 /// Durchmesser ist mit der Maus ein Ziel und mit dem Finger keines. Deshalb
-/// trägt die Reihe hier die Klicks, und `uhrenwischen` daneben die Wischgeste
-/// über der ganzen Vorschau — auf jeder Oberfläche beides, nur verschieden
-/// leicht zu treffen.
+/// trägt die Reihe hier die Klicks, und `Uhrenblaetterer` das Blättern über
+/// der ganzen Vorschau — auf jeder Oberfläche beides, nur verschieden leicht
+/// zu treffen.
 ///
 /// Bei einer Uhr bleibt sie weg: Ein einzelner Punkt sagt nichts.
 public struct Uhrenpunkte: View {
@@ -84,52 +84,46 @@ public struct Uhrenpunkte: View {
     }
 }
 
-public extension View {
-    /// Wischen über der Vorschau wechselt die angesehene Uhr — nach links die
-    /// nächste, nach rechts die vorige, in Schleife.
-    ///
-    /// Über der Vorschau und nicht über der ganzen Ansicht: Darunter
-    /// liegen die fünf Blöcke, die selbst auf Wischen reagieren (umschalten
-    /// und löschen), und eine Geste, die beides fängt, nähme ihnen ihre.
-    ///
-    /// `minimumDistance: 20` und der Vergleich mit der senkrechten Strecke:
-    /// Am Telefon liegt die Vorschau in einem Scrollbereich, und eine Geste,
-    /// die bei jedem Daumenzucken zugreift, macht das Scrollen unbrauchbar.
-    func uhrenwischen(_ zustand: AppZustand) -> some View {
-        modifier(Uhrenwischen(zustand: zustand))
-    }
-}
-
-/// Die Wischgeste über der Vorschau samt Schiebebild: Die alte Uhr geht zur
-/// Seite hinaus, die neue kommt von der anderen nach.
+/// Die Vorschau aller Uhren nebeneinander, blätterbar — ein Ausschnitt je Uhr.
 ///
-/// Die Richtung merkt sich der Modifikator, weil sie dem Übergang erst seinen
-/// Sinn gibt — nach links gewischt heißt, die nächste kommt von rechts. Ohne
-/// das führe jeder Wechsel in dieselbe Richtung, gleich wohin man zieht.
+/// Das Blättern kommt aus dem System (`.scrollTargetBehavior(.paging)` mit
+/// `.scrollPosition`, ab iOS 17 und macOS 14) und nicht aus einer eigenen
+/// Geste: Nur so folgt das Bild dem Finger, statt beim Loslassen etwas
+/// überzublenden. Der Ausschnitt ist zugleich die Wahl der angesehenen Uhr —
+/// wer blättert, sieht eine andere an.
 ///
-/// `.id` auf der angesehenen Uhr ist der Auslöser: Erst dadurch hält SwiftUI
-/// die alte und die neue Ansicht für zwei verschiedene und blendet die eine
-/// gegen die andere, statt denselben Inhalt still zu ersetzen.
-struct Uhrenwischen: ViewModifier {
+/// Der Inhalt bekommt gesagt, ob seine Uhr die angesehene ist: Nur für sie
+/// lohnt die teure Laufschriftberechnung, die Nachbarn zeigen ihr Standbild.
+public struct Uhrenblaetterer<Inhalt: View>: View {
     @Bindable var zustand: AppZustand
-    @State private var richtung = 1
+    @ViewBuilder let inhalt: (Uhr, Bool) -> Inhalt
 
-    func body(content: Content) -> some View {
-        content
-            .id(zustand.aktiveID)
-            .transition(.asymmetric(
-                insertion: .move(edge: richtung > 0 ? .trailing : .leading),
-                removal: .move(edge: richtung > 0 ? .leading : .trailing)))
-            // Sonst zeichnet die hinausgehende Uhr über ihre Nachbarn hinweg.
-            .clipped()
-            .gesture(DragGesture(minimumDistance: 20)
-                .onEnded { zug in
-                    let waagrecht = zug.translation.width
-                    guard abs(waagrecht) > abs(zug.translation.height) else { return }
-                    richtung = waagrecht < 0 ? 1 : -1
-                    withAnimation(.snappy(duration: 0.28)) {
-                        zustand.uhrWeiter(um: richtung)
+    public init(zustand: AppZustand,
+                @ViewBuilder inhalt: @escaping (Uhr, Bool) -> Inhalt) {
+        self.zustand = zustand
+        self.inhalt = inhalt
+    }
+
+    public var body: some View {
+        if zustand.uhren.count > 1 {
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(zustand.uhren) { uhr in
+                        inhalt(uhr, uhr.id == zustand.aktiveID)
+                            .containerRelativeFrame(.horizontal)
+                            .id(uhr.id)
                     }
-                })
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollIndicators(.hidden)
+            .scrollPosition(id: Binding(
+                get: { zustand.aktiveID },
+                set: { if let neu = $0, neu != zustand.aktiveID { zustand.uhrAnsehen(neu) } }))
+        } else if let uhr = zustand.referenzUhr {
+            inhalt(uhr, true)
+        }
     }
 }
+

@@ -52,8 +52,8 @@ final class UhrenwahlTests: XCTestCase {
             let quelle = try ohneKommentare(pfad)
             XCTAssertTrue(quelle.contains("Uhrenpunkte(zustand: zustand)"),
                           "\(pfad): keine Punktreihe unter der Vorschau.")
-            XCTAssertTrue(quelle.contains(".uhrenwischen(zustand)"),
-                          "\(pfad): über der Vorschau lässt sich nicht wischen.")
+            XCTAssertTrue(quelle.contains("Uhrenblaetterer(zustand: zustand)"),
+                          "\(pfad): über der Vorschau lässt sich nicht blättern.")
         }
     }
 

@@ -53,78 +53,64 @@ public struct Verlaufsliste: View {
     }
 
     public var body: some View {
-        if !aufDerUhr.namen.isEmpty {
-            HStack {
-                Text("Auf der Uhr")
-                    .font(.caption).fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Text(aufDerUhr.quelle == .geraet ? lok("vom Gerät gemeldet")
-                                                 : lok("von dieser App angelegt"))
-                    .font(.caption2).foregroundStyle(.tertiary)
-                Spacer()
-            }
-            .padding(.horizontal, 6)
-            List {
-                ForEach(aufDerUhr.namen, id: \.self) { name in
-                    HStack {
+        // Eine Liste mit zwei Abschnitten, nicht zwei Listen untereinander:
+        // Eine eigene Liste mit fester Hoehe zeichnet sich als leerer Rahmen,
+        // sobald weniger darin steht, als die Hoehe hergibt.
+        List {
+            if !aufDerUhr.namen.isEmpty {
+                Section {
+                    ForEach(aufDerUhr.namen, id: \.self) { name in
                         Text(name).font(.system(.body, design: .monospaced))
-                        Spacer(minLength: 0)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    Task { await zustand.loeschen(name) }
+                                } label: {
+                                    Label("Löschen", systemImage: "trash")
+                                }
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button { zustand.umschalten(auf: name) } label: {
+                                    Label("Zeigen", systemImage: "eye")
+                                }
+                                .tint(.blue)
+                            }
+                            .contextMenu {
+                                Button("Zeigen") { zustand.umschalten(auf: name) }
+                                Button("Löschen", role: .destructive) {
+                                    Task { await zustand.loeschen(name) }
+                                }
+                            }
                     }
-                    .contentShape(Rectangle())
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await zustand.loeschen(name) }
-                        } label: {
-                            Label("Löschen", systemImage: "trash")
+                } header: {
+                    HStack(spacing: 6) {
+                        Text("Auf der Uhr")
+                        Text(aufDerUhr.quelle == .geraet ? lok("vom Gerät gemeldet")
+                                                         : lok("von dieser App angelegt"))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+            // Zwei Ueberschriften, weil es zwei Dinge sind: was jetzt auf der
+            // Uhr liegt — gleich von wem —, und was man selbst geschickt hat.
+            if zustand.verlaufAn, !eintraege.isEmpty {
+                Section("Verlauf") {
+                    ForEach(eintraege) { eintrag in
+                        Button { uebernehmen(eintrag) } label: {
+                            zeile(eintrag)
                         }
-                    }
-                    .swipeActions(edge: .leading) {
-                        Button { zustand.umschalten(auf: name) } label: {
-                            Label("Zeigen", systemImage: "eye")
-                        }
-                        .tint(.blue)
-                    }
-                    .contextMenu {
-                        Button("Zeigen") { zustand.umschalten(auf: name) }
-                        Button("Löschen", role: .destructive) {
-                            Task { await zustand.loeschen(name) }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                zustand.verlaufVergessen(eintrag.id)
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
-            .listStyle(.plain)
-            .frame(maxHeight: 140)
         }
-        if zustand.verlaufAn, !eintraege.isEmpty {
-            // Eine Ueberschrift, so klein wie moeglich: Ohne sie stuende
-            // dort eine Liste, die man fuer vieles halten kann — die Anzeigen
-            // auf der Uhr etwa, die es an anderer Stelle wirklich gibt. Mit
-            // ihr ist in einem Wort gesagt, dass dies die eigenen, schon
-            // geschickten Meldungen sind.
-            HStack {
-                Text("Verlauf")
-                    .font(.caption).fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 6)
-            List {
-                ForEach(eintraege) { eintrag in
-                    Button { uebernehmen(eintrag) } label: {
-                        zeile(eintrag)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            zustand.verlaufVergessen(eintrag.id)
-                        } label: {
-                            Label("Löschen", systemImage: "trash")
-                        }
-                    }
-                }
-            }
-            .listStyle(.plain)
-        }
+        .listStyle(.plain)
     }
 
     /// Eine Zeile: Zeit und Platz links, dann das Icon, dann der Text. Die

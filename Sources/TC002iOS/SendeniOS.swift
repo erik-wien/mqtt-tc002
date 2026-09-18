@@ -186,6 +186,21 @@ struct SendeniOS: View {
     /// unverändert `optionen`.
     private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
 
+    /// Die Vorschau einer bestimmten Uhr — jede hat ihr eigenes Maß und ihre
+    /// eigene Gattung. Die Laufschrift bekommt nur die angesehene: Ihre
+    /// Einzelbilder sind auf deren Maß gerechnet und wären auf einem anderen
+    /// das falsche Bild.
+    @ViewBuilder
+    private func vorschau(fuer uhr: Uhr, angesehen: Bool) -> some View {
+        let uhrmass = Anzeigemass.fuer(uhr)
+        let o = optionen.naeherung(fuer: uhr.typ ?? .tc002)
+        let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
+        VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
+                    icon: sitzt ? gewaehltesIcon?.datei : nil,
+                    laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames,
+                    typ: uhr.typ)
+    }
+
     private var passt: Bool {
         Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, mass: mass)
     }
@@ -446,11 +461,9 @@ struct SendeniOS: View {
                 // Uhr, die Punktreihe darunter sagt, die wievielte es
                 // ist — dieselben zwei Bausteine wie am Schreibtisch
                 // (`Uhrenwahl.swift`).
-                VorschauiOS(feld: Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, mass: mass),
-                            icon: passt ? gewaehltesIcon?.datei : nil,
-                            laufschriftBilder: passt ? nil : laufschriftFrames,
-                            typ: zustand.referenzUhr?.typ)
-                    .uhrenwischen(zustand)
+                Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
+                    vorschau(fuer: uhr, angesehen: angesehen)
+                }
                 Uhrenpunkte(zustand: zustand)
                 if !passt {
                     Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))

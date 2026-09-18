@@ -253,6 +253,28 @@ public struct SendenView: View {
     /// `optionen`: `gebauterRahmen` fragt hier nicht.
     private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
 
+    /// Die Vorschau einer bestimmten Uhr. Jede hat ihr eigenes Maß und ihre
+    /// eigene Gattung; beim Blättern müssen die Nachbarn deshalb selbst
+    /// gerastert werden und nicht mit den Zahlen der angesehenen.
+    ///
+    /// Die Laufschrift bekommt nur die angesehene: Ihre Einzelbilder sind auf
+    /// deren Maß gerechnet (`laufschriftSchluessel`), und auf einem anderen
+    /// wären sie schlicht das falsche Bild. Die Nachbarn zeigen ihr Standbild,
+    /// bis man bei ihnen angekommen ist.
+    @ViewBuilder
+    private func vorschau(fuer uhr: Uhr, angesehen: Bool, kante: Double) -> some View {
+        let art = uhr.typ
+        let uhrmass = Anzeigemass.fuer(uhr)
+        let o = optionen.naeherung(fuer: art ?? .tc002)
+        let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
+        VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
+                     kantenlaenge: kante,
+                     typ: art,
+                     icon: sitzt ? gewaehltesIcon?.datei : nil,
+                     iconKante: iconKante,
+                     laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+    }
+
     private var passt: Bool {
         Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
@@ -425,12 +447,9 @@ public struct SendenView: View {
                     // unten weg. Sie sitzen im selben mittigen Stapel, direkt
                     // unter dem Rahmen.
                     VStack(spacing: 6) {
-                        VorschauView(feld: feld, kantenlaenge: kante,
-                                    typ: geraeteart,
-                                    icon: passt ? gewaehltesIcon?.datei : nil,
-                                    iconKante: iconKante,
-                                    laufschriftBilder: passt ? nil : laufschriftFrames)
-                            .uhrenwischen(zustand)
+                        Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
+                            vorschau(fuer: uhr, angesehen: angesehen, kante: kante)
+                        }
                         Uhrenpunkte(zustand: zustand)
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
