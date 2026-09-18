@@ -60,6 +60,21 @@ mehreren Kilobyte für einen Satz.
 
 **Prüfung.** Einen Text mit sechzig Zeichen als `text` schicken und hinsehen.
 
+**Was daran hängt (18.09.2026).** Solange das so ist, hat „Scrolltempo" für
+alles, was diese App schickt, keine Wirkung — es gilt allein den Anzeigen, die
+das Gerät selbst verwaltet (Uhrzeit, Temperatur). Die Oberfläche sagt das seit
+dem 18.09.2026 auch so; vorher versprach sie an vier Stellen das Gegenteil.
+
+Daraus folgt eine Arbeit, die **erst nach der Behebung** sinnvoll ist: ein
+gemeinsames Vokabular für beide Lauftempi. Auf AWTRIX NG gibt es das längst —
+`scroll.speed` ist dort ein Prozentsatz, und `NGNutzlast.tempo` schickt je
+Meldung 66 · 100 · 145 für langsam · mittel · schnell. Auf der Werksfirmware
+wäre dieselbe Dreiteilung heute eine Behauptung über einen Regler, der nichts
+tut. Läuft selbst geschickter Text eines Tages durch, sind es wirklich zwei
+Namen für dieselbe Sache, und dann gehört `scrollSpeed` (Bereich
+undokumentiert, die Oberfläche bietet 0…20) **gemessen** auf langsam / mittel /
+schnell abgebildet — nicht geraten.
+
 ---
 
 ## 2. Ein leerer HTTP-Rumpf meldet Erfolg, ohne zu löschen

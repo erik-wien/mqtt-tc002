@@ -103,7 +103,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.wegeRegel
                 + [
                     .absatz("Läuft der Text beim Weg „als Pixel“, gilt „Tempo“ aus demselben Blatt — langsam, mittel oder schnell. Unter der Vorschau steht dann, aus wie vielen Einzelbildern der Lauf besteht."),
-                    .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Passt er nicht aufs Display, läuft er von selbst durch, ohne dass die App dafür ein GIF bauen muss; wie schnell, ist eine Einstellung der Uhr, die diese Fassung nicht anbietet."),
+                    .absatz("Beim Weg „als Text“ rastert die App dagegen nichts — sie schickt den Text als eigenen Textblock, und die Uhr setzt ihn mit ihrer eingebauten Schrift (Gerätereferenz, §4.3). Die Nutzlast ist damit winzig. Zu langer Text läuft dort aber nicht durch: Die Werksfirmware schneidet ihn ab. Wer langen Text will, nimmt „als Pixel“ — dort baut die App den Lauf selbst."),
 
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
                     .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Fassung stellt ihn nicht ein."),

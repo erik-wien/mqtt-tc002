@@ -444,7 +444,7 @@ public struct SendenView: View {
                 // hier von einem GIF, das niemand je sieht; was wirklich hinausgeht,
                 // ist der Rumpf, dessen Bytes `ngNutzlastBytes` misst.
                 if gattung.setztSelbst {
-                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo.",
+                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.",
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
                     if nutzlastBytes > 0 {
@@ -468,11 +468,23 @@ public struct SendenView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 case .text:
-                    // Zu langer Text ist hier kein Fehler und keine eigene Warnung
-                    // wert — die Uhr laesst ihn von selbst laufen (§4.3, §5.4). Statt
+                    // **Doch eine Breitenwarnung.** Bis zum 18.09.2026 stand hier,
+                    // zu langer Text sei auf diesem Weg kein Fehler, weil die Uhr
+                    // ihn von selbst laufen lasse. Das stimmt nicht: Gemessen am
+                    // 11.09.2026 mit drei Fassungen laeuft selbst geschickter Text
+                    // auf der Werksfirmware **nicht**, er wird abgeschnitten
+                    // (`docs/firmware-beobachtungen.md` Nr. 1) — und `scrollSpeed`
+                    // aendert daran nichts. Die Schaetzung ist ungenau, weil die
+                    // Uhr ihre eigene Schrift setzt; deshalb „voraussichtlich".
+                    if !passt {
+                        Label("Voraussichtlich zu lang: Die Uhr schneidet selbst geschickten Text ab, statt ihn durchlaufen zu lassen. Wie viel auf ihre eingebaute Schrift passt, weiß diese App nicht genau — „als Pixel“ lässt ihn laufen.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.footnote).foregroundStyle(.orange)
+                    }
+                    // Statt
                     // der Breitenwarnung steht hier, dass unsere Vorschau nur eine
                     // Naeherung ist: die Uhr rastert selbst, mit ihrer eigenen Schrift.
-                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, bestimmt „Scrolltempo“ unter „Einstellungen“ das Tempo.",
+                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders.",
                           systemImage: "info.circle")
                         .font(.footnote).foregroundStyle(.secondary)
                     if !unbekannteZeichen.isEmpty {

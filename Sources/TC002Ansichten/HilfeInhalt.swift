@@ -181,8 +181,9 @@ public enum HilfeInhalt {
         .absatz("Bei „als Pixel“ entscheidet die App selbst, ob der Text stehenbleibt oder durchläuft — es gibt dafür keinen eigenen Schalter."),
         .tabelle([
             ("als Pixel", "Umlaute und „ß“ gehen; die App entscheidet selbst — passt der Text, bleibt er stehen, sonst läuft er als GIF."),
-            ("als Text", "nur `%`, `.`, `-` und `:` als Sonderzeichen; läuft von selbst durch, wenn nötig, ohne dass die App ein GIF bauen muss."),
+            ("als Text", "nur `%`, `.`, `-` und `:` als Sonderzeichen; die Uhr setzt ihn selbst — auf der Ulanzi-Werksfirmware bleibt er dabei stehen und wird abgeschnitten, wenn er nicht passt."),
         ]),
+        .absatz("Dass zu langer Text auf diesem Weg abgeschnitten wird statt durchzulaufen, ist ein Mangel der Werksfirmware und keine Absicht: Die Uhr hat eine Einstellung fürs Lauftempo, sie wirkt auf selbst geschickte Anzeigen aber nicht. Am 11.09.2026 mit drei Fassungen geprüft, keine lief. Wer langen Text will, nimmt „als Pixel“ — dort baut die App den Lauf selbst."),
         .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
     ]
 

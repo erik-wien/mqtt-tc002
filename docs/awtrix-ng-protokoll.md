@@ -408,9 +408,21 @@ Palette malt und die Stückfarben übergeht. `textBlinkMs`, `textFadeMs`,
 | `direction` | string | `left` · `right` | `left` | Laufrichtung |
 | `entry` | string | `inline` · `offscreen` | `inline` | ruhend auf dem Panel beginnen oder von außen einlaufen |
 | `whenFits` | string | `static` · `scroll` | `static` | ob Text, der ohnehin passt, sich trotzdem bewegt |
-| `speed` | int | ≥ 0 | `100` | Prozent der Grundgeschwindigkeit |
+| `speed` | int | ≥ 0 | `100` | Prozent der Grundgeschwindigkeit — siehe unten |
 | `gap` | int | ≥ 0 | `8` | nur `loop` — Pixel zwischen den Wiederholungen |
 | `holdMs` | int | ≥ 0 | `1000` | Pause vor dem Anlaufen und an jedem Wendepunkt von `bounce` |
+
+📘 **Was die 100 in Pixeln bedeutet, und wo die Grenze liegt.** Die
+Grundgeschwindigkeit sind rund **21 Pixel je Sekunde** bei 40 Bildern je
+Sekunde; `speed` ist der Prozentsatz davon (200 doppelt so schnell, 50 halb so
+schnell). Die Herstellerdokumentation nennt **200 als Obergrenze für scharfes
+Scrollen** auf einem acht Pixel hohen Panel wie dem der TC001: Darüber bleibt
+die Bewegung flüssig, der Text wird aber unleserlich.
+
+Diese App schickt je Meldung 66 · 100 · 145 für langsam · mittel · schnell
+(`NGNutzlast.tempo`) — umgerechnet aus den Standzeiten ihres eigenen
+Pixelwegs, mit „mittel" auf der Gerätevorgabe und „schnell" deutlich unter der
+Lesbarkeitsgrenze.
 
 | `mode` | Bewegung | Durchlauf gezählt | Pause |
 |---|---|---|---|
