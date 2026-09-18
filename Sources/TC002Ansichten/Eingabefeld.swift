@@ -91,7 +91,15 @@ public extension View {
                             Image(systemName: "return")
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
+                        // **In der Akzentfarbe, das (x) daneben gedaempft.**
+                        // Blau ist in diesem Haus die *eine* Haupthandlung
+                        // einer Ansicht (`Knopfstil.swift`), und die ist hier
+                        // das Senden. Grau war es die schwaechere Haelfte von
+                        // beidem: der wichtigste Griff, so unauffaellig wie das
+                        // Leeren daneben. Ein gefuellter Knopf waere zu viel —
+                        // im Feld ist das Zeichen selbst die Schaltflaeche,
+                        // wie der Pfeil in Nachrichten.
+                        .foregroundStyle(.tint)
                         .help(lok("Senden"))
                         .accessibilityLabel(Text("Senden"))
                     }

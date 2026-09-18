@@ -508,7 +508,14 @@ public struct SendenView: View {
             // Frage, an wen.
             HStack(spacing: 8) {
                 textFeld
+                // **Dieselbe Groesse wie das Feld.** Bedienelemente in einer
+                // Zeile teilen sich ihre Groesse; ein regulaerer Knopf neben
+                // einem `extraLarge`-Feld sass zu tief und wirkte wie ein
+                // Nachtrag. Hier und nicht in `ZielauswahlView` selbst: Im
+                // Editor steht er neben einem gewoehnlichen Sendeknopf und
+                // haette sich dort mit diesem ueberworfen.
                 ZielauswahlView(zustand: zustand)
+                    .controlSize(.extraLarge)
             }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
