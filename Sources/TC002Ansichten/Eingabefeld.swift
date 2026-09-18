@@ -84,25 +84,41 @@ public extension View {
                             .controlSize(.small)
                             .accessibilityLabel(Text("Sende…"))
                     } else if let senden, !text.wrappedValue.isEmpty {
-                        // Ein gefuellter Kreis in der Akzentfarbe, wie der
-                        // Sendepfeil in Nachrichten: Beim ersten Anwendertest
-                        // wurde das blosse Zeichen nicht als Schaltflaeche
-                        // erkannt. Blau ist in diesem Haus die eine
-                        // Haupthandlung einer Ansicht (`Knopfstil.swift`), und
-                        // die ist hier das Senden.
-                        Button(action: senden) {
-                            Image(systemName: "arrow.up")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 26, height: 26)
-                                .background(Circle().fill(.tint))
-                        }
-                        .buttonStyle(.plain)
-                        .help(lok("Senden"))
-                        .accessibilityLabel(Text("Senden"))
+                        Sendezeichen(senden: senden)
                     }
                 }
                 .padding(.trailing, 4)
             }
+    }
+}
+
+/// Der Sendeknopf im Eingabefeld: ein gefüllter Kreis in der Akzentfarbe, wie
+/// der Sendepfeil in Nachrichten.
+///
+/// Ein eigener Baustein und kein Stück der Erweiterung darüber, weil
+/// `@ScaledMetric` eine Ansicht braucht: Der Kreis sitzt in einem Feld, das mit
+/// der eingestellten Textgröße wächst — bliebe er fest, säße er darin
+/// irgendwann wie ein Fremdkörper.
+///
+/// Blau ist in diesem Haus die eine Haupthandlung einer Ansicht
+/// (`Knopfstil.swift`), und die ist hier das Senden. Beim ersten Anwendertest
+/// wurde das bloße Zeichen ohne Kreis nicht als Schaltfläche erkannt.
+struct Sendezeichen: View {
+    let senden: () -> Void
+
+    @ScaledMetric(relativeTo: .body) private var kante: Double = 26
+    @ScaledMetric(relativeTo: .body) private var pfeil: Double = 13
+
+    var body: some View {
+        Button(action: senden) {
+            Image(systemName: "arrow.up")
+                .font(.system(size: pfeil, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: kante, height: kante)
+                .background(Circle().fill(.tint))
+        }
+        .buttonStyle(.plain)
+        .help(lok("Senden"))
+        .accessibilityLabel(Text("Senden"))
     }
 }

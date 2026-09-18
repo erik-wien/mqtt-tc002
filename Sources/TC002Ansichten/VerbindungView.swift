@@ -31,6 +31,18 @@ public struct VerbindungView: View {
         }
     }
 
+    /// Die vier Spaltenbreiten der Uhrenzeile. Zusammen 518 Punkte plus
+    /// Zwischenraum — der Kasten eines gruppierten Formulars ist am Mac bei
+    /// 704 gedeckelt, gleich wie breit das Fenster ist.
+    ///
+    /// `@ScaledMetric` und keine festen Zahlen: Sonst hebelt die Zeile die
+    /// Textgrößen-Einstellung des Systems aus und schneidet den Inhalt ab,
+    /// statt ihn wachsen zu lassen.
+    @ScaledMetric(relativeTo: .body) private var breiteName: Double = 140
+    @ScaledMetric(relativeTo: .body) private var breiteAdresse: Double = 130
+    @ScaledMetric(relativeTo: .body) private var breiteBetriebsart: Double = 116
+    @ScaledMetric(relativeTo: .body) private var breiteGeraeteart: Double = 132
+
     public var body: some View {
         Form {
             Section {
@@ -51,10 +63,10 @@ public struct VerbindungView: View {
                         HStack {
                             TextField("Name", text: $uhr.name)
                                 .eingabefeld()
-                                .frame(width: 140)
+                                .frame(width: breiteName)
                             TextField("Adresse", text: $uhr.host)
                                 .eingabefeld()
-                                .frame(width: 130)
+                                .frame(width: breiteAdresse)
                                 .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
                             Spacer(minLength: 8)
                             Picker("Betriebsart", selection: betriebsart($uhr)) {
@@ -63,7 +75,7 @@ public struct VerbindungView: View {
                             }
                             .labelsHidden()
                             .pickerStyle(.segmented)
-                            .frame(width: 116)
+                            .frame(width: breiteBetriebsart)
                             // Der Tausch-Hinweis gehoert an den Schalter,
                             // nicht als Fusstext unter die Liste — dort
                             // kostet er keine Zeile und steht, wo die Wahl
@@ -77,7 +89,7 @@ public struct VerbindungView: View {
                                 }
                             }
                             .labelsHidden()
-                            .frame(width: 132)
+                            .frame(width: breiteGeraeteart)
                             .help("„Abfragen“ stellt die Geräteart selbst fest. Von Hand zu wählen ist sie nur dort, wo das nicht gelingt — etwa wenn die Schnittstelle der AWTRIX eine Anmeldung verlangt.")
                         }
                         HStack(spacing: 8) {
