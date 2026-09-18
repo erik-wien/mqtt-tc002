@@ -297,10 +297,12 @@ public struct EditorBereichView: View {
         Laufbildstand(bilder: leinwand.bilder, verzoegerung: leinwand.verzoegerung)
     }
 
-    private var belegtePlaetze: Set<Int> {
-        let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
-        return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
-    }
+    /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
+    /// die **angesehene** Uhr, dieselbe, aus der `slotzustand` den Inhalt
+    /// nimmt. Hier stand sie bis zum 18.09.2026 dreimal wortgleich und fragte
+    /// die Zielmenge; das ergab Bloecke, die Belegung und Inhalt aus
+    /// verschiedenen Uhren zusammensetzten.
+    private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
 
     /// Leer oder 0 heisst: keine eigene Dauer, "duration" fehlt dann in der
     /// Nutzlast.
@@ -1030,7 +1032,10 @@ public struct EditorBereichView: View {
             Button { platz = i } label: {
                 Slotblock(platz: i,
                           zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                          gewaehlt: platz == i)
+                          gewaehlt: platz == i,
+                          // Das Mass der angesehenen Uhr: Ihren Stand zeigt
+                          // der Block, und auf einer NG sind das 32×8.
+                          mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002)
             }
             .buttonStyle(.plain)
             // Wie unter „Senden": das ⊗ ueber dem Block, den es betrifft.

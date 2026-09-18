@@ -25,14 +25,21 @@ public struct Slotblock: View {
     public let platz: Int
     public let zustand: Slotzustand
     public let gewaehlt: Bool
+    /// **Das Mass der Uhr, deren Stand dieser Block zeigt.** Bis zum
+    /// 18.09.2026 war es fest 52×16; seit die Bloecke auch fuer eine NG ein
+    /// Bild zeigen duerfen, muessen sie deren 32×8 kennen — sonst faende die
+    /// Wache in `Slotraster` die falsche Punktzahl vor und liesse den Block
+    /// leer.
+    public let mass: Anzeigemass
 
-    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool) {
+    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .tc002) {
         self.platz = platz
         self.zustand = zustand
         self.gewaehlt = gewaehlt
+        self.mass = mass
     }
 
-    private static let seitenverhaeltnis = Double(Pixelfeld.breiteStandard) / Double(Pixelfeld.hoeheStandard)
+    private var seitenverhaeltnis: Double { Double(mass.breite) / Double(mass.hoehe) }
     private static let eckenradius = 6.0
 
     public var body: some View {
@@ -77,7 +84,7 @@ public struct Slotblock: View {
             case .bekannt(let punkte):
                 ZStack {
                     RoundedRectangle(cornerRadius: Self.eckenradius).fill(.black)
-                    Slotraster(punkte: punkte)
+                    Slotraster(punkte: punkte, mass: mass)
                         .clipShape(RoundedRectangle(cornerRadius: Self.eckenradius))
                     RoundedRectangle(cornerRadius: Self.eckenradius).stroke(.quaternary)
                 }
@@ -88,7 +95,7 @@ public struct Slotblock: View {
                 }
             }
         }
-        .aspectRatio(Self.seitenverhaeltnis, contentMode: .fit)
+        .aspectRatio(seitenverhaeltnis, contentMode: .fit)
         .overlay {
             if gewaehlt {
                 RoundedRectangle(cornerRadius: Self.eckenradius)
@@ -119,11 +126,12 @@ public struct Slotblock: View {
 /// keine eigene Rasterung, kein Bezug zu `Meldungsbau`.
 private struct Slotraster: View {
     let punkte: [String?]
+    let mass: Anzeigemass
 
     var body: some View {
         Canvas { kontext, groesse in
-            let spalten = Pixelfeld.breiteStandard
-            let zeilen = Pixelfeld.hoeheStandard
+            let spalten = mass.breite
+            let zeilen = mass.hoehe
             guard punkte.count == spalten * zeilen else { return }
             let kante = groesse.width / Double(spalten)
             for y in 0..<zeilen {

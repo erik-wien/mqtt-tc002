@@ -282,6 +282,39 @@ final class AppZustandTests: XCTestCase {
                        "Nachsehen darf die Zielmenge nicht anruehren.")
     }
 
+    /// **Die Bloecke gehoeren der angesehenen Uhr — auch beim Belegtsein.**
+    ///
+    /// Sie zeigen den Stand der angesehenen Uhr (`slotzustand` fragt
+    /// `referenzUhr`), aber **ob** ein Platz belegt ist, rechneten die drei
+    /// Sendeansichten bis zum 18.09.2026 aus `ziele()` — den Empfaengern.
+    /// Solange Ansehen und Senden dasselbe waren, fiel das nie auf; seit sie
+    /// getrennt sind, zeigte ein Block die Belegung der einen und den Inhalt
+    /// der anderen Uhr. Wer eine Uhr ansah, an die er gerade nicht sendet, sah
+    /// fuenf leere Plaetze — auch fuer das, was er selbst darauf geschickt
+    /// hatte.
+    func testDieBelegtenPlaetzeGehoerenDerAngesehenenUhr() throws {
+        let angesehen = Uhr(name: "Angesehen", host: "a.example", praefix: "pa")
+        let ziel = Uhr(name: "Ziel", host: "b.example", praefix: "pb")
+        d.set(try JSONEncoder().encode([angesehen, ziel]), forKey: "uhren")
+        d.set(angesehen.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([ziel.id])), forKey: "zielIDs")
+
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.bekannteAnzeigen[angesehen.id] = ["meldung1", "meldung3"]
+        zustand.bekannteAnzeigen[ziel.id] = ["meldung5"]
+
+        XCTAssertEqual(zustand.belegtePlaetze(), [1, 3],
+                       "Die Bloecke zeigen den Stand der angesehenen Uhr, nicht den der Empfaenger.")
+    }
+
+    /// Ohne angesehene Uhr ist nichts belegt — und nicht etwa alles.
+    func testOhneAngeseheneUhrIstNichtsBelegt() throws {
+        d.removeObject(forKey: "uhren")
+        d.removeObject(forKey: "aktiveID")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        XCTAssertTrue(zustand.belegtePlaetze().isEmpty)
+    }
+
     /// **Die App schreibt nie eine leere Zielmenge** — und das ist keine
     /// Schoenheitsfrage, sondern eine Verstaendigung mit dem
     /// Kommandozeilenwerkzeug.

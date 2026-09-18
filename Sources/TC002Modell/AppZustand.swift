@@ -511,21 +511,44 @@ public final class AppZustand {
     ///
     /// Eine Fassung fuer alle drei Ansichten (Senden Mac, Senden iPhone,
     /// Bilder): Derselbe Platz derselben Uhr soll ueberall dasselbe zeigen.
+    /// **Welche der fuenf Plaetze auf der angesehenen Uhr belegt sind.**
+    ///
+    /// Gefragt ist `referenzUhr` und nicht `ziele()` — dieselbe Uhr, aus der
+    /// auch `slotzustand` unten den Inhalt nimmt. Bis zum 18.09.2026 rechneten
+    /// das die drei Sendeansichten je fuer sich aus der **Zielmenge**; solange
+    /// Ansehen und Senden dasselbe waren, fiel der Unterschied nie auf. Seit
+    /// sie getrennt sind, zeigte ein Block die Belegung der einen und den
+    /// Inhalt der anderen Uhr: Wer eine Uhr ansah, an die er gerade nicht
+    /// sendet, sah fuenf leere Plaetze — auch fuer das, was er selbst darauf
+    /// geschickt hatte.
+    ///
+    /// Hier und nicht dreimal in den Ansichten: Es ist dieselbe Frage an
+    /// dieselben Daten, und drei Abschriften laufen auseinander.
+    public func belegtePlaetze() -> Set<Int> {
+        guard let uhr = referenzUhr else { return [] }
+        let namen = Set(anzeigenAufUhr(uhr.id))
+        return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
+    }
+
     public func slotzustand(_ platz: Int, belegt: Bool,
                             gedaechtnis: Slotgedaechtnis = .gemeinsam) -> Slotzustand {
         guard belegt else { return .frei }
         guard let uhr = referenzUhr else { return .unbekannt }
         if let bild = slotInhalt[uhr.id]?[platz] { return .bekannt(bild.pixel) }
-        // **Der Riegel fuer AWTRIX NG.** Das Gedaechtnis merkt sich Regler, und
-        // `gerastert` macht daraus ein 52×16-Bild in unserer Schrift. Auf einer
-        // NG steht der Text in **ihrer** Schrift auf 32×8 — das gerechnete Bild
-        // waere nicht eine ungenaue Erinnerung, sondern eine falsche. Ein Block,
-        // der es zeigte, behauptete etwas, das niemand belegen kann; „belegt,
-        // Inhalt unbekannt" ist weniger und wahr.
-        guard uhr.gattung == .tc002 else { return .unbekannt }
+        // **Der Riegel fuer AWTRIX NG ist am 18.09.2026 gefallen.** Er stuetzte
+        // sich auf zwei Saetze, die beide nicht mehr gelten: „ein 52×16-Bild"
+        // und „in unserer Schrift". Seit `Anzeigemass` und
+        // `Meldungsoptionen.naeherung` rechnet `gerastert` fuer eine NG auf
+        // ihren 32×8 und mit derselben Naeherungsschrift, die die Vorschau
+        // ohnehin zeigt — dasselbe Bild, dieselbe Einschraenkung.
+        //
+        // Dass es eine Naeherung ist, sagt die Hilfe seit je fuer **alle**
+        // Bloecke: Sie zeigen, was auf dem Platz liegt, nicht, wie es auf der
+        // Uhr aussieht. Nichts zu zeigen war die staerkere Behauptung — es hiess
+        // „wir wissen es nicht", obwohl wir es geschickt haben.
         guard let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
               let optionen = stand.optionen else { return .unbekannt }
-        return .bekannt(gerastert(stand, optionen))
+        return .bekannt(gerastert(stand, optionen, uhr: uhr))
     }
 
     /// Zwischenspeicher fuer die aus einem gemerkten Stand gerechneten Pixel.
@@ -551,20 +574,35 @@ public final class AppZustand {
     /// `@ObservationIgnored`, weil dies kein Zustand der App ist, sondern eine
     /// Rechnung: Beobachtet, wuerde das Schreiben aus `body` heraus ein
     /// erneutes Zeichnen ausloesen.
-    @ObservationIgnored private var gerastertePixel: [Slotstand: [String?]] = [:]
+    @ObservationIgnored private var gerastertePixel: [Rasterschluessel: [String?]] = [:]
 
     /// Die Pixel zu einem gemerkten Stand — gerechnet, wenn noetig, sonst aus
     /// dem Zwischenspeicher darueber.
-    private func gerastert(_ stand: Slotstand, _ optionen: Meldungsoptionen) -> [String?] {
-        if let fertig = gerastertePixel[stand] { return fertig }
-        let pixel = Meldungsbau.feld(optionen, mitIcon: stand.icon != nil,
-                                     iconKante: stand.iconKanteOderAcht).punkteRoh
+    /// **Der Zwischenspeicher haengt an Stand *und* Uhr.** Derselbe gemerkte
+    /// Stand ergibt auf einer Werksfirmware ein 52×16-Bild in der gewaehlten
+    /// Schrift und auf einer NG ein 32×8 in der Naeherungsschrift; ein
+    /// Schluessel allein aus dem Stand vertauschte die beiden.
+    private struct Rasterschluessel: Hashable {
+        let stand: Slotstand
+        let breite: Int
+        let hoehe: Int
+        let setztSelbst: Bool
+    }
+
+    private func gerastert(_ stand: Slotstand, _ optionen: Meldungsoptionen, uhr: Uhr) -> [String?] {
+        let mass = Anzeigemass.fuer(uhr)
+        let schluessel = Rasterschluessel(stand: stand, breite: mass.breite, hoehe: mass.hoehe,
+                                          setztSelbst: uhr.gattung.setztSelbst)
+        if let fertig = gerastertePixel[schluessel] { return fertig }
+        let pixel = Meldungsbau.feld(optionen.naeherung(fuer: uhr.gattung),
+                                     mitIcon: stand.icon != nil,
+                                     iconKante: stand.iconKanteOderAcht, mass: mass).punkteRoh
         // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt
         // fuellt: Jede Sendung legt einen weiteren Stand an, gebraucht werden
         // fuenf je Uhr. Ganz leeren statt einzeln verdraengen — der naechste
         // Durchlauf rastert die fuenf sichtbaren sofort wieder ein.
         if gerastertePixel.count >= 40 { gerastertePixel.removeAll() }
-        gerastertePixel[stand] = pixel
+        gerastertePixel[schluessel] = pixel
         return pixel
     }
 

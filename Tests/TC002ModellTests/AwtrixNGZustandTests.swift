@@ -193,18 +193,52 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     // MARK: - Was ein Block zeigen darf
 
-    /// **Der Riegel.** Das Gedaechtnis merkt sich Regler, und daraus rechnet
-    /// `slotzustand` ein 52×16-Bild in **unserer** Schrift. Auf einer NG steht
-    /// der Text in ihrer Schrift auf 32×8 — das Bild waere nicht eine ungenaue
-    /// Erinnerung, sondern eine falsche.
-    func testEinNGBlockZeigtKeinGerechnetesBild() throws {
+    /// **Der Riegel ist am 18.09.2026 gefallen — weil seine Begruendung
+    /// weggefallen ist.**
+    ///
+    /// Er lautete: Das Gedaechtnis merkt sich Regler, und daraus rechnet
+    /// `slotzustand` ein **52×16**-Bild in **unserer** Schrift; auf einer NG
+    /// steht der Text in ihrer Schrift auf 32×8, das Bild waere also falsch.
+    /// Beide Haelften stimmen nicht mehr: `Anzeigemass` rastert auf den 32×8
+    /// der Uhr, `Meldungsoptionen.naeherung` setzt dieselbe Naeherungsschrift,
+    /// die die Vorschau ohnehin zeigt. Es ist dasselbe Bild mit derselben
+    /// Einschraenkung — und nichts zu zeigen war die staerkere Behauptung:
+    /// „wir wissen es nicht", obwohl wir es selbst geschickt haben.
+    func testEinNGBlockZeigtDasBildAufIhremEigenenMass() throws {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "Bus kommt"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
 
-        XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis), .unbekannt,
-                       "ein gerechnetes Bild behauptete etwas, das auf einer AWTRIX nie so aussah")
+        guard case let .bekannt(pixel) = zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
+            return XCTFail("Der Block zeigt nichts, obwohl der Stand gemerkt ist.")
+        }
+        XCTAssertEqual(pixel.count, 32 * 8,
+                       "Auf einer NG gehoert das Bild auf ihre 32×8, nicht auf die 52×16 der Werksfirmware.")
+        XCTAssertTrue(pixel.contains { $0 != nil }, "Vom Text ist nichts uebriggeblieben.")
+    }
+
+    /// Und die Gegenprobe zur Gegenprobe: Derselbe gemerkte Stand ergibt auf
+    /// den beiden Gattungen **verschieden viele** Punkte. Ohne diese Zusicherung
+    /// ginge der Test oben auch dann durch, wenn das Mass gar nicht ankaeme.
+    func testDerselbeStandErgibtAufBeidenGattungenVerschiedeneBilder() throws {
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        let ng = ngUhr()
+        let ngZustand = try mitUhr(ng)
+        gedaechtnis.merken(Meldungsoptionen(text: "Bus"), icon: nil, iconKante: 8, fuer: ng.id, platz: 2)
+        guard case let .bekannt(ngPixel) = ngZustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
+            return XCTFail("NG zeigt nichts")
+        }
+
+        let werk = Uhr(name: "Küche", host: "werk.example", praefix: "awtrix_a86b")
+        let werkZustand = try mitUhr(werk)
+        gedaechtnis.merken(Meldungsoptionen(text: "Bus"), icon: nil, iconKante: 8, fuer: werk.id, platz: 2)
+        guard case let .bekannt(werkPixel) = werkZustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
+            return XCTFail("Werksfirmware zeigt nichts")
+        }
+
+        XCTAssertEqual(ngPixel.count, 32 * 8)
+        XCTAssertEqual(werkPixel.count, 52 * 16)
     }
 
     /// Die Gegenprobe mit **demselben** Gedaechtnisstand: Auf der

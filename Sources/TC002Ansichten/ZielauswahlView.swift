@@ -47,19 +47,12 @@ struct ZielauswahlView: View {
                 // „an 2 Uhren" —, der neben dem Titelmenue wie ein zweiter
                 // Titel las. Wohin es geht, sagt jetzt der Einblendtext und das
                 // Blatt selbst.
-                // **Die Zahl nur, wenn sie etwas sagt.** „Empfänger" allein
-                // beantwortet nicht die eine Frage, die man im Vorbeigehen
-                // hat: Geht das gerade an mehr als eine? Bei genau einer
-                // bliebe die 1 dagegen stumm — und machte den Knopf breiter,
-                // ohne etwas hinzuzufügen.
-                //
-                // `lok`/`lokf` in beiden Zweigen: Ein Ternär mit einem
-                // `String`-Zweig zwänge `Label` in die
-                // `StringProtocol`-Überladung, und die schlägt nichts nach
-                // (CLAUDE.md, „Sprachen"). Hier ist beides schon übersetzt,
-                // bevor `Label` es sieht.
-                Label(gewaehlteIDs.count > 1 ? lokf("Empfänger · %d", gewaehlteIDs.count)
-                                             : lok("Empfänger"),
+                // **Die Zahl steht immer da, auch die 1.** Sie wegzulassen
+                // hiess, zwei Zustaende auf dasselbe Bild abzubilden: „an eine"
+                // und „noch nichts gewaehlt" saehen gleich aus, und wer die
+                // Zahl sucht, faende bei genau einem Empfaenger nichts und
+                // fragte sich, ob der Knopf gerade etwas anderes meint.
+                Label(lokf("Empfänger · %d", gewaehlteIDs.count),
                       systemImage: "antenna.radiowaves.left.and.right")
             }
             .knopfBefehl()

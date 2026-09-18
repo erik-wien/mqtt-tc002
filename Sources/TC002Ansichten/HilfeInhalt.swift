@@ -54,7 +54,7 @@ public enum HilfeInhalt {
             ("Fällt dort weg", "Schriftart, Größe, Fett, Rand und Zeichenabstand steuern unsere eigene Rasterung — wo das Gerät selbst setzt, gibt es daran nichts zu drehen. Senkrecht ausrichten geht nicht, ihre Grundlinie liegt fest; rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen im Einblendtext, warum."),
             ("Geht dort nicht", "Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides wird abgelehnt statt stillschweigend verschluckt."),
         ]),
-        .absatz("Und die fünf Blöcke zeigen bei einer AWTRIX kein Bild, sondern nur, ob ein Platz belegt ist. Was darauf steht, wüsste die App nur als Text in ihrer eigenen Schrift auf sechzehn Zeilen — und das ist nicht, was auf einer Anzeige mit acht Zeilen zu sehen wäre. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
+        .absatz("Die fünf Blöcke zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in der Ersatzschrift. Genau steht der Text dort in der eingebauten Schrift der Uhr, die diese App nicht kennt — der Block sagt also, was auf dem Platz liegt, nicht, wie es dort aussieht. Bis September 2026 zeigte er gar nichts, weil er nur ein 52 × 16-Bild rechnen konnte; das war die stärkere Behauptung, nämlich „wir wissen es nicht“, obwohl die App es selbst geschickt hatte. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der

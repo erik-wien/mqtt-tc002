@@ -102,10 +102,12 @@ struct SendeniOS: View {
 
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt —
     /// dieselbe Grundlage wie am Mac (`SendenView.belegtePlaetze`).
-    private var belegtePlaetze: Set<Int> {
-        let namen = Set(zustand.ziele().flatMap { zustand.anzeigenAufUhr($0.id) })
-        return Set((1...Meldungsplatz.anzahl).filter { namen.contains(Meldungsplatz.name(fuer: $0)) })
-    }
+    /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
+    /// die **angesehene** Uhr, dieselbe, aus der `slotzustand` den Inhalt
+    /// nimmt. Hier stand sie bis zum 18.09.2026 dreimal wortgleich und fragte
+    /// die Zielmenge; das ergab Bloecke, die Belegung und Inhalt aus
+    /// verschiedenen Uhren zusammensetzten.
+    private var belegtePlaetze: Set<Int> { zustand.belegtePlaetze() }
 
     /// Je Uhr eine Datei unter Application Support. Die gehaltene Fassung,
     /// nicht bei jedem Zugriff eine neue: `init` legt den Ordner an, und das
@@ -415,7 +417,8 @@ struct SendeniOS: View {
                 Button { slotWaehlen(i) } label: {
                     Slotblock(platz: i,
                               zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                              gewaehlt: platz == i)
+                              gewaehlt: platz == i,
+                              mass: mass)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
