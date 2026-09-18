@@ -303,34 +303,22 @@ struct SendeniOS: View {
             // funktioniert dort genauso — Dateien und Notizen machen es so.
             .navigationBarTitleDisplayMode(.inline)
             .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
-                // **Zwei Gruppen, zwei Fragen.** Oben, welche Uhr man
-                // ansieht — daran haengen Vorschau, Bloecke und Verlauf.
-                // Darunter, an welche gesendet wird: seit dem 18.09.2026 jede
-                // einzeln, statt „eine oder alle". Getrennt, weil es zwei
-                // Entscheidungen sind; in einem Menue, weil es dieselbe Frage
-                // an dieselben Uhren ist.
-                Section("Angesehen") {
-                    Picker("Angesehene Uhr", selection: angesehene) {
-                        ForEach(zustand.uhren) { uhr in
-                            Text(uhr.name).tag(Optional(uhr.id))
-                        }
-                    }
-                    .pickerStyle(.inline)
-                }
-                Section("Senden an") {
+                // **Nur, was man ansieht.** Die Empfaenger stehen im
+                // Antennenmenue neben dem Eingabefeld — wie am Schreibtisch,
+                // wo der Titel die angesehene Uhr traegt und ein eigener Knopf
+                // die Empfaenger.
+                //
+                // Beides hier stand bis zum 18.09.2026 nebeneinander, und iOS
+                // zeigt in diesem Menue **keine** Abschnittsueberschriften:
+                // Uebrig blieben zwei unbeschriftete Listen derselben Uhren,
+                // in umgekehrter Reihenfolge, weil das Menue nach oben
+                // aufklappt. Es sah aus wie ein Fehler und war einer.
+                Picker("Angesehene Uhr", selection: angesehene) {
                     ForEach(zustand.uhren) { uhr in
-                        Button {
-                            zustand.zielUmschalten(uhr.id)
-                        } label: {
-                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
-                                  ? "checkmark.circle.fill" : "circle")
-                        }
-                    }
-                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
-                    Button("Nur die angesehene") {
-                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
+                        Text(uhr.name).tag(Optional(uhr.id))
                     }
                 }
+                .pickerStyle(.inline)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -771,13 +759,7 @@ struct SendeniOS: View {
                     .accessibilityLabel(Text("Sende…"))
             } else if zustand.uhren.count > 1 {
                 Menu {
-                    Section("Angesehen") {
-                        Picker("Angesehene Uhr", selection: angesehene) {
-                            ForEach(zustand.uhren) { uhr in
-                                Text(uhr.name).tag(Optional(uhr.id))
-                            }
-                        }
-                    }
+                    // Nur die Empfaenger: Was man ansieht, steht im Titel.
                 Section("Senden an") {
                     ForEach(zustand.uhren) { uhr in
                         Button {
