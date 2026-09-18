@@ -153,6 +153,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key><string>Pixel Clock Messenger</string>
+    <!-- **Beide Schluessel, nicht nur einer.** `CFBundleDisplayName` stand bis
+         zum 18.09.2026 allein in den `InfoPlist.strings` — und eine
+         Uebersetzung kann nur ueberschreiben, was es im Original gibt. Ohne den
+         Schluessel hier griff sie ins Leere, und Finder, Dock und Menueleiste
+         fielen auf den **Dateinamen** zurueck: „MQTT-TC002". Der Dateiname
+         bleibt genau so (die Freigabe „Lokales Netzwerk" haengt daran, siehe
+         CLAUDE.md); sichtbar ist kuenftig der Anzeigename. -->
+    <key>CFBundleDisplayName</key><string>Pixel Clock Messenger</string>
     <key>CFBundleExecutable</key><string>TC002App</string>
     <key>CFBundleIdentifier</key><string>cloud.eriks.mqtt-tc002</string>
     <key>CFBundlePackageType</key><string>APPL</string>
