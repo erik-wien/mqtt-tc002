@@ -59,15 +59,18 @@ public struct EditorBereichView: View {
     @State private var name = ""
     @State private var nummer = ""
     @State private var suche = ""
-    /// Die Filterleiste ueber dem Bestand — Groesse und Bewegung.
-    @State private var filtergroesse: Leinwandgroesse?
     @State private var nurBewegte = false
     /// Einmal gelesen: Welche Eintraege sich bewegen, steht in den Dateien.
     /// Die Begruendung steht bei `Array<Icon>.bewegteKennungen`.
     @State private var bewegte: Set<String> = []
     @State private var vorhandene: [Editoreintrag] = []
+    /// Womit der Bereich anfaengt: der ganze Bestand im Hauptfenster. Beim
+    /// ersten Anwendertest wurde der Icon-Editor nicht gefunden, weil er sich
+    /// hinter einer leeren Leinwand und einer Liste im Inspektor verbarg.
+    @State private var zeigtUebersicht = true
     @State private var meldung: String?
     @State private var lametricNummer = ""
+    @State private var zeigeGalerie = false
     @State private var laedt = false
 
     // Rueckfragen.
@@ -308,20 +311,35 @@ public struct EditorBereichView: View {
             //
             // Ohne zweite Uhr zeigt `ZielauswahlView` nichts, die Zeile bleibt
             // dann leer.
-            Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
-                       vorStrich: { verlauf.merken(leinwand) },
-                       nachStrich: arbeitsstandSichern)
-            fusszeile
-            if groesse.sendbar { sendezeile }
+            if zeigtUebersicht {
+                uebersicht
+            } else {
+                Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
+                           vorStrich: { verlauf.merken(leinwand) },
+                           nachStrich: arbeitsstandSichern)
+                fusszeile
+                if groesse.sendbar { sendezeile }
+            }
         }
         .padding()
         .toolbar {
             // Dieselbe Stelle wie unter „Senden": die angesehene Uhr mittig in
             // der Werkzeugleiste.
             ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
+            // Der Weg zurueck aus dem Editor in den Bestand.
+            if !zeigtUebersicht {
+                ToolbarItem(placement: .navigation) {
+                    Button { zeigtUebersicht = true } label: {
+                        Label("Alle Icons", systemImage: "chevron.backward")
+                    }
+                    .help(lok("Alle Icons"))
+                }
+            }
             werkzeugleiste
         }
-        .inspector(isPresented: $zeigeInspektor) { inspektor }
+        .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
+                                        set: { zeigeInspektor = $0 })) { inspektor }
+        .sheet(isPresented: $zeigeGalerie) { galerieblatt }
         .onAppear { vorhandene = bestand.alle(); bewegungLesen() }
         .onDisappear { stoppeAbspielen(); arbeitsstandSichern() }
         // ⌘Q verlaesst diese Ansicht nicht — ohne dieses Netz ginge ein eben
@@ -714,8 +732,8 @@ public struct EditorBereichView: View {
                     .accessibilityLabel(Text(laedt ? lok("Hole…") : lok("Nachladen")))
                 }
             }
-            Link("LaMetric Icon Gallery", destination: URL(string: "https://developer.lametric.com/icons")!)
-                .font(.caption)
+            Button("LaMetric Icon Gallery") { zeigeGalerie = true }
+                .knopfBefehl()
             // Der Knopf sagt, wo gesucht wird: „Öffnen…" liess offen, ob der
             // Bestand der App gemeint ist oder das Dateisystem.
             Button(Self.dateiwahlname) { zeigeDateiImport = true }
@@ -738,20 +756,6 @@ public struct EditorBereichView: View {
             Abschnittskopf("Hinzufügen", hilfe: Self.lametricHilfe)
         }
 
-        Section("Vorhandene") {
-            TextField("Suchen", text: $suche)
-                .eingabefeld(loeschbar: $suche)
-            // Dieselbe Leiste wie im Auswahlblatt, nur mit drei Groessen statt
-            // zwei: Hier steht auch die ganze Anzeige im Bestand.
-            Filterleiste(wert: $filtergroesse,
-                         angebot: Leinwandgroesse.allCases.map { ($0.beschriftung, $0.kurzbeschriftung, $0) },
-                         nurBewegte: $nurBewegte)
-            // Gesucht und gefiltert wird in der schon gelesenen Liste
-            // (`vorhandene`), nicht bei jedem Tastendruck neu im Dateisystem.
-            ForEach(gefilterterBestand) { eintrag in
-                bestandszeile(eintrag)
-            }
-        }
     }
 
     /// Suche, Groesse und Bewegung zusammen — dieselbe Reihenfolge der Fragen
@@ -759,7 +763,6 @@ public struct EditorBereichView: View {
     /// kennt statt zwei.
     private var gefilterterBestand: [Editoreintrag] {
         var ergebnis = vorhandene.gefiltert(nach: suche)
-        if let filtergroesse { ergebnis = ergebnis.filter { $0.groesse == filtergroesse } }
         if nurBewegte { ergebnis = ergebnis.filter { bewegte.contains($0.datei.path) } }
         return ergebnis
     }
@@ -894,57 +897,161 @@ public struct EditorBereichView: View {
 
     /// Eine Zeile der Liste der Vorhandenen — mit der Groesse als Merkmal, weil
     /// alle drei Bestaende in derselben Liste stehen.
-    private func bestandszeile(_ eintrag: Editoreintrag) -> some View {
-        HStack {
-            // Alle drei Groessen in dasselbe Kaestchen von 44 × 24 Punkten
-            // eingepasst — ohne Fallunterscheidung, damit eine vierte Groesse
-            // hier nichts zu aendern haette. Ein 52×16 wird dabei breit und
-            // flach, ein Quadrat quadratisch: Das ist das Bild, nicht ein
-            // Fehler.
-            Rasterbild(datei: eintrag.datei,
-                       breite: eintrag.groesse.breite, hoehe: eintrag.groesse.hoehe,
-                       kante: min(44 / Double(eintrag.groesse.breite),
-                                  24 / Double(eintrag.groesse.hoehe)))
-                .background(Color.black)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(eintrag.name).lineLimit(1)
-                // Das Abspielzeichen neben die Groesse, nicht ins Bild:
-                // LaMetric und AWTRIX legen es durchscheinend ueber das
-                // Vorschaubildchen; bei 8×8 verdeckt es damit ein Viertel des
-                // Motivs. In der Beschriftungszeile kostet es nichts und
-                // steht bei den uebrigen Angaben ueber die Datei.
-                HStack(spacing: 4) {
-                    Text(lok(eintrag.groesse.beschriftung) + (eintrag.nummer.map { " · \($0)" } ?? ""))
+    /// Die LaMetric Icon Gallery als Blatt statt als Sprung in den Browser.
+    ///
+    /// Die Seite selbst steht nicht darin: Eine eingebettete Webansicht
+    /// braeuchte `WKWebView` und damit AppKit bzw. UIKit — dieses Ziel kennt
+    /// keine Plattform (CLAUDE.md). Das Blatt traegt stattdessen, was man
+    /// wirklich braucht: das Nummernfeld, die Erklaerung und den Weg hinaus.
+    private var galerieblatt: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("LaMetric Icon Gallery").font(.headline)
+            Text(Self.lametricHilfe)
+                .font(.callout).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                TextField("Nummer", text: $lametricNummer)
+                    .eingabefeld(loeschbar: $lametricNummer)
+                    .frame(width: 110)
+                    .onSubmit { nachladen(); zeigeGalerie = false }
+                Button("Holen") { nachladen(); zeigeGalerie = false }
+                    .knopfHaupthandlung()
+                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            Link("Gallery im Browser öffnen",
+                 destination: URL(string: "https://developer.lametric.com/icons")!)
+            HStack {
+                Spacer()
+                Button("Fertig") { zeigeGalerie = false }
+                    .knopfBefehl()
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
+        .padding(20)
+        .frame(minWidth: 380)
+    }
+
+    // MARK: - Uebersicht
+
+    /// Der ganze Bestand im Hauptfenster, nach Groesse gruppiert. Ein Druck
+    /// auf ein Stueck holt es auf die Leinwand.
+    ///
+    /// Gruppen statt einer Groessenwahl: Welche Groessen es gibt, ist die
+    /// Antwort und nicht die Frage — wer ein 8×8 sucht, sieht die Gruppe und
+    /// muss keinen Filter erst setzen.
+    private var uebersicht: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                TextField("Suchen", text: $suche)
+                    .eingabefeld(loeschbar: $suche)
+                    .frame(maxWidth: 260)
+                Toggle(isOn: $nurBewegte) {
+                    Label(lok("Nur bewegte"), systemImage: "play.fill")
+                }
+                .toggleStyle(.button)
+                .help(lok("Nur bewegte"))
+                Spacer()
+                Button { neuAnfragen() } label: {
+                    Label("Neu", systemImage: "plus")
+                }
+                .knopfBefehl()
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    ForEach(Leinwandgroesse.allCases) { g in
+                        let stuecke = gefilterterBestand.filter { $0.groesse == g }
+                        if !stuecke.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(lok(g.beschriftung))
+                                    .font(.caption).fontWeight(.semibold)
+                                    .foregroundStyle(.secondary)
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 12)],
+                                          alignment: .leading, spacing: 12) {
+                                    ForEach(stuecke) { kachel($0) }
+                                }
+                            }
+                        }
+                    }
+                    if gefilterterBestand.isEmpty {
+                        Text("Nichts gefunden. Unter „Hinzufügen“ im Inspektor kommt Neues herein.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.bottom, 8)
+            }
+        }
+    }
+
+    /// Ein Stueck in der Uebersicht: das Bild, darunter sein Name.
+    private func kachel(_ eintrag: Editoreintrag) -> some View {
+        Button { anklicken(eintrag) } label: {
+            VStack(spacing: 4) {
+                ZStack(alignment: .bottomTrailing) {
+                    Rasterbild(datei: eintrag.datei,
+                               breite: eintrag.groesse.breite, hoehe: eintrag.groesse.hoehe,
+                               kante: min(76 / Double(eintrag.groesse.breite),
+                                          44 / Double(eintrag.groesse.hoehe)))
+                        .background(Color.black)
+                    // Das Abspielzeichen an den Rand, nicht ueber die Mitte:
+                    // Bei 8×8 verdeckte es sonst ein Viertel des Motivs.
                     if bewegte.contains(eintrag.datei.path) {
                         Image(systemName: "play.fill")
+                            .font(.system(size: 8))
+                            .padding(2)
+                            .background(.black.opacity(0.6), in: Circle())
+                            .foregroundStyle(.white)
                             .accessibilityLabel(Text("bewegt"))
                     }
                 }
-                .font(.caption).foregroundStyle(.secondary)
+                Text(eintrag.name)
+                    .font(.caption).lineLimit(1)
+                    .frame(maxWidth: 88)
             }
-            Spacer()
-            // Derselbe Stil wie der Papierkorb daneben — gleiche Groesse,
-            // gleiche Trefferflaeche —, aber nicht gefaerbt und ohne
-            // zerstoerende Rolle: Umbenennen wirft nichts weg. Der Name steht
-            // in beiden Beschriftungen, weil zwei gleiche Symbole
-            // untereinander sonst nicht auseinanderzuhalten sind.
-            Button { umbenennenBeginnen(eintrag) } label: { Image(systemName: "pencil") }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .help(lokf("„%@“ umbenennen", eintrag.name))
-                .accessibilityLabel(Text(lokf("„%@“ umbenennen", eintrag.name)))
-            Button { zuLoeschen = eintrag } label: { Image(systemName: "trash") }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .help(lokf("„%@“ löschen", eintrag.name))
-                .accessibilityLabel(Text(lokf("„%@“ löschen", eintrag.name)))
         }
-        .contentShape(Rectangle())
-        .onTapGesture { anklicken(eintrag) }
+        .buttonStyle(.plain)
+        .help(eintrag.nummer.map { lokf("%@ · %@", eintrag.name, $0) } ?? eintrag.name)
         .contextMenu {
             Button("Öffnen") { anklicken(eintrag) }
+            Button("Duplizieren") { duplizieren(eintrag) }
             Button("Umbenennen…") { umbenennenBeginnen(eintrag) }
             Button("Löschen", role: .destructive) { zuLoeschen = eintrag }
+        }
+    }
+
+    /// Legt eine Kopie an — die Voraussetzung dafuer, ein mitgeliefertes oder
+    /// von LaMetric geholtes Icon zu bearbeiten, ohne das Vorbild zu verlieren.
+    ///
+    /// Geht ueber Oeffnen und Sichern und nicht ueber das Dateisystem: So
+    /// gelten dieselben Regeln fuer Schluessel und Format wie fuer jedes
+    /// andere Sichern.
+    private func duplizieren(_ eintrag: Editoreintrag) {
+        do {
+            let leinwand = try bestand.oeffnen(eintrag)
+            let (nummer, name) = freierSchluessel(wie: eintrag)
+            let kopie = try bestand.sichern(leinwand, name: name, nummer: nummer)
+            vorhandene = bestand.alle()
+            bewegungLesen()
+            meldung = lokf("„%@“ angelegt.", kopie.name)
+        } catch {
+            zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        }
+    }
+
+    /// Der naechste freie Schluessel neben einem vorhandenen Stueck: „Herz 2",
+    /// „Herz 3" … bzw. bei nummerngefuehrten Groessen die naechste freie Zahl.
+    private func freierSchluessel(wie eintrag: Editoreintrag) -> (nummer: String, name: String) {
+        var zaehler = 2
+        while true {
+            let name = lokf("%@ %d", eintrag.name, zaehler)
+            let nummer = eintrag.groesse.nummerIstDateiname
+                ? String((Int(eintrag.nummer ?? "0") ?? 0) + zaehler)
+                : (eintrag.nummer ?? "")
+            if Editorbestand.belegt(in: vorhandene, groesse: eintrag.groesse,
+                                    nummer: nummer, name: name) == nil {
+                return (nummer, name)
+            }
+            zaehler += 1
+            if zaehler > 99 { return (nummer, name) }
         }
     }
 
@@ -1304,6 +1411,7 @@ public struct EditorBereichView: View {
             // GIF hier keine Durchsichtigkeit traegt — nach einem Rundlauf sind
             // beide dasselbe und nicht mehr auseinanderzuhalten.
             let neue = try bestand.oeffnen(eintrag)
+            zeigtUebersicht = false
             stoppeAbspielen()
             verlauf.leeren()
             leinwand = neue

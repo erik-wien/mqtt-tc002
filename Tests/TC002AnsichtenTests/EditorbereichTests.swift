@@ -437,33 +437,32 @@ final class EditorbereichTests: XCTestCase {
     /// gefärbt und nicht als zerstörend gekennzeichnet, denn der Papierkorb
     /// wirft weg, Umbenennen nicht.
     ///
-    /// Nichts davon sieht ein Übersetzer: Ein rot eingefärbter Stift mit
-    /// zerstörender Rolle baut und zeichnet anstandslos.
+    /// Jedes Stück des Bestands lässt sich aus der Übersicht öffnen,
+    /// duplizieren, umbenennen und löschen.
     ///
-    /// Mutation: den Stift als `Button(role: .destructive)` schreiben — der
-    /// Test fällt, und am Gerät stünden zwei Warnfarben nebeneinander, von
-    /// denen eine nichts zerstört.
-    func testDieBestandszeileHatEinenStiftNebenDemPapierkorb() throws {
+    /// Das Duplizieren trägt die übrigen: Ein mitgeliefertes oder von LaMetric
+    /// geholtes Icon lässt sich sonst nicht bearbeiten, ohne das Vorbild zu
+    /// verlieren. Geprüft wird die Zusicherung, nicht die Schreibweise — wo
+    /// die vier Handlungen stehen (Kontextmenü, Zeile, Leiste), ist eine
+    /// Entscheidung über die Oberfläche und darf sich ändern.
+    ///
+    /// Mutation: eine der vier Zeilen entfernen — der Test fällt, und am
+    /// Gerät gäbe es für diese Handlung keinen Weg mehr.
+    func testJedesStueckLaesstSichOeffnenDuplizierenUmbenennenLoeschen() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let zeile = ausschnitt(text, von: "private func bestandszeile", bis: "private var sendezeile")
+        let kachel = ausschnitt(text, von: "private func kachel", bis: "private func duplizieren")
 
-        XCTAssertTrue(zeile.contains("Image(systemName: \"pencil\")"),
-                      "der Stift fehlt — dann gibt es in der Liste keinen Weg zum Umbenennen")
-        XCTAssertTrue(zeile.contains("umbenennenBeginnen(eintrag)"),
-                      "der Stift führt nicht mehr auf das Umbenennen")
-        XCTAssertEqual(zeile.components(separatedBy: ".buttonStyle(.borderless)").count - 1, 2,
-                       "Stift und Papierkorb tragen nicht mehr denselben Stil — dann haben sie "
-                       + "verschiedene Größen und Trefferflächen")
-        XCTAssertTrue(zeile.contains("lokf(\"„%@“ umbenennen\", eintrag.name)"),
-                      "der Stift trägt keine Beschriftung mit dem Namen — zwei gleiche Symbole "
-                      + "untereinander sind sonst nicht auseinanderzuhalten")
-        for faerbung in ["role: .destructive) { umbenennenBeginnen", ".knopfZerstoerend()",
-                         ".foregroundStyle(.red)"] {
-            XCTAssertFalse(zeile.contains(faerbung),
-                           "„\(faerbung)“ steht in der Bestandszeile — Umbenennen zerstört nichts")
+        for (handlung, ruf) in [("Öffnen", "anklicken(eintrag)"),
+                                ("Duplizieren", "duplizieren(eintrag)"),
+                                ("Umbenennen…", "umbenennenBeginnen(eintrag)"),
+                                ("Löschen", "zuLoeschen = eintrag")] {
+            XCTAssertTrue(kachel.contains(ruf),
+                          "„\(handlung)“ führt nicht mehr auf \(ruf)")
         }
-        XCTAssertTrue(zeile.contains("Button(\"Umbenennen…\") { umbenennenBeginnen(eintrag) }"),
-                      "das Kontextmenü der Zeile bietet kein Umbenennen an")
+        XCTAssertTrue(kachel.contains("Button(\"Löschen\", role: .destructive)"),
+                      "Löschen trägt keine zerstörende Rolle mehr")
+        XCTAssertFalse(kachel.contains("role: .destructive) { duplizieren"),
+                       "Duplizieren ist als zerstörend ausgewiesen — es wirft nichts weg")
     }
 
     /// Umbenennen benennt eine Datei um — also dieselben Fragen wie beim

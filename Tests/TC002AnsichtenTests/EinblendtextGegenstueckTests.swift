@@ -188,17 +188,17 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                       + "„Entfernen“ dann nirgends mehr benannt")
     }
 
-    /// „Umbenennen“ und „Löschen“ stehen an jeder Zeile der Liste
-    /// „Vorhandene“ — bei mehreren Einträgen mehrfach. Auch hier ist das
-    /// Kontextmenü das Gegenstück.
-    func testBestandszeileKnoepfeHabenEinKontextmenue() throws {
+    /// Eine Kachel der Übersicht trägt einen Einblendtext mit ihrem Namen,
+    /// und ihre Handlungen stehen im Kontextmenü — am iPad ist das ihr
+    /// einziger benannter Ort.
+    func testDieKachelHatEinKontextmenue() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let zeile = ausschnitt(text, von: "private func bestandszeile", bis: "private var sendezeile")
-        XCTAssertEqual(anzahl(zeile, ".help("), 2,
-                       "„Umbenennen“/„Löschen“ sind nicht mehr zu zweit — dieser Test prüft die falsche Stelle")
-        XCTAssertTrue(zeile.contains(".contextMenu {"),
-                      "bestandszeile hat sein Kontextmenü verloren — am iPad steht „Umbenennen“/"
-                      + "„Löschen“ dann nirgends mehr benannt")
+        let kachel = ausschnitt(text, von: "private func kachel", bis: "private func duplizieren")
+        XCTAssertEqual(anzahl(kachel, ".help("), 1,
+                       "die Kachel trägt nicht mehr genau einen Einblendtext mit ihrem Namen")
+        XCTAssertTrue(kachel.contains(".contextMenu {"),
+                      "die Kachel hat ihr Kontextmenü verloren — am iPad stehen „Öffnen“, "
+                      + "„Duplizieren“, „Umbenennen“ und „Löschen“ dann nirgends mehr benannt")
     }
 
     // MARK: - Zwei weitere Symbolknöpfe für sich allein: Abspielsymbol und
@@ -269,10 +269,11 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 12,
+        XCTAssertEqual(anzahl(text, ".help("), 13,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
-                       + "die Werkzeugleiste (3), die beiden Kontextmenü-Zeilen (2 + 2), das "
-                       + "Abspielsymbol (1), das Verschiebekreuz (1), das Nummernfeld (1), der "
+                       + "die Werkzeugleiste (3), der Weg zurück zur Übersicht (1), die Kachel (1), "
+                       + "der Schalter „Nur bewegte“ (1), das Abspielsymbol (1), das Verschiebekreuz "
+                       + "(1), die zwei Knöpfe am Einzelbildstreifen (2), das Nummernfeld (1), der "
                        + "Sendeknopf (1) und das Nachladen-Zeichen der LaMetric-Zeile (1) — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")
     }
