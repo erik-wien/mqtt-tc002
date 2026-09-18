@@ -523,10 +523,13 @@ struct SendeniOS: View {
                     .disabled(!gattung.wirkt(.senkrecht))
                     .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
                     .accessibilityHint(Text(gattung.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
-                    ColorPicker("Farbe", selection: farbe, supportsOpacity: false)
-                        .labelsHidden()
+                    // Dasselbe Gesicht wie am Schreibtisch (`Farbkreis`) —
+                    // unter iPadOS und hier zeigt das Systemfeld nicht einmal
+                    // den Regenbogenkreis, den der Mac danebenstellt.
+                    // Die Trefferflaeche bleibt bei 44 Punkten, der Kreis
+                    // darin ist kleiner.
+                    Farbkreis(farbe: farbe, kante: 26)
                         .frame(width: 44, height: 44)
-                        .accessibilityLabel("Farbe")
                     Button { zeigeFormat = true } label: {
                         Image(systemName: "paintbrush")
                             .frame(width: 44, height: 44)
@@ -694,7 +697,12 @@ struct SendeniOS: View {
         HStack(spacing: 8) {
             TextField("Text", text: $text, axis: .vertical)
                 .lineLimit(1...3)
-                .textFieldStyle(.roundedBorder)
+                // **Dieselbe Fassung wie am Schreibtisch, samt (x).** Bis zum
+                // 18.09.2026 stand hier `.textFieldStyle(.roundedBorder)` und
+                // kein Loeschzeichen, mit der Ueberlegung, dieses Feld sei
+                // Nachrichten nachgebaut und Nachrichten habe keines. Was die
+                // eine Oberflaeche kann, soll die andere aber auch koennen.
+                .eingabefeld(loeschbar: $text)
                 .submitLabel(.send)
                 .disabled(laeuft)
                 .onChange(of: text) { _, neu in

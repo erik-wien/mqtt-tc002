@@ -60,7 +60,12 @@ final class SendefeldTests: XCTestCase {
         guard let stil = block(nach: #"LabeledContent("Stil")"#, in: text) else {
             return XCTFail("die Stil-Zeile gibt es nicht mehr")
         }
-        XCTAssertTrue(stil.contains("ColorPicker("),
+        // `Farbkreis` und nicht `ColorPicker`: Seit dem 18.09.2026 steht dort
+        // der Kreis mit Regenbogenring (ein weisses Systemfeld war auf hellem
+        // Grund nicht mehr als Bedienelement zu erkennen). Die Systempalette
+        // loest er weiterhin aus — zugesichert ist hier die **Zeile**, nicht
+        // das Element.
+        XCTAssertTrue(stil.contains("Farbkreis("),
                       "der Farbwähler steht nicht in der Stil-Zeile")
         XCTAssertTrue(stil.contains(#"Image(systemName: "bold")"#),
                       "„Fett“ steht nicht mehr in der Stil-Zeile")
@@ -142,7 +147,10 @@ final class SendefeldTests: XCTestCase {
         guard let eingabe = block(nach: "private var eingabe: some View", in: text) else {
             return XCTFail("das Eingabefeld des iPhones heißt nicht mehr `eingabe`")
         }
-        XCTAssertTrue(eingabe.contains(".textFieldStyle(.roundedBorder)"),
+        // `.eingabefeld(…)` **ist** `.roundedBorder`, samt Loeschzeichen seit
+        // dem 18.09.2026 (`Eingabefeld.swift`). Zugesichert ist die Fassung,
+        // nicht ihre Schreibweise.
+        XCTAssertTrue(eingabe.contains(".eingabefeld("),
                       "dem iPhone ist der Rahmen seines Eingabefelds abhanden gekommen")
     }
 }

@@ -20,7 +20,12 @@ final class LoeschzeichenTests: XCTestCase {
     /// Datei, Bindung und wozu das Feld gehört — der letzte Teil steht nur in
     /// der Fehlermeldung, damit die sagt, welche Stelle gemeint ist.
     private static let felder: [(datei: String, bindung: String, wo: String)] = [
-        ("Sources/TC002Ansichten/SendenView.swift", "$text", "die Nachricht"),
+        ("Sources/TC002Ansichten/SendenView.swift", "$text", "die Nachricht am Schreibtisch"),
+        // **Doch auch am Telefon.** Am 15.09.2026 stand hier die Ueberlegung,
+        // das Eingabefeld sei Nachrichten nachgebaut und Nachrichten habe kein
+        // (x). Der Auftraggeber hat am 18.09.2026 anders entschieden: Was die
+        // eine Oberflaeche kann, soll die andere auch koennen.
+        ("Sources/TC002iOS/SendeniOS.swift", "$text", "die Nachricht am Telefon"),
         ("Sources/TC002Ansichten/IconAuswahlView.swift", "$suche", "Suchen im Icon-Blatt"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "$name", "„Dieses Bild“ → Name"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "$nummer", "„Dieses Bild“ → Nummer"),

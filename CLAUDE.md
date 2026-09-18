@@ -23,10 +23,28 @@ ist und bei einem Update nachzuprüfen wäre, in
   Mac-App, `TC002iOS` die iPhone-App, `TC002CLI` das Werkzeug. Die ersten
   drei kennen **keine** Plattform: kein `import AppKit`, kein `import UIKit`,
   kein `NSColor`, kein `UIColor`.
-- **Zwei Oberflächenfamilien, nicht eine.** Das iPhone hat seine eigene
-  (Senden als Wurzel, Titelmenü, schiebbare Formatpille, Blätter). Mac und —
-  sobald es sie gibt — die iPad-Fassung teilen sich die Desktop-Oberfläche mit
-  Seitenleiste. Was auf dem Telefon richtig ist, ist es dort selten.
+- **Dieselbe App, überall dasselbe Können — Unterschiede brauchen einen
+  Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
+  ist nur zulässig, wenn ihn die **Bedienung** (Maus und Zeiger gegen Finger)
+  oder das **Platzangebot** erzwingt; „das ist eben das Telefon" ist keiner.
+  Entschieden am 18.09.2026 und damit die Regel, die die frühere ablöst
+  („Was auf dem Telefon richtig ist, ist es dort selten") — die stimmte für
+  die *Anordnung* und wurde als Freibrief für fehlende Funktionen gelesen.
+
+  Zwei Familien gibt es weiterhin, aber sie unterscheiden sich in der
+  **Anordnung**, nicht im Umfang: Das iPhone hat Senden als Wurzel, Titelmenü,
+  schiebbare Formatpille und Blätter; Mac und iPad teilen sich die
+  Desktop-Oberfläche mit Seitenleiste und Inspektor. Wer eine Funktion nur an
+  einer Stelle einbaut, hat die Arbeit halb getan.
+
+- **Bedienelemente so, wie Apple sie festlegt** — ein eigener Nachbau braucht
+  eine Begründung, und die gehört an den Nachbau geschrieben. Bisher gibt es
+  genau einen: `Farbkreis` (`TC002Ansichten`). Das Systemfeld ist bei weißer
+  Farbe auf hellem Grund nicht mehr als Bedienelement zu erkennen, und
+  SwiftUI lässt sein Aussehen nicht ändern — `ColorPicker` hat kein Gegenstück
+  zu `buttonStyle` oder `pickerStyle` (im SDK nachgesehen), und sein `label`
+  steht neben dem Feld statt darin. Der Kreis ist deshalb gezeichnet, die
+  Systempalette darunter bleibt der Auslöser.
 - **Die Hilfe ist zweigeteilt.** Die Darstellung (`TC002Ansichten/Hilfe.swift`)
   und die Absätze, die vom Gerät unabhängig sind
   (`TC002Ansichten/HilfeInhalt.swift`), gelten für beide; `HilfeView` (Mac) und

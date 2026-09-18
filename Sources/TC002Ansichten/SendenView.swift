@@ -796,10 +796,15 @@ public struct SendenView: View {
                             .disabled(!kleinbuchstabenMoeglich)
                             .gattungssperre(.grossbuchstaben, gattung, sonst: grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
-                        // `labelsHidden` nimmt nur die sichtbare Beschriftung;
-                        // fuer VoiceOver bleibt „Farbe“ die des Waehlers.
-                        ColorPicker("Farbe", selection: farbe)
-                            .labelsHidden()
+                        // **Kein blankes Systemfeld.** Bei weisser Schrift
+                        // stuende dort ein weisser Fleck auf hellem Grund —
+                        // `Farbkreis` legt einen Regenbogenring darum, der zum
+                        // Element gehoert und nicht zur Farbe. Die
+                        // Systempalette bleibt darunter der Ausloeser.
+                        //
+                        // Ohne Deckkraft: `farbeHex` haelt „#RRGGBB", ein
+                        // Alphawert fiele beim Sichern ohnehin weg.
+                        Farbkreis(farbe: farbe)
                     }
                 }
             } header: {
