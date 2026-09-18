@@ -58,7 +58,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .ueberblick:
             return HilfeInhalt.wasEsTut
                 + [
-                    .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze, unten die Formatpille und das Eingabefeld. „Verlauf“ und „Einstellungen“ gehen über die beiden Symbole rechts oben als Blatt auf."),
+                    .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze und die Liste mit dem, was auf der Uhr liegt und zuletzt geschickt wurde, unten die Formatpille und das Eingabefeld. Links oben stehen die Empfänger, rechts oben die Einstellungen — und das Protokoll, solange es eingeschaltet ist."),
                     .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres MQTT-Protokolls. Sie liegt der Mac-Fassung dieser App bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
@@ -72,7 +72,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
                 + [
-                    .absatz("Auf dem Telefon steht die Wahl als Zweierschalter unter der Adresse der Uhr."),
+                    .absatz("Auf dem Telefon stehen Adresse, Präfix und Geräteart in einer Zeile unter dem Namen. Die Geräteart stellt „Abfragen“ selbst fest; von Hand wählt man sie über das Kontextmenü der Zeile — ein langer Druck darauf."),
 
                     .ueberschrift("Entfernen"),
                     .absatz("„Entfernen“ in der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
@@ -97,6 +97,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fuenfPlaetze
                 + HilfeInhalt.blockwissenAnfang
                 + HilfeInhalt.blockwissenSchluss
+                + HilfeInhalt.verlaufHerkunft
+                + HilfeInhalt.verlaufEntstehung
+                + HilfeInhalt.verlaufLoeschen
                 + [
                     .ueberschrift("Stehen oder laufen"),
                 ]
@@ -110,7 +113,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.blockierendeAnzeige
                 + [.ueberschrift("Löschen und Dauer")]
                 + HilfeInhalt.papierkorb
-                + [.absatz("Dasselbe tut unter „Verlauf“ ein Wischen nach links.")]
+                + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
                 + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit dem Weg und der Laufschrift. Den Seitenwechsel stellt diese Fassung nicht ein.")]
                 + HilfeInhalt.zeichen
@@ -139,22 +142,20 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Uhr wählen"),
-                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü, und neben dem Eingabefeld erscheint dasselbe Menü noch einmal als eigenes Zeichen. Beide wählen dasselbe: welche Uhr man ansieht. Ihr Name steht im Titel, und die fünf Blöcke und der „Verlauf“ zeigen ihren Stand. Gesendet wird an dieselbe Uhr — am Telefon ist das eine Entscheidung und nicht zwei. Bei nur einer Uhr gibt es nichts zu wählen, und das Zeichen neben dem Eingabefeld bleibt weg."),
-                    .absatz("„An alle Uhren senden“ im selben Menü trennt beides wieder: Jede Sendung geht dann an alle eingerichteten Uhren, während Titel, Blöcke und „Verlauf“ bei der angesehenen bleiben — wie viele Uhren beliefert werden, sagt der Titel hinter ihrem Namen."),
+                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü: Es wählt, welche Uhr man **ansieht**. Ihr Name steht im Titel, und Vorschau, die fünf Blöcke und die Liste darunter zeigen ihren Stand. Über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten; die Punktreihe darunter sagt, die wievielte es ist."),
+                    .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die angesehene“. Das Ziel folgt dem Blick nicht — wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),
-                    .absatz("Wie in Nachrichten: kein eigener Sendeknopf. Die Eingabetaste schickt die Anzeige, statt einen Zeilenumbruch einzufügen; bei leerem Textfeld oder während eine Sendung läuft, ist das Feld gesperrt. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
+                    .abbildung(.sendezeile),
+                    .absatz("Wie in Nachrichten: Die Eingabetaste schickt die Anzeige, statt einen Zeilenumbruch einzufügen, und am rechten Rand des Feldes steht dafür ein blauer runder Knopf mit Pfeil. Bei leerem Textfeld oder während eine Sendung läuft, ist das Feld gesperrt. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
                     .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .anzeigen:
-            return HilfeInhalt.verlaufHerkunft
-                + HilfeInhalt.verlaufEntstehung
-                + [
-                    .ueberschrift("Anzeigen und Löschen"),
-                    .absatz("Ein Wischen nach rechts schaltet die Uhr auf diese Anzeige um, ein Wischen nach links entfernt sie mit einer leeren Nachricht von der aktiven Uhr."),
+            return [
+                    .absatz("Dieses Blatt ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht in der Sendeansicht unter den fünf Blöcken."),
+                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf."),
                 ]
-                + HilfeInhalt.verlaufLoeschen
                 + HilfeInhalt.protokollListe
                 + HilfeInhalt.protokollLeeren
         case .kurzbefehle:

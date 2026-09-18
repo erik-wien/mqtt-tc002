@@ -299,9 +299,10 @@ public enum HilfeInhalt {
     /// Woher die Anzeigenliste kommt und warum der Unterschied zaehlt. Gemeldet
     /// schlaegt gemerkt — `AppZustand.anzeigenDerAktivenMitQuelle` fuer beide.
     public static let verlaufHerkunft: [Hilfebaustein] = [
-        .ueberschrift("Herkunft der Liste"),
-        .absatz("„Verlauf“ listet, was auf der aktiven Uhr steht. Über der Liste steht, woher sie kommt — und dieser Unterschied ist wichtig: „vom Gerät gemeldet“ heißt, die Auskunft stammt von der Uhr selbst; dann steht dort alles, was wirklich auf ihr liegt, auch von einem anderen Werkzeug Angelegtes, und auch das lässt sich hier löschen."),
-        .absatz("„von dieser App angelegt“ heißt dagegen, es ist nur die eigene Buchführung — das eine ist Tatsache, das andere Erinnerung."),
+        .ueberschrift("Auf der Uhr und zuletzt geschickt"),
+        .absatz("Unter den fünf Blöcken steht eine Liste, die zweierlei vereint: die eigenen Sendungen mit allem, was dazugehört — Zeit, Platz, Icon, Text in seiner Farbe, Empfänger —, und das, was sonst noch auf der angesehenen Uhr liegt. Eine Meldung, die gerade dort steht, trägt rechts ein Bildschirmzeichen."),
+        .absatz("Von fremden Anzeigen weiß die App nur den Namen: Die Uhr nennt ihre Anzeigen, verrät aber nicht, was darin steht. Solche Zeilen haben deshalb dieselbe Form, nur bleiben die Felder leer, zu denen es keine Auskunft gibt."),
+        .absatz("Ein Druck auf eine eigene Sendung stellt sie wieder her — Text, Schrift, Farbe, Ausrichtung, Tempo und Icon. Ein Wischen nach links löscht: bei einer eigenen Zeile den Eintrag, bei einer Anzeige auf der Uhr die Anzeige. Ein Wischen von der anderen Seite schaltet die Uhr auf diese Anzeige um. Je Uhr getrennt: Die Liste wechselt mit, wenn man eine andere Uhr ansieht."),
     ]
 
     /// Wie die Liste zustande kommt: die Uhr veroeffentlicht, die App hoert mit —

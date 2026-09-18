@@ -17,6 +17,8 @@ public enum Hilfebild: String, CaseIterable, Sendable, Identifiable {
     case geraetegroessen
     /// Was die waagrechte und die senkrechte Ausrichtung tun.
     case ausrichtung
+    /// Das Eingabefeld mit Löschzeichen und Sendeknopf.
+    case sendezeile
 
     public var id: String { rawValue }
 }
@@ -32,6 +34,7 @@ struct HilfebildView: View {
             case .slotzustaende: slotzustaende
             case .geraetegroessen: geraetegroessen
             case .ausrichtung: ausrichtung
+            case .sendezeile: sendezeile
             }
         }
         .padding(.vertical, 4)
@@ -81,6 +84,25 @@ struct HilfebildView: View {
                 beschriftet(lok("mittig")) { anzeige(Self.kurz.mit(senkrecht: .mittig)) }
                 beschriftet(lok("unten")) { anzeige(Self.kurz.mit(senkrecht: .unten)) }
             }
+        }
+    }
+
+    /// Das Eingabefeld, wie es wirklich aussieht — mit dem Löschzeichen links
+    /// und dem Sendeknopf rechts.
+    ///
+    /// Beim ersten Anwendertest wurde der Knopf nicht als Schaltfläche
+    /// erkannt; eine Abbildung davon ist deshalb nicht Zierat, sondern die
+    /// Antwort auf eine Frage, die wirklich gestellt wurde.
+    private var sendezeile: some View {
+        beschriftet(lok("Die Eingabetaste schickt — oder der blaue Knopf rechts. Das ⊗ daneben leert das Feld.")) {
+            TextField("Text", text: .constant(lok("Hallo")))
+                .font(.title2)
+                .controlSize(.extraLarge)
+                .eingabefeld(loeschbar: .constant(lok("Hallo")),
+                             senden: {},
+                             laeuft: false)
+                .disabled(true)
+                .frame(maxWidth: 360)
         }
     }
 
