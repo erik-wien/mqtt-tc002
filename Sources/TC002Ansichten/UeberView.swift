@@ -207,24 +207,16 @@ private struct LizenztextView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        Blatt(titel: lok("Lizenz"), schliessen: dismiss) {
             ScrollView {
                 Text(text)
                     .font(.system(.footnote, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(20)
+                    .padding(.vertical, 8)
             }
-            Divider()
-            HStack {
-                Spacer()
-                Button("Fertig", action: dismiss)
-                    .knopfHaupthandlung()
-                    .keyboardShortcut(.defaultAction)
-            }
-            .padding(12)
+            #if canImport(AppKit)
+            .frame(width: 540, height: 420)
+            #endif
         }
-        #if canImport(AppKit)
-        .frame(width: 560, height: 480)
-        #endif
     }
 }

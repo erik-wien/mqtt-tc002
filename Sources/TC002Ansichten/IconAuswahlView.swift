@@ -121,8 +121,8 @@ struct IconAuswahlView: View {
     }
 
     private var blatt: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Icon wählen").font(.headline)
+        Blatt(titel: lok("Icon wählen"), schliessen: { zeigeBlatt = false }) {
+            VStack(alignment: .leading, spacing: 12) {
             TextField("Suchen", text: $suche)
                 .eingabefeld(loeschbar: $suche)
             Filterleiste(wert: $filterkante,
@@ -199,15 +199,9 @@ struct IconAuswahlView: View {
                     }
                 }
             }
-            HStack {
-                Spacer()
-                Button("Schließen") { zeigeBlatt = false }
-                    .knopfHaupthandlung()
-                    .keyboardShortcut(.defaultAction)
             }
+            .frame(minWidth: 420, minHeight: 380)
         }
-        .padding()
-        .frame(minWidth: 460, minHeight: 420)
         .confirmationDialog(
             "„\(zuLoeschen?.name ?? "")“ löschen?",
             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),

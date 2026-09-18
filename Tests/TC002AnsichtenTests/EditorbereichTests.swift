@@ -505,9 +505,12 @@ final class EditorbereichTests: XCTestCase {
                       + "dann merkt man das Ersetzen erst, wenn es geschehen ist")
         XCTAssertTrue(blatt.contains("lok(\"Ersetzen\")"),
                       "der Knopf heißt nicht mehr „Ersetzen“, wo er ersetzt")
-        XCTAssertTrue(blatt.contains(".disabled(benennSchluessel(eintrag).isEmpty\n"
-                                     + "                          || benennName.trimmingCharacters(in: .whitespaces).isEmpty)"),
-                      "ohne beide Bedingungen lässt sich der Name leeren oder ein Eintrag ohne Schlüssel anlegen")
+        // Beide Bedingungen, seit der Rahmen (`Blatt`) den Knopf traegt:
+        // Ohne Schlüssel gäbe es nichts anzulegen, ohne Namen keinen Dateinamen.
+        XCTAssertTrue(blatt.contains("bestaetigenMoeglich: !benennSchluessel(eintrag).isEmpty"),
+                      "ein Eintrag ohne Schlüssel lässt sich wieder anlegen")
+        XCTAssertTrue(blatt.contains("!benennName.trimmingCharacters(in: .whitespaces).isEmpty"),
+                      "der Name lässt sich wieder leeren")
 
         let belegt = ausschnitt(text, von: "private func benennBelegt", bis: "private func schritt()")
         XCTAssertTrue(belegt.contains("treffer?.id == eintrag.id ? nil : treffer"),

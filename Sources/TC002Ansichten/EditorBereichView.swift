@@ -932,32 +932,28 @@ public struct EditorBereichView: View {
     /// (`Webansicht`). Wer dort eine Nummer findet, traegt sie unten ein und
     /// holt das Icon, ohne die App zu verlassen.
     private var galerieblatt: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("LaMetric Icon Gallery").font(.headline)
-                Spacer()
-                Button("Fertig") { zeigeGalerie = false }
-                    .knopfBefehl()
-                    .keyboardShortcut(.cancelAction)
+        // Die Seite fuellt das Blatt, das Nummernfeld steht darunter: Wer dort
+        // eine Nummer findet, traegt sie ein, ohne die App zu verlassen.
+        Blatt(titel: lok("LaMetric Icon Gallery"),
+              bestaetigung: lok("Holen"),
+              bestaetigenMoeglich: !laedt && !lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty,
+              schliessen: { zeigeGalerie = false },
+              bestaetigen: { nachladen(); zeigeGalerie = false }) {
+            VStack(spacing: 0) {
+                Webansicht(adresse: Self.galerie)
+                Divider()
+                HStack(spacing: 8) {
+                    Text("Nummer")
+                    TextField("Nummer", text: $lametricNummer)
+                        .eingabefeld(loeschbar: $lametricNummer)
+                        .frame(width: 110)
+                        .onSubmit { nachladen(); zeigeGalerie = false }
+                    Spacer()
+                }
+                .padding(12)
             }
-            .padding(12)
-            Divider()
-            Webansicht(adresse: Self.galerie)
-            Divider()
-            HStack(spacing: 8) {
-                Text("Nummer")
-                TextField("Nummer", text: $lametricNummer)
-                    .eingabefeld(loeschbar: $lametricNummer)
-                    .frame(width: 110)
-                    .onSubmit { nachladen(); zeigeGalerie = false }
-                Button("Holen") { nachladen(); zeigeGalerie = false }
-                    .knopfHaupthandlung()
-                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
-                Spacer()
-            }
-            .padding(12)
+            .frame(minWidth: 560, minHeight: 460)
         }
-        .frame(minWidth: 620, minHeight: 520)
     }
 
     private static let galerie = URL(string: "https://developer.lametric.com/icons")!
@@ -1234,7 +1230,11 @@ public struct EditorBereichView: View {
     /// unter einer kleinen grauen Ueberschrift, ohne dass stand, dass
     /// LaMetric-Nummer und Titel gemeint waren.
     private var importBlatt: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        Blatt(titel: lok("Aufnehmen"),
+              bestaetigung: importBelegt == nil ? lok("Öffnen") : lok("Ersetzen"),
+              bestaetigenMoeglich: !importSchluessel.isEmpty,
+              schliessen: { zeigeImportBlatt = false },
+              bestaetigen: { einlesen() }) {
             Form {
                 Section {
                     if importMitNummer {
@@ -1271,24 +1271,12 @@ public struct EditorBereichView: View {
                     Text(importMeldung).foregroundStyle(.orange)
                 }
             }
+            // Der Knopf des Rahmens sagt, was geschieht: „Ersetzen", wo etwas
+            // ueberschrieben wird. `lok` in beiden Zweigen — ein Ternaer mit
+            // `String`-Zweig schlaegt selbst nichts nach.
             .formStyle(.grouped)
-
-            HStack {
-                Spacer()
-                Button("Abbrechen") { zeigeImportBlatt = false }
-                    .knopfBefehl()
-                    .keyboardShortcut(.cancelAction)
-                // Der Knopf sagt, was geschieht: „Ersetzen", wo etwas
-                // ueberschrieben wird. `lok` in beiden Zweigen — ein Ternaer
-                // mit `String`-Zweig schlaegt selbst nichts nach.
-                Button(importBelegt == nil ? lok("Öffnen") : lok("Ersetzen")) { einlesen() }
-                    .knopfHaupthandlung()
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(importSchluessel.isEmpty)
-            }
-            .padding()
+            .frame(minWidth: 320)
         }
-        .frame(minWidth: 360)
     }
 
     /// Wonach das Blatt fragt, haengt an der Groesse der Datei — nicht an
@@ -1328,7 +1316,12 @@ public struct EditorBereichView: View {
     /// LaMetric-Nummer, beim 16×52 die Ulanzi-Werknummer. Der Fuss sagt, was
     /// davon den Dateinamen traegt.
     private func umbenennenBlatt(_ eintrag: Editoreintrag) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        Blatt(titel: lok("Umbenennen"),
+              bestaetigung: benennBelegt(eintrag) == nil ? lok("Umbenennen") : lok("Ersetzen"),
+              bestaetigenMoeglich: !benennSchluessel(eintrag).isEmpty
+                  && !benennName.trimmingCharacters(in: .whitespaces).isEmpty,
+              schliessen: { zuBenennen = nil },
+              bestaetigen: { umbenennen(eintrag) }) {
             Form {
                 Section {
                     if eintrag.groesse.mitNummer {
@@ -1361,23 +1354,8 @@ public struct EditorBereichView: View {
                 }
             }
             .formStyle(.grouped)
-
-            HStack {
-                Spacer()
-                Button("Abbrechen") { zuBenennen = nil }
-                    .knopfBefehl()
-                    .keyboardShortcut(.cancelAction)
-                Button(benennBelegt(eintrag) == nil ? lok("Umbenennen") : lok("Ersetzen")) {
-                    umbenennen(eintrag)
-                }
-                .knopfHaupthandlung()
-                .keyboardShortcut(.defaultAction)
-                .disabled(benennSchluessel(eintrag).isEmpty
-                          || benennName.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            .padding()
+            .frame(minWidth: 320)
         }
-        .frame(minWidth: 360)
     }
 
     /// Unter welchem Schluessel der Eintrag hinterher laege.
@@ -1555,8 +1533,16 @@ public struct EditorBereichView: View {
     /// Nummer und Name vor dem Sichern — an der Stelle, an der man sie
     /// braucht, statt im Inspektor, wo sie zu suchen waren.
     private var sichernblatt: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Sichern").font(.headline)
+        Blatt(titel: lok("Sichern"),
+              bestaetigung: lok("Sichern"),
+              bestaetigenMoeglich: !schluessel.isEmpty,
+              schliessen: { zeigeSichernBlatt = false },
+              bestaetigen: {
+                  zeigeSichernBlatt = false
+                  sichern()
+                  zeigtUebersicht = true
+              }) {
+            VStack(alignment: .leading, spacing: 14) {
             if groesse.mitNummer {
                 LabeledContent("Nummer") {
                     TextField("Nummer", text: $nummer)
@@ -1576,23 +1562,9 @@ public struct EditorBereichView: View {
                 Label(lokf("Ersetzt „%@“.", vorhanden.name), systemImage: "exclamationmark.triangle")
                     .font(.footnote).foregroundStyle(.orange)
             }
-            HStack {
-                Spacer()
-                Button("Abbrechen") { zeigeSichernBlatt = false }
-                    .knopfBefehl()
-                    .keyboardShortcut(.cancelAction)
-                Button("Sichern") {
-                    zeigeSichernBlatt = false
-                    sichern()
-                    zeigtUebersicht = true
-                }
-                .knopfHaupthandlung()
-                .keyboardShortcut(.defaultAction)
-                .disabled(schluessel.isEmpty)
             }
+            .frame(minWidth: 320)
         }
-        .padding(20)
-        .frame(minWidth: 360)
     }
 
     private func loeschen(_ eintrag: Editoreintrag) {

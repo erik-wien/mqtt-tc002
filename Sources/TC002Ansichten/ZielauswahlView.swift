@@ -62,9 +62,9 @@ struct ZielauswahlView: View {
     }
 
     private var blatt: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("An welche Uhr senden?").font(.headline)
-
+        Blatt(titel: lok("An welche Uhr senden?"),
+              schliessen: { zeigeBlatt = false }) {
+            VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
                     .knopfBefehl()
@@ -140,15 +140,8 @@ struct ZielauswahlView: View {
                 #endif
             }
             .frame(minHeight: 160)
-
-            HStack {
-                Spacer()
-                Button("Schließen") { zeigeBlatt = false }
-                    .knopfHaupthandlung()
-                    .keyboardShortcut(.defaultAction)
             }
+            .frame(minWidth: 340, minHeight: 280)
         }
-        .padding()
-        .frame(minWidth: 380, minHeight: 320)
     }
 }

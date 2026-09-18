@@ -935,3 +935,6 @@
 "Auf der Uhr und zuletzt geschickt" = "On the clock and recently sent";
 "auf der Uhr" = "on the clock";
 "liegt auf der Uhr" = "is on the clock";
+
+/* EditorBereichView.swift — Titel des Importblatts */
+"Aufnehmen" = "Import";
