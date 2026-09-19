@@ -297,7 +297,7 @@ final class EditorbereichTests: XCTestCase {
         // der Knopf sonst fast ein Fenster weit darunter.
         XCTAssertTrue(text.contains("zubehoer: leinwand.bilder.count > 1"),
                       "das Wiedergabesymbol hängt nicht mehr am Bild")
-        XCTAssertTrue(text.contains("AnyView(abspielknopf(abspielGross))"),
+        XCTAssertTrue(text.contains("AnyView(abspielknopf(abspielGross, aufDemBild: true))"),
                       "das Symbol steht auch bei einem einzigen Einzelbild da — dann ist es ein Knopf "
                       + "ohne Wirkung statt einer Auskunft darueber, dass sich hier etwas bewegt")
 
@@ -309,11 +309,15 @@ final class EditorbereichTests: XCTestCase {
 
         // Zwei Orte, ausdrücklich gewollt: groß unter der Leinwand, klein
         // neben „Bild anhängen" im Reiter „Animation", wo man Einzelbilder
-        // aufbaut und den Lauf gleich sehen will.
-        XCTAssertTrue(text.contains("abspielknopf(abspielGross)"),
-                      "unter der Leinwand steht kein großer Abspielknopf mehr")
-        XCTAssertTrue(text.contains("abspielknopf(abspielKlein)"),
-                      "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr")
+        // aufbaut und den Lauf gleich sehen will. Und zwei Fassungen: `auf
+        // DemBild` liegt über unbekannter Farbe und braucht seine eigene
+        // Scheibe, das kleine liegt auf dem Formularhintergrund.
+        XCTAssertTrue(text.contains("abspielknopf(abspielGross, aufDemBild: true)"),
+                      "unter der Leinwand steht kein großer Abspielknopf mehr — "
+                      + "oder er hält sich nicht mehr für einen auf dem Bild")
+        XCTAssertTrue(text.contains("abspielknopf(abspielKlein, aufDemBild: false)"),
+                      "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr — "
+                      + "oder er trägt jetzt die Scheibe, die auf das Bild gehört")
         // Beide Maße hängen an `@ScaledMetric`: Eine feste Zahl hier hebelte
         // die Textgrößen-Einstellung des Systems aus.
         XCTAssertTrue(text.contains("@ScaledMetric(relativeTo: .largeTitle) private var abspielGross"),
@@ -323,12 +327,24 @@ final class EditorbereichTests: XCTestCase {
         // Play und Pause, nicht Play und Stopp: `stoppeAbspielen` bricht
         // nur die Schleife ab, das gezeigte Einzelbild bleibt stehen. Ein
         // `stop.fill` verspraeche einen Ruecksprung an den Anfang.
-        for zustand in ["\"play.circle\"", "\"pause.circle\""] {
+        for zustand in ["\"play.circle\"", "\"pause.circle\"",
+                        "\"play.fill\"", "\"pause.fill\""] {
             XCTAssertTrue(knopf.contains(zustand),
-                          "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen")
+                          "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen, "
+                          + "und das in beiden Fassungen (auf dem Bild gefüllt, im Inspektor als Umriss)")
         }
         XCTAssertFalse(knopf.contains("stop.fill"),
                        "das Symbol verspricht wieder einen Stopp, hält aber nur an")
+        // Der Grund für die zweite Fassung: Das Zeichen liegt auf einem Bild,
+        // dessen Farbe niemand kennt. Schwarz auf schwarzem Motiv war
+        // unsichtbar — deshalb weiß auf dunkler Scheibe, wie in AVKit und
+        // Fotos. Ein Übersetzer sieht davon nichts.
+        XCTAssertTrue(knopf.contains(".foregroundStyle(.white)"),
+                      "das Zeichen auf dem Bild ist nicht mehr weiß — auf einem schwarzen Motiv "
+                      + "ist es damit unsichtbar")
+        XCTAssertTrue(knopf.contains("Circle().fill(.black.opacity("),
+                      "die dunkle Scheibe unter dem Zeichen fehlt — weiß allein verschwindet "
+                      + "auf einem weißen Motiv")
         XCTAssertTrue(knopf.contains(".accessibilityLabel("),
                       "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
         // Zweimal, nicht dreimal: Der Knopf traegt sein Symbol ohne sichtbaren

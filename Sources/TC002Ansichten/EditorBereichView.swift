@@ -333,7 +333,7 @@ public struct EditorBereichView: View {
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
                            zubehoer: leinwand.bilder.count > 1
-                               ? AnyView(abspielknopf(abspielGross)) : nil)
+                               ? AnyView(abspielknopf(abspielGross, aufDemBild: true)) : nil)
                 // Am Werkstueck, nicht in einem Reiter: Wer den Inspektor
                 // nicht oeffnet, sah von sechzehn Einzelbildern nur eines mit
                 // einem Abspielzeichen. Fotos, Procreate und jeder
@@ -667,7 +667,7 @@ public struct EditorBereichView: View {
                 Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
                 Spacer()
-                if leinwand.bilder.count > 1 { abspielknopf(abspielKlein) }
+                if leinwand.bilder.count > 1 { abspielknopf(abspielKlein, aufDemBild: false) }
             }
         }
 
@@ -699,10 +699,25 @@ public struct EditorBereichView: View {
     /// durch ein Ternaer kommt, ist jeder Zweig schon uebersetzt (`lok`),
     /// bevor SwiftUI ihn sieht: Ein Ternaer mit `String`-Zweig schlaegt selbst
     /// nichts mehr nach.
-    private func abspielknopf(_ kante: Double) -> some View {
+    ///
+    /// `aufDemBild` entscheidet die Faerbung. Auf der Leinwand liegt das
+    /// Zeichen ueber unbekannter Farbe: `primary` war auf einem schwarzen
+    /// Motiv unsichtbar. Deshalb weiss auf einer dunklen, halbdurchsichtigen
+    /// Scheibe, wie es AVKit und Fotos halten. Im Inspektor liegt es auf dem
+    /// Formularhintergrund und bleibt ein blosser Umriss.
+    private func abspielknopf(_ kante: Double, aufDemBild: Bool) -> some View {
         Button { abspielenUmschalten() } label: {
-            Image(systemName: spielAb ? "pause.circle" : "play.circle")
-                .font(.system(size: kante, weight: .light))
+            if aufDemBild {
+                Image(systemName: spielAb ? "pause.fill" : "play.fill")
+                    .font(.system(size: kante * 0.42, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: kante, height: kante)
+                    .background(Circle().fill(.black.opacity(0.45)))
+            } else {
+                Image(systemName: spielAb ? "pause.circle" : "play.circle")
+                    .font(.system(size: kante, weight: .light))
+                    .foregroundStyle(.secondary)
+            }
         }
         .buttonStyle(.plain)
         .help(spielAb ? lok("Pause") : lok("Abspielen"))
