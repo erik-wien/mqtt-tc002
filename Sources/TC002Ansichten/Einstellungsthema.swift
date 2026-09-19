@@ -21,7 +21,7 @@ public enum Einstellungsthema: String, CaseIterable, Identifiable, Sendable {
     public var titel: String {
         switch self {
         case .uhren: return lok("Uhren")
-        case .broker: return lok("Broker")
+        case .broker: return lok("MQTT-Broker")
         case .aufzeichnung: return lok("Aufzeichnung")
         case .wolke: return lok("iCloud")
         case .erweitert: return lok("Erweitert")

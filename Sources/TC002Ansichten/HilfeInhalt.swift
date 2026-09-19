@@ -83,6 +83,14 @@ public enum HilfeInhalt {
         .absatz("Die fünf Blöcke unter der Vorschau zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in einer Ersatzschrift. Die Uhr setzt den Text mit ihrer eigenen Schrift, und die kennt diese App nicht — der Block sagt dir also, was auf dem Platz liegt, nicht, wie es dort aussieht. Ob ein Platz belegt ist, weiß er dafür genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
+    /// Die Ueberschrift des Brokerabschnitts und was darunter steht. Beide
+    /// Hilfen fuehren denselben Satz; als Konstante ist es ein
+    /// Uebersetzungsschluessel statt zweier.
+    public static let brokerEintragen: [Hilfebaustein] = [
+        .ueberschrift("MQTT-Broker"),
+        .absatz("Unter „MQTT-Broker“ trägst du den Broker ein: Adresse, Port, Benutzer und Kennwort."),
+    ]
+
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der
     /// Abschnitt sichtbar und benutzbar bleibt und nur eingeordnet gehoert.
     public static let brokerNurFuerMqtt: [Hilfebaustein] = [
@@ -101,7 +109,7 @@ public enum HilfeInhalt {
         .absatz("Die Einstellungen sind in fünf Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite."),
         .punkte([
             "**Uhren** — deine eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt.",
-            "**Broker** — Adresse, Port, Benutzer und Kennwort des MQTT-Brokers, dazu die Prüfung der Verbindung.",
+            "**MQTT-Broker** — Adresse, Port, Benutzer und Kennwort des Brokers, dazu die Prüfung der Verbindung.",
             "**Aufzeichnung** — Verlauf und Protokoll.",
             "**iCloud** — Synchronisation deiner Geräte.",
             "**Erweitert** — die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",

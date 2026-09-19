@@ -34,7 +34,7 @@ final class HilfezeichenTests: XCTestCase {
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
         ("Sources/TC002Ansichten/Uhreinstellungen.swift", "Auf der Uhr"),
         ("Sources/TC002Ansichten/Uhrseite.swift", "Betriebsart"),
-        ("Sources/TC002Ansichten/Brokerabschnitt.swift", "Broker"),
+        ("Sources/TC002Ansichten/Brokerabschnitt.swift", "MQTT-Broker"),
         ("Sources/TC002Ansichten/Aufzeichnungsabschnitt.swift", "Verlauf"),
         ("Sources/TC002Ansichten/Aufzeichnungsabschnitt.swift", "Protokoll"),
         ("Sources/TC002Ansichten/VirtuelleUhrAbschnitt.swift", "Virtuelle Uhr"),

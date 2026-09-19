@@ -72,7 +72,7 @@ public struct Brokerabschnitt: View {
                 stand
             }
         } header: {
-            Abschnittskopf("Broker", hilfe: lok("Der Broker gilt für Uhren im MQTT-Betrieb. „Verbindung prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf."))
+            Abschnittskopf("MQTT-Broker", hilfe: lok("Der MQTT-Broker gilt für Uhren im MQTT-Betrieb. „Verbindung prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf."))
         }
         // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
         // Bereichs- oder Reiterwechsel zerstört wird — ohne dieses Netz ginge
