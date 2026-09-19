@@ -14,14 +14,26 @@ import TC002Modell
 /// Den Unterschied erklärt ein (?) an der Dauer, die Fernbedienung steht dort,
 /// wo Einstellungen stehen.
 ///
+/// Die Uhr kommt herein und wird nicht aus `AppZustand` geholt: Gelesen und
+/// geschrieben wird die Uhr, deren Seite offen steht (`Uhrseite`), nicht die
+/// angesehene. Vorher stand dieser Abschnitt einmal unter allen Uhren und galt
+/// stets der angesehenen — wer eine andere meinte, musste die Einstellungen
+/// verlassen und umschalten.
+///
 /// Nur bei der Ulanzi-Werksfirmware: `/getConfig` gibt es bei AWTRIX NG
 /// nicht; dort führt die Uhr beides selbst. Der Aufrufer zeigt diese Ansicht
 /// deshalb gar nicht erst an — sie prüft es zusätzlich, damit sie ohne
 /// Rücksicht auf den Aufrufer wahr bleibt.
 public struct Uhreinstellungen: View {
     @Bindable var zustand: AppZustand
+    private let uhr: Uhr
+    private let kanon: Formkanon
 
-    public init(zustand: AppZustand) { self.zustand = zustand }
+    public init(zustand: AppZustand, uhr: Uhr, kanon: Formkanon) {
+        self.zustand = zustand
+        self.uhr = uhr
+        self.kanon = kanon
+    }
 
     /// Vorgabe zehn Sekunden, nicht „kein Wechsel" (0): 0 fixiert die Anzeige
     /// auf die erste Meldung (Geraetereferenz §5.4 nennt das als haeufige
@@ -51,10 +63,10 @@ public struct Uhreinstellungen: View {
     @State private var lesefehler: String?
 
 
-    /// Ob die aktive Uhr die Werksfirmware fährt. Nur dann sind die beiden
-    /// Regler eine Einstellung dieser Uhr: Sie stehen in `/getConfig`, und
-    /// diesen Pfad gibt es bei AWTRIX NG nicht.
-    private var nurUlanzi: Bool { (zustand.aktiveUhr?.gattung ?? .tc002) == .tc002 }
+    /// Ob diese Uhr die Werksfirmware fährt. Nur dann sind die beiden Regler
+    /// eine Einstellung dieser Uhr: Sie stehen in `/getConfig`, und diesen Pfad
+    /// gibt es bei AWTRIX NG nicht.
+    private var nurUlanzi: Bool { uhr.gattung == .tc002 }
 
     public var body: some View {
         if nurUlanzi {
@@ -77,34 +89,30 @@ public struct Uhreinstellungen: View {
                     nutzerHatScrollGewaehlt = true
                     setzen("scrollSpeed", neu)
                 }
-                Text("Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                // Das Scrolltempo ist eine Einstellung der Uhr und laesst
-                // sich von hier aus aendern — es wirkt aber nicht auf das,
-                // was diese App schickt.
-                Text("Das Scrolltempo gilt dagegen nur den Anzeigen, die die Uhr selbst verwaltet. Auf Meldungen dieser App wirkt es nicht: Die Werksfirmware lässt selbst geschickten Text gar nicht laufen, sie schneidet ihn ab.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                // Ein Satz je Einstellung, das Laengere hinter dem (?) am
+                // Kopf: Was einen Absatz braucht, um verstanden zu werden,
+                // steht am falschen Ort oder heisst falsch.
+                Text("Der Takt, in dem die Uhr durch alles blättert, was auf ihr steht.")
+                    .font(kanon.fussnote).foregroundStyle(.secondary)
                 if let lesefehler {
                     // Angezeigt wird der Grund, nicht ein aufgeräumter
                     // Ersatzsatz: Steht dort „keine Verbindung zum lokalen
                     // Netzwerk“, sagt die Meldung des Kerns schon, was zu tun
                     // ist.
                     Label(lesefehler, systemImage: "exclamationmark.triangle")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(kanon.fussnote).foregroundStyle(.secondary)
                     Button("Erneut abfragen") {
                         geladen = false
                         self.lesefehler = nil
                         Task { await lesen() }
                     }
                     .buttonStyle(.borderless)
-                    .font(.footnote)
+                    .font(kanon.fussnote)
                 }
             } header: {
-                Abschnittskopf("Auf der Uhr", hilfe: lok("Zwei Einstellungen des Geräts: Sie überdauern jede Meldung, gelten für alles, was auf der Uhr steht, und werden beim Verstellen sofort geschrieben. Was dagegen nur eine einzelne Meldung betrifft — ihre Dauer und ihr Lauftempo —, steht unter „Senden“ im Zeit-Reiter."))
-            } footer: {
-                Text(lokf("Gilt für die angesehene Uhr: %@", zustand.aktiveUhr?.name ?? ""))
+                Abschnittskopf("Auf der Uhr", hilfe: lok("Zwei Einstellungen des Geräts: Sie überdauern jede Meldung, gelten für alles, was auf der Uhr steht — Uhrzeit, Temperatur, die fünf Meldungen —, und werden beim Verstellen sofort geschrieben. Der Seitenwechsel ist der Takt, in dem sie durch alles blättert; „kein Wechsel“ hält sie beim ersten. Das Scrolltempo gilt dagegen nur den Anzeigen, die die Uhr selbst verwaltet: Auf Meldungen dieser App wirkt es nicht, die Werksfirmware lässt selbst geschickten Text gar nicht laufen. Was nur eine einzelne Meldung betrifft — ihre Dauer und ihr Lauftempo —, steht unter „Senden“ im Zeit-Reiter."))
             }
-            .task(id: zustand.aktiveID) { await lesen() }
+            .task(id: uhr.id) { await lesen() }
         }
     }
 
@@ -117,7 +125,8 @@ public struct Uhreinstellungen: View {
         // `/getConfig` gibt es nur bei der Werksfirmware. Bei einer AWTRIX NG
         // holte diese Abfrage eine 404 und meldete sie als Fehler — für eine
         // Einstellung, die dort gar nicht gefragt ist.
-        guard nurUlanzi, let host = zustand.aktiveUhr?.host else { return }
+        guard nurUlanzi else { return }
+        let host = uhr.host
         let ergebnis: (carousel: Int?, scroll: Int?, fehler: String?) = await Hintergrund.lauf {
             do {
                 let k = try Geraet(host: host).konfiguration()
@@ -144,7 +153,7 @@ public struct Uhreinstellungen: View {
     }
 
     private func setzen(_ feld: String, _ wert: Int) {
-        guard let host = zustand.aktiveUhr?.host else { return }
+        let host = uhr.host
         Task {
             do {
                 try await Hintergrund.lauf { try Geraet(host: host).konfigurationSetzen(feld, wert) }

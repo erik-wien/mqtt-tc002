@@ -283,15 +283,12 @@
 "Betriebsart" = "Method";
 "HTTP" = "HTTP";
 "MQTT" = "MQTT";
-"Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird." = "No clock is currently set to MQTT — then none of this is needed here. It may still be entered, and it applies as soon as a clock is switched over.";
 "kein Wechsel" = "no change";
 "alle %d Sekunden" = "every %d seconds";
 "Scrolltempo" = "Scroll speed";
 "Port" = "Port";
 "Benutzer" = "User";
 "Kennwort" = "Password";
-"Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen." = "The password lives in the Keychain, not in the settings.";
-"Sichern und prüfen" = "Save and check";
 "Die Einstellungen „Seitenwechsel“ und „Scrolltempo“ ließen sich nicht lesen: %@" = "The \"Page change\" and \"Scroll speed\" settings could not be read: %@";
 "Die Uhr hat keinen Wert für „Seitenwechsel“ gemeldet." = "The clock reported no value for \"Page change\".";
 "Die Uhr hat keinen Wert für „Scrolltempo“ gemeldet." = "The clock reported no value for \"Scroll speed\".";
@@ -301,7 +298,6 @@
 "%@ auf %@ gesetzt" = "%@ set to %@";
 /* VerbindungiOS.swift */
 "wird geprüft …" = "checking …";
-"angenommen" = "accepted";
 /* VorschauView.swift */
 "Vorschau der Anzeige, %d mal %d Pixel" = "Preview of the display, %d by %d pixels";
 "Hinaus geht der Text samt Reglern · %@" = "What goes out is the text with its settings · %@";
@@ -407,7 +403,6 @@
 "Empfänger · %d" = "Recipients · %d";
 "Die fünf Blöcke zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in der Ersatzschrift. Genau steht der Text dort in der eingebauten Schrift der Uhr, die diese App nicht kennt — der Block sagt also, was auf dem Platz liegt, nicht, wie es dort aussieht. Bis September 2026 zeigte er gar nichts, weil er nur ein 52 × 16-Bild rechnen konnte; das war die stärkere Behauptung, nämlich „wir wissen es nicht“, obwohl die App es selbst geschickt hatte. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat." = "On an AWTRIX the five blocks show the same as the preview: an approximation on its 32 × 8, in the substitute font. Exactly, the text there is set in the clock's built-in font, which this app does not know — so the block says what lies on the slot, not how it looks there. Until September 2026 it showed nothing at all, because it could only render a 52 × 16 image; that was the stronger claim — \"we do not know\" — about something the app had sent itself. Occupied is more precise here than on the factory firmware: the AWTRIX names who placed each display.";
 "Protokoll führen" = "Keep a log";
-"Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt." = "Records what the app sends and what the clocks report — readable under History. Only needed when something goes wrong; switched off, nothing is recorded and what is there is cleared.";
 /* Protokoll: was gesendet wurde, was scheiterte, was uebersprungen wurde (18.09.2026) */
 "%d Rechtecke" = "%d rectangles";
 "%d Bilder" = "%d images";
@@ -433,16 +428,12 @@
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";
-"Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät." = "Remembers every message you send, with its settings — under Send it appears below the slots, and a tap restores it. Synced via iCloud when that is switched on, and keeps the last 200 sends per device.";
 "Platz %d" = "Slot %d";
 "Übernimmt diese Meldung samt Einstellungen" = "Takes over this message with its settings";
 "Der Verlauf ließ sich nicht schreiben." = "The history could not be written.";
 /* Uhreinstellungen.swift — Seitenwechsel und Scrolltempo, seit 18.09.2026 hier */
 "Auf der Uhr" = "On the clock";
-"Zwei Einstellungen des Geräts: Sie überdauern jede Meldung, gelten für alles, was auf der Uhr steht, und werden beim Verstellen sofort geschrieben. Was dagegen nur eine einzelne Meldung betrifft — ihre Dauer und ihr Lauftempo —, steht unter „Senden“ im Zeit-Reiter." = "Two settings of the device: they outlast every message, apply to everything on the clock, and are written to it the moment you change them. What concerns a single message — its duration and its scroll speed — is under Send, in the Time tab.";
-"Gilt für die angesehene Uhr: %@" = "Applies to the clock shown: %@";
 "Gilt nur den Anzeigen, die die Uhr selbst verwaltet — Uhrzeit, Temperatur. Auf Meldungen dieser App wirkt es nicht." = "Applies only to the displays the clock manages itself — time, temperature. It has no effect on messages from this app.";
-"Das Scrolltempo gilt dagegen nur den Anzeigen, die die Uhr selbst verwaltet. Auf Meldungen dieser App wirkt es nicht: Die Werksfirmware lässt selbst geschickten Text gar nicht laufen, sie schneidet ihn ab." = "The scroll speed, by contrast, applies only to the displays the clock manages itself. It has no effect on messages from this app: the factory firmware does not scroll text you send it at all, it cuts it off.";
 "Dauer und Lauftempo reisen mit dieser einen Meldung mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung des Geräts und steht unter „Einstellungen“ — bei der Uhr, für die sie gilt." = "Duration and scroll speed travel with this one message. How fast the clock pages through all displays is a setting of the device and lives under Settings — with the clock it applies to.";
 "Eine AWTRIX NG führt den Seitenwechsel selbst; unter „Einstellungen“ steht er deshalb nur bei einer Ulanzi-Werksfirmware." = "An AWTRIX NG handles page changes itself; that is why Settings shows it only for Ulanzi factory firmware.";
 "Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe." = "How long the clock shows this one message before paging on. Empty or 0: no setting of its own.";
@@ -762,8 +753,6 @@
 "Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides wird abgelehnt statt stillschweigend verschluckt." = "A painted image and an image from the collection: painting happens on 52 × 16, the AWTRIX has 32 × 8. Likewise a 16 × 16 icon — there is no room for it on eight rows. Both are refused instead of silently swallowed.";
 /* VerbindungView.swift — Geraeteart */
 "Geräteart" = "Device kind";
-"„Abfragen“ stellt die Geräteart selbst fest. Von Hand zu wählen ist sie nur dort, wo das nicht gelingt — etwa wenn die Schnittstelle der AWTRIX eine Anmeldung verlangt." = "“Query” determines the device kind itself. Picking it by hand is only needed where that fails — for instance when the AWTRIX interface requires a login.";
-"Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb." = "The app determines the prefix itself, and finds out what kind of device is answering along the way. On a Ulanzi it is the configured one plus the last four digits of the MAC address, on an AWTRIX NG exactly the configured one. It belongs to MQTT mode.";
 "Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe." = "How long the clock shows this one message before it moves on. Empty or 0: no setting of its own.";
 "Senkrecht ausrichten" = "Vertical alignment";
 "Gerät" = "Device";
@@ -781,7 +770,6 @@
 "alle" = "all";
 "bewegt" = "animated";
 "Nur diese Meldung" = "This message only";
-"Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, deine fünf Meldungen. Der Seitenwechsel ist der Takt dafür und gilt für alle. „kein Wechsel“: sie bleibt beim ersten stehen." = "The clock pages through everything on it — time, temperature, your five messages. The page change sets that rhythm and applies to all of them. \"no change\": it stays on the first one.";
 "Der Unterschied zwischen „Dauer“ und „Seitenwechsel“ ist die Reichweite. Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, die fünf Meldungen. Wie schnell sie das tut, sagt der Seitenwechsel, und er gilt für alle. Die Dauer reist dagegen mit einer einzelnen Meldung mit und gibt ihr eine eigene Standzeit; leer oder 0 heißt keine Angabe, dann bleibt es beim Seitenwechsel." = "The difference between \"duration\" and \"page change\" is reach. The clock pages through everything on it — time, temperature, the five messages. How fast it does that is the page change, and it applies to all of them. The duration, by contrast, travels with a single message and gives that one its own display time; empty or 0 means no value, and the page change stands.";
 "Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4)." = "How the two interact is unclear — whether the duration overrides the page change for that display, or the smaller value wins, the manufacturer's documentation does not say (device reference, §4.4).";
 "Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft." = "How fast the text scrolls — only when it does not fit the display and therefore runs.";
@@ -795,8 +783,6 @@
 "Virtuelle Uhr" = "Virtual clock";
 "Als Uhr eintragen" = "Add as a clock";
 "Ansehen" = "Show";
-"Eine Uhr, die es nicht gibt: Sie nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster. Damit lässt sich alles ausprobieren — Senden, Löschen, die fünf Plätze, das Blättern —, ohne dass ein Gerät im Netz steht." = "A clock that does not exist: it takes displays like a Ulanzi with factory firmware and shows them in a window of its own. Everything can be tried out that way — sending, deleting, the five slots, the page turn — with no device on the network.";
-"Sie hört nur auf dem eigenen Rechner zu und spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen." = "It listens on this computer only and speaks HTTP, not MQTT: a broker is a separate program and cannot come along.";
 "angekommen, aber nicht als Pixel zerlegbar" = "arrived, but cannot be taken apart into pixels";
 "Die virtuelle Uhr läuft nicht — einzuschalten in den Einstellungen." = "The virtual clock is not running — switch it on in Settings.";
 "Noch nichts angekommen. Unter „Senden“ an die Uhr mit dieser Adresse schicken." = "Nothing has arrived yet. Send to the clock with this address under Send.";
@@ -948,3 +934,30 @@
 
 /* Editorbestand.swift — was aufgenommen wird, seit auch Kleineres passt */
 "Das Bild ist %d×%d und passt nicht auf die Anzeige (52×16). Verkleinert wird nicht." = "The image is %d×%d and does not fit the display (52×16). Nothing is scaled down.";
+"Aufzeichnung" = "Recording";
+"Erweitert" = "Advanced";
+"Thema" = "Topic";
+"Neue Uhr" = "New clock";
+"Uhr hinzufügen …" = "Add clock …";
+"z. B. Küche" = "e.g. Kitchen";
+"Diese Uhr gibt es nicht mehr" = "This clock is gone";
+"Diese Uhr entfernen?" = "Remove this clock?";
+"Sie verschwindet aus dieser App. Auf dem Gerät selbst ändert sich nichts." = "It disappears from this app. Nothing changes on the device itself.";
+"Antippen öffnet die Uhr: Name, Adresse, Betriebsart und was auf ihr eingestellt ist." = "Tapping a clock opens it: name, address, mode and what is set on the device.";
+"Präfix und Geräteart stellt die App selbst fest, sobald die Uhr antwortet." = "The app works out prefix and device kind itself as soon as the clock answers.";
+"Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen." = "The app determines the prefix itself, and finds out what kind of device is answering along the way. On a Ulanzi it is the configured one plus the last four digits of the MAC address, on an AWTRIX NG exactly the configured one. It belongs to MQTT mode; in HTTP mode the clock is addressed by its address.";
+"Verlauf" = "History";
+"Merkt sich jede gesendete Meldung samt ihren Einstellungen." = "Remembers every message sent, along with its settings.";
+"Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt eine Meldung samt ihren Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist." = "Under “Send” the history sits below the slots, and a tap restores a message together with its settings. It keeps the last 200 sends per device and is synced via iCloud when that is switched on.";
+"Schreibt mit, was die App sendet und was die Uhren melden." = "Records what the app sends and what the clocks report.";
+"Die technische Mitschrift, unter „Protokoll“ nachzulesen. Nur nötig, wenn etwas nicht klappt — ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt, und der Bereich „Protokoll“ verschwindet aus der Seitenleiste." = "The technical transcript, readable under “Log”. Only needed when something does not work — switched off, nothing is recorded, what is there is cleared away, and the “Log” area disappears from the sidebar.";
+"Zurzeit steht keine Uhr auf MQTT — eingetragen werden darf der Broker trotzdem, und er gilt, sobald eine Uhr umgestellt wird." = "No clock is on MQTT at the moment — the broker may still be entered, and it applies as soon as a clock is switched over.";
+"Der Broker gilt für Uhren im MQTT-Betrieb. „Verbindung prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf." = "The broker applies to clocks in MQTT mode. “Check connection” asks it whether it accepts the login — that takes up to eight seconds. An accepted login only means that user and password are right: whether the clock shows the message in the end also depends on the right prefix and on whether the account may write to the topic.";
+"Der Takt, in dem die Uhr durch alles blättert, was auf ihr steht." = "The rate at which the clock pages through everything on it.";
+"Zwei Einstellungen des Geräts: Sie überdauern jede Meldung, gelten für alles, was auf der Uhr steht — Uhrzeit, Temperatur, die fünf Meldungen —, und werden beim Verstellen sofort geschrieben. Der Seitenwechsel ist der Takt, in dem sie durch alles blättert; „kein Wechsel“ hält sie beim ersten. Das Scrolltempo gilt dagegen nur den Anzeigen, die die Uhr selbst verwaltet: Auf Meldungen dieser App wirkt es nicht, die Werksfirmware lässt selbst geschickten Text gar nicht laufen. Was nur eine einzelne Meldung betrifft — ihre Dauer und ihr Lauftempo —, steht unter „Senden“ im Zeit-Reiter." = "Two settings of the device: they outlast every message, apply to everything on the clock — time, temperature, the five messages — and are written immediately when changed. The page rate is the tempo at which it pages through everything; “no change” keeps it on the first. The scroll speed, by contrast, applies only to the displays the clock manages itself: it has no effect on messages from this app, because the factory firmware does not scroll text it was sent. What concerns only a single message — its duration and its scrolling speed — is under “Send” in the Time tab.";
+"Nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware, ohne Gerät im Netz." = "Accepts displays like a Ulanzi with factory firmware, with no device on the network.";
+"Eine Uhr, die es nicht gibt: Sie zeigt, was ankommt, in einem eigenen Fenster — damit lässt sich alles ausprobieren, Senden, Löschen, die fünf Plätze, das Blättern, ohne dass ein Gerät im Netz steht. Sie hört nur auf dem eigenen Rechner zu und spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen." = "A clock that does not exist: it shows what arrives in a window of its own — everything can be tried out that way, sending, deleting, the five slots, the paging, without a device on the network. It listens only on this computer and speaks HTTP, not MQTT: a broker is a separate program and cannot come along here.";
+"Verbindung prüfen" = "Check connection";
+"Ein Kennwort liegt im Schlüsselbund, nicht in den Einstellungen." = "A password is stored in the keychain, not in the settings.";
+"Es liegt kein Kennwort im Schlüsselbund." = "No password is stored in the keychain.";
+"Uhr %d" = "Clock %d";

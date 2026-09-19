@@ -29,6 +29,63 @@ public extension View {
         textFieldStyle(.roundedBorder)
     }
 
+    /// Ein Feld in einer beschrifteten Zeile (`LabeledContent`), so wie es die
+    /// jeweilige Oberfläche haben will.
+    ///
+    /// Am Schreibtisch trägt es die Fassung und gibt seine eigene Beschriftung
+    /// ab — die steht schon links in der Zeile. Auf dem Telefon steht der Wert
+    /// rechts angeschlagen ohne Kasten, wie in den Systemeinstellungen, und die
+    /// Beschriftung des Feldes ist dort der Platzhalter.
+    ///
+    /// Seit sich beide Oberflächen dieselben Bausteine teilen, braucht dieser
+    /// eine Unterschied einen Schalter statt zweier Dateien.
+    @ViewBuilder
+    func eingabefeld(inZeile kanon: Formkanon) -> some View {
+        switch kanon {
+        case .schreibtisch: labelsHidden().eingabefeld()
+        case .telefon: multilineTextAlignment(.trailing)
+        }
+    }
+
+    /// Adresse, Benutzername und Präfix sind keine Prosa: keine Autokorrektur,
+    /// kein großer Anfangsbuchstabe. `textInputAutocapitalization` gibt es nur
+    /// außerhalb von macOS; eine Mac-Tastatur fängt von sich aus ohnehin nicht
+    /// groß an.
+    @ViewBuilder
+    func ohneAutokorrektur() -> some View {
+        #if os(macOS)
+        autocorrectionDisabled()
+        #else
+        autocorrectionDisabled().textInputAutocapitalization(.never)
+        #endif
+    }
+
+    /// Der Ziffernblock für ein Portfeld samt „Fertig“ darüber: `.numberPad`
+    /// hat keine Eingabetaste, ohne Leiste käme man aus dem Feld nur durch
+    /// Tippen daneben heraus. Beides gibt es nur außerhalb von macOS — dort
+    /// tippt man die Zahl auf derselben Tastatur wie alles andere.
+    ///
+    /// Die Leiste hängt am Fokus dieses einen Feldes: `.keyboard` gölte sonst
+    /// für jede Tastatur derselben Ansicht, auch für Adresse, Benutzer und
+    /// Kennwort, die ihre Eingabetaste schon haben.
+    @ViewBuilder
+    func ziffernfeld(fokus: FocusState<Bool>.Binding) -> some View {
+        #if os(macOS)
+        self
+        #else
+        focused(fokus)
+            .keyboardType(.numberPad)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    if fokus.wrappedValue {
+                        Spacer()
+                        Button("Fertig") { fokus.wrappedValue = false }
+                    }
+                }
+            }
+        #endif
+    }
+
     /// Dieselbe Fassung, dazu ein (x) am rechten Rand — nur, solange etwas
     /// drinsteht.
     ///

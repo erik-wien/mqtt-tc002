@@ -13,12 +13,20 @@ final class Schluesselbunddoppelgaenger: Schluesselbundzugriff {
     var gelingt = true
     private(set) var gelesen: [String] = []
     private(set) var geschrieben: [(konto: String, wert: String)] = []
+    /// Getrennt gezaehlt: Die Frage, **ob** ein Eintrag da ist, zieht im echten
+    /// Schluesselbund keinen Dialog auf, die nach seinem Wert schon.
+    private(set) var gefragtObVorhanden: [String] = []
 
     init(_ eintraege: [String: String] = [:]) { self.eintraege = eintraege }
 
     func lesen(_ konto: String) -> String? {
         gelesen.append(konto)
         return eintraege[konto]
+    }
+
+    func vorhanden(_ konto: String) -> Bool {
+        gefragtObVorhanden.append(konto)
+        return eintraege[konto] != nil
     }
 
     func setzen(_ wert: String, fuer konto: String) -> Bool {
@@ -114,6 +122,88 @@ final class AppZustandTests: XCTestCase {
                                       iconNummer: "5610", iconKante: 16)
         XCTAssertNil(zustand.icon(fuer: grosses),
                      "Ein 16×16 derselben Nummer ist ein anderes Icon.")
+    }
+
+    // MARK: - Wie eine neue Uhr heisst
+
+    /// Ohne getippten Namen heisst eine neue Uhr „Uhr 1", „Uhr 2" — und
+    /// **nicht** nach ihrer Adresse oder ihrem Themenpraefix. Das Praefix
+    /// (`hersteller_a86b`) stand als Titel ueber der Sendeansicht und sagte
+    /// dort niemandem, welche Uhr gemeint ist.
+    func testEineNeueUhrHeisstUhrEins() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = []
+
+        zustand.uhrHinzufuegen(host: "10.0.0.7", sitzung: Belegungsdoppelgaenger.sitzung())
+        zustand.uhrHinzufuegen(host: "10.0.0.8", sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertEqual(Set(zustand.uhren.map(\.name)), ["Uhr 1", "Uhr 2"])
+    }
+
+    /// Ein getippter Name gilt — das Blatt „Neue Uhr" fragt danach.
+    func testEinGetippterNameGilt() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = []
+
+        zustand.uhrHinzufuegen(host: "10.0.0.7", name: "Küche",
+                               sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertEqual(zustand.uhren.first?.name, "Küche")
+    }
+
+    /// Die freie Zahl, nicht die naechste: Wer „Uhr 2" entfernt und eine neue
+    /// anlegt, bekommt wieder „Uhr 2" und keine zweite „Uhr 3".
+    func testDieNaechsteFreieZahlWirdVergeben() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = [Uhr(name: "Uhr 1", host: "10.0.0.1"),
+                         Uhr(name: "Uhr 3", host: "10.0.0.3")]
+
+        zustand.uhrHinzufuegen(host: "10.0.0.9", sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertTrue(zustand.uhren.contains { $0.name == "Uhr 2" })
+    }
+
+    // MARK: - Ob ein Kennwort hinterlegt ist
+
+    /// Ein leeres Feld sieht aus, als waere kein Kennwort gesetzt. Die
+    /// Einstellungen sagen deshalb, ob eines hinterlegt ist — und fragen den
+    /// Schluesselbund dafuer **nicht** nach dem Wert: Das Lesen zieht auf dem
+    /// Rechner eines Menschen einen Dialog auf.
+    func testKennwortVorhandenKommtOhneZweitesLesenAus() {
+        schluesselbund.eintraege["broker"] = "geheim"
+
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        XCTAssertTrue(zustand.kennwortVorhanden)
+        XCTAssertEqual(schluesselbund.gelesen, ["broker"],
+                       "Der Wert des Kennworts darf genau einmal gelesen werden, beim Start — "
+                       + "jedes weitere Lesen fragt beim Anwender nach.")
+    }
+
+    /// Liegt keines da, sagt die Auskunft das — und zwar ueber die Frage, ob
+    /// ein Eintrag existiert, nicht ueber seinen Inhalt.
+    func testOhneEintragIstKeinKennwortVorhanden() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        XCTAssertFalse(zustand.kennwortVorhanden)
+        XCTAssertEqual(schluesselbund.gefragtObVorhanden, ["broker"],
+                       "Ohne gelesenen Wert muss die Existenzfrage gestellt werden — sie ist "
+                       + "die einzige, die ohne Dialog auskommt.")
+    }
+
+    /// Nach dem Sichern gilt, was gesichert wurde. Ein leerer Wert loescht den
+    /// Eintrag, und danach ist keines mehr hinterlegt.
+    func testSichernSetztDieAuskunftNach() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        XCTAssertFalse(zustand.kennwortVorhanden)
+
+        zustand.kennwort = "geheim"
+        zustand.kennwortSichern()
+        XCTAssertTrue(zustand.kennwortVorhanden)
+
+        zustand.kennwort = ""
+        zustand.kennwortSichern()
+        XCTAssertFalse(zustand.kennwortVorhanden)
     }
 
     /// UUID(uuidString:) ist gegenueber Gross-/Kleinschreibung nachsichtig: zwei von

@@ -3,16 +3,19 @@ import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-/// Uhren und Broker einrichten. Eine Liste im Hochformat; die Mac-Fassung
-/// bringt dieselben Felder in einem Fenster unter, hier stehen sie in
-/// Abschnitten untereinander.
+/// Die Einstellungen am Telefon: eine Liste der fünf Themen, jedes Thema eine
+/// eigene Seite.
+///
+/// **Der eine Unterschied zum Schreibtisch, und sein Grund.** Dort wählt eine
+/// Segmentwahl über dem Inhalt das Thema. Auf dem Telefon ist dafür kein Platz
+/// — fünf Wörter nebeneinander schrumpfen auf Kürzel —, und eine Reiterleiste
+/// in einem Blatt ist dort nicht üblich: Reiter gehören der App, nicht einem
+/// Blatt. Der Einstieg ist deshalb eine Liste mit `NavigationLink`, die Bauart
+/// der Einstellungen-App. Die Inhalte der Seiten sind **dieselben Bausteine**
+/// wie am Schreibtisch (`Einstellungsinhalt`).
 struct VerbindungiOS: View {
     @Bindable var zustand: AppZustand
-    @State private var neueAdresse = ""
     @Environment(\.dismiss) private var schliessen
-    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
-    /// dem Port-Feld nur durch Tippen daneben heraus.
-    @FocusState private var portFokus: Bool
     @State private var zeigeVirtuelleUhr = false
     @State private var zeigeHilfe = false
     @State private var zeigeUeber = false
@@ -21,21 +24,23 @@ struct VerbindungiOS: View {
         NavigationStack {
             VStack(spacing: 0) {
                 FehlerleisteiOS(zustand: zustand)
-                Form {
-                    uhrenAbschnitt
-                    // Die Einstellungen der angesehenen Uhr — derselbe
-                    // Baustein wie am Schreibtisch: Seitenwechsel und
-                    // Scrolltempo sind Einstellungen des Geraets, keine Frage
-                    // der Bedienung, und gehoeren darum auch hier hin.
-                    Uhreinstellungen(zustand: zustand)
-                    verlaufAbschnitt
-                    protokollAbschnitt
-                    brokerAbschnitt
-                    VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
-                                          ansehen: { zeigeVirtuelleUhr = true })
-                    Wolkenabschnitt(zustand: zustand, fussnote: .caption)
+                List {
+                    Section {
+                        ForEach(Einstellungsthema.allCases) { thema in
+                            NavigationLink(value: thema) {
+                                Label { Text(thema.titel) } icon: {
+                                    Image(systemName: thema.symbol)
+                                }
+                            }
+                        }
+                    }
                     ueberAbschnitt
                 }
+            }
+            .navigationDestination(for: Einstellungsthema.self) { thema in
+                Einstellungsinhalt(zustand: zustand, thema: thema, kanon: .telefon,
+                                   virtuelleUhrAnsehen: { zeigeVirtuelleUhr = true })
+                    .navigationTitle(thema.titel)
             }
             // Wie am Schreibtisch: beim Aufschlagen fragen, nicht erst auf
             // Druck (`AppZustand.alleAbfragen`).
@@ -52,121 +57,6 @@ struct VerbindungiOS: View {
         .sheet(isPresented: $zeigeVirtuelleUhr) { VirtuelleUhrView(betrieb: .gemeinsam) }
         .sheet(isPresented: $zeigeHilfe) { HilfeiOS() }
         .sheet(isPresented: $zeigeUeber) { UeberiOS() }
-        // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
-        // ein eben erst eingetipptes Kennwort sonst verloren — es stünde nur im
-        // Speicher, nicht im Schlüsselbund. Dasselbe Netz wie am Mac.
-        .onDisappear { zustand.kennwortSichern() }
-    }
-
-    private var uhrenAbschnitt: some View {
-        Section("Uhren") {
-            ForEach($zustand.uhren) { $uhr in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(uhr.name)
-                        Spacer()
-                        if zustand.verbunden[uhr.id] == true {
-                            Image(systemName: "checkmark.circle").foregroundStyle(.green)
-                        } else if zustand.verbunden[uhr.id] == false {
-                            Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
-                        }
-                    }
-                    // Adresse, Praefix und Geraeteart in einer Zeile: Drei
-                    // Angaben, die man liest und nicht bedient. Das Praefix
-                    // nur im MQTT-Betrieb — bei einer HTTP-Uhr stuende dort
-                    // „noch nicht abgefragt" und schickte jemanden hinter
-                    // etwas her, das diese Uhr nie braucht.
-                    Text(kennzeile(uhr))
-                        .font(.caption).foregroundStyle(.secondary)
-                        .lineLimit(1).minimumScaleFactor(0.8)
-                    Adresswarnung(host: uhr.host)
-                    Brokergrund(grund: zustand.brokergrund[uhr.id])
-                    Picker("Betriebsart", selection: betriebsart($uhr)) {
-                        Text("HTTP").tag(Betriebsart.http)
-                        Text("MQTT").tag(Betriebsart.mqtt)
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.segmented)
-                    HStack {
-                        Button("Abfragen") { zustand.abfragen(uhr.id) }
-                            .knopfBefehl()
-                        Uhrlink(host: uhr.host)
-                        Spacer()
-                        Button("Entfernen", role: .destructive) { zustand.uhrEntfernen(uhr.id) }
-                            .knopfZerstoerend()
-                    }
-                    .font(.callout)
-                }
-                // Die Geraeteart stellt „Abfragen" selbst fest. Von Hand
-                // gebraucht wird sie nur dort, wo das nicht gelingt: Eine
-                // AWTRIX NG hinter einer Anmeldung antwortet auf keine Frage
-                // und gilt sonst als Werksfirmware — die App schickte dann auf
-                // `<Praefix>/custom/…` statt auf `<Praefix>/cmd/apps/pushed/…`,
-                // und auf der Uhr erschiene nichts. Darum im Kontextmenue und
-                // nicht in der Liste: ein Ausweg, kein Regelfall.
-                .contextMenu {
-                    Picker("Geräteart", selection: geraeteart($uhr)) {
-                        ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
-                            Text(art.beschriftung).tag(art)
-                        }
-                    }
-                }
-            }
-            HStack {
-                // Beispiel statt Beschreibung — dieselbe Ueberlegung wie am
-                // Mac: Man sieht sofort, dass eine IP-Adresse gemeint ist.
-                TextField("z. B. 192.168.0.10", text: $neueAdresse)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onSubmit { hinzufuegen() }
-                Button("Hinzufügen") { hinzufuegen() }
-                    .knopfBefehl()
-                    .disabled(neueAdresse.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
-                .font(.caption).foregroundStyle(.secondary)
-            Text("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb.")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-    }
-
-    /// Die Betriebsart als nicht-wahlfreie Wahl fuer den Picker — dieselbe
-    /// Ueberlegung wie in der Mac-Fassung: Das Optional ist ein Dateiformat,
-    /// die Oberflaeche sieht nur zwei Faelle, und wer waehlt, schreibt einen
-    /// Wert ausdruecklich hinein.
-    /// Die Geraeteart als nicht-wahlfreie Wahl — wortgleich zur Mac-Fassung
-    /// (`VerbindungView.geraeteart`), damit beide Oberflaechen dasselbe tun:
-    /// `Uhr.typ` ist ein `Optional`, weil es ein Dateiformat ist, gelesen wird
-    /// es ueber `gattung`, und wer waehlt, schreibt einen Wert ausdruecklich
-    /// hinein.
-    private func geraeteart(_ uhr: Binding<Uhr>) -> Binding<Geraetetyp> {
-        Binding(get: { uhr.wrappedValue.gattung },
-                set: { neu in
-                    guard neu != uhr.wrappedValue.gattung else { return }
-                    uhr.wrappedValue.typ = neu
-                    zustand.geraeteartGeaendert(uhr.wrappedValue.id)
-                })
-    }
-
-    /// Adresse, Themenpraefix und Geraeteart in einer Zeile — mit Mittelpunkt
-    /// getrennt, wie es Listen in den Systemeinstellungen halten.
-    private func kennzeile(_ uhr: Uhr) -> String {
-        var teile = [uhr.host]
-        if uhr.wirksameBetriebsart == .mqtt {
-            teile.append(uhr.praefix.isEmpty ? lok("noch nicht abgefragt")
-                                             : Themenpraefix.sichtbar(uhr.praefix))
-        }
-        teile.append(lok(uhr.gattung.beschriftung))
-        return teile.joined(separator: " · ")
-    }
-
-    private func betriebsart(_ uhr: Binding<Uhr>) -> Binding<Betriebsart> {
-        Binding(get: { uhr.wrappedValue.wirksameBetriebsart },
-                set: { neu in
-                    guard neu != uhr.wrappedValue.wirksameBetriebsart else { return }
-                    uhr.wrappedValue.betriebsart = neu
-                    zustand.betriebsartGeaendert(uhr.wrappedValue.id)
-                })
     }
 
     /// Hilfe und Über am Fuß der Einstellungen. iOS stellt für „Über“ keine
@@ -186,105 +76,5 @@ struct VerbindungiOS: View {
             Button("Über Pixel Clock Messenger") { zeigeUeber = true }
                 .buttonStyle(.automatic)
         }
-    }
-
-    private var verlaufAbschnitt: some View {
-        // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
-        // keine technische Mitschrift, sondern das, was man geschickt hat, und
-        // ein Druck darauf stellt es wieder her.
-        Section {
-            Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
-            Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
-                .knopfZerstoerend()
-            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
-    }
-
-    private var protokollAbschnitt: some View {
-        // Ab Werk aus. Das Protokoll ist ein Werkzeug fuer den Fall, dass
-        // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
-        // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
-        // raeumt das Vorhandene weg.
-        Section {
-            Toggle("Protokoll führen", isOn: $zustand.protokollAn)
-            Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
-    }
-
-    private var brokerAbschnitt: some View {
-        Section("Broker") {
-            // Weiter sichtbar und weiter benutzbar — nur eingeordnet. Die
-            // Begruendung steht bei der Mac-Fassung, sie gilt hier genauso:
-            // Ein verschwindender Abschnitt liesse das Formular springen, ein
-            // abgeblendeter verhinderte, den Broker vor dem Umstellen
-            // einer Uhr einzutragen.
-            if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
-                Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            // Beschriftet waren die vier Felder hier schon; was fehlte, war
-            // der Platzhalter, der nach dem Leeren der Vorgaben sichtbar wird.
-            // Die Beschriftung links sagt, was das Feld ist, das Beispiel
-            // rechts, wie ein Wert darin aussieht.
-            LabeledContent("Adresse") {
-                TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
-                    .multilineTextAlignment(.trailing)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            LabeledContent("Port") {
-                TextField("Port", text: $zustand.brokerPort)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.numberPad)
-                    .focused($portFokus)
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            // Nur beim Port: `.keyboard` gilt sonst fuer jede
-                            // Tastatur dieses Blattes, auch fuer Adresse,
-                            // Benutzer und Kennwort, die ihre Eingabetaste
-                            // schon haben.
-                            if portFokus {
-                                Spacer()
-                                Button("Fertig") { portFokus = false }
-                            }
-                        }
-                    }
-            }
-            LabeledContent("Benutzer") {
-                TextField("z. B. pixdeck", text: $zustand.benutzer)
-                    .multilineTextAlignment(.trailing)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            LabeledContent("Kennwort") {
-                SecureField("Kennwort", text: $zustand.kennwort)
-                    .multilineTextAlignment(.trailing)
-                    .onSubmit { zustand.kennwortSichern() }
-            }
-            Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
-                .knopfBefehl()
-            standText
-            Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var standText: some View {
-        switch zustand.brokerStand {
-        case .unbekannt: Text("noch nicht geprüft").foregroundStyle(.secondary)
-        case .laeuft: HStack { ProgressView(); Text("wird geprüft …") }
-        case .angenommen: Text("angenommen").foregroundStyle(.green)
-        case .abgelehnt(let grund): Text(grund).foregroundStyle(.red)
-        }
-    }
-
-    private func hinzufuegen() {
-        let adresse = neueAdresse.trimmingCharacters(in: .whitespaces)
-        guard !adresse.isEmpty else { return }
-        zustand.uhrHinzufuegen(host: adresse)
-        neueAdresse = ""
     }
 }

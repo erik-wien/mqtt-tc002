@@ -24,9 +24,20 @@ final class HilfezeichenTests: XCTestCase {
     /// gehört nicht mehr dazu: Der Abschnitt ist weg, weil die Wahl weg ist
     /// (siehe `SendeWeg` im Kern) — und damit auch die Frage, die sein (?)
     /// beantwortet hätte.
+    ///
+    /// Die fünf aus den Einstellungen kamen mit der Gliederung nach Themen
+    /// dazu: Dort steht je Einstellung höchstens ein Satz, und was länger ist,
+    /// steht hinter dem (?). Fällt eines dieser Zeichen weg, ist die Erklärung
+    /// nirgends mehr zu haben — sie steht nicht mehr als Absatz darunter.
     private static let koepfe = [
         ("Sources/TC002Ansichten/SendenView.swift", "Schrift"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
+        ("Sources/TC002Ansichten/Uhreinstellungen.swift", "Auf der Uhr"),
+        ("Sources/TC002Ansichten/Uhrseite.swift", "Betriebsart"),
+        ("Sources/TC002Ansichten/Brokerabschnitt.swift", "Broker"),
+        ("Sources/TC002Ansichten/Aufzeichnungsabschnitt.swift", "Verlauf"),
+        ("Sources/TC002Ansichten/Aufzeichnungsabschnitt.swift", "Protokoll"),
+        ("Sources/TC002Ansichten/VirtuelleUhrAbschnitt.swift", "Virtuelle Uhr"),
     ]
 
     /// Quelltext ohne Kommentare — sonst genügte ein Satz über einen
@@ -52,9 +63,9 @@ final class HilfezeichenTests: XCTestCase {
 
     // MARK: - Die Prüfungen
 
-    /// Jede der vier Überschriften steht als `Abschnittskopf`, nicht als
+    /// Jede dieser Überschriften steht als `Abschnittskopf`, nicht als
     /// blanker `Section("…")` — und trägt damit ihr (?).
-    func testDieVierGruppenueberschriftenTragenEineErklaerung() throws {
+    func testDieGruppenueberschriftenTragenEineErklaerung() throws {
         for (pfad, titel) in Self.koepfe {
             let quelle = try ohneKommentare(pfad)
             XCTAssertTrue(quelle.contains("Abschnittskopf(\"\(titel)\""),

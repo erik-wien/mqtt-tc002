@@ -68,6 +68,19 @@ public final class AppZustand {
     /// `kennwortSichern()` ruft, wer die Eingabe abschliesst.
     public var kennwort: String { didSet { brokerStand = .unbekannt } }
 
+    /// Ob ueberhaupt ein Brokerkennwort hinterlegt ist.
+    ///
+    /// Die Ansicht braucht das, weil ein leeres Feld sonst nicht von einem
+    /// ungelesenen zu unterscheiden ist. Gefragt wird der Schluesselbund dafuer
+    /// **nicht** nach dem Wert: `init` hat ihn einmal gelesen, und wo dieses
+    /// Lesen scheitert — eine Entwicklerfassung wird nach jedem Bau ad hoc neu
+    /// signiert und gilt damit als anderes Programm —, beantwortet
+    /// `Schluesselbund.vorhanden` die Frage ohne Nutzlast und damit ohne Dialog.
+    ///
+    /// Gespeichert und nicht gerechnet: Sonst fragte jedes Neuzeichnen der
+    /// Einstellungen den Schluesselbund.
+    public private(set) var kennwortVorhanden = false
+
     public enum Brokerstand: Equatable {
         case unbekannt
         case laeuft
@@ -205,6 +218,9 @@ public final class AppZustand {
             return
         }
         kennwortGesichert = kennwort
+        // Ein leerer Wert loescht den Eintrag (`Schluesselbund.setzen`) —
+        // danach ist keines mehr hinterlegt.
+        kennwortVorhanden = !kennwort.isEmpty
     }
 
     /// Sichert die Broker-Angaben ausdruecklich und fragt den Broker, ob er sie
@@ -300,7 +316,9 @@ public final class AppZustand {
         brokerHost = d.string(forKey: "brokerHost") ?? Einstellungen.Vorgabe.brokerHost
         brokerPort = d.string(forKey: "brokerPort") ?? Einstellungen.Vorgabe.brokerPort
         benutzer   = d.string(forKey: "benutzer") ?? Einstellungen.Vorgabe.benutzer
-        kennwort   = schluesselbund.lesen("broker") ?? ""
+        let gelesenesKennwort = schluesselbund.lesen("broker") ?? ""
+        kennwort   = gelesenesKennwort
+        kennwortVorhanden = !gelesenesKennwort.isEmpty || schluesselbund.vorhanden("broker")
         let flach = (try? JSONDecoder().decode([String: [String]].self,
                         from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]
         // uniquingKeysWith statt uniqueKeysWithValues: UUID(uuidString:) ist gegenueber
@@ -503,6 +521,15 @@ public final class AppZustand {
     /// Schlaegt das Vergessen fehl, bleibt die Loeschung gueltig — nur eine
     /// Protokollzeile haelt es fest, wie in `senden`.
     ///
+    /// „Uhr 1", „Uhr 2", … — die erste Zahl, die noch nicht vergeben ist.
+    /// Fortlaufend zu zaehlen genuegte nicht: Wer „Uhr 2" entfernt und eine
+    /// neue anlegt, bekaeme sonst eine zweite „Uhr 3".
+    private func naechsterName() -> String {
+        var zahl = 1
+        while uhren.contains(where: { $0.name == lokf("Uhr %d", zahl) }) { zahl += 1 }
+        return lokf("Uhr %d", zahl)
+    }
+
     /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
     /// Ablage unter Application Support greifen muessen.
     public func anzeigeGeloescht(_ name: String, fuer uhr: Uhr,
@@ -720,8 +747,13 @@ public final class AppZustand {
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }
     }
 
-    /// Legt eine Uhr an und fragt sie sofort ab. Der Name kommt aus der Geraetekennung,
-    /// laesst sich aber aendern — bei mehreren Uhren ist "Kueche" hilfreicher als eine MAC.
+    /// Legt eine Uhr an und fragt sie sofort ab.
+    ///
+    /// Ohne getippten Namen heisst sie „Uhr 1", „Uhr 2" — ein Wort, das man
+    /// ueberschreibt. Weder die Adresse noch das Themenpraefix taugen als
+    /// Vorschlag: Beide stehen ohnehin in der Kennzeile darunter, und das
+    /// Praefix (`hersteller_a86b`) landete als Titel ueber der Sendeansicht,
+    /// wo es niemandem sagt, welche Uhr gemeint ist.
     ///
     /// `.http` wird ausdruecklich eingetragen, nicht weggelassen: Daran
     /// haengt die ganze Lesart von `Uhr.betriebsart`. Weil jede von nun an
@@ -730,12 +762,17 @@ public final class AppZustand {
     ///
     /// `sitzung` ist wie bei `abfragen` die Naht fuer den Test — die
     /// Oberflaeche ruft `uhrHinzufuegen(host:)`.
-    public func uhrHinzufuegen(host: String, sitzung: URLSession = .shared) {
+    ///
+    /// `name` ist freiwillig. Leer heisst: Die App vergibt einen; wer im Blatt
+    /// „Kueche" eingetippt hat, bekommt „Kueche".
+    public func uhrHinzufuegen(host: String, name: String = "",
+                               sitzung: URLSession = .shared) {
         let erste = uhren.isEmpty
         // `angelegt` traegt den Zeitpunkt, damit ein Grabstein derselben
         // Adresse ueberstimmt werden kann — sonst liesse sich eine einmal
         // entfernte Uhr nie wieder eintragen.
-        let neue = Uhr(name: host, host: host, betriebsart: .http, angelegt: Date())
+        let neue = Uhr(name: name.isEmpty ? naechsterName() : name, host: host,
+                       betriebsart: .http, angelegt: Date())
         var ohneGrabstein = grabsteine
         for merkmal in neue.abgleichmerkmale { ohneGrabstein[merkmal] = nil }
         if ohneGrabstein != grabsteine { grabsteine = ohneGrabstein }
@@ -913,10 +950,6 @@ public final class AppZustand {
                     if let breite { self.uhren[i].panelbreite = breite }
                     if gattungGewechselt {
                         self.log(lokf("%@ ist eine %@", self.uhren[i].name, gattung.beschriftung))
-                    }
-                    // Ohne Praefix bliebe hier ein leerer Name stehen.
-                    if self.uhren[i].name == self.uhren[i].host, !praefix.isEmpty {
-                        self.uhren[i].name = praefix
                     }
                     self.verbunden[id] = steht
                     // Der Grund steht nur da, wenn es einen gibt — die

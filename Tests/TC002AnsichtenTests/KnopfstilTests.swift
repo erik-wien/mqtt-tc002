@@ -325,6 +325,10 @@ final class KnopfstilTests: XCTestCase {
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/VerbindungiOS.swift": 2,
+            // „Uhr hinzufuegen …“ — eine Listenzeile, die weiterfuehrt und
+            // ein Blatt oeffnet, wie „Account hinzufuegen" in den
+            // Systemeinstellungen.
+            "Sources/TC002Ansichten/Uhrenliste.swift": 1,
             // „Kein Icon“ — dieselbe Bauart, eigene Zeile.
             "Sources/TC002iOS/IconauswahliOS.swift": 1,
             // Die Löschzeile im Verlauf, allein in ihrer Zeile.
