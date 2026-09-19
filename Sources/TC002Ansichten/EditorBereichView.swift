@@ -1039,7 +1039,12 @@ public struct EditorBereichView: View {
                                 Text(lok(g.beschriftung))
                                     .font(.caption).fontWeight(.semibold)
                                     .foregroundStyle(.secondary)
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 12)],
+                                // Ein Raster je Gruppe: Ein gemeinsames haelt
+                                // entweder das Banner klein oder zieht die
+                                // Icons auseinander. Die Gruppen stehen
+                                // ohnehin getrennt untereinander.
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: kachelbreite(g)),
+                                                             spacing: 12)],
                                           alignment: .leading, spacing: 12) {
                                     ForEach(stuecke) { kachel($0) }
                                 }
@@ -1056,6 +1061,21 @@ public struct EditorBereichView: View {
         }
     }
 
+    /// Wie gross ein Pixel in der Uebersicht gezeigt wird. Bei den
+    /// quadratischen Icons das bisherige Mass — 76 × 44 Punkte, bei 8×8 und
+    /// 16×16 begrenzt die Hoehe. Die Anzeige bekommt vier Punkte je Pixel:
+    /// Auf der Icon-Kachel lagen zwei, und ein Schloss oder ein Bergpanorama
+    /// war darin nicht zu erkennen.
+    private func kachelkante(_ g: Leinwandgroesse) -> Double {
+        g.istIcon ? min(76 / Double(g.breite), 44 / Double(g.hoehe)) : 4
+    }
+
+    /// Die Breite einer Kachel dieser Gruppe — das Bild und ein Rand, aber nie
+    /// schmaler als die 88 Punkte, die ein zweizeiliger Name braucht.
+    private func kachelbreite(_ g: Leinwandgroesse) -> Double {
+        max(88, Double(g.breite) * kachelkante(g) + 12)
+    }
+
     /// Ein Stueck in der Uebersicht: das Bild, darunter sein Name.
     private func kachel(_ eintrag: Editoreintrag) -> some View {
         Button { anklicken(eintrag) } label: {
@@ -1063,8 +1083,7 @@ public struct EditorBereichView: View {
                 ZStack(alignment: .bottomTrailing) {
                     Rasterbild(datei: eintrag.datei,
                                breite: eintrag.groesse.breite, hoehe: eintrag.groesse.hoehe,
-                               kante: min(76 / Double(eintrag.groesse.breite),
-                                          44 / Double(eintrag.groesse.hoehe)))
+                               kante: kachelkante(eintrag.groesse))
                         .background(Color.black)
                     // Das Abspielzeichen an den Rand, nicht ueber die Mitte:
                     // Bei 8×8 verdeckte es sonst ein Viertel des Motivs.
@@ -1077,9 +1096,19 @@ public struct EditorBereichView: View {
                             .accessibilityLabel(Text("bewegt"))
                     }
                 }
+                // Zwei Zeilen: Einzeilig standen drei Kacheln „Home
+                // Assista…" nebeneinander, die sich nur im Bild unterschieden.
+                // `reservesSpace` haelt den Platz auch fuer einen einzeiligen
+                // Namen frei — sonst machte er die ganze Reihe kuerzer als ein
+                // zweizeiliger. Eine feste Hoehe taete das auch, aber eine zu
+                // knapp bemessene laesst SwiftUI still auf eine Zeile
+                // zurueckfallen (bei .caption gemessen: 30 Punkte reichen fuer
+                // zwei Zeilen nicht).
                 Text(eintrag.name)
-                    .font(.caption).lineLimit(1)
-                    .frame(maxWidth: 88)
+                    .font(.caption)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.center)
+                    .frame(width: kachelbreite(eintrag.groesse))
             }
         }
         .buttonStyle(.plain)

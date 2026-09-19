@@ -176,12 +176,22 @@ struct IconauswahliOS: View {
                                     // und verdecken damit gerade das Motiv, das
                                     // man erkennen soll. Hier ist die
                                     // Namenszeile ohnehin da.
-                                    HStack(spacing: 2) {
+                                    // Zwei Zeilen, wie in der Uebersicht am
+                                    // Schreibtisch: Einzeilig stehen in fuenf
+                                    // Spalten mehrere „Home Assista…"
+                                    // nebeneinander, die sich nur im Bild
+                                    // unterscheiden. `reservesSpace` haelt den
+                                    // Platz auch fuer einen einzeiligen Namen
+                                    // frei, sonst macht er die ganze Reihe
+                                    // kuerzer.
+                                    HStack(alignment: .top, spacing: 2) {
                                         if bewegte.contains(icon.kennung) {
                                             Image(systemName: "play.fill")
                                                 .accessibilityHidden(true)
                                         }
-                                        Text(icon.name).lineLimit(1)
+                                        Text(icon.name)
+                                            .lineLimit(2, reservesSpace: true)
+                                            .multilineTextAlignment(.center)
                                     }
                                     .font(.caption2).foregroundStyle(.secondary)
                                 }

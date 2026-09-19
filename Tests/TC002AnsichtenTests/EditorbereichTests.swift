@@ -359,6 +359,45 @@ final class EditorbereichTests: XCTestCase {
                       "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
     }
 
+    /// Die Übersicht: zwei Zeilen Name, und je Größe ein eigenes Raster.
+    ///
+    /// Einzeilig standen drei Kacheln „Home Assista…" nebeneinander, die sich
+    /// nur im Bild unterschieden; die Gruppe 52 × 16 benutzte die Kachelbreite
+    /// der Icons und zeigte ein Banner von 52 Pixeln auf zwei Punkte je Pixel.
+    ///
+    /// `reservesSpace` und nicht eine feste Höhe: Eine zu knapp bemessene Höhe
+    /// lässt SwiftUI still auf eine Zeile zurückfallen — am Gerät gemessen, im
+    /// Quelltext nicht zu sehen.
+    ///
+    /// Mutation: `lineLimit(2, reservesSpace: true)` durch `lineLimit(2)`
+    /// ersetzen — baut, übersetzt, und eine Reihe mit lauter einzeiligen Namen
+    /// steht höher als die nächste.
+    func testDieUebersichtZeigtZweiZeilenNamenUndEinRasterJeGroesse() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let kachel = ausschnitt(text, von: "private func kachel", bis: "private func duplizieren")
+
+        XCTAssertTrue(kachel.contains(".lineLimit(2, reservesSpace: true)"),
+                      "der Name steht wieder in einer Zeile — oder der Platz für die zweite wird "
+                      + "nicht mehr freigehalten, dann sind die Reihen verschieden hoch")
+        XCTAssertTrue(kachel.contains(".multilineTextAlignment(.center)"),
+                      "die zweite Zeile steht nicht mehr mittig unter dem Bild")
+        XCTAssertTrue(kachel.contains("kante: kachelkante(eintrag.groesse)"),
+                      "alle Größen werden wieder mit demselben Maß gezeigt — das Banner von "
+                      + "52 Pixeln liegt dann bei zwei Punkten je Pixel")
+
+        let raster = ausschnitt(text, von: "private var uebersicht", bis: "private func kachelkante")
+        XCTAssertTrue(raster.contains("GridItem(.adaptive(minimum: kachelbreite(g))"),
+                      "die Gruppen teilen sich wieder ein Raster — dann ist es entweder für die "
+                      + "Icons zu weit oder für die Anzeige zu eng")
+
+        // Abgeleitet, nicht aufgezählt: Der Unterschied hängt an
+        // `Leinwandgroesse.istIcon`, nicht an einem `== .anzeige` in der
+        // Ansicht (siehe `testDieUnterschiedeWerdenAbgeleitetUndNichtAufgezaehlt`).
+        let mass = ausschnitt(text, von: "private func kachelkante", bis: "private func kachel(")
+        XCTAssertTrue(mass.contains("g.istIcon"),
+                      "das Maß der Kachel hängt nicht mehr an einer abgeleiteten Eigenschaft")
+    }
+
     /// Die Karte „Werkzeug" trägt Farbe und Stift, sonst nichts. „Alles
     /// löschen" wählt kein Werkzeug, es wirft weg — es stand dort als einzige
     /// zerstörende Handlung in Warnfarbe zwischen zwei Wählern. Sein Platz ist
