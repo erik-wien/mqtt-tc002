@@ -59,35 +59,34 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         ("Senden", "Text und Icon verschicken"),
                         ("Icons", "Icons und ganze Anzeigen malen"),
                         ("Protokoll", "die technische Mitschrift — nur da, wenn eingeschaltet"),
-                        ("Einstellungen", "Uhren und Broker"),
+                        ("Einstellungen", "fünf Themen: Uhren, Broker, Aufzeichnung, iCloud, Erweitert"),
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht je ein Dokument für beide Gattungen, die Wahl darüber sitzt über dem Inhaltsverzeichnis. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
         case .verbindung:
-            return HilfeInhalt.startOhneEinrichtung
+            return HilfeInhalt.themen
+                + HilfeInhalt.startOhneEinrichtung
+                + HilfeInhalt.uhrHinzufuegen
                 + [
-                    .ueberschrift("Uhr hinzufügen"),
-                    .absatz("Unter „Einstellungen“ trägt man zuerst die Adresse einer Uhr ein (das Feld unter der Liste, in dem eine Beispieladresse steht, dann „Hinzufügen“ oder die Eingabetaste im Feld) oder passt eine vorhandene an. Welche Uhr man **ansieht**, wählt das Titelmenü in der Werkzeugleiste unter „Senden“ — dort steht ihr Name, und Vorschau, Geräterahmen und die fünf Blöcke beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel: Das steht links oben in derselben Leiste, sobald mehr als eine Uhr eingetragen ist. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr; bei nur einer Uhr fallen beide ohnehin zusammen."),
+                    .absatz("Welche Uhr man **ansieht**, wählt das Titelmenü in der Werkzeugleiste unter „Senden“ — dort steht ihr Name, und Vorschau, Geräterahmen und die fünf Blöcke beziehen sich auf sie. Das ist nicht dasselbe wie das Sendeziel: Das steht links oben in derselben Leiste, sobald mehr als eine Uhr eingetragen ist. Solange dort nichts eigenes gewählt ist, geht das Senden ebenfalls an die angesehene Uhr; bei nur einer Uhr fallen beide ohnehin zusammen."),
                     .absatz("Beim allerersten Start fragt macOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und die allererste „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt — einfach erlauben und erneut abfragen. Zurücknehmen lässt sich die Freigabe später unter Systemeinstellungen → Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
                 + [
-                    .absatz("Am Mac und auf dem iPad steht die Wahl als Zweierschalter in der Zeile der Uhr, zwischen Adresse und Präfix."),
-                    .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand und zeigt in der Zeile wieder „—“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
-                    .ueberschrift("Entfernen"),
-                    .absatz("„Entfernen“ am rechten Rand der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
-                    .absatz("„Seitenwechsel“ und „Scrolltempo“ stehen hier, bei der Uhr, für die sie gelten: Beides sind Einstellungen des Geräts, sie überdauern jede Meldung und werden beim Verstellen sofort geschrieben. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht. Das Scrolltempo dagegen gilt nur ihren eigenen Anzeigen — auf Meldungen dieser App wirkt es nicht (Gerätereferenz, §4.3). Wie lange eine einzelne Meldung steht und wie schnell sie läuft, entscheidet dagegen der Zeit-Reiter unter „Senden“."),
+                    .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand; die Zeile der Uhr zeigt dann wieder „noch nicht abgefragt“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
+                ]
+                + HilfeInhalt.uhrEntfernen
+                + HilfeInhalt.aufDerUhr
+                + [
                     .ueberschrift("Broker"),
-                    .absatz("Darunter steht der Broker: Adresse, Port, Benutzer und Kennwort."),
+                    .absatz("Der Broker ist ein eigenes Thema: Adresse, Port, Benutzer und Kennwort."),
                 ]
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
                 + HilfeInhalt.brokerKennwort
-                + [
-                    .absatz("Gesichert wird es, sobald man das Feld verlässt, die Eingabetaste drückt, den Bereich wechselt oder die App beendet — nicht bei jedem Tastendruck."),
-                ]
+                + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
                 + HilfeInhalt.wolkenabgleich
@@ -112,7 +111,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Läuft der Text, wird im Zeit-Reiter des Inspektors der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da."),
                     .absatz("Wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man. Unter der Vorschau steht davon nur, was ein Befund ist: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage) — wird die Nutzlast auffällig groß, sagt es eine Zeile dort von selbst."),
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
-                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ bei der aktiven Uhr."),
+                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, unter „Auf der Uhr“."),
                 ]
                 + HilfeInhalt.blockierendeAnzeige
                 + [
@@ -204,7 +203,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .anzeigen:
             return [
                     .absatz("Dieser Bereich ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht unter „Senden“ in der Liste unter den fünf Blöcken."),
-                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ ausgeschaltet — und das ist es ab Werk —, verschwindet der Eintrag in der Seitenleiste ganz: Ein Bereich, der nichts zeigt, ist kein Bereich."),
+                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet der Eintrag in der Seitenleiste ganz: Ein Bereich, der nichts zeigt, ist kein Bereich. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
                 ]
                 + HilfeInhalt.protokollListe
                 + [
@@ -213,7 +212,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.protokollLeeren
                 + [
                     .ueberschrift("Seitenwechsel"),
-                    .absatz("Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht mehr hier, sondern unter „Einstellungen“ bei der jeweils aktiven Uhr, direkt neben der Liste der Uhren."),
+                    .absatz("Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht hier, sondern unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, für die sie gilt."),
                 ]
         case .fehlersuche:
             return HilfeInhalt.fehlerStille

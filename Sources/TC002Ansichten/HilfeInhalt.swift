@@ -37,7 +37,7 @@ public enum HilfeInhalt {
     /// anders aus.
     public static let betriebsart: [Hilfebaustein] = [
         .ueberschrift("Betriebsart: HTTP oder MQTT"),
-        .absatz("Jede Uhr hat in ihrer Zeile eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:"),
+        .absatz("Jede Uhr hat auf ihrer Seite eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:"),
         .tabelle([
             ("HTTP", "Die Uhr antwortet. Anlegen, Löschen und Umschalten quittiert sie, und eine abgewiesene Sendung ist als solche zu erkennen. Es braucht weder Broker noch Präfix."),
             ("MQTT", "Die Uhr antwortet nie (siehe „Wenn nichts erscheint“). Dafür liest die App am Broker mit, was andere an dieselbe Uhr schicken — und nur so kann ein Block eine fremde Sendung zeigen."),
@@ -72,13 +72,55 @@ public enum HilfeInhalt {
         .absatz("Der Broker gilt für Uhren im MQTT-Betrieb. Steht keine Uhr darauf, bleiben seine Felder ungenutzt — ausgegraut oder versteckt sind sie trotzdem nicht: Man trägt einen Broker ein, bevor man eine Uhr auf MQTT stellt, und in dieser Reihenfolge müssen sie benutzbar sein."),
     ]
 
+    /// Wie die Einstellungen gegliedert sind (`Einstellungsthema`). Das Erste,
+    /// was man wissen will — und auf beiden Oberflaechen dieselben fuenf
+    /// Themen in derselben Reihenfolge. Nur ihre Darstellung unterscheidet
+    /// sich, und das steht im Absatz selbst.
+    public static let themen: [Hilfebaustein] = [
+        .ueberschrift("Fünf Themen"),
+        .absatz("Die Einstellungen sind nach Themen gegliedert. Am Mac und auf dem iPad steht die Wahl als Segmentwahl über dem Inhalt, auf dem Telefon als Liste, deren Einträge auf je eine Seite führen."),
+        .tabelle([
+            ("Uhren", "die eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt"),
+            ("Broker", "Adresse, Port, Benutzer, Kennwort und die Prüfung"),
+            ("Aufzeichnung", "Verlauf und Protokoll"),
+            ("iCloud", "der Abgleich"),
+            ("Erweitert", "die virtuelle Uhr"),
+        ]),
+        .ueberschrift("Die Seite einer Uhr"),
+        .absatz("Eine Zeile in der Liste antippen öffnet die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Geräteart, Betriebsart, „Auf der Uhr“ (nur bei der Werksfirmware), „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser Uhr, nicht der angesehenen."),
+        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse, Präfix und Geräteart, und rechts das Anmeldezeichen."),
+    ]
+
     /// Womit die App beginnt, solange nichts eingerichtet ist
     /// (`AppZustand.eingerichtet`). Der Satz gilt fuer beide Oberflaechen: Am
     /// Mac und auf dem iPad steht der Bereich „Einstellungen" vorn, auf dem
     /// Telefon geht sein Blatt von selbst auf. Beide Male ist es derselbe
     /// Grund und dieselbe Auskunft — deshalb ein Absatz und nicht zwei.
     public static let startOhneEinrichtung: [Hilfebaustein] = [
-        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“ — dort gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und keine Brokeradresse eingetragen ist; für eine reine HTTP-Einrichtung wird nach keinem Broker gefragt. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
+        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“, und zwar beim Thema „Uhren“, wo die erste Uhr eingetragen wird — bei „Senden“ gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und keine Brokeradresse eingetragen ist; für eine reine HTTP-Einrichtung wird nach keinem Broker gefragt. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
+    ]
+
+    /// Wie eine Uhr angelegt wird (`Uhrenliste`). Auf beiden Oberflaechen
+    /// dieselbe Zeile am Fuss der Liste und dasselbe Blatt dahinter.
+    public static let uhrHinzufuegen: [Hilfebaustein] = [
+        .ueberschrift("Uhr hinzufügen"),
+        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name; der Name ist freiwillig. Präfix und Geräteart stellt die App danach selbst fest."),
+    ]
+
+    /// Die zwei Wege, eine Uhr loszuwerden, und dass beide nachfragen
+    /// (`Uhrentfernen`). Auf beiden Oberflaechen dieselben zwei.
+    public static let uhrEntfernen: [Hilfebaustein] = [
+        .ueberschrift("Entfernen"),
+        .absatz("Eine Uhr wird auf zwei Wegen entfernt: mit der roten Zeile „Entfernen“ am Fuß ihrer Seite oder mit einem Wischen nach links in der Liste. Beide fragen dasselbe nach. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
+    ]
+
+    /// Die beiden Werte, die nicht der Meldung, sondern dem Geraet gehoeren
+    /// (`Uhreinstellungen`). Sie stehen auf der Seite der Uhr, fuer die sie
+    /// gelten — auf beiden Oberflaechen, seit sich beide dieselben Bausteine
+    /// teilen.
+    public static let aufDerUhr: [Hilfebaustein] = [
+        .ueberschrift("Auf der Uhr"),
+        .absatz("„Auf der Uhr“ — Seitenwechsel und Scrolltempo — steht auf der Seite der Uhr, für die beides gilt: Beides sind Einstellungen des Geräts, sie überdauern jede Meldung und werden beim Verstellen sofort geschrieben. Bei einer AWTRIX NG fehlt der Abschnitt: Ihre Firmware kennt `/getConfig` nicht, sie führt beides selbst. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht; das Scrolltempo gilt nur ihren eigenen Anzeigen (Gerätereferenz, §4.3). Wie lange eine einzelne Meldung steht und wie schnell sie läuft, entscheidet dagegen das Format unter „Senden“."),
     ]
 
     /// Das Themen-Praefix und woher es kommt. Beide Oberflaechen haben denselben
@@ -104,16 +146,24 @@ public enum HilfeInhalt {
     ]
 
     /// Wo das Kennwort liegt — im Schluesselbund, nicht in den App-Einstellungen
-    /// (`Einstellungen.kennwort`). Wann es gesichert wird, ist dagegen je
-    /// Oberflaeche verschieden und steht dort.
+    /// (`Einstellungen.kennwort`) — und dass unter dem Feld steht, ob eines da
+    /// ist (`Brokerabschnitt.kennwortstand`): Ein leeres Feld sieht sonst aus,
+    /// als waere keines gesetzt.
     public static let brokerKennwort: [Hilfebaustein] = [
-        .absatz("Das Kennwort liegt im Schlüsselbund und nicht, wie die übrigen Felder, in den App-Einstellungen."),
+        .absatz("Das Kennwort liegt im Schlüsselbund und nicht, wie die übrigen Felder, in den App-Einstellungen. Unter dem Feld steht, ob im Schlüsselbund eines liegt — das Feld selbst zeigt es nie an."),
+    ]
+
+    /// Wann die vier Brokerfelder gesichert werden. Seit beide Oberflaechen
+    /// denselben Baustein tragen (`Brokerabschnitt`), gilt der Satz wortgleich
+    /// fuer beide.
+    public static let brokerSichern: [Hilfebaustein] = [
+        .absatz("Adresse, Port und Benutzer sichern sich beim Tippen — es gibt nichts zu bestätigen. Das Kennwort wird gesichert, sobald man das Feld verlässt, die Eingabetaste drückt, das Thema wechselt oder die App beendet — nicht bei jedem Tastendruck."),
     ]
 
     /// Was die Brokerpruefung tut und was ihr Ergebnis nicht bedeutet. Beide
     /// Oberflaechen rufen dieselbe `AppZustand.brokerSichernUndPruefen`.
     public static let brokerPruefen: [Hilfebaustein] = [
-        .absatz("„Sichern und prüfen“ schreibt Adresse, Port, Benutzer und Kennwort ausdrücklich fest und fragt danach den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt."),
+        .absatz("„Verbindung prüfen“ fragt den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt. Zu sichern gibt es dabei nichts: Adresse, Port und Benutzer stehen schon beim Tippen fest, das Kennwort spätestens beim Verlassen des Feldes."),
         .absatz("Eine angenommene Anmeldung heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Verlauf“."),
     ]
 
@@ -126,7 +176,7 @@ public enum HilfeInhalt {
     /// gibt und was er tut ueberall dasselbe ist.
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
-        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
+        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
         .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
         .absatz("Sie spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
@@ -367,7 +417,7 @@ public enum HilfeInhalt {
     /// gemeint ist (`AppZustand.zusammengefasst`).
     public static let fehlerWelche: [Hilfebaustein] = [
         .ueberschrift("Welche Meldung ist gemeint?"),
-        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Sichern und prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
+        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
     ]
 
     /// Die vier Punkte der Reihe nach. Alle vier gibt es auf beiden Geraeten.

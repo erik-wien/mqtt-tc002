@@ -62,33 +62,25 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres Protokolls — je ein Dokument für die Werksfirmware und für AWTRIX NG. Sie liegt der Fassung für Mac und iPad bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
-            return HilfeInhalt.startOhneEinrichtung
+            return HilfeInhalt.themen
+                + HilfeInhalt.startOhneEinrichtung
+                + HilfeInhalt.uhrHinzufuegen
                 + [
-                    .ueberschrift("Uhr hinzufügen"),
-                    .absatz("Unter „Einstellungen“ trägt man die Adresse einer Uhr in das Feld unter der Liste ein, in dem eine Beispieladresse steht, und drückt „Hinzufügen“ oder die Eingabetaste. Eine bereits eingetragene Adresse lässt sich hier nicht ändern — dafür die Uhr entfernen und neu eintragen."),
                     .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
+                + HilfeInhalt.uhrEntfernen
+                + HilfeInhalt.aufDerUhr
                 + [
-                    .absatz("Auf dem Telefon stehen Adresse, Präfix und Geräteart in einer Zeile unter dem Namen. Die Geräteart stellt „Abfragen“ selbst fest; von Hand wählt man sie über das Kontextmenü der Zeile — ein langer Druck darauf."),
-
-                    .ueberschrift("Entfernen"),
-                    .absatz("„Entfernen“ in der Zeile löscht die Uhr aus der Liste, mitsamt dem, was die App sich für sie gemerkt hat. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
-
-                    .ueberschrift("Einstellungen der Uhr selbst"),
-                    .absatz("„Seitenwechsel“ und „Scrolltempo“ stehen unter „Einstellungen“ bei der angesehenen Uhr: Beides sind Einstellungen des Geräts. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht; das Scrolltempo gilt nur ihren eigenen Anzeigen und wirkt auf Meldungen dieser App nicht."),
-
                     .ueberschrift("Broker"),
                     .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
                 ]
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
                 + HilfeInhalt.brokerKennwort
-                + [
-                    .absatz("Gesichert wird es, sobald man die Eingabetaste drückt, „Sichern und prüfen“ drückt oder das Blatt schließt — nicht bei jedem Tastendruck."),
-                ]
+                + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
                 + HilfeInhalt.wolkenabgleich
@@ -108,14 +100,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell. Unter der Vorschau steht dann, aus wie vielen Einzelbildern der Lauf besteht."),
 
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
-                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Fassung stellt ihn nicht ein."),
+                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung steht unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, unter „Auf der Uhr“."),
                 ]
                 + HilfeInhalt.blockierendeAnzeige
                 + [.ueberschrift("Löschen und Dauer")]
                 + HilfeInhalt.blockLoeschen
                 + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
-                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit dem Weg und der Laufschrift. Den Seitenwechsel stellt diese Fassung nicht ein.")]
+                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift. Den Seitenwechsel stellt dagegen die Seite der Uhr unter „Einstellungen“.")]
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
@@ -154,7 +146,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .anzeigen:
             return [
                     .absatz("Dieses Blatt ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht in der Sendeansicht unter den fünf Blöcken."),
-                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf."),
+                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
                 ]
                 + HilfeInhalt.protokollListe
                 + HilfeInhalt.protokollLeeren
@@ -189,7 +181,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fehlerReihe
                 + [
                     .ueberschrift("Weitere Symptome"),
-                    .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — diese Fassung stellt ihn nicht ein."),
+                    .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — nachzusehen unter „Einstellungen“ auf der Seite dieser Uhr."),
                     .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es auf einer Ulanzi-Werksfirmware nicht geben: Die App rastert dorthin jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht. Auf einer TC001 unter AWTRIX NG setzt die Uhr selbst — dort hängt es an ihrer Schrift."),
                 ]
         }
