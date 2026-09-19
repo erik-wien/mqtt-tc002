@@ -39,4 +39,4 @@ claude-resume.sh
 # oertlich liegen. **Entwurf und Rueckstand bleiben eingecheckt**: Auf die
 # verweist der Quelltext, und sie sagen, warum etwas so ist, wie es ist.
 docs/superpowers/plans/
-.claude/
+.claude/worktrees/
