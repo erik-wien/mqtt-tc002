@@ -223,7 +223,10 @@ struct SendeniOS: View {
             // Name nichts, was sich unterscheiden liesse.
             if zustand.uhren.count > 1 {
                 HStack(spacing: 6) {
-                    Text(uhr.name).font(.headline).lineLimit(1)
+                    Text(uhr.name)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     Erreichbarkeitszeichen(zustand: zustand, id: uhr.id)
                 }
             }

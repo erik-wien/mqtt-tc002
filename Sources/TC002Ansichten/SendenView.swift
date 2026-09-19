@@ -284,9 +284,15 @@ public struct SendenView: View {
             //
             // Nur ab zwei Uhren: Bei einer einzigen benennt der Name nichts,
             // was sich unterscheiden liesse.
+            //
+            // Leise: Er beantwortet eine Frage, die man selten stellt — welche
+            // der Uhren man gerade ansieht. Gross gesetzt war er ein zweiter
+            // Titel unter dem Bild und zog den Blick von der Uhr weg, um die
+            // es geht.
             if zustand.uhren.count > 1 {
                 Text(uhr.name)
-                    .font(.headline)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
         }
