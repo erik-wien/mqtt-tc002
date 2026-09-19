@@ -47,6 +47,15 @@ public struct Uhrenliste: View {
                 }
                 .buttonStyle(.automatic)
             } footer: {
+                // Nur wenn **keine** einzige geantwortet hat: Melden sich
+                // drei von vier, steht die Freigabe, und der Hinweis
+                // schickte jemanden in die Systemeinstellungen, wo nichts zu
+                // tun ist.
+                if keineAntwortet {
+                    Label(lok("Keine der Uhren antwortet. Kam gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen."),
+                          systemImage: "exclamationmark.triangle")
+                        .font(kanon.fussnote).foregroundStyle(.orange)
+                }
                 Text("Antippen öffnet die Uhr: Name, Adresse, Betriebsart und was auf ihr eingestellt ist.")
                     .font(kanon.fussnote)
             }
@@ -66,7 +75,10 @@ public struct Uhrenliste: View {
     private func zeile(_ uhr: Uhr) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(uhr.name)
+                HStack(spacing: 6) {
+                    Text(uhr.name)
+                    Erreichbarkeitszeichen(zustand: zustand, id: uhr.id)
+                }
                 Text(Uhrenliste.kennzeile(uhr))
                     .font(kanon.fussnote).foregroundStyle(.secondary)
                     .lineLimit(1).minimumScaleFactor(0.8)
@@ -81,6 +93,13 @@ public struct Uhrenliste: View {
     /// nur im MQTT-Betrieb: Bei einer HTTP-Uhr stünde dort „noch nicht
     /// abgefragt" und schickte jemanden hinter etwas her, das diese Uhr nie
     /// braucht.
+    /// Ob jede eingerichtete Uhr auf die letzte Abfrage geschwiegen hat.
+    /// Erst dann ist die Netzwerkfreigabe eine plausible Erklaerung.
+    private var keineAntwortet: Bool {
+        !zustand.uhren.isEmpty
+            && zustand.uhren.allSatisfy { zustand.erreichbar[$0.id] == false }
+    }
+
     static func kennzeile(_ uhr: Uhr) -> String {
         var teile = [uhr.host]
         // Der Weg steht ausdruecklich da und nicht nur als Andeutung: Das

@@ -22,6 +22,16 @@ public final class AppZustand {
     public var zielIDs: Set<UUID> { didSet { zielIDsSichern() } }
     /// Nicht gesichert: der Verbindungsstand ist eine Momentaufnahme, keine Einstellung.
     public var verbunden: [UUID: Bool] = [:]
+
+    /// Ob die Uhr auf die letzte Abfrage geantwortet hat — `nil` heisst: noch
+    /// nicht gefragt.
+    ///
+    /// Eine stumme Uhr ist kein Fehler, den jemand wegklicken muss: Sie ist
+    /// aus, sie steht woanders, das WLAN schlaeft. Das gehoert an die Uhr
+    /// geschrieben (Liste und Titel), nicht in einen Dialog vor den Rest der
+    /// App. Andere Fehler — eine falsche Adresse, eine unerwartete Antwort —
+    /// bleiben Meldungen: Da hat jemand etwas zu berichtigen.
+    public var erreichbar: [UUID: Bool] = [:]
     /// Warum eine Uhr nicht am Broker haengt, wenn sie es selbst sagt.
     /// Nur AWTRIX NG tut das (`badCredentials` und dergleichen); bei der
     /// Werksfirmware bleibt es leer.
@@ -954,6 +964,7 @@ public final class AppZustand {
                     self.verbunden[id] = steht
                     // Der Grund steht nur da, wenn es einen gibt — die
                     // Werksfirmware nennt keinen.
+                    self.erreichbar[id] = true
                     self.brokergrund[id] = grund
                     if let steht {
                         self.log(lokf("%@: Präfix %@, MQTT %@", self.uhren[i].name, praefix,
@@ -972,7 +983,15 @@ public final class AppZustand {
                 }
             } catch {
                 self?.verbunden[id] = nil
-                self?.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                if case GeraetFehler.nichtErreichbar = error {
+                    self?.erreichbar[id] = false
+                    if let name = self?.uhren.first(where: { $0.id == id })?.name {
+                        self?.log(lokf("%@ hat nicht geantwortet", name))
+                    }
+                } else {
+                    self?.erreichbar[id] = false
+                    self?.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                }
             }
         }
     }

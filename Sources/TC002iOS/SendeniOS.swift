@@ -305,7 +305,7 @@ struct SendeniOS: View {
                 formatleiste
                 eingabe
             }
-            .navigationTitle(titel)
+            .navigationTitle(titelText)
             // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
             // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
             // von noetigen rund 265 Punkten fuer den Inhalt, die Slot-Zeile
@@ -401,6 +401,18 @@ struct SendeniOS: View {
     /// sagt er zusaetzlich, an wie viele Uhren; sonst stuende hier ein einzelner
     /// Name, waehrend anderswohin gesendet wird. Bei nur einer eingerichteten
     /// Uhr gibt es nichts zu waehlen und nichts zu benennen.
+    /// Der Titel samt Zeichen, wenn die angesehene Uhr auf die letzte Abfrage
+    /// nicht geantwortet hat. `Text` und nicht ein Zeichen im String: Ein
+    /// eingesetztes Zeichen waere Teil des Uebersetzungsschluessels
+    /// (CLAUDE.md, „Sprachen"), und ein Dialog davor legte sich ueber die
+    /// ganze App — die Uhr ist stumm, nicht kaputt.
+    private var titelText: Text {
+        let name = Text(titel)
+        guard let id = zustand.aktiveID, zustand.erreichbar[id] == false else { return name }
+        return Text(Image(systemName: "exclamationmark.circle.fill")).foregroundColor(.red)
+            + Text(" ") + name
+    }
+
     private var titel: String {
         guard zustand.uhren.count > 1, let uhr = zustand.aktiveUhr else { return lok("Senden") }
         guard zustand.zielIDs.count > 1 else { return uhr.name }

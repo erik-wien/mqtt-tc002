@@ -28,7 +28,11 @@ public enum GeraetFehler: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .nichtErreichbar(let g): return lokf("Die Uhr ist nicht erreichbar: %@ Kam dabei gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen.", g)
+        // Ohne den Hinweis auf die Netzwerkfreigabe: Ob der plausibel ist,
+        // weiss nur, wer alle Uhren sieht — melden sich drei von vier, liegt
+        // es nicht an der Freigabe. Der Hinweis steht deshalb in der
+        // Uhrenliste, und zwar nur, wenn keine einzige geantwortet hat.
+        case .nichtErreichbar(let g): return lokf("Die Uhr ist nicht erreichbar: %@", g)
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
         case .keinPraefix: return lok("Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen.")

@@ -343,7 +343,7 @@
 "%@ aufgenommen, %@." = "%@ taken in, %@.";
 "Das lässt sich nicht öffnen." = "That cannot be opened.";
 /* Geraet.swift */
-"Die Uhr ist nicht erreichbar: %@ Kam dabei gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen." = "The clock is not reachable: %@ If the question about local network access just came up, please allow it and then query again.";
+"Die Uhr ist nicht erreichbar: %@" = "The clock cannot be reached: %@";
 "Die Uhr hat unerwartet geantwortet: %@" = "The clock gave an unexpected answer: %@";
 "Die Uhr hat einen Fehler gemeldet: %@ (Status %d)" = "The clock reported an error: %@ (status %d)";
 "Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen." = "The clock has no MQTT prefix set. Enter one in Ulanzi Studio under MQTT and then query again.";
@@ -972,3 +972,7 @@
 "Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — nachzusehen unter „Einstellungen“ auf der Seite dieser Uhr." = "If the clock does not page on to the new display although several are set up, its page interval is probably on \"no paging\" — look under Settings on that clock's page.";
 "Zurücksetzen" = "Reset";
 "Suche, Größe und Bewegung zurücksetzen" = "Reset search, size and motion";
+"%@ hat nicht geantwortet" = "%@ did not answer";
+"Hat auf die letzte Abfrage nicht geantwortet" = "Did not answer the last query";
+
+"Keine der Uhren antwortet. Kam gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen." = "None of the clocks answers. If you were just asked for local network access, allow it and query again.";

@@ -34,7 +34,12 @@ public struct Uhrenmenue: View {
                 }
                 .pickerStyle(.inline)
             } label: {
-                Text(zustand.aktiveUhr?.name ?? "")
+                HStack(spacing: 4) {
+                    Text(zustand.aktiveUhr?.name ?? "")
+                    if let id = zustand.aktiveID {
+                        Erreichbarkeitszeichen(zustand: zustand, id: id)
+                    }
+                }
             }
             .help(lok("Welche Uhr diese Ansicht zeigt"))
         }
