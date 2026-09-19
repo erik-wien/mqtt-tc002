@@ -746,8 +746,6 @@
 "Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen." = "Additional permission under section 7 of the GPL: this program may be distributed through an application distribution service (\"app store\") even where its terms impose restrictions on recipients that would otherwise be incompatible. All other terms of the GPL remain in force, in particular the obligation to make the complete source code available.";
 "HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken." = "HTTP reports back whether the clock accepted the display. MQTT never reports that, but it reads along with what others send to the same clock.";
 "Angesehene Uhr" = "Clock being viewed";
-"bewegte" = "moving";
-"Nur Einträge zeigen, die sich bewegen" = "Show only entries that move";
 "alle" = "all";
 "bewegt" = "animated";
 "Nur diese Meldung" = "This message only";
@@ -978,3 +976,5 @@
 "Keine der Uhren antwortet. Kam gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen." = "None of the clocks answers. If you were just asked for local network access, allow it and query again.";
 "Zurück zur Übersicht" = "Back to the overview";
 "Hinausgeschickt" = "Sent";
+"Filter" = "Filter";
+"Nur bewegte" = "Animated only";
