@@ -10,9 +10,6 @@ struct VerbindungiOS: View {
     @Bindable var zustand: AppZustand
     @State private var neueAdresse = ""
     @Environment(\.dismiss) private var schliessen
-    /// `.numberPad` hat keine Eingabetaste — ohne Tastaturleiste kaeme man aus
-    /// dem Port-Feld nur durch Tippen daneben heraus.
-    @FocusState private var portFokus: Bool
     @State private var zeigeVirtuelleUhr = false
     @State private var zeigeHilfe = false
     @State private var zeigeUeber = false
@@ -28,12 +25,11 @@ struct VerbindungiOS: View {
                     // Scrolltempo sind Einstellungen des Geraets, keine Frage
                     // der Bedienung, und gehoeren darum auch hier hin.
                     Uhreinstellungen(zustand: zustand)
-                    verlaufAbschnitt
-                    protokollAbschnitt
-                    brokerAbschnitt
+                    Aufzeichnungsabschnitt(zustand: zustand, kanon: .telefon)
+                    Brokerabschnitt(zustand: zustand, kanon: .telefon)
                     VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
                                           ansehen: { zeigeVirtuelleUhr = true })
-                    Wolkenabschnitt(zustand: zustand, fussnote: .caption)
+                    Wolkenabschnitt(zustand: zustand, kanon: .telefon)
                     ueberAbschnitt
                 }
             }
@@ -52,10 +48,6 @@ struct VerbindungiOS: View {
         .sheet(isPresented: $zeigeVirtuelleUhr) { VirtuelleUhrView(betrieb: .gemeinsam) }
         .sheet(isPresented: $zeigeHilfe) { HilfeiOS() }
         .sheet(isPresented: $zeigeUeber) { UeberiOS() }
-        // Wischt man das Blatt weg, ohne „Sichern und prüfen“ zu drücken, ginge
-        // ein eben erst eingetipptes Kennwort sonst verloren — es stünde nur im
-        // Speicher, nicht im Schlüsselbund. Dasselbe Netz wie am Mac.
-        .onDisappear { zustand.kennwortSichern() }
     }
 
     private var uhrenAbschnitt: some View {
@@ -185,99 +177,6 @@ struct VerbindungiOS: View {
                 .buttonStyle(.automatic)
             Button("Über Pixel Clock Messenger") { zeigeUeber = true }
                 .buttonStyle(.automatic)
-        }
-    }
-
-    private var verlaufAbschnitt: some View {
-        // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
-        // keine technische Mitschrift, sondern das, was man geschickt hat, und
-        // ein Druck darauf stellt es wieder her.
-        Section {
-            Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
-            Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
-                .knopfZerstoerend()
-            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
-    }
-
-    private var protokollAbschnitt: some View {
-        // Ab Werk aus. Das Protokoll ist ein Werkzeug fuer den Fall, dass
-        // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
-        // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
-        // raeumt das Vorhandene weg.
-        Section {
-            Toggle("Protokoll führen", isOn: $zustand.protokollAn)
-            Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
-    }
-
-    private var brokerAbschnitt: some View {
-        Section("Broker") {
-            // Weiter sichtbar und weiter benutzbar — nur eingeordnet. Die
-            // Begruendung steht bei der Mac-Fassung, sie gilt hier genauso:
-            // Ein verschwindender Abschnitt liesse das Formular springen, ein
-            // abgeblendeter verhinderte, den Broker vor dem Umstellen
-            // einer Uhr einzutragen.
-            if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
-                Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            // Beschriftet waren die vier Felder hier schon; was fehlte, war
-            // der Platzhalter, der nach dem Leeren der Vorgaben sichtbar wird.
-            // Die Beschriftung links sagt, was das Feld ist, das Beispiel
-            // rechts, wie ein Wert darin aussieht.
-            LabeledContent("Adresse") {
-                TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
-                    .multilineTextAlignment(.trailing)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            LabeledContent("Port") {
-                TextField("Port", text: $zustand.brokerPort)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.numberPad)
-                    .focused($portFokus)
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            // Nur beim Port: `.keyboard` gilt sonst fuer jede
-                            // Tastatur dieses Blattes, auch fuer Adresse,
-                            // Benutzer und Kennwort, die ihre Eingabetaste
-                            // schon haben.
-                            if portFokus {
-                                Spacer()
-                                Button("Fertig") { portFokus = false }
-                            }
-                        }
-                    }
-            }
-            LabeledContent("Benutzer") {
-                TextField("z. B. pixdeck", text: $zustand.benutzer)
-                    .multilineTextAlignment(.trailing)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            LabeledContent("Kennwort") {
-                SecureField("Kennwort", text: $zustand.kennwort)
-                    .multilineTextAlignment(.trailing)
-                    .onSubmit { zustand.kennwortSichern() }
-            }
-            Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
-                .knopfBefehl()
-            standText
-            Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var standText: some View {
-        switch zustand.brokerStand {
-        case .unbekannt: Text("noch nicht geprüft").foregroundStyle(.secondary)
-        case .laeuft: HStack { ProgressView(); Text("wird geprüft …") }
-        case .angenommen: Text("angenommen").foregroundStyle(.green)
-        case .abgelehnt(let grund): Text(grund).foregroundStyle(.red)
         }
     }
 

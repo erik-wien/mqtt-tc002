@@ -11,14 +11,13 @@ import TC002Modell
 /// gehoert in die Hilfe.
 public struct Wolkenabschnitt: View {
     @Bindable var zustand: AppZustand
-    /// `.footnote` am Mac, `.caption` am Telefon — dieselbe Wahl, die die
-    /// beiden Einstellungsansichten fuer ihre uebrigen Fussnoten schon
-    /// treffen.
-    let fussnote: Font
+    private let kanon: Formkanon
+    /// `.footnote` am Schreibtisch, `.caption` am Telefon (`Formkanon`).
+    private var fussnote: Font { kanon.fussnote }
 
-    public init(zustand: AppZustand, fussnote: Font) {
+    public init(zustand: AppZustand, kanon: Formkanon) {
         self.zustand = zustand
-        self.fussnote = fussnote
+        self.kanon = kanon
     }
 
     public var body: some View {

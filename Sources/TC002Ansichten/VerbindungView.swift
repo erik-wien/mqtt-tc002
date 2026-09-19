@@ -10,9 +10,6 @@ public struct VerbindungView: View {
         self.fensterOeffnen = fensterOeffnen
     }
     @State private var neuerHost = ""
-    /// Das Kennwort wandert beim Verlassen des Feldes in den Schluesselbund, nicht
-    /// bei jedem Tastendruck.
-    @FocusState private var kennwortFokus: Bool
 
     /// Wo die virtuelle Uhr aufgeht: am Mac als eigenes Fenster, am iPad als
     /// Einblendung. Die Handlung kommt herein und wird hier nicht
@@ -142,75 +139,9 @@ public struct VerbindungView: View {
             Uhreinstellungen(zustand: zustand)
             VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam, ansehen: ansehen)
 
-            // Der Verlauf ist ab Werk an — anders als das Protokoll. Er ist
-            // keine technische Mitschrift, sondern das, was man geschickt hat, und
-            // ein Druck darauf stellt es wieder her.
-            Section {
-                Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
-                Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
-                        .knopfZerstoerend()
-                Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
-                        .font(.footnote).foregroundStyle(.secondary)
-            }
-
-            // Ab Werk aus: Das Protokoll ist ein Werkzeug fuer den Fall, dass
-            // etwas nicht klappt — kein Mitschnitt, den eine App von sich aus
-            // fuehrt. Wer einen Fehler sucht, schaltet es ein; das Ausschalten
-            // raeumt das Vorhandene weg.
-            Section {
-                Toggle("Protokoll führen", isOn: $zustand.protokollAn)
-                Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
-                        .font(.footnote).foregroundStyle(.secondary)
-            }
-
-            Section("Broker") {
-                // Der Abschnitt wird nicht ausgeblendet und nicht
-                // abgeblendet, sondern nur eingeordnet. Ausgeblendet spraenge
-                // das Formular bei jedem Griff an die Betriebsart; abgeblendet
-                // liesse sich ein Broker nicht mehr eintragen, bevor man
-                // eine Uhr auf MQTT stellt — und genau in der Reihenfolge geht
-                // man vor. Die Felder sind auch nicht wirkungslos: Sie wirken,
-                // sobald eine Uhr sie benutzt.
-                if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
-                    Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                // `LabeledContent` statt der Beschriftung, die `TextField`
-                // selbst mitbringt: Am Mac zeigt SwiftUI die zwar an, auf dem
-                // iPad dagegen ist sie der Platzhalter — und der verschwindet,
-                // sobald etwas im Feld steht. Vier gefuellte Felder ohne jede
-                // Beschriftung waren das Ergebnis. Die Beschriftung kommt
-                // deshalb von aussen, das Feld traegt nur noch das Beispiel.
-                LabeledContent("Adresse") {
-                    TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
-                        .labelsHidden().eingabefeld()
-                }
-                LabeledContent("Port") {
-                    TextField("Port", text: $zustand.brokerPort)
-                        .labelsHidden().eingabefeld()
-                }
-                LabeledContent("Benutzer") {
-                    TextField("z. B. pixdeck", text: $zustand.benutzer)
-                        .labelsHidden().eingabefeld()
-                }
-                LabeledContent("Kennwort") {
-                    SecureField("Kennwort", text: $zustand.kennwort)
-                        .labelsHidden()
-                        .eingabefeld()
-                        .focused($kennwortFokus)
-                        .onSubmit { zustand.kennwortSichern() }
-                        .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
-                }
-                Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                HStack {
-                    Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
-                        .knopfBefehl()
-                        .disabled(zustand.brokerStand == .laeuft)
-                    brokerStandAnzeige
-                }
-            }
-            Wolkenabschnitt(zustand: zustand, fussnote: .footnote)
+            Aufzeichnungsabschnitt(zustand: zustand, kanon: .schreibtisch)
+            Brokerabschnitt(zustand: zustand, kanon: .schreibtisch)
+            Wolkenabschnitt(zustand: zustand, kanon: .schreibtisch)
         }
         .formStyle(.grouped)
         // Beim Aufschlagen fragen, nicht erst auf Druck: Praefix, Gattung
@@ -224,10 +155,6 @@ public struct VerbindungView: View {
         // endete buendig am Fensterrand. Ein Rand innerhalb der Rollflaeche
         // endet dagegen mit dem Inhalt.
         .contentMargins(.bottom, 16, for: .scrollContent)
-        // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
-        // Bereichswechsel zerstoert wird — ohne dieses Netz ginge ein eben erst
-        // eingetipptes Kennwort dabei verloren.
-        .onDisappear { zustand.kennwortSichern() }
         .sheet(isPresented: $zeigeVirtuelleUhr) { Nebenfenster.virtuelleUhr.inhalt }
     }
 
@@ -274,23 +201,4 @@ public struct VerbindungView: View {
         neuerHost = ""
     }
 
-    @ViewBuilder
-    private var brokerStandAnzeige: some View {
-        switch zustand.brokerStand {
-        case .unbekannt:
-            Text("noch nicht geprüft")
-                .font(.footnote).foregroundStyle(.secondary)
-        case .laeuft:
-            HStack(spacing: 6) {
-                ProgressView().controlSize(.small)
-                Text("prüfe…").font(.footnote).foregroundStyle(.secondary)
-            }
-        case .angenommen:
-            Text("Der Broker nimmt die Anmeldung an.")
-                .font(.footnote).foregroundStyle(.green)
-        case .abgelehnt(let text):
-            Text(text)
-                .font(.footnote).foregroundStyle(.red)
-        }
-    }
 }

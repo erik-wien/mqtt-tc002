@@ -301,7 +301,6 @@
 "%@ auf %@ gesetzt" = "%@ set to %@";
 /* VerbindungiOS.swift */
 "wird geprüft …" = "checking …";
-"angenommen" = "accepted";
 /* VorschauView.swift */
 "Vorschau der Anzeige, %d mal %d Pixel" = "Preview of the display, %d by %d pixels";
 "Hinaus geht der Text samt Reglern · %@" = "What goes out is the text with its settings · %@";
