@@ -94,7 +94,22 @@ ist und bei einem Update nachzuprüfen wäre, in
      ist nicht gewollt.
   4. **Kein Bildschirmfoto mit echten Adressen ins Repo.** Das Repo ist
      öffentlich, und Bilder gehen am Haken `scripts/private-spuren.sh`
-     vorbei — der liest nur Text. Ihre Adressen stehen in den
+     vorbei — der liest nur Text.
+
+  **iPhone und iPad des Auftraggebers: vorher fragen, jedes Mal.** `xcrun
+  devicectl` erreicht die angeschlossenen Geräte — Bildschirmfoto, Aufnahme,
+  App installieren, starten, beenden (tippen und wischen kann es nicht, so
+  wenig wie `simctl`). Erlaubt am 19.09.2026, aber **nur nach Rückfrage vor
+  dem jeweiligen Zugriff**: Ein Bildschirmfoto zeigt, was gerade offen ist,
+  und ein Installieren tauscht die App auf einem Gerät, das der Auftraggeber
+  in der Hand hat.
+
+  **Der Simulator ist der Normalfall**, und zwar nicht nur aus Rücksicht: Dort
+  lassen sich Anfangswerte patchen (`// SCHAUBILD`), um an einen Zustand zu
+  kommen — am echten Gerät geht das nicht. Das Gerät ist für das, was der
+  Simulator nicht zeigen kann: die wirkliche Verbindung zu den Uhren, den
+  iCloud-Abgleich zwischen mehreren Geräten, und Darstellungsfragen, bei denen
+  dem Simulator nicht zu trauen ist. Ihre Adressen stehen in den
   Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
   genannt — eine veraltete Adresse hier schützt die falsche Maschine. Dafür
   gibt es Doppelgänger: `URLProtocol` für die

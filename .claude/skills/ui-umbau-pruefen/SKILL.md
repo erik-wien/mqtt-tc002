@@ -177,6 +177,14 @@ iPad zu belegen.
 Das Bild bleibt im Scratchpad. Es zeigt Adressen und Präfixe aus dem
 Hausnetz.
 
+**Das echte iPhone und iPad erreicht `xcrun devicectl`** (Bildschirmfoto,
+Installieren, Starten) — aber **erst nach Rückfrage, jedes Mal**, und nur für
+das, was der Simulator nicht zeigen kann. Der Simulator ist der Normalfall:
+Nur dort lässt sich ein Anfangswert patchen, um an einen Zustand zu kommen.
+
+    xcrun devicectl list devices
+    xcrun devicectl device capture screenshot --device <UDID> --destination <pfad>.png
+
 Nach `ditto` gehört der Hinweis dazu, die App **zu beenden und neu zu
 starten** — ein laufendes Programm merkt vom getauschten Bündel nichts, und
 der Auftraggeber prüft sonst alten Code.
