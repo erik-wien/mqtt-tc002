@@ -75,7 +75,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.aufDerUhr
                 + [
                     .ueberschrift("Broker"),
-                    .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
+                    .absatz("Unter „Broker“ trägst du den MQTT-Broker ein: Adresse, Port, Benutzer und Kennwort."),
                 ]
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
@@ -97,7 +97,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell. Unter der Vorschau steht dann, aus wie vielen Einzelbildern der Lauf besteht."),
+                    .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell."),
 
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
                     .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung steht unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, unter „Auf der Uhr“."),
@@ -113,11 +113,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
 
                     .ueberschrift("Ein Bild schicken"),
-                    .absatz("Das Bildsymbol in der Formatpille öffnet den Bestand der 52 × 16-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display."),
+                ]
+                + HilfeInhalt.iconOderAnzeige
+                + [
+                    .absatz("Der Icon-Knopf in der Formatpille öffnet das Blatt „Icons“, und dort steht unter „52 × 16“ der Bestand der ganzen Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eine antippen führt auf ihre Seite: die Vorschau, darunter die fünf Plätze und „An Platz N senden“. Den Platz wählst du dort, auf der Seite des Bildes."),
                     .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
 
                     .ueberschrift("Formatpille"),
-                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon) und das Bild aus dem Bestand. Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
+                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon). Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
                 ]
                 + HilfeInhalt.schriftart
                 + HilfeInhalt.groesse
@@ -126,10 +129,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.randUndAbstand
                 + HilfeInhalt.breiteUndAusrichtung
                 + [
-                    .ueberschrift("Icon wählen"),
-                    .absatz("Ganz links in der Formatpille sitzt der Icon-Knopf: ohne Wahl ein Smiley, mit Wahl das gewählte Icon. Ein Druck öffnet ein Blatt mit Suchfeld, Filterleiste und Raster — die Leiste grenzt nach Größe (8 × 8 oder 16 × 16) und auf bewegte Icons ein; ein Antippen zeigt ein Icon groß — bei einem animierten auch laufend —, „Übernehmen“ wählt es. „Kein Icon“ ganz oben nimmt die Wahl zurück, „Abbrechen“ schließt ohne Änderung."),
+                    .ueberschrift("Icons"),
+                    .absatz("Ganz links in der Formatpille sitzt der Icon-Knopf: ohne Wahl ein Smiley, mit Wahl das gewählte Icon. Ein Druck öffnet das Blatt „Icons“ — die ganze Sammlung, nach Größe gruppiert: die 8 × 8-Icons, die eigenen 16 × 16 und die 52 × 16-Anzeigen. Darüber stehen ein Suchfeld und eine Filterleiste, die nach Größe und auf bewegte Einträge eingrenzt; „Zurücksetzen“ steht nur da, solange etwas eingeschränkt ist."),
+                    .absatz("Ein Icon antippen zeigt es groß — bei einem animierten auch laufend —, „Übernehmen“ wählt es. „Kein Icon“ ganz oben nimmt die Wahl zurück, „Abbrechen“ schließt ohne Änderung."),
                     .absatz("In der großen Ansicht steht rechts oben ein Menü mit „Umbenennen“ und „Löschen“. Der Name ist frei; die Nummer bleibt dabei, wie sie ist — ein Kurzbefehl, der sich auf sie beruft, findet das Icon weiterhin. Gelöscht wird endgültig, und nur, was hier liegt: Der mitgelieferte Grundschatz hat kein Menü."),
-                    .absatz("Über dem Raster lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen; das Icon steht danach bei den eigenen. Gemalt wird hier nicht — eigene Icons entstehen am Mac und auf dem iPad, wo ein Editor daneben Platz hat. Zur Wahl stehen beide Größen: die 8×8-Icons und die eigenen 16×16, die am Schreibtisch entstehen und über iCloud hier ankommen."),
+                    .absatz("Ganz oben unter „Hinzufügen“ stehen zwei Wege: eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen, oder „Dateien …“ — eine GIF-, PNG- oder JPEG-Datei aus den Dateien. Sie landet im Bestand ihrer eigenen Größe; Kleineres wird mittig eingepasst, Größeres als die Anzeige abgelehnt, denn verkleinert wird nicht. Gemalt wird hier nicht — eigene Icons entstehen am Mac und auf dem iPad, wo ein Editor daneben Platz hat."),
                 ]
                 + HilfeInhalt.iconImLauf
                 + [
@@ -139,8 +143,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),
-                    .abbildung(.sendezeile),
-                    .absatz("Wie in Nachrichten: Die Eingabetaste schickt die Anzeige, statt einen Zeilenumbruch einzufügen, und am rechten Rand des Feldes steht dafür ein blauer runder Knopf mit Pfeil. Bei leerem Textfeld oder während eine Sendung läuft, ist das Feld gesperrt. Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund; bei mehreren Zieluhren eine Zeile je betroffener Uhr, die übrigen werden trotzdem beliefert."),
+                    .absatz("Wie in Nachrichten: Die Eingabetaste schickt die Anzeige, statt einen Zeilenumbruch einzufügen — auf der Bildschirmtastatur heißt sie „Senden“. Einen eigenen Sendeknopf gibt es dafür nicht; das ⊗ rechts im Feld leert es."),
+                    .absatz("Solange die Sendung läuft, dreht sich rechts neben dem Feld ein Rädchen, und das Feld ist derweil gesperrt. Ist die Anzeige hinaus, steht dort eine Sekunde lang ein grüner Haken — sonst sagte nichts, dass etwas hinausging."),
+                    .absatz("Geht etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund. Bei mehreren Zieluhren steht dort eine Zeile je betroffener Uhr; die übrigen werden trotzdem beliefert."),
                     .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .anzeigen:

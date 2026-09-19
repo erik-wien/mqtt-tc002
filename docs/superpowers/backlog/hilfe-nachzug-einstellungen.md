@@ -1,5 +1,17 @@
 # Hilfeschuld aus dem Umbau der Einstellungen
 
+> **Erledigt.** Alle sechzehn Punkte stehen im Quelltext der Hilfe. Zwei
+> Abweichungen vom Sollwortlaut, beide auf Ansage des Auftraggebers:
+>
+> - Punkt 15 wollte eine **Tabelle** „Fuenf Themen". Beides ist anders
+>   gekommen: Die Ueberschrift nannte die Anzahl statt der Sache und ist weg,
+>   die Tabelle ist eine Aufzaehlung geworden — den Baustein `tabelle` gibt es
+>   nicht mehr (siehe `Hilfe.swift`, dort steht der Grund).
+> - Punkt 16 hiess „Die Seite einer Uhr" und heisst jetzt
+>   **„Konfigurieren der Pixel Uhr"**.
+>
+> Die Abbildungen waren nachzusehen und zeigten nichts Veraltetes.
+
 Der Umbau nach Papier 11 (`einstellungen-nach-themen.md`) und 8
 (`einstellungen-ohne-sichern-knopf.md`) hat die Bedienung der Einstellungen
 umgestellt; die Hilfe beschreibt weiter die alte. Sie wurde **nicht**

@@ -39,11 +39,54 @@ final class HilfeauszeichnungTests: XCTestCase {
         }
     }
 
+    /// Die Gliederung läuft über Überschriften, nicht über eine Tabelle.
+    ///
+    /// `Hilfebaustein.tabelle` zeichnete ein `Grid`, dessen erste Spalte ihre
+    /// ideale Breite nahm und nicht umbrach: Am Telefon stand der Abschnitt
+    /// dadurch links und rechts über dem Rand, ohne dass sich waagrecht rollen
+    /// ließ. Geprüft wird am Quelltext, denn hier gibt es nichts zu rechnen —
+    /// und nur dort fällt auf, wenn jemand den Baustein wieder einführt.
+    func testKeinHilfeabschnittBautEineTabelle() throws {
+        for pfad in ["Sources/TC002Ansichten/Hilfe.swift",
+                     "Sources/TC002Ansichten/HilfeInhalt.swift",
+                     "Sources/TC002Ansichten/HilfeView.swift",
+                     "Sources/TC002iOS/HilfeiOS.swift"] {
+            let quelle = try Self.ohneKommentare(pfad)
+            XCTAssertFalse(quelle.contains("tabelle"),
+                           "\(pfad) baut wieder eine Tabelle statt einer Gliederung.")
+            XCTAssertFalse(quelle.contains("Grid("),
+                           "\(pfad) setzt die Hilfe wieder in ein Grid.")
+        }
+    }
+
+    /// Die zweite Ebene wird auch benutzt: Wo vorher eine Tabelle zwei Spalten
+    /// hatte, steht heute der Begriff als `untertitel` über seiner Erklärung.
+    func testDieZweiteEbeneTraegtDieFruererenTabellenbegriffe() {
+        let untertitel = Self.alleBausteine.compactMap { baustein -> String? in
+            if case .untertitel(let t) = baustein { return t }
+            return nil
+        }
+        for begriff in ["HTTP", "MQTT"] {
+            XCTAssertTrue(untertitel.contains(begriff),
+                          "„\(begriff)“ steht nicht mehr als eigene Ebene in der Gliederung.")
+        }
+    }
+
+    private static func ohneKommentare(_ pfad: String) throws -> String {
+        let wurzel = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let roh = try String(contentsOf: wurzel.appendingPathComponent(pfad), encoding: .utf8)
+        return roh.split(separator: "\n", omittingEmptySubsequences: false).map { z in
+            guard let strich = z.range(of: "//") else { return String(z) }
+            return String(z[z.startIndex..<strich.lowerBound])
+        }.joined(separator: "\n")
+    }
+
     private static func texte(aus baustein: Hilfebaustein) -> [String] {
         switch baustein {
-        case .ueberschrift(let t), .absatz(let t): return [t]
+        case .ueberschrift(let t), .untertitel(let t), .absatz(let t): return [t]
         case .punkte(let p): return p
-        case .tabelle(let z): return z.flatMap { [$0.0, $0.1] }
         case .abbildung: return []
         }
     }
@@ -64,7 +107,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.dauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
         HilfeInhalt.groesse, HilfeInhalt.microFuenf, HilfeInhalt.fettUndGross,
         HilfeInhalt.randUndAbstand, HilfeInhalt.breiteUndAusrichtung,
-        HilfeInhalt.iconImLauf, HilfeInhalt.verlaufHerkunft,
+        HilfeInhalt.iconOderAnzeige, HilfeInhalt.iconImLauf, HilfeInhalt.verlaufHerkunft,
         HilfeInhalt.verlaufEntstehung, HilfeInhalt.verlaufLoeschen,
         HilfeInhalt.protokollListe, HilfeInhalt.protokollLeeren,
         HilfeInhalt.fehlerStille, HilfeInhalt.fehlerWelche,

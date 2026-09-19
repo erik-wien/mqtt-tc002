@@ -1,18 +1,29 @@
 import SwiftUI
 import TC002Core
 
-/// Ein Baustein eines Hilfeabschnitts: Fließtext, Zwischenüberschrift,
-/// Aufzählung oder zweispaltige Tabelle (für Zuordnungen wie „Schrift → Größen“).
+/// Ein Baustein eines Hilfeabschnitts: Fließtext, Überschrift, Unterpunkt
+/// einer Überschrift oder Aufzählung.
 ///
 /// Der deutsche Wortlaut ist der Übersetzungsschlüssel; nachgeschlagen wird
 /// erst beim Darstellen (`HilfeabschnittView`), nicht beim Bauen der Liste.
 /// So bleiben die Bausteine reine Daten und lassen sich zwischen den
 /// Oberflächen teilen (siehe `HilfeInhalt`).
+///
+/// **Eine zweispaltige Tabelle gibt es hier nicht.** Sie war der Baustein für
+/// Zuordnungen („HTTP → was das bedeutet“), und ihre erste Spalte nahm im
+/// `Grid` ihre ideale Breite und brach nicht um: Am Telefon stand der ganze
+/// Abschnitt dadurch links und rechts über dem Bildschirmrand, ohne dass sich
+/// waagrecht rollen ließ. Ersetzt ist sie durch zwei Ebenen von Überschriften
+/// — der Begriff steht als `untertitel` über seiner Erklärung statt in einer
+/// Spalte daneben. Das bricht um, liest sich auf einer schmalen Seite wie auf
+/// einer breiten und braucht keine Sonderbehandlung je Plattform. Wer eine
+/// Tabelle wiedereinführt, baut denselben Fehler wieder ein.
 public enum Hilfebaustein {
     case ueberschrift(String)
+    /// Die zweite Ebene: ein Begriff oder Fall unter einer `ueberschrift`.
+    case untertitel(String)
     case absatz(String)
     case punkte([String])
-    case tabelle([(String, String)])
     /// Eine gezeichnete Abbildung (`Hilfebilder.swift`).
     case abbildung(Hilfebild)
 }
@@ -84,8 +95,8 @@ public struct HilfeabschnittView: View {
             ?? AttributedString(uebersetzt)
     }
 
-    /// Baut einen einzelnen Hilfebaustein. Zwischenüberschriften bekommen
-    /// zusätzliche Luft davor, Aufzählungen und Tabellen einen Einzug.
+    /// Baut einen einzelnen Hilfebaustein. Überschriften bekommen zusätzliche
+    /// Luft davor, Aufzählungen einen Einzug.
     @ViewBuilder
     private func bausteinView(_ baustein: Hilfebaustein) -> some View {
         switch baustein {
@@ -93,6 +104,14 @@ public struct HilfeabschnittView: View {
             Text(lok(text))
                 .font(.headline)
                 .padding(.top, 10)
+        case .untertitel(let text):
+            // Kleiner und mit weniger Luft davor als die Überschrift: Die
+            // beiden Ebenen müssen sich unterscheiden lassen, sonst ist die
+            // Gliederung wieder flach.
+            Text(lok(text))
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.top, 4)
         case .absatz(let text):
             Text(Self.ausgezeichnet(text)).lineSpacing(zeilenabstand)
         case .punkte(let eintraege):
@@ -107,16 +126,6 @@ public struct HilfeabschnittView: View {
             .padding(.leading, 8)
         case .abbildung(let bild):
             HilfebildView(bild: bild)
-        case .tabelle(let zeilen):
-            Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 6) {
-                ForEach(Array(zeilen.enumerated()), id: \.offset) { _, zeile in
-                    GridRow {
-                        Text(Self.ausgezeichnet(zeile.0)).fontWeight(.semibold)
-                        Text(Self.ausgezeichnet(zeile.1)).lineSpacing(zeilenabstand)
-                    }
-                }
-            }
-            .padding(.leading, 8)
         }
     }
 }

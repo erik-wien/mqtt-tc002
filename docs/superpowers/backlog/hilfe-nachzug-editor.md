@@ -1,5 +1,9 @@
 # Hilfe-Nachzug: Editor und Icons
 
+> **Erledigt.** Beide Punkte waren schon eingeloest, als dieser Durchgang
+> begann; nachgeprueft am Quelltext von heute. Was dabei zusaetzlich auffiel,
+> steht in `hilfe-nachzug-umformen.md`.
+
 Die Bahn „Editor und Icons" der UX-Runde vom 19.09. aendert die Bedienung, die
 Hilfe aber nicht — sie macht zum Schluss ein eigener Durchgang. Hier steht,
 was dabei nachzuziehen ist: je Punkt der betroffene Absatz, was daran jetzt
