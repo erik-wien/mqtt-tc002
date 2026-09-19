@@ -96,6 +96,21 @@ ist und bei einem Update nachzuprüfen wäre, in
      öffentlich, und Bilder gehen am Haken `scripts/private-spuren.sh`
      vorbei — der liest nur Text.
 
+  **Agenten duerfen die App mit den echten Uhren sprechen lassen.** Erlaubt am
+  19.09.2026, woertlich: *„Das Pixeluhren Universum ist nicht
+  sicherheitskritisch. Kein Teil davon."* Ein Simulator haengt am selben Netz
+  wie der Rechner; mit den wirklichen Adressen zeigt die App belegte Plaetze,
+  angemeldete Uhren und echtes Mitlesen statt lauter Fehlerzustaende. Wer
+  die Angaben braucht, liest sie aus den Einstellungen der installierten
+  Mac-App (`defaults export cloud.eriks.mqtt-tc002 -`), nicht aus einer Datei
+  im Repo.
+
+  **Was bleibt: Nichts davon in eine Datei, einen Commit oder ein Papier.**
+  Das Repo ist oeffentlich. Adressen, Praefixe, MAC, Benutzername und Kennwort
+  gehoeren in den laufenden Vorgang und in Bilder im Scratchpad — sonst
+  nirgends. Der Haken `scripts/private-spuren.sh` faengt Text ab, Bilder
+  nicht.
+
   **iPhone und iPad des Auftraggebers: vorher fragen, jedes Mal.** `xcrun
   devicectl` erreicht die angeschlossenen Geräte — Bildschirmfoto, Aufnahme,
   App installieren, starten, beenden (tippen und wischen kann es nicht, so
