@@ -1305,13 +1305,33 @@ public struct EditorBereichView: View {
                     bytes: laufbildBytes,
                     rat: lok("nur weniger Einzelbilder machen sie kleiner, das Tempo ändert daran nichts."))
             }
-            // Breit: Bloecke und Dauer nebeneinander. Schmal: die Dauer rueckt
-            // darunter, statt dass die Zeile rechts abgeschnitten wird.
-            // Nur noch Bloecke und Sendeknopf: Die Dauer steht im Zeit-Reiter
-            // des Inspektors, die Zielauswahl oben. Was hier bleibt, passt
-            // damit auch schmal in eine Zeile — das `ViewThatFits` von
-            // vorher war die Folge einer ueberladenen Zeile, nicht ihre Kur.
-            HStack(alignment: .bottom, spacing: 16) { sendeteile }
+            // Zwei Zeilen: die Bloecke oben, Empfaenger und Sendeknopf
+            // darunter rechts.
+            //
+            // In einer Zeile passte es am iPad nicht. Dort ist die mittlere
+            // Spalte neben Seitenleiste und Inspektor rund 450 Punkte breit,
+            // die Zeile braucht rund 500 (fuenf Bloecke à 44, Empfaenger,
+            // Knopf). Beschnitten wurde dann nicht die Zeile, sondern der
+            // ganze Stapel: Er ist so breit wie sein breitestes Kind und sass
+            // mittig in der Spalte — links fehlte das halbe
+            // Abbrechen-Zeichen, rechts das halbe „Senden".
+            //
+            // Kein `ViewThatFits`: Die Bloecke dehnen sich, ihre gemessene
+            // Idealbreite ist deshalb auch am Mac groesser als die Spalte,
+            // und die Wahl fiel ohnehin immer auf die zweizeilige Form. Zwei
+            // Zeilen ueberall sind ehrlicher als eine Wahl, die keine ist.
+            VStack(spacing: 8) {
+                HStack(spacing: 6) { slotBloecke }
+                // Der Empfaenger neben dem Knopf, der sendet — dieselbe
+                // Nachbarschaft wie unter „Senden", wo er neben dem
+                // Eingabefeld steht. Hier gibt es kein Feld, wohl aber einen
+                // Sendeknopf: Die Leinwand ist der Inhalt.
+                HStack(spacing: 8) {
+                    Spacer()
+                    ZielauswahlView(zustand: zustand)
+                    sendeKnopf
+                }
+            }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -1325,17 +1345,6 @@ public struct EditorBereichView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-
-    @ViewBuilder
-    private var sendeteile: some View {
-        HStack(spacing: 6) { slotBloecke }
-        Spacer()
-        // Der Empfaenger neben dem Knopf, der sendet — dieselbe Nachbarschaft
-        // wie unter „Senden", wo er neben dem Eingabefeld steht. Hier gibt es
-        // kein Feld, wohl aber einen Sendeknopf: Die Leinwand ist der Inhalt.
-        ZielauswahlView(zustand: zustand)
-        sendeKnopf
     }
 
     /// Dieselben Bloecke wie unter „Senden", aus derselben Rechnung

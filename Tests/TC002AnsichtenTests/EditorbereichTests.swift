@@ -468,6 +468,27 @@ final class EditorbereichTests: XCTestCase {
                        + "die Frage wäre eine ohne Anlass")
     }
 
+    /// Bloecke oben, Empfaenger und Sendeknopf darunter — zwei Zeilen, nicht
+    /// eine. In einer Zeile braucht sie rund 500 Punkte (fuenf Bloecke à 44,
+    /// Empfaenger, Knopf); die mittlere Spalte am iPad im Hochformat bietet
+    /// neben Seitenleiste und Inspektor rund 450. Beschnitten wurde dann der
+    /// ganze Stapel, weil er so breit ist wie sein breitestes Kind: links
+    /// fehlte das halbe Abbrechen-Zeichen, rechts das halbe „Senden".
+    ///
+    /// Mutation: die beiden HStacks wieder zu einem zusammenziehen — baut,
+    /// uebersetzt, und am iPad ist der Editor an beiden Raendern angeschnitten.
+    func testDieSendezeileDesEditorsStehtInZweiZeilen() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let stelle = ausschnitt(text, von: "HStack(spacing: 6) { slotBloecke }", bis: "zustand.ziele().isEmpty")
+        XCTAssertTrue(stelle.contains("ZielauswahlView(zustand: zustand)") && stelle.contains("sendeKnopf"),
+                      "Empfänger und Sendeknopf stehen nicht mehr unter den Blöcken — dann prüft "
+                      + "dieser Test die falsche Stelle")
+        XCTAssertFalse(stelle.contains("ViewThatFits"),
+                       "die Zeilenzahl hängt wieder an einer Messung. Die Blöcke dehnen sich, "
+                       + "ihre Idealbreite ist auch am Mac größer als die Spalte — die Wahl fiel "
+                       + "ohnehin immer gleich aus.")
+    }
+
     /// Der Eimer rechnet im Kern (`Leinwand.fuellen`) und wirkt genau einmal je
     /// Berührung, dort wo sie beginnt. Folgte er jedem überfahrenen Kästchen,
     /// färbte die erste Fingerbewegung das ganze Bild ein — der Übersetzer sagt
