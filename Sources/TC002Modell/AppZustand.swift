@@ -698,12 +698,17 @@ public final class AppZustand {
     ///
     /// `sitzung` ist wie bei `abfragen` die Naht fuer den Test — die
     /// Oberflaeche ruft `uhrHinzufuegen(host:)`.
-    public func uhrHinzufuegen(host: String, sitzung: URLSession = .shared) {
+    ///
+    /// `name` ist freiwillig. Leer heisst: Die App vergibt einen; wer im Blatt
+    /// „Kueche" eingetippt hat, bekommt „Kueche".
+    public func uhrHinzufuegen(host: String, name: String = "",
+                               sitzung: URLSession = .shared) {
         let erste = uhren.isEmpty
         // `angelegt` traegt den Zeitpunkt, damit ein Grabstein derselben
         // Adresse ueberstimmt werden kann — sonst liesse sich eine einmal
         // entfernte Uhr nie wieder eintragen.
-        let neue = Uhr(name: host, host: host, betriebsart: .http, angelegt: Date())
+        let neue = Uhr(name: name.isEmpty ? host : name, host: host,
+                       betriebsart: .http, angelegt: Date())
         var ohneGrabstein = grabsteine
         for merkmal in neue.abgleichmerkmale { ohneGrabstein[merkmal] = nil }
         if ohneGrabstein != grabsteine { grabsteine = ohneGrabstein }
@@ -879,12 +884,12 @@ public final class AppZustand {
                     // heisst „nicht beantwortet" und darf eine schon bekannte
                     // Breite nicht gegen die Vorgabe eintauschen.
                     if let breite { self.uhren[i].panelbreite = breite }
-                    if gattungGewechselt {
-                        self.log(lokf("%@ ist eine %@", self.uhren[i].name, gattung.beschriftung))
-                    }
                     // Ohne Praefix bliebe hier ein leerer Name stehen.
                     if self.uhren[i].name == self.uhren[i].host, !praefix.isEmpty {
                         self.uhren[i].name = praefix
+                    }
+                    if gattungGewechselt {
+                        self.log(lokf("%@ ist eine %@", self.uhren[i].name, gattung.beschriftung))
                     }
                     self.verbunden[id] = steht
                     // Der Grund steht nur da, wenn es einen gibt — die

@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Core
 import TC002Modell
 
 /// Das Thema „Aufzeichnung" der Einstellungen — für beide Oberflächen
@@ -21,8 +22,11 @@ public struct Aufzeichnungsabschnitt: View {
             Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
             Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
                 .knopfZerstoerend()
-            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen — unter „Senden“ steht sie unter den Plätzen, ein Druck stellt sie wieder her. Wird über iCloud abgeglichen, wenn das eingeschaltet ist, und hält die letzten 200 Sendungen je Gerät.")
+            // Ein Satz je Schalter, das Laengere hinter dem (?) am Kopf.
+            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen.")
                 .font(kanon.fussnote).foregroundStyle(.secondary)
+        } header: {
+            Abschnittskopf("Verlauf", hilfe: lok("Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt eine Meldung samt ihren Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist."))
         }
 
         // Ab Werk aus: Das Protokoll ist ein Werkzeug für den Fall, dass etwas
@@ -31,8 +35,10 @@ public struct Aufzeichnungsabschnitt: View {
         // Vorhandene weg.
         Section {
             Toggle("Protokoll führen", isOn: $zustand.protokollAn)
-            Text("Schreibt mit, was die App sendet und was die Uhren melden — unter „Verlauf“ nachzulesen. Nur nötig, wenn etwas nicht klappt; ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt.")
+            Text("Schreibt mit, was die App sendet und was die Uhren melden.")
                 .font(kanon.fussnote).foregroundStyle(.secondary)
+        } header: {
+            Abschnittskopf("Protokoll", hilfe: lok("Die technische Mitschrift, unter „Protokoll“ nachzulesen. Nur nötig, wenn etwas nicht klappt — ausgeschaltet wird nichts aufgezeichnet und das Vorhandene weggeräumt, und der Bereich „Protokoll“ verschwindet aus der Seitenleiste."))
         }
     }
 }

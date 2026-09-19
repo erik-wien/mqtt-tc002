@@ -18,14 +18,14 @@ public struct Brokerabschnitt: View {
     }
 
     public var body: some View {
-        Section("Broker") {
+        Section {
             // Der Abschnitt wird nicht ausgeblendet und nicht abgeblendet,
             // sondern nur eingeordnet. Ausgeblendet spränge das Formular bei
             // jedem Griff an die Betriebsart; abgeblendet ließe sich ein Broker
             // nicht mehr eintragen, bevor man eine Uhr auf MQTT stellt — und
             // genau in der Reihenfolge geht man vor.
             if !Einstellungen.brokerNoetig(fuer: zustand.uhren) {
-                Text("Zurzeit steht keine Uhr auf MQTT — dann wird hier nichts davon gebraucht. Eingetragen werden darf es trotzdem, und es gilt, sobald eine Uhr umgestellt wird.")
+                Text("Zurzeit steht keine Uhr auf MQTT — eingetragen werden darf der Broker trotzdem, und er gilt, sobald eine Uhr umgestellt wird.")
                     .font(kanon.fussnote).foregroundStyle(.secondary)
             }
             // `LabeledContent` statt der Beschriftung, die `TextField` selbst
@@ -64,6 +64,8 @@ public struct Brokerabschnitt: View {
                     .disabled(zustand.brokerStand == .laeuft)
                 stand
             }
+        } header: {
+            Abschnittskopf("Broker", hilfe: lok("Der Broker gilt für Uhren im MQTT-Betrieb. „Sichern und prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf."))
         }
         // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
         // Bereichs- oder Reiterwechsel zerstört wird — ohne dieses Netz ginge

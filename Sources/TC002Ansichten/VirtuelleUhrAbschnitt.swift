@@ -52,12 +52,11 @@ public struct VirtuelleUhrAbschnitt: View {
                     .knopfBefehl()
             }
 
-            Text("Eine Uhr, die es nicht gibt: Sie nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster. Damit lässt sich alles ausprobieren — Senden, Löschen, die fünf Plätze, das Blättern —, ohne dass ein Gerät im Netz steht.")
-                .font(.footnote).foregroundStyle(.secondary)
-            Text("Sie hört nur auf dem eigenen Rechner zu und spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen.")
+            // Ein Satz, das Laengere hinter dem (?) am Kopf.
+            Text("Nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware, ohne Gerät im Netz.")
                 .font(.footnote).foregroundStyle(.secondary)
         } header: {
-            Text("Virtuelle Uhr")
+            Abschnittskopf("Virtuelle Uhr", hilfe: lok("Eine Uhr, die es nicht gibt: Sie zeigt, was ankommt, in einem eigenen Fenster — damit lässt sich alles ausprobieren, Senden, Löschen, die fünf Plätze, das Blättern, ohne dass ein Gerät im Netz steht. Sie hört nur auf dem eigenen Rechner zu und spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen."))
         }
     }
 }
