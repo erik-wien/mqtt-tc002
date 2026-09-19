@@ -3,8 +3,9 @@ import UniformTypeIdentifiers
 import XCTest
 @testable import TC002Core
 
-/// Ein GIF wird in seiner eigenen Groesse aufgenommen und lehnt jede andere
-/// Groesse mit Begruendung ab, statt sie stillschweigend herunterzurechnen.
+/// Ein GIF wird in seiner eigenen Groesse aufgenommen — Kleineres mittig in
+/// den kleinsten Raster, der es fasst — und Groesseres mit Begruendung
+/// abgelehnt, statt es stillschweigend herunterzurechnen.
 /// Zusaetzlich liest der Kern Bytes an, statt sich eine URL zu merken und
 /// spaeter zu lesen — dann waere der Zugriff auf eine zugriffsgeschuetzte
 /// Datei laengst zu.
@@ -76,11 +77,29 @@ final class DateiEinlesenTests: XCTestCase {
         }
     }
 
-    /// Und eine Fremdgroesse wird abgelehnt, statt auf die naechstliegende
+    /// Kleineres kommt mittig in den kleinsten Raster, der es fasst: Ein
+    /// 7×7 ist ein 8×8-Icon mit leerem Rand, ein 12×10 ein 16×16, ein 32×8
+    /// eine Anzeige. Nachgewiesen am roten Pixel, der mitwandert.
+    func testKleineresKommtMittigInDenKleinstenRaster() throws {
+        let faelle: [(Int, Int, Leinwandgroesse, Int)] = [
+            (7, 7, .icon8, 0), (12, 10, .icon16, 3 * 16 + 2), (32, 8, .anzeige, 4 * 52 + 10),
+        ]
+        for (qb, qh, erwartet, index) in faelle {
+            let eintrag = try bestand.einlesen(daten: try gif(breite: qb, hoehe: qh),
+                                               nummer: "k\(qb)", name: "K\(qb)")
+            XCTAssertEqual(eintrag.groesse, erwartet, "\(qb)×\(qh)")
+            let zurueck = try bestand.oeffnen(eintrag)
+            XCTAssertEqual(zurueck.breite, erwartet.breite, "\(qb)×\(qh): Breite")
+            XCTAssertEqual(zurueck.hoehe, erwartet.hoehe, "\(qb)×\(qh): Höhe")
+            XCTAssertEqual(zurueck.bild[index], "#FF0000", "\(qb)×\(qh): das rote Pixel sitzt nicht mittig")
+        }
+    }
+
+    /// Und was nicht auf die Anzeige passt, wird abgelehnt, statt auf sie
     /// gerechnet zu werden. Geprueft wird beides: dass es wirft — und dass
     /// danach nichts auf der Platte liegt.
     func testEineFremdeGroesseWirdAbgelehntUndSchreibtNichts() throws {
-        for (qb, qh) in [(32, 32), (104, 32), (7, 7)] {
+        for (qb, qh) in [(32, 32), (104, 32), (53, 16), (52, 17)] {
             XCTAssertThrowsError(try bestand.einlesen(daten: try gif(breite: qb, hoehe: qh),
                                                       nummer: "maze", name: "Maze"),
                                  "\(qb)×\(qh) wurde angenommen") { fehler in
@@ -98,18 +117,13 @@ final class DateiEinlesenTests: XCTestCase {
         }
     }
 
-    /// Die Begruendung nennt beides: was es ist und was ginge. Eine
-    /// Meldung, die nur „geht nicht" sagt, laesst den Anwender raten.
-    func testDieBegruendungNenntDieGroesseUndDieDreiMoeglichen() {
+    /// Die Begruendung nennt beides: was es ist und was ginge, beides in
+    /// Breite × Höhe. Eine Meldung, die nur „geht nicht" sagt, laesst den
+    /// Anwender raten.
+    func testDieBegruendungNenntDieGroesseUndDieAnzeige() {
         let text = EditorbestandFehler.fremdeGroesse(breite: 32, hoehe: 32).errorDescription ?? ""
         XCTAssertTrue(text.contains("32×32"), "die Begründung nennt die Größe der Datei nicht: \(text)")
-        // Alles in Breite × Höhe, in einem Satz: Die Meldung nannte die Größe
-        // der Datei als 52×11 und die möglichen als „16×52" — zwei Ordnungen
-        // nebeneinander, und es sah aus, als verwechsle die App beides.
-        for moeglich in ["8×8", "16×16", "52×16"] {
-            XCTAssertTrue(text.contains(moeglich),
-                          "die Begründung nennt \(moeglich) nicht: \(text)")
-        }
+        XCTAssertTrue(text.contains("52×16"), "die Begründung nennt die Anzeige nicht: \(text)")
     }
 
     /// Ein animiertes GIF behaelt seine Einzelbilder — in seiner eigenen

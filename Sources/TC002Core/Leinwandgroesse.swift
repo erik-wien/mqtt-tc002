@@ -146,6 +146,13 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
         allCases.first { $0.breite == breite && $0.hoehe == hoehe }
     }
 
+    /// Die kleinste Groesse, in die ein Bild dieser Masse passt — `nil`, wenn
+    /// es nicht einmal auf die Anzeige passt. `allCases` ist aufsteigend
+    /// geordnet, deshalb genuegt der erste Treffer.
+    public static func passend(breite: Int, hoehe: Int) -> Leinwandgroesse? {
+        allCases.first { breite <= $0.breite && hoehe <= $0.hoehe }
+    }
+
     public static func fuer(_ leinwand: Leinwand) -> Leinwandgroesse? {
         fuer(breite: leinwand.breite, hoehe: leinwand.hoehe)
     }

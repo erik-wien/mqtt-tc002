@@ -274,37 +274,23 @@ public struct Editorbestand {
         }
     }
 
-    /// In welchem Bestand eine Datei landet: in dem ihrer eigenen Groesse.
+    /// In welchem Bestand eine Datei landet: im kleinsten Raster, der sie
+    /// fasst. Passt sie genau, bleibt sie Byte fuer Byte; ist sie kleiner,
+    /// wird sie beim Einlesen mittig eingepasst (`Bildraster.eingepasst`).
     ///
     /// Der Editor stellt sich auf die Datei ein, nicht umgekehrt. Ein
     /// Herunterrechnen auf die gerade eingestellte Leinwandgroesse liesse ein
     /// 16×16-GIF unbemerkt als 8×8 landen, sobald der Editor auf 8×8 steht.
-    ///
-    /// Eine Groesse, die keine der drei ist, wird abgelehnt und nicht auf
-    /// die naechstliegende gerechnet: Verkleinern zerstoert, und unsichtbar
-    /// geschehen darf das nicht.
+    /// Groesser als die Anzeige wird abgelehnt statt verkleinert: Verkleinern
+    /// zerstoert, und unsichtbar geschehen darf das nicht.
     public static func zielgroesse(fuer daten: Data) throws -> Leinwandgroesse {
         guard let masse = Bildraster.groesse(daten) else {
             throw EditorbestandFehler.keinBild
         }
-        if let genau = Leinwandgroesse.fuer(breite: masse.breite, hoehe: masse.hoehe) {
-            return genau
+        guard let groesse = Leinwandgroesse.passend(breite: masse.breite, hoehe: masse.hoehe) else {
+            throw EditorbestandFehler.fremdeGroesse(breite: masse.breite, hoehe: masse.hoehe)
         }
-        // Was breiter ist als ein Icon und auf die Anzeige passt, wird
-        // aufgenommen und beim Einlesen mittig eingepasst
-        // (`Bildraster.eingepasst`) — ein Banner von 52 x 11 ist ein Banner von
-        // 52 x 11, es fuellt nur nicht alle Zeilen.
-        //
-        // Die Breite entscheidet, nicht die Flaeche: Ein 7 x 7 passt zwar auch
-        // auf die Anzeige, ist aber allem Anschein nach ein misslungenes Icon
-        // und keine Anzeige — es bleibt abgelehnt. Groesser als die Anzeige
-        // wird ebenfalls abgelehnt statt verkleinert: Verkleinern zerstoert.
-        if masse.breite > Leinwandgroesse.icon16.breite,
-           masse.breite <= Leinwandgroesse.anzeige.breite,
-           masse.hoehe <= Leinwandgroesse.anzeige.hoehe {
-            return .anzeige
-        }
-        throw EditorbestandFehler.fremdeGroesse(breite: masse.breite, hoehe: masse.hoehe)
+        return groesse
     }
 
     /// Liest eine schon gelesene Bilddatei in den Bestand ihrer eigenen
@@ -317,13 +303,16 @@ public struct Editorbestand {
     @discardableResult
     public func einlesen(daten: Data, nummer: String, name: String) throws -> Editoreintrag {
         let groesse = try Self.zielgroesse(fuer: daten)
+        // Kleineres wird eingepasst, Passendes bleibt Byte fuer Byte, wie es
+        // war.
+        let passend = try Bildraster.eingepasst(daten, breite: groesse.breite, hoehe: groesse.hoehe)
         switch groesse {
         case .icon8, .icon16:
             let sammlung = groesse == .icon8 ? icons8 : icons16
             let schluessel = Self.schluessel(groesse: groesse, nummer: nummer, name: name)
             guard !schluessel.isEmpty else { throw EditorbestandFehler.leererName }
             let sauber = name.trimmingCharacters(in: .whitespaces)
-            let icon = try sammlung.einfuegen(daten: daten, nummer: schluessel,
+            let icon = try sammlung.einfuegen(daten: passend, nummer: schluessel,
                                               name: sauber.isEmpty ? schluessel : sauber)
             return Editoreintrag(groesse: groesse, name: icon.name,
                                  nummer: groesse.mitNummer ? icon.nummer : nil,
@@ -331,11 +320,6 @@ public struct Editorbestand {
         case .anzeige:
             let sauber = name.trimmingCharacters(in: .whitespaces)
             guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
-            // Kleineres wird eingepasst, Passendes bleibt Byte fuer Byte, wie
-            // es war.
-            let passend = try Bildraster.eingepasst(daten,
-                                                    breite: Leinwandgroesse.anzeige.breite,
-                                                    hoehe: Leinwandgroesse.anzeige.hoehe)
             let eintrag = try bilder.einfuegen(daten: passend, name: sauber, nummer: nummer)
             return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: eintrag.nummer,
                                  datei: eintrag.datei)
@@ -351,8 +335,8 @@ public enum EditorbestandFehler: Error, LocalizedError {
     case nichtLesbar
     /// Die gewaehlte Datei ist gar kein Bild.
     case keinBild
-    /// Ein Bild, das keine der drei Groessen hat. Es wird abgelehnt, nicht
-    /// gerechnet — und die Begruendung nennt beides: was es ist und was geht.
+    /// Ein Bild, das nicht auf die Anzeige passt. Es wird abgelehnt, nicht
+    /// verkleinert — und die Begruendung nennt beides: was es ist und was geht.
     case fremdeGroesse(breite: Int, hoehe: Int)
 
     public var errorDescription: String? {
@@ -362,7 +346,7 @@ public enum EditorbestandFehler: Error, LocalizedError {
         case .nichtLesbar: return lok("Das lässt sich nicht öffnen.")
         case .keinBild: return lok("Das lässt sich nicht als Bild lesen.")
         case .fremdeGroesse(let breite, let hoehe):
-            return lokf("Das Bild ist %d×%d. Aufgenommen werden 8×8, 16×16 und alles, was breiter als 16 ist und in 52×16 passt.",
+            return lokf("Das Bild ist %d×%d und passt nicht auf die Anzeige (52×16). Verkleinert wird nicht.",
                         breite, hoehe)
         }
     }
