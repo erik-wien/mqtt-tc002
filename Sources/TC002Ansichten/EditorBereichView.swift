@@ -334,6 +334,13 @@ public struct EditorBereichView: View {
                            nachStrich: arbeitsstandSichern,
                            zubehoer: leinwand.bilder.count > 1
                                ? AnyView(abspielknopf(abspielGross)) : nil)
+                // Am Werkstueck, nicht in einem Reiter: Wer den Inspektor
+                // nicht oeffnet, sah von sechzehn Einzelbildern nur eines mit
+                // einem Abspielzeichen. Fotos, Procreate und jeder
+                // Videoschnitt stellen ihre Bilder unter die Leinwand.
+                // Nur bei mehr als einem Bild — bei einem gaebe es nichts zu
+                // waehlen.
+                if leinwand.bilder.count > 1 { einzelbildstreifen }
                 fusszeile
                 sendezeile
             }
@@ -656,7 +663,6 @@ public struct EditorBereichView: View {
     @ViewBuilder
     private var animationAbschnitte: some View {
         Section("Einzelbilder") {
-            einzelbildstreifen
             HStack {
                 Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
