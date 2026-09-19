@@ -428,7 +428,7 @@ final class EditorbereichTests: XCTestCase {
                       "das Maß der Kachel hängt nicht mehr an einer abgeleiteten Eigenschaft")
     }
 
-    /// Die Karte „Werkzeug" trägt Farbe und Stift, sonst nichts. „Alles
+    /// Die Karte „Werkzeug" trägt Farbe und die Werkzeugwahl, sonst nichts. „Alles
     /// löschen" wählt kein Werkzeug, es wirft weg — es stand dort als einzige
     /// zerstörende Handlung in Warnfarbe zwischen zwei Wählern. Sein Platz ist
     /// die letzte Zeile des Reiters „Malen", dieselbe Bauart wie „Verlauf
@@ -442,9 +442,16 @@ final class EditorbereichTests: XCTestCase {
     func testAllesLoeschenIstKeinWerkzeug() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         let karte = ausschnitt(text, von: "Section(\"Werkzeug\")", bis: "Section {")
-        for element in ["ColorPicker(\"Farbe\"", "Picker(\"Stift\""] {
+        for element in ["ColorPicker(\"Farbe\"", "Picker(\"Werkzeug\""] {
             XCTAssertTrue(karte.contains(element),
                           "\(element) fehlt in der Karte „Werkzeug“ — dann prüft dieser Test die falsche Stelle")
+        }
+        // Drei Werkzeuge, ein Waehler: Der Eimer ist das dritte Segment neben
+        // Stift und Radierer und kein vierter Knopf daneben — er ist ein
+        // Werkzeug, kein Befehl.
+        for fall in ["tag(Malwerkzeug.malen)", "tag(Malwerkzeug.radieren)", "tag(Malwerkzeug.fuellen)"] {
+            XCTAssertTrue(karte.contains(fall),
+                          "\(fall) fehlt im Werkzeugwähler — ein Werkzeug steht woanders als bei den anderen")
         }
         XCTAssertFalse(karte.contains("Alles löschen"),
                        "„Alles löschen“ steht wieder in der Karte „Werkzeug“ — eine zerstörende "
@@ -459,6 +466,66 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertFalse(text.contains("rueckfrage = .leeren"),
                        "vor dem Leeren wird wieder gefragt — „Rückgängig“ holt es zurück, "
                        + "die Frage wäre eine ohne Anlass")
+    }
+
+    /// Der Eimer rechnet im Kern (`Leinwand.fuellen`) und wirkt genau einmal je
+    /// Berührung, dort wo sie beginnt. Folgte er jedem überfahrenen Kästchen,
+    /// färbte die erste Fingerbewegung das ganze Bild ein — der Übersetzer sagt
+    /// dazu nichts, und am Mac, wo man kurz klickt, fiele es kaum auf.
+    ///
+    /// Mutation: `if beginnt` streichen — baut, übersetzt, und am iPad ist
+    /// nach dem ersten Ziehen alles einfarbig.
+    func testDerEimerFuelltEinmalJeBeruehrungUndRechnetImKern() throws {
+        let text = try quelltext("Sources/TC002Ansichten/Malflaeche.swift")
+        let geste = ausschnitt(text, von: ".onChanged { wert in", bis: ".onEnded")
+        XCTAssertTrue(geste.contains("case .fuellen: if beginnt { leinwand.fuellen("),
+                      "der Eimer füllt nicht mehr genau einmal je Berührung — oder er fragt den "
+                      + "Kern nicht mehr")
+        XCTAssertTrue(geste.contains("case .malen:") && geste.contains("case .radieren:"),
+                      "Stift und Radierer sind keine eigenen Fälle mehr — dann prüft dieser Test "
+                      + "die falsche Stelle")
+        XCTAssertFalse(geste.contains("for y in 0..<"),
+                       "die Fläche wird wieder in der Ansicht gerechnet statt im Kern")
+    }
+
+    /// Verschieben, Drehen und Spiegeln stehen in einer Karte und teilen sich
+    /// einen Schalter „Alle Bilder / Nur dieses“: Es ist dieselbe Frage, und
+    /// zwei Schalter wären zwei Antworten auf sie — welche gälte, sähe man
+    /// erst am Ergebnis.
+    ///
+    /// Gerechnet wird im Kern (`Leinwand.umformen`), und die Sperre ist die
+    /// Entscheidung, die kein Übersetzer trifft: Eine gedrehte 52 × 16 wäre
+    /// 16 × 52 und passt auf keine Uhr. Ohne `.disabled(!leinwand.drehbar)`
+    /// bliebe der Knopf drückbar und täte nichts — der Grund stünde nirgends.
+    ///
+    /// Mutation: `.disabled(!leinwand.drehbar)` entfernen — baut, übersetzt,
+    /// und auf der breiten Anzeige passiert beim Drehen wortlos nichts.
+    func testUmformenRechnetImKernUndTeiltDenSchalterMitDemVerschiebekreuz() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let karte = ausschnitt(text, von: "LabeledContent(\"Verschieben\")", bis: "if groesse.iconEinfuegbar")
+
+        for art in ["art: .linksherum", "art: .rechtsherum", "art: .waagrecht", "art: .senkrecht"] {
+            XCTAssertTrue(karte.contains(art),
+                          "\(art) fehlt in der Karte „Umformen“ — eine der vier Umformungen ist weg")
+        }
+        XCTAssertTrue(karte.contains(".disabled(!leinwand.drehbar)"),
+                      "die Drehknöpfe sind auf einer 52 × 16 wieder drückbar — gedreht wäre sie "
+                      + "16 × 52, und diese Größe zeigt keine Uhr")
+        XCTAssertTrue(karte.contains("Gedreht wäre die Anzeige 16 × 52 hoch"),
+                      "der Fuß der Karte nennt den Grund der Sperre nicht mehr — am iPad gibt es "
+                      + "kein Verweilen, das ihn sonst zeigte")
+
+        let malen = ausschnitt(text, von: "private var malenAbschnitte", bis: "private var animationAbschnitte")
+        XCTAssertEqual(malen.components(separatedBy: "selection: $nurDiesesBild").count - 1, 1,
+                       "es steht nicht mehr genau ein Schalter „Alle Bilder / Nur dieses“ im Reiter "
+                       + "„Malen“ — zwei wären zwei Antworten auf dieselbe Frage")
+
+        let knopf = ausschnitt(text, von: "private func umformknopf(", bis: "\n    }")
+        XCTAssertTrue(knopf.contains("leinwand.umformen(art, nurDieses: nurDiesesBild"),
+                      "der Umformknopf fragt den Kern nicht mehr — oder er folgt dem gemeinsamen "
+                      + "Schalter nicht mehr")
+        XCTAssertFalse(knopf.contains("setzen(x:"),
+                       "die Ansicht setzt beim Umformen wieder selbst Pixel, statt im Kern zu rechnen")
     }
 
     /// Ein geladenes Bild will man auch sehen. Aus einer Datei wie von

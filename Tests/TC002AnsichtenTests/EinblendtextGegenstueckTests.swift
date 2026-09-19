@@ -271,6 +271,21 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                        "die geteilte Pfeilfunktion zeigt ihren Namen am iPad nicht mehr sichtbar an")
     }
 
+    /// Dasselbe für die vier Knöpfe der Karte „Umformen“ (zweimal drehen,
+    /// zweimal spiegeln): eine geteilte Funktion, ein Einblendtext, ein
+    /// Gegenstück. Warum die gesperrten Drehknöpfe ihren Grund trotzdem nicht
+    /// als `.help(...)` tragen, steht an der Karte — ein Einblendtext am
+    /// gesperrten Knopf erreicht am iPad niemanden, die Begründung steht dort
+    /// im Fuß.
+    func testUmformknoepfeZeigenNamenAuchAmIPad() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let funktion = ausschnitt(text, von: "private func umformknopf(", bis: "\n    }")
+        XCTAssertEqual(anzahl(funktion, ".help("), 1,
+                       "die geteilte Umformfunktion hat nicht mehr genau einen Einblendtext")
+        XCTAssertEqual(anzahl(funktion, ".namensichtbarAmIPad()"), 1,
+                       "die geteilte Umformfunktion zeigt ihren Namen am iPad nicht mehr sichtbar an")
+    }
+
     /// Das Nummernfeld erklärt, was die aktuelle Größe gerade aus ihm macht
     /// — LaMetric-Nummer oder Ulanzi-Werknummer —, ein zustandsabhängiger
     /// Text, den weder die Beschriftung (überall nur „Nummer") noch die
@@ -301,11 +316,12 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 14,
+        XCTAssertEqual(anzahl(text, ".help("), 15,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
                        + "die Werkzeugleiste (3), das Plus der Übersicht (1), Kreuz und Haken (2), die Kachel (1), "
                        + "der Schalter „Nur bewegte“ (1), das Abspielsymbol (1), das Verschiebekreuz "
-                       + "(1), die zwei Knöpfe am Einzelbildstreifen (2), das Nummernfeld (1), der "
+                       + "(1), die vier Umformknöpfe (1, geteilte Funktion), die zwei Knöpfe am "
+                       + "Einzelbildstreifen (2), das Nummernfeld (1), der "
                        + "Sendeknopf (1) — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")
     }

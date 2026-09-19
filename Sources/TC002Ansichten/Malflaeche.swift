@@ -1,9 +1,9 @@
 import SwiftUI
 import TC002Core
 
-/// Die Leinwand selbst — ein Raster aus Kaestchen, in das man malt und
-/// radiert. Sonst nichts: Werkzeuge, Bildleiste und alles Weitere stehen
-/// woanders (`EditorBereichView`).
+/// Die Leinwand selbst — ein Raster aus Kaestchen, in das man malt, radiert
+/// und Flaechen fuellt. Sonst nichts: Werkzeuge, Bildleiste und alles Weitere
+/// stehen woanders (`EditorBereichView`).
 ///
 /// Sie macht ihre Spalte nie breiter, als diese ist. Der `GeometryReader`
 /// steht ueber dem Raster, nicht als Hintergrund darunter: So bekommt die
@@ -15,10 +15,18 @@ import TC002Core
 /// Reicht die Breite selbst bei der kleinsten Kantenlaenge nicht (Slide Over:
 /// 52 Kaestchen zu sechs Punkten sind 312), rollt die Leinwand waagrecht,
 /// statt ueber ihren Bereich hinauszuzeichnen.
+/// Was ein Strich auf der Leinwand anrichtet. Ein Zustand mit drei Faellen
+/// statt „radiert ja/nein" und einem dritten Schalter daneben: Der Waehler im
+/// Inspektor kennt immer genau eines der drei.
+enum Malwerkzeug: String, CaseIterable, Identifiable {
+    case malen, radieren, fuellen
+    var id: String { rawValue }
+}
+
 struct Malflaeche: View {
     @Binding var leinwand: Leinwand
     let farbe: Color
-    let radiert: Bool
+    let werkzeug: Malwerkzeug
     /// Einmal je Strich, vor dem ersten Pixel — der Platz fuer einen
     /// Schritt im Rueckgaengig-Stapel. Ein Strich ueber zwanzig Kaestchen ist
     /// ein Schritt, nicht zwanzig.
@@ -110,12 +118,20 @@ struct Malflaeche: View {
         .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
         .gesture(DragGesture(minimumDistance: 0)
             .onChanged { wert in
-                if !imStrich {
+                let beginnt = !imStrich
+                if beginnt {
                     imStrich = true
                     vorStrich()
                 }
                 let x = Int(wert.location.x / kante), y = Int(wert.location.y / kante)
-                leinwand.setzen(x: x, y: y, farbe: radiert ? nil : farbe.hexWert)
+                switch werkzeug {
+                case .malen: leinwand.setzen(x: x, y: y, farbe: farbe.hexWert)
+                case .radieren: leinwand.setzen(x: x, y: y, farbe: nil)
+                // Der Eimer wirkt einmal je Beruehrung, dort wo sie beginnt.
+                // Wuerde er jedem ueberfahrenen Kaestchen folgen, faerbte die
+                // erste Fingerbewegung das ganze Bild ein.
+                case .fuellen: if beginnt { leinwand.fuellen(x: x, y: y, farbe: farbe.hexWert) }
+                }
             }
             .onEnded { _ in
                 imStrich = false

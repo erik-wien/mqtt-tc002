@@ -222,4 +222,92 @@ public struct Leinwand: Equatable, Sendable, Codable {
             bilder[i] = neu
         }
     }
+
+    /// Die vier Umformungen: zwei Vierteldrehungen, zwei Spiegelungen.
+    public enum Umformung: String, CaseIterable, Sendable {
+        case linksherum, rechtsherum, waagrecht, senkrecht
+    }
+
+    /// Ob sich diese Leinwand drehen laesst — nur eine quadratische.
+    ///
+    /// Eine gedrehte 52 × 16 waere 16 × 52, und diese Groesse zeigt keine Uhr
+    /// an (`Leinwandgroesse` kennt drei, und sie ist keine davon). Bliebe das
+    /// Format stehen und wuerde beschnitten, fielen 36 der 52 Spalten weg —
+    /// ein Verlust, den kein Gegenknopf zuruecknimmt. Aus demselben Grund
+    /// liest `Editorbestand.zielgroesse` die Groesse der Datei, statt sie
+    /// umzurechnen. Der Editor sperrt die beiden Drehknoepfe deshalb und
+    /// schreibt den Grund unter die Karte.
+    public var drehbar: Bool { breite == hoehe }
+
+    /// Dreht oder spiegelt die Grafik.
+    ///
+    /// `nurDieses` wie beim Pfeilkreuz: die ganze Animation oder allein das
+    /// gewaehlte Einzelbild. Gespiegelt und gedreht wird sonst alles zugleich,
+    /// weil eine Animation aus gegeneinander verdrehten Bildern kaputt ist.
+    ///
+    /// `false` heisst: Es ist nichts geschehen — eine Drehung auf einer nicht
+    /// quadratischen Leinwand (siehe `drehbar`). Die Ansicht merkt sich dann
+    /// auch keinen Schritt fuer „Rueckgaengig".
+    @discardableResult
+    public mutating func umformen(_ art: Umformung, nurDieses: Bool = false) -> Bool {
+        guard breite > 0, hoehe > 0 else { return false }
+        if art == .linksherum || art == .rechtsherum { guard drehbar else { return false } }
+        let b = breite, h = hoehe
+        // Wohin das Pixel (x, y) kommt. Beim Drehen sind Breite und Hoehe
+        // gleich — andernfalls laege das Ziel ausserhalb, und genau davor
+        // schuetzt die Sperre oben.
+        let ziel: (Int, Int) -> (Int, Int) = { x, y in
+            switch art {
+            case .rechtsherum: return (b - 1 - y, x)
+            case .linksherum: return (y, h - 1 - x)
+            case .waagrecht: return (b - 1 - x, y)
+            case .senkrecht: return (x, h - 1 - y)
+            }
+        }
+        for i in (nurDieses ? [aktuell] : Array(bilder.indices)) {
+            var neu = [String?](repeating: nil, count: b * h)
+            for y in 0..<h {
+                for x in 0..<b {
+                    let (zx, zy) = ziel(x, y)
+                    neu[zy * b + zx] = bilder[i][y * b + x]
+                }
+            }
+            bilder[i] = neu
+        }
+        return true
+    }
+
+    /// „Mit Farbe fuellen": faerbt die zusammenhaengende Flaeche um, zu der
+    /// (x, y) gehoert — die vier Nachbarn mit derselben Farbe wie der
+    /// angetippte Punkt, und deren Nachbarn. Ueber Eck laeuft nichts: Eine
+    /// Diagonale, die auf einem 8×8 als Linie gemalt ist, waere sonst keine
+    /// Grenze.
+    ///
+    /// Durchsichtig ist dabei eine Farbe wie jede andere — der Untergrund
+    /// eines frischen Icons ist genau das, und ihn zu fuellen der haeufigste
+    /// Fall.
+    ///
+    /// Nur das gerade bearbeitete Einzelbild: Gefuellt wird auf einem Bild,
+    /// wie gemalt und radiert wird.
+    ///
+    /// `false` heisst: Es ist nichts geschehen — daneben getippt, oder die
+    /// Flaeche traegt die Farbe schon. Die zweite Bedingung ist nicht nur
+    /// Sparsamkeit: Ohne sie passte jedes gefuellte Feld weiterhin auf die
+    /// gesuchte Farbe, und der Stapel liefe endlos.
+    @discardableResult
+    public mutating func fuellen(x: Int, y: Int, farbe neue: String?) -> Bool {
+        guard drin(x, y) else { return false }
+        let alte = bilder[aktuell][y * breite + x]
+        guard alte != neue else { return false }
+        var offen = [(x, y)]
+        while let (px, py) = offen.popLast() {
+            guard drin(px, py), bilder[aktuell][py * breite + px] == alte else { continue }
+            bilder[aktuell][py * breite + px] = neue
+            offen.append((px - 1, py))
+            offen.append((px + 1, py))
+            offen.append((px, py - 1))
+            offen.append((px, py + 1))
+        }
+        return true
+    }
 }
