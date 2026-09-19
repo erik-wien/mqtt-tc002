@@ -1079,8 +1079,12 @@ public struct EditorBereichView: View {
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
             Spacer()
+            // Gross und gefuellt: Sie ist die eine Haupthandlung des Editors
+            // und stand in der Vorgabegroesse als blasse Pille neben dem
+            // Namen, kaum staerker als ein gewoehnlicher Knopf.
             Button(lok("Sichern")) { sichernAnfragen() }
                 .knopfHaupthandlung()
+                .controlSize(.large)
             #else
             // Am iPad die runden Zeichen, wie Fotos sie ueber dem Bild
             // stehen hat: kein Wort, dafuer eine Trefferflaeche, die der
