@@ -330,4 +330,94 @@ final class SlotgedaechtnisTests: XCTestCase {
         XCTAssertEqual(stand.iconKanteOderAcht, 8)
     }
 
+    // MARK: Das gemerkte Bild
+
+    private var probebild: [String?] { ["#00ff66", nil, "#ff0000", nil] }
+
+    /// Ein gemaltes Bild und eine Anzeige aus dem Bestand haben keine Regler,
+    /// aus denen sich das Bild neu rechnen liesse. Bis hierher lag es allein
+    /// im Arbeitsspeicher: Der Block zeigte es bis zum Beenden und danach
+    /// „belegt, Inhalt unbekannt" — fuer ein Bild, das diese Installation
+    /// selbst geschickt hatte.
+    func testEinGemerktesBildUeberstehtDenNeustart() throws {
+        let ordner = temp()
+        let uhr = UUID()
+        XCTAssertTrue(Slotgedaechtnis(ordner: ordner).merken(bild: probebild, fuer: uhr, platz: 2))
+
+        // Ein zweites Gedaechtnis auf demselben Ordner ist der Neustart: Es
+        // teilt mit dem ersten nichts als die Datei.
+        let nachher = Slotgedaechtnis(ordner: ordner)
+        XCTAssertEqual(nachher.gemerktesBild(fuer: uhr, platz: 2), probebild)
+        XCTAssertNil(nachher.gemerktesBild(fuer: uhr, platz: 3),
+                     "ein Bild auf Platz 2 faerbt auf Platz 3 ab")
+    }
+
+    /// Das gemeinsame Dateiformat bleibt unberuehrt: `Slotstand` bekommt kein
+    /// Feld, das Werkzeug und Kurzbefehle nicht fuellen koennen. Das Bild liegt
+    /// in einer eigenen Datei daneben.
+    func testDasBildStehtInEinerEigenenDatei() throws {
+        let ordner = temp()
+        let uhr = UUID()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 1)
+
+        let regler = ordner.appendingPathComponent("\(uhr.uuidString).json")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: regler.path),
+                       "ein gemerktes Bild legt eine Reglerdatei an")
+        let bilder = ordner.appendingPathComponent("\(uhr.uuidString)-bilder.json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: bilder.path))
+    }
+
+    /// Ein Platz traegt entweder Regler oder ein Bild, nie beides. Wer zuletzt
+    /// gesendet hat, bestimmt, was dort steht — sonst zeigte der Block das Bild
+    /// von gestern neben den Reglern von heute.
+    func testReglerUndBildLoeschenEinanderAufDemselbenPlatz() throws {
+        let ordner = temp()
+        let uhr = UUID()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "danach"), icon: nil, iconKante: 8,
+                           fuer: uhr, platz: 1)
+        XCTAssertNil(gedaechtnis.gemerktesBild(fuer: uhr, platz: 1),
+                     "die Regler haben das Bild nicht weggeraeumt")
+
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 1)
+        XCTAssertNotNil(gedaechtnis.gemerktesBild(fuer: uhr, platz: 1))
+    }
+
+    /// Wird ein Platz geraeumt — geloescht oder mit etwas Unmerkbarem
+    /// ueberschrieben —, geht das Bild mit. Auch das Werkzeug ruft das; sein
+    /// Bild kennen wir nicht, und ein stehengebliebenes eigenes waere dann eine
+    /// Behauptung ueber fremden Inhalt.
+    func testEinGeraeumterPlatzVerliertAuchSeinBild() throws {
+        let ordner = temp()
+        let uhr = UUID()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 1)
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 4)
+
+        XCTAssertTrue(gedaechtnis.vergessen(fuer: uhr, platz: 1))
+        XCTAssertNil(gedaechtnis.gemerktesBild(fuer: uhr, platz: 1))
+        XCTAssertEqual(gedaechtnis.gemerktesBild(fuer: uhr, platz: 4), probebild,
+                       "der andere Platz hat sein Bild mit verloren")
+    }
+
+    /// Verschwindet die Uhr, verschwindet beides. Sonst bliebe je entfernter
+    /// Uhr eine Bilddatei liegen, die nie wieder jemand liest.
+    func testMitDerUhrVerschwindetAuchIhreBilddatei() throws {
+        let ordner = temp()
+        let uhr = UUID()
+        let gedaechtnis = Slotgedaechtnis(ordner: ordner)
+        gedaechtnis.merken(bild: probebild, fuer: uhr, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 2)
+
+        gedaechtnis.vergessen(fuer: uhr)
+        XCTAssertNil(gedaechtnis.gemerktesBild(fuer: uhr, platz: 1))
+        XCTAssertNil(gedaechtnis.gemerkt(fuer: uhr, platz: 2))
+        for name in ["\(uhr.uuidString).json", "\(uhr.uuidString)-bilder.json"] {
+            XCTAssertFalse(FileManager.default.fileExists(
+                atPath: ordner.appendingPathComponent(name).path), "\(name) liegt noch da")
+        }
+    }
 }

@@ -692,9 +692,20 @@ public final class AppZustand {
         // zeigen, was auf dem Platz liegt, nicht, wie es auf der Uhr aussieht.
         // Nichts zu zeigen waere die staerkere Behauptung — es hiesse „wir
         // wissen es nicht", obwohl wir es geschickt haben.
-        guard let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
-              let optionen = stand.optionen else { return .unbekannt }
-        return .bekannt(gerastert(stand, optionen, uhr: uhr))
+        if let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: platz),
+           let optionen = stand.optionen {
+            return .bekannt(gerastert(stand, optionen, uhr: uhr))
+        }
+        // Zuletzt das gemerkte Bild: Was ohne Regler hinausging — ein gemaltes
+        // Bild, eine Anzeige aus dem Bestand — laesst sich nicht neu rechnen,
+        // wohl aber aufheben. Nach den Reglern und nicht davor: Wer zuletzt
+        // Text geschickt hat, hat das Bild ohnehin weggeraeumt
+        // (`Slotgedaechtnis.vergessen(fuer:platz:)`), und die Reihenfolge sagt,
+        // was gilt, wenn doch beides dastuende.
+        if let pixel = gedaechtnis.gemerktesBild(fuer: uhr.id, platz: platz) {
+            return .bekannt(pixel)
+        }
+        return .unbekannt
     }
 
     /// Zwischenspeicher fuer die aus einem gemerkten Stand gerechneten Pixel.
@@ -1271,6 +1282,18 @@ public final class AppZustand {
                 }
             } else if !Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: slotPlatz) {
                 log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, slotPlatz))
+            }
+            // Erst hier, nach `merken`/`vergessen`: Beide raeumen das gemerkte
+            // Bild dieses Platzes weg, damit nie Regler des einen und ein Bild
+            // des anderen Absenders nebeneinander stehen. Das eben geschickte
+            // Bild kommt danach.
+            //
+            // Ohne diese Zeilen lag es allein im Arbeitsspeicher: Der Block
+            // zeigte es bis zum Beenden und danach „belegt, Inhalt unbekannt" —
+            // fuer ein Bild, das diese Installation selbst geschickt hatte.
+            if let slotPixel,
+               !Slotgedaechtnis.gemeinsam.merken(bild: slotPixel, fuer: uhr.id, platz: slotPlatz) {
+                log(lokf("%@: Bild für Slot %d nicht gemerkt", uhr.name, slotPlatz))
             }
         }
         verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,

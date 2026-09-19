@@ -113,6 +113,25 @@ public struct Slotstand: Codable, Hashable, Sendable {
     }
 }
 
+/// Die Pixel, die zuletzt auf einen Platz gingen — fuer alles, was keine
+/// Regler hat und sich daher nicht neu rechnen laesst: ein gemaltes Bild, eine
+/// Anzeige aus dem Bestand.
+///
+/// Eigene Datei, eigener Typ: `Slotstand` ist das gemeinsame Format von App,
+/// Werkzeug und Kurzbefehlen und bleibt unberuehrt. Die Pixel stehen als
+/// `[String?]` da, in derselben Form, die `Anzeigen.pixelAusCustomNutzlast`
+/// liefert und `Slotbild` haelt — so ist zwischen Ablage, Mitlesen und Anzeige
+/// nichts umzurechnen.
+public struct Slotbildstand: Codable, Hashable, Sendable {
+    public var platz: Int
+    public var pixel: [String?]
+
+    public init(platz: Int, pixel: [String?]) {
+        self.platz = platz
+        self.pixel = pixel
+    }
+}
+
 /// Je Uhr eine Datei mit den Reglern, mit denen ihre fuenf Slots zuletzt
 /// beschrieben wurden — geschrieben von allen drei Absendern (App, Werkzeug,
 /// Kurzbefehle), gelesen beim Antippen eines Slot-Blocks.
@@ -171,6 +190,19 @@ public struct Slotgedaechtnis: Sendable {
 
     private func datei(fuer uhr: UUID) -> URL {
         ordner.appendingPathComponent("\(uhr.uuidString).json")
+    }
+
+    /// Die Bilddatei liegt **neben** der Reglerdatei und nicht darin.
+    ///
+    /// `Slotstand` ist ein gemeinsames Dateiformat: App, Werkzeug und
+    /// Kurzbefehle schreiben es. Ein Bild dort hineinzulegen hiesse, jedem
+    /// Absender ein Feld aufzuzwingen, das er nicht fuellen kann, und die
+    /// uebrigen Felder eines bildlosen Standes muessten mit Erfundenem
+    /// belegt werden — `optionen` baute daraus Regler, die niemand gesendet
+    /// hat. Eine zweite Datei kostet einen Dateinamen und laesst das
+    /// gemeinsame Format unberuehrt.
+    private func bilddatei(fuer uhr: UUID) -> URL {
+        ordner.appendingPathComponent("\(uhr.uuidString)-bilder.json")
     }
 
     /// Alle gemerkten Slots einer Uhr. Eine fehlende oder unlesbare Datei
@@ -244,12 +276,63 @@ public struct Slotgedaechtnis: Sendable {
             iconKante: (icon == nil || iconKante == 8) ? nil : iconKante,
             dauer: optionen.dauer,
             pruefsumme: Self.pruefsumme(pixel: pixel))
+        // Ein Platz traegt entweder Regler oder ein Bild, nie beides: Wer hier
+        // schreibt, hat zuletzt gesendet, und ein Bild von vorher gehoert
+        // weggeraeumt. Sonst zeigte der Block es, sobald die Regler einmal
+        // nicht lesbar waeren.
+        bildVergessen(fuer: uhr, platz: platz)
         var neu = alle(fuer: uhr).filter { $0.platz != platz }
         neu.append(stand)
         guard let daten = try? JSONEncoder().encode(neu) else { return false }
         try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
         guard (try? daten.write(to: datei(fuer: uhr), options: .atomic)) != nil else { return false }
         return true
+    }
+
+    /// Die zuletzt auf einen Platz geschickten Pixel — `nil`, wenn dort nichts
+    /// gemerkt ist.
+    public func gemerktesBild(fuer uhr: UUID, platz: Int) -> [String?]? {
+        alleBilder(fuer: uhr).first { $0.platz == platz }?.pixel
+    }
+
+    private func alleBilder(fuer uhr: UUID) -> [Slotbildstand] {
+        guard let daten = try? Data(contentsOf: bilddatei(fuer: uhr)),
+              let gelesen = try? JSONDecoder().decode([Slotbildstand].self, from: daten)
+        else { return [] }
+        return gelesen
+    }
+
+    /// Merkt sich die Pixel, die gerade auf `platz` gegangen sind.
+    ///
+    /// Gebraucht fuer alles, was keine Regler hat: ein gemaltes Bild, eine
+    /// Anzeige aus dem Bestand. Ohne das stand nach einem Neustart auf dem
+    /// Platz „belegt, Inhalt unbekannt" — die App hatte das Bild selbst
+    /// geschickt und wusste es am naechsten Tag nicht mehr.
+    ///
+    /// Geschrieben wird wie in `merken`: lesen, den einen Platz ersetzen,
+    /// atomar zurueck.
+    @discardableResult
+    public func merken(bild pixel: [String?], fuer uhr: UUID, platz: Int) -> Bool {
+        var neu = alleBilder(fuer: uhr).filter { $0.platz != platz }
+        neu.append(Slotbildstand(platz: platz, pixel: pixel))
+        guard let daten = try? JSONEncoder().encode(neu) else { return false }
+        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        return (try? daten.write(to: bilddatei(fuer: uhr), options: .atomic)) != nil
+    }
+
+    /// Wirft das gemerkte Bild eines Platzes weg. Gerufen von `merken` und von
+    /// `vergessen(fuer:platz:)`, damit ein Platz nie Regler des einen und ein
+    /// Bild des anderen Absenders traegt.
+    @discardableResult
+    private func bildVergessen(fuer uhr: UUID, platz: Int) -> Bool {
+        let vorhanden = alleBilder(fuer: uhr)
+        let uebrig = vorhanden.filter { $0.platz != platz }
+        guard uebrig.count != vorhanden.count else { return true }
+        guard !uebrig.isEmpty else {
+            return (try? FileManager.default.removeItem(at: bilddatei(fuer: uhr))) != nil
+        }
+        guard let daten = try? JSONEncoder().encode(uebrig) else { return false }
+        return (try? daten.write(to: bilddatei(fuer: uhr), options: .atomic)) != nil
     }
 
     /// Wirft die Datei einer Uhr weg — aufzurufen, wenn die Uhr selbst
@@ -262,6 +345,7 @@ public struct Slotgedaechtnis: Sendable {
     /// Uhr, auf die nie etwas gesendet wurde.
     public func vergessen(fuer uhr: UUID) {
         try? FileManager.default.removeItem(at: datei(fuer: uhr))
+        try? FileManager.default.removeItem(at: bilddatei(fuer: uhr))
     }
 
     /// Wirft die Erinnerung an einen Platz weg — aufzurufen, wenn dieser
@@ -283,6 +367,11 @@ public struct Slotgedaechtnis: Sendable {
     /// ob es gelungen ist — eine schon angekommene Sendung kippt dadurch nicht.
     @discardableResult
     public func vergessen(fuer uhr: UUID, platz: Int) -> Bool {
+        // Auch das Bild: Wer diesen Platz neu beschreibt, macht **beide**
+        // Erinnerungen ungueltig. Sonst zeigte der Block das Bild von gestern
+        // neben den Reglern von heute — oder, nach einer Sendung des
+        // Werkzeugs, ein Bild, das dort gar nicht mehr steht.
+        bildVergessen(fuer: uhr, platz: platz)
         let vorhanden = alle(fuer: uhr)
         let uebrig = vorhanden.filter { $0.platz != platz }
         guard uebrig.count != vorhanden.count else { return true }

@@ -251,6 +251,19 @@ an zwei Stellen, und sie entscheiden verschieden:
   passender Prüfsumme, sonst hat seither jemand anderes auf den Platz
   geschrieben (Hilfe → Senden erklärt das aus Anwendersicht).
 
+**Neben der Reglerdatei liegt eine zweite, `<uuid>-bilder.json`**, und sie
+gehört allein der App: Was ohne Regler hinausgeht — ein gemaltes Bild, eine
+Anzeige aus der Sammlung —, lässt sich nicht neu rechnen, wohl aber aufheben
+(`Slotgedaechtnis.merken(bild:fuer:platz:)`, `gemerktesBild(fuer:platz:)`). Das
+gemeinsame Format `Slotstand` bleibt dabei unberührt: Ein Bildfeld darin müsste
+jeder Absender füllen, und die übrigen Pflichtfelder eines bildlosen Standes
+wären erfunden — `optionen` baute daraus Regler, die niemand gesendet hat.
+
+**Ein Platz trägt entweder Regler oder ein Bild, nie beides.** Wer zuletzt
+gesendet hat, bestimmt, was dort steht; `merken` und `vergessen(fuer:platz:)`
+räumen das jeweils andere weg. `AppZustand.slotzustand` fragt in dieser
+Reihenfolge: mitgelesene Pixel, dann Regler, dann gemerktes Bild.
+
 Geschrieben wird es an zwei Stellen — **weggeworfen** überall dort, wo ein
 Platz geräumt oder mit etwas Unmerkbarem überschrieben wird
 (`Slotgedaechtnis.vergessen(fuer:platz:)`). Bliebe die Erinnerung liegen,
@@ -258,7 +271,8 @@ zeigte der Block nach dem nächsten Start ohne Broker den Text, der dort längst
 nicht mehr steht:
 
 - ein gemaltes Bild (`MalenView` → `AppZustand.senden` mit `slotPlatz`, aber
-  ohne `slotOptionen`) — es hat keine Regler, die sich merken ließen;
+  ohne `slotOptionen`) — es hat keine Regler, die sich merken ließen; seine
+  Pixel liegen stattdessen in der Bilddatei;
 - eine erfolgreiche Löschung. `AppZustand.anzeigeGeloescht` ist der gemeinsame
   Rumpf für `AppZustand.loeschen`, `AnzeigenView` und `AnzeigeniOS`; der
   Kurzbefehl „Meldung nehmen" (`Kurzbefehle.swift`) kommt ohne `AppZustand`
