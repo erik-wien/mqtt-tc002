@@ -463,12 +463,20 @@ public struct SendenView: View {
                     // aufzufangen. `masse(inhaltHoehe:)` rechnet dieselbe Formel
                     // wie `GeraeteRahmen` selbst.
                     let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
-                    // Die Punktreihe braucht Platz unter dem Rahmen, sonst
-                    // schoebe sie ihn beim Erscheinen um ihre Hoehe hinauf.
+                    // Punktreihe und Name brauchen Platz unter dem Rahmen,
+                    // sonst schoeben sie ihn beim Erscheinen um ihre Hoehe
+                    // hinauf.
                     let punktehoehe: Double = (zustand.uhren.count > 1 || gattung.setztSelbst) ? 20 : 0
+                    let namenshoehe: Double = zustand.uhren.count > 1 ? 18 : 0
                     let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
-                    let nachHoehe = (geo.size.height - 24 - punktehoehe) / einheit.rahmenHoehe
-                    let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
+                    let nachHoehe = (geo.size.height - 24 - punktehoehe - namenshoehe) / einheit.rahmenHoehe
+                    // Nach oben nur durch den Platz begrenzt, nicht durch eine
+                    // Zahl: Ein Deckel von 14 reichte der TC002 mit ihren 52
+                    // Spalten, liess die AWTRIX NG mit 32 aber halb so gross
+                    // und verloren in der Flaeche stehen. Gezeigt wird das
+                    // Geraet, nicht das Pixel — die Hoehe des Bereichs
+                    // begrenzt ohnehin.
+                    let kante = max(4, (min(nachBreite, nachHoehe)).rounded(.down))
                     // Die Punkte gehoeren an die Vorschau, nicht an den
                     // unteren Rand ihres Bereichs: Ausserhalb des
                     // `GeometryReader` rutschten sie mit dessen Dehnung nach
