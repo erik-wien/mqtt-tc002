@@ -1226,9 +1226,14 @@ public final class AppZustand {
     /// Sendung, die scheitert, darf das Gedächtnis nicht verändern. Schlägt
     /// das Schreiben selbst fehl, bleibt die Sendung trotzdem erfolgreich —
     /// nur eine Protokollzeile hält es fest.
+    /// Der Rueckgabewert sagt, ob **mindestens eine** Uhr die Sendung genommen
+    /// hat. Die Oberflaeche braucht ihn fuer ihre Rueckmeldung: Ein gruenes
+    /// Haekchen nach einer Sendung, die keine Uhr erreicht hat, waere eine
+    /// Luege — was schiefging, steht dann in der Fehlerleiste.
+    @discardableResult
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotIconKante: Int = 8,
-                       slotPlatz: Int? = nil) async {
+                       slotPlatz: Int? = nil) async -> Bool {
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
         // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
         // Der Verlauf erzaehlt, was man geschickt hat, und das war eine
@@ -1257,6 +1262,7 @@ public final class AppZustand {
         }
         verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,
                          platz: slotPlatz, erreicht: erreicht)
+        return !erreicht.isEmpty
     }
 
     /// Traegt eine gelungene Sendung in den Verlauf ein.

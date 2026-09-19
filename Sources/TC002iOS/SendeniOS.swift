@@ -84,6 +84,10 @@ struct SendeniOS: View {
     @State private var laufschriftFrames: [Bildraster.Einzelbild] = []
     @State private var laufschriftURI = ""
     @State private var laeuft = false
+    /// Eine Sekunde nach einer gelungenen Sendung — am Telefon an der Stelle
+    /// des Fortschrittsdrehers, weil dort die Eingabetaste schickt und es
+    /// keinen Sendeknopf gibt, der gruen werden koennte.
+    @State private var gelungen = false
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
@@ -905,6 +909,15 @@ struct SendeniOS: View {
                 ProgressView()
                     .frame(width: 44, height: 44)
                     .accessibilityLabel(Text("Sende…"))
+            } else if gelungen {
+                // An derselben Stelle wie der Dreher: Dort schaut hin, wer
+                // eben geschickt hat.
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.green)
+                    .frame(width: 44, height: 44)
+                    .transition(.opacity)
+                    .accessibilityLabel(Text("Hinausgeschickt"))
             }
         }
         .padding(.horizontal)
@@ -954,9 +967,16 @@ struct SendeniOS: View {
             // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
             // am Mac (SendenView.senden()).
             let slotOptionen = optionen
-            await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz), slotOptionen: slotOptionen,
-                                 slotIcon: gewaehltesIcon?.nummer,
-                                 slotIconKante: gewaehltesIcon?.kante ?? 8, slotPlatz: platz)
+            let angekommen = await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz),
+                                                  slotOptionen: slotOptionen,
+                                                  slotIcon: gewaehltesIcon?.nummer,
+                                                  slotIconKante: gewaehltesIcon?.kante ?? 8,
+                                                  slotPlatz: platz)
+            if angekommen {
+                gelungen = true
+                try? await Task.sleep(for: .seconds(1))
+                gelungen = false
+            }
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }

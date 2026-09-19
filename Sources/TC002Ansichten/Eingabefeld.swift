@@ -137,7 +137,8 @@ public extension View {
     func eingabefeld(loeschbar text: Binding<String>,
                      senden: (() -> Void)?,
                      laeuft: Bool,
-                     auskunft: String? = nil) -> some View {
+                     auskunft: String? = nil,
+                     gelungen: Bool = false) -> some View {
         eingabefeld()
             .overlay(alignment: .trailing) {
                 HStack(spacing: 6) {
@@ -155,7 +156,7 @@ public extension View {
                             .controlSize(.small)
                             .accessibilityLabel(Text("Sende…"))
                     } else if let senden, !text.wrappedValue.isEmpty {
-                        Sendezeichen(senden: senden, auskunft: auskunft)
+                        Sendezeichen(senden: senden, auskunft: auskunft, gelungen: gelungen)
                     }
                 }
                 .padding(.trailing, 4)
@@ -181,20 +182,29 @@ struct Sendezeichen: View {
     /// senden:laeuft:auskunft:)`). Die Sprachausgabe bekommt weiter das Wort:
     /// Sie sagt, was der Knopf tut, nicht wie groß die Nutzlast wird.
     var auskunft: String?
+    /// Eine Sekunde nach einer gelungenen Sendung: gruen und mit Haken.
+    ///
+    /// Die Rueckmeldung sitzt an der Stelle, an der man gedrueckt hat, und
+    /// nicht anderswo auf dem Bildschirm. Ohne sie sagte nichts, dass etwas
+    /// hinausging — die Slotleiste aendert sich zwar, aber nur bei der
+    /// angesehenen Uhr, und wer eine andere ansieht, sah gar nichts.
+    var gelungen: Bool = false
 
     @ScaledMetric(relativeTo: .body) private var kante: Double = 26
     @ScaledMetric(relativeTo: .body) private var pfeil: Double = 13
 
     var body: some View {
         Button(action: senden) {
-            Image(systemName: "arrow.up")
+            Image(systemName: gelungen ? "checkmark" : "arrow.up")
                 .font(.system(size: pfeil, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: kante, height: kante)
-                .background(Circle().fill(.tint))
+                .background(Circle().fill(gelungen ? AnyShapeStyle(.green) : AnyShapeStyle(.tint)))
         }
         .buttonStyle(.plain)
-        .help(auskunft ?? lok("Senden"))
-        .accessibilityLabel(Text("Senden"))
+        .disabled(gelungen)
+        .animation(.easeInOut(duration: 0.15), value: gelungen)
+        .help(gelungen ? lok("Hinausgeschickt") : (auskunft ?? lok("Senden")))
+        .accessibilityLabel(Text(gelungen ? lok("Hinausgeschickt") : lok("Senden")))
     }
 }

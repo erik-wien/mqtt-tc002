@@ -53,6 +53,8 @@ public struct SendenView: View {
     @AppStorage("senden.iconkante") private var iconKanteGemerkt = 8
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
+    /// Eine Sekunde nach einer gelungenen Sendung — siehe `Sendezeichen`.
+    @State private var gelungen = false
     /// Die Einzelbilder der Laufschrift — einmal je Aenderung an Text oder
     /// Formatierung berechnet (`.task(id:)`), nicht bei jedem Neuzeichnen der
     /// mit `TimelineView` laufenden Vorschau. Fuellt zugleich die Groessenanzeige.
@@ -960,7 +962,8 @@ public struct SendenView: View {
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft,
-                         auskunft: nutzlastauskunft)
+                         auskunft: nutzlastauskunft,
+                         gelungen: gelungen)
             // Beschriftet die Eingabetaste der Bildschirmtastatur mit
             // „Senden" — auf dem iPad sichtbar, am Mac und an einer
             // angesteckten Tastatur ohne Wirkung.
@@ -994,6 +997,15 @@ public struct SendenView: View {
         !laeuft && !zustand.ziele().isEmpty && !text.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// Eine Sekunde gruen mit Haken, dann wieder der Pfeil. Die Dauer steht
+    /// hier und nicht im Zeichen: Sie gehoert zum Ablauf des Sendens, nicht
+    /// zum Aussehen des Knopfes.
+    private func gelungenZeigen() async {
+        gelungen = true
+        try? await Task.sleep(for: .seconds(1))
+        gelungen = false
+    }
+
     private func senden() {
         laeuft = true
         let frame: Frame
@@ -1014,10 +1026,13 @@ public struct SendenView: View {
         let slotPlatz = platz
         let slotIcon = gewaehltesIcon?.nummer
         Task {
-            await zustand.senden(frame, als: anzeigenName, slotOptionen: slotOptionen,
-                                 slotIcon: slotIcon, slotIconKante: iconKante,
-                                 slotPlatz: slotPlatz)
+            let angekommen = await zustand.senden(frame, als: anzeigenName,
+                                                  slotOptionen: slotOptionen,
+                                                  slotIcon: slotIcon, slotIconKante: iconKante,
+                                                  slotPlatz: slotPlatz)
             laeuft = false
+            guard angekommen else { return }
+            await gelungenZeigen()
         }
     }
 }

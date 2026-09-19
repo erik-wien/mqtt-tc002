@@ -86,7 +86,13 @@ final class VorschauhinweisTests: XCTestCase {
         let feld = try quelltext("Sources/TC002Ansichten/Eingabefeld.swift")
         XCTAssertTrue(feld.contains("auskunft ?? lok(\"Senden\")"),
                       "das ⏎ zeigt die Auskunft nicht mehr — dann steht die Nutzlastgröße nirgends")
-        XCTAssertTrue(feld.contains("accessibilityLabel(Text(\"Senden\"))"),
+        // Die Sprachausgabe bekommt weiter das Wort, nicht die Nutzlast: Sie
+        // sagt, was der Knopf tut. Seit der Knopf eine Sekunde lang gelungen
+        // aussieht, sind es zwei Wörter — beide sagen eine Handlung, keines
+        // eine Größe.
+        XCTAssertTrue(feld.contains("lok(\"Hinausgeschickt\") : lok(\"Senden\")"),
                       "die Sprachausgabe sagt nicht mehr, was der Knopf tut")
+        XCTAssertFalse(feld.contains("accessibilityLabel(Text(auskunft"),
+                       "die Sprachausgabe liest die Nutzlastgröße vor statt der Handlung")
     }
 }
