@@ -478,7 +478,14 @@ struct SendeniOS: View {
                 Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
                     vorschau(fuer: uhr, angesehen: angesehen)
                 }
-                Uhrenpunkte(zustand: zustand)
+                // Dasselbe Zeichen wie am Schreibtisch: Setzt die Uhr den Text
+                // selbst, ist die Vorschau nur eine Naeherung. Was die eine
+                // Oberflaeche sagt, sagt die andere auch — hier fehlte die
+                // Auskunft bisher ganz.
+                HStack(spacing: 8) {
+                    Uhrenpunkte(zustand: zustand)
+                    if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                }
             }
             .listenzeileOhneRahmen(rand: 0)
 

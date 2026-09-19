@@ -51,3 +51,23 @@ Meldung um, „Löschen" räumt den Platz. Am Schreibtisch zeigt der Block
 zusätzlich ein ⊗, sobald der Zeiger darüber steht — am Finger gibt es kein
 Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der
 Wackelmodus des Home-Bildschirms."
+
+---
+
+## 3. Näherung und Nutzlast stehen woanders
+
+**Steht da:** `HilfeView`, Abschnitt „Senden": der Absatz zur Nutzlastgröße
+und der zur NG-Vorschau beschreiben zwei Zeilen unter der Vorschau.
+
+**Falsch daran:** Unter der Vorschau steht kein Satz mehr. Setzt die
+angesehene Uhr den Text selbst, hängt die Erklärung an einem (?) neben der
+Punktreihe — am Zeiger im Einblendtext, am Finger als Blase; das gilt jetzt
+für beide Oberflächen, das iPhone hatte diese Auskunft vorher gar nicht. Wie
+groß die nächste Nutzlast wird, steht als Einblendtext am ⏎ im Eingabefeld.
+Sichtbar unter der Vorschau bleibt allein die Warnung über der Schwelle.
+
+**Soll lauten:** „Setzt die angesehene Uhr den Text selbst (AWTRIX NG), ist
+die Vorschau nur eine Näherung; das (?) neben der Punktreihe sagt, warum.
+Wie groß die nächste Nutzlast wird, steht am ⏎ im Eingabefeld — es ist die
+Antwort auf „was passiert, wenn ich drücke". Wird sie auffällig groß, sagt
+es eine Zeile unter der Vorschau von selbst."

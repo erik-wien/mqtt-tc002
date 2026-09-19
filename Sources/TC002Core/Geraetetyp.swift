@@ -86,6 +86,22 @@ extension Geraetetyp {
     /// ihrer eigenen Schrift. Daran haengt alles Weitere — die Regler unten,
     /// die Nutzlast (`NGNutzlast`) und die Themen (`NGThema`).
     public var setztSelbst: Bool { self == .awtrixNG }
+
+    /// Was ueber die Vorschau zu sagen ist — `nil`, wo es nichts zu sagen
+    /// gibt.
+    ///
+    /// Auf der Werksfirmware zeigt die Vorschau die Pixel, die hinausgehen;
+    /// auf AWTRIX NG setzt das Geraet den Text mit seiner eigenen Schrift, und
+    /// unsere Rasterung ist nur eine Naeherung.
+    ///
+    /// Im Kern und nicht in der Ansicht: Beide Oberflaechen sagen denselben
+    /// Satz, und zwei Abschriften waeren zwei Uebersetzungsschluessel. Er geht
+    /// als gewoehnliches `String` weiter (an `Hilfezeichen` und an
+    /// `.help(_:)`), deshalb `lok`.
+    public var vorschauhinweis: String? {
+        guard setztSelbst else { return nil }
+        return lok("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.")
+    }
 }
 
 /// Die Regler der Sendeansicht, soweit die Geraeteart ueber sie entscheidet.
