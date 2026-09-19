@@ -152,26 +152,26 @@ final class SendefeldTests: XCTestCase {
                       "dem iPhone ist der Rahmen seines Eingabefelds abhanden gekommen")
     }
 
-    /// Neben dem Feld steht ein Sendeknopf — am Telefon wie am Schreibtisch.
+    /// Im Feld steht ein Sendepfeil — am Telefon wie am Schreibtisch, und aus
+    /// demselben Baustein (`eingabefeld(loeschbar:senden:laeuft:gelungen:)`).
     ///
-    /// Vorher gab es dort nur die Sendetaste der Tastatur. Stand ein Text im
-    /// Feld und war die Tastatur unten, liess er sich nicht abschicken, ohne
-    /// das Feld erst wieder anzutippen.
+    /// Vorher gab es am Telefon nur die Sendetaste der Tastatur. Stand ein
+    /// Text im Feld und war die Tastatur unten, liess er sich nicht
+    /// abschicken, ohne das Feld erst wieder anzutippen.
     ///
-    /// Der Platz ist derselbe, den Dreher und Haken belegen: Es sind drei
-    /// Zustaende einer Stelle, nicht drei Stellen.
-    func testDasTelefonHatEinenSendeknopfNebenDemFeld() throws {
+    /// Im Feld und nicht daneben, wie der Sendepfeil in Nachrichten. Dreher
+    /// und Haken sitzen an derselben Stelle: drei Zustaende einer Stelle,
+    /// nicht drei Stellen.
+    func testDasTelefonHatEinenSendepfeilImFeld() throws {
         let text = try quelltext("Sources/TC002iOS/SendeniOS.swift")
         guard let eingabe = block(nach: "private var eingabe: some View", in: text) else {
             return XCTFail("das Eingabefeld des iPhones heißt nicht mehr `eingabe`")
         }
-        XCTAssertTrue(eingabe.contains("Button { Task { await senden() } }"),
-                      "neben dem Eingabefeld steht kein Sendeknopf mehr — mit unten liegender "
-                      + "Tastatur ist ein getippter Text dann nicht abzuschicken")
-        XCTAssertTrue(eingabe.contains("if laeuft") && eingabe.contains("} else if gelungen {"),
-                      "Dreher und Haken teilen sich die Stelle nicht mehr mit dem Knopf — dann "
+        XCTAssertTrue(eingabe.contains("senden: sendenMoeglich ? { Task { await senden() } } : nil"),
+                      "im Eingabefeld steht kein Sendepfeil mehr — mit unten liegender Tastatur "
+                      + "ist ein getippter Text dann nicht abzuschicken")
+        XCTAssertTrue(eingabe.contains("laeuft: laeuft") && eingabe.contains("gelungen: gelungen"),
+                      "Dreher und Haken teilen sich die Stelle nicht mehr mit dem Pfeil — dann "
                       + "stehen dort zwei Dinge nebeneinander")
-        XCTAssertTrue(eingabe.contains(".disabled(text.trimmingCharacters(in: .whitespaces).isEmpty"),
-                      "der Sendeknopf steht auch ohne Text bereit und schickt Leeres hinaus")
     }
 }

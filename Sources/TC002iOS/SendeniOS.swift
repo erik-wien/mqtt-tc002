@@ -866,62 +866,41 @@ struct SendeniOS: View {
         }
     }
 
+    /// Ob es etwas zu senden gibt und jemanden, der es nimmt. Dieselbe Frage
+    /// wie am Schreibtisch (`SendenView.sendenMoeglich`).
+    private var sendenMoeglich: Bool {
+        !laeuft && !zustand.ziele().isEmpty && !text.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     private var eingabe: some View {
-        HStack(spacing: 8) {
-            TextField("Text", text: $text, axis: .vertical)
-                .lineLimit(1...3)
-                // Dieselbe Fassung wie am Schreibtisch, samt (x): Was die
-                // eine Oberflaeche kann, soll die andere auch koennen — ein
-                // Feld ohne Loeschzeichen, weil es Nachrichten nachgebaut
-                // ist, waere kein Grund, es hier vorzuenthalten.
-                .eingabefeld(loeschbar: $text)
-                .submitLabel(.send)
-                .disabled(laeuft)
-                .onChange(of: text) { _, neu in
-                    guard neu.hasSuffix("\n") else { return }
-                    text = String(neu.dropLast())
-                    guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                    Task { await senden() }
-                }
-            if laeuft {
-                ProgressView()
-                    .frame(width: 44, height: 44)
-                    .accessibilityLabel(Text("Sende…"))
-            } else if gelungen {
-                // An derselben Stelle wie der Dreher: Dort schaut hin, wer
-                // eben geschickt hat.
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.green)
-                    .frame(width: 44, height: 44)
-                    .transition(.opacity)
-                    .accessibilityLabel(Text("Hinausgeschickt"))
-            } else {
-                // Am Schreibtisch und am iPad steht neben dem Feld ein
-                // Sendeknopf, am Telefon gab es nur die Sendetaste der
-                // Tastatur. Stand ein Text im Feld und war die Tastatur
-                // unten, liess er sich nicht abschicken, ohne das Feld erst
-                // wieder anzutippen. Derselbe Platz wie Dreher und Haken.
-                Button { Task { await senden() } } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                        // Die Farbe ausdruecklich: `.plain` nimmt dem
-                        // Zeichen die Akzentfarbe, und schwarz sieht es nicht
-                        // mehr nach Knopf aus.
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 44, height: 44)
-                }
-                // `.plain`: Das gefuellte Zeichen ist der Knopf, wie in
-                // Nachrichten. Ein Befehlsknopf legte eine zweite Flaeche
-                // darum.
-                .buttonStyle(.plain)
-                .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty
-                          || zustand.ziele().isEmpty)
-                .accessibilityLabel(Text("Senden"))
+        // Derselbe Baustein wie am Schreibtisch: Loeschzeichen und Sendepfeil
+        // liegen **im** Feld, wie in Nachrichten. Am Telefon stand dort vorher
+        // gar kein Sendeknopf — geschickt wurde allein ueber die Sendetaste
+        // der Tastatur, und mit unten liegender Tastatur war ein getippter
+        // Text nicht abzuschicken, ohne das Feld erst wieder anzutippen.
+        //
+        // Der Dreher waehrend des Sendens und der gruene Haken danach stecken
+        // im Baustein: drei Zustaende einer Stelle, nicht drei Stellen.
+        //
+        // Ohne `auskunft`: Was hinausgeht, steht am Telefon schon ueber den
+        // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
+        // gibt es am Finger ohnehin nicht.
+        TextField("Text", text: $text, axis: .vertical)
+            .lineLimit(1...3)
+            .eingabefeld(loeschbar: $text,
+                         senden: sendenMoeglich ? { Task { await senden() } } : nil,
+                         laeuft: laeuft,
+                         gelungen: gelungen)
+            .submitLabel(.send)
+            .disabled(laeuft)
+            .onChange(of: text) { _, neu in
+                guard neu.hasSuffix("\n") else { return }
+                text = String(neu.dropLast())
+                guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                Task { await senden() }
             }
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
     }
 
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
