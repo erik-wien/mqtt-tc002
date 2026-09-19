@@ -1,5 +1,10 @@
 # Hilfeschuld aus der Bahn „Senden" (UX-Runde 19.09.)
 
+> **Erledigt.** Die Punkte 1, 2 und 5 waren schon eingeloest, als dieser
+> Durchgang begann. Punkt 3 und 4 sind es jetzt: Unter der Vorschau steht am
+> Telefon nichts mehr ueber Einzelbilder, und der Absatz zur Formatpille
+> nennt das Bild aus dem Bestand nicht mehr — den Knopf gibt es dort nicht.
+
 Die Bahn „Senden" der UX-Runde hat die Hilfe nicht angefasst — sie macht zum
 Schluss ein eigener Durchgang. Was dabei nachzuziehen ist, steht hier: je
 Punkt der betroffene Absatz, was daran jetzt falsch ist, und wie er lauten

@@ -1,5 +1,13 @@
 # Hilfe-Nachzug: Umformen und der Eimer
 
+> **Erledigt.** Die drei falsch gewordenen Absaetze sind berichtigt, die vier
+> neuen geschrieben: die Karte „Umformen" samt „Alle Bilder / Nur dieses",
+> Drehen nur quadratisch mit Begruendung, der Eimer und dass er einmal je
+> Beruehrung wirkt. „Rueckgaengig" zaehlt Umformungen und Fuellungen mit auf.
+> Zusaetzlich nachgezogen, weil es beim Nachsehen auffiel: der Knopf heisst
+> „Frame anhaengen", und die Abschlusszeile ueber der Leinwand sieht am Mac
+> anders aus als am iPad.
+
 **Anlass.** Der Editor hat vier Umformungen (links/rechts drehen, waagrecht/
 senkrecht spiegeln) und ein drittes Werkzeug („mit Farbe fuellen") bekommen.
 Die Hilfe war fuer diese Arbeit gesperrt und weiss davon nichts. Was unten

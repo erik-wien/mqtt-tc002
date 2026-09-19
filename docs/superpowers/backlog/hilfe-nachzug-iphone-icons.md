@@ -1,5 +1,12 @@
 # Hilfeschuld: das Icons-Blatt am Telefon
 
+> **Erledigt.** Alle vier Punkte. Der neue geteilte Absatz (Punkt 4) heisst
+> `HilfeInhalt.iconOderAnzeige` und steht in beiden Hilfen. Nachgesehen:
+> `Hilfebilder.swift` zeigt kein Formatpillen-Bild, dafuer aber die
+> **Sendezeile des Schreibtischs** — samt blauem Sendeknopf, den es am Telefon
+> nicht gibt. Die Abbildung ist aus der Telefonhilfe genommen, und
+> `HilfebildTests` haelt das fest.
+
 Die Bedienung hat sich geaendert, die Hilfe nicht — sie war fuer diese Aufgabe
 gesperrt. Was die Hilfe heute behauptet, stimmt danach in drei Absaetzen nicht
 mehr; ein vierter fehlt ganz.
