@@ -28,18 +28,32 @@ final class UhrenwahlTests: XCTestCase {
         return inhalt.filter { $0.hasSuffix(".swift") }.sorted().map { "\(ordner)/\($0)" }
     }
 
-    /// Beide Bereiche des Schreibtischs tragen das Titelmenü, und zwar an der
-    /// selben Stelle: `.principal`. Zwei Orte für dieselbe Wahl wären
-    /// schlimmer als ein ungünstiger.
-    func testBeideSchreibtischbereicheTragenDasTitelmenue() throws {
-        for pfad in ["Sources/TC002Ansichten/SendenView.swift",
-                     "Sources/TC002Ansichten/EditorBereichView.swift"] {
-            let quelle = try ohneKommentare(pfad)
-            XCTAssertTrue(quelle.contains("ToolbarItem(placement: .principal)"),
-                          "\(pfad): kein Titelmenü in der Werkzeugleiste.")
-            XCTAssertTrue(quelle.contains("Uhrenmenue(zustand: zustand)"),
-                          "\(pfad): das Titelmenü zeigt nicht die angesehene Uhr.")
-        }
+    /// Das Titelmenü steht **unter „Senden"**, und zwar an `.principal` — dort
+    /// sagt es, welche Uhr die Ansicht zeigt, und das ist die ganze Ansicht.
+    ///
+    /// **Im Editor steht es nicht.** Dort steuert die angesehene Uhr allein
+    /// das Aussehen der Slotleiste ganz unten; wohin gesendet wird, sagt
+    /// „Empfänger" daneben. Zwei Uhrenbegriffe in einer Ansicht, einer davon
+    /// als Titel des Editors, waren eine Frage statt einer Auskunft — der
+    /// Auftraggeber hat den Namen dort eingekringelt und ein Fragezeichen
+    /// danebengeschrieben. Der Name steht jetzt an der Leiste, die er betrifft.
+    ///
+    /// Mutation: das Menü in die Werkzeugleiste des Editors zurückschieben —
+    /// baut, übersetzt, und über einer Zeichnung namens „Hearts" steht wieder
+    /// der Name einer Uhr.
+    func testNurDieSendeansichtTraegtDasTitelmenue() throws {
+        let senden = try ohneKommentare("Sources/TC002Ansichten/SendenView.swift")
+        XCTAssertTrue(senden.contains("ToolbarItem(placement: .principal)"),
+                      "SendenView: kein Titelmenü in der Werkzeugleiste.")
+        XCTAssertTrue(senden.contains("Uhrenmenue(zustand: zustand)"),
+                      "SendenView: das Titelmenü zeigt nicht die angesehene Uhr.")
+
+        let editor = try ohneKommentare("Sources/TC002Ansichten/EditorBereichView.swift")
+        XCTAssertFalse(editor.contains("Uhrenmenue(zustand: zustand)"),
+                       "EditorBereichView: der Uhrenname steht wieder im Titel des Editors — "
+                       + "dort steuert er nur die Slotleiste, und wohin gesendet wird, sagt "
+                       + "„Empfänger“.")
+
     }
 
     /// Wo eine Vorschau steht, steht auch die Punktreihe — und die Wischgeste

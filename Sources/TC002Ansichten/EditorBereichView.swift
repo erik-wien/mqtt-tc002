@@ -387,7 +387,12 @@ public struct EditorBereichView: View {
                     .help(lok("Hinzufügen"))
                 }
             } else {
-                ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
+                // Kein Uhrenmenue im Titel: Die angesehene Uhr steuert hier
+                // allein das Aussehen der Slotleiste ganz unten — wohin
+                // gesendet wird, sagt „Empfänger" daneben. Zwei Uhrenbegriffe
+                // in einer Ansicht, einer davon als Titel des Editors, waren
+                // eine Frage statt einer Auskunft. Der Name steht jetzt an der
+                // Leiste, die er betrifft.
                 werkzeugleiste
             }
         }
