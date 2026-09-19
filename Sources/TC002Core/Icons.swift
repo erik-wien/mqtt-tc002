@@ -299,6 +299,41 @@ public enum Bildraster {
         return "data:image/gif;base64," + (daten as Data).base64EncodedString()
     }
 
+    /// Legt ein kleineres Bild mittig in eine Fläche der gewünschten Größe.
+    ///
+    /// Gerechnet wird dabei **nichts**: Jedes Pixel bleibt, was es war, ringsum
+    /// kommt Durchsichtiges dazu. Ein Banner von 52 × 11 ist auf der Anzeige
+    /// ein Banner von 52 × 11 — es füllt nur nicht alle Zeilen.
+    ///
+    /// Passt das Bild genau, kommen die Bytes unverändert zurück; ist es
+    /// größer als die Fläche, wird es abgelehnt statt verkleinert. Verkleinern
+    /// zerstört, und wer es nicht gewollt hat, sähe es nicht.
+    public static func eingepasst(_ daten: Data, breite: Int, hoehe: Int) throws -> Data {
+        guard let masse = groesse(daten) else { throw BildrasterFehler.nichtLesbar }
+        if masse.breite == breite, masse.hoehe == hoehe { return daten }
+        guard masse.breite <= breite, masse.hoehe <= hoehe else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        let gelesen = try lesenMitZeiten(daten, breite: masse.breite, hoehe: masse.hoehe)
+        let dx = (breite - masse.breite) / 2, dy = (hoehe - masse.hoehe) / 2
+        let gepolstert: [[String?]] = gelesen.map { einzel in
+            var aus = [String?](repeating: nil, count: breite * hoehe)
+            for y in 0..<masse.hoehe {
+                for x in 0..<masse.breite {
+                    aus[(y + dy) * breite + (x + dx)] = einzel.pixel[y * masse.breite + x]
+                }
+            }
+            return aus
+        }
+        let uri = try alsDatenURI(gepolstert, breite: breite, hoehe: hoehe,
+                                  verzoegerung: gelesen.first?.dauer ?? 0.1)
+        guard let teil = uri.split(separator: ",").last,
+              let roh = Data(base64Encoded: String(teil)) else {
+            throw BildrasterFehler.nichtLesbar
+        }
+        return roh
+    }
+
     /// Setzt schwarze Pixel jenseits eines Rahmens von `maxRand` Pixeln um die
     /// andersfarbige Tinte auf durchsichtig — dieselbe Ueberlegung wie
     /// `Textraster.tintenSpalten`/`tintenZeilen`, nur auf einem Quadrat statt

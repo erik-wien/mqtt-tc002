@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 /// Aufbau nach dem Muster von Pages: Seitenleiste — Leinwand — Inspektor. Der
 /// Inspektor hat drei Modi (Malen, Animation, Bestand), umgeschaltet ueber die
 /// Segmentwahl an seinem Kopf. Unter der Leinwand steht die Sendezeile — nur
-/// bei 16×52, denn ein Icon ist fuer sich keine Anzeige.
+/// bei 52×16, denn ein Icon ist fuer sich keine Anzeige.
 ///
 /// Eine Ansicht mit Unterschieden, nicht zwei mit Aehnlichkeiten: `slotzustand`
 /// gab es einmal dreimal, mit einer abweichenden, falschen Fassung.
@@ -242,7 +242,7 @@ public struct EditorBereichView: View {
     /// Unter welchem Schluessel gesichert wird — bei 8×8 die Nummer, sonst der
     /// Name. Leer heisst: „Sichern" bleibt gesperrt.
     ///
-    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 hat eine Werknummer,
+    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 52×16 hat eine Werknummer,
     /// heisst aber weiter nach seinem Namen — mit `mitNummer` liesse es sich
     /// ohne Nummer gar nicht mehr sichern.
     private var schluessel: String {
@@ -251,7 +251,7 @@ public struct EditorBereichView: View {
 
     /// Ob dieser Eintrag gerade der auf der Leinwand ist. Verglichen wird
     /// der Schluessel, unter dem er liegt, mit dem, unter dem ein „Sichern"
-    /// jetzt ablegen wuerde — nicht Name gegen Name: Bei 16×52 ist der
+    /// jetzt ablegen wuerde — nicht Name gegen Name: Bei 52×16 ist der
     /// Dateiname der bereinigte Name („Mario/Luigi" liegt als „Mario-Luigi"),
     /// und ein Vergleich der Namen ginge dort daneben.
     ///
@@ -565,7 +565,7 @@ public struct EditorBereichView: View {
             Picker("Größe", selection: Binding(get: { groesse }, set: { groesseWechseln($0) })) {
                 Text("8 × 8").tag(Leinwandgroesse.icon8)
                 Text("16 × 16").tag(Leinwandgroesse.icon16)
-                Text("16 × 52").tag(Leinwandgroesse.anzeige)
+                Text("52 × 16").tag(Leinwandgroesse.anzeige)
             }
             .pickerStyle(.segmented).labelsHidden()
         }
@@ -599,7 +599,7 @@ public struct EditorBereichView: View {
                 // Deshalb die Fassung eines Befehlsknopfs — `menuStyle(.button)`
                 // schickt das Menue ueberhaupt erst durch einen Knopfstil.
                 //
-                // Nach Groesse gegliedert: Bei 16×52 stehen beide Icongroessen
+                // Nach Groesse gegliedert: Bei 52×16 stehen beide Icongroessen
                 // zur Wahl, und welche man nimmt, entscheidet, wie viel Platz
                 // daneben bleibt. Eine Liste, in der sie durcheinanderstehen,
                 // machte das Merkmal zur Suchaufgabe.
@@ -1112,7 +1112,7 @@ public struct EditorBereichView: View {
             Divider()
             // Dieselbe Zeile wie unter „Senden" (`Nutzlastzeile`), nicht eine
             // zweite daneben — hier ist die Gefahr sogar groesser: Ein
-            // 16×52-Laufbild mit vielen Einzelbildern wird schnell gross.
+            // 52×16-Laufbild mit vielen Einzelbildern wird schnell gross.
             // Nur bei mehreren: Ein einzelnes Bild geht als `draw` hinaus und
             // ist klein; wie klein, sagt die Rechteckzahl in der Fusszeile.
             if leinwand.bilder.count > 1 {
@@ -1189,7 +1189,7 @@ public struct EditorBereichView: View {
     /// „Sichern" bekommt sie aus drei Gruenden: Es ist die eine Haupthandlung
     /// des Editors (`knopfHaupthandlung`, dieser hier ist ein Befehl unter
     /// mehreren). Es gibt es bei jeder Leinwandgroesse, diese Zeile nur bei
-    /// 16×52 — eine Taste, die je nach Leinwand etwas anderes tut, waere
+    /// 52×16 — eine Taste, die je nach Leinwand etwas anderes tut, waere
     /// schlimmer als keine. Und es steht in einem Formular mit Name und
     /// Nummer, wo die Eingabetaste ohnehin „uebernehmen" heisst, waehrend hier
     /// der irreversible Weg auf die Uhr begaenne.
@@ -1227,7 +1227,7 @@ public struct EditorBereichView: View {
 
     /// Eine Ansicht fuer alle drei Groessen, nicht zwei Fassungen: Ob nach
     /// einer Nummer gefragt wird, leitet sich aus der Groesse der Datei ab —
-    /// bei 16×16 und 16×52 gibt es keine.
+    /// bei 16×16 und 52×16 gibt es keine.
     ///
     /// Gebaut wie der Inspektor: Beschriftung links, gefasstes Feld rechts,
     /// eine Karte mit Kopf und Fuss. Zuvor standen hier zwei nackte Felder
@@ -1284,7 +1284,7 @@ public struct EditorBereichView: View {
     }
 
     /// Wonach das Blatt fragt, haengt an der Groesse der Datei — nicht an
-    /// der des Editors. Bei 16×16 und 16×52 gibt es keine Nummer.
+    /// der des Editors. Bei 16×16 und 52×16 gibt es keine Nummer.
     private var importMitNummer: Bool { importZiel?.mitNummer ?? false }
 
     /// Und ob sie zugleich der Dateiname ist — nur beim 8×8. Davon haengt der
@@ -1317,7 +1317,7 @@ public struct EditorBereichView: View {
     /// Handlung sind andere.
     ///
     /// Die Nummer steht da, wo es eine gibt (`mitNummer`) — beim 8×8 die
-    /// LaMetric-Nummer, beim 16×52 die Ulanzi-Werknummer. Der Fuss sagt, was
+    /// LaMetric-Nummer, beim 52×16 die Ulanzi-Werknummer. Der Fuss sagt, was
     /// davon den Dateinamen traegt.
     private func umbenennenBlatt(_ eintrag: Editoreintrag) -> some View {
         Blatt(titel: lok("Umbenennen"),

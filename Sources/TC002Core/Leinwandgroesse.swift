@@ -13,7 +13,7 @@ import Foundation
 /// |---------|-------------------------|--------|-------------|--------|
 /// | 8×8     | kanonisches LaMetric-Icon | ja   | der Nummer  | nein   |
 /// | 16×16   | Icon ohne Nummer        | nein   | dem Namen   | nein   |
-/// | 16×52   | die ganze Anzeige       | ja     | dem Namen   | ja     |
+/// | 52×16   | die ganze Anzeige       | ja     | dem Namen   | ja     |
 public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     case icon8, icon16, anzeige
 
@@ -55,7 +55,7 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
         switch self {
         case .icon8: return "8 × 8"
         case .icon16: return "16 × 16"
-        case .anzeige: return "16 × 52"
+        case .anzeige: return "52 × 16"
         }
     }
 
@@ -64,7 +64,7 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// zwei Groessen ununterscheidbar macht.
     ///
     /// Genommen wird die Zahl, die unterscheidet: 8×8 und 16×16 an ihrer
-    /// Kante, 16×52 an ihrer Breite. Nebeneinander in einer Leiste ist das
+    /// Kante, 52×16 an ihrer Breite. Nebeneinander in einer Leiste ist das
     /// eindeutig, und daneben steht in jeder Zeile der Liste die ganze
     /// Angabe.
     public var kurzbeschriftung: String {
@@ -89,7 +89,7 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// |---------|--------|-------|
     /// | 8×8     | ja     | die LaMetric-Iconnummer |
     /// | 16×16   | nein   | nicht kanonisch, von uns eingefuehrt |
-    /// | 16×52   | ja     | die Ulanzi-Werknummer (`ugc.ulanzistudio.com`, Kategorie „Pixel Art 16×52") |
+    /// | 52×16   | ja     | die Ulanzi-Werknummer (`ugc.ulanzistudio.com`, Kategorie „Pixel Art 52×16") |
     public var mitNummer: Bool {
         switch self {
         case .icon8: return true
@@ -102,7 +102,7 @@ public enum Leinwandgroesse: String, CaseIterable, Sendable, Identifiable {
     /// der Schluessel, unter dem das Icon liegt, und muss deshalb eindeutig
     /// sein und da sein.
     ///
-    /// Bei 16×52 traegt die Datei weiter den Namen, die Nummer steht daneben in
+    /// Bei 52×16 traegt die Datei weiter den Namen, die Nummer steht daneben in
     /// `names.json`. Das ist der Unterschied zwischen „hat eine Nummer" und
     /// „heisst nach der Nummer", und er entscheidet ueber bestehende
     /// Sammlungen: Wer dort den Dateinamen umstellte, machte jede vorhandene

@@ -55,7 +55,7 @@ extension Geraetetyp {
     /// Ein 16×16-Icon ist auf NG nicht bloss gross, es geht gar nicht: Die
     /// Leinwand fuer Icons ist 32×8, und ein GIF, dessen erstes Bild hoeher
     /// ist, spielt ueberhaupt nicht (§8) — ohne jede Meldung. Dasselbe gilt
-    /// fuer eine ganze 16×52-Anzeige. Das ist eine Eigenschaft des Geraets und
+    /// fuer eine ganze 52×16-Anzeige. Das ist eine Eigenschaft des Geraets und
     /// kein Fehler, der sich glattbuegeln liesse; gesagt gehoert er trotzdem,
     /// und zwar bevor jemand waehlt, was nicht ankommen kann.
     ///

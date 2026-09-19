@@ -121,7 +121,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
 
                     .ueberschrift("Ein Bild schicken"),
-                    .absatz("Das Bildsymbol in der Formatpille öffnet den Bestand der 16 × 52-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display."),
+                    .absatz("Das Bildsymbol in der Formatpille öffnet den Bestand der 52 × 16-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display."),
                     .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
 
                     .ueberschrift("Formatpille"),
@@ -164,7 +164,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
                 .ueberschrift("Meldung schicken"),
                 .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
-                .absatz("„Bild an die Uhr schicken“ ist der dritte: Er nimmt den Namen einer 16 × 52-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
+                .absatz("„Bild an die Uhr schicken“ ist der dritte: Er nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
                 .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
 
                 .ueberschrift("Die Formatangaben"),

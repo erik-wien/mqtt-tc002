@@ -103,7 +103,10 @@ final class DateiEinlesenTests: XCTestCase {
     func testDieBegruendungNenntDieGroesseUndDieDreiMoeglichen() {
         let text = EditorbestandFehler.fremdeGroesse(breite: 32, hoehe: 32).errorDescription ?? ""
         XCTAssertTrue(text.contains("32×32"), "die Begründung nennt die Größe der Datei nicht: \(text)")
-        for moeglich in ["8×8", "16×16", "16×52"] {
+        // Alles in Breite × Höhe, in einem Satz: Die Meldung nannte die Größe
+        // der Datei als 52×11 und die möglichen als „16×52" — zwei Ordnungen
+        // nebeneinander, und es sah aus, als verwechsle die App beides.
+        for moeglich in ["8×8", "16×16", "52×16"] {
             XCTAssertTrue(text.contains(moeglich),
                           "die Begründung nennt \(moeglich) nicht: \(text)")
         }

@@ -16,7 +16,7 @@ import TC002Core
 /// Der Hintergrund bleibt Sache des Aufrufers: „aus" ist durchsichtig, nicht
 /// schwarz, und im Icon-Raster soll die Zelle durchscheinen.
 ///
-/// Dieselbe Ansicht zeigt auch am Telefon die 16×52-Anzeigen des Bestands,
+/// Dieselbe Ansicht zeigt auch am Telefon die 52×16-Anzeigen des Bestands,
 /// statt eines eigenen `Canvas` im Auswahlblatt — zwei Stellen, die dasselbe
 /// zeichnen, laufen sonst auseinander.
 public struct Rasterbild: View {

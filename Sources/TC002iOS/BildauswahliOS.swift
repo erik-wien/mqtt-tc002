@@ -27,7 +27,7 @@ struct BildauswahliOS: View {
 
     private var sammlung: Bildersammlung { Bildersammlung(ordner: Bilderordner.eigene) }
 
-    /// Warum eine ganze 16 × 52-Anzeige an keine der Zieluhren gehen kann.
+    /// Warum eine ganze 52 × 16-Anzeige an keine der Zieluhren gehen kann.
     ///
     /// Ohne diese Sperre schickte der Knopf trotzdem, und auf einer AWTRIX NG
     /// kam nichts an — die Fussnote unten sagt zwar „Eine AWTRIX NG nimmt sie
@@ -47,7 +47,7 @@ struct BildauswahliOS: View {
                             zeile(bild)
                         }
                     } footer: {
-                        Text("Eine 16 × 52-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8.")
+                        Text("Eine 52 × 16-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8.")
                     }
                 }
                 if let sperre {

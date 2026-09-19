@@ -118,3 +118,37 @@ extension BildsendungTests {
         }
     }
 }
+
+extension BildsendungTests {
+    /// Was auf die Anzeige passt, wird aufgenommen und mittig eingepasst —
+    /// ein Banner von 52 × 11 etwa. Gerechnet wird dabei nichts: Die Ränder
+    /// bleiben leer, die Zeichnung bleibt Pixel für Pixel dieselbe.
+    func testEinKleineresBildWirdMittigEingepasst() throws {
+        let breit = 52, hoch = 11
+        var pixel = [String?](repeating: nil, count: breit * hoch)
+        pixel[0] = "#FF0000"                       // links oben in der Quelle
+        pixel[breit * hoch - 1] = "#00FF00"        // rechts unten
+        let uri = try Bildraster.alsDatenURI([pixel], breite: breit, hoehe: hoch, verzoegerung: 0.1)
+        let roh = try XCTUnwrap(Data(base64Encoded: String(uri.split(separator: ",").last!)))
+
+        let eingepasst = try Bildraster.eingepasst(roh, breite: 52, hoehe: 16)
+        let masse = try XCTUnwrap(Bildraster.groesse(eingepasst))
+        XCTAssertEqual(masse.breite, 52)
+        XCTAssertEqual(masse.hoehe, 16)
+
+        let bilder = try Bildraster.lesenMitZeiten(eingepasst, breite: 52, hoehe: 16)
+        let feld = try XCTUnwrap(bilder.first).pixel
+        // (16 − 11) / 2 = 2 Zeilen Rand oben.
+        XCTAssertEqual(feld[2 * 52 + 0], "#FF0000", "die Zeichnung sitzt nicht zwei Zeilen tiefer")
+        XCTAssertNil(feld[0], "die Randzeile ist nicht leer geblieben")
+    }
+
+    /// Passt es genau, kommen die Bytes unveraendert zurueck — kein
+    /// Neuschreiben, kein Qualitaetsverlust.
+    func testEinPassendesBildBleibtUnveraendert() throws {
+        let pixel = [String?](repeating: "#FFFFFF", count: 52 * 16)
+        let uri = try Bildraster.alsDatenURI([pixel], breite: 52, hoehe: 16, verzoegerung: 0.1)
+        let roh = try XCTUnwrap(Data(base64Encoded: String(uri.split(separator: ",").last!)))
+        XCTAssertEqual(try Bildraster.eingepasst(roh, breite: 52, hoehe: 16), roh)
+    }
+}

@@ -11,7 +11,7 @@ import TC002Core
 ///
 /// Über den Wert allgemein, weil die beiden Bestände verschieden zählen:
 /// Das Auswahlblatt kennt Kantenlängen (8, 16), der Bestand im Editor
-/// Leinwandgrößen (8 × 8, 16 × 16, 16 × 52). `nil` heißt in beiden Fällen
+/// Leinwandgrößen (8 × 8, 16 × 16, 52 × 16). `nil` heißt in beiden Fällen
 /// „alle“.
 public struct Filterleiste<Wert: Hashable>: View {
     @Binding var wert: Wert?

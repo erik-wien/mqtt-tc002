@@ -128,7 +128,7 @@ public struct Editorbestand {
     /// und die Frage, ob dort schon etwas liegt. Liefen sie auseinander,
     /// warnte das Blatt vor einer Belegung, die es nicht gibt — oder schwiege
     /// zu einer, die es gibt.
-    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 16×52 *hat* eine
+    /// `nummerIstDateiname`, nicht `mitNummer`: Ein 52×16 *hat* eine
     /// Nummer, *heisst* aber weiter nach seinem Namen — sonst laege jede
     /// bestehende Bildersammlung unter neuen Schluesseln.
     public static func schluessel(groesse: Leinwandgroesse,
@@ -234,7 +234,7 @@ public struct Editorbestand {
     /// Regeln wie beim Sichern: Wohin es gehoert, entscheidet die Groesse;
     /// unter welchem Schluessel es liegt, `schluessel(groesse:nummer:name:)`;
     /// und was dort schon liegt, wird ersetzt statt abgewiesen (die Oberflaeche
-    /// sagt es vorher). Bei 16×52 aendert eine neue Werknummer nichts am
+    /// sagt es vorher). Bei 52×16 aendert eine neue Werknummer nichts am
     /// Dateinamen — sie heisst weiter nach ihrem Namen.
     @discardableResult
     public func umbenennen(_ eintrag: Editoreintrag, name: String,
@@ -287,10 +287,24 @@ public struct Editorbestand {
         guard let masse = Bildraster.groesse(daten) else {
             throw EditorbestandFehler.keinBild
         }
-        guard let groesse = Leinwandgroesse.fuer(breite: masse.breite, hoehe: masse.hoehe) else {
-            throw EditorbestandFehler.fremdeGroesse(breite: masse.breite, hoehe: masse.hoehe)
+        if let genau = Leinwandgroesse.fuer(breite: masse.breite, hoehe: masse.hoehe) {
+            return genau
         }
-        return groesse
+        // Was breiter ist als ein Icon und auf die Anzeige passt, wird
+        // aufgenommen und beim Einlesen mittig eingepasst
+        // (`Bildraster.eingepasst`) — ein Banner von 52 x 11 ist ein Banner von
+        // 52 x 11, es fuellt nur nicht alle Zeilen.
+        //
+        // Die Breite entscheidet, nicht die Flaeche: Ein 7 x 7 passt zwar auch
+        // auf die Anzeige, ist aber allem Anschein nach ein misslungenes Icon
+        // und keine Anzeige — es bleibt abgelehnt. Groesser als die Anzeige
+        // wird ebenfalls abgelehnt statt verkleinert: Verkleinern zerstoert.
+        if masse.breite > Leinwandgroesse.icon16.breite,
+           masse.breite <= Leinwandgroesse.anzeige.breite,
+           masse.hoehe <= Leinwandgroesse.anzeige.hoehe {
+            return .anzeige
+        }
+        throw EditorbestandFehler.fremdeGroesse(breite: masse.breite, hoehe: masse.hoehe)
     }
 
     /// Liest eine schon gelesene Bilddatei in den Bestand ihrer eigenen
@@ -317,7 +331,12 @@ public struct Editorbestand {
         case .anzeige:
             let sauber = name.trimmingCharacters(in: .whitespaces)
             guard !sauber.isEmpty else { throw EditorbestandFehler.leererName }
-            let eintrag = try bilder.einfuegen(daten: daten, name: sauber, nummer: nummer)
+            // Kleineres wird eingepasst, Passendes bleibt Byte fuer Byte, wie
+            // es war.
+            let passend = try Bildraster.eingepasst(daten,
+                                                    breite: Leinwandgroesse.anzeige.breite,
+                                                    hoehe: Leinwandgroesse.anzeige.hoehe)
+            let eintrag = try bilder.einfuegen(daten: passend, name: sauber, nummer: nummer)
             return Editoreintrag(groesse: groesse, name: eintrag.name, nummer: eintrag.nummer,
                                  datei: eintrag.datei)
         }
@@ -343,7 +362,7 @@ public enum EditorbestandFehler: Error, LocalizedError {
         case .nichtLesbar: return lok("Das lässt sich nicht öffnen.")
         case .keinBild: return lok("Das lässt sich nicht als Bild lesen.")
         case .fremdeGroesse(let breite, let hoehe):
-            return lokf("Das Bild ist %d×%d. Aufgenommen werden 8×8, 16×16 und 16×52.",
+            return lokf("Das Bild ist %d×%d. Aufgenommen werden 8×8, 16×16 und alles, was breiter als 16 ist und in 52×16 passt.",
                         breite, hoehe)
         }
     }

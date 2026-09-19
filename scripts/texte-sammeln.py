@@ -91,7 +91,7 @@ DYNAMISCH = [
     "Über", "Hilfe", "Gerätereferenz", "Schriftprobe",
     # Die drei Leinwandgroessen (Leinwandgroesse.beschriftung im Kern,
     # nachgeschlagen ueber lok(groesse.beschriftung)).
-    "8 × 8", "16 × 16", "16 × 52",
+    "8 × 8", "16 × 16", "52 × 16",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
     # Nur die iPhone-Hilfe (HilfeiOS.swift, enum Abschnitt) — die Mac-Fassung
@@ -106,7 +106,7 @@ DYNAMISCH = [
     "Meldung schicken",
     "Meldung nehmen",
     "Bild an die Uhr schicken",
-    "Schickt eine fertige 16 × 52-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.",
+    "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.",
     "Bild schicken",
     # `Summary(...)` in Kurzbefehle.swift: Im Quelltext steht SwiftUIs
     # Parameterverweis-Syntax `\(\.$…)`, aber `appintentsmetadataprocessor`

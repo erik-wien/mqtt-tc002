@@ -288,7 +288,7 @@ struct MeldungLoeschenIntent: AppIntent {
 /// Ein fertiges Bild aus dem Bestand schicken.
 ///
 /// Eigener Kurzbefehl und nicht eine Angabe an „Meldung schicken": Eine
-/// 16 × 52-Anzeige ist das ganze Display und ersetzt Text und Icon. Von
+/// 52 × 16-Anzeige ist das ganze Display und ersetzt Text und Icon. Von
 /// den Angaben dort gelten hier nur die, die sagen *wohin* und *wie lange* —
 /// alles Übrige formatiert Text, den es hier nicht gibt.
 ///
@@ -297,7 +297,7 @@ struct MeldungLoeschenIntent: AppIntent {
 struct BildSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Bild an die Uhr schicken"
     static let description = IntentDescription(
-        "Schickt eine fertige 16 × 52-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.")
+        "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Bild", description: "Der Name, unter dem es im Editor gesichert wurde.")
