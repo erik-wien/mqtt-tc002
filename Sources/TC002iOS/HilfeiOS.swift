@@ -59,7 +59,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.wasEsTut
                 + [
                     .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze und die Liste mit dem, was auf der Uhr liegt und zuletzt geschickt wurde, unten die Formatpille und das Eingabefeld. Links oben stehen die Empfänger, rechts oben die Einstellungen — und das Protokoll, solange es eingeschaltet ist."),
-                    .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres MQTT-Protokolls. Sie liegt der Mac-Fassung dieser App bei; in dieser Fassung ist sie nicht eingebaut."),
+                    .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres Protokolls — je ein Dokument für die Werksfirmware und für AWTRIX NG. Sie liegt der Fassung für Mac und iPad bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
             return HilfeInhalt.startOhneEinrichtung

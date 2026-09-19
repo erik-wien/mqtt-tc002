@@ -61,7 +61,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         ("Protokoll", "die technische Mitschrift — nur da, wenn eingeschaltet"),
                         ("Einstellungen", "Uhren und Broker"),
                     ]),
-                    .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“. Diese Hilfe beschreibt nur, was man in der App klickt."),
+                    .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht je ein Dokument für beide Gattungen, die Wahl darüber sitzt über dem Inhaltsverzeichnis. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
         case .verbindung:
             return HilfeInhalt.startOhneEinrichtung

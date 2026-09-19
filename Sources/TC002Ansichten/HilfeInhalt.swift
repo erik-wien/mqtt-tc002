@@ -16,8 +16,16 @@ public enum HilfeInhalt {
     /// Was die App ueberhaupt tut und wo die Nachrichten langlaufen. Seit es
     /// zwei Wege gibt, steht der Broker nicht mehr zwangslaeufig dazwischen —
     /// welcher Weg gilt, entscheidet jede Uhr fuer sich (`Betriebsart`).
+    ///
+    /// Beide Gattungen schon im ersten Satz (`Geraetetyp`): Wer die
+    /// Einleitung liest, hat die Uhr vor sich, die er einrichten will, und
+    /// eine Einleitung, die nur eine Bauart nennt, schliesst die andere aus.
+    /// Der zweite Absatz sagt, was die Gattung fuer die Regler bedeutet — die
+    /// Einblendtexte der gesperrten Regler sagen es sonst nur dort, wo man
+    /// schon anstoesst.
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("Pixel Clock Messenger schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
+        .absatz("Pixel Clock Messenger schickt Anzeigen an Pixeluhren — an eine Ulanzi TC002 mit Werksfirmware und an eine TC001 unter AWTRIX NG. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
+        .absatz("Welche der beiden Gattungen eine Uhr ist, steht ebenfalls je Uhr unter „Einstellungen“, und es entscheidet, was die Regler bewirken: Für die Werksfirmware rastert diese App den Text selbst, Schriftart, Größe, Fett, Rand und Abstand gelten also. Eine AWTRIX NG setzt ihn mit ihrer eigenen Schrift — dort stehen dieselben Regler gesperrt da und sagen im Einblendtext, warum."),
     ]
 
     /// Die Wahl selbst — was sie bedeutet und was sie kostet. Gehoert hierher
