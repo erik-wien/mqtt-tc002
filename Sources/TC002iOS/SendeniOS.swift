@@ -427,23 +427,26 @@ struct SendeniOS: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
-                // Dieselbe Entscheidung wie am Schreibtisch: Das Loeschen
-                // gehoert an den Block, den es betrifft, nicht als sechster
-                // Knopf daneben. Ein Papierkorb, der sich auf den gerade
-                // gewaehlten Platz bezieht, muss erst getroffen werden und
-                // nimmt in einer Zeile, die auf 44 Punkte je Platz gerechnet
-                // ist, einen ganzen weiteren Platz ein.
-                //
-                // Das ⊗ liegt ausserhalb des Blockknopfes: Innen waere es
-                // Teil von dessen Beschriftung und loeste beim Tippen die
-                // Platzwahl aus statt zu loeschen.
-                .overlay(alignment: .topTrailing) {
-                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                         belegt: belegtePlaetze.contains(i))
-                        .offset(x: 6, y: -6)
-                }
+                // Das Loeschen gehoert an den Block, den es betrifft, nicht
+                // als sechster Knopf daneben — und es steht im Kontextmenue,
+                // nicht als Zeichen am Block. Ein rotes ⊗ an jedem belegten
+                // Block sah aus wie der Wackelmodus des Home-Bildschirms, also
+                // wie ein Zustand, den man absichtlich betritt; es verdeckte
+                // das Motiv, und seine Trefferflaeche lag auf dem Block, der
+                // selbst ein Knopf ist. Der lange Druck ist die Geste, die das
+                // System dafuer vorsieht.
+                .slotmenue(belegt: belegtePlaetze.contains(i),
+                           loeschen: { slotLoeschen(i) },
+                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
             }
         }
+    }
+
+    /// Raeumt den Platz auf den gewaehlten Uhren — derselbe Weg wie am
+    /// Schreibtisch (`AppZustand.loeschen`), samt Slotgedaechtnis.
+    private func slotLoeschen(_ i: Int) {
+        let name = Meldungsplatz.name(fuer: i)
+        Task { await zustand.loeschen(name) }
     }
 
     /// Die Mitte der Sendeansicht als eigenes Glied.
@@ -887,61 +890,6 @@ struct SendeniOS: View {
                                  slotIconKante: gewaehltesIcon?.kante ?? 8, slotPlatz: platz)
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-        }
-    }
-}
-
-/// Loescht den gewaehlten Meldungsplatz auf den gewaehlten Uhren — dieselbe
-/// Bauart wie `MeldungLoeschenKnopf` in `SendenView.swift` (Mac), als eigene
-/// Kopie: `TC002App` (Mac) und `MQTT-TC002-iOS` sind getrennte ausfuehrbare
-/// Ziele, keins kann Typen vom anderen einbinden. Die 44×44-Trefferflaeche
-/// kommt dazu, wie bei den uebrigen Symbolknoepfen dieser Datei (siehe
-/// `formatleiste`) — am Mac reicht die Knopfgroesse von selbst, ein Zeiger
-/// trifft auch kleine Ziele.
-private struct MeldungLoeschenKnopf: View {
-    @Bindable var zustand: AppZustand
-    let platz: Int
-    /// Ein leerer Platz laesst sich nicht loeschen. Woher das bekannt ist,
-    /// steht bei `belegtePlaetze`: gemeldet schlaegt gemerkt.
-    let belegt: Bool
-
-    @State private var laeuft = false
-
-    private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
-
-    var body: some View {
-        // Nur an belegten Plaetzen: Ein leerer Platz hat nichts zu
-        // loeschen; ein abgeblendetes ⊗ an vier von fuenf Bloecken waere
-        // Unruhe ohne Aussage.
-        if belegt {
-            Button(role: .destructive) {
-                laeuft = true
-                let name = Meldungsplatz.name(fuer: platz)
-                Task { await zustand.loeschen(name); laeuft = false }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .red)
-                    .font(.system(size: 15))
-                    // Polsterung statt Symbolgroesse: Das Zeichen bleibt
-                    // klein, die Trefferflaeche waechst. 44 Punkte wie bei
-                    // den uebrigen Symbolknoepfen dieser Datei waeren hier
-                    // groesser als der Block selbst.
-                    .padding(6)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(laeuft || zustand.ziele().isEmpty)
-            .accessibilityLabel(Text(beschriftung))
-            // Das Gegenstueck zum fehlenden sichtbaren Namen: Der Knopf
-            // wiederholt sich fuenfmal, ein Langdruck nennt ihn beim Namen.
-            .contextMenu {
-                Button(role: .destructive) {
-                    laeuft = true
-                    let name = Meldungsplatz.name(fuer: platz)
-                    Task { await zustand.loeschen(name); laeuft = false }
-                } label: { Text(beschriftung) }
-            }
         }
     }
 }

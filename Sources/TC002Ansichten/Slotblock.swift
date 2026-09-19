@@ -120,6 +120,39 @@ public struct Slotblock: View {
     }
 }
 
+public extension View {
+    /// Das Menü eines Slotblocks: „Zeigen" und „Löschen", beides nur an einem
+    /// belegten Platz.
+    ///
+    /// Der lange Druck bzw. der Rechtsklick ist die Geste, die das System für
+    /// die Handlungen an einem Element vorsieht. Vorher stand an jedem
+    /// belegten Block ein rotes ⊗: Es verdeckte das Motiv, sah aus wie der
+    /// Wackelmodus des Home-Bildschirms, und seine Trefferfläche lag auf dem
+    /// Block, der selbst ein Knopf ist.
+    ///
+    /// Nur an belegten Blöcken, und deshalb hier statt am Aufrufer: Ein leerer
+    /// Platz hat nichts zu löschen und nichts zu zeigen; ein leeres Menü wäre
+    /// eine Geste, die nichts tut.
+    ///
+    /// Geteilt zwischen den Oberflächen — was der eine Block kann, kann der
+    /// andere auch.
+    @ViewBuilder
+    func slotmenue(belegt: Bool,
+                   loeschen: @escaping () -> Void,
+                   zeigen: @escaping () -> Void) -> some View {
+        if belegt {
+            contextMenu {
+                Button(action: zeigen) { Label("Zeigen", systemImage: "eye") }
+                Button(role: .destructive, action: loeschen) {
+                    Label("Löschen", systemImage: "trash")
+                }
+            }
+        } else {
+            self
+        }
+    }
+}
+
 /// Zeichnet ein volles 52×16-Punkteraster in die verfügbare Fläche — dieselbe
 /// Form, die `Slotzustand.bekannt` trägt. Rein darstellend, wie `GeraeteRahmen`:
 /// keine eigene Rasterung, kein Bezug zu `Meldungsbau`.

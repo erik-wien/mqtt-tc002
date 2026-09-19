@@ -30,3 +30,24 @@ der Text in der Farbe, in der er geschickt wurde, darunter die Empfänger,
 rechts Zeit und Platz. Eine Sendung ohne Text nennt stattdessen den Namen
 ihres Icons. Bei nur einer eingerichteten Uhr bleibt die Zeile mit den
 Empfängern weg — und dazu das, was sonst noch auf der angesehenen Uhr liegt."
+
+---
+
+## 2. Das Löschen am Block — das ⊗ steht nicht mehr da
+
+**Steht da:** nichts Ausdrückliches zum Löschen eines Platzes; die Hilfe
+beschreibt es nur über die Wischgeste in der Liste darunter
+(`HilfeInhalt.verlaufHerkunft`, dritter Absatz — der Satz bleibt richtig).
+
+**Falsch daran:** Das rote ⊗ an jedem belegten Block gibt es nicht mehr. Wer
+es aus der Hilfe kennt, sucht es. Gelöscht wird jetzt über das Menü des
+Blocks; am Schreibtisch erscheint das ⊗ zusätzlich, solange der Zeiger über
+dem Block steht.
+
+**Soll dazukommen** in `HilfeInhalt`, im Abschnitt „Senden" beim Absatz über
+die fünf Blöcke (gilt für beide Oberflächen): „Ein langer Druck auf einen
+belegten Block öffnet sein Menü: „Zeigen" schaltet die Uhr auf diese
+Meldung um, „Löschen" räumt den Platz. Am Schreibtisch zeigt der Block
+zusätzlich ein ⊗, sobald der Zeiger darüber steht — am Finger gibt es kein
+Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der
+Wackelmodus des Home-Bildschirms."
