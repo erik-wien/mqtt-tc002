@@ -152,7 +152,10 @@
 "Verzögerung" = "Delay";
 "LaMetric Icon Gallery" = "LaMetric Icon Gallery";
 "LaMetric-Nummer" = "LaMetric number";
-"Nummer von developer.lametric.com — das Icon landet bei den eigenen." = "Number from developer.lametric.com — the icon lands among your own.";
+"Die Nummer kommt von developer.lametric.com. Eine Datei landet im Bestand ihrer Größe; Kleineres wird mittig eingepasst, Größeres als die Anzeige abgelehnt." = "The number comes from developer.lametric.com. A file lands in the stock of its own size; anything smaller is fitted in centred, anything larger than the display is refused.";
+"Die Datei kommt zu den %@." = "The file goes to the %@ ones.";
+"%@ aufgenommen — %@." = "%@ taken in — %@.";
+"Nichts gefunden. Über „Hinzufügen“ kommt Neues herein." = "Nothing found. New things come in via Add.";
 "Öffnen" = "Open";
 "Ersetzen" = "Replace";
 "Wird aufgenommen als %@" = "Taken in as %@";
@@ -774,10 +777,8 @@
 "„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT." = "Add as a clock puts it in the clock list; from then on everything works as with a device: query, send, delete, the history. What the window shows is not the preview but what actually arrived — the payload is taken back apart into pixels, the same way as when listening in over MQTT.";
 "Sie spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen." = "It speaks HTTP, not MQTT: a broker is a separate program and cannot come along. And it listens on this computer only — it is not visible on the home network.";
 "Aus dieser Adresse lässt sich keine Anfrage bilden — sie wird beim Senden übersprungen." = "No request can be formed from this address — it will be skipped when sending.";
-"Noch keine Bilder. Sie entstehen im Editor am Mac und am iPad und kommen über iCloud hierher." = "No images yet. They are made in the editor on the Mac and the iPad and arrive here via iCloud.";
 "Eine 52 × 16-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8." = "A 52 × 16 display fills the screen and replaces text and icon. An AWTRIX NG will not take it — its display is 32 × 8.";
 "An Platz %d senden" = "Send to slot %d";
-"Bild senden" = "Send image";
 "Ein Bild schicken" = "Sending an image";
 "Das Bildsymbol in der Formatpille öffnet den Bestand der 52 × 16-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display." = "The image symbol in the format pill opens the stock of 52 × 16 displays — the images made in the editor on the Mac and the iPad, which arrive here via iCloud. Pick one, tap Send: it goes to the slot currently selected and replaces text and icon there, because a display fills the whole screen.";
 "Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab." = "There is no drawing on the phone — a grid under a fingertip is no work surface. Sending is not the same as drawing. An AWTRIX NG will not take such an image: drawing happens on 52 × 16, its display is 32 × 8; it refuses and says why.";

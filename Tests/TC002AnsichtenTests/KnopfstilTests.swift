@@ -316,12 +316,14 @@ final class KnopfstilTests: XCTestCase {
         let bekannt: [String: Int] = [
             // Die schiebbare Formatpille: Kapseln in einem `ScrollView`,
             // keine Listenzeilen — dort ist `.automatic` das Aussehen, das
-            // die Pille haben soll (3: Icon, Format, Bild). „Fett" und
+            // die Pille haben soll (2: Icons, Format). „Fett" und
             // „Großbuchstaben" sind keine Knöpfe mehr, sondern `Toggle` im
             // Knopfstil: Der getönte Hintergrund im Zustand „an" kommt damit
             // vom System statt aus eigener Färbung. Der Sendeknopf fehlt hier
-            // — die Eingabetaste schickt, wie in Nachrichten.
-            "Sources/TC002iOS/SendeniOS.swift": 3,
+            // — die Eingabetaste schickt, wie in Nachrichten. Das 🖼 am Ende
+            // fehlt seit „Icons": Die 52 × 16 stehen im selben Blatt wie die
+            // Icons, und der Knopf davor ist ihr einziger Einstieg.
+            "Sources/TC002iOS/SendeniOS.swift": 2,
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/VerbindungiOS.swift": 2,
@@ -329,8 +331,9 @@ final class KnopfstilTests: XCTestCase {
             // ein Blatt oeffnet, wie „Account hinzufuegen" in den
             // Systemeinstellungen.
             "Sources/TC002Ansichten/Uhrenliste.swift": 1,
-            // „Kein Icon“ — dieselbe Bauart, eigene Zeile.
-            "Sources/TC002iOS/IconauswahliOS.swift": 1,
+            // „Kein Icon“, „Zurücksetzen“ und „Dateien …“ — dieselbe Bauart,
+            // jede für sich allein in ihrer Zeile.
+            "Sources/TC002iOS/IconsblattiOS.swift": 3,
             // Die Löschzeile im Verlauf, allein in ihrer Zeile.
             "Sources/TC002iOS/AnzeigeniOS.swift": 1,
             // Plattformabhängiger Rückfall: `.link` gibt es nur am Mac.
