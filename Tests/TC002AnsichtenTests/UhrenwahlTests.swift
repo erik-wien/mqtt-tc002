@@ -28,32 +28,34 @@ final class UhrenwahlTests: XCTestCase {
         return inhalt.filter { $0.hasSuffix(".swift") }.sorted().map { "\(ordner)/\($0)" }
     }
 
-    /// Das Titelmenü steht **unter „Senden"**, und zwar an `.principal` — dort
-    /// sagt es, welche Uhr die Ansicht zeigt, und das ist die ganze Ansicht.
+    /// **Kein Uhrenmenü in der Werkzeugleiste** — auf keiner der beiden
+    /// Schreibtischansichten.
     ///
-    /// **Im Editor steht es nicht.** Dort steuert die angesehene Uhr allein
-    /// das Aussehen der Slotleiste ganz unten; wohin gesendet wird, sagt
-    /// „Empfänger" daneben. Zwei Uhrenbegriffe in einer Ansicht, einer davon
-    /// als Titel des Editors, waren eine Frage statt einer Auskunft — der
-    /// Auftraggeber hat den Namen dort eingekringelt und ein Fragezeichen
-    /// danebengeschrieben. Der Name steht jetzt an der Leiste, die er betrifft.
+    /// In der Mitte der Leiste las es sich wie ein zweiter Fenstertitel, und
+    /// macOS zieht alles, was hinter dem mittigen Eintrag kommt, in dieselbe
+    /// Gruppe: Der Inspektorknopf sass dadurch neben der Mitte statt am Rand.
+    /// Im Editor kam dazu, dass der Name dort nur die Slotleiste steuerte,
+    /// während „Empfänger" daneben sagt, wohin gesendet wird.
     ///
-    /// Mutation: das Menü in die Werkzeugleiste des Editors zurückschieben —
-    /// baut, übersetzt, und über einer Zeichnung namens „Hearts" steht wieder
-    /// der Name einer Uhr.
-    func testNurDieSendeansichtTraegtDasTitelmenue() throws {
+    /// Der Name steht jetzt **unter der Vorschau**, die er benennt, und wandert
+    /// beim Blättern mit. Gewechselt wird über die Punktreihe und über das
+    /// Blättern selbst.
+    ///
+    /// Mutation: das Menü an `.principal` zurückschieben — baut, übersetzt,
+    /// und der Inspektorknopf rutscht wieder in die Mitte.
+    func testKeineSchreibtischansichtTraegtEinUhrenmenue() throws {
+        for pfad in ["Sources/TC002Ansichten/SendenView.swift",
+                     "Sources/TC002Ansichten/EditorBereichView.swift"] {
+            let quelle = try ohneKommentare(pfad)
+            XCTAssertFalse(quelle.contains("Uhrenmenue(zustand: zustand)"),
+                           "\(pfad): der Uhrenname steht wieder in der Werkzeugleiste — dort "
+                           + "liest er sich als zweiter Titel und schiebt den Inspektorknopf "
+                           + "aus dem rechten Rand")
+        }
         let senden = try ohneKommentare("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(senden.contains("ToolbarItem(placement: .principal)"),
-                      "SendenView: kein Titelmenü in der Werkzeugleiste.")
-        XCTAssertTrue(senden.contains("Uhrenmenue(zustand: zustand)"),
-                      "SendenView: das Titelmenü zeigt nicht die angesehene Uhr.")
-
-        let editor = try ohneKommentare("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertFalse(editor.contains("Uhrenmenue(zustand: zustand)"),
-                       "EditorBereichView: der Uhrenname steht wieder im Titel des Editors — "
-                       + "dort steuert er nur die Slotleiste, und wohin gesendet wird, sagt "
-                       + "„Empfänger“.")
-
+        XCTAssertTrue(senden.contains("Text(uhr.name)"),
+                      "SendenView: die Vorschau ist nicht mehr beschriftet — dann steht nirgends, "
+                      + "welche Uhr man gerade ansieht")
     }
 
     /// Wo eine Vorschau steht, steht auch die Punktreihe — und die Wischgeste

@@ -269,12 +269,27 @@ public struct SendenView: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.naeherung(fuer: art ?? .tc002)
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
-        VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
-                     kantenlaenge: kante,
-                     typ: art,
-                     icon: sitzt ? gewaehltesIcon?.datei : nil,
-                     iconKante: iconKante,
-                     laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+        VStack(alignment: .leading, spacing: 4) {
+            VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
+                         kantenlaenge: kante,
+                         typ: art,
+                         icon: sitzt ? gewaehltesIcon?.datei : nil,
+                         iconKante: iconKante,
+                         laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+            // Der Name unter der Uhr, die er benennt — und in der Vorschau
+            // selbst, damit er beim Blaettern mitwandert. Vorher stand er als
+            // Menue in der Mitte der Werkzeugleiste: Dort las er sich wie ein
+            // zweiter Fenstertitel, und alles, was rechts davon kam, rutschte
+            // in dieselbe Gruppe.
+            //
+            // Nur ab zwei Uhren: Bei einer einzigen benennt der Name nichts,
+            // was sich unterscheiden liesse.
+            if zustand.uhren.count > 1 {
+                Text(uhr.name)
+                    .font(.headline)
+                    .lineLimit(1)
+            }
+        }
     }
 
     private var passt: Bool {
@@ -535,14 +550,18 @@ public struct SendenView: View {
             // ausdruecklich nur unter iOS); `.principal` ist die Stelle, die
             // auf beiden Plattformen dasselbe meint — und dieselbe, an der
             // Xcode sein Ziel zeigt.
-            // Links die Empfaenger, mittig die angesehene Uhr, rechts der
-            // Inspektor. Neben dem Eingabefeld hielt der erste Anwender den
-            // Empfaengerknopf fuer den Sendeknopf.
+            // Links die Empfaenger, rechts der Inspektor. Neben dem
+            // Eingabefeld hielt der erste Anwender den Empfaengerknopf fuer
+            // den Sendeknopf.
+            //
+            // Die angesehene Uhr steht **nicht** hier: Ein Menue in der Mitte
+            // der Leiste las sich wie ein zweiter Fenstertitel, und alles,
+            // was rechts davon kam, zog macOS in dieselbe Gruppe — der
+            // Inspektorknopf sass dadurch neben der Mitte statt am Rand. Der
+            // Name steht jetzt unter der Vorschau, die er benennt; gewechselt
+            // wird ueber die Punktreihe darunter und ueber das Blaettern.
             ToolbarItem(placement: .navigation) {
                 ZielauswahlView(zustand: zustand)
-            }
-            ToolbarItem(placement: .principal) {
-                Uhrenmenue(zustand: zustand)
             }
             // Ausdruecklich rechts: Der Schalter gehoert zu dem Bereich, den
             // er ein- und ausblendet, und der liegt rechts.
