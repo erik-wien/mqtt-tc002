@@ -789,6 +789,7 @@
 
 /* SchreibtischView.swift — der Bereich heisst seit dem Anwendertest „Icons" */
 "Icons" = "Icons";
+"Icons — %@" = "Icons — %@";
 
 /* EditorBereichView.swift — die Uebersicht des Bestands im Hauptfenster */
 "Holen" = "Fetch";

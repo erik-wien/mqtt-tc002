@@ -53,6 +53,9 @@ public struct EditorBereichView: View {
     /// keine abgeleitete Groesse: GIF kodieren und Base64 darueber bei jedem
     /// Strich liesse das Malen stocken.
     @State private var laufbildBytes = 0
+    /// Eine Sekunde nach einer gelungenen Sendung: gruener Haken an der
+    /// Stelle des Sendeknopfs. Wie `gelungen` in den beiden Sendeansichten.
+    @State private var gelungen = false
     @Environment(\.scenePhase) private var phase
 
     // Sichern und Bestand.
@@ -353,7 +356,14 @@ public struct EditorBereichView: View {
             if zeigtUebersicht {
                 uebersicht
             } else {
+                // Am Mac steht der Name mit Zurueck und „Sichern" ueber der
+                // Leinwand; das Fenster traegt den Programmnamen und kann ihn
+                // nicht aufnehmen. Am iPad gibt es einen Navigationstitel —
+                // dort steht „Icons — <Name>", und die beiden Knoepfe liegen
+                // in der Werkzeugleiste, wo iPadOS sie erwartet.
+                #if os(macOS)
                 abschlusszeile
+                #endif
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, werkzeug: werkzeug,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
@@ -405,8 +415,21 @@ public struct EditorBereichView: View {
                 // eine Frage statt einer Auskunft. Der Name steht jetzt an der
                 // Leiste, die er betrifft.
                 werkzeugleiste
+                #if !os(macOS)
+                abschlussknoepfe
+                #endif
             }
         }
+        // Der Titel sagt, was offen ist, nicht bloss, wo man ist: „Icons"
+        // stand auch dann da, wenn ein bestimmtes Bild auf der Leinwand lag,
+        // und der Name darunter in einer eigenen Zeile. Am Mac gibt es diesen
+        // Titel nicht — dort traegt das Fenster den Programmnamen.
+        #if !os(macOS)
+        .navigationTitle(zeigtUebersicht
+                         ? lok("Icons")
+                         : lokf("Icons — %@", name.isEmpty ? lok("Ohne Namen") : name))
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
                                         set: { zeigeInspektor = $0 })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
@@ -1055,6 +1078,27 @@ public struct EditorBereichView: View {
     /// Werkzeugleiste: Dort saessen sie am rechten Fensterrand, also über dem
     /// Inspektor, und nicht über dem Stueck, das sie betreffen. Nur die
     /// Zeichen, wie in Fotos; `Label` schriebe am Mac das Wort dazu.
+    /// Abbrechen und Sichern in der Werkzeugleiste — am iPad, wo es eine
+    /// gibt. `cancellationAction` und `confirmationAction` und nicht feste
+    /// Seiten: iPadOS setzt sie selbst links und rechts, und die
+    /// Eingabetaste findet „Sichern" darueber von allein.
+    #if !os(macOS)
+    @ToolbarContentBuilder
+    private var abschlussknoepfe: some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button { fertigAnfragen() } label: {
+                Label(lok("Fertig"), systemImage: "xmark")
+            }
+            .help(lok("Fertig"))
+            .accessibilityLabel(Text("Fertig"))
+        }
+        ToolbarItem(placement: .confirmationAction) {
+            Button(lok("Sichern")) { sichernAnfragen() }
+                .knopfHaupthandlung()
+        }
+    }
+    #endif
+
     private var abschlusszeile: some View {
         HStack {
             #if os(macOS)
@@ -1320,6 +1364,20 @@ public struct EditorBereichView: View {
             // Idealbreite ist deshalb auch am Mac groesser als die Spalte,
             // und die Wahl fiel ohnehin immer auf die zweizeilige Form. Zwei
             // Zeilen ueberall sind ehrlicher als eine Wahl, die keine ist.
+            // Der Grund ueber den Knoepfen, nicht darunter: Unter ihnen stand
+            // er am unteren Rand der Ansicht und wurde dort abgeschnitten —
+            // ein gesperrter Sendeknopf ohne sichtbaren Grund ist eine
+            // Sackgasse. Sichtbar und nicht als Einblendtext: Am Finger gibt
+            // es kein Verweilen.
+            if zustand.ziele().isEmpty {
+                Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            } else if keineNimmtGemaltes {
+                Label("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.",
+                      systemImage: "info.circle")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             VStack(spacing: 8) {
                 HStack(spacing: 6) { slotBloecke }
                 // Der Empfaenger neben dem Knopf, der sendet — dieselbe
@@ -1331,18 +1389,6 @@ public struct EditorBereichView: View {
                     ZielauswahlView(zustand: zustand)
                     sendeKnopf
                 }
-            }
-            if zustand.ziele().isEmpty {
-                Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            } else if keineNimmtGemaltes {
-                // Sichtbar und nicht nur als Einblendtext: Am iPad gibt es
-                // kein Verweilen, und ein gesperrter Knopf ohne Grund daneben
-                // ist eine Sackgasse.
-                Label("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.",
-                      systemImage: "info.circle")
-                    .font(.footnote).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -1398,7 +1444,26 @@ public struct EditorBereichView: View {
     /// `lok` in beiden Zweigen: Ein Ternaer mit einem `String`-Zweig zwingt
     /// SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
     /// nach — der Eintrag staende in `en.lproj` und wuerde nie gefunden.
+    /// Derselbe Dreiklang wie unter „Senden": Wort, Dreher, gruener Haken.
+    /// Ohne ihn sagte im Editor nichts, dass etwas hinausgegangen ist — der
+    /// Slotblock daneben aendert sich nur, wenn die angesehene Uhr zugleich
+    /// die Zieluhr ist.
+    @ViewBuilder
     private var sendeKnopf: some View {
+        if gelungen {
+            Label(lok("Hinausgeschickt"), systemImage: "checkmark.circle.fill")
+                .labelStyle(.iconOnly)
+                .font(.title2)
+                .foregroundStyle(.green)
+                .frame(minWidth: 44, minHeight: 28)
+                .transition(.opacity)
+                .accessibilityLabel(Text("Hinausgeschickt"))
+        } else {
+            sendeknopfEcht
+        }
+    }
+
+    private var sendeknopfEcht: some View {
         Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
             .knopfBefehl()
             .disabled(laeuft || zustand.ziele().isEmpty || keineNimmtGemaltes)
@@ -2042,9 +2107,13 @@ public struct EditorBereichView: View {
         // Block das falsche Mass.
         let slotPixel: [String?]? = groesse.istIcon ? nil : leinwand.bild
         Task {
-            await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz,
-                                 slotPixel: slotPixel)
+            let hinaus = await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz,
+                                              slotPixel: slotPixel)
             laeuft = false
+            guard hinaus else { return }
+            withAnimation { gelungen = true }
+            try? await Task.sleep(for: .seconds(1))
+            withAnimation { gelungen = false }
         }
     }
 }
