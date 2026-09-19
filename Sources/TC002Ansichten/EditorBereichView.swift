@@ -44,7 +44,7 @@ public struct EditorBereichView: View {
     /// leeren Flaeche beginnen. Erst waehlen, dann malen.
     @State private var modus = Inspektormodus.sichern
     @State private var zeigeInspektor = true
-    @State private var radiert = false
+    @State private var werkzeug = Malwerkzeug.malen
     @State private var spielAb = false
     @State private var spielTask: Task<Void, Never>?
     @State private var laeuft = false
@@ -341,7 +341,7 @@ public struct EditorBereichView: View {
                 uebersicht
             } else {
                 abschlusszeile
-                Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, radiert: radiert,
+                Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, werkzeug: werkzeug,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
                            zubehoer: leinwand.bilder.count > 1
@@ -626,16 +626,24 @@ public struct EditorBereichView: View {
 
         Section("Werkzeug") {
             ColorPicker("Farbe", selection: farbe)
-            // Blank: Die `Form` setzt „Stift" links, der Segmentschalter
-            // steht rechts. Die Umwicklung brachte nichts, was das System
-            // nicht selbst tut.
-            Picker("Stift", selection: $radiert) {
+            // Wie die Groessenwahl darueber: blanker Segmentschalter ueber die
+            // ganze Zeile. Den Namen traegt der Kopf der Karte; er ein zweites
+            // Mal als Zeilenbeschriftung nimmt den drei Symbolen nur Breite.
+            //
+            // Ein Eimer statt eines vierten Knopfes: Fuellen ist ein Werkzeug
+            // wie Stift und Radierer — man waehlt es und tippt dann ins Bild.
+            // `drop.fill` und nicht `paint.bucket.classic`: Das gibt es erst ab
+            // SF Symbols 7 (iOS 26), die App laeuft ab iOS 17.
+            Picker("Werkzeug", selection: $werkzeug) {
                 Image(systemName: "paintbrush.pointed")
-                    .accessibilityLabel("Malen").tag(false)
+                    .accessibilityLabel("Malen").tag(Malwerkzeug.malen)
                 Image(systemName: "eraser")
-                    .accessibilityLabel("Radieren").tag(true)
+                    .accessibilityLabel("Radieren").tag(Malwerkzeug.radieren)
+                Image(systemName: "drop.fill")
+                    .accessibilityLabel("Mit Farbe füllen").tag(Malwerkzeug.fuellen)
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
         }
 
         // Eine Karte fuer alles, was die ganze Grafik bewegt, und darin als
