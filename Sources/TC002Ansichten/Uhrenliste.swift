@@ -83,6 +83,11 @@ public struct Uhrenliste: View {
     /// braucht.
     static func kennzeile(_ uhr: Uhr) -> String {
         var teile = [uhr.host]
+        // Der Weg steht ausdruecklich da und nicht nur als Andeutung: Das
+        // Praefix verriet ihn zwar (nur MQTT hat eines), aber wer die Regel
+        // nicht kennt, sieht einer Zeile ohne Praefix nicht an, ob sie ueber
+        // HTTP geht oder nur noch nicht abgefragt wurde.
+        teile.append(uhr.wirksameBetriebsart == .mqtt ? lok("MQTT") : lok("HTTP"))
         if uhr.wirksameBetriebsart == .mqtt {
             teile.append(uhr.praefix.isEmpty ? lok("noch nicht abgefragt")
                                              : Themenpraefix.sichtbar(uhr.praefix))

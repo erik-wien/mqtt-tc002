@@ -837,7 +837,6 @@
 /* EditorBereichView.swift — die Uebersicht des Bestands im Hauptfenster */
 "Holen" = "Fetch";
 "Im Browser öffnen" = "Open in the browser";
-"Nur bewegte" = "Animated only";
 "Nichts gefunden. Über das Plus kommt Neues herein." = "Nothing found. New things come in through the plus.";
 "%@ · %@" = "%@ · %@";
 "Duplizieren" = "Duplicate";
@@ -971,3 +970,5 @@
 "Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht hier, sondern unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, für die sie gilt." = "The \"Page interval\" setting — how long a display stays before the clock turns to the next — is not here but under Settings → Clocks, on the page of the clock it applies to.";
 "Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift. Den Seitenwechsel stellt dagegen die Seite der Uhr unter „Einstellungen“." = "The duration sits in the \"Format\" sheet — the brush in the format pill, together with the scrolling. The page interval, by contrast, is set on the clock's page under Settings.";
 "Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — nachzusehen unter „Einstellungen“ auf der Seite dieser Uhr." = "If the clock does not page on to the new display although several are set up, its page interval is probably on \"no paging\" — look under Settings on that clock's page.";
+"Zurücksetzen" = "Reset";
+"Suche, Größe und Bewegung zurücksetzen" = "Reset search, size and motion";

@@ -60,6 +60,11 @@ public struct EditorBereichView: View {
     @State private var nummer = ""
     @State private var suche = ""
     @State private var nurBewegte = false
+    /// Auf welche Groesse die Uebersicht eingeschraenkt ist — `nil` heisst
+    /// alle. Die Gruppen zeigen zwar schon, welche Groessen es gibt; bei
+    /// einem gewachsenen Bestand rollt man trotzdem an zwei Gruppen vorbei,
+    /// um die dritte zu sehen.
+    @State private var filtergroesse: Leinwandgroesse?
     /// Einmal gelesen: Welche Eintraege sich bewegen, steht in den Dateien.
     /// Die Begruendung steht bei `Array<Icon>.bewegteKennungen`.
     @State private var bewegte: Set<String> = []
@@ -793,8 +798,22 @@ public struct EditorBereichView: View {
     /// kennt statt zwei.
     private var gefilterterBestand: [Editoreintrag] {
         var ergebnis = vorhandene.gefiltert(nach: suche)
+        if let filtergroesse { ergebnis = ergebnis.filter { $0.groesse == filtergroesse } }
         if nurBewegte { ergebnis = ergebnis.filter { bewegte.contains($0.datei.path) } }
         return ergebnis
+    }
+
+    /// Ob ueberhaupt etwas eingeschraenkt ist. Nur dann steht das
+    /// Zuruecksetzen da: ein Knopf, der nichts zu tun hat, ist eine Frage
+    /// ohne Anlass.
+    private var gefiltert: Bool {
+        !suche.isEmpty || filtergroesse != nil || nurBewegte
+    }
+
+    private func filterZuruecksetzen() {
+        suche = ""
+        filtergroesse = nil
+        nurBewegte = false
     }
 
     /// Einmal je Bestandsaenderung, nicht bei jedem Neuzeichnen.
@@ -1012,11 +1031,19 @@ public struct EditorBereichView: View {
                 TextField("Suchen", text: $suche)
                     .eingabefeld(loeschbar: $suche)
                     .frame(maxWidth: 260)
-                Toggle(isOn: $nurBewegte) {
-                    Label(lok("Nur bewegte"), systemImage: "play.fill")
+                // Dieselbe Leiste wie im Icon-Blatt: Groesse und Bewegung
+                // nebeneinander. Der Schalter allein las sich nicht als
+                // Filter — neben den Groessensegmenten tut er es.
+                Filterleiste(wert: $filtergroesse,
+                             angebot: Leinwandgroesse.allCases.map {
+                                 (titel: $0.beschriftung, kurz: $0.kurzbeschriftung, wert: $0)
+                             },
+                             nurBewegte: $nurBewegte)
+                if gefiltert {
+                    Button("Zurücksetzen") { filterZuruecksetzen() }
+                        .knopfBefehl()
+                        .help(lok("Suche, Größe und Bewegung zurücksetzen"))
                 }
-                .toggleStyle(.button)
-                .help(lok("Nur bewegte"))
                 Spacer()
             }
             // Die Antwort auf das Plus — „3 Icons wiederhergestellt." oder
