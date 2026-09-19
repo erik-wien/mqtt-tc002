@@ -32,8 +32,10 @@ struct AnzeigeniOS: View {
                 Text(zeile).font(.system(.caption, design: .monospaced))
             }
         } header: {
+            // Ohne Wort: Die Seite heisst schon „Protokoll", und zweimal
+            // derselbe Titel untereinander ist nur Rauschen. Der Kopf traegt
+            // hier allein die Handlung.
             HStack {
-                Text("Protokoll")
                 Spacer()
                 // Am Mac ist „Leeren" ein rot getoenter Befehlsknopf; hier
                 // steht es im Kopf eines Listenabschnitts, und dort ist auf
