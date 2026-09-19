@@ -205,25 +205,26 @@ struct Verlaufszeilenbild: View {
         }
     }
 
-    /// Was auf der Uhr liegt, ohne dass die App es kennt. Dieselbe Anordnung
-    /// wie eine Verlaufszeile, nur bleiben die Felder leer, zu denen die Uhr
-    /// nichts sagt — sie nennt ihre Anzeigen beim Namen und sonst nichts
-    /// (Gerätereferenz, §3.5).
+    /// Was auf der Uhr liegt, ohne dass die App es kennt. Dieselbe Ordnung wie
+    /// eine Verlaufszeile — was, an wen, wann —, nur bleiben die Felder leer,
+    /// zu denen die Uhr nichts sagt: Sie nennt ihre Anzeigen beim Namen und
+    /// sonst nichts (Gerätereferenz, §3.5). Eine Zeit gibt es dort nicht,
+    /// also steht rechts nur der Platz.
     private func fremdzeile(_ name: String) -> some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 1) {
+        HStack(spacing: 10) {
+            iconplatz
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.system(.body, design: .monospaced))
+                    .lineLimit(1)
                 Text("auf der Uhr")
-                    .font(.caption).foregroundStyle(.secondary)
-                if let platz = Meldungsplatz.platz(fuerName: name) {
-                    Text(lokf("Platz %d", platz))
-                        .font(.caption2).foregroundStyle(.tertiary)
-                }
+                    .font(.caption2).foregroundStyle(.tertiary)
             }
-            .frame(width: 96, alignment: .leading)
-            Text(name)
-                .font(.system(.body, design: .monospaced))
-                .lineLimit(1)
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
+            if let platz = Meldungsplatz.platz(fuerName: name) {
+                Text(lokf("Platz %d", platz))
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
             uhrenzeichen
         }
         .contentShape(Rectangle())
@@ -237,43 +238,91 @@ struct Verlaufszeilenbild: View {
             .accessibilityLabel(Text("liegt auf der Uhr"))
     }
 
-    /// Eine Zeile: Zeit und Platz links, dann das Icon, dann der Text. Die
-    /// Ziele stehen darunter klein — bei einer Uhr ist das keine Auskunft, bei
-    /// dreien sehr wohl.
+    /// Die Kantenlänge des Bildchens vorn. So groß wie zwei Zeilen Text
+    /// daneben hoch sind; größer würde die Zeile davon höher.
+    private static let iconkante = 26.0
+
+    /// Der leere Platz vorn — überall gleich breit, damit Text und Uhren
+    /// untereinander stehen, ob eine Zeile ein Icon hat oder nicht.
+    private var iconplatz: some View {
+        Color.clear.frame(width: Self.iconkante, height: Self.iconkante)
+    }
+
+    /// Eine Zeile in der Reihenfolge der Auskunft: was — an wen — wann.
+    ///
+    /// Vorn das Icon als Bild und nicht als Nummer: Eine Sendung ohne Text
+    /// bestand vorher aus „Gestern, 19:13 · 5610 · Uhrennamen", und niemand
+    /// weiß, was 5610 ist. Der Verlauf soll „dasselbe noch einmal"
+    /// ermöglichen, und dafür muss man das Dasselbe erkennen.
+    ///
+    /// Die Uhren stehen nur bei mehreren eingerichteten darunter: Bei einer
+    /// einzigen ist ihr Name keine Auskunft, sondern in jeder Zeile dasselbe
+    /// Wort.
     private func zeile(_ eintrag: Verlaufseintrag, aufDerUhr: Bool) -> some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(Self.zeitform.string(from: eintrag.zeit))
+        let icon = zustand.icon(fuer: eintrag)
+        return HStack(spacing: 10) {
+            if let icon {
+                Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                           kante: Self.iconkante / Double(icon.kante))
+            } else {
+                iconplatz
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                // Der Text in der Farbe, in der er gesendet wurde — die
+                // schnellste Auskunft darueber, welche Meldung das war. Ohne
+                // Text sagt der Name des Icons, was geschickt wurde; gibt es
+                // das Icon nicht mehr, bleibt nur seine Nummer, und die ist
+                // dann alles, was noch bekannt ist.
+                if eintrag.optionen.text.isEmpty {
+                    Text(icon?.name ?? eintrag.iconNummer ?? "")
+                        .lineLimit(1)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(eintrag.optionen.text)
+                        .lineLimit(1)
+                        .foregroundStyle(Color(hex: eintrag.optionen.farbe) ?? .primary)
+                }
+                if zustand.uhren.count > 1 {
+                    Text(eintrag.uhr)
+                        .font(.caption2).foregroundStyle(.tertiary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(Self.zeitwort(eintrag.zeit))
                     .font(.caption).foregroundStyle(.secondary)
                 if let platz = eintrag.platz {
                     Text(lokf("Platz %d", platz))
                         .font(.caption2).foregroundStyle(.tertiary)
                 }
             }
-            .frame(width: 96, alignment: .leading)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
 
-            if let nummer = eintrag.iconNummer, !nummer.isEmpty {
-                Text(nummer)
-                    .font(.system(.caption2, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 34, alignment: .leading)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                // Der Text in der Farbe, in der er gesendet wurde — die
-                // schnellste Auskunft darueber, welche Meldung das war.
-                Text(eintrag.optionen.text)
-                    .lineLimit(1)
-                    .foregroundStyle(Color(hex: eintrag.optionen.farbe) ?? .primary)
-                Text(eintrag.uhr)
-                    .font(.caption2).foregroundStyle(.tertiary)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
             if aufDerUhr { uhrenzeichen }
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Übernimmt diese Meldung samt Einstellungen"))
     }
+
+    /// Heute nur die Uhrzeit, sonst der Tag davor („Gestern, 19:13").
+    ///
+    /// Zwei Former, weil `doesRelativeDateFormatting` für heute „Heute,
+    /// 19:13" liefert: Das Wort kostet in der schmalen rechten Spalte mehr
+    /// Breite, als es sagt — was heute war, ist der Normalfall.
+    private static func zeitwort(_ zeit: Date) -> String {
+        Calendar.current.isDateInToday(zeit) ? heuteform.string(from: zeit)
+                                             : zeitform.string(from: zeit)
+    }
+
+    private static let heuteform: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .none
+        f.timeStyle = .short
+        return f
+    }()
 }

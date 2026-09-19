@@ -36,6 +36,20 @@ public struct Verlaufseintrag: Codable, Identifiable, Equatable, Sendable {
         self.iconKante = iconKante
     }
 
+    /// Die erreichten Uhren als das Feld `uhr` — alphabetisch verbunden.
+    ///
+    /// Hier und nicht am Aufrufer, weil `gleichtInhaltlich` unten diese
+    /// Zeichenkette vergleicht: `erreicht` kommt aus einer Menge, ihre
+    /// Reihenfolge ist Zufall, und ohne Sortierung stand dieselbe Sendung
+    /// mehrfach im Verlauf — einmal als „A, B", einmal als „B, A".
+    ///
+    /// `localizedStandardCompare`, wie ueberall, wo Namen sortiert werden:
+    /// Umlaute und Ziffern sollen dort stehen, wo der Leser sie sucht.
+    public static func uhrenfeld(_ erreicht: [String]) -> String {
+        erreicht.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+            .joined(separator: ", ")
+    }
+
     /// Ob zwei Sendungen dasselbe sagen — ohne Zeit und Kennung. Zwei gleiche
     /// hintereinander stehen nur einmal da: Wer dreimal „Kaffee" schickt, will
     /// keine drei Zeilen lesen.

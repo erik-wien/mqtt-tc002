@@ -1,0 +1,32 @@
+# Hilfeschuld aus der Bahn „Senden" (UX-Runde 19.09.)
+
+Die Bahn „Senden" der UX-Runde hat die Hilfe nicht angefasst — sie macht zum
+Schluss ein eigener Durchgang. Was dabei nachzuziehen ist, steht hier: je
+Punkt der betroffene Absatz, was daran jetzt falsch ist, und wie er lauten
+soll.
+
+Die Dateien der Hilfe sind `Sources/TC002Ansichten/HilfeInhalt.swift`
+(gemeinsam), `Sources/TC002Ansichten/HilfeView.swift` (Mac/iPad) und
+`Sources/TC002iOS/HilfeiOS.swift` (iPhone).
+
+---
+
+## 1. `HilfeInhalt.verlaufHerkunft`, erster Absatz — die Zeile zeigt anderes
+
+**Steht da:** „… die eigenen Sendungen mit allem, was dazugehört — Zeit,
+Platz, Icon, Text in seiner Farbe, Empfänger —, und das, was sonst noch auf
+der angesehenen Uhr liegt."
+
+**Falsch daran:** Die Aufzählung nennt die alte Reihenfolge und das alte
+Icon. Die Zeile steht jetzt in der Reihenfolge der Auskunft — was, an wen,
+wann: vorn das Icon als **Bild** (nicht als Nummer), daneben der Text in
+seiner Farbe, darunter die Empfänger, rechts Zeit und Platz. Die Empfänger
+stehen nur da, wenn mehr als eine Uhr eingerichtet ist; bei einer einzigen
+wäre ihr Name in jeder Zeile dasselbe Wort. Hat eine Sendung keinen Text,
+steht dort der Name des Icons.
+
+**Soll lauten:** „… die eigenen Sendungen: vorn das Icon als Bild, daneben
+der Text in der Farbe, in der er geschickt wurde, darunter die Empfänger,
+rechts Zeit und Platz. Eine Sendung ohne Text nennt stattdessen den Namen
+ihres Icons. Bei nur einer eingerichteten Uhr bleibt die Zeile mit den
+Empfängern weg — und dazu das, was sonst noch auf der angesehenen Uhr liegt."

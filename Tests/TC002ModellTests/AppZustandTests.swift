@@ -80,6 +80,42 @@ final class AppZustandTests: XCTestCase {
                       "Der alte Schlüssel muss nach der Übernahme verschwinden, sonst wandert die Liste bei jedem Start erneut.")
     }
 
+    /// Die Verlaufszeile zeigt ihr Icon als Bild und braucht dafuer die Datei.
+    /// Nachgeschlagen wird sie einmal je Icon, nicht bei jedem Zeichnen: Der
+    /// Bestand liegt in zwei Ordnern, und eine Zeile wird bei jedem
+    /// Tastendruck im Eingabefeld neu gebaut.
+    func testDasIconEinerVerlaufszeileWirdNurEinmalNachgeschlagen() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        var gefragt = 0
+        let stern = Icon(nummer: "5610", name: "Stern", kategorie: "",
+                         datei: URL(fileURLWithPath: "/keine/5610.gif"), kante: 8)
+        zustand.iconbestand = { gefragt += 1; return [stern] }
+
+        let eintrag = Verlaufseintrag(platz: 1, uhr: "Küche",
+                                      optionen: Meldungsoptionen(text: "Kaffee"),
+                                      iconNummer: "5610", iconKante: 8)
+        XCTAssertEqual(zustand.icon(fuer: eintrag)?.name, "Stern")
+        XCTAssertEqual(zustand.icon(fuer: eintrag)?.name, "Stern")
+        XCTAssertEqual(gefragt, 1, "Der Bestand wird bei jedem Zeichnen neu gelesen.")
+
+        // Auch ein fehlendes Icon wird gemerkt — sonst liest gerade der
+        // haeufigste Fall bei jedem Zeichnen beide Ordner.
+        let fehlt = Verlaufseintrag(platz: 1, uhr: "Küche",
+                                    optionen: Meldungsoptionen(text: "Kaffee"),
+                                    iconNummer: "9999", iconKante: 8)
+        XCTAssertNil(zustand.icon(fuer: fehlt))
+        XCTAssertNil(zustand.icon(fuer: fehlt))
+        XCTAssertEqual(gefragt, 2)
+
+        // Nummer allein genuegt nicht: Ein 8×8 und ein 16×16 duerfen
+        // dieselbe tragen (`Icon.kennung`).
+        let grosses = Verlaufseintrag(platz: 1, uhr: "Küche",
+                                      optionen: Meldungsoptionen(text: "Kaffee"),
+                                      iconNummer: "5610", iconKante: 16)
+        XCTAssertNil(zustand.icon(fuer: grosses),
+                     "Ein 16×16 derselben Nummer ist ein anderes Icon.")
+    }
+
     /// UUID(uuidString:) ist gegenueber Gross-/Kleinschreibung nachsichtig: zwei von
     /// Hand verbogene Schluessel in unterschiedlicher Schreibweise ergeben dieselbe
     /// UUID. Das darf die App beim Start nicht zum Absturz bringen.
