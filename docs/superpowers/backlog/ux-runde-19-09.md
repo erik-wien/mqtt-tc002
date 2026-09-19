@@ -5,10 +5,12 @@ Senden, iPad Senden): *„die ui/ux ist schon ziemlich ok, aber ich zweifle noch
 ob sie wirklich professionell aussieht. vor allem am iphone."* Farbwahl ist
 ausdruecklich ausgenommen.
 
-Zehn Befunde, je ein Papier, nach Gewicht sortiert — sechs aus den ersten
+Zehn Befunde und ein Auftrag, je ein Papier — sechs Befunde aus den ersten
 zwei Bildschirmfotos (iPhone Senden, iPad Senden), vier aus fuenf weiteren
-vom iPad (Icons-Uebersicht, Editor, Einstellungen, Hilfe). Die ersten zwei
-machen den Eindruck „unfertig"; die anderen sind Feinschliff.
+vom iPad (Icons-Uebersicht, Editor, Einstellungen, Hilfe), dazu Nr. 11,
+das der Auftraggeber selbst bestellt hat. Die ersten zwei Befunde machen
+den Eindruck „unfertig"; Nr. 11 ist die groesste Arbeit; der Rest ist
+Feinschliff.
 
 | Nr. | Papier | Kern |
 |---|---|---|
@@ -22,6 +24,7 @@ machen den Eindruck „unfertig"; die anderen sind Feinschliff.
 | 8 | `einstellungen-ohne-sichern-knopf.md` | „Sichern und pruefen" → „Verbindung pruefen", Kennwort als vorhanden erkennbar |
 | 9 | `icons-uebersicht-kacheln.md` | Namen zweizeilig, 52 × 16 breiter |
 | 10 | `hilfe-einleitung-beide-uhren.md` | Einleitung nennt nur die TC002 |
+| 11 | `einstellungen-nach-themen.md` | **Vom Auftraggeber bestellt:** Reiter, Themen, je Uhr eine Seite — vor Nr. 8 bauen, das darin aufgeht |
 
 ## Arbeitsregeln fuer jedes Papier
 
