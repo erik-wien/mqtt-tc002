@@ -500,6 +500,16 @@ public struct SendenView: View {
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
+                // Nur so hoch, wie die Breite es zulaesst. Ohne das nahm der
+                // Bereich die ganze Resthoehe und stellte die Uhr mittig
+                // hinein: Am iPad blieb rund ein Drittel der Seite leer, weil
+                // dort die Breite die Groesse begrenzt, nicht die Hoehe. Am
+                // Mac, wo das Fenster breiter als hoch ist, aendert sich
+                // nichts — dann greift weiter die Hoehe.
+                .aspectRatio(Geraetezeichnung.fuer(geraeteart)
+                                .masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis,
+                             contentMode: .fit)
+                .frame(maxWidth: .infinity)
                 // Sichtbar bleibt unter der Vorschau nur, was ein Befund ist:
                 // eine auffaellig grosse Nutzlast — niemand weiss, wo die Uhr
                 // aussteigt (§4.2a). Der Stand darunter ist kein Befund und
@@ -514,7 +524,11 @@ public struct SendenView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            // Nicht mehr `maxHeight: .infinity`: Der Bereich ist seit dem
+            // Seitenverhaeltnis oben so hoch, wie die Uhr ihn braucht. Der
+            // uebrige Platz gehoert dem Verlauf darunter, nicht einer leeren
+            // Flaeche unter der Vorschau.
+            .frame(maxWidth: .infinity, alignment: .topLeading)
 
             // Nur noch die fuenf Bloecke: Die Dauer steht im Zeit-Reiter des
             // Inspektors, bei Seitenwechsel und Scrolltempo. Damit faellt

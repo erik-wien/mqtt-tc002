@@ -172,6 +172,11 @@ public struct Geraetezeichnung: Equatable, Sendable {
         public var feldY: Double
         public var feldBreite: Double
         public var feldHoehe: Double
+
+        /// Breite durch Hoehe des ganzen Rahmens. Wer die Vorschau in eine
+        /// Flaeche einpasst, bekommt damit einen Bereich, der nur so hoch
+        /// wird, wie die Breite es zulaesst.
+        public var seitenverhaeltnis: Double { rahmenBreite / rahmenHoehe }
     }
 
     /// Die Zeichnung wird so gross gezeichnet, dass ihr Displayfeld genau
