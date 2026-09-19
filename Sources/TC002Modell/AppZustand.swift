@@ -68,6 +68,19 @@ public final class AppZustand {
     /// `kennwortSichern()` ruft, wer die Eingabe abschliesst.
     public var kennwort: String { didSet { brokerStand = .unbekannt } }
 
+    /// Ob ueberhaupt ein Brokerkennwort hinterlegt ist.
+    ///
+    /// Die Ansicht braucht das, weil ein leeres Feld sonst nicht von einem
+    /// ungelesenen zu unterscheiden ist. Gefragt wird der Schluesselbund dafuer
+    /// **nicht** nach dem Wert: `init` hat ihn einmal gelesen, und wo dieses
+    /// Lesen scheitert — eine Entwicklerfassung wird nach jedem Bau ad hoc neu
+    /// signiert und gilt damit als anderes Programm —, beantwortet
+    /// `Schluesselbund.vorhanden` die Frage ohne Nutzlast und damit ohne Dialog.
+    ///
+    /// Gespeichert und nicht gerechnet: Sonst fragte jedes Neuzeichnen der
+    /// Einstellungen den Schluesselbund.
+    public private(set) var kennwortVorhanden = false
+
     public enum Brokerstand: Equatable {
         case unbekannt
         case laeuft
@@ -173,6 +186,9 @@ public final class AppZustand {
             return
         }
         kennwortGesichert = kennwort
+        // Ein leerer Wert loescht den Eintrag (`Schluesselbund.setzen`) —
+        // danach ist keines mehr hinterlegt.
+        kennwortVorhanden = !kennwort.isEmpty
     }
 
     /// Sichert die Broker-Angaben ausdruecklich und fragt den Broker, ob er sie
@@ -268,7 +284,9 @@ public final class AppZustand {
         brokerHost = d.string(forKey: "brokerHost") ?? Einstellungen.Vorgabe.brokerHost
         brokerPort = d.string(forKey: "brokerPort") ?? Einstellungen.Vorgabe.brokerPort
         benutzer   = d.string(forKey: "benutzer") ?? Einstellungen.Vorgabe.benutzer
-        kennwort   = schluesselbund.lesen("broker") ?? ""
+        let gelesenesKennwort = schluesselbund.lesen("broker") ?? ""
+        kennwort   = gelesenesKennwort
+        kennwortVorhanden = !gelesenesKennwort.isEmpty || schluesselbund.vorhanden("broker")
         let flach = (try? JSONDecoder().decode([String: [String]].self,
                         from: d.data(forKey: "bekannteAnzeigen") ?? Data())) ?? [:]
         // uniquingKeysWith statt uniqueKeysWithValues: UUID(uuidString:) ist gegenueber

@@ -37,6 +37,20 @@ public enum Schluesselbund {
         return String(data: daten, encoding: .utf8)
     }
 
+    /// Ob ein Eintrag da ist, **ohne** seinen Inhalt zu verlangen.
+    ///
+    /// Ohne `kSecReturnData` entschluesselt der Schluesselbund nichts und
+    /// prueft deshalb auch keine Zugriffsliste — die Frage zieht keinen Dialog
+    /// auf. Genau das wird gebraucht: Die Einstellungen sollen sagen koennen,
+    /// dass ein Kennwort hinterlegt ist, ohne danach zu fragen.
+    public static func vorhanden(_ konto: String,
+                                 dienst: String = Einstellungen.kennung) -> Bool {
+        var frage = basis(konto, dienst: dienst)
+        frage[kSecReturnData as String] = false
+        frage[kSecMatchLimit as String] = kSecMatchLimitOne
+        return SecItemCopyMatching(frage as CFDictionary, nil) == errSecSuccess
+    }
+
     public static func loeschen(_ konto: String, dienst: String = Einstellungen.kennung) {
         SecItemDelete(basis(konto, dienst: dienst) as CFDictionary)
     }
@@ -53,6 +67,9 @@ public protocol Schluesselbundzugriff {
     func lesen(_ konto: String) -> String?
     @discardableResult
     func setzen(_ wert: String, fuer konto: String) -> Bool
+    /// Ob ein Eintrag da ist, ohne seinen Inhalt zu verlangen — siehe
+    /// `Schluesselbund.vorhanden`.
+    func vorhanden(_ konto: String) -> Bool
 }
 
 /// Der Schluesselbund des Nutzers — die Vorgabe ueberall ausser in Tests.
@@ -66,5 +83,9 @@ public struct EchterSchluesselbund: Schluesselbundzugriff {
     @discardableResult
     public func setzen(_ wert: String, fuer konto: String) -> Bool {
         Schluesselbund.setzen(wert, fuer: konto)
+    }
+
+    public func vorhanden(_ konto: String) -> Bool {
+        Schluesselbund.vorhanden(konto)
     }
 }

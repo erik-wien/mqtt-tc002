@@ -13,12 +13,20 @@ final class Schluesselbunddoppelgaenger: Schluesselbundzugriff {
     var gelingt = true
     private(set) var gelesen: [String] = []
     private(set) var geschrieben: [(konto: String, wert: String)] = []
+    /// Getrennt gezaehlt: Die Frage, **ob** ein Eintrag da ist, zieht im echten
+    /// Schluesselbund keinen Dialog auf, die nach seinem Wert schon.
+    private(set) var gefragtObVorhanden: [String] = []
 
     init(_ eintraege: [String: String] = [:]) { self.eintraege = eintraege }
 
     func lesen(_ konto: String) -> String? {
         gelesen.append(konto)
         return eintraege[konto]
+    }
+
+    func vorhanden(_ konto: String) -> Bool {
+        gefragtObVorhanden.append(konto)
+        return eintraege[konto] != nil
     }
 
     func setzen(_ wert: String, fuer konto: String) -> Bool {
@@ -78,6 +86,49 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.bekannteAnzeigen[id], ["Alt1", "Alt2"])
         XCTAssertNil(d.stringArray(forKey: "bekannteAnzeigen"),
                       "Der alte Schlüssel muss nach der Übernahme verschwinden, sonst wandert die Liste bei jedem Start erneut.")
+    }
+
+    // MARK: - Ob ein Kennwort hinterlegt ist
+
+    /// Ein leeres Feld sieht aus, als waere kein Kennwort gesetzt. Die
+    /// Einstellungen sagen deshalb, ob eines hinterlegt ist — und fragen den
+    /// Schluesselbund dafuer **nicht** nach dem Wert: Das Lesen zieht auf dem
+    /// Rechner eines Menschen einen Dialog auf.
+    func testKennwortVorhandenKommtOhneZweitesLesenAus() {
+        schluesselbund.eintraege["broker"] = "geheim"
+
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        XCTAssertTrue(zustand.kennwortVorhanden)
+        XCTAssertEqual(schluesselbund.gelesen, ["broker"],
+                       "Der Wert des Kennworts darf genau einmal gelesen werden, beim Start — "
+                       + "jedes weitere Lesen fragt beim Anwender nach.")
+    }
+
+    /// Liegt keines da, sagt die Auskunft das — und zwar ueber die Frage, ob
+    /// ein Eintrag existiert, nicht ueber seinen Inhalt.
+    func testOhneEintragIstKeinKennwortVorhanden() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        XCTAssertFalse(zustand.kennwortVorhanden)
+        XCTAssertEqual(schluesselbund.gefragtObVorhanden, ["broker"],
+                       "Ohne gelesenen Wert muss die Existenzfrage gestellt werden — sie ist "
+                       + "die einzige, die ohne Dialog auskommt.")
+    }
+
+    /// Nach dem Sichern gilt, was gesichert wurde. Ein leerer Wert loescht den
+    /// Eintrag, und danach ist keines mehr hinterlegt.
+    func testSichernSetztDieAuskunftNach() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        XCTAssertFalse(zustand.kennwortVorhanden)
+
+        zustand.kennwort = "geheim"
+        zustand.kennwortSichern()
+        XCTAssertTrue(zustand.kennwortVorhanden)
+
+        zustand.kennwort = ""
+        zustand.kennwortSichern()
+        XCTAssertFalse(zustand.kennwortVorhanden)
     }
 
     /// UUID(uuidString:) ist gegenueber Gross-/Kleinschreibung nachsichtig: zwei von

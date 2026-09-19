@@ -56,21 +56,47 @@ public struct Brokerabschnitt: View {
                     .onSubmit { zustand.kennwortSichern() }
                     .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
             }
-            Text("Das Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
-                .font(kanon.fussnote).foregroundStyle(.secondary)
+            kennwortstand
             HStack {
-                Button("Sichern und prüfen") { zustand.brokerSichernUndPruefen() }
+                // Nur pruefen, nicht sichern: Adresse, Port und Benutzer
+                // haengen unmittelbar an `zustand` und stehen damit schon beim
+                // Tippen in den Einstellungen (`AppZustand.brokerHost` und
+                // die zwei darunter, je ein `didSet` mit `merke`). Das
+                // Kennwort sichert das Feld selbst, sobald man es verlaesst.
+                // `brokerSichernUndPruefen` sichert es trotzdem noch einmal —
+                // wer den Knopf drueckt, ohne das Feld zu verlassen, soll
+                // nicht mit dem alten Kennwort pruefen.
+                Button("Verbindung prüfen") { zustand.brokerSichernUndPruefen() }
                     .knopfBefehl()
                     .disabled(zustand.brokerStand == .laeuft)
                 stand
             }
         } header: {
-            Abschnittskopf("Broker", hilfe: lok("Der Broker gilt für Uhren im MQTT-Betrieb. „Sichern und prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf."))
+            Abschnittskopf("Broker", hilfe: lok("Der Broker gilt für Uhren im MQTT-Betrieb. „Verbindung prüfen“ fragt ihn, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden. Eine angenommene Anmeldung heißt aber nur, dass Benutzer und Kennwort stimmen: Ob die Uhr die Nachricht am Ende zeigt, hängt zusätzlich am richtigen Präfix und daran, ob das Konto auf das Thema schreiben darf."))
         }
         // Fokuswechsel ist nicht zugesichert, wenn diese Ansicht durch einen
         // Bereichs- oder Reiterwechsel zerstört wird — ohne dieses Netz ginge
         // ein eben erst eingetipptes Kennwort dabei verloren.
         .onDisappear { zustand.kennwortSichern() }
+    }
+
+    /// Ein leeres Kennwortfeld sieht aus, als waere keines gesetzt. Es ist
+    /// aber auch dann leer, wenn der Schluesselbund den Wert nicht
+    /// herausrueckt — deshalb steht hier, **ob** eines da ist, und nicht bloss,
+    /// wo es laege.
+    ///
+    /// Zwei `Text` und kein Ternaer: Ein Ternaer mit zwei Zeichenketten zwingt
+    /// `Text` in die `StringProtocol`-Ueberladung, und die schlaegt nichts nach
+    /// (CLAUDE.md, „Sprachen").
+    @ViewBuilder
+    private var kennwortstand: some View {
+        if zustand.kennwortVorhanden {
+            Text("Ein Kennwort liegt im Schlüsselbund, nicht in den Einstellungen.")
+                .font(kanon.fussnote).foregroundStyle(.secondary)
+        } else {
+            Text("Es liegt kein Kennwort im Schlüsselbund.")
+                .font(kanon.fussnote).foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder
