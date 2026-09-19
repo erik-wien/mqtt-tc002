@@ -40,12 +40,22 @@ ist und bei einem Update nachzuprüfen wäre, in
 
 - **Bedienelemente so, wie Apple sie festlegt** — ein eigener Nachbau braucht
   eine Begründung, und die gehört an den Nachbau geschrieben. Bisher gibt es
-  genau einen: `Farbkreis` (`TC002Ansichten`). Das Systemfeld ist bei weißer
+  zwei. Der erste ist `Farbkreis` (`TC002Ansichten`). Das Systemfeld ist bei weißer
   Farbe auf hellem Grund nicht mehr als Bedienelement zu erkennen, und
   SwiftUI lässt sein Aussehen nicht ändern — `ColorPicker` hat kein Gegenstück
   zu `buttonStyle` oder `pickerStyle` (im SDK nachgesehen), und sein `label`
   steht neben dem Feld statt darin. Der Kreis ist deshalb gezeichnet, die
   Systempalette darunter bleibt der Auslöser.
+
+  Der zweite ist die Kapsel in `Filterleiste`. Größe und Bewegung sind zwei
+  Filter über demselben Bestand und gehören sichtbar zusammen, aber nicht in
+  **einen** `Picker`: Ein Segment „bewegte" höbe die Größenwahl auf, sobald
+  man es wählt, und „8 × 8 **und** bewegt" wäre nicht mehr zu filtern. Zwei
+  Bedienelemente nebeneinander lasen sich dagegen als zwei Sachen. Die Form —
+  eine Kapsel, innen durch einen Strich geteilt — ist die, die Fotos für
+  gruppierte Werkzeuge über dem Bild benutzt. Was der `Picker` mitbrachte,
+  steht dort von Hand: die Wahl als `.isSelected` für die Sprachausgabe und je
+  Segment ein eigener Einblendtext.
 - **Die Hilfe ist zweigeteilt.** Die Darstellung (`TC002Ansichten/Hilfe.swift`)
   und die Absätze, die vom Gerät unabhängig sind
   (`TC002Ansichten/HilfeInhalt.swift`), gelten für beide; `HilfeView` (Mac) und
