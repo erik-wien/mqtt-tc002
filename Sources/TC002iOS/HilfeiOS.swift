@@ -113,11 +113,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
 
                     .ueberschrift("Ein Bild schicken"),
-                    .absatz("Das Bildsymbol in der Formatpille öffnet den Bestand der 52 × 16-Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eines wählen, „Senden“: Es geht an den Platz, der gerade gewählt ist, und ersetzt dort Text und Icon, denn eine Anzeige füllt das ganze Display."),
+                ]
+                + HilfeInhalt.iconOderAnzeige
+                + [
+                    .absatz("Der Icon-Knopf in der Formatpille öffnet das Blatt „Icons“, und dort steht unter „52 × 16“ der Bestand der ganzen Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eine antippen führt auf ihre Seite: die Vorschau, darunter die fünf Plätze und „An Platz N senden“. Den Platz wählst du dort, auf der Seite des Bildes."),
                     .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
 
                     .ueberschrift("Formatpille"),
-                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon) und das Bild aus dem Bestand. Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
+                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon). Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
                 ]
                 + HilfeInhalt.schriftart
                 + HilfeInhalt.groesse
@@ -126,10 +129,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.randUndAbstand
                 + HilfeInhalt.breiteUndAusrichtung
                 + [
-                    .ueberschrift("Icon wählen"),
-                    .absatz("Ganz links in der Formatpille sitzt der Icon-Knopf: ohne Wahl ein Smiley, mit Wahl das gewählte Icon. Ein Druck öffnet ein Blatt mit Suchfeld, Filterleiste und Raster — die Leiste grenzt nach Größe (8 × 8 oder 16 × 16) und auf bewegte Icons ein; ein Antippen zeigt ein Icon groß — bei einem animierten auch laufend —, „Übernehmen“ wählt es. „Kein Icon“ ganz oben nimmt die Wahl zurück, „Abbrechen“ schließt ohne Änderung."),
+                    .ueberschrift("Icons"),
+                    .absatz("Ganz links in der Formatpille sitzt der Icon-Knopf: ohne Wahl ein Smiley, mit Wahl das gewählte Icon. Ein Druck öffnet das Blatt „Icons“ — die ganze Sammlung, nach Größe gruppiert: die 8 × 8-Icons, die eigenen 16 × 16 und die 52 × 16-Anzeigen. Darüber stehen ein Suchfeld und eine Filterleiste, die nach Größe und auf bewegte Einträge eingrenzt; „Zurücksetzen“ steht nur da, solange etwas eingeschränkt ist."),
+                    .absatz("Ein Icon antippen zeigt es groß — bei einem animierten auch laufend —, „Übernehmen“ wählt es. „Kein Icon“ ganz oben nimmt die Wahl zurück, „Abbrechen“ schließt ohne Änderung."),
                     .absatz("In der großen Ansicht steht rechts oben ein Menü mit „Umbenennen“ und „Löschen“. Der Name ist frei; die Nummer bleibt dabei, wie sie ist — ein Kurzbefehl, der sich auf sie beruft, findet das Icon weiterhin. Gelöscht wird endgültig, und nur, was hier liegt: Der mitgelieferte Grundschatz hat kein Menü."),
-                    .absatz("Über dem Raster lässt sich außerdem eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen; das Icon steht danach bei den eigenen. Gemalt wird hier nicht — eigene Icons entstehen am Mac und auf dem iPad, wo ein Editor daneben Platz hat. Zur Wahl stehen beide Größen: die 8×8-Icons und die eigenen 16×16, die am Schreibtisch entstehen und über iCloud hier ankommen."),
+                    .absatz("Ganz oben unter „Hinzufügen“ stehen zwei Wege: eine Nummer von developer.lametric.com eintragen und mit „Nachladen“ holen, oder „Dateien …“ — eine GIF-, PNG- oder JPEG-Datei aus den Dateien. Sie landet im Bestand ihrer eigenen Größe; Kleineres wird mittig eingepasst, Größeres als die Anzeige abgelehnt, denn verkleinert wird nicht. Gemalt wird hier nicht — eigene Icons entstehen am Mac und auf dem iPad, wo ein Editor daneben Platz hat."),
                 ]
                 + HilfeInhalt.iconImLauf
                 + [

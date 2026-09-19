@@ -365,6 +365,16 @@ public enum HilfeInhalt {
         .abbildung(.ausrichtung),
     ]
 
+    /// Der Unterschied zwischen einem Icon und einer ganzen Anzeige.
+    ///
+    /// Gehoert hierher, seit das Telefon beide im selben Blatt zeigt: Dort
+    /// stehen sie als zwei Gruppen nebeneinander, und wer den Unterschied
+    /// nicht kennt, waehlt eine Anzeige als Icon. Am Schreibtisch ist er
+    /// ebenso wahr — die Uebersicht gruppiert genauso.
+    public static let iconOderAnzeige: [Hilfebaustein] = [
+        .absatz("Ein Icon und eine Anzeige sind zweierlei. Ein Icon steht **neben** dem Text und ist 8 × 8 oder 16 × 16 Pixel groß; eine 52 × 16-Anzeige **ist** das ganze Display und ersetzt Text und Icon. Deshalb wird ein Icon gewählt und eine Anzeige geschickt."),
+    ]
+
     /// Wie das Icon in der Vorschau und in der Laufschrift behandelt wird.
     /// Beide Vorschauen spielen animierte Icons ab (`VorschauView`,
     /// `VorschauiOS`), und das Mitscrollen gibt es auf beiden.

@@ -107,7 +107,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.dauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
         HilfeInhalt.groesse, HilfeInhalt.microFuenf, HilfeInhalt.fettUndGross,
         HilfeInhalt.randUndAbstand, HilfeInhalt.breiteUndAusrichtung,
-        HilfeInhalt.iconImLauf, HilfeInhalt.verlaufHerkunft,
+        HilfeInhalt.iconOderAnzeige, HilfeInhalt.iconImLauf, HilfeInhalt.verlaufHerkunft,
         HilfeInhalt.verlaufEntstehung, HilfeInhalt.verlaufLoeschen,
         HilfeInhalt.protokollListe, HilfeInhalt.protokollLeeren,
         HilfeInhalt.fehlerStille, HilfeInhalt.fehlerWelche,
