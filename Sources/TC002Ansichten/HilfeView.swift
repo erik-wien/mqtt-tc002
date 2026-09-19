@@ -53,7 +53,6 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .ueberblick:
             return HilfeInhalt.wasEsTut
                 + [
-                    .absatz("Welcher Weg für eine Uhr gilt, steht unten bei „Einstellungen“ unter „Betriebsart“. Unabhängig davon spricht die App eine Uhr für ein paar Abfragen und Einstellungen immer selbst per HTTP an."),
                     .ueberschrift("Die vier Bereiche in der Seitenleiste"),
                     .punkte([
                         "**Senden** — Text und Icon verschicken.",
@@ -81,7 +80,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.aufDerUhr
                 + [
                     .ueberschrift("Broker"),
-                    .absatz("Der Broker ist ein eigenes Thema: Adresse, Port, Benutzer und Kennwort."),
+                    .absatz("Unter „Broker“ trägst du den MQTT-Broker ein: Adresse, Port, Benutzer und Kennwort."),
                 ]
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer

@@ -13,19 +13,35 @@ import TC002Core
 /// könnte beim nächsten Mal nur an einer der beiden Stellen berichtigt
 /// werden.
 public enum HilfeInhalt {
-    /// Was die App ueberhaupt tut und wo die Nachrichten langlaufen. Seit es
-    /// zwei Wege gibt, steht der Broker nicht mehr zwangslaeufig dazwischen —
-    /// welcher Weg gilt, entscheidet jede Uhr fuer sich (`Betriebsart`).
+    /// Was die App ueberhaupt tut und wo die Nachrichten langlaufen.
     ///
-    /// Beide Gattungen schon im ersten Satz (`Geraetetyp`): Wer die
-    /// Einleitung liest, hat die Uhr vor sich, die er einrichten will, und
-    /// eine Einleitung, die nur eine Bauart nennt, schliesst die andere aus.
-    /// Der zweite Absatz sagt, was die Gattung fuer die Regler bedeutet — die
-    /// Einblendtexte der gesperrten Regler sagen es sonst nur dort, wo man
-    /// schon anstoesst.
+    /// **Der Unterschied der beiden Wege steht hier und nicht erst bei den
+    /// Einstellungen.** Er ist die Entscheidung, die alles Weitere traegt:
+    /// Ob eine Sendung quittiert wird, ob ein Block eine fremde Anzeige zeigen
+    /// kann, ob es ein Praefix braucht — alles haengt daran. Wer ihn erst
+    /// hinter der Haelfte der Hilfe erfaehrt, hat bis dahin Saetze gelesen,
+    /// die nur fuer einen der beiden gelten.
+    ///
+    /// Und ein Absatz „Was ist MQTT" — genau einer. Ohne ihn ist „Broker" ein
+    /// Wort, das Vorwissen verlangt, und die Einstellungen sind ein Formular
+    /// fuer etwas, das man nicht kennt.
+    ///
+    /// Beide Bauarten schon im ersten Satz (`Geraetetyp`): Wer die Einleitung
+    /// liest, hat die Uhr vor sich, die er einrichten will, und eine
+    /// Einleitung, die nur eine Bauart nennt, schliesst die andere aus.
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("Pixel Clock Messenger schickt Anzeigen an Pixeluhren — an eine Ulanzi TC002 mit Werksfirmware und an eine TC001 unter AWTRIX NG. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
-        .absatz("Welche der beiden Gattungen eine Uhr ist, steht ebenfalls je Uhr unter „Einstellungen“, und es entscheidet, was die Regler bewirken: Für die Werksfirmware rastert diese App den Text selbst, Schriftart, Größe, Fett, Rand und Abstand gelten also. Eine AWTRIX NG setzt ihn mit ihrer eigenen Schrift — dort stehen dieselben Regler gesperrt da und sagen im Einblendtext, warum."),
+        .absatz("Pixel Clock Messenger schickt Text, Farbe und kleine Bilder an eine Pixeluhr: an eine Ulanzi TC002 mit ihrer Werksfirmware — der Software, die ab Werk darauf läuft — oder an eine TC001 mit der freien Firmware AWTRIX NG. Du tippst den Text unten ein, die Vorschau darüber zeigt, wie er auf der Uhr aussehen wird, und die Eingabetaste schickt ihn hin."),
+        .ueberschrift("Zwei Wege zur Uhr"),
+        .absatz("Wie die Anzeige zur Uhr kommt, legst du je Uhr unter „Einstellungen“ fest. Es gibt zwei Wege, und sie unterscheiden sich vor allem darin, was du hinterher weißt."),
+        .untertitel("Direkt über HTTP"),
+        .absatz("Die App spricht die Uhr unmittelbar an, so wie ein Browser eine Seite holt. Die Uhr antwortet auf jede Sendung: Du erfährst, ob sie die Anzeige genommen hat, und wenn nicht, warum. Mehr als ihre Adresse brauchst du dafür nicht. Eine neu eingetragene Uhr steht auf diesem Weg."),
+        .untertitel("Indirekt über einen MQTT-Server"),
+        .absatz("Die App legt die Anzeige bei einem Vermittler im eigenen Netz ab, und die Uhr holt sie dort. Eine Rückmeldung bekommst du auf diesem Weg nie — auch dann nicht, wenn die Uhr ausgeschaltet ist. Dafür liest die App mit: Schickt ein anderes Programm etwas an dieselbe Uhr, sieht sie es und zeigt es dir an."),
+        .ueberschrift("Was ist MQTT?"),
+        .absatz("MQTT ist die Sprache, in der Geräte im Haus einander Nachrichten hinterlassen. In der Mitte steht ein Programm, das die Nachrichten annimmt und weiterreicht: der **MQTT-Broker**, meist ein kleiner Server im eigenen Netz. Wer etwas zu sagen hat, legt es dort unter einem Namen ab — dem Thema —, und wer es haben will, meldet sich für dieses Thema an und bekommt jede neue Nachricht zugestellt. Die Uhren hängen selbst an einem solchen Broker; diese App legt ihre Anzeigen dort für sie ab."),
+        .ueberschrift("Zwei Bauarten von Uhr"),
+        .absatz("Welche Bauart eine Uhr ist, steht ebenfalls unter „Einstellungen“, und sie entscheidet, was die Regler bewirken. Auf einer Ulanzi mit Werksfirmware setzt **diese App** den Text in Pixel um; Schriftart, Größe, Fett, Rand und Abstand gelten also. Eine AWTRIX NG setzt ihn mit ihrer eigenen Schrift — dort stehen dieselben Regler gesperrt da und sagen beim Antippen, warum."),
+        .absatz("Ein paar Dinge macht die App immer selbst über HTTP, gleich welcher Weg für eine Uhr eingestellt ist: die Uhr abfragen, holen, welche Anzeigen gerade auf ihr stehen, und die Einstellungen des Geräts schreiben."),
     ]
 
     /// Die Wahl selbst — was sie bedeutet und was sie kostet. Gehoert hierher
@@ -70,7 +86,7 @@ public enum HilfeInhalt {
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der
     /// Abschnitt sichtbar und benutzbar bleibt und nur eingeordnet gehoert.
     public static let brokerNurFuerMqtt: [Hilfebaustein] = [
-        .absatz("Der Broker gilt für Uhren im MQTT-Betrieb. Steht keine Uhr darauf, bleiben seine Felder ungenutzt — ausgegraut oder versteckt sind sie trotzdem nicht: Man trägt einen Broker ein, bevor man eine Uhr auf MQTT stellt, und in dieser Reihenfolge müssen sie benutzbar sein."),
+        .absatz("Diese Angaben gelten dem MQTT-Broker und damit den Uhren, die über MQTT beschickt werden. Steht gerade keine Uhr darauf, bleiben die Felder ungenutzt — ausgegraut oder versteckt sind sie trotzdem nicht: Du trägst den Broker ein, bevor du eine Uhr auf MQTT stellst, und in dieser Reihenfolge müssen sie benutzbar sein."),
     ]
 
     /// Wie die Einstellungen gegliedert sind (`Einstellungsthema`). Das Erste,
@@ -101,7 +117,7 @@ public enum HilfeInhalt {
     /// Telefon geht sein Blatt von selbst auf. Beide Male ist es derselbe
     /// Grund und dieselbe Auskunft — deshalb ein Absatz und nicht zwei.
     public static let startOhneEinrichtung: [Hilfebaustein] = [
-        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“, und zwar beim Thema „Uhren“, wo die erste Uhr eingetragen wird — bei „Senden“ gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und keine Brokeradresse eingetragen ist; für eine reine HTTP-Einrichtung wird nach keinem Broker gefragt. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
+        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“, und zwar beim Thema „Uhren“, wo die erste Uhr eingetragen wird — bei „Senden“ gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und die Adresse des MQTT-Brokers fehlt; steht jede Uhr auf HTTP, fragt die App nach keinem Broker. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
     ]
 
     /// Wie eine Uhr angelegt wird (`Uhrenliste`). Auf beiden Oberflaechen
@@ -132,7 +148,7 @@ public enum HilfeInhalt {
     /// ermittelt, nie eingetippt (`AppZustand.abfragen`).
     public static let uhrAbfragen: [Hilfebaustein] = [
         .ueberschrift("Abfragen"),
-        .absatz("„Abfragen“ holt von der Uhr selbst das Themen-Präfix und die MAC-Adresse und zeigt das Präfix monospaced in der Zeile an. Das Häkchen- oder Warndreieck-Symbol daneben sagt, ob die Uhr gerade beim Broker angemeldet ist — das ist aber nur die Anmeldung, keine Aussage darüber, ob die App auf das richtige Thema schreiben darf (mehr dazu unter „Wenn nichts erscheint“)."),
+        .absatz("„Abfragen“ holt von der Uhr selbst das Themen-Präfix und die MAC-Adresse und zeigt das Präfix monospaced in der Zeile an. Das Häkchen- oder Warndreieck-Symbol daneben sagt, ob die Uhr gerade beim MQTT-Broker angemeldet ist — das ist aber nur die Anmeldung, keine Aussage darüber, ob die App auf das richtige Thema schreiben darf (mehr dazu unter „Wenn nichts erscheint“)."),
         .absatz("Beides gehört zum MQTT-Betrieb. Steht die Uhr auf HTTP, wird kein Präfix gebraucht, das Symbol bleibt weg, und „Abfragen“ sagt dort nur eines — dass die Uhr antwortet. Geholt wird dabei in beiden Fällen auch, welche Anzeigen gerade auf ihr stehen."),
         .absatz("Das Präfix lässt sich absichtlich nicht von Hand eintragen: es ist nicht dasselbe wie das in Ulanzi Studio eingestellte, die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt das wirksame Präfix selbst. Hat die Uhr gar kein Präfix eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
         .absatz("Bei einer AWTRIX NG ist das Präfix dagegen genau das, was auf ihr eingestellt ist, ohne jeden Anhang. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das man liest."),
@@ -167,7 +183,7 @@ public enum HilfeInhalt {
     /// Was die Brokerpruefung tut und was ihr Ergebnis nicht bedeutet. Beide
     /// Oberflaechen rufen dieselbe `AppZustand.brokerSichernUndPruefen`.
     public static let brokerPruefen: [Hilfebaustein] = [
-        .absatz("„Verbindung prüfen“ fragt den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt. Zu sichern gibt es dabei nichts: Adresse, Port und Benutzer stehen schon beim Tippen fest, das Kennwort spätestens beim Verlassen des Feldes."),
+        .absatz("„Verbindung prüfen“ fragt den MQTT-Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt. Zu sichern gibt es dabei nichts: Adresse, Port und Benutzer stehen schon beim Tippen fest, das Kennwort spätestens beim Verlassen des Feldes."),
         .absatz("Eine angenommene Anmeldung heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Verlauf“."),
     ]
 
@@ -182,13 +198,13 @@ public enum HilfeInhalt {
         .ueberschrift("Virtuelle Uhr"),
         .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
         .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
-        .absatz("Sie spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
+        .absatz("Sie spricht HTTP, kein MQTT: Ein MQTT-Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
 
     public static let wolkenabgleich: [Hilfebaustein] = [
         .ueberschrift("Über iCloud abgleichen"),
         .absatz("Ist der Schalter an, liegen die eigenen Icons (8×8 und 16×16), die gemalten Bilder, die Einstellungen und das Gedächtnis der fünf Plätze nicht mehr auf diesem Gerät, sondern in iCloud — und damit auf jedem Gerät, auf dem die App mit demselben Konto läuft."),
-        .absatz("Der letzte Punkt ist der eigentliche Gewinn: Weil auch das Gedächtnis der fünf Plätze mitwandert, zeigt das Telefon, was der Mac zuletzt an die Uhr geschickt hat, ohne dass es dafür am Broker mithören müsste."),
+        .absatz("Der letzte Punkt ist der eigentliche Gewinn: Weil auch das Gedächtnis der fünf Plätze mitwandert, zeigt das Telefon, was der Mac zuletzt an die Uhr geschickt hat, ohne dass es dafür am MQTT-Broker mithören müsste."),
         .absatz("**Zwei Dinge gehen nicht mit.** Das Brokerkennwort bleibt im Schlüsselbund und wird auf jedem Gerät einmal eingetragen; ein abgeglichener Schlüsselbund wäre ein eigener Mechanismus mit eigener Rückfrage. Und der Text, an dem man gerade unter „Senden“ schreibt, bleibt ebenfalls hier — zwei Geräte, die einander den halben Satz aus dem Feld ziehen, wären keine Verbesserung."),
         .absatz("Steht dort „Auf diesem Gerät steht der Abgleich nicht bereit“, fehlt die Berechtigung oder das iCloud-Konto. Dann bleibt alles örtlich liegen und die App arbeitet genau wie zuvor — es ist kein halber Zustand und kein Fehler."),
         .ueberschrift("Ein- und wieder ausschalten"),
@@ -222,7 +238,7 @@ public enum HilfeInhalt {
     public static let blockwissenAnfang: [Hilfebaustein] = [
         .ueberschrift("Woher die Blöcke wissen, was belegt ist"),
         .abbildung(.slotzustaende),
-        .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes (Gerätereferenz, §3.5) — belegt oder frei ist damit gesichert, der Inhalt nicht. Den gewinnt die App stattdessen daraus, dass sie beim Broker jede Sendung an die Uhr mitliest, gleich von wem sie kommt: von dieser App, vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm."),
+        .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes (Gerätereferenz, §3.5) — belegt oder frei ist damit gesichert, der Inhalt nicht. Den gewinnt die App stattdessen daraus, dass sie beim MQTT-Broker jede Sendung an die Uhr mitliest, gleich von wem sie kommt: von dieser App, vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm."),
         .absatz("**Das gilt nur im MQTT-Betrieb.** Steht die Uhr auf HTTP, gibt es kein Mitlesen — dann zeigt ein Block allein, was diese Installation selbst auf den Platz geschickt und sich dazu gemerkt hat. Jede fremde Sendung bleibt dort „belegt, Inhalt unbekannt“, und zwar dauerhaft und nicht bloß bis zur nächsten Nachricht. Die Belegung selbst ist davon unberührt: Welche Plätze belegt sind, sagt die Uhr auf Nachfrage, und im HTTP-Betrieb obendrein nach jeder eigenen Sendung — sie quittiert sie."),
         .absatz("Mitlesen heißt aber: nur, was gesendet wird, solange die App verbunden ist. Ohne aufbewahrte (RETAIN-)Nachrichten liefert MQTT einem frisch verbundenen Abonnenten keinen Rückstand — das ist kein Fehler dieser App, sondern die normale Stille von MQTT 3.1.1 (siehe auch „Wenn nichts erscheint“). Was diese Installation unter „Senden“ selbst geschickt hat, zeigt der Block nach einem Neustart trotzdem: Dafür merkt sie sich je Platz die Regler und rechnet das Bild daraus neu."),
     ]
@@ -372,7 +388,7 @@ public enum HilfeInhalt {
     /// Quelle; der Inhalt eines Platzes gehoert ausdruecklich nicht dazu.
     public static let verlaufEntstehung: [Hilfebaustein] = [
         .ueberschrift("Wie die Liste entsteht"),
-        .absatz("Die App fragt die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/customList`, Gerätereferenz §5.7) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Das gilt in beiden Betriebsarten: Dafür braucht es keinen Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),
+        .absatz("Die App fragt die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/customList`, Gerätereferenz §5.7) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Das gilt in beiden Betriebsarten: Dafür braucht es keinen MQTT-Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),
         .absatz("Im MQTT-Betrieb kommt ein zweiter Weg dazu, und er führt zur selben Quelle: Die Uhr veröffentlicht ihre Anzeigenliste von sich aus über das Thema `<präfix>/customList`, und die App hört dort dauerhaft mit, sobald die Uhr ein Präfix hat (Gerätereferenz, §3.5). Im HTTP-Betrieb gibt es das nicht — die Uhr reicht ihre HTTP-Vorgänge nicht über MQTT weiter."),
         .absatz("Dafür gibt es dort ein Drittes, und es ist die verlässlichste Auskunft von allen: Jede eigene Sendung und jede eigene Löschung quittiert die Uhr. Ein so gebuchter Name ist keine Vermutung, sondern von der Uhr bestätigt."),
         .absatz("Gefragt wird dabei immer nur, **welche** Anzeigen es gibt. Was auf einem Platz steht, verrät die Uhr auf keinem dieser Wege; belegt oder frei ist damit Tatsache, der Inhalt bleibt geraten."),
@@ -396,7 +412,7 @@ public enum HilfeInhalt {
         .punkte([
             "jede Abfrage einer Uhr",
             "jedes Umschalten und Löschen einer Anzeige",
-            "jede Broker-Prüfung",
+            "jede Prüfung des MQTT-Brokers",
             "jede Meldung, die von einer Uhr hereinkommt",
         ]),
     ]
@@ -413,14 +429,14 @@ public enum HilfeInhalt {
         .absatz("**Das hängt an der Betriebsart der Uhr, und der Unterschied ist groß.**"),
         .absatz("Im HTTP-Betrieb antwortet die Uhr auf jede Sendung, jede Löschung und jedes Umschalten. Bleibt die Meldung aus, hat sie angenommen; weist sie etwas ab — etwa ein Umschalten auf eine Anzeige, die es nicht gibt —, steht der Grund in der Meldung, mit dem Namen der Uhr davor. Und antwortet sie gar nicht, steht auch das da, statt dass die Sendung stumm verschwindet."),
         .absatz("Im MQTT-Betrieb gibt es das nicht: MQTT in der hier verwendeten Version 3.1.1 meldet eine abgelehnte Veröffentlichung nicht zurück. Egal ob das Konto keine Schreibrechte auf das Thema hat oder niemand darauf lauscht — die App bekommt kein Fehlersignal, keine Warnung, nichts unterscheidet das von einer erfolgreichen Sendung. Erscheint nichts auf der Uhr, ist das also kein Rätsel dieser App, sondern die normale Stille von MQTT 3.1.1."),
-        .absatz("Alles bis zur Anmeldung am Broker meldet die App dagegen sehr wohl: falsches Kennwort, unerreichbarer Broker, Zeitüberschreitung, fehlende Zugangsdaten."),
+        .absatz("Alles bis zur Anmeldung am MQTT-Broker meldet die App dagegen sehr wohl: falsches Kennwort, unerreichbarer Broker, Zeitüberschreitung, fehlende Zugangsdaten."),
     ]
 
     /// Broker-Fehler oder Uhr-Fehler: Die Meldung selbst sagt, welche Suche
     /// gemeint ist (`AppZustand.zusammengefasst`).
     public static let fehlerWelche: [Hilfebaustein] = [
         .ueberschrift("Welche Meldung ist gemeint?"),
-        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
+        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den MQTT-Broker mit Adresse und Port („Der Broker 192.0.2.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
     ]
 
     /// Die vier Punkte der Reihe nach. Alle vier gibt es auf beiden Geraeten.
@@ -429,7 +445,7 @@ public enum HilfeInhalt {
         .absatz("Die ersten drei Punkte betreffen den MQTT-Betrieb. Im HTTP-Betrieb erübrigen sie sich: Dort gibt es kein Präfix, keine Anmeldung und keine Schreibrechte auf ein Thema — was schiefgeht, sagt die Meldung selbst. Bleibt der vierte."),
         .punkte([
             "Erstens das Präfix — unter „Einstellungen“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen; es ist nicht das in Ulanzi Studio eingetragene.",
-            "Zweitens, ob die Uhr überhaupt beim Broker angemeldet ist — das Häkchen- oder Warndreieck-Symbol in derselben Zeile.",
+            "Zweitens, ob die Uhr überhaupt beim MQTT-Broker angemeldet ist — das Häkchen- oder Warndreieck-Symbol in derselben Zeile.",
             "Drittens, ob das Broker-Konto auf dieses Thema schreiben darf. Das steht in der Rechtedatei des Brokers, nicht in dieser App, und lässt sich nur am Broker-Protokoll ablesen.",
             "Viertens, ob unter „Verlauf“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen.",
         ]),

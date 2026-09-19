@@ -75,7 +75,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.aufDerUhr
                 + [
                     .ueberschrift("Broker"),
-                    .absatz("Unter „Broker“ stehen Adresse, Port, Benutzer und Kennwort."),
+                    .absatz("Unter „Broker“ trägst du den MQTT-Broker ein: Adresse, Port, Benutzer und Kennwort."),
                 ]
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
