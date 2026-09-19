@@ -58,13 +58,15 @@ public struct EditorBereichView: View {
     // Sichern und Bestand.
     @State private var name = ""
     @State private var nummer = ""
-    @State private var suche = ""
-    @State private var nurBewegte = false
+    /// Suche, Groesse und Bewegung in einem Wert — derselbe Baustein, den das
+    /// Icons-Blatt am Telefon benutzt (`Bestandsfilter` im Kern). Drei eigene
+    /// Zustaende und drei eigene Rechnungen daneben waren ein Doppel, das
+    /// auseinanderlaufen kann.
+    @State private var filter = Bestandsfilter()
     /// Auf welche Groesse die Uebersicht eingeschraenkt ist — `nil` heisst
     /// alle. Die Gruppen zeigen zwar schon, welche Groessen es gibt; bei
     /// einem gewachsenen Bestand rollt man trotzdem an zwei Gruppen vorbei,
     /// um die dritte zu sehen.
-    @State private var filtergroesse: Leinwandgroesse?
     /// Einmal gelesen: Welche Eintraege sich bewegen, steht in den Dateien.
     /// Die Begruendung steht bei `Array<Icon>.bewegteKennungen`.
     @State private var bewegte: Set<String> = []
@@ -738,7 +740,7 @@ public struct EditorBereichView: View {
     private var animationAbschnitte: some View {
         Section("Einzelbilder") {
             HStack {
-                Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
+                Button("Frame anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
                 Spacer()
                 if leinwand.bilder.count > 1 { abspielknopf(abspielKlein) }
@@ -843,27 +845,8 @@ public struct EditorBereichView: View {
 
     }
 
-    /// Suche, Groesse und Bewegung zusammen — dieselbe Reihenfolge der Fragen
-    /// wie in `Iconfilter`, nur ueber `Editoreintrag`, der drei Groessen
-    /// kennt statt zwei.
     private var gefilterterBestand: [Editoreintrag] {
-        var ergebnis = vorhandene.gefiltert(nach: suche)
-        if let filtergroesse { ergebnis = ergebnis.filter { $0.groesse == filtergroesse } }
-        if nurBewegte { ergebnis = ergebnis.filter { bewegte.contains($0.datei.path) } }
-        return ergebnis
-    }
-
-    /// Ob ueberhaupt etwas eingeschraenkt ist. Nur dann steht das
-    /// Zuruecksetzen da: ein Knopf, der nichts zu tun hat, ist eine Frage
-    /// ohne Anlass.
-    private var gefiltert: Bool {
-        !suche.isEmpty || filtergroesse != nil || nurBewegte
-    }
-
-    private func filterZuruecksetzen() {
-        suche = ""
-        filtergroesse = nil
-        nurBewegte = false
+        vorhandene.gefiltert(filter) { bewegte.contains($0.datei.path) }
     }
 
     /// Einmal je Bestandsaenderung, nicht bei jedem Neuzeichnen.
@@ -1119,19 +1102,19 @@ public struct EditorBereichView: View {
     private var uebersicht: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                TextField("Suchen", text: $suche)
-                    .eingabefeld(loeschbar: $suche)
+                TextField("Suchen", text: $filter.suche)
+                    .eingabefeld(loeschbar: $filter.suche)
                     .frame(maxWidth: 260)
                 // Dieselbe Leiste wie im Icon-Blatt: Groesse und Bewegung
                 // nebeneinander. Der Schalter allein las sich nicht als
                 // Filter — neben den Groessensegmenten tut er es.
-                Filterleiste(wert: $filtergroesse,
+                Filterleiste(wert: $filter.groesse,
                              angebot: Leinwandgroesse.allCases.map {
                                  (titel: $0.beschriftung, kurz: $0.kurzbeschriftung, wert: $0)
                              },
-                             nurBewegte: $nurBewegte)
-                if gefiltert {
-                    Button("Zurücksetzen") { filterZuruecksetzen() }
+                             nurBewegte: $filter.nurBewegte)
+                if filter.schraenktEin {
+                    Button("Zurücksetzen") { filter.zuruecksetzen() }
                         .knopfBefehl()
                         .help(lok("Suche, Größe und Bewegung zurücksetzen"))
                 }
