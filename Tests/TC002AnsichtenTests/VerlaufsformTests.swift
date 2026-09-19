@@ -3,12 +3,16 @@ import XCTest
 /// Der Verlauf hat zwei Formen, und welche wohin gehoert, entscheidet die
 /// Umgebung.
 ///
-/// Am Telefon ist der ganze Sendebildschirm **eine** `List`: Vorschau und
-/// Slotleiste sind Zeilen darin, der Verlauf ein `Section`
-/// (`Verlaufsabschnitt`). Eine eigene `List` waere dort die zweite in der
-/// ersten — sie bekaeme keine eigene Hoehe, braeuchte deshalb eine feste, und
-/// eine feste Hoehe mit wenigen Zeilen verteilt den Rest als Leere. Genau das
-/// stand zwischen Slotleiste und Formatpille.
+/// Am Telefon rollt genau **eine** `List`: Slotleiste als Zeile, der Verlauf
+/// als `Section` (`Verlaufsabschnitt`). Eine eigene `List` waere dort die
+/// zweite in der ersten — sie bekaeme keine eigene Hoehe, braeuchte deshalb
+/// eine feste, und eine feste Hoehe mit wenigen Zeilen verteilt den Rest als
+/// Leere. Genau das stand zwischen Slotleiste und Formatpille.
+///
+/// Die Vorschau steht **ueber** der Liste und rollt nicht mit: Sie beantwortet,
+/// was gleich auf der Uhr steht, und muss sichtbar bleiben, waehrend man im
+/// Verlauf blaettert. Als erste Zeile der Liste wanderte sie beim ersten
+/// Wischen aus dem Bild.
 ///
 /// Am Schreibtisch bleibt `Verlaufsliste` mit ihrer eigenen `List`: Dort ist
 /// die Vorschau kein Listeneintrag, sie hat die Werkzeugleiste ueber sich und
@@ -46,6 +50,31 @@ final class VerlaufsformTests: XCTestCase {
                        + "zwei ineinander rollende Bereiche sind am Finger nicht auseinanderzuhalten")
         XCTAssertFalse(text.contains(".frame(height: 260)"),
                        "die feste Hoehe des Verlaufs ist wieder da")
+    }
+
+    /// Die Vorschau ist kein Listeneintrag mehr.
+    ///
+    /// Mutation: `vorschaukopf` in die `List` schieben — baut, uebersetzt, und
+    /// die Uhr wandert beim Blaettern im Verlauf nach oben weg.
+    func testDieVorschauStehtUeberDerListeUndRolltNichtMit() throws {
+        let text = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        XCTAssertTrue(text.contains("private var vorschaukopf: some View"),
+                      "es gibt keinen festen Vorschaukopf mehr")
+        let mitte = ausschnitt(text, von: "private var mitte: some View", bis: "private var liste: some View")
+        XCTAssertTrue(mitte.contains("vorschaukopf") && mitte.contains("liste"),
+                      "die Mitte setzt sich nicht mehr aus festem Kopf und rollender Liste zusammen")
+        XCTAssertFalse(mitte.contains("List {"),
+                       "die Mitte ist wieder selbst die Liste — dann rollt die Vorschau mit")
+        let liste = ausschnitt(text, von: "private var liste: some View", bis: "private var horizontalSymbol")
+        XCTAssertFalse(liste.contains("Uhrenblaetterer"),
+                       "die Vorschau steht wieder in der Liste und rollt beim Blaettern aus dem Bild")
+    }
+
+    private func ausschnitt(_ text: String, von: String, bis: String) -> String {
+        guard let a = text.range(of: von) else { XCTFail("„\(von)“ gibt es nicht mehr"); return "" }
+        let rest = text[a.lowerBound...]
+        guard let e = rest.range(of: bis) else { XCTFail("„\(bis)“ steht nicht mehr hinter „\(von)“"); return "" }
+        return String(rest[rest.startIndex..<e.lowerBound])
     }
 
     func testDerSchreibtischBehaeltSeineEigeneListe() throws {

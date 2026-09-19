@@ -480,28 +480,42 @@ struct SendeniOS: View {
     /// sind. Mit einer Liste rollt der Bildschirm als Ganzes: wenig Verlauf
     /// heisst wenig Zeilen und darunter nichts, viel Verlauf schiebt die
     /// Vorschau nach oben weg.
+    /// Die Vorschau steht fest ueber der Liste und rollt nicht mit: Sie ist
+    /// die Antwort auf „was steht gleich auf der Uhr" und muss sichtbar
+    /// bleiben, waehrend man im Verlauf blaettert. Als erste Zeile der Liste
+    /// wanderte sie beim ersten Wischen nach oben aus dem Bild.
+    ///
+    /// Wischen ueber der Vorschau wechselt die angesehene Uhr, die Punktreihe
+    /// darunter sagt, die wievielte es ist — dieselben zwei Bausteine wie am
+    /// Schreibtisch (`Uhrenwahl.swift`).
+    @ViewBuilder
+    private var vorschaukopf: some View {
+        VStack(spacing: 0) {
+            Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
+                vorschau(fuer: uhr, angesehen: angesehen)
+            }
+            // Dasselbe Zeichen wie am Schreibtisch: Setzt die Uhr den Text
+            // selbst, ist die Vorschau nur eine Naeherung. Was die eine
+            // Oberflaeche sagt, sagt die andere auch.
+            HStack(spacing: 8) {
+                Uhrenpunkte(zustand: zustand)
+                if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+            }
+        }
+        .padding(.vertical, 8)
+    }
+
     @ViewBuilder
     private var mitte: some View {
-        List {
-            // Wischen ueber der Vorschau wechselt die angesehene
-            // Uhr, die Punktreihe darunter sagt, die wievielte es
-            // ist — dieselben zwei Bausteine wie am Schreibtisch
-            // (`Uhrenwahl.swift`).
-            VStack(spacing: 0) {
-                Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
-                    vorschau(fuer: uhr, angesehen: angesehen)
-                }
-                // Dasselbe Zeichen wie am Schreibtisch: Setzt die Uhr den Text
-                // selbst, ist die Vorschau nur eine Naeherung. Was die eine
-                // Oberflaeche sagt, sagt die andere auch — hier fehlte die
-                // Auskunft bisher ganz.
-                HStack(spacing: 8) {
-                    Uhrenpunkte(zustand: zustand)
-                    if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
-                }
-            }
-            .listenzeileOhneRahmen(rand: 0)
+        VStack(spacing: 0) {
+            vorschaukopf
+            liste
+        }
+    }
 
+    @ViewBuilder
+    private var liste: some View {
+        List {
             VStack(spacing: 8) {
                 if !passt {
                     Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))

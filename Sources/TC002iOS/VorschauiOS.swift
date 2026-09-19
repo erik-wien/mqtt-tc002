@@ -18,7 +18,12 @@ struct VorschauiOS: View {
     let feld: Pixelfeld
     let icon: URL?
     let laufschriftBilder: [Bildraster.Einzelbild]?
-    var kante: Double = 6
+    /// Punkte je Pixel. `nil` heisst: so gross, wie die Breite es zulaesst —
+    /// der Rahmen ist breiter als sein Displayfeld (`breitenFaktor`), und
+    /// eine feste Kantenlaenge liess ihn am Telefon links und rechts aus dem
+    /// Sichtfeld laufen. Sichtbar blieb dann nur das schwarze Feld ohne
+    /// Gehaeuse.
+    var kante: Double? = nil
     /// Welche Geraetefront darum liegt und wie die Punkte darin aussehen.
     /// `Optional` wie `Uhr.typ`: `nil` heisst `.tc002`.
     var typ: Geraetetyp? = nil
@@ -31,7 +36,39 @@ struct VorschauiOS: View {
     /// Rahmen, damit Mac und Telefon dasselbe Raster zeigen.
     private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
 
+    /// Die groesste Kantenlaenge, bei der der ganze Rahmen in `breite` passt —
+    /// nach oben begrenzt, damit die Vorschau auf einem breiten Bildschirm
+    /// nicht ins Riesenhafte waechst.
+    private func passendeKante(fuer breite: Double) -> Double {
+        guard breite > 0 else { return 6 }
+        let faktor = Geraetezeichnung.fuer(typ).breitenFaktor
+        return min(6, breite / (Double(feld.breite) * faktor))
+    }
+
     var body: some View {
+        if let kante {
+            rahmen(kante: kante)
+        } else {
+            // `GeometryReader` und keine feste Zahl: Wie breit die Spalte ist,
+            // weiss nur der Aufrufer — und am Telefon ist sie schmaler als der
+            // Rahmen bei sechs Punkten je Pixel.
+            GeometryReader { geo in
+                let k = passendeKante(fuer: geo.size.width)
+                rahmen(kante: k)
+                    .frame(width: geo.size.width, alignment: .center)
+            }
+            .frame(height: Double(feld.hoehe) * passendeKanteFuerHoehe)
+        }
+    }
+
+    /// Die Hoehe des `GeometryReader` muss feststehen, bevor er misst — sonst
+    /// waechst er ins Unbestimmte. Gerechnet mit der groessten Kantenlaenge;
+    /// faellt sie kleiner aus, bleibt oben und unten etwas Luft.
+    private var passendeKanteFuerHoehe: Double {
+        6 * Geraetezeichnung.fuer(typ).hoehenFaktor
+    }
+
+    private func rahmen(kante: Double) -> some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
         GeraeteRahmen(hoehe: Double(feld.hoehe) * kante, typ: typ) {
@@ -39,17 +76,17 @@ struct VorschauiOS: View {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {
                         TimelineView(.animation) { zeit in
-                            anzeige(Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel)
+                            anzeige(Self.einzelbild(aus: bilder, bei: zeit.date)?.pixel ?? bilder[0].pixel, kante: kante)
                         }
                     } else {
-                        anzeige(bilder[0].pixel)
+                        anzeige(bilder[0].pixel, kante: kante)
                     }
                 } else if iconBilder.count > 1 {
                     TimelineView(.animation) { zeit in
-                        anzeige(mitIcon(Self.einzelbild(aus: iconBilder, bei: zeit.date)))
+                        anzeige(mitIcon(Self.einzelbild(aus: iconBilder, bei: zeit.date)), kante: kante)
                     }
                 } else {
-                    anzeige(mitIcon(iconBilder.first))
+                    anzeige(mitIcon(iconBilder.first), kante: kante)
                 }
             }
             .frame(width: Double(feld.breite) * kante,
@@ -65,7 +102,7 @@ struct VorschauiOS: View {
     /// die sich die Vorschau bezieht. Nicht fest 52×16: Eine NG-Uhr hat
     /// 32×8, und ein Raster der falschen Groesse liefe hier ins Leere und im
     /// Rahmen ueber (siehe `Anzeigemass`).
-    private func anzeige(_ punkte: [String?]) -> some View {
+    private func anzeige(_ punkte: [String?], kante: Double) -> some View {
         let stil = pixelstil
         return Canvas { kontext, _ in
             for y in 0..<feld.hoehe {

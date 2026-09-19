@@ -269,19 +269,25 @@ struct Verlaufszeilenbild: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                // Der Text in der Farbe, in der er gesendet wurde — die
-                // schnellste Auskunft darueber, welche Meldung das war. Ohne
-                // Text sagt der Name des Icons, was geschickt wurde; gibt es
-                // das Icon nicht mehr, bleibt nur seine Nummer, und die ist
-                // dann alles, was noch bekannt ist.
-                if eintrag.optionen.text.isEmpty {
-                    Text(icon?.name ?? eintrag.iconNummer ?? "")
+                // Der Text in der Schriftfarbe der Liste, die Sendefarbe
+                // daneben als Punkt: In seiner eigenen Farbe gesetzt war ein
+                // weiss geschickter Text auf weissem Grund unsichtbar — die
+                // Zeile sah aus, als fehle die Meldung. Die Farbe ist eine
+                // Auskunft ueber die Meldung, nicht die Farbe dieser Liste.
+                HStack(spacing: 6) {
+                    if let farbe = Color(hex: eintrag.optionen.farbe) {
+                        Circle().fill(farbe)
+                            .frame(width: 8, height: 8)
+                            .overlay(Circle().stroke(.quaternary, lineWidth: 0.5))
+                            .accessibilityHidden(true)
+                    }
+                    // Nie eine leere Zeile: Ohne Text sagt der Name des Icons,
+                    // was geschickt wurde; gibt es das Icon nicht mehr, seine
+                    // Nummer. Ist auch die weg, bleibt das Wort — eine Zeile
+                    // ohne Inhalt laese sich als Fehler.
+                    Text(inhaltswort(eintrag, icon: icon))
                         .lineLimit(1)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(eintrag.optionen.text)
-                        .lineLimit(1)
-                        .foregroundStyle(Color(hex: eintrag.optionen.farbe) ?? .primary)
+                        .foregroundStyle(eintrag.optionen.text.isEmpty ? .secondary : .primary)
                 }
                 if zustand.uhren.count > 1 {
                     Text(eintrag.uhr)
@@ -314,6 +320,16 @@ struct Verlaufszeilenbild: View {
     /// Zwei Former, weil `doesRelativeDateFormatting` für heute „Heute,
     /// 19:13" liefert: Das Wort kostet in der schmalen rechten Spalte mehr
     /// Breite, als es sagt — was heute war, ist der Normalfall.
+    /// Was in der Zeile als Inhalt steht — der Text, sonst der Iconname,
+    /// sonst die Iconnummer, sonst ein Wort dafuer, dass nichts davon bekannt
+    /// ist.
+    private func inhaltswort(_ eintrag: Verlaufseintrag, icon: Icon?) -> String {
+        if !eintrag.optionen.text.isEmpty { return eintrag.optionen.text }
+        if let name = icon?.name, !name.isEmpty { return name }
+        if let nummer = eintrag.iconNummer, !nummer.isEmpty { return nummer }
+        return lok("ohne Text")
+    }
+
     private static func zeitwort(_ zeit: Date) -> String {
         Calendar.current.isDateInToday(zeit) ? heuteform.string(from: zeit)
                                              : zeitform.string(from: zeit)

@@ -201,6 +201,7 @@
 "Änderungen verwerfen?" = "Discard changes?";
 "Verwerfen" = "Discard";
 "Neu zeichnen" = "Draw new";
+"ohne Text" = "no text";
 "Das Gemalte ist nicht gesichert und geht dabei verloren." = "What you drew is not saved and will be lost.";
 "Zwischen den Größen wird nichts umgerechnet — das Gemalte geht dabei verloren. „Rückgängig“ holt es zurück." = "Nothing is converted between the sizes — what you drew is lost in the process. \"Undo\" brings it back.";
 "Gemaltes ersetzen?" = "Replace what you drew?";
