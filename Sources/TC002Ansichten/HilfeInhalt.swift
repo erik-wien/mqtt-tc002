@@ -154,8 +154,9 @@ public enum HilfeInhalt {
         .tabelle([
             ("frei", "gestrichelter, leerer Rahmen — kein Name auf diesem Platz."),
             ("belegt, Inhalt bekannt", "die Pixel, verkleinert. Sie stammen entweder aus einer mitgelesenen Sendung oder aus dem, was sich diese Installation für den Platz gemerkt hat — im zweiten Fall ist es eine Erinnerung und kann überholt sein."),
-            ("belegt, Inhalt unbekannt", "grau gefüllter Block mit dem Wort „belegt“, ohne Pixel."),
+            ("belegt, Inhalt unbekannt", "grau gefüllter Block mit einem Fragezeichen, ohne Pixel."),
         ]),
+        .absatz("Ein Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin steht — der Platz ist belegt, der Inhalt bleibt unbekannt."),
         .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt — die Blöcke zeigen dabei immer den Stand der gerade aktiven Uhr."),
     ]
 
@@ -194,7 +195,7 @@ public enum HilfeInhalt {
         .abbildung(.stehtOderLaeuft),
         .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
         .absatz("Gerastert wird dabei immer von dieser App, auch bei langem Text. Die Uhr kann Text zwar auch selbst setzen, und bis zum 18.09.2026 gab es dafür die Wahl „als Text“ — sie kostete Schriftart, Größe und Fett, verlor Umlaute und ließ langen Text nicht einmal durchlaufen, sondern schnitt ihn ab (ein Mangel der Werksfirmware, am 11.09.2026 mit drei Fassungen geprüft). Übrig blieb eine kleinere Nutzlast, und die ist den Preis nicht wert."),
-        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst, und die Vorschau sagt dazu, dass sie nur eine Näherung ist."),
+        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst. Die Vorschau ist dann nur eine Näherung, und das (?) neben der Punktreihe unter ihr sagt, warum."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -203,13 +204,13 @@ public enum HilfeInhalt {
         .absatz("Egal wie viele Plätze belegt sind: Eine gerade angezeigte, stehende Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder ersetzt wird — deshalb ist „auf denselben Platz senden“ oft das, was man eigentlich will."),
     ]
 
-    /// Das ⊗ an den fuenf Bloecken. Steht auf beiden Geraeten an derselben
-    /// Stelle und erscheint nur an belegten Plaetzen.
-    ///
-    /// Zuvor war es ein Papierkorb neben der Reihe, der sich auf den gerade
-    /// gewaehlten Platz bezog — man musste ihn erst treffen.
-    public static let papierkorb: [Hilfebaustein] = [
-        .absatz("Das ⊗ in der Ecke eines Blocks löscht genau diesen Platz auf den gewählten Uhren. Es erscheint nur an belegten Plätzen — ein leerer hat nichts zu löschen. Ein langer Druck darauf nennt den Platz beim Namen, bevor man ihn trifft."),
+    /// Wie ein einzelner Platz geraeumt wird: ueber das Menue des Blocks
+    /// (`View.slotmenue`), auf beiden Oberflaechen dieselbe Geste. Das ⊗ am
+    /// Zeiger ist der eine begruendete Unterschied und deshalb als solcher
+    /// benannt.
+    public static let blockLoeschen: [Hilfebaustein] = [
+        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „Löschen“ räumt den Platz auf den gewählten Uhren. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
+        .absatz("Am Zeiger erscheint zusätzlich ein rotes ⊗ in der Ecke des Blocks, solange der Zeiger darüber steht — so wie Safari das Schließzeichen seiner Tabs zeigt. Am Finger gibt es kein Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der Wackelmodus des Home-Bildschirms."),
     ]
 
     /// Die eigene Standzeit einer Anzeige. Das Feld heisst am Mac „Dauer (Sek.)“
@@ -308,7 +309,7 @@ public enum HilfeInhalt {
     /// schlaegt gemerkt — `AppZustand.anzeigenDerAktivenMitQuelle` fuer beide.
     public static let verlaufHerkunft: [Hilfebaustein] = [
         .ueberschrift("Auf der Uhr und zuletzt geschickt"),
-        .absatz("Unter den fünf Blöcken steht eine Liste, die zweierlei vereint: die eigenen Sendungen mit allem, was dazugehört — Zeit, Platz, Icon, Text in seiner Farbe, Empfänger —, und das, was sonst noch auf der angesehenen Uhr liegt. Eine Meldung, die gerade dort steht, trägt rechts ein Bildschirmzeichen."),
+        .absatz("Unter den fünf Blöcken steht eine Liste, die zweierlei vereint: die eigenen Sendungen und das, was sonst noch auf der angesehenen Uhr liegt. Eine eigene Zeile steht in der Reihenfolge der Auskunft — vorn das Icon als Bild, daneben der Text in der Farbe, in der er geschickt wurde, darunter die Empfänger, rechts Zeit und Platz. Hat eine Sendung keinen Text, steht dort der Name ihres Icons. Die Empfänger bleiben weg, solange nur eine Uhr eingerichtet ist: Ihr Name wäre in jeder Zeile dasselbe Wort. Eine Meldung, die gerade auf der Uhr steht, trägt rechts ein Bildschirmzeichen."),
         .absatz("Von fremden Anzeigen weiß die App nur den Namen: Die Uhr nennt ihre Anzeigen, verrät aber nicht, was darin steht. Solche Zeilen haben deshalb dieselbe Form, nur bleiben die Felder leer, zu denen es keine Auskunft gibt."),
         .absatz("Ein Druck auf eine eigene Sendung stellt sie wieder her — Text, Schrift, Farbe, Ausrichtung, Tempo und Icon. Ein Wischen nach links löscht: bei einer eigenen Zeile den Eintrag, bei einer Anzeige auf der Uhr die Anzeige. Ein Wischen von der anderen Seite schaltet die Uhr auf diese Anzeige um. Je Uhr getrennt: Die Liste wechselt mit, wenn man eine andere Uhr ansieht."),
     ]

@@ -58,7 +58,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.virtuelleUhr, HilfeInhalt.wolkenabgleich,
         HilfeInhalt.fuenfPlaetze, HilfeInhalt.blockwissenAnfang,
         HilfeInhalt.blockwissenSchluss, HilfeInhalt.wegeRegel,
-        HilfeInhalt.blockierendeAnzeige, HilfeInhalt.papierkorb,
+        HilfeInhalt.blockierendeAnzeige, HilfeInhalt.blockLoeschen,
         HilfeInhalt.dauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
         HilfeInhalt.groesse, HilfeInhalt.microFuenf, HilfeInhalt.fettUndGross,
         HilfeInhalt.randUndAbstand, HilfeInhalt.breiteUndAusrichtung,

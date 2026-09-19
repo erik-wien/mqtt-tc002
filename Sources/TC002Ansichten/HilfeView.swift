@@ -109,8 +109,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text, wird im Inspektor der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da. Unter der Vorschau steht, wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird."),
-                    .absatz("Die Größe ist der Grund für die Angabe: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage). Wird es auffällig groß, sagt ein zusätzlicher Hinweis das."),
+                    .absatz("Läuft der Text, wird im Zeit-Reiter des Inspektors der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da."),
+                    .absatz("Wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man. Unter der Vorschau steht davon nur, was ein Befund ist: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage) — wird die Nutzlast auffällig groß, sagt es eine Zeile dort von selbst."),
                     .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
                     .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ bei der aktiven Uhr."),
                 ]
@@ -118,15 +118,15 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Löschen und Dauer"),
                 ]
-                + HilfeInhalt.papierkorb
+                + HilfeInhalt.blockLoeschen
                 + [
-                    .absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken. Im Bereich „Icons“ tragen die fünf Blöcke dasselbe ⊗. Es und „Alles löschen“ im Inspektor nicht verwechseln: „Alles löschen“ leert die Leinwand, das ⊗ löscht die Anzeige auf der Uhr."),
+                    .absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken. Im Bereich „Icons“ trägt jeder belegte Block dasselbe ⊗, dort ohne Überfahren und ohne Menü. Es und „Alles löschen“ im Reiter „Malen“ nicht verwechseln: „Alles löschen“ leert die Leinwand, das ⊗ löscht die Anzeige auf der Uhr."),
                 ]
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen
                 + [
                     .ueberschrift("Formatierung"),
-                    .absatz("Alles Formatierende sitzt rechts im Inspektor, in vier Abschnitten: „Laufschrift“ (das Tempo), „Icon“, „Schrift“ (Schriftart, Größe und in der Zeile „Stil“ Fett, Großbuchstaben und die Farbe) und „Lage“ (Rand, Abstand, waagrechte und senkrechte Ausrichtung). Der Knopf rechts in der Werkzeugleiste blendet den Inspektor ein und aus; welche Richtung ein Symbolknopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
+                    .absatz("Alles Formatierende sitzt rechts im Inspektor, im Reiter „Format“ und dort in drei Abschnitten: „Icon“, „Schrift“ (Schriftart, Größe und in der Zeile „Stil“ Fett, Großbuchstaben und die Farbe) und „Lage“ (Rand, Abstand, waagrechte und senkrechte Ausrichtung). Der zweite Reiter, „Zeit“, führt zusammen, wie lange etwas zu sehen ist: die Dauer dieser Meldung und das Tempo ihrer Laufschrift. Der Knopf rechts in der Werkzeugleiste blendet den Inspektor ein und aus; welche Richtung ein Symbolknopf setzt, sagt sein Einblendtext beim Verweilen mit der Maus."),
                     .absatz("Der ganze Inspektor gilt auch für den laufenden Text: Er wird in derselben Phase gerastert wie der stehende, damit dieselbe Schrift nicht einmal dünner und einmal dicker aussieht; die waagrechte Ausrichtung wirkt sich beim laufenden Text naturgemäß nicht aus, die senkrechte schon."),
                 ]
                 + HilfeInhalt.schriftart

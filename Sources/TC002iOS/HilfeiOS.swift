@@ -112,7 +112,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.blockierendeAnzeige
                 + [.ueberschrift("Löschen und Dauer")]
-                + HilfeInhalt.papierkorb
+                + HilfeInhalt.blockLoeschen
                 + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
                 + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit dem Weg und der Laufschrift. Den Seitenwechsel stellt diese Fassung nicht ein.")]
@@ -125,7 +125,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
 
                     .ueberschrift("Formatpille"),
-                    .absatz("Über dem Eingabefeld liegt die Formatpille mit elf Bedienelementen: Icon, waagrechte und senkrechte Ausrichtung, Farbe, der Pinsel für das Blatt „Format“, Schriftart, Größe, Fett, Großbuchstaben, Rand und Abstand. Sie passen nicht alle nebeneinander auf ein Telefon — die Pille lässt sich seitwärts schieben, und der Pfeil an ihrem rechten Rand zeigt an, solange dort noch etwas liegt."),
+                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon) und das Bild aus dem Bestand. Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
                 ]
                 + HilfeInhalt.schriftart
                 + HilfeInhalt.groesse
