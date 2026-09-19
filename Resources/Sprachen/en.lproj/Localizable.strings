@@ -961,3 +961,4 @@
 "Verbindung prüfen" = "Check connection";
 "Ein Kennwort liegt im Schlüsselbund, nicht in den Einstellungen." = "A password is stored in the keychain, not in the settings.";
 "Es liegt kein Kennwort im Schlüsselbund." = "No password is stored in the keychain.";
+"Uhr %d" = "Clock %d";

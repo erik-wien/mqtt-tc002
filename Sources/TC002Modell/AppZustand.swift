@@ -489,6 +489,15 @@ public final class AppZustand {
     /// Schlaegt das Vergessen fehl, bleibt die Loeschung gueltig — nur eine
     /// Protokollzeile haelt es fest, wie in `senden`.
     ///
+    /// „Uhr 1", „Uhr 2", … — die erste Zahl, die noch nicht vergeben ist.
+    /// Fortlaufend zu zaehlen genuegte nicht: Wer „Uhr 2" entfernt und eine
+    /// neue anlegt, bekaeme sonst eine zweite „Uhr 3".
+    private func naechsterName() -> String {
+        var zahl = 1
+        while uhren.contains(where: { $0.name == lokf("Uhr %d", zahl) }) { zahl += 1 }
+        return lokf("Uhr %d", zahl)
+    }
+
     /// `gedaechtnis` ist ein Parameter, damit die Tests nicht in die echte
     /// Ablage unter Application Support greifen muessen.
     public func anzeigeGeloescht(_ name: String, fuer uhr: Uhr,
@@ -706,8 +715,13 @@ public final class AppZustand {
         if protokoll.count > 300 { protokoll.removeFirst(protokoll.count - 300) }
     }
 
-    /// Legt eine Uhr an und fragt sie sofort ab. Der Name kommt aus der Geraetekennung,
-    /// laesst sich aber aendern — bei mehreren Uhren ist "Kueche" hilfreicher als eine MAC.
+    /// Legt eine Uhr an und fragt sie sofort ab.
+    ///
+    /// Ohne getippten Namen heisst sie „Uhr 1", „Uhr 2" — ein Wort, das man
+    /// ueberschreibt. Weder die Adresse noch das Themenpraefix taugen als
+    /// Vorschlag: Beide stehen ohnehin in der Kennzeile darunter, und das
+    /// Praefix (`hersteller_a86b`) landete als Titel ueber der Sendeansicht,
+    /// wo es niemandem sagt, welche Uhr gemeint ist.
     ///
     /// `.http` wird ausdruecklich eingetragen, nicht weggelassen: Daran
     /// haengt die ganze Lesart von `Uhr.betriebsart`. Weil jede von nun an
@@ -725,7 +739,7 @@ public final class AppZustand {
         // `angelegt` traegt den Zeitpunkt, damit ein Grabstein derselben
         // Adresse ueberstimmt werden kann — sonst liesse sich eine einmal
         // entfernte Uhr nie wieder eintragen.
-        let neue = Uhr(name: name.isEmpty ? host : name, host: host,
+        let neue = Uhr(name: name.isEmpty ? naechsterName() : name, host: host,
                        betriebsart: .http, angelegt: Date())
         var ohneGrabstein = grabsteine
         for merkmal in neue.abgleichmerkmale { ohneGrabstein[merkmal] = nil }
@@ -902,10 +916,6 @@ public final class AppZustand {
                     // heisst „nicht beantwortet" und darf eine schon bekannte
                     // Breite nicht gegen die Vorgabe eintauschen.
                     if let breite { self.uhren[i].panelbreite = breite }
-                    // Ohne Praefix bliebe hier ein leerer Name stehen.
-                    if self.uhren[i].name == self.uhren[i].host, !praefix.isEmpty {
-                        self.uhren[i].name = praefix
-                    }
                     if gattungGewechselt {
                         self.log(lokf("%@ ist eine %@", self.uhren[i].name, gattung.beschriftung))
                     }

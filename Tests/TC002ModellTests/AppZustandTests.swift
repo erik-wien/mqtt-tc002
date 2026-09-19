@@ -88,6 +88,45 @@ final class AppZustandTests: XCTestCase {
                       "Der alte Schlüssel muss nach der Übernahme verschwinden, sonst wandert die Liste bei jedem Start erneut.")
     }
 
+    // MARK: - Wie eine neue Uhr heisst
+
+    /// Ohne getippten Namen heisst eine neue Uhr „Uhr 1", „Uhr 2" — und
+    /// **nicht** nach ihrer Adresse oder ihrem Themenpraefix. Das Praefix
+    /// (`hersteller_a86b`) stand als Titel ueber der Sendeansicht und sagte
+    /// dort niemandem, welche Uhr gemeint ist.
+    func testEineNeueUhrHeisstUhrEins() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = []
+
+        zustand.uhrHinzufuegen(host: "10.0.0.7", sitzung: Belegungsdoppelgaenger.sitzung())
+        zustand.uhrHinzufuegen(host: "10.0.0.8", sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertEqual(Set(zustand.uhren.map(\.name)), ["Uhr 1", "Uhr 2"])
+    }
+
+    /// Ein getippter Name gilt — das Blatt „Neue Uhr" fragt danach.
+    func testEinGetippterNameGilt() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = []
+
+        zustand.uhrHinzufuegen(host: "10.0.0.7", name: "Küche",
+                               sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertEqual(zustand.uhren.first?.name, "Küche")
+    }
+
+    /// Die freie Zahl, nicht die naechste: Wer „Uhr 2" entfernt und eine neue
+    /// anlegt, bekommt wieder „Uhr 2" und keine zweite „Uhr 3".
+    func testDieNaechsteFreieZahlWirdVergeben() {
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.uhren = [Uhr(name: "Uhr 1", host: "10.0.0.1"),
+                         Uhr(name: "Uhr 3", host: "10.0.0.3")]
+
+        zustand.uhrHinzufuegen(host: "10.0.0.9", sitzung: Belegungsdoppelgaenger.sitzung())
+
+        XCTAssertTrue(zustand.uhren.contains { $0.name == "Uhr 2" })
+    }
+
     // MARK: - Ob ein Kennwort hinterlegt ist
 
     /// Ein leeres Feld sieht aus, als waere kein Kennwort gesetzt. Die
