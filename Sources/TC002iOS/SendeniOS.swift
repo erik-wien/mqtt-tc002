@@ -453,33 +453,50 @@ struct SendeniOS: View {
     /// Groesse gibt der Uebersetzer bei `body` auf („unable to type-check
     /// this expression in reasonable time"). Ihn zu teilen ist die Loesung,
     /// nicht ein Kunstgriff.
+    /// Der ganze Bildschirm ist **eine** Liste — so bauen Mail, Nachrichten
+    /// und die Einstellungen ihre Bildschirme. Vorschau und Slotleiste sind
+    /// Zeilen darin, der Verlauf ein Abschnitt (`Verlaufsabschnitt`).
+    ///
+    /// Vorher stand eine `List` in einer `ScrollView`: Eine Liste bekommt dort
+    /// keine eigene Hoehe, brauchte deshalb eine feste — und eine feste Hoehe
+    /// mit wenigen Zeilen verteilt den Rest als Leere. Dazu waren es zwei
+    /// ineinander rollende Bereiche, die am Finger nicht auseinanderzuhalten
+    /// sind. Mit einer Liste rollt der Bildschirm als Ganzes: wenig Verlauf
+    /// heisst wenig Zeilen und darunter nichts, viel Verlauf schiebt die
+    /// Vorschau nach oben weg.
     @ViewBuilder
     private var mitte: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                // Wischen ueber der Vorschau wechselt die angesehene
-                // Uhr, die Punktreihe darunter sagt, die wievielte es
-                // ist — dieselben zwei Bausteine wie am Schreibtisch
-                // (`Uhrenwahl.swift`).
+        List {
+            // Wischen ueber der Vorschau wechselt die angesehene
+            // Uhr, die Punktreihe darunter sagt, die wievielte es
+            // ist — dieselben zwei Bausteine wie am Schreibtisch
+            // (`Uhrenwahl.swift`).
+            VStack(spacing: 0) {
                 Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
                     vorschau(fuer: uhr, angesehen: angesehen)
                 }
                 Uhrenpunkte(zustand: zustand)
+            }
+            .listenzeileOhneRahmen(rand: 0)
+
+            VStack(spacing: 8) {
                 if !passt {
                     Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 blockZeile
-                    .padding(.horizontal)
-                // Der Verlauf fuellt die Flaeche unter den Bloecken mit dem,
-                // was man am haeufigsten will: dasselbe noch einmal. Feste
-                // Hoehe, weil eine Liste in einem Scrollbereich sonst keine
-                // eigene bekommt.
-                Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
-                    .frame(height: 260)
             }
-            .padding(.vertical, 12)
+            .listenzeileOhneRahmen(rand: 16)
+
+            // Der Verlauf fuellt die Flaeche unter den Bloecken mit dem, was
+            // man am haeufigsten will: dasselbe noch einmal.
+            Verlaufsabschnitt(zustand: zustand) { reglerUebernehmen($0) }
         }
+        .listStyle(.plain)
+        // Vor der Ueberschrift stuende sonst der Abstand eines eigenen
+        // Kapitels; hier trennt sie nur Slotleiste und Verlauf, und die
+        // gehoeren zusammen auf einen Bildschirm.
+        .listSectionSpacing(0)
     }
 
     /// Symbol fuer den Stand der waagrechten Ausrichtung — kein Ternaer, sonst
@@ -930,6 +947,19 @@ private struct MeldungLoeschenKnopf: View {
 }
 
 private extension View {
+    /// Eine Zeile, die nicht wie ein Listeneintrag aussehen soll: ohne
+    /// Trennlinie, ohne Zeilenhintergrund, mit eigenem seitlichem Rand.
+    ///
+    /// Vorschau und Slotleiste sind Zeilen der Liste, damit der Bildschirm als
+    /// Ganzes rollt (siehe `mitte`) — aussehen sollen sie deswegen nicht
+    /// danach. Die Vorschau bekommt `rand: 0`, damit sie wie bisher bis an die
+    /// Kante reicht.
+    func listenzeileOhneRahmen(rand: CGFloat) -> some View {
+        listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 8, leading: rand, bottom: 8, trailing: rand))
+    }
+
     /// Haengt das Auswahlmenue an den Titel, aber nur ab zwei Uhren — bei
     /// genau einer waere ein Menue mit einem Eintrag eine Falle, keine
     /// Auswahl, und der Titel bleibt schlichter Text ohne Pfeil.

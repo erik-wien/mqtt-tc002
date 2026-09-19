@@ -18,6 +18,13 @@ import TC002Modell
 /// Schreibtisch wächst sie in den Platz, den das Fenster hergibt. Dieselbe
 /// Anordnung, weil es dieselbe Frage ist — und der häufigste Fall ist
 /// „dasselbe noch einmal".
+///
+/// Zwei Formen, dieselben Zeilen: `Verlaufsliste` bringt ihre eigene `List`
+/// mit, `Verlaufsabschnitt` liefert einen `Section` in die Liste des
+/// Aufrufers. Der Unterschied kommt aus der Umgebung, nicht aus der Sache —
+/// am Telefon ist der ganze Bildschirm eine Liste, in der die Vorschau selbst
+/// eine Zeile ist; am Schreibtisch hat die Vorschau die Werkzeugleiste über
+/// sich und den Inspektor neben sich und ist kein Listeneintrag.
 public struct Verlaufsliste: View {
     @Bindable var zustand: AppZustand
     /// Was beim Antippen geschehen soll — die Ansicht setzt ihre eigenen
@@ -29,42 +36,79 @@ public struct Verlaufsliste: View {
         self.uebernehmen = uebernehmen
     }
 
-    /// `verlaufstand` wird gelesen, damit SwiftUI neu zeichnet: Die Einträge
-    /// liegen in Dateien, und ohne einen beobachteten Wert wüsste niemand,
-    /// dass sich dort etwas getan hat.
-    private var eintraege: [Verlaufseintrag] {
-        _ = zustand.verlaufstand
-        return zustand.verlauf()
+    public var body: some View {
+        let zeilen = Verlaufsbau.zeilen(zustand)
+        if !zeilen.isEmpty {
+            HStack {
+                Text(Verlaufsbau.ueberschrift)
+                    .font(.caption).fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 6)
+            List(zeilen) { zeile in
+                Verlaufszeilenbild(zustand: zustand, zeile: zeile, uebernehmen: uebernehmen)
+            }
+            .listStyle(.plain)
+        }
+    }
+}
+
+/// Dieselben Zeilen als Abschnitt in einer fremden `List`, mit der
+/// Überschrift als `header`.
+///
+/// Eine eigene `List` wäre am Telefon die zweite in der ersten: Sie bekäme
+/// darin keine eigene Höhe, bräuchte deshalb eine feste — und eine feste Höhe
+/// mit wenigen Zeilen verteilt den Rest als Leere. Genau das stand zwischen
+/// Slotleiste und Eingabefeld.
+public struct Verlaufsabschnitt: View {
+    @Bindable var zustand: AppZustand
+    let uebernehmen: (Verlaufseintrag) -> Void
+
+    public init(zustand: AppZustand, uebernehmen: @escaping (Verlaufseintrag) -> Void) {
+        self.zustand = zustand
+        self.uebernehmen = uebernehmen
     }
 
-    private static let zeitform: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .short
-        f.timeStyle = .short
-        f.doesRelativeDateFormatting = true
-        return f
-    }()
-
-    /// Was jetzt auf der angesehenen Uhr liegt — auch, was andere dorthin
-    /// geschickt haben. Die Uhr nennt ihre Anzeigen beim Namen, mehr nicht;
-    /// was darin steht, weiss sie nicht zu sagen (Gerätereferenz, §3.5).
-    private var aufDerUhr: (namen: [String], quelle: AppZustand.Anzeigenquelle) {
-        zustand.anzeigenDerAktivenMitQuelle()
+    public var body: some View {
+        let zeilen = Verlaufsbau.zeilen(zustand)
+        if !zeilen.isEmpty {
+            Section {
+                ForEach(zeilen) { zeile in
+                    Verlaufszeilenbild(zustand: zustand, zeile: zeile, uebernehmen: uebernehmen)
+                }
+            } header: {
+                // Dieselbe Auszeichnung wie am Schreibtisch, und ein eigener
+                // Zeilenrand: Der Kopf einer `List(.plain)` bringt sonst den
+                // Abstand eines eigenen Kapitels mit, und zwischen Slotleiste
+                // und Verlauf stand damit wieder eine leere Flaeche.
+                Text(Verlaufsbau.ueberschrift)
+                    .font(.caption).fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
+            }
+        }
     }
+}
 
-    /// Eine Zeile der Liste — entweder ein eigener Eintrag des Verlaufs oder
-    /// eine Anzeige, die auf der Uhr liegt und von der die App nichts weiß.
-    ///
-    /// Ein Typ und nicht zwei Abschnitte: Für den Leser ist beides dasselbe —
-    /// eine Meldung auf der Uhr. Dass die App von der einen alles weiß und von
-    /// der anderen nur den Namen, ist ein Unterschied in der Auskunft, nicht
-    /// in der Sache; er zeigt sich darin, dass Felder leer bleiben.
-    private struct Zeile: Identifiable {
-        let id: String
-        let eintrag: Verlaufseintrag?
-        /// Der Name der Anzeige auf der Uhr — gesetzt, solange sie dort liegt.
-        let aufDerUhr: String?
-    }
+/// Eine Zeile der Liste — entweder ein eigener Eintrag des Verlaufs oder
+/// eine Anzeige, die auf der Uhr liegt und von der die App nichts weiß.
+///
+/// Ein Typ und nicht zwei Abschnitte: Für den Leser ist beides dasselbe —
+/// eine Meldung auf der Uhr. Dass die App von der einen alles weiß und von
+/// der anderen nur den Namen, ist ein Unterschied in der Auskunft, nicht
+/// in der Sache; er zeigt sich darin, dass Felder leer bleiben.
+struct Verlaufszeile: Identifiable {
+    let id: String
+    let eintrag: Verlaufseintrag?
+    /// Der Name der Anzeige auf der Uhr — gesetzt, solange sie dort liegt.
+    let aufDerUhr: String?
+}
+
+/// Was beide Formen teilen: die Überschrift und die Zeilen, die darunter
+/// stehen.
+enum Verlaufsbau {
+    static let ueberschrift: LocalizedStringKey = "Auf der Uhr und zuletzt geschickt"
 
     /// Verlauf und Uhrenstand in einer Liste.
     ///
@@ -73,11 +117,18 @@ public struct Verlaufsliste: View {
     /// ältere auf demselben Platz sind überschrieben. Was auf der Uhr liegt,
     /// ohne dass ein Eintrag dazu passt, kommt von fremder Hand und steht mit
     /// seinem blanken Namen darüber.
-    private var zeilen: [Zeile] {
+    ///
+    /// `verlaufstand` wird gelesen, damit SwiftUI neu zeichnet: Die Einträge
+    /// liegen in Dateien, und ohne einen beobachteten Wert wüsste niemand,
+    /// dass sich dort etwas getan hat.
+    @MainActor
+    static func zeilen(_ zustand: AppZustand) -> [Verlaufszeile] {
+        _ = zustand.verlaufstand
+        let eintraege = zustand.verlauf()
         let stand = zustand.anzeigenDerAktivenMitQuelle().namen
         var offen = Set(stand)
         var gesehen = Set<Int>()
-        var aus: [Zeile] = []
+        var aus: [Verlaufszeile] = []
         for eintrag in eintraege {
             var name: String?
             if let platz = eintrag.platz, !gesehen.contains(platz) {
@@ -88,57 +139,62 @@ public struct Verlaufsliste: View {
                     gesehen.insert(platz)
                 }
             }
-            aus.append(Zeile(id: eintrag.id.uuidString, eintrag: eintrag, aufDerUhr: name))
+            aus.append(Verlaufszeile(id: eintrag.id.uuidString, eintrag: eintrag, aufDerUhr: name))
         }
         // Fremdes zuerst: Es ist das, was man nicht erwartet hat.
         let fremd = stand.filter { offen.contains($0) }
-            .map { Zeile(id: "uhr-\($0)", eintrag: nil, aufDerUhr: $0) }
+            .map { Verlaufszeile(id: "uhr-\($0)", eintrag: nil, aufDerUhr: $0) }
         return fremd + aus
     }
+}
 
-    public var body: some View {
-        if !zeilen.isEmpty {
-            HStack {
-                Text("Auf der Uhr und zuletzt geschickt")
-                    .font(.caption).fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 6)
-            List(zeilen) { zeile in
-                zeilenbild(zeile)
-                    .swipeActions(edge: .trailing) {
-                        if let name = zeile.aufDerUhr {
-                            Button(role: .destructive) {
-                                Task { await zustand.loeschen(name) }
-                            } label: {
-                                Label("Löschen", systemImage: "trash")
-                            }
-                        } else if let eintrag = zeile.eintrag {
-                            Button(role: .destructive) {
-                                zustand.verlaufVergessen(eintrag.id)
-                            } label: {
-                                Label("Löschen", systemImage: "trash")
-                            }
-                        }
+/// Eine Zeile samt ihren Wischgesten — einmal geschrieben, von beiden Formen
+/// benutzt. Die Gesten stehen hier und nicht am Aufrufer: Sie gehören zur
+/// Zeile, und zweimal geschrieben liefen sie auseinander.
+struct Verlaufszeilenbild: View {
+    @Bindable var zustand: AppZustand
+    let zeile: Verlaufszeile
+    let uebernehmen: (Verlaufseintrag) -> Void
+
+    private static let zeitform: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        f.timeStyle = .short
+        f.doesRelativeDateFormatting = true
+        return f
+    }()
+
+    var body: some View {
+        zeilenbild
+            .swipeActions(edge: .trailing) {
+                if let name = zeile.aufDerUhr {
+                    Button(role: .destructive) {
+                        Task { await zustand.loeschen(name) }
+                    } label: {
+                        Label("Löschen", systemImage: "trash")
                     }
-                    .swipeActions(edge: .leading) {
-                        if let name = zeile.aufDerUhr {
-                            Button { zustand.umschalten(auf: name) } label: {
-                                Label("Zeigen", systemImage: "eye")
-                            }
-                            .tint(.blue)
-                        }
+                } else if let eintrag = zeile.eintrag {
+                    Button(role: .destructive) {
+                        zustand.verlaufVergessen(eintrag.id)
+                    } label: {
+                        Label("Löschen", systemImage: "trash")
                     }
+                }
             }
-            .listStyle(.plain)
-        }
+            .swipeActions(edge: .leading) {
+                if let name = zeile.aufDerUhr {
+                    Button { zustand.umschalten(auf: name) } label: {
+                        Label("Zeigen", systemImage: "eye")
+                    }
+                    .tint(.blue)
+                }
+            }
     }
 
     /// Eine Zeile, für beide Herkünfte dieselbe Form: Ein Druck übernimmt die
     /// Regler, wo es welche gibt.
     @ViewBuilder
-    private func zeilenbild(_ zeile: Zeile) -> some View {
+    private var zeilenbild: some View {
         if let eintrag = zeile.eintrag {
             Button { uebernehmen(eintrag) } label: {
                 self.zeile(eintrag, aufDerUhr: zeile.aufDerUhr != nil)
