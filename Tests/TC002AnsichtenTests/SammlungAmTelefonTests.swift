@@ -102,6 +102,21 @@ final class SammlungAmTelefonTests: XCTestCase {
                        "Der Import hebt wieder eine URL auf.")
     }
 
+    /// Die Sammlung steht oben, das Hinzufuegen darunter. Umgekehrt nahm das
+    /// Feld fuer die LaMetric-Nummer die obere Haelfte des Blattes ein, und die
+    /// Icons begannen unterhalb des Bildschirmrands — wer das Blatt oeffnet,
+    /// will aber fast immer waehlen, nicht nachladen.
+    func testDieSammlungStehtVorDemHinzufuegen() throws {
+        let quelle = try blatt()
+        guard let liste = quelle.range(of: "ForEach(Leinwandgroesse.allCases) { gruppe($0) }"),
+              let zufuegen = quelle.range(of: "\n                hinzufuegen\n") else {
+            return XCTFail("Das Blatt baut seine Liste nicht mehr aus Gruppen und „Hinzufügen“.")
+        }
+        XCTAssertTrue(liste.lowerBound < zufuegen.lowerBound,
+                      "Das Hinzufügen steht wieder über der Sammlung; die Icons beginnen "
+                      + "dann unterhalb des Bildschirmrands.")
+    }
+
     /// Gemalt wird am Telefon weiterhin nicht: Ein 8 × 8-Raster mit dem Finger
     /// ist keine Arbeitsfläche. Ansehen, suchen, hinzufügen und verschicken ist
     /// kein Malen — die Leinwand bleibt draußen.

@@ -105,7 +105,11 @@ struct IconsblattiOS: View {
     /// dem Nummernfeld nur durch Tippen daneben heraus.
     @FocusState private var lametricFokus: Bool
 
-    private static let spalten = 5
+    /// Vier statt fuenf: Bei fuenf blieben rund 60 Punkte je Kachel, und
+    /// Namen wie „Animated cloud" oder „Best Real Fire Flame" standen auch
+    /// zweizeilig noch mit „…" da. Ein Icon, dessen Name nicht zu lesen ist,
+    /// muss man am Bild erraten.
+    private static let spalten = 4
     private static let zwischenraum = 10.0
 
     /// Die drei Bestaende dieser Installation. Nicht `Editorbestand.eigene`:
@@ -133,15 +137,25 @@ struct IconsblattiOS: View {
 
     var body: some View {
         NavigationStack(path: $pfad) {
+            // Die Sammlung zuerst, das Hinzufuegen darunter: Wer das Blatt
+            // oeffnet, will fast immer waehlen. Oben stand zuerst ein Feld
+            // fuer eine LaMetric-Nummer, und die Icons begannen unterhalb des
+            // halben Bildschirms.
             List {
-                hinzufuegen
                 auswahl
                 ForEach(Leinwandgroesse.allCases) { gruppe($0) }
                 if gefilterterBestand.isEmpty {
                     Text("Nichts gefunden. Über „Hinzufügen“ kommt Neues herein.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
+                hinzufuegen
             }
+            // Ohne das stand zwischen Titel und erster Karte ein leeres Band
+            // von rund 45 Punkten: Eine gruppierte `List` haelt oben Platz
+            // fuer eine Abschnittsueberschrift frei, auch wo keine steht.
+            // `listSectionSpacing` erreicht das nicht — das regelt den
+            // Abstand *zwischen* Abschnitten, nicht den Rand darueber.
+            .contentMargins(.top, 8, for: .scrollContent)
             .searchable(text: $filter.suche, prompt: Text("Suchen"))
             .navigationTitle("Icons")
             .navigationBarTitleDisplayMode(.inline)
