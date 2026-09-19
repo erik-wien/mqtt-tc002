@@ -58,7 +58,7 @@
 "Woher die Blöcke wissen, was belegt ist" = "How the blocks know what is occupied";
 "Auch ein Block mit bekanntem Inhalt stellt beim Antippen nicht immer die Regler wieder her: Das gelingt nur, wenn diese Installation die Sendung selbst mitgelesen hat und der Platz seither nicht von anderer Stelle überschrieben wurde — sonst wählt das Antippen nur den Platz, ohne die Regler zu verändern." = "Even a block with known content does not always restore the controls when tapped: that only works if this installation overheard the send itself and the slot has not since been overwritten from elsewhere — otherwise tapping only picks the slot without changing the controls.";
 "Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart." = "It works out the width of the typeset text anyway, and the rule hangs on that. If the text fits the available width (52 pixels, 42 with an icon), it goes to the clock as a rigid pixel image and stands still — small, fast, exact. If it does not fit, the app rasterizes the scroll itself and sends it as an animated GIF that the clock plays (Device Reference, §4.2a): the text scrolls through, with umlauts and in the chosen font.";
-"Wie viele Einzelbilder das ergibt und wie groß die Nutzlast wird, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man. Unter der Vorschau steht davon nur, was ein Befund ist: Ein langer Text ergibt ein großes GIF, und wo die Grenze der Uhr liegt, weiß niemand (Gerätereferenz, §4.2a führt das als offene Frage) — wird die Nutzlast auffällig groß, sagt es eine Zeile dort von selbst." = "How many frames that makes and how large the payload gets is the tooltip on the ⏎ in the input field — it answers \"what happens when I press this\", and that is where you press. Below the preview only a finding remains: a long text makes a large GIF, and nobody knows where the clock's limit lies (Device Reference, §4.2a lists this as an open question) — if the payload gets noticeably large, a line there says so of its own accord.";
+"Wie viele Einzelbilder das ergibt, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man. Eine Größenangabe steht dort nicht: Wo die Grenze der Uhr liegt, sagt sie selbst nicht (Gerätereferenz, §4.2a führt das als offene Frage), und eine Zahl ohne Bezugsgröße beunruhigt, ohne zu helfen." = "How many frames that makes is the tooltip on the ⏎ in the input field — it answers \"what happens when I press this\", and that is where you press. No size is given there: the clock does not say where its limit lies (Device Reference, §4.2a lists this as an open question), and a number without a reference value worries without helping.";
 "Seitenwechsel und blockierende Anzeigen" = "Page change and blocking displays";
 "Löschen und Dauer" = "Delete and duration";
 "Zeichen: Umlaute und Sonderzeichen" = "Characters: umlauts and punctuation";
@@ -160,7 +160,8 @@
 "Nachladen" = "Fetch";
 "%@ geöffnet (%d Bilder)." = "%@ opened (%d frames).";
 "%@ geöffnet." = "%@ opened.";
-"%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst." = "%d rectangles — horizontal runs of the same color are merged.";
+"%d Rechtecke" = "%d rectangles";
+"Waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst." = "Horizontal runs of the same color are merged into one rectangle before sending.";
 "Dauer (Sek.)" = "Duration (sec.)";
 "Uhr entscheidet" = "Clock decides";
 "Erst unter „Einstellungen“ eine Uhr eintragen und abfragen." = "First enter and query a clock under Settings.";
@@ -218,7 +219,7 @@
 "Liegt unter dieser Nummer — oder, wo es keine gibt, unter diesem Namen — schon etwas, steht das im Blatt und nennt den Namen; der Knopf heißt dann „Ersetzen“ statt „Öffnen“. Abgewiesen wird es nicht: Dasselbe Icon in einer besseren Fassung noch einmal zu holen ist der häufigste Fall, und ersetzt wird beim Sichern ohnehin. Falsch war nicht das Ersetzen, sondern dass man es erst hinterher merkte." = "If something is already filed under that number — or, where there is none, under that name — the sheet says so and names it; the button then reads \"Replace\" instead of \"Open\". It is not refused: fetching the same icon again in a better version is the commonest case, and saving replaces anyway. What was wrong was not the replacing, but only noticing it afterwards.";
 "War das Gelöschte gerade geöffnet, bleibt das Bild auf der Leinwand stehen, nur Name und Nummer werden geleert — sonst legte ein erneutes „Sichern“ es unter demselben Namen wieder an." = "If what was deleted happened to be open, the drawing stays on the canvas and only name and number are cleared — otherwise saving again would file it under the same name once more.";
 "„Aus“ und „schwarz gemalt“ sind zweierlei, auch nach dem Sichern: Ein ausgeschaltetes Pixel wird im GIF durchsichtig abgelegt, ein schwarz gemaltes deckend schwarz. Auf der Uhr sieht beides gleich aus, weil ihr Grund schwarz ist — im Editor kommt ein wieder geöffnetes Bild aber so zurück, wie es gemalt war. Dass „aus“ durchsichtig bleibt, ist nebenbei die Bedingung dafür, dass die Laufschrift auf der Uhr sauber läuft (Gerätereferenz, §4.2a)." = "\"Off\" and \"painted black\" are two different things, even after saving: a pixel switched off is stored transparent in the GIF, one painted black opaquely black. On the clock both look the same, because its ground is black — but in the editor a drawing opened again comes back the way it was drawn. That \"off\" stays transparent is incidentally the condition for scrolling text running cleanly on the clock (Device Reference, §4.2a).";
-"Der Hinweis unter der Leinwand zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Ein einzelnes Bild geht so hinaus — klein und exakt. Mehrere gehen als ein animiertes GIF, denn Rechtecke kennen keine Zeit; was dabei an Nutzlast zusammenkommt, gilt wie bei der Laufschrift unter „Senden“ — ein langes Laufbild wird groß, und wo die Grenze der Uhr liegt, weiß niemand." = "The note below the canvas shows how many rectangles the clock finally gets: horizontal runs of the same color are merged into one rectangle before sending. A single frame goes out that way — small and exact. Several go out as one animated GIF, because rectangles know no time; what that adds up to in payload holds as it does for scrolling text under Send — a long moving picture gets large, and where the clock's limit lies nobody knows.";
+"Der Hinweis unter der Leinwand zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Ein einzelnes Bild geht so hinaus — klein und exakt. Mehrere gehen als ein animiertes GIF, denn Rechtecke kennen keine Zeit; darunter steht dann, aus wie vielen Einzelbildern es besteht." = "The note below the canvas shows how many rectangles the clock finally gets: horizontal runs of the same color are merged into one rectangle before sending. A single frame goes out that way — small and exact. Several go out as one animated GIF, because rectangles know no time; below it then stands how many frames it consists of.";
 /* SendenView.swift */
 "Slot" = "Slot";
 "Slot %d auf der Uhr löschen" = "Delete slot %d on the clock";
@@ -293,7 +294,6 @@
 "wird geprüft …" = "checking …";
 /* VorschauView.swift */
 "Vorschau der Anzeige, %d mal %d Pixel" = "Preview of the display, %d by %d pixels";
-"Hinaus geht der Text samt Reglern · %@" = "What goes out is the text with its settings · %@";
 /* ZielauswahlView.swift */
 "An welche Uhr senden?" = "Send to which clock?";
 "Alle" = "All";
@@ -384,6 +384,7 @@
 "Größe %d" = "Size %d";
 "Großbuchstaben" = "Capital letters";
 "Laufschrift" = "Scrolling";
+"%@ · %d Bilder" = "%@ · %d frames";
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
 
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung." = "Only an approximation — the clock sets this text itself and shows it differently. If it scrolls because it does not fit, the scroll speed of this message applies.";
@@ -634,16 +635,10 @@
 
 // Die Groessenangabe der Nutzlast, bis 14.09.2026 ein Ternaer mit zwei blanken
 // String-Zweigen und damit unuebersetzt (TC002Ansichten/SendenView.swift).
-"unter 1 KB Nutzlast" = "under 1 KB payload";
-"rund %d KB Nutzlast" = "around %d KB payload";
 
 // Die Nutzlastzeile, seit 14.09.2026 eine fuer „Senden" und den Editor
 // (TC002Ansichten/Nutzlastzeile.swift). Der Satzanfang der Warnung ist
 // gemeinsam, was kleiner hilft, bringt jede Stelle selbst mit.
-"%@ · %d Bilder · %@" = "%@ · %d frames · %@";
-"Eine auffällig große Nutzlast — %@" = "A noticeably large payload — %@";
-"nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts." = "only a shorter text makes it smaller, the speed changes nothing.";
-"nur weniger Einzelbilder machen sie kleiner, das Tempo ändert daran nichts." = "only fewer frames make it smaller, the speed changes nothing.";
 
 // Der iCloud-Abgleich (14.09.2026). Meldungen aus dem Modell — sie gehen als
 // gewoehnliches String ins Protokoll bzw. in die Fehlerleiste und muessen

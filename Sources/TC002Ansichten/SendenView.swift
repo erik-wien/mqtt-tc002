@@ -322,22 +322,6 @@ public struct SendenView: View {
                                vorberechnet: mass == .tc002 ? laufschriftURI : nil)
     }
 
-    /// Wie viele Bytes an eine NG-Uhr wirklich hinausgehen: der Rumpf, den
-    /// `Anzeigen.nutzlast` für diese Gattung baut — Text, Regler und das Icon
-    /// als Daten-URI. 0 auf der Werksfirmware, wo die Frage nicht gestellt wird.
-    ///
-    /// Das Icon wird dafür von der Platte gelesen; deshalb abseits des
-    /// Hauptthreads, wie die Laufschrift selbst.
-    private func ngNutzlastBytes() async -> Int {
-        guard gattung.setztSelbst else { return 0 }
-        let (o, icon, sammlung) = (optionen, gewaehltesIcon, sammlung)
-        return await Task.detached(priority: .userInitiated) {
-            let uri = icon.flatMap { try? sammlung.datenURI(fuer: $0) }
-            let rumpf = try? NGNutzlast.anzeige(o, iconDatenURI: uri, iconKante: icon?.kante ?? 8)
-            return rumpf?.utf8.count ?? 0
-        }.value
-    }
-
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
     /// die einzige Stelle, an der „Großbuchstaben" wirkt. Das Eingabefeld
     /// bleibt unangetastet, an ihm hängt nur `text`. Nebeneffekt von
@@ -400,12 +384,6 @@ public struct SendenView: View {
         return ((try? Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)) ?? [])
             .map(\.pixel)
     }
-
-    /// Wie groß die nächste Nutzlast wird. Bei der Werksfirmware ist das das
-    /// Lauf-GIF; bei NG geht davon nichts hinaus, sondern der Text samt
-    /// Reglern (`Anzeigen.nutzlast`) — die Zahl wird deshalb im Rechenlauf
-    /// unten je nach Gattung verschieden ermittelt.
-    @State private var nutzlastBytes = 0
 
     /// Über welchem Slotblock der Zeiger gerade steht — daran hängt allein
     /// das ⊗ (siehe `slotZeile`). Am iPad bleibt der Wert `nil`: Dort gibt es
@@ -510,19 +488,6 @@ public struct SendenView: View {
                                 .masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis,
                              contentMode: .fit)
                 .frame(maxWidth: .infinity)
-                // Sichtbar bleibt unter der Vorschau nur, was ein Befund ist:
-                // eine auffaellig grosse Nutzlast — niemand weiss, wo die Uhr
-                // aussteigt (§4.2a). Der Stand darunter ist kein Befund und
-                // steht am Sendezeichen (`nutzlastauskunft`), die Erklaerung
-                // zur Naeherung am Zeichen neben der Punktreihe.
-                if !gattung.setztSelbst, !passt, nutzlastBytes > Nutzlastzeile.heikelAb {
-                    Nutzlastzeile(
-                        art: lok("Laufschrift"),
-                        bilder: laufschriftFrames.count,
-                        bytes: nutzlastBytes,
-                        rat: lok("nur ein kürzerer Text macht sie kleiner, das Tempo ändert daran nichts."))
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
             }
             // Nicht mehr `maxHeight: .infinity`: Der Bereich ist seit dem
             // Seitenverhaeltnis oben so hoch, wie die Uhr ihn braucht. Der
@@ -634,7 +599,6 @@ public struct SendenView: View {
         .task(id: laufschriftSchluessel) {
             guard !passt else {
                 laufschriftFrames = []; laufschriftURI = ""
-                nutzlastBytes = await ngNutzlastBytes()
                 return
             }
             // Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64
@@ -656,9 +620,6 @@ public struct SendenView: View {
             guard !Task.isCancelled else { return }
             laufschriftFrames = frames
             laufschriftURI = uri
-            // Bei NG geht das eben gebaute GIF nicht hinaus — dort zaehlt, was
-            // `Anzeigen` wirklich schickt.
-            nutzlastBytes = gattung.setztSelbst ? await ngNutzlastBytes() : uri.utf8.count
         }
     }
 
@@ -1030,13 +991,8 @@ public struct SendenView: View {
     /// im Warnfall sichtbar unter der Vorschau, und zwei Fassungen wären zwei
     /// Übersetzungsschlüssel.
     private var nutzlastauskunft: String? {
-        guard nutzlastBytes > 0 else { return nil }
-        if gattung.setztSelbst {
-            return lokf("Hinaus geht der Text samt Reglern · %@", Nutzlastzeile.groesse(nutzlastBytes))
-        }
-        guard !passt else { return nil }
-        return Nutzlastzeile.stand(art: lok("Laufschrift"), bilder: laufschriftFrames.count,
-                                   bytes: nutzlastBytes)
+        guard !gattung.setztSelbst, !passt, !laufschriftFrames.isEmpty else { return nil }
+        return Sendungsstand.satz(art: lok("Laufschrift"), bilder: laufschriftFrames.count)
     }
 
     /// Ob es überhaupt etwas zu senden gibt und jemanden, der es nimmt.

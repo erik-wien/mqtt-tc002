@@ -42,6 +42,18 @@ Erarbeitet am Gerät, jede Zeile ist einmal falsch gewesen.
 - **Erklärtexte: ein Satz.** Was länger ist, gehört hinter ein `Hilfezeichen`
   (?) oder in die Hilfe. Zwei Absätze unter einem Schalter heißen, dass der
   Schalter falsch heißt oder am falschen Ort steht.
+- **Keine Rechtfertigung, wo nichts im Weg steht.** Wörtlich verlangt:
+  *„weniger direkte Rechtfertigungsversuche, wenn keine direkte Gefahr
+  besteht. Gerne aber mehr (?)"*. Sichtbar bleibt, was jemanden aufhält — ein
+  gesperrter Knopf sagt daneben, warum. Alles andere, was bloß erklärt, wie
+  etwas zustande kommt, wandert hinter das Zeichen. Die Zahl steht da, der
+  Grund dahinter.
+- **Keine Zahl ohne Bezugsgröße.** Wörtlich: *„Die einzige Engstelle ist die
+  Uhr selbst … Aber iCloud und App ist das komplett egal."* Kilobyte in der
+  Oberfläche beunruhigen, solange niemand sagen kann, wovon sie ein Teil sind
+  — und die Werksfirmware gibt weder freien Speicher noch eine Grenze heraus.
+  Was bleibt, ist eine Aussage über die Sache selbst: die Zahl der
+  Einzelbilder, nicht die der Bytes.
 - **Keine typografischen Investitionen.** Ausdrückliche Projektentscheidung:
   Die Gerätschriften sind vom Aussterben bedroht, sobald AWTRIX NG übernimmt.
 

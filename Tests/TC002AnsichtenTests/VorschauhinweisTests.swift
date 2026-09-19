@@ -67,32 +67,41 @@ final class VorschauhinweisTests: XCTestCase {
         }
     }
 
-    /// Sichtbar bleibt nur der Befund.
-    func testUnterDerVorschauStehtNurNochDieWarnung() throws {
+    /// Unter der Vorschau steht gar nichts mehr.
+    ///
+    /// Dort hing zuletzt eine Warnung über eine auffällig große Nutzlast.
+    /// Der Auftraggeber: *„Die einzige Engstelle ist die Uhr selbst … Aber
+    /// iCloud und App ist das komplett egal."* Die Uhr sagt nicht, was sie
+    /// fasst (`SendungsstandTests` führt aus, warum auch ein Prozentsatz nicht
+    /// zu haben ist), und eine Zahl ohne Bezugsgröße beunruhigt, ohne zu
+    /// helfen.
+    func testUnterDerVorschauStehtKeineGroessenwarnung() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(text.contains("nutzlastBytes > Nutzlastzeile.heikelAb"),
-                      "die Nutzlastzeile steht wieder dauerhaft unter der Vorschau statt erst "
-                      + "über der Schwelle")
-        XCTAssertTrue(text.contains("Nutzlastzeile("),
-                      "die Warnung über eine auffällig große Nutzlast ist ganz verschwunden — "
-                      + "sie ist ein Befund und muss sichtbar bleiben")
+        XCTAssertFalse(text.contains("heikelAb"),
+                       "die Schwelle ist wieder da — dann warnt die Oberfläche wieder über eine "
+                       + "Zahl, zu der es keine Bezugsgröße gibt")
+        XCTAssertFalse(text.contains("Nutzlastzeile"),
+                       "die Nutzlastzeile steht wieder unter der Vorschau")
     }
 
-    /// Und der Stand steht am Sendezeichen, nicht nirgends.
-    func testDieNutzlastStehtAmSendezeichen() throws {
+    /// Und was hinausgeht, steht am Sendezeichen — die Art und die Zahl der
+    /// Einzelbilder, keine Größe.
+    func testWasHinausgehtStehtAmSendezeichen() throws {
         let sendenView = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         XCTAssertTrue(sendenView.contains("auskunft: nutzlastauskunft"),
                       "das Eingabefeld bekommt nicht mehr gesagt, was hinausgeht")
         let feld = try quelltext("Sources/TC002Ansichten/Eingabefeld.swift")
         XCTAssertTrue(feld.contains("auskunft ?? lok(\"Senden\")"),
-                      "das ⏎ zeigt die Auskunft nicht mehr — dann steht die Nutzlastgröße nirgends")
-        // Die Sprachausgabe bekommt weiter das Wort, nicht die Nutzlast: Sie
+                      "das ⏎ zeigt die Auskunft nicht mehr — dann steht nirgends, was hinausgeht")
+        XCTAssertTrue(sendenView.contains("Sendungsstand.satz(art: lok(\"Laufschrift\")"),
+                      "die Auskunft nennt nicht mehr Art und Zahl der Einzelbilder")
+        // Die Sprachausgabe bekommt weiter das Wort, nicht die Auskunft: Sie
         // sagt, was der Knopf tut. Seit der Knopf eine Sekunde lang gelungen
         // aussieht, sind es zwei Wörter — beide sagen eine Handlung, keines
         // eine Größe.
         XCTAssertTrue(feld.contains("lok(\"Hinausgeschickt\") : lok(\"Senden\")"),
                       "die Sprachausgabe sagt nicht mehr, was der Knopf tut")
         XCTAssertFalse(feld.contains("accessibilityLabel(Text(auskunft"),
-                       "die Sprachausgabe liest die Nutzlastgröße vor statt der Handlung")
+                       "die Sprachausgabe liest die Auskunft vor statt der Handlung")
     }
 }

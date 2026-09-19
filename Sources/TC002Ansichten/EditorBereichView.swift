@@ -48,11 +48,6 @@ public struct EditorBereichView: View {
     @State private var spielAb = false
     @State private var spielTask: Task<Void, Never>?
     @State private var laeuft = false
-    /// Wie gross das naechste Laufbild wuerde. Gerechnet wird es abseits des
-    /// Hauptthreads (siehe `.task(id:)` im `body`), deshalb ein Zustand und
-    /// keine abgeleitete Groesse: GIF kodieren und Base64 darueber bei jedem
-    /// Strich liesse das Malen stocken.
-    @State private var laufbildBytes = 0
     /// Eine Sekunde nach einer gelungenen Sendung: gruener Haken an der
     /// Stelle des Sendeknopfs. Wie `gelungen` in den beiden Sendeansichten.
     @State private var gelungen = false
@@ -321,19 +316,6 @@ public struct EditorBereichView: View {
     /// Belegt ist ein Platz, wenn irgendeine der Zieluhren ihn schon kennt.
     /// Dieselbe Grundlage wie unter „Senden" und „Verlauf": was die Uhr
     /// meldet, sonst was die App sich gemerkt hat.
-    /// Woran die Nutzlast des Laufbilds haengt: die Einzelbilder und ihre
-    /// Standzeit, nicht die Auswahl. Zwischen den Bildern zu blaettern aendert
-    /// an dem, was hinausginge, nichts, soll die Rechnung also auch nicht noch
-    /// einmal anstossen.
-    private struct Laufbildstand: Equatable {
-        let bilder: [[String?]]
-        let verzoegerung: Double
-    }
-
-    private var laufbildstand: Laufbildstand {
-        Laufbildstand(bilder: leinwand.bilder, verzoegerung: leinwand.verzoegerung)
-    }
-
     /// Die Rechnung steht im Modell (`AppZustand.belegtePlaetze`) — sie fragt
     /// die angesehene Uhr, dieselbe, aus der `slotzustand` den Inhalt nimmt.
     /// Hier stand sie zuvor dreimal wortgleich und fragte die Zielmenge; das
@@ -456,20 +438,6 @@ public struct EditorBereichView: View {
         .onChange(of: phase) { _, neu in
             if neu != .active { arbeitsstandSichern() }
         }
-        // Dieselbe Rechnung wie in `senden()` — die Zahl soll die sein, die
-        // wirklich hinausginge. Abseits des Hauptthreads und nur bei
-        // tatsaechlicher Aenderung, wie die Laufschrift unter „Senden".
-        .task(id: laufbildstand) {
-            guard leinwand.bilder.count > 1 else { laufbildBytes = 0; return }
-            let (bilder, breite, hoehe) = (leinwand.bilder, leinwand.breite, leinwand.hoehe)
-            let verzoegerung = leinwand.verzoegerung
-            let bytes = await Task.detached(priority: .userInitiated) {
-                ((try? Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
-                                              verzoegerung: verzoegerung)) ?? "").utf8.count
-            }.value
-            guard !Task.isCancelled else { return }
-            laufbildBytes = bytes
-        }
         // `onDismiss` und nicht unmittelbar in `einlesen()`: Eine Rueckfrage,
         // die im selben Durchlauf aufgeht, in dem das Blatt zugeht,
         // verschluckt SwiftUI — der Knopf haette dann nichts getan.
@@ -537,9 +505,14 @@ public struct EditorBereichView: View {
     @ViewBuilder
     private var fusstexte: some View {
         if groesse.sendbar {
-            Text(lokf("%d Rechtecke — waagrechte Läufe gleicher Farbe werden zusammengefasst.",
-                      feld.alsDrawBefehle().count))
-                .font(.footnote).foregroundStyle(.secondary)
+            // Die Zahl steht da, die Erklaerung dahinter liegt hinter dem (?):
+            // Wie die Rechtecke zustande kommen, muss nicht jeder lesen, der
+            // nur sehen will, wie viele es sind.
+            HStack(spacing: 6) {
+                Text(lokf("%d Rechtecke", feld.alsDrawBefehle().count))
+                Hilfezeichen(lok("Waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst."))
+            }
+            .font(.footnote).foregroundStyle(.secondary)
         }
         // Nur als Auffangnetz: Die Meldung steht im Abschnitt „Dieses Bild",
         // gleich unter den Knoepfen — hier bleibt sie fuer den einen Fall, in
@@ -1337,17 +1310,11 @@ public struct EditorBereichView: View {
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
-            // Dieselbe Zeile wie unter „Senden" (`Nutzlastzeile`), nicht eine
-            // zweite daneben — hier ist die Gefahr sogar groesser: Ein
-            // 52×16-Laufbild mit vielen Einzelbildern wird schnell gross.
-            // Nur bei mehreren: Ein einzelnes Bild geht als `draw` hinaus und
-            // ist klein; wie klein, sagt die Rechteckzahl in der Fusszeile.
+            // Nur bei mehreren Einzelbildern: Bei einem gibt es nichts zu
+            // zaehlen. Derselbe Satz wie unter „Senden" (`Sendungsstand`).
             if leinwand.bilder.count > 1 {
-                Nutzlastzeile(
-                    art: lok("Animation"),
-                    bilder: leinwand.bilder.count,
-                    bytes: laufbildBytes,
-                    rat: lok("nur weniger Einzelbilder machen sie kleiner, das Tempo ändert daran nichts."))
+                Text(Sendungsstand.satz(art: lok("Animation"), bilder: leinwand.bilder.count))
+                    .font(.footnote).foregroundStyle(.secondary)
             }
             // Zwei Zeilen: die Bloecke oben, Empfaenger und Sendeknopf
             // darunter rechts.
