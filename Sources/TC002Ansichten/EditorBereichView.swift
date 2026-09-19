@@ -95,6 +95,9 @@ public struct EditorBereichView: View {
     ///
     /// Gemerkt wird der Inhalt, nicht die URL — warum, steht bei
     /// `dateiUebernehmen`.
+    /// Welchen Block der Zeiger gerade ueberfaehrt — `nil` heisst keinen.
+    /// Nur daran haengt das ⊗; am Finger tut es das Kontextmenue.
+    @State private var ueberfahrenerPlatz: Int?
     @State private var zeigeDateiImport = false
     @State private var zeigeImportBlatt = false
     @State private var importDaten: Data?
@@ -1222,11 +1225,20 @@ public struct EditorBereichView: View {
                           mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002)
             }
             .buttonStyle(.plain)
-            // Wie unter „Senden": das ⊗ ueber dem Block, den es betrifft.
+            .onHover { drueber in ueberfahrenerPlatz = drueber ? i : nil }
+            // Dieselbe Bedienung wie unter „Senden": Am Finger das
+            // Kontextmenue, am Zeiger zusaetzlich das ⊗ beim Ueberfahren. Ein
+            // dauerhaftes ⊗ sah aus wie der Wackelmodus des Startbildschirms
+            // und verdeckte das Motiv des Blocks.
+            .slotmenue(belegt: belegtePlaetze.contains(i),
+                       loeschen: { slotLoeschen(i) },
+                       zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
             .overlay(alignment: .topTrailing) {
-                MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                     belegt: belegtePlaetze.contains(i))
-                    .offset(x: 8, y: -8)
+                if ueberfahrenerPlatz == i {
+                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
+                                         belegt: belegtePlaetze.contains(i))
+                        .offset(x: 8, y: -8)
+                }
             }
         }
     }
@@ -1500,6 +1512,11 @@ public struct EditorBereichView: View {
     private func verwerfen() {
         neu(in: groesse)
         zeigtUebersicht = true
+    }
+
+    private func slotLoeschen(_ i: Int) {
+        let name = Meldungsplatz.name(fuer: i)
+        Task { await zustand.loeschen(name) }
     }
 
     private func anklicken(_ eintrag: Editoreintrag) {

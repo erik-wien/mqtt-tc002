@@ -119,7 +119,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.blockLoeschen
                 + [
-                    .absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken. Im Bereich „Icons“ trägt jeder belegte Block dasselbe ⊗, dort ohne Überfahren und ohne Menü. Es und „Alles löschen“ im Reiter „Malen“ nicht verwechseln: „Alles löschen“ leert die Leinwand, das ⊗ löscht die Anzeige auf der Uhr."),
+                    .absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken. Die Blockreihe im Bereich „Icons“ verhält sich genauso. Das ⊗ und „Alles löschen“ im Reiter „Malen“ nicht verwechseln: „Alles löschen“ leert die Leinwand, das ⊗ löscht die Anzeige auf der Uhr."),
                 ]
                 + HilfeInhalt.dauer
                 + HilfeInhalt.zeichen

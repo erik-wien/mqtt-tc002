@@ -33,14 +33,30 @@ final class SlotmenueTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    /// Beide Sendeansichten haengen dasselbe Menue an ihren Block.
+    /// **Jede** Blockreihe haengt dasselbe Menue an ihren Block — auch die im
+    /// Editor. Sie blieb beim Umbau zurueck und trug als einzige weiter ein
+    /// dauerhaftes ⊗: zwei Blockreihen in derselben App, verschieden zu
+    /// bedienen.
     func testBeideBloeckeTragenDasselbeMenue() throws {
         for datei in ["Sources/TC002iOS/SendeniOS.swift",
-                      "Sources/TC002Ansichten/SendenView.swift"] {
+                      "Sources/TC002Ansichten/SendenView.swift",
+                      "Sources/TC002Ansichten/EditorBereichView.swift"] {
             let text = try quelltext(datei)
             XCTAssertTrue(text.contains(".slotmenue(belegt:"),
                           "\(datei): der Slotblock hat sein Kontextmenü verloren — am Finger gibt "
                           + "es dann keinen Weg mehr zum Löschen")
+        }
+    }
+
+    /// Und keine Blockreihe zeigt das ⊗ dauerhaft: Am Zeiger haengt es am
+    /// Ueberfahren, am Finger gibt es nur das Menue.
+    func testKeinBlockTraegtDasZeichenDauerhaft() throws {
+        for datei in ["Sources/TC002Ansichten/SendenView.swift",
+                      "Sources/TC002Ansichten/EditorBereichView.swift"] {
+            let text = try quelltext(datei)
+            XCTAssertTrue(text.contains("if ueberfahrenerPlatz == i {"),
+                          "\(datei): das ⊗ haengt nicht mehr am Ueberfahren — dann steht es "
+                          + "dauerhaft ueber dem Block und verdeckt sein Motiv")
         }
     }
 
