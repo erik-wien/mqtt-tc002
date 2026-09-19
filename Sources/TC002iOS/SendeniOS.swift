@@ -5,18 +5,31 @@ import TC002Modell
 
 // Melden die Geometrie der schiebbaren Formatpille (Inhaltsbreite, sichtbare
 // Breite, Schiebeversatz) von innerhalb der ScrollView nach aussen — daraus
-// entscheidet `SendeniOS.zeigtPfeil`, ob rechts noch etwas liegt.
+// entscheidet `SendeniOS.zeigtMehr`, ob rechts noch etwas liegt.
+//
+// `max` und nicht `value = nextValue()`: Gemessen wird in einem
+// `.background(GeometryReader …)`, und der steht in der Zusammenfassung vor
+// dem Inhalt, den er hinterlegt. Jeder Knopf danach steuert den Vorgabewert
+// null bei, und der letzte gewinnt — herausgekommen ist immer null, das
+// Ausblenden am rechten Rand kam nie zustande. Alle drei Masse sind
+// nichtnegativ, `max` ist damit dasselbe wie „der eine gemessene Wert".
 private struct PilleInhaltsbreiteKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
 private struct PilleSichtbarKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
 private struct PilleVersatzKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
 
 /// Der Kern der App, aufgebaut wie ein Nachrichtenfenster: die Vorschau oben
@@ -75,8 +88,8 @@ struct SendeniOS: View {
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
     @State private var zeigeBilder = false
-    // Misst die schiebbare Formatpille, um den Pfeil nur zu zeigen, solange
-    // rechts wirklich noch etwas liegt (siehe `zeigtPfeil` unten).
+    // Misst die schiebbare Formatpille, um den rechten Rand nur auszublenden,
+    // solange dort wirklich noch etwas liegt (siehe `zeigtMehr` unten).
     @State private var pilleInhaltsbreite: CGFloat = 0
     @State private var pilleSichtbareBreite: CGFloat = 0
     @State private var pilleVersatz: CGFloat = 0
@@ -427,23 +440,26 @@ struct SendeniOS: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
-                // Dieselbe Entscheidung wie am Schreibtisch: Das Loeschen
-                // gehoert an den Block, den es betrifft, nicht als sechster
-                // Knopf daneben. Ein Papierkorb, der sich auf den gerade
-                // gewaehlten Platz bezieht, muss erst getroffen werden und
-                // nimmt in einer Zeile, die auf 44 Punkte je Platz gerechnet
-                // ist, einen ganzen weiteren Platz ein.
-                //
-                // Das ⊗ liegt ausserhalb des Blockknopfes: Innen waere es
-                // Teil von dessen Beschriftung und loeste beim Tippen die
-                // Platzwahl aus statt zu loeschen.
-                .overlay(alignment: .topTrailing) {
-                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                         belegt: belegtePlaetze.contains(i))
-                        .offset(x: 6, y: -6)
-                }
+                // Das Loeschen gehoert an den Block, den es betrifft, nicht
+                // als sechster Knopf daneben — und es steht im Kontextmenue,
+                // nicht als Zeichen am Block. Ein rotes ⊗ an jedem belegten
+                // Block sah aus wie der Wackelmodus des Home-Bildschirms, also
+                // wie ein Zustand, den man absichtlich betritt; es verdeckte
+                // das Motiv, und seine Trefferflaeche lag auf dem Block, der
+                // selbst ein Knopf ist. Der lange Druck ist die Geste, die das
+                // System dafuer vorsieht.
+                .slotmenue(belegt: belegtePlaetze.contains(i),
+                           loeschen: { slotLoeschen(i) },
+                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
             }
         }
+    }
+
+    /// Raeumt den Platz auf den gewaehlten Uhren — derselbe Weg wie am
+    /// Schreibtisch (`AppZustand.loeschen`), samt Slotgedaechtnis.
+    private func slotLoeschen(_ i: Int) {
+        let name = Meldungsplatz.name(fuer: i)
+        Task { await zustand.loeschen(name) }
     }
 
     /// Die Mitte der Sendeansicht als eigenes Glied.
@@ -453,33 +469,57 @@ struct SendeniOS: View {
     /// Groesse gibt der Uebersetzer bei `body` auf („unable to type-check
     /// this expression in reasonable time"). Ihn zu teilen ist die Loesung,
     /// nicht ein Kunstgriff.
+    /// Der ganze Bildschirm ist **eine** Liste — so bauen Mail, Nachrichten
+    /// und die Einstellungen ihre Bildschirme. Vorschau und Slotleiste sind
+    /// Zeilen darin, der Verlauf ein Abschnitt (`Verlaufsabschnitt`).
+    ///
+    /// Vorher stand eine `List` in einer `ScrollView`: Eine Liste bekommt dort
+    /// keine eigene Hoehe, brauchte deshalb eine feste — und eine feste Hoehe
+    /// mit wenigen Zeilen verteilt den Rest als Leere. Dazu waren es zwei
+    /// ineinander rollende Bereiche, die am Finger nicht auseinanderzuhalten
+    /// sind. Mit einer Liste rollt der Bildschirm als Ganzes: wenig Verlauf
+    /// heisst wenig Zeilen und darunter nichts, viel Verlauf schiebt die
+    /// Vorschau nach oben weg.
     @ViewBuilder
     private var mitte: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                // Wischen ueber der Vorschau wechselt die angesehene
-                // Uhr, die Punktreihe darunter sagt, die wievielte es
-                // ist — dieselben zwei Bausteine wie am Schreibtisch
-                // (`Uhrenwahl.swift`).
+        List {
+            // Wischen ueber der Vorschau wechselt die angesehene
+            // Uhr, die Punktreihe darunter sagt, die wievielte es
+            // ist — dieselben zwei Bausteine wie am Schreibtisch
+            // (`Uhrenwahl.swift`).
+            VStack(spacing: 0) {
                 Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
                     vorschau(fuer: uhr, angesehen: angesehen)
                 }
-                Uhrenpunkte(zustand: zustand)
+                // Dasselbe Zeichen wie am Schreibtisch: Setzt die Uhr den Text
+                // selbst, ist die Vorschau nur eine Naeherung. Was die eine
+                // Oberflaeche sagt, sagt die andere auch — hier fehlte die
+                // Auskunft bisher ganz.
+                HStack(spacing: 8) {
+                    Uhrenpunkte(zustand: zustand)
+                    if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                }
+            }
+            .listenzeileOhneRahmen(rand: 0)
+
+            VStack(spacing: 8) {
                 if !passt {
                     Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 blockZeile
-                    .padding(.horizontal)
-                // Der Verlauf fuellt die Flaeche unter den Bloecken mit dem,
-                // was man am haeufigsten will: dasselbe noch einmal. Feste
-                // Hoehe, weil eine Liste in einem Scrollbereich sonst keine
-                // eigene bekommt.
-                Verlaufsliste(zustand: zustand) { reglerUebernehmen($0) }
-                    .frame(height: 260)
             }
-            .padding(.vertical, 12)
+            .listenzeileOhneRahmen(rand: 16)
+
+            // Der Verlauf fuellt die Flaeche unter den Bloecken mit dem, was
+            // man am haeufigsten will: dasselbe noch einmal.
+            Verlaufsabschnitt(zustand: zustand) { reglerUebernehmen($0) }
         }
+        .listStyle(.plain)
+        // Vor der Ueberschrift stuende sonst der Abstand eines eigenen
+        // Kapitels; hier trennt sie nur Slotleiste und Verlauf, und die
+        // gehoeren zusammen auf einen Bildschirm.
+        .listSectionSpacing(0)
     }
 
     /// Symbol fuer den Stand der waagrechten Ausrichtung — kein Ternaer, sonst
@@ -519,239 +559,257 @@ struct SendeniOS: View {
         }
     }
 
-    /// Der Pfeil am rechten Rand der Pille zeigt nur an, solange dort
-    /// wirklich noch etwas liegt, und verschwindet, sobald ganz durchgeschoben
-    /// ist — sonst verspraeche er etwas, das nicht mehr da ist. 1pt Toleranz
-    /// gegen Rundung der gemeldeten Groessen.
-    private var zeigtPfeil: Bool {
+    /// Ob rechts noch etwas liegt. Daran haengt das Ausblenden am rechten
+    /// Rand; es verschwindet, sobald ganz durchgeschoben ist — sonst
+    /// verspraeche es etwas, das nicht mehr da ist. 1pt Toleranz gegen
+    /// Rundung der gemeldeten Groessen.
+    private var zeigtMehr: Bool {
         let rest = pilleInhaltsbreite - pilleSichtbareBreite - pilleVersatz
         return pilleInhaltsbreite > pilleSichtbareBreite + 1 && rest > 1
     }
 
+    /// Der ausblendende rechte Rand — die Bauart der Vorschlagsleiste ueber
+    /// der Tastatur.
+    ///
+    /// Vorher endete die Pille mit einem halb sichtbaren Element; das sah aus,
+    /// als waere der Inhalt zu breit geraten, nicht als koenne man
+    /// weiterrollen. Ein Zeichen daneben sagte dasselbe noch einmal und ist
+    /// deshalb entfallen.
+    ///
+    /// Achtundzwanzig Punkte und nicht sechzehn: Das runde Ende der Kapsel
+    /// ist halb so breit wie sie hoch ist, hier rund dreissig Punkte. Ein
+    /// Verlauf ueber sechzehn laege ganz darin und war am Simulator nicht zu
+    /// sehen. Als Anteil der sichtbaren Breite, weil `mask` den Verlauf ueber
+    /// die ganze Flaeche legt; gedeckelt bei der Haelfte, damit eine sehr
+    /// schmale Pille nicht ganz verblasst.
+    private var randverlauf: LinearGradient {
+        let anteil = zeigtMehr && pilleSichtbareBreite > 0
+            ? min(0.5, 28 / pilleSichtbareBreite) : 0
+        return LinearGradient(stops: [
+            .init(color: .black, location: 0),
+            .init(color: .black, location: 1 - anteil),
+            .init(color: anteil > 0 ? .clear : .black, location: 1),
+        ], startPoint: .leading, endPoint: .trailing)
+    }
+
     /// Was man ständig ändert, direkt erreichbar. Elf gleichwertige Symbole
     /// wie in Pages, nichts hinter einer Sammelstelle. Sie passen nicht alle
-    /// nebeneinander auf ein Telefon, deshalb schiebbar — die ersten fuenf
-    /// (Icon, waagrecht, senkrecht, Farbe, Pinsel) muessen dafuer ohne
-    /// Schieben sichtbar bleiben, siehe Bericht zur Breitenrechnung. Farbe
-    /// steht bewusst nicht neben Icon: beide sind bunt und rund, nebeneinander
-    /// leicht verwechselt; mit dem Pinsel dazwischen nicht mehr.
+    /// nebeneinander auf ein Telefon, deshalb schiebbar — und geordnet nach
+    /// Haeufigkeit: Icon, Schrift, Groesse, Fett, Grossbuchstaben und Farbe
+    /// stehen links und sind ohne Schieben erreichbar, dahinter die
+    /// Ausrichtungen, Rand und Abstand.
+    ///
+    /// Ganz hinten das Formatblatt und das Bild aus dem Bestand: Beide oeffnen
+    /// ein Blatt statt eines Menues, und Dauer, Lauftempo und mitlaufendes
+    /// Icon aendert man selten.
     private var formatleiste: some View {
-        ZStack(alignment: .trailing) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    Button { zeigeIcons = true } label: {
-                        Group {
-                            if let icon = gewaehltesIcon {
-                                // Beide Groessen gleich gross: Ein 16×16 ist
-                                // nicht das doppelt so grosse Bild, sondern
-                                // das feinere — dieselbe Ueberlegung wie im
-                                // Raster am Schreibtisch.
-                                IconbildiOS(datei: icon.datei, pixelkante: icon.kante)
-                                    .frame(width: 20, height: 20)
-                            } else {
-                                Image(systemName: "face.smiling")
-                            }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                Button { zeigeIcons = true } label: {
+                    Group {
+                        if let icon = gewaehltesIcon {
+                            // Beide Groessen gleich gross: Ein 16×16 ist
+                            // nicht das doppelt so grosse Bild, sondern
+                            // das feinere — dieselbe Ueberlegung wie im
+                            // Raster am Schreibtisch.
+                            IconbildiOS(datei: icon.datei, pixelkante: icon.kante)
+                                .frame(width: 20, height: 20)
+                        } else {
+                            Image(systemName: "face.smiling")
                         }
+                    }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                }
+                // Symbol in einer Leiste, kein Befehlsknopf: Diese
+                // Pille ist die Werkzeugleiste des Telefons. Gilt fuer
+                // alle drei Knoepfe darin.
+                .buttonStyle(.automatic)
+                .accessibilityLabel("Icon")
+                // `Picker` und nicht einzelne Knoepfe: Nur so traegt der
+                // gewaehlte Eintrag sein Haekchen, wie in den Menues der
+                // Einstellungen auch.
+                Menu {
+                    Picker("Schriftart", selection: $schrift) {
+                        ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
+                    }
+                } label: {
+                    // Zeichen und Wert wie beim Groessenmenue daneben, nicht
+                    // der blosse Name in Akzentfarbe: Zwischen lauter Symbolen
+                    // las sich das Wort wie ein Verweis, und in voller Groesse
+                    // schob es den Rest der Pille aus dem Bild.
+                    Label { Text(schrift).font(.caption) } icon: { Image(systemName: "textformat") }
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                .disabled(!gattung.wirkt(.schriftart))
+                .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
+                .accessibilityHint(Text(schriftartHinweis))
+                Menu {
+                    // Eine Liste, keine Folge: Die durchgesehenen Groessen
+                    // haben Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16.
+                    Picker("Größe", selection: $groesse) {
+                        ForEach(angeboteneGroessen, id: \.self) { g in
+                            Text(String(Int(g))).tag(g)
+                        }
+                    }
+                } label: {
+                    Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                .disabled(!gattung.wirkt(.groesse))
+                .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
+                .accessibilityHint(Text(gattung.begruendung(.groesse) ?? lok("Schriftgröße")))
+                // `Toggle` im Knopfstil statt eines `Button`, der seinen
+                // Zustand selbst faerbt: Der getoente Hintergrund im
+                // Zustand „an" und das Merkmal `.isSelected` fuer die
+                // Sprachausgabe kommen damit vom System.
+                //
+                // Wie am Mac (`fettWirkt`): Auch Schriften und Groessen
+                // ohne fetten Schnitt sperren den Knopf, sonst waere er
+                // bedienbar, ohne etwas zu bewirken.
+                Toggle(isOn: $fett) {
+                    Image(systemName: "bold").frame(width: 44, height: 44)
+                }
+                .toggleStyle(.button)
+                .disabled(!fettWirkt)
+                .disabled(!gattung.wirkt(.fett))
+                .accessibilityLabel("Fett")
+                .accessibilityHint(Text(fettHinweis))
+                Toggle(isOn: $grossbuchstaben) {
+                    Image(systemName: "capslock").frame(width: 44, height: 44)
+                }
+                .toggleStyle(.button)
+                .disabled(!kleinbuchstabenMoeglich)
+                .accessibilityLabel("Großbuchstaben")
+                .accessibilityHint(Text(grossHinweis))
+                // Dasselbe Gesicht wie am Schreibtisch (`Farbkreis`) —
+                // unter iPadOS und hier zeigt das Systemfeld nicht einmal
+                // den Regenbogenkreis, den der Mac danebenstellt.
+                // Die Trefferflaeche bleibt bei 44 Punkten, der Kreis
+                // darin ist kleiner.
+                Farbkreis(farbe: farbe, kante: 26)
+                    .frame(width: 44, height: 44)
+                // Was die Uhr nicht kann, steht nicht drin — nicht
+                // gesperrt, sondern nicht vorhanden. Dieselbe Begruendung
+                // wie in SendenView.swift: Ein Eintrag, der angenommen und
+                // dann als linksbuendig gesendet wuerde, zeigte etwas
+                // anderes an, als auf der Uhr steht.
+                Menu {
+                    Picker("Waagrecht", selection: $horizontal) {
+                        Label("Linksbündig", systemImage: "text.alignleft")
+                            .tag(SendenHAusrichtung.links)
+                        Label("Zentriert", systemImage: "text.aligncenter")
+                            .tag(SendenHAusrichtung.mittig)
+                        if gattung.waagrechteAusrichtungen.contains(.rechts) {
+                            Label("Rechtsbündig", systemImage: "text.alignright")
+                                .tag(SendenHAusrichtung.rechts)
+                        }
+                    }
+                } label: {
+                    Image(systemName: horizontalSymbol)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
-                    }
-                    // Symbol in einer Leiste, kein Befehlsknopf: Diese
-                    // Pille ist die Werkzeugleiste des Telefons. Gilt fuer
-                    // alle vier Knoepfe darin.
-                    .buttonStyle(.automatic)
-                    .accessibilityLabel("Icon")
-                    // `Picker` und nicht einzelne Knoepfe: Nur so traegt der
-                    // gewaehlte Eintrag sein Haekchen, wie in den Menues der
-                    // Einstellungen auch.
-                    //
-                    // Was die Uhr nicht kann, steht nicht drin — nicht
-                    // gesperrt, sondern nicht vorhanden. Dieselbe Begruendung
-                    // wie in SendenView.swift: Ein Eintrag, der angenommen und
-                    // dann als linksbuendig gesendet wuerde, zeigte etwas
-                    // anderes an, als auf der Uhr steht.
-                    Menu {
-                        Picker("Waagrecht", selection: $horizontal) {
-                            Label("Linksbündig", systemImage: "text.alignleft")
-                                .tag(SendenHAusrichtung.links)
-                            Label("Zentriert", systemImage: "text.aligncenter")
-                                .tag(SendenHAusrichtung.mittig)
-                            if gattung.waagrechteAusrichtungen.contains(.rechts) {
-                                Label("Rechtsbündig", systemImage: "text.alignright")
-                                    .tag(SendenHAusrichtung.rechts)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: horizontalSymbol)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    // Gesperrt, wenn der Text ohnehin laeuft — dieselbe
-                    // Rechnung wie am Schreibtisch (`waagrechtWirktNicht`):
-                    // Die Laufschrift schiebt ihn von ganz aussen durchs
-                    // Fenster und fragt die Ausrichtung gar nicht ab.
-                    .disabled(waagrechtWirktNicht)
-                    .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
-                    .accessibilityHint(Text(waagrechtWirktNicht
-                        ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
-                        : lok("Waagrecht")))
-                    Menu {
-                        Picker("Senkrecht", selection: $vertikal) {
-                            Label("Oben", systemImage: "align.vertical.top")
-                                .tag(SendenVAusrichtung.oben)
-                            Label("Mittig", systemImage: "align.vertical.center")
-                                .tag(SendenVAusrichtung.mittig)
-                            Label("Unten", systemImage: "align.vertical.bottom")
-                                .tag(SendenVAusrichtung.unten)
-                        }
-                    } label: {
-                        Image(systemName: vertikalSymbol)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .disabled(!gattung.wirkt(.senkrecht))
-                    .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
-                    .accessibilityHint(Text(gattung.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
-                    // Dasselbe Gesicht wie am Schreibtisch (`Farbkreis`) —
-                    // unter iPadOS und hier zeigt das Systemfeld nicht einmal
-                    // den Regenbogenkreis, den der Mac danebenstellt.
-                    // Die Trefferflaeche bleibt bei 44 Punkten, der Kreis
-                    // darin ist kleiner.
-                    Farbkreis(farbe: farbe, kante: 26)
-                        .frame(width: 44, height: 44)
-                    Button { zeigeFormat = true } label: {
-                        Image(systemName: "paintbrush")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.automatic)
-                    .accessibilityLabel("Format")
-                    // Hier und nicht am Ende der Pille: Die fuenf davor
-                    // (Icon, waagrecht, senkrecht, Farbe, Pinsel) muessen
-                    // ohne Schieben sichtbar bleiben; ein sechstes Zeichen
-                    // von 44 Punkten passt daneben noch in die Breite —
-                    // hinausgeschoben wird dadurch der Schriftname, nicht ein
-                    // Knopf. Am Ende, hinter Rand und Abstand, faende es
-                    // niemand.
-                    Button { zeigeBilder = true } label: {
-                        Image(systemName: "photo")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.automatic)
-                    .accessibilityLabel("Bild senden")
-                    Menu {
-                        Picker("Schriftart", selection: $schrift) {
-                            ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
-                        }
-                    } label: {
-                        Text(schrift)
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .disabled(!gattung.wirkt(.schriftart))
-                    .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
-                    .accessibilityHint(Text(schriftartHinweis))
-                    Menu {
-                        // Eine Liste, keine Folge: Die durchgesehenen Groessen
-                        // haben Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16.
-                        Picker("Größe", selection: $groesse) {
-                            ForEach(angeboteneGroessen, id: \.self) { g in
-                                Text(String(Int(g))).tag(g)
-                            }
-                        }
-                    } label: {
-                        Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .disabled(!gattung.wirkt(.groesse))
-                    .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
-                    .accessibilityHint(Text(gattung.begruendung(.groesse) ?? lok("Schriftgröße")))
-                    // `Toggle` im Knopfstil statt eines `Button`, der seinen
-                    // Zustand selbst faerbt: Der getoente Hintergrund im
-                    // Zustand „an" und das Merkmal `.isSelected` fuer die
-                    // Sprachausgabe kommen damit vom System.
-                    //
-                    // Wie am Mac (`fettWirkt`): Auch Schriften und Groessen
-                    // ohne fetten Schnitt sperren den Knopf, sonst waere er
-                    // bedienbar, ohne etwas zu bewirken.
-                    Toggle(isOn: $fett) {
-                        Image(systemName: "bold").frame(width: 44, height: 44)
-                    }
-                    .toggleStyle(.button)
-                    .disabled(!fettWirkt)
-                    .disabled(!gattung.wirkt(.fett))
-                    .accessibilityLabel("Fett")
-                    .accessibilityHint(Text(fettHinweis))
-                    Toggle(isOn: $grossbuchstaben) {
-                        Image(systemName: "capslock").frame(width: 44, height: 44)
-                    }
-                    .toggleStyle(.button)
-                    .disabled(!kleinbuchstabenMoeglich)
-                    .accessibilityLabel("Großbuchstaben")
-                    .accessibilityHint(Text(grossHinweis))
-                    Menu {
-                        Picker("Rand", selection: $rand) {
-                            ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
-                        }
-                    } label: {
-                        Label { Text(String(rand)) } icon: { Image(systemName: "arrow.up.and.down") }
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    // Wie am Mac (SendenView.swift): bei "Mittig" wirkt der
-                    // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
-                    // Wirkung.
-                    .disabled(vertikal == .mittig)
-                    .disabled(!gattung.wirkt(.rand))
-                    .accessibilityLabel(Text(lokf("Rand %d", rand)))
-                    .accessibilityHint(Text(gattung.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
-                    Menu {
-                        Picker("Abstand", selection: $luecke) {
-                            ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
-                        }
-                    } label: {
-                        Label { Text(String(luecke)) } icon: { Image(systemName: "arrow.left.and.right") }
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .disabled(!gattung.wirkt(.abstand))
-                    .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
                 }
-                .font(.body)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(key: PilleInhaltsbreiteKey.self, value: geo.size.width)
-                            .preference(key: PilleVersatzKey.self,
-                                        value: -geo.frame(in: .named("pilleRaum")).minX)
+                // Gesperrt, wenn der Text ohnehin laeuft — dieselbe
+                // Rechnung wie am Schreibtisch (`waagrechtWirktNicht`):
+                // Die Laufschrift schiebt ihn von ganz aussen durchs
+                // Fenster und fragt die Ausrichtung gar nicht ab.
+                .disabled(waagrechtWirktNicht)
+                .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(horizontalWort))
+                .accessibilityHint(Text(waagrechtWirktNicht
+                    ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
+                    : lok("Waagrecht")))
+                Menu {
+                    Picker("Senkrecht", selection: $vertikal) {
+                        Label("Oben", systemImage: "align.vertical.top")
+                            .tag(SendenVAusrichtung.oben)
+                        Label("Mittig", systemImage: "align.vertical.center")
+                            .tag(SendenVAusrichtung.mittig)
+                        Label("Unten", systemImage: "align.vertical.bottom")
+                            .tag(SendenVAusrichtung.unten)
                     }
-                )
+                } label: {
+                    Image(systemName: vertikalSymbol)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .disabled(!gattung.wirkt(.senkrecht))
+                .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
+                .accessibilityHint(Text(gattung.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
+                Menu {
+                    Picker("Rand", selection: $rand) {
+                        ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
+                    }
+                } label: {
+                    Label { Text(String(rand)) } icon: { Image(systemName: "arrow.up.and.down") }
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                // Wie am Mac (SendenView.swift): bei "Mittig" wirkt der
+                // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
+                // Wirkung.
+                .disabled(vertikal == .mittig)
+                .disabled(!gattung.wirkt(.rand))
+                .accessibilityLabel(Text(lokf("Rand %d", rand)))
+                .accessibilityHint(Text(gattung.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
+                Menu {
+                    Picker("Abstand", selection: $luecke) {
+                        ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
+                    }
+                } label: {
+                    Label { Text(String(luecke)) } icon: { Image(systemName: "arrow.left.and.right") }
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                .disabled(!gattung.wirkt(.abstand))
+                .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
+                Button { zeigeFormat = true } label: {
+                    Image(systemName: "paintbrush")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.automatic)
+                .accessibilityLabel("Format")
+                Button { zeigeBilder = true } label: {
+                    Image(systemName: "photo")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.automatic)
+                .accessibilityLabel("Bild senden")
             }
-            .coordinateSpace(.named("pilleRaum"))
-            // Keine feste Hoehe mehr: Bei den groessten Bedienungshilfen-
-            // Schriftgroessen wuchs .body auf rund 53 Punkte Zeilenhoehe, eine
-            // starre 60-Punkte-Pille schnitt den Inhalt dann ab. Ohne Vorgabe
-            // richtet sich die Hoehe nach dem Inhalt — die Kapsel wird dann
-            // hoeher statt etwas abzuschneiden.
+            .font(.body)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .background(
                 GeometryReader { geo in
-                    Color.clear.preference(key: PilleSichtbarKey.self, value: geo.size.width)
+                    Color.clear
+                        .preference(key: PilleInhaltsbreiteKey.self, value: geo.size.width)
+                        .preference(key: PilleVersatzKey.self,
+                                    value: -geo.frame(in: .named("pilleRaum")).minX)
                 }
             )
-            .background(.thinMaterial)
-            .clipShape(Capsule())
-            .onPreferenceChange(PilleInhaltsbreiteKey.self) { pilleInhaltsbreite = $0 }
-            .onPreferenceChange(PilleVersatzKey.self) { pilleVersatz = $0 }
-            .onPreferenceChange(PilleSichtbarKey.self) { pilleSichtbareBreite = $0 }
-
-            if zeigtPfeil {
-                Image(systemName: "chevron.compact.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, 8)
-                    .allowsHitTesting(false)
-                    .accessibilityLabel("Weitere Bedienelemente")
-            }
         }
+        .coordinateSpace(.named("pilleRaum"))
+        // Keine feste Hoehe mehr: Bei den groessten Bedienungshilfen-
+        // Schriftgroessen wuchs .body auf rund 53 Punkte Zeilenhoehe, eine
+        // starre 60-Punkte-Pille schnitt den Inhalt dann ab. Ohne Vorgabe
+        // richtet sich die Hoehe nach dem Inhalt — die Kapsel wird dann
+        // hoeher statt etwas abzuschneiden.
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: PilleSichtbarKey.self, value: geo.size.width)
+            }
+        )
+        .background(.thinMaterial)
+        .clipShape(Capsule())
+        // Zuletzt und nicht vor der Kapsel: Ein `clipShape` nach einem `mask`
+        // greift auf den rollenden Inhalt nicht mehr durch — das letzte
+        // Element stand dann weiterhin hart abgeschnitten ueber dem Rand der
+        // Kapsel. So verblasst, was rechts hinausragt, samt dem Ende der
+        // Kapsel.
+        .mask(randverlauf)
+        .onPreferenceChange(PilleInhaltsbreiteKey.self) { pilleInhaltsbreite = $0 }
+        .onPreferenceChange(PilleVersatzKey.self) { pilleVersatz = $0 }
+        .onPreferenceChange(PilleSichtbarKey.self) { pilleSichtbareBreite = $0 }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
     }
@@ -874,62 +932,20 @@ struct SendeniOS: View {
     }
 }
 
-/// Loescht den gewaehlten Meldungsplatz auf den gewaehlten Uhren — dieselbe
-/// Bauart wie `MeldungLoeschenKnopf` in `SendenView.swift` (Mac), als eigene
-/// Kopie: `TC002App` (Mac) und `MQTT-TC002-iOS` sind getrennte ausfuehrbare
-/// Ziele, keins kann Typen vom anderen einbinden. Die 44×44-Trefferflaeche
-/// kommt dazu, wie bei den uebrigen Symbolknoepfen dieser Datei (siehe
-/// `formatleiste`) — am Mac reicht die Knopfgroesse von selbst, ein Zeiger
-/// trifft auch kleine Ziele.
-private struct MeldungLoeschenKnopf: View {
-    @Bindable var zustand: AppZustand
-    let platz: Int
-    /// Ein leerer Platz laesst sich nicht loeschen. Woher das bekannt ist,
-    /// steht bei `belegtePlaetze`: gemeldet schlaegt gemerkt.
-    let belegt: Bool
-
-    @State private var laeuft = false
-
-    private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
-
-    var body: some View {
-        // Nur an belegten Plaetzen: Ein leerer Platz hat nichts zu
-        // loeschen; ein abgeblendetes ⊗ an vier von fuenf Bloecken waere
-        // Unruhe ohne Aussage.
-        if belegt {
-            Button(role: .destructive) {
-                laeuft = true
-                let name = Meldungsplatz.name(fuer: platz)
-                Task { await zustand.loeschen(name); laeuft = false }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .red)
-                    .font(.system(size: 15))
-                    // Polsterung statt Symbolgroesse: Das Zeichen bleibt
-                    // klein, die Trefferflaeche waechst. 44 Punkte wie bei
-                    // den uebrigen Symbolknoepfen dieser Datei waeren hier
-                    // groesser als der Block selbst.
-                    .padding(6)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(laeuft || zustand.ziele().isEmpty)
-            .accessibilityLabel(Text(beschriftung))
-            // Das Gegenstueck zum fehlenden sichtbaren Namen: Der Knopf
-            // wiederholt sich fuenfmal, ein Langdruck nennt ihn beim Namen.
-            .contextMenu {
-                Button(role: .destructive) {
-                    laeuft = true
-                    let name = Meldungsplatz.name(fuer: platz)
-                    Task { await zustand.loeschen(name); laeuft = false }
-                } label: { Text(beschriftung) }
-            }
-        }
-    }
-}
-
 private extension View {
+    /// Eine Zeile, die nicht wie ein Listeneintrag aussehen soll: ohne
+    /// Trennlinie, ohne Zeilenhintergrund, mit eigenem seitlichem Rand.
+    ///
+    /// Vorschau und Slotleiste sind Zeilen der Liste, damit der Bildschirm als
+    /// Ganzes rollt (siehe `mitte`) — aussehen sollen sie deswegen nicht
+    /// danach. Die Vorschau bekommt `rand: 0`, damit sie wie bisher bis an die
+    /// Kante reicht.
+    func listenzeileOhneRahmen(rand: CGFloat) -> some View {
+        listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 8, leading: rand, bottom: 8, trailing: rand))
+    }
+
     /// Haengt das Auswahlmenue an den Titel, aber nur ab zwei Uhren — bei
     /// genau einer waere ein Menue mit einem Eintrag eine Falle, keine
     /// Auswahl, und der Titel bleibt schlichter Text ohne Pfeil.

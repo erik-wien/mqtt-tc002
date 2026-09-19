@@ -37,9 +37,16 @@ struct Nutzlastzeile: View {
                      : lokf("rund %d KB Nutzlast", bytes / 1024)
     }
 
+    /// Der Stand als ein Satz. Einmal geschrieben, weil ihn zwei Stellen
+    /// sagen: diese Zeile im Warnfall und der Einblendtext am Sendezeichen,
+    /// wo er die Antwort auf „was passiert, wenn ich druecke" ist.
+    static func stand(art: String, bilder: Int, bytes: Int) -> String {
+        lokf("%@ · %d Bilder · %@", art, bilder, Self.groesse(bytes))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(lokf("%@ · %d Bilder · %@", art, bilder, Self.groesse(bytes)))
+            Text(Self.stand(art: art, bilder: bilder, bytes: bytes))
                 .foregroundStyle(.secondary)
             if bytes > Self.heikelAb {
                 Label(lokf("Eine auffällig große Nutzlast — %@", rat),

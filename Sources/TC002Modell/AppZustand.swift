@@ -138,6 +138,38 @@ public final class AppZustand {
     /// entsteht (sie legt beim Anlegen einen Ordner an).
     @ObservationIgnored public lazy var sendeverlauf = Sendeverlauf()
 
+    /// Woher die Icons kommen, die eine Verlaufszeile zeigt. Die Naht fuer den
+    /// Test — die App laesst sie, wie sie ist.
+    @ObservationIgnored
+    public var iconbestand: () -> [Icon] = { Iconbestaende.alle().flatMap { $0.alle() } }
+
+    /// Was einmal nachgeschlagen wurde. `@ObservationIgnored`, aus demselben
+    /// Grund wie bei `gerastertePixel`: Beobachtet, loeste das Schreiben aus
+    /// `body` heraus ein erneutes Zeichnen aus.
+    @ObservationIgnored private var verlaufsicons: [String: Icon?] = [:]
+
+    /// Das Icon zu einem Verlaufseintrag — die Zeile zeigt es als Bildchen,
+    /// und der Eintrag traegt nur Nummer und Kante.
+    ///
+    /// Gemerkt wird das Ergebnis, auch ein fehlendes: `iconbestand()` liest
+    /// zwei Ordner, und die Zeile wird bei jedem Neuzeichnen gebaut — also bei
+    /// jedem Tastendruck im Eingabefeld. Der Preis ist, dass ein waehrend der
+    /// Sitzung hinzugekommenes Icon in alten Zeilen erst nach einem Neustart
+    /// auftaucht; das ist eine Erinnerung an gestern, keine Ansicht des
+    /// Bestands.
+    ///
+    /// Nummer **und** Kante muessen stimmen: Ein 8×8 „stern" und ein 16×16
+    /// „stern" liegen in verschiedenen Bestaenden und teilen sich die Nummer
+    /// (siehe `Icon.kennung`).
+    public func icon(fuer eintrag: Verlaufseintrag) -> Icon? {
+        guard let nummer = eintrag.iconNummer, !nummer.isEmpty else { return nil }
+        let schluessel = "\(eintrag.iconKante)/\(nummer)"
+        if let gemerkt = verlaufsicons[schluessel] { return gemerkt }
+        let gefunden = iconbestand().first { $0.nummer == nummer && $0.kante == eintrag.iconKante }
+        verlaufsicons[schluessel] = gefunden
+        return gefunden
+    }
+
     /// Zaehlt hoch, sobald sich am Verlauf etwas geaendert hat. Die Ansichten
     /// lesen die Dateien selbst; ohne einen beobachteten Wert wuesste SwiftUI
     /// nicht, dass es neu zeichnen soll.
@@ -1188,7 +1220,10 @@ public final class AppZustand {
     private func verlaufEintragen(optionen: Meldungsoptionen?, icon: String?, iconKante: Int,
                                   platz: Int?, erreicht: [String]) {
         guard verlaufAn, let optionen, !erreicht.isEmpty else { return }
-        let eintrag = Verlaufseintrag(platz: platz, uhr: erreicht.joined(separator: ", "),
+        // `Verlaufseintrag.uhrenfeld` und nicht `joined`: `erreicht` kommt aus
+        // einer Menge, und ohne Sortierung stuende dieselbe Sendung mehrfach
+        // im Verlauf (siehe dort).
+        let eintrag = Verlaufseintrag(platz: platz, uhr: Verlaufseintrag.uhrenfeld(erreicht),
                                       optionen: optionen, iconNummer: icon, iconKante: iconKante)
         guard sendeverlauf.merken(eintrag) else {
             log(lok("Der Verlauf ließ sich nicht schreiben."))

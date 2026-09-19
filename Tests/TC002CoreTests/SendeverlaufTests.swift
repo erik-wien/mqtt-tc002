@@ -93,6 +93,31 @@ final class SendeverlaufTests: XCTestCase {
         XCTAssertTrue(mac.alle().isEmpty)
     }
 
+    /// Dieselbe Sendung an dieselben Uhren ergibt eine Zeile, gleich in
+    /// welcher Reihenfolge die Uhren geantwortet haben.
+    ///
+    /// `AppZustand.verlaufEintragen` baut das Feld `uhr` aus einer Menge; ohne
+    /// Sortierung stand dieselbe Sendung zweimal im Verlauf, einmal als
+    /// „A, B" und einmal als „B, A". Sortiert wird an der Quelle
+    /// (`Verlaufseintrag.uhrenfeld`), weil `gleichtInhaltlich` genau diese
+    /// Zeichenkette vergleicht.
+    func testDieUhrenStehenSortiertUndMachenGleicheSendungenGleich() {
+        XCTAssertEqual(Verlaufseintrag.uhrenfeld(["Werkstatt", "Küche"]), "Küche, Werkstatt")
+        let eins = eintrag("Kaffee", uhr: Verlaufseintrag.uhrenfeld(["Küche", "Werkstatt"]))
+        let zwei = eintrag("Kaffee", uhr: Verlaufseintrag.uhrenfeld(["Werkstatt", "Küche"]))
+        XCTAssertTrue(eins.gleichtInhaltlich(zwei),
+                      "Zwei gleiche Sendungen gelten wieder als verschieden, nur weil die Uhren in "
+                      + "anderer Reihenfolge geantwortet haben.")
+    }
+
+    /// Und die Ablage macht daraus wirklich eine Zeile.
+    func testZweiGleicheSendungenStehenNurEinmalDa() {
+        let verlauf = Sendeverlauf(ordner: temp(), kennung: "A")
+        verlauf.merken(eintrag("Kaffee", uhr: Verlaufseintrag.uhrenfeld(["Küche", "Werkstatt"])))
+        verlauf.merken(eintrag("Kaffee", uhr: Verlaufseintrag.uhrenfeld(["Werkstatt", "Küche"])))
+        XCTAssertEqual(verlauf.alle().count, 1)
+    }
+
     /// Die Obergrenze gilt je Installation — ein Verlauf ist eine
     /// Erinnerungsstuetze, kein Archiv.
     func testUeberDerObergrenzeFaelltDasAeltesteWeg() {

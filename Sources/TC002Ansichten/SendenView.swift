@@ -384,6 +384,11 @@ public struct SendenView: View {
     /// unten je nach Gattung verschieden ermittelt.
     @State private var nutzlastBytes = 0
 
+    /// Über welchem Slotblock der Zeiger gerade steht — daran hängt allein
+    /// das ⊗ (siehe `slotZeile`). Am iPad bleibt der Wert `nil`: Dort gibt es
+    /// kein Überfahren, und `onHover` meldet nichts.
+    @State private var ueberfahrenerPlatz: Int?
+
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
     /// den Satzzeichen nur `%`, `.`, `-`, `:` (Gerätereferenz, §1). Nur fürs
     /// Vorwarnen beim Weg „als Text" gedacht — die Uhr meldet ein fehlendes
@@ -437,7 +442,7 @@ public struct SendenView: View {
                     let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
                     // Die Punktreihe braucht Platz unter dem Rahmen, sonst
                     // schoebe sie ihn beim Erscheinen um ihre Hoehe hinauf.
-                    let punktehoehe: Double = zustand.uhren.count > 1 ? 20 : 0
+                    let punktehoehe: Double = (zustand.uhren.count > 1 || gattung.setztSelbst) ? 20 : 0
                     let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
                     let nachHoehe = (geo.size.height - 24 - punktehoehe) / einheit.rahmenHoehe
                     let kante = max(4, min(14, (min(nachBreite, nachHoehe)).rounded(.down)))
@@ -450,29 +455,26 @@ public struct SendenView: View {
                         Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
                             vorschau(fuer: uhr, angesehen: angesehen, kante: kante)
                         }
-                        Uhrenpunkte(zustand: zustand)
+                        // Das Zeichen neben der Punktreihe, nicht ein Satz
+                        // unter dem Bild: Zwei Zeilen Erklaerung unter jeder
+                        // Vorschau lesen sich wie ein Beipackzettel, und
+                        // Apples eigene Apps erklaeren sich nicht unter jedem
+                        // Element. `Hilfezeichen` traegt denselben Satz auf
+                        // beiden Wegen — am Zeiger im Einblendtext, am Finger
+                        // als Blase.
+                        HStack(spacing: 8) {
+                            Uhrenpunkte(zustand: zustand)
+                            if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                        }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
-                // Setzt die Uhr selbst, ist der Weg einerlei: Eine NG bekommt
-                // von `Anzeigen.nutzlast` in beiden Faellen den Text samt Reglern,
-                // nie unsere Pixel. Die Zeile „Laufschrift · N Bilder · KB" spraeche
-                // hier von einem GIF, das niemand je sieht; was wirklich hinausgeht,
-                // ist der Rumpf, dessen Bytes `ngNutzlastBytes` misst.
-                if gattung.setztSelbst {
-                    Label("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.",
-                          systemImage: "info.circle")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    if nutzlastBytes > 0 {
-                        Text(lokf("Hinaus geht der Text samt Reglern · %@", Nutzlastzeile.groesse(nutzlastBytes)))
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                } else if !passt {
-                    // Zu langer Text ist kein Fehler, sondern der Grund fuers Laufen.
-                    // Zeigen, worauf man sich einlaesst: niemand weiss, wo die Uhr bei
-                    // der Nutzlastgroesse aussteigt (§4.2a).
-                    // Nur der Stand, keine Erklaerung — die steht in der Hilfe
-                    // („Senden", Absatz zur Nutzlastgroesse).
+                // Sichtbar bleibt unter der Vorschau nur, was ein Befund ist:
+                // eine auffaellig grosse Nutzlast — niemand weiss, wo die Uhr
+                // aussteigt (§4.2a). Der Stand darunter ist kein Befund und
+                // steht am Sendezeichen (`nutzlastauskunft`), die Erklaerung
+                // zur Naeherung am Zeichen neben der Punktreihe.
+                if !gattung.setztSelbst, !passt, nutzlastBytes > Nutzlastzeile.heikelAb {
                     Nutzlastzeile(
                         art: lok("Laufschrift"),
                         bilder: laufschriftFrames.count,
@@ -875,8 +877,15 @@ public struct SendenView: View {
 
     /// Die fuenf Bloecke zeigen, was auf der Uhr liegt — Antippen waehlt den
     /// Platz und stellt, wenn belegbar, die Regler wieder her (siehe
-    /// `slotWaehlen`). Der Papierkorb gehoert zum gewaehlten Platz und leert
-    /// ihn — direkt daneben.
+    /// `slotWaehlen`). Geloescht wird ueber das Menue des Blocks, den es
+    /// betrifft.
+    ///
+    /// Das ⊗ erscheint nur, solange der Zeiger ueber dem Block steht — so
+    /// halten es Safari mit den Schliesszeichen seiner Tabs und der Finder mit
+    /// dem Auswerfen. Das ist der eine begruendete Unterschied zwischen den
+    /// Bedienungen: Auf dem iPad gibt es kein Ueberfahren, dort bleibt das
+    /// Menue der einzige Weg — und ein Zeichen, das immer dasteht, sah aus wie
+    /// der Wackelmodus des Home-Bildschirms.
     private var slotZeile: some View {
         HStack(spacing: 6) {
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
@@ -887,18 +896,31 @@ public struct SendenView: View {
                               mass: mass)
                 }
                 .buttonStyle(.plain)
+                .onHover { drueber in ueberfahrenerPlatz = drueber ? i : nil }
+                .slotmenue(belegt: belegtePlaetze.contains(i),
+                           loeschen: { slotLoeschen(i) },
+                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
                 // Das ⊗ liegt ueber dem Block und ausserhalb seines
                 // Knopfes: Innen waere es Teil von dessen Beschriftung und
                 // loeste beim Tippen die Platzwahl aus statt zu loeschen.
                 // Etwas nach aussen versetzt, damit es die Vorschau im Block
                 // nicht verdeckt.
                 .overlay(alignment: .topTrailing) {
-                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                         belegt: belegtePlaetze.contains(i))
-                        .offset(x: 8, y: -8)
+                    if ueberfahrenerPlatz == i {
+                        MeldungLoeschenKnopf(zustand: zustand, platz: i,
+                                             belegt: belegtePlaetze.contains(i))
+                            .offset(x: 8, y: -8)
+                    }
                 }
             }
         }
+    }
+
+    /// Raeumt den Platz auf den gewaehlten Uhren — derselbe Weg, den auch das
+    /// ⊗ nimmt (`AppZustand.loeschen`), samt Slotgedaechtnis.
+    private func slotLoeschen(_ i: Int) {
+        let name = Meldungsplatz.name(fuer: i)
+        Task { await zustand.loeschen(name) }
     }
 
     /// Das Eingabefeld fuer die Meldung. Einmal geschrieben, weil beide Zweige
@@ -937,12 +959,34 @@ public struct SendenView: View {
             .controlSize(.extraLarge)
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
-                         laeuft: laeuft)
+                         laeuft: laeuft,
+                         auskunft: nutzlastauskunft)
             // Beschriftet die Eingabetaste der Bildschirmtastatur mit
             // „Senden" — auf dem iPad sichtbar, am Mac und an einer
             // angesteckten Tastatur ohne Wirkung.
             .submitLabel(.send)
             .onSubmit { if sendenMoeglich { senden() } }
+    }
+
+    /// Was beim Drücken hinausgeht — der Einblendtext am ⏎.
+    ///
+    /// Er stand als zweite Zeile unter der Vorschau; dort war er
+    /// Kleingedrucktes. Er ist aber die Antwort auf „was passiert, wenn ich
+    /// drücke", und gehört dorthin, wo man drückt. Bei stehendem Text auf der
+    /// Werksfirmware gibt es nichts Besonderes zu sagen — dann bleibt es beim
+    /// Wort „Senden".
+    ///
+    /// `Nutzlastzeile.stand` und kein eigener Wortlaut: Derselbe Satz steht
+    /// im Warnfall sichtbar unter der Vorschau, und zwei Fassungen wären zwei
+    /// Übersetzungsschlüssel.
+    private var nutzlastauskunft: String? {
+        guard nutzlastBytes > 0 else { return nil }
+        if gattung.setztSelbst {
+            return lokf("Hinaus geht der Text samt Reglern · %@", Nutzlastzeile.groesse(nutzlastBytes))
+        }
+        guard !passt else { return nil }
+        return Nutzlastzeile.stand(art: lok("Laufschrift"), bilder: laufschriftFrames.count,
+                                   bytes: nutzlastBytes)
     }
 
     /// Ob es überhaupt etwas zu senden gibt und jemanden, der es nimmt.

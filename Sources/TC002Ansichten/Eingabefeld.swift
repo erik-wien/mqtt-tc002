@@ -64,9 +64,16 @@ public extension View {
     /// und das (x) fällt weg: Ein Feld, dessen Inhalt gerade hinausgeht,
     /// leert man nicht. Ohne den Dreher fehlte jede Rückmeldung — die gab
     /// vorher der Knopf, der „Sende…" hieß.
+    ///
+    /// `auskunft` ist der Einblendtext am ⏎: Was beim Drücken hinausgeht —
+    /// Art, Einzelbilder, Größe der Nutzlast. Sie stand früher als
+    /// Kleingedrucktes unter der Vorschau; sie ist aber die Antwort auf „was
+    /// passiert, wenn ich drücke" und gehört dorthin, wo man drückt. `nil`
+    /// heißt: nichts Besonderes zu sagen, dann bleibt es beim Wort „Senden".
     func eingabefeld(loeschbar text: Binding<String>,
                      senden: (() -> Void)?,
-                     laeuft: Bool) -> some View {
+                     laeuft: Bool,
+                     auskunft: String? = nil) -> some View {
         eingabefeld()
             .overlay(alignment: .trailing) {
                 HStack(spacing: 6) {
@@ -84,7 +91,7 @@ public extension View {
                             .controlSize(.small)
                             .accessibilityLabel(Text("Sende…"))
                     } else if let senden, !text.wrappedValue.isEmpty {
-                        Sendezeichen(senden: senden)
+                        Sendezeichen(senden: senden, auskunft: auskunft)
                     }
                 }
                 .padding(.trailing, 4)
@@ -105,6 +112,11 @@ public extension View {
 /// wurde das bloße Zeichen ohne Kreis nicht als Schaltfläche erkannt.
 struct Sendezeichen: View {
     let senden: () -> Void
+    /// Was hinausgeht, für den Einblendtext — `nil` heißt „Senden“, sonst
+    /// steht der Satz dort statt des Worts (siehe `eingabefeld(loeschbar:
+    /// senden:laeuft:auskunft:)`). Die Sprachausgabe bekommt weiter das Wort:
+    /// Sie sagt, was der Knopf tut, nicht wie groß die Nutzlast wird.
+    var auskunft: String?
 
     @ScaledMetric(relativeTo: .body) private var kante: Double = 26
     @ScaledMetric(relativeTo: .body) private var pfeil: Double = 13
@@ -118,7 +130,7 @@ struct Sendezeichen: View {
                 .background(Circle().fill(.tint))
         }
         .buttonStyle(.plain)
-        .help(lok("Senden"))
+        .help(auskunft ?? lok("Senden"))
         .accessibilityLabel(Text("Senden"))
     }
 }
