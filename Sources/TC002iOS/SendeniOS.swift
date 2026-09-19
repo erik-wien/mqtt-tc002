@@ -896,6 +896,28 @@ struct SendeniOS: View {
                     .frame(width: 44, height: 44)
                     .transition(.opacity)
                     .accessibilityLabel(Text("Hinausgeschickt"))
+            } else {
+                // Am Schreibtisch und am iPad steht neben dem Feld ein
+                // Sendeknopf, am Telefon gab es nur die Sendetaste der
+                // Tastatur. Stand ein Text im Feld und war die Tastatur
+                // unten, liess er sich nicht abschicken, ohne das Feld erst
+                // wieder anzutippen. Derselbe Platz wie Dreher und Haken.
+                Button { Task { await senden() } } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                        // Die Farbe ausdruecklich: `.plain` nimmt dem
+                        // Zeichen die Akzentfarbe, und schwarz sieht es nicht
+                        // mehr nach Knopf aus.
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 44, height: 44)
+                }
+                // `.plain`: Das gefuellte Zeichen ist der Knopf, wie in
+                // Nachrichten. Ein Befehlsknopf legte eine zweite Flaeche
+                // darum.
+                .buttonStyle(.plain)
+                .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty
+                          || zustand.ziele().isEmpty)
+                .accessibilityLabel(Text("Senden"))
             }
         }
         .padding(.horizontal)

@@ -151,4 +151,27 @@ final class SendefeldTests: XCTestCase {
         XCTAssertTrue(eingabe.contains(".eingabefeld("),
                       "dem iPhone ist der Rahmen seines Eingabefelds abhanden gekommen")
     }
+
+    /// Neben dem Feld steht ein Sendeknopf — am Telefon wie am Schreibtisch.
+    ///
+    /// Vorher gab es dort nur die Sendetaste der Tastatur. Stand ein Text im
+    /// Feld und war die Tastatur unten, liess er sich nicht abschicken, ohne
+    /// das Feld erst wieder anzutippen.
+    ///
+    /// Der Platz ist derselbe, den Dreher und Haken belegen: Es sind drei
+    /// Zustaende einer Stelle, nicht drei Stellen.
+    func testDasTelefonHatEinenSendeknopfNebenDemFeld() throws {
+        let text = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        guard let eingabe = block(nach: "private var eingabe: some View", in: text) else {
+            return XCTFail("das Eingabefeld des iPhones heißt nicht mehr `eingabe`")
+        }
+        XCTAssertTrue(eingabe.contains("Button { Task { await senden() } }"),
+                      "neben dem Eingabefeld steht kein Sendeknopf mehr — mit unten liegender "
+                      + "Tastatur ist ein getippter Text dann nicht abzuschicken")
+        XCTAssertTrue(eingabe.contains("if laeuft") && eingabe.contains("} else if gelungen {"),
+                      "Dreher und Haken teilen sich die Stelle nicht mehr mit dem Knopf — dann "
+                      + "stehen dort zwei Dinge nebeneinander")
+        XCTAssertTrue(eingabe.contains(".disabled(text.trimmingCharacters(in: .whitespaces).isEmpty"),
+                      "der Sendeknopf steht auch ohne Text bereit und schickt Leeres hinaus")
+    }
 }
