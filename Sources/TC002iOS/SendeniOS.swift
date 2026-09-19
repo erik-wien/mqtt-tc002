@@ -211,10 +211,23 @@ struct SendeniOS: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.naeherung(fuer: uhr.typ ?? .tc002)
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
-        VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
-                    icon: sitzt ? gewaehltesIcon?.datei : nil,
-                    laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames,
-                    typ: uhr.typ)
+        VStack(spacing: 4) {
+            VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
+                        icon: sitzt ? gewaehltesIcon?.datei : nil,
+                        laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames,
+                        typ: uhr.typ)
+            // Der Name unter der Uhr, die er benennt — wie am Schreibtisch.
+            // Im Titel stand er als Menue: eine zweite Geraetewahl neben dem
+            // Antennenknopf, der die Empfaenger traegt, und beim Blaettern
+            // wanderte er nicht mit. Nur ab zwei Uhren: Bei einer benennt der
+            // Name nichts, was sich unterscheiden liesse.
+            if zustand.uhren.count > 1 {
+                HStack(spacing: 6) {
+                    Text(uhr.name).font(.headline).lineLimit(1)
+                    Erreichbarkeitszeichen(zustand: zustand, id: uhr.id)
+                }
+            }
+        }
     }
 
     private var passt: Bool {
@@ -308,7 +321,7 @@ struct SendeniOS: View {
                 formatleiste
                 eingabe
             }
-            .navigationTitle(titelText)
+            .navigationTitle(Text("Senden"))
             // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
             // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
             // von noetigen rund 265 Punkten fuer den Inhalt, die Slot-Zeile
@@ -316,21 +329,6 @@ struct SendeniOS: View {
             // Punkte des grossen Titels zurueck; das Titelmenue unten
             // funktioniert dort genauso — Dateien und Notizen machen es so.
             .navigationBarTitleDisplayMode(.inline)
-            .titelmenuFallsMehrereUhren(zustand.uhren.count > 1) {
-                // Nur, was man ansieht: Die Empfaenger stehen im
-                // Antennenmenue neben dem Eingabefeld — wie am Schreibtisch,
-                // wo der Titel die angesehene Uhr traegt und ein eigener Knopf
-                // die Empfaenger. Beides in einem Menue ginge nicht: iOS zeigt
-                // hier keine Abschnittsueberschriften, uebrig blieben zwei
-                // unbeschriftete Listen derselben Uhren, in umgekehrter
-                // Reihenfolge, weil das Menue nach oben aufklappt.
-                Picker("Angesehene Uhr", selection: angesehene) {
-                    ForEach(zustand.uhren) { uhr in
-                        Text(uhr.name).tag(Optional(uhr.id))
-                    }
-                }
-                .pickerStyle(.inline)
-            }
             .toolbar {
                 // Links die Empfaenger, mittig die angesehene Uhr, rechts
                 // Protokoll und Einstellungen. Neben dem Eingabefeld hielt
@@ -400,23 +398,6 @@ struct SendeniOS: View {
     /// sagt er zusaetzlich, an wie viele Uhren; sonst stuende hier ein einzelner
     /// Name, waehrend anderswohin gesendet wird. Bei nur einer eingerichteten
     /// Uhr gibt es nichts zu waehlen und nichts zu benennen.
-    /// Der Titel samt Zeichen, wenn die angesehene Uhr auf die letzte Abfrage
-    /// nicht geantwortet hat. `Text` und nicht ein Zeichen im String: Ein
-    /// eingesetztes Zeichen waere Teil des Uebersetzungsschluessels
-    /// (CLAUDE.md, „Sprachen"), und ein Dialog davor legte sich ueber die
-    /// ganze App — die Uhr ist stumm, nicht kaputt.
-    private var titelText: Text {
-        let name = Text(titel)
-        guard let id = zustand.aktiveID, zustand.erreichbar[id] == false else { return name }
-        return Text(Image(systemName: "exclamationmark.circle.fill")).foregroundColor(.red)
-            + Text(" ") + name
-    }
-
-    private var titel: String {
-        guard zustand.uhren.count > 1, let uhr = zustand.aktiveUhr else { return lok("Senden") }
-        guard zustand.zielIDs.count > 1 else { return uhr.name }
-        return lokf("%@ · an %d Uhren", uhr.name, zustand.zielIDs.count)
-    }
 
     /// Das Titelmenue waehlt, welche Uhr man ansieht. Dass damit auch das
     /// Sendeziel wechselt, entscheidet `AppZustand.uhrAnsehen` — auf dem
@@ -991,16 +972,4 @@ private extension View {
             .listRowInsets(EdgeInsets(top: 8, leading: rand, bottom: 8, trailing: rand))
     }
 
-    /// Haengt das Auswahlmenue an den Titel, aber nur ab zwei Uhren — bei
-    /// genau einer waere ein Menue mit einem Eintrag eine Falle, keine
-    /// Auswahl, und der Titel bleibt schlichter Text ohne Pfeil.
-    @ViewBuilder
-    func titelmenuFallsMehrereUhren<Inhalt: View>(_ mehrere: Bool,
-                                                  @ViewBuilder inhalt: () -> Inhalt) -> some View {
-        if mehrere {
-            toolbarTitleMenu(content: inhalt)
-        } else {
-            self
-        }
-    }
 }

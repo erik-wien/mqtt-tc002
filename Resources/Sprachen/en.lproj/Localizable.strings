@@ -429,7 +429,6 @@
 /* TC002iOS/SendeniOS.swift */
 "Angesehene Uhr" = "Clock shown";
 "Ziel wählen" = "Choose target";
-"%@ · an %d Uhren" = "%@ · to %d clocks";
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Ausrichtung" = "Alignment";
 "Linksbündig" = "Left-aligned";
