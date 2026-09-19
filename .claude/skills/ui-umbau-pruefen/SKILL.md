@@ -179,8 +179,16 @@ Hausnetz.
 
 **Das echte iPhone und iPad erreicht `xcrun devicectl`** (Bildschirmfoto,
 Installieren, Starten) — aber **erst nach Rückfrage, jedes Mal**, und nur für
-das, was der Simulator nicht zeigen kann. Der Simulator ist der Normalfall:
-Nur dort lässt sich ein Anfangswert patchen, um an einen Zustand zu kommen.
+das, was der Simulator nicht zeigen kann.
+
+**Der Simulator ist der Normalfall**, aus drei Gründen:
+
+- Nur dort lässt sich ein Anfangswert patchen, um an einen Zustand zu kommen.
+- **Das iPhone sperrt nach 30 Sekunden.** Ein Bildschirmfoto danach ist
+  schwarz, und `devicectl` kann das Gerät nicht wecken — bauen, installieren,
+  starten und fotografieren dauert länger als das.
+- Ein Bildschirmfoto des Geräts zeigt, was gerade offen ist, und geht den
+  Auftraggeber an.
 
     xcrun devicectl list devices
     xcrun devicectl device capture screenshot --device <UDID> --destination <pfad>.png
