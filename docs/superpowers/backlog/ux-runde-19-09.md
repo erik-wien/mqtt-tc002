@@ -5,8 +5,10 @@ Senden, iPad Senden): *„die ui/ux ist schon ziemlich ok, aber ich zweifle noch
 ob sie wirklich professionell aussieht. vor allem am iphone."* Farbwahl ist
 ausdruecklich ausgenommen.
 
-Sechs Befunde, je ein Papier, nach Gewicht sortiert. Die ersten zwei machen den
-Eindruck „unfertig"; die anderen sind Feinschliff.
+Zehn Befunde, je ein Papier, nach Gewicht sortiert — sechs aus den ersten
+zwei Bildschirmfotos (iPhone Senden, iPad Senden), vier aus fuenf weiteren
+vom iPad (Icons-Uebersicht, Editor, Einstellungen, Hilfe). Die ersten zwei
+machen den Eindruck „unfertig"; die anderen sind Feinschliff.
 
 | Nr. | Papier | Kern |
 |---|---|---|
@@ -16,6 +18,10 @@ Eindruck „unfertig"; die anderen sind Feinschliff.
 | 4 | `vorschau-ohne-kleingedrucktes.md` | Zwei Zeilen Disclaimer unter der Vorschau |
 | 5 | `formatpille-schrift-als-menue.md` | Schriftname als Wort, Pille endet abgeschnitten |
 | 6 | `kleinigkeiten-belegt-und-titel.md` | Chip „belegt", Uhrenname im Titel |
+| 7 | `editor-einzelbilder-unter-der-leinwand.md` | Streifen unter die Leinwand, Abspielzeichen weiss, „Alles loeschen" raus aus der Werkzeugkarte |
+| 8 | `einstellungen-ohne-sichern-knopf.md` | „Sichern und pruefen" → „Verbindung pruefen", Kennwort als vorhanden erkennbar |
+| 9 | `icons-uebersicht-kacheln.md` | Namen zweizeilig, 52 × 16 breiter |
+| 10 | `hilfe-einleitung-beide-uhren.md` | Einleitung nennt nur die TC002 |
 
 ## Arbeitsregeln fuer jedes Papier
 

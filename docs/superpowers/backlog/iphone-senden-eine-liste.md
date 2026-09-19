@@ -1,6 +1,6 @@
 # iPhone Senden: der ganze Bildschirm ist eine Liste
 
-**Gewicht: 1 von 6.** Das ist der eine Befund, der die Ansicht unfertig
+**Gewicht: 1 von 10.** Das ist der eine Befund, der die Ansicht unfertig
 aussehen laesst.
 
 ## Was heute geschieht

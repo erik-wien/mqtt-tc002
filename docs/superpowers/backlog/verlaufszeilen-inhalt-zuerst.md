@@ -1,6 +1,6 @@
 # Verlauf: die Zeile zeigt den Inhalt, nicht die Uhrzeit
 
-**Gewicht: 2 von 6.**
+**Gewicht: 2 von 10.**
 
 ## Was heute geschieht
 

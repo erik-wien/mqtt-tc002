@@ -1,6 +1,6 @@
 # Kleinigkeiten: der Chip „belegt" und der Uhrenname im Titel
 
-**Gewicht: 6 von 6.** Zwei kleine Stellen, ein Commit je Stelle.
+**Gewicht: 6 von 10.** Zwei kleine Stellen, ein Commit je Stelle.
 
 ## A. Der Chip „belegt"
 

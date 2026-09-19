@@ -1,6 +1,6 @@
 # Formatpille (iPhone): Schrift als Menue mit Zeichen, kein abgeschnittener Rand
 
-**Gewicht: 5 von 6.**
+**Gewicht: 5 von 10.**
 
 ## Was heute geschieht
 

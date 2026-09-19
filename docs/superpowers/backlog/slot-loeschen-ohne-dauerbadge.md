@@ -1,6 +1,6 @@
 # Slots: Loeschen ueber das Kontextmenue, kein Dauerbadge
 
-**Gewicht: 3 von 6.**
+**Gewicht: 3 von 10.**
 
 ## Was heute geschieht
 

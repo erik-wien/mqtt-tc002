@@ -1,6 +1,6 @@
 # Vorschau: kein Kleingedrucktes darunter
 
-**Gewicht: 4 von 6.**
+**Gewicht: 4 von 10.**
 
 ## Was heute geschieht
 
