@@ -63,6 +63,25 @@ final class SlotmenueTests: XCTestCase {
                       "niemand setzt `ueberfahrenerPlatz` mehr — das ⊗ erschiene nie")
     }
 
+    /// Ein Block, auf dem etwas Fremdes liegt, traegt ein Zeichen und kein
+    /// Wort.
+    ///
+    /// „belegt“ in einem Kaestchen von 44 Punkten Hoehe stand als Etikett
+    /// dort, wo sonst Bilder stehen. Fuer die Sprachausgabe bleibt es dabei —
+    /// das Wort geht aus dem Bild, nicht aus der Auskunft.
+    func testDerUnbekannteBlockZeigtEinZeichenUndKeinWort() throws {
+        let text = try quelltext("Sources/TC002Ansichten/Slotblock.swift")
+        XCTAssertFalse(text.contains("Text(lok(\"belegt\"))"),
+                       "auf dem unbekannten Block steht wieder das Wort „belegt“")
+        XCTAssertTrue(text.contains("Image(systemName: \"questionmark\")"),
+                      "der unbekannte Block trägt kein Fragezeichen mehr — dann ist er von einem "
+                      + "leeren Block nicht mehr zu unterscheiden")
+        XCTAssertTrue(text.contains("lokf(\"Slot %d, unbekannt\", platz)"),
+                      "die Sprachausgabe unterscheidet „belegt“ und „unbekannt“ nicht mehr")
+        XCTAssertTrue(text.contains("help(lok(\"belegt — von einer anderen Quelle\"))"),
+                      "am Zeiger sagt nichts mehr, was das Fragezeichen bedeutet")
+    }
+
     /// Ein leerer Platz bekommt kein Menue: Er hat nichts zu loeschen und
     /// nichts zu zeigen, und ein leeres Menue ist eine Geste, die nichts tut.
     func testEinLeererBlockBekommtKeinMenue() throws {

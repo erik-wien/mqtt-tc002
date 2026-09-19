@@ -9,7 +9,7 @@ import TC002Core
 /// (`Button { … } label: { Slotblock(…) } `), siehe die Sendeansichten.
 ///
 /// Zustand hängt nicht allein an der Farbe: `.frei` (gestrichelter,
-/// leerer Rahmen) und `.unbekannt` (gefüllter Rahmen mit dem Wort „belegt“)
+/// leerer Rahmen) und `.unbekannt` (gefüllter Rahmen mit einem Fragezeichen)
 /// unterscheiden sich auch in der Form; `.bekannt` zeigt Pixel. Ob die
 /// mitgelesen oder aus dem Slotgedächtnis gerechnet sind, entscheidet
 /// `AppZustand.slotzustand` und steht hier nicht mehr zur Debatte. Der
@@ -88,10 +88,19 @@ public struct Slotblock: View {
                     RoundedRectangle(cornerRadius: Self.eckenradius).stroke(.quaternary)
                 }
             case .unbekannt:
+                // Ein Zeichen und kein Wort: „belegt“ in einem Kästchen von
+                // 44 Punkten Höhe stand als Etikett dort, wo sonst Bilder
+                // stehen. Das Fragezeichen sagt dasselbe in der Sprache der
+                // Nachbarblöcke — da ist etwas, wir wissen nicht was. Für die
+                // Sprachausgabe bleibt es „Slot 2, unbekannt“ (siehe
+                // `beschriftung`), der Einblendtext sagt es am Zeiger aus.
                 ZStack {
                     RoundedRectangle(cornerRadius: Self.eckenradius).fill(.quaternary)
-                    Text(lok("belegt")).font(.caption).foregroundStyle(.secondary)
+                    Image(systemName: "questionmark")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
+                .help(lok("belegt — von einer anderen Quelle"))
             }
         }
         .aspectRatio(seitenverhaeltnis, contentMode: .fit)
@@ -104,10 +113,10 @@ public struct Slotblock: View {
     }
 
     /// Slotnummer und Zustand als Wort — die Fassung für die Sprachausgabe.
-    /// `.bekannt` und `.unbekannt` müssen sich hier unterscheiden, obwohl das
-    /// Wort im Block für `.unbekannt` ebenfalls „belegt“ heißt: Sehende sehen
-    /// den Unterschied an den Pixeln (da oder nicht), wer nicht sieht, braucht
-    /// dafür ein eigenes Wort.
+    /// `.bekannt` und `.unbekannt` müssen sich hier unterscheiden: Sehende
+    /// sehen den Unterschied an den Pixeln (da oder nicht), wer nicht sieht,
+    /// braucht dafür ein eigenes Wort. Der Block selbst trägt keins mehr,
+    /// sondern ein Fragezeichen.
     private var beschriftung: Text {
         switch zustand {
         case .frei:

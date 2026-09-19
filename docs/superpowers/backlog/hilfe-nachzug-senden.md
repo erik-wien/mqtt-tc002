@@ -92,3 +92,22 @@ Dahinter die Ausrichtungen, Rand und Abstand, und ganz hinten das
 Formatblatt (Dauer, Lauftempo, mitlaufendes Icon) und das Bild aus dem
 Bestand. Wo die Pille am rechten Rand ausblendet, geht es weiter — dort
 schieben."
+
+---
+
+## 5. Der Block mit dem Fragezeichen
+
+**Steht da:** nichts Ausdrückliches. `HilfeInhalt.senden` beschreibt die fünf
+Blöcke, sagt aber nichts über den Zustand „da liegt etwas, das nicht von hier
+kam".
+
+**Falsch daran:** Der Block trug das Wort „belegt", jetzt ein Fragezeichen.
+Das Zeichen ist erklärungsbedürftiger als das Wort, und am iPad gibt es
+keinen Einblendtext, der es erklären könnte — der Satz „belegt — von einer
+anderen Quelle" hängt dort an nichts. Die Hilfe ist die Stelle, die auf
+beiden Geräten erreichbar ist.
+
+**Soll dazukommen** in `HilfeInhalt`, im Absatz über die fünf Blöcke: „Ein
+Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier
+kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin
+steht — der Platz ist belegt, der Inhalt bleibt unbekannt."

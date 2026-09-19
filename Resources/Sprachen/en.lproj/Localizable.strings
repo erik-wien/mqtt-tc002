@@ -525,7 +525,7 @@
 "Rosa" = "Pink";
 
 /* Slotblock.swift */
-"belegt" = "occupied";
+"belegt — von einer anderen Quelle" = "occupied — from another source";
 "Slot %d, frei" = "Slot %d, free";
 "Slot %d, belegt" = "Slot %d, occupied";
 "Slot %d, unbekannt" = "Slot %d, unknown";
