@@ -52,13 +52,15 @@ final class HilfeauszeichnungTests: XCTestCase {
     /// gesammelt, damit eine neue Konstante nicht vergessen werden kann.
     private static let alleBausteine: [Hilfebaustein] = [
         HilfeInhalt.wasEsTut, HilfeInhalt.betriebsart, HilfeInhalt.geraeteart,
-        HilfeInhalt.brokerNurFuerMqtt, HilfeInhalt.startOhneEinrichtung,
+        HilfeInhalt.brokerNurFuerMqtt, HilfeInhalt.themen,
+        HilfeInhalt.startOhneEinrichtung, HilfeInhalt.uhrHinzufuegen,
+        HilfeInhalt.uhrEntfernen, HilfeInhalt.aufDerUhr, HilfeInhalt.brokerSichern,
         HilfeInhalt.uhrAbfragen, HilfeInhalt.brokerFelderLeer,
         HilfeInhalt.brokerKennwort, HilfeInhalt.brokerPruefen,
         HilfeInhalt.virtuelleUhr, HilfeInhalt.wolkenabgleich,
         HilfeInhalt.fuenfPlaetze, HilfeInhalt.blockwissenAnfang,
         HilfeInhalt.blockwissenSchluss, HilfeInhalt.wegeRegel,
-        HilfeInhalt.blockierendeAnzeige, HilfeInhalt.papierkorb,
+        HilfeInhalt.blockierendeAnzeige, HilfeInhalt.blockLoeschen,
         HilfeInhalt.dauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
         HilfeInhalt.groesse, HilfeInhalt.microFuenf, HilfeInhalt.fettUndGross,
         HilfeInhalt.randUndAbstand, HilfeInhalt.breiteUndAusrichtung,

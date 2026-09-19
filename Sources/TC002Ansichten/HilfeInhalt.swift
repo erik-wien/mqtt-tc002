@@ -16,8 +16,16 @@ public enum HilfeInhalt {
     /// Was die App ueberhaupt tut und wo die Nachrichten langlaufen. Seit es
     /// zwei Wege gibt, steht der Broker nicht mehr zwangslaeufig dazwischen —
     /// welcher Weg gilt, entscheidet jede Uhr fuer sich (`Betriebsart`).
+    ///
+    /// Beide Gattungen schon im ersten Satz (`Geraetetyp`): Wer die
+    /// Einleitung liest, hat die Uhr vor sich, die er einrichten will, und
+    /// eine Einleitung, die nur eine Bauart nennt, schliesst die andere aus.
+    /// Der zweite Absatz sagt, was die Gattung fuer die Regler bedeutet — die
+    /// Einblendtexte der gesperrten Regler sagen es sonst nur dort, wo man
+    /// schon anstoesst.
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("Pixel Clock Messenger schickt Anzeigen an eine oder mehrere Ulanzi-TC002-Pixeluhren. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
+        .absatz("Pixel Clock Messenger schickt Anzeigen an Pixeluhren — an eine Ulanzi TC002 mit Werksfirmware und an eine TC001 unter AWTRIX NG. Auf welchem Weg, steht je Uhr unter „Einstellungen“: unmittelbar über HTTP, oder über den MQTT-Broker im Haus, an den auch die Uhren angeschlossen sind."),
+        .absatz("Welche der beiden Gattungen eine Uhr ist, steht ebenfalls je Uhr unter „Einstellungen“, und es entscheidet, was die Regler bewirken: Für die Werksfirmware rastert diese App den Text selbst, Schriftart, Größe, Fett, Rand und Abstand gelten also. Eine AWTRIX NG setzt ihn mit ihrer eigenen Schrift — dort stehen dieselben Regler gesperrt da und sagen im Einblendtext, warum."),
     ]
 
     /// Die Wahl selbst — was sie bedeutet und was sie kostet. Gehoert hierher
@@ -29,7 +37,7 @@ public enum HilfeInhalt {
     /// anders aus.
     public static let betriebsart: [Hilfebaustein] = [
         .ueberschrift("Betriebsart: HTTP oder MQTT"),
-        .absatz("Jede Uhr hat in ihrer Zeile eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:"),
+        .absatz("Jede Uhr hat auf ihrer Seite eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:"),
         .tabelle([
             ("HTTP", "Die Uhr antwortet. Anlegen, Löschen und Umschalten quittiert sie, und eine abgewiesene Sendung ist als solche zu erkennen. Es braucht weder Broker noch Präfix."),
             ("MQTT", "Die Uhr antwortet nie (siehe „Wenn nichts erscheint“). Dafür liest die App am Broker mit, was andere an dieselbe Uhr schicken — und nur so kann ein Block eine fremde Sendung zeigen."),
@@ -64,13 +72,55 @@ public enum HilfeInhalt {
         .absatz("Der Broker gilt für Uhren im MQTT-Betrieb. Steht keine Uhr darauf, bleiben seine Felder ungenutzt — ausgegraut oder versteckt sind sie trotzdem nicht: Man trägt einen Broker ein, bevor man eine Uhr auf MQTT stellt, und in dieser Reihenfolge müssen sie benutzbar sein."),
     ]
 
+    /// Wie die Einstellungen gegliedert sind (`Einstellungsthema`). Das Erste,
+    /// was man wissen will — und auf beiden Oberflaechen dieselben fuenf
+    /// Themen in derselben Reihenfolge. Nur ihre Darstellung unterscheidet
+    /// sich, und das steht im Absatz selbst.
+    public static let themen: [Hilfebaustein] = [
+        .ueberschrift("Fünf Themen"),
+        .absatz("Die Einstellungen sind nach Themen gegliedert. Am Mac und auf dem iPad steht die Wahl als Segmentwahl über dem Inhalt, auf dem Telefon als Liste, deren Einträge auf je eine Seite führen."),
+        .tabelle([
+            ("Uhren", "die eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt"),
+            ("Broker", "Adresse, Port, Benutzer, Kennwort und die Prüfung"),
+            ("Aufzeichnung", "Verlauf und Protokoll"),
+            ("iCloud", "der Abgleich"),
+            ("Erweitert", "die virtuelle Uhr"),
+        ]),
+        .ueberschrift("Die Seite einer Uhr"),
+        .absatz("Eine Zeile in der Liste antippen öffnet die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Geräteart, Betriebsart, „Auf der Uhr“ (nur bei der Werksfirmware), „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser Uhr, nicht der angesehenen."),
+        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse, Präfix und Geräteart, und rechts das Anmeldezeichen."),
+    ]
+
     /// Womit die App beginnt, solange nichts eingerichtet ist
     /// (`AppZustand.eingerichtet`). Der Satz gilt fuer beide Oberflaechen: Am
     /// Mac und auf dem iPad steht der Bereich „Einstellungen" vorn, auf dem
     /// Telefon geht sein Blatt von selbst auf. Beide Male ist es derselbe
     /// Grund und dieselbe Auskunft — deshalb ein Absatz und nicht zwei.
     public static let startOhneEinrichtung: [Hilfebaustein] = [
-        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“ — dort gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und keine Brokeradresse eingetragen ist; für eine reine HTTP-Einrichtung wird nach keinem Broker gefragt. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
+        .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“, und zwar beim Thema „Uhren“, wo die erste Uhr eingetragen wird — bei „Senden“ gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und keine Brokeradresse eingetragen ist; für eine reine HTTP-Einrichtung wird nach keinem Broker gefragt. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
+    ]
+
+    /// Wie eine Uhr angelegt wird (`Uhrenliste`). Auf beiden Oberflaechen
+    /// dieselbe Zeile am Fuss der Liste und dasselbe Blatt dahinter.
+    public static let uhrHinzufuegen: [Hilfebaustein] = [
+        .ueberschrift("Uhr hinzufügen"),
+        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name; der Name ist freiwillig. Präfix und Geräteart stellt die App danach selbst fest."),
+    ]
+
+    /// Die zwei Wege, eine Uhr loszuwerden, und dass beide nachfragen
+    /// (`Uhrentfernen`). Auf beiden Oberflaechen dieselben zwei.
+    public static let uhrEntfernen: [Hilfebaustein] = [
+        .ueberschrift("Entfernen"),
+        .absatz("Eine Uhr wird auf zwei Wegen entfernt: mit der roten Zeile „Entfernen“ am Fuß ihrer Seite oder mit einem Wischen nach links in der Liste. Beide fragen dasselbe nach. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
+    ]
+
+    /// Die beiden Werte, die nicht der Meldung, sondern dem Geraet gehoeren
+    /// (`Uhreinstellungen`). Sie stehen auf der Seite der Uhr, fuer die sie
+    /// gelten — auf beiden Oberflaechen, seit sich beide dieselben Bausteine
+    /// teilen.
+    public static let aufDerUhr: [Hilfebaustein] = [
+        .ueberschrift("Auf der Uhr"),
+        .absatz("„Auf der Uhr“ — Seitenwechsel und Scrolltempo — steht auf der Seite der Uhr, für die beides gilt: Beides sind Einstellungen des Geräts, sie überdauern jede Meldung und werden beim Verstellen sofort geschrieben. Bei einer AWTRIX NG fehlt der Abschnitt: Ihre Firmware kennt `/getConfig` nicht, sie führt beides selbst. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht; das Scrolltempo gilt nur ihren eigenen Anzeigen (Gerätereferenz, §4.3). Wie lange eine einzelne Meldung steht und wie schnell sie läuft, entscheidet dagegen das Format unter „Senden“."),
     ]
 
     /// Das Themen-Praefix und woher es kommt. Beide Oberflaechen haben denselben
@@ -96,16 +146,24 @@ public enum HilfeInhalt {
     ]
 
     /// Wo das Kennwort liegt — im Schluesselbund, nicht in den App-Einstellungen
-    /// (`Einstellungen.kennwort`). Wann es gesichert wird, ist dagegen je
-    /// Oberflaeche verschieden und steht dort.
+    /// (`Einstellungen.kennwort`) — und dass unter dem Feld steht, ob eines da
+    /// ist (`Brokerabschnitt.kennwortstand`): Ein leeres Feld sieht sonst aus,
+    /// als waere keines gesetzt.
     public static let brokerKennwort: [Hilfebaustein] = [
-        .absatz("Das Kennwort liegt im Schlüsselbund und nicht, wie die übrigen Felder, in den App-Einstellungen."),
+        .absatz("Das Kennwort liegt im Schlüsselbund und nicht, wie die übrigen Felder, in den App-Einstellungen. Unter dem Feld steht, ob im Schlüsselbund eines liegt — das Feld selbst zeigt es nie an."),
+    ]
+
+    /// Wann die vier Brokerfelder gesichert werden. Seit beide Oberflaechen
+    /// denselben Baustein tragen (`Brokerabschnitt`), gilt der Satz wortgleich
+    /// fuer beide.
+    public static let brokerSichern: [Hilfebaustein] = [
+        .absatz("Adresse, Port und Benutzer sichern sich beim Tippen — es gibt nichts zu bestätigen. Das Kennwort wird gesichert, sobald man das Feld verlässt, die Eingabetaste drückt, das Thema wechselt oder die App beendet — nicht bei jedem Tastendruck."),
     ]
 
     /// Was die Brokerpruefung tut und was ihr Ergebnis nicht bedeutet. Beide
     /// Oberflaechen rufen dieselbe `AppZustand.brokerSichernUndPruefen`.
     public static let brokerPruefen: [Hilfebaustein] = [
-        .absatz("„Sichern und prüfen“ schreibt Adresse, Port, Benutzer und Kennwort ausdrücklich fest und fragt danach den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt."),
+        .absatz("„Verbindung prüfen“ fragt den Broker, ob er die Anmeldung annimmt — das dauert bis zu acht Sekunden und läuft unter einer eigenen Client-Kennung, damit dabei keine laufende Sendung hinausfliegt. Zu sichern gibt es dabei nichts: Adresse, Port und Benutzer stehen schon beim Tippen fest, das Kennwort spätestens beim Verlassen des Feldes."),
         .absatz("Eine angenommene Anmeldung heißt aber nur: Benutzername und Kennwort stimmen. Ob die Uhr die Nachricht am Ende auch zeigt, hängt zusätzlich vom richtigen Präfix und davon ab, ob das Konto auf das Thema schreiben darf — beides meldet MQTT 3.1.1 nicht zurück (siehe „Wenn nichts erscheint“). Das Ergebnis der Prüfung steht auch im Protokoll unter „Verlauf“."),
     ]
 
@@ -118,7 +176,7 @@ public enum HilfeInhalt {
     /// gibt und was er tut ueberall dasselbe ist.
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
-        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
+        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
         .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
         .absatz("Sie spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
@@ -146,8 +204,9 @@ public enum HilfeInhalt {
         .tabelle([
             ("frei", "gestrichelter, leerer Rahmen — kein Name auf diesem Platz."),
             ("belegt, Inhalt bekannt", "die Pixel, verkleinert. Sie stammen entweder aus einer mitgelesenen Sendung oder aus dem, was sich diese Installation für den Platz gemerkt hat — im zweiten Fall ist es eine Erinnerung und kann überholt sein."),
-            ("belegt, Inhalt unbekannt", "grau gefüllter Block mit dem Wort „belegt“, ohne Pixel."),
+            ("belegt, Inhalt unbekannt", "grau gefüllter Block mit einem Fragezeichen, ohne Pixel."),
         ]),
+        .absatz("Ein Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin steht — der Platz ist belegt, der Inhalt bleibt unbekannt."),
         .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt — die Blöcke zeigen dabei immer den Stand der gerade aktiven Uhr."),
     ]
 
@@ -186,7 +245,7 @@ public enum HilfeInhalt {
         .abbildung(.stehtOderLaeuft),
         .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
         .absatz("Gerastert wird dabei immer von dieser App, auch bei langem Text. Die Uhr kann Text zwar auch selbst setzen, und bis zum 18.09.2026 gab es dafür die Wahl „als Text“ — sie kostete Schriftart, Größe und Fett, verlor Umlaute und ließ langen Text nicht einmal durchlaufen, sondern schnitt ihn ab (ein Mangel der Werksfirmware, am 11.09.2026 mit drei Fassungen geprüft). Übrig blieb eine kleinere Nutzlast, und die ist den Preis nicht wert."),
-        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst, und die Vorschau sagt dazu, dass sie nur eine Näherung ist."),
+        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst. Die Vorschau ist dann nur eine Näherung, und das (?) neben der Punktreihe unter ihr sagt, warum."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -195,13 +254,13 @@ public enum HilfeInhalt {
         .absatz("Egal wie viele Plätze belegt sind: Eine gerade angezeigte, stehende Anzeige blockiert alle anderen Inhalte, bis sie gelöscht oder ersetzt wird — deshalb ist „auf denselben Platz senden“ oft das, was man eigentlich will."),
     ]
 
-    /// Das ⊗ an den fuenf Bloecken. Steht auf beiden Geraeten an derselben
-    /// Stelle und erscheint nur an belegten Plaetzen.
-    ///
-    /// Zuvor war es ein Papierkorb neben der Reihe, der sich auf den gerade
-    /// gewaehlten Platz bezog — man musste ihn erst treffen.
-    public static let papierkorb: [Hilfebaustein] = [
-        .absatz("Das ⊗ in der Ecke eines Blocks löscht genau diesen Platz auf den gewählten Uhren. Es erscheint nur an belegten Plätzen — ein leerer hat nichts zu löschen. Ein langer Druck darauf nennt den Platz beim Namen, bevor man ihn trifft."),
+    /// Wie ein einzelner Platz geraeumt wird: ueber das Menue des Blocks
+    /// (`View.slotmenue`), auf beiden Oberflaechen dieselbe Geste. Das ⊗ am
+    /// Zeiger ist der eine begruendete Unterschied und deshalb als solcher
+    /// benannt.
+    public static let blockLoeschen: [Hilfebaustein] = [
+        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „Löschen“ räumt den Platz auf den gewählten Uhren. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
+        .absatz("Am Zeiger erscheint zusätzlich ein rotes ⊗ in der Ecke des Blocks, solange der Zeiger darüber steht — so wie Safari das Schließzeichen seiner Tabs zeigt. Am Finger gibt es kein Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der Wackelmodus des Home-Bildschirms."),
     ]
 
     /// Die eigene Standzeit einer Anzeige. Das Feld heisst am Mac „Dauer (Sek.)“
@@ -300,7 +359,7 @@ public enum HilfeInhalt {
     /// schlaegt gemerkt — `AppZustand.anzeigenDerAktivenMitQuelle` fuer beide.
     public static let verlaufHerkunft: [Hilfebaustein] = [
         .ueberschrift("Auf der Uhr und zuletzt geschickt"),
-        .absatz("Unter den fünf Blöcken steht eine Liste, die zweierlei vereint: die eigenen Sendungen mit allem, was dazugehört — Zeit, Platz, Icon, Text in seiner Farbe, Empfänger —, und das, was sonst noch auf der angesehenen Uhr liegt. Eine Meldung, die gerade dort steht, trägt rechts ein Bildschirmzeichen."),
+        .absatz("Unter den fünf Blöcken steht eine Liste, die zweierlei vereint: die eigenen Sendungen und das, was sonst noch auf der angesehenen Uhr liegt. Eine eigene Zeile steht in der Reihenfolge der Auskunft — vorn das Icon als Bild, daneben der Text in der Farbe, in der er geschickt wurde, darunter die Empfänger, rechts Zeit und Platz. Hat eine Sendung keinen Text, steht dort der Name ihres Icons. Die Empfänger bleiben weg, solange nur eine Uhr eingerichtet ist: Ihr Name wäre in jeder Zeile dasselbe Wort. Eine Meldung, die gerade auf der Uhr steht, trägt rechts ein Bildschirmzeichen."),
         .absatz("Von fremden Anzeigen weiß die App nur den Namen: Die Uhr nennt ihre Anzeigen, verrät aber nicht, was darin steht. Solche Zeilen haben deshalb dieselbe Form, nur bleiben die Felder leer, zu denen es keine Auskunft gibt."),
         .absatz("Ein Druck auf eine eigene Sendung stellt sie wieder her — Text, Schrift, Farbe, Ausrichtung, Tempo und Icon. Ein Wischen nach links löscht: bei einer eigenen Zeile den Eintrag, bei einer Anzeige auf der Uhr die Anzeige. Ein Wischen von der anderen Seite schaltet die Uhr auf diese Anzeige um. Je Uhr getrennt: Die Liste wechselt mit, wenn man eine andere Uhr ansieht."),
     ]
@@ -358,7 +417,7 @@ public enum HilfeInhalt {
     /// gemeint ist (`AppZustand.zusammengefasst`).
     public static let fehlerWelche: [Hilfebaustein] = [
         .ueberschrift("Welche Meldung ist gemeint?"),
-        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Sichern und prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
+        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den Broker mit Adresse und Port („Der Broker 192.168.1.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
     ]
 
     /// Die vier Punkte der Reihe nach. Alle vier gibt es auf beiden Geraeten.
