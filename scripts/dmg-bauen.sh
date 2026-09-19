@@ -33,6 +33,9 @@ hdiutil detach "$BERG" >/dev/null 2>&1 || true
 rm -f "$DMG" "$ROH"
 
 echo "== Abbild anlegen =="
+# `build/` ist ignoriert und in einem frischen Klon nicht da; ohne den Ordner
+# scheitert `hdiutil create` mit „No such file or directory".
+mkdir -p "$(dirname "$ROH")"
 BAU="$(mktemp -d)"
 cp -R "$APP" "$BAU/"
 ln -s /Applications "$BAU/Programme"
