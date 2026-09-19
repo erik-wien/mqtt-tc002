@@ -18,8 +18,8 @@ final class HilfezeichenTests: XCTestCase {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
 
-    /// Die vier Gruppenüberschriften, die eine Erklärung tragen müssen, samt
-    /// ihrer Datei. Zwei im Sendeinspektor, zwei im Editorinspektor — beide
+    /// Die Gruppenüberschriften, die eine Erklärung tragen müssen, samt
+    /// ihrer Datei. Eine im Sendeinspektor, eine im Editorinspektor — beide
     /// Ansichten gelten für Mac und iPad (`SchreibtischView`). „Senden als"
     /// gehört nicht mehr dazu: Der Abschnitt ist weg, weil die Wahl weg ist
     /// (siehe `SendeWeg` im Kern) — und damit auch die Frage, die sein (?)
@@ -27,7 +27,6 @@ final class HilfezeichenTests: XCTestCase {
     private static let koepfe = [
         ("Sources/TC002Ansichten/SendenView.swift", "Schrift"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
-        ("Sources/TC002Ansichten/EditorBereichView.swift", "Hinzufügen"),
     ]
 
     /// Quelltext ohne Kommentare — sonst genügte ein Satz über einen
@@ -75,11 +74,10 @@ final class HilfezeichenTests: XCTestCase {
         }
     }
 
-    /// Die LaMetric-Nummer wird an zwei Stellen erklärt — im Abschnitt des
-    /// Bildes und unter „Hinzufügen“ —, beide Male mit demselben Wortlaut.
-    /// Zweimal hingeschrieben wären es zwei Übersetzungsschlüssel, die
-    /// auseinanderlaufen können; deshalb eine Konstante, die genau einmal im
-    /// Quelltext steht.
+    /// Die LaMetric-Erklärung ist eine Konstante, die genau einmal im
+    /// Quelltext steht: Wo sie ein zweites Mal gebraucht wird, wäre ein
+    /// zweiter Wortlaut ein zweiter Übersetzungsschlüssel, der auseinander-
+    /// laufen kann.
     func testDieLaMetricErklaerungStehtNurEinmalDa() throws {
         let anfang = "Icons für solche Uhren werden über LaMetric-Nummern angesprochen."
         var stellen = 0

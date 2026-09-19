@@ -86,7 +86,7 @@ public struct EditorBereichView: View {
     @State private var laedt = false
 
     // Rueckfragen.
-    /// Eine Frage, vier Anlaesse — siehe `Rueckfrage`.
+    /// Eine Frage, mehrere Anlaesse — siehe `Rueckfrage`.
     @State private var rueckfrage: Rueckfrage?
     @State private var zuLoeschen: Editoreintrag?
 
@@ -135,11 +135,9 @@ public struct EditorBereichView: View {
         #endif
     }
 
-    /// Die Erklärung hinter dem (?) an beiden Stellen, an denen eine
-    /// LaMetric-Nummer vorkommt: am Abschnitt des bearbeiteten Bildes und
-    /// unter „Hinzufügen“. Ein Wortlaut, einmal hingeschrieben — zweimal wären
-    /// es zwei Übersetzungsschlüssel, die auseinanderlaufen können, für
-    /// dieselbe Sache (`HilfezeichenTests` hält das fest).
+    /// Die Erklärung hinter dem (?) am Abschnitt des bearbeiteten Bildes.
+    /// Eine Konstante, damit der Wortlaut ein Übersetzungsschlüssel bleibt,
+    /// wo immer er noch gebraucht wird (`HilfezeichenTests` hält das fest).
     private static var lametricHilfe: String {
         lok("Icons für solche Uhren werden über LaMetric-Nummern angesprochen. Die Nummer stammt aus der LaMetric Icon Gallery, ist beim 8×8 zugleich der Dateiname und muss darum eindeutig sein. Ein über sie geholtes Icon ist immer ein 8×8 und landet im 8×8-Bestand — gleich, was gerade auf der Leinwand liegt.")
     }
@@ -150,10 +148,10 @@ public struct EditorBereichView: View {
         var id: String { rawValue }
     }
 
-    /// Eine Frage, vier Anlaesse. Sie lautet immer gleich: Auf der Leinwand
+    /// Eine Frage, mehrere Anlaesse. Sie lautet immer gleich: Auf der Leinwand
     /// steht etwas, das nicht im Bestand liegt, und der naechste Schritt wuerde
     /// es verwerfen. Gestellt wird sie nur dann — `ungesichert` entscheidet
-    /// das, und zwar fuer alle vier gleich.
+    /// das, und zwar fuer alle gleich.
     ///
     /// Eine statt vier: Mehrere `.alert`/`.confirmationDialog` mit eigenem
     /// Zustand schliessen einander aus, wenn sie gleichzeitig aufgehen wollen —
@@ -161,8 +159,13 @@ public struct EditorBereichView: View {
     /// ohne dass es auffaellt, weil beide fuer sich funktionieren. Ein
     /// einziger Zustand kann nicht zweierlei gleichzeitig meinen.
     enum Rueckfrage {
-        /// „Neu" — Leinwand, Einzelbilder, Name und Nummer von vorn.
-        case neu
+        /// „Neu" — Leinwand, Einzelbilder, Name und Nummer von vorn, in der
+        /// genannten Groesse.
+        case neu(Leinwandgroesse)
+        /// Das Kreuz ueber der Leinwand. Zurueck in die Uebersicht fuehrt kein
+        /// Weg zur Leinwand — Oeffnen fragt nicht mehr —, also wird hier
+        /// gefragt, wie in Fotos.
+        case verwerfen
         /// Ein Groessenwechsel. Umgerechnet wird zwischen den Groessen nichts.
         case groesse(Leinwandgroesse)
         /// Ein eben geladenes Stueck — aus einer Datei oder von LaMetric. Es
@@ -173,6 +176,7 @@ public struct EditorBereichView: View {
         var titel: String {
             switch self {
             case .neu: return lok("Neu anfangen?")
+            case .verwerfen: return lok("Änderungen verwerfen?")
             case .groesse: return lok("Größe wechseln?")
             case .geladen: return lok("Gemaltes ersetzen?")
             }
@@ -180,7 +184,7 @@ public struct EditorBereichView: View {
 
         var text: String {
             switch self {
-            case .neu:
+            case .neu, .verwerfen:
                 return lok("Das Gemalte ist nicht gesichert und geht dabei verloren.")
             case .groesse:
                 return lok("Zwischen den Größen wird nichts umgerechnet — das Gemalte geht dabei verloren. „Rückgängig“ holt es zurück.")
@@ -338,13 +342,27 @@ public struct EditorBereichView: View {
         .toolbar {
             // Die Werkzeugleiste gilt der Leinwand: In der Uebersicht gibt es
             // nichts rueckgaengig zu machen, keinen Inspektor und keine
-            // angesehene Uhr — dort steht nur „Neu".
+            // angesehene Uhr — dort steht nur das Plus. Ein Menue, kein Knopf:
+            // Alles, was Neues hereinholt, liegt dahinter, und ein leeres
+            // Blatt braucht vorher seine Groesse. Im Inspektor stand es
+            // zuvor, aber der gehoert zur Leinwand, und den Bestand fuellt man
+            // von der Uebersicht aus.
             if zeigtUebersicht {
                 ToolbarItem(placement: .primaryAction) {
-                    Button { neuAnfragen() } label: {
-                        Label("Neu", systemImage: "plus")
+                    Menu {
+                        Menu("Neu zeichnen") {
+                            ForEach(Leinwandgroesse.allCases) { g in
+                                Button(lok(g.beschriftung)) { neuAnfragen(in: g) }
+                            }
+                        }
+                        Button("LaMetric Icon Gallery") { zeigeGalerie = true }
+                        Button(Self.dateiwahlname) { zeigeDateiImport = true }
+                        Divider()
+                        Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
+                    } label: {
+                        Label("Hinzufügen", systemImage: "plus")
                     }
-                    .help(lok("Neu"))
+                    .help(lok("Hinzufügen"))
                 }
             } else {
                 ToolbarItem(placement: .principal) { Uhrenmenue(zustand: zustand) }
@@ -354,6 +372,20 @@ public struct EditorBereichView: View {
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
                                         set: { zeigeInspektor = $0 })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
+        // An der Ansicht, nicht am Knopf im Inspektor: Den gibt es in der
+        // Uebersicht nicht, und das Plus dort oeffnet dieselbe Dateiwahl.
+        .fileImporter(isPresented: $zeigeDateiImport,
+                      allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
+            switch ergebnis {
+            case .success(let url): dateiUebernehmen(url)
+            // `guard case .success … else { return }` taugte hier
+            // nicht: Wer eine Datei waehlte und scheiterte, sah nichts
+            // geschehen und konnte nicht wissen, woran es lag.
+            case .failure(let fehler):
+                zustand.fehler = lokf("Die Datei ließ sich nicht öffnen: %@",
+                                      fehler.localizedDescription)
+            }
+        }
         .sheet(isPresented: $zeigeSichernBlatt) { sichernblatt }
         .onAppear { vorhandene = bestand.alle(); bewegungLesen() }
         .onDisappear { stoppeAbspielen(); arbeitsstandSichern() }
@@ -394,8 +426,10 @@ public struct EditorBereichView: View {
             presenting: rueckfrage
         ) { frage in
             switch frage {
-            case .neu:
-                Button("Neu anfangen", role: .destructive) { neu() }
+            case .neu(let groesse):
+                Button("Neu anfangen", role: .destructive) { neu(in: groesse) }
+            case .verwerfen:
+                Button("Verwerfen", role: .destructive) { verwerfen() }
             case .groesse(let neue):
                 Button("Wechseln", role: .destructive) { groesseSetzen(neue) }
             case .geladen(let eintrag):
@@ -404,7 +438,7 @@ public struct EditorBereichView: View {
                 // im Bestand, die Leinwand bleibt stehen.
                 Button("Nur in den Bestand") { imBestandLassen(eintrag) }
             }
-            // Fuer alle drei: Eine Rueckfrage ohne Ausweg ist keine.
+            // Fuer alle: Eine Rueckfrage ohne Ausweg ist keine.
             Button("Abbrechen", role: .cancel) {}
         } message: { frage in
             Text(frage.text)
@@ -704,7 +738,7 @@ public struct EditorBereichView: View {
                     .knopfHaupthandlung()
                     .keyboardShortcut(.defaultAction)
                     .disabled(schluessel.isEmpty)
-                Button("Neu") { neuAnfragen() }
+                Button("Neu") { neuAnfragen(in: groesse) }
                     .knopfBefehl()
             }
             // Die Antwort auf den Druck, unmittelbar darunter — „Hearts
@@ -720,57 +754,6 @@ public struct EditorBereichView: View {
                  : lok("Der Name ist zugleich der Dateiname — derselbe Name ersetzt das Vorhandene."))
         }
 
-        // Was hier steht, sind Handlungen am Bestand, nicht an der Leinwand:
-        // Ein geholtes LaMetric-Icon ist immer ein 8×8 im 8×8-Bestand, gleich
-        // was gerade auf dem Tisch liegt. Der ganze Abschnitt hing zuvor an
-        // `groesse.mitNummer` — wer auf 16×16 stand, fand die LaMetric-Wahl
-        // nicht mehr und konnte nicht erraten, warum.
-        Section {
-            // Eine Zeile fuer eine Handlung: Feld, Knopf und der Verweis auf
-            // die Gallery standen untereinander und nahmen drei Zeilen fuer
-            // eine einzige Sache. Der Knopf traegt nur noch sein Symbol — als
-            // Wort waren Feld und Knopf zusammen breiter als die
-            // Inspektorspalte, und SwiftUI stapelte sie deshalb doch wieder
-            // untereinander.
-            LabeledContent("LaMetric-Nummer") {
-                HStack(spacing: 6) {
-                    TextField("Nummer", text: $lametricNummer)
-                        .labelsHidden()
-                        .eingabefeld(loeschbar: $lametricNummer)
-                        .frame(width: 80)
-                        .onSubmit { nachladen() }
-                    Button { nachladen() } label: {
-                        Image(systemName: laedt ? "ellipsis" : "arrow.down.circle")
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(laedt || lametricNummer.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .help(laedt ? lok("Hole…") : lok("Nachladen"))
-                    .accessibilityLabel(Text(laedt ? lok("Hole…") : lok("Nachladen")))
-                }
-            }
-            Button("LaMetric Icon Gallery") { zeigeGalerie = true }
-                .knopfBefehl()
-            // Der Knopf sagt, wo gesucht wird: „Öffnen…" liess offen, ob der
-            // Bestand der App gemeint ist oder das Dateisystem.
-            Button(Self.dateiwahlname) { zeigeDateiImport = true }
-                .knopfBefehl()
-                .fileImporter(isPresented: $zeigeDateiImport,
-                              allowedContentTypes: [.gif, .png, .jpeg]) { ergebnis in
-                    switch ergebnis {
-                    case .success(let url): dateiUebernehmen(url)
-                    // `guard case .success … else { return }` taugte hier
-                    // nicht: Wer eine Datei waehlte und scheiterte, sah nichts
-                    // geschehen und konnte nicht wissen, woran es lag.
-                    case .failure(let fehler):
-                        zustand.fehler = lokf("Die Datei ließ sich nicht öffnen: %@",
-                                              fehler.localizedDescription)
-                    }
-                }
-            Button("Grundschatz wiederherstellen") { grundschatzWiederherstellen() }
-                .knopfBefehl()
-        } header: {
-            Abschnittskopf("Hinzufügen", hilfe: Self.lametricHilfe)
-        }
 
     }
 
@@ -958,24 +941,29 @@ public struct EditorBereichView: View {
 
     private static let galerie = URL(string: "https://developer.lametric.com/icons")!
 
-    /// Abbrechen links, Sichern rechts — über der Leinwand und nicht in der
+    /// Kreuz links, Haken rechts — über der Leinwand und nicht in der
     /// Werkzeugleiste: Dort saessen sie am rechten Fensterrand, also über dem
-    /// Inspektor, und nicht über dem Stueck, das sie betreffen.
+    /// Inspektor, und nicht über dem Stueck, das sie betreffen. Nur die
+    /// Zeichen, wie in Fotos; `Label` schriebe am Mac das Wort dazu.
     private var abschlusszeile: some View {
         HStack {
-            Button { zeigtUebersicht = true } label: {
-                Label("Fertig", systemImage: "xmark")
+            Button { fertigAnfragen() } label: {
+                Image(systemName: "xmark")
             }
             .knopfBefehl()
             .keyboardShortcut(.cancelAction)
+            .help(lok("Fertig"))
+            .accessibilityLabel(Text("Fertig"))
             Spacer()
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
             Spacer()
             Button { sichernAnfragen() } label: {
-                Label("Sichern", systemImage: "checkmark")
+                Image(systemName: "checkmark")
             }
             .knopfHaupthandlung()
+            .help(lok("Sichern"))
+            .accessibilityLabel(Text("Sichern"))
         }
     }
 
@@ -1000,6 +988,12 @@ public struct EditorBereichView: View {
                 .help(lok("Nur bewegte"))
                 Spacer()
             }
+            // Die Antwort auf das Plus — „3 Icons wiederhergestellt." oder
+            // warum eine LaMetric-Nummer nichts brachte. Unter der Leinwand
+            // stuende sie hinter der Uebersicht.
+            if let meldung {
+                Text(meldung).font(.footnote).foregroundStyle(.secondary)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     ForEach(Leinwandgroesse.allCases) { g in
@@ -1017,7 +1011,7 @@ public struct EditorBereichView: View {
                         }
                     }
                     if gefilterterBestand.isEmpty {
-                        Text("Nichts gefunden. Unter „Hinzufügen“ im Inspektor kommt Neues herein.")
+                        Text("Nichts gefunden. Über das Plus kommt Neues herein.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
@@ -1421,14 +1415,14 @@ public struct EditorBereichView: View {
         arbeitsstandSichern()
     }
 
-    private func neuAnfragen() {
-        if ungesichert { rueckfrage = .neu } else { neu() }
+    private func neuAnfragen(in groesse: Leinwandgroesse) {
+        if ungesichert { rueckfrage = .neu(groesse) } else { neu(in: groesse) }
     }
 
     /// Von vorn — Leinwand, Einzelbilder, Verzoegerung, Name und Nummer. Der
     /// Verlauf faellt dabei weg: Von einem leeren Blatt aus fuehrt kein Weg
     /// zurueck zu dem, was nicht mehr da ist.
-    private func neu() {
+    private func neu(in groesse: Leinwandgroesse) {
         stoppeAbspielen()
         verlauf.leeren()
         leinwand = groesse.leereLeinwand
@@ -1436,6 +1430,19 @@ public struct EditorBereichView: View {
         name = ""
         meldung = nil
         arbeitsstandSichern()
+        zeigtUebersicht = false
+    }
+
+    private func fertigAnfragen() {
+        if ungesichert { rueckfrage = .verwerfen } else { meldung = nil; zeigtUebersicht = true }
+    }
+
+    /// Das Kreuz nach der Rueckfrage: Die Leinwand wird geleert, damit in der
+    /// Uebersicht nichts Ungesichertes mehr liegt, das dort niemand sieht und
+    /// das sonst beim naechsten „Neu zeichnen" ohne erkennbaren Grund fragte.
+    private func verwerfen() {
+        neu(in: groesse)
+        zeigtUebersicht = true
     }
 
     private func anklicken(_ eintrag: Editoreintrag) {

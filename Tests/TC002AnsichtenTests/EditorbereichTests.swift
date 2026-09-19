@@ -168,23 +168,26 @@ final class EditorbereichTests: XCTestCase {
 
     /// A1, die zweite Hälfte. „Neu" ist zerstörend — es leert Leinwand,
     /// Einzelbilder, Name und Nummer und wirft den Verlauf weg. Es darf
-    /// deshalb nur über die Rückfrage erreichbar sein: der Knopf ruft
-    /// `neuAnfragen()`, und `neu()` selbst steht genau an zwei Stellen — im
-    /// Zweig „da ist nichts zu verlieren" und hinter der Bestätigung.
+    /// deshalb nur über die Rückfrage erreichbar sein: Knopf und Plusmenü
+    /// rufen `neuAnfragen(in:)`, und `neu(in:)` selbst steht genau an drei
+    /// Stellen — im Zweig „da ist nichts zu verlieren", hinter der
+    /// Bestätigung und im Verwerfen nach dem Kreuz, das dieselbe Räumung ist.
     func testNeuIstNurUeberDieRueckfrageErreichbar() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         let zeile = ausschnitt(text, von: "Button(\"Sichern\")", bis: "} header:")
-        XCTAssertTrue(zeile.contains("Button(\"Neu\") { neuAnfragen() }"),
+        XCTAssertTrue(zeile.contains("Button(\"Neu\") { neuAnfragen(in: groesse) }"),
                       "der Knopf „Neu“ räumt wieder unmittelbar auf, statt vorher zu fragen")
+        XCTAssertTrue(text.contains("Button(lok(g.beschriftung)) { neuAnfragen(in: g) }"),
+                      "das Plusmenü der Übersicht fragt vor „Neu zeichnen“ nicht mehr nach")
 
-        XCTAssertTrue(text.contains("Button(\"Neu anfangen\", role: .destructive) { neu() }"),
+        XCTAssertTrue(text.contains("Button(\"Neu anfangen\", role: .destructive) { neu(in: groesse) }"),
                       "die Rückfrage führt nicht mehr auf „Neu“ — oder sie ist nicht mehr als zerstörend gekennzeichnet")
-        XCTAssertTrue(text.contains("if ungesichert { rueckfrage = .neu } else { neu() }"),
+        XCTAssertTrue(text.contains("if ungesichert { rueckfrage = .neu(groesse) } else { neu(in: groesse) }"),
                       "ohne diesen Zweig fragt „Neu“ entweder immer oder nie")
 
-        let anzahl = aufrufe("neu", in: text)
-        XCTAssertEqual(anzahl, 2,
-                       "`neu()` wird an \(anzahl) Stellen gerufen — es darf nur die Rückfrage und der Fall „da ist nichts zu verlieren“ sein")
+        let anzahl = text.components(separatedBy: " neu(in: ").count - 1
+        XCTAssertEqual(anzahl, 3,
+                       "`neu(in:)` wird an \(anzahl) Stellen gerufen — es dürfen nur die Rückfrage, der Fall „da ist nichts zu verlieren“ und das Verwerfen sein")
     }
 
     /// C1. Der Import richtet sich nach der Datei, nicht nach dem Editor.
@@ -413,8 +416,9 @@ final class EditorbereichTests: XCTestCase {
                       "die Rückfrage nach dem Blatt wird wieder im selben Durchlauf gestellt, in dem das Blatt zugeht — SwiftUI verschluckt sie")
 
         for zweig in ["if ungesichert { rueckfrage = .groesse(neue) } else { groesseSetzen(neue) }",
-                      "if ungesichert { rueckfrage = .neu } else { neu() }",
-                      "if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }"] {
+                      "if ungesichert { rueckfrage = .neu(groesse) } else { neu(in: groesse) }",
+                      "if ungesichert { rueckfrage = .geladen(eintrag) } else { aufDieLeinwand(eintrag) }",
+                      "if ungesichert { rueckfrage = .verwerfen } else { meldung = nil; zeigtUebersicht = true }"] {
             XCTAssertTrue(text.contains(zweig), "„\(zweig)“ fehlt — dieser Anlass fragt wieder nach eigener Regel")
         }
         // Das Öffnen fragt nicht: Die Übersicht ist der Einstieg in den

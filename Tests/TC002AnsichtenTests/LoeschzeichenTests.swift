@@ -25,7 +25,7 @@ final class LoeschzeichenTests: XCTestCase {
         ("Sources/TC002Ansichten/EditorBereichView.swift", "$name", "„Dieses Bild“ → Name"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "$nummer", "„Dieses Bild“ → Nummer"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "$suche", "„Vorhandene“ → Suchen"),
-        ("Sources/TC002Ansichten/EditorBereichView.swift", "$lametricNummer", "„Hinzufügen“ → LaMetric-Nummer"),
+        ("Sources/TC002Ansichten/EditorBereichView.swift", "$lametricNummer", "LaMetric Icon Gallery → Nummer"),
     ]
 
     private func ohneKommentare(_ pfad: String) throws -> String {

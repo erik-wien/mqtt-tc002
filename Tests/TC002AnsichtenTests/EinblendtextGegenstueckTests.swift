@@ -227,6 +227,18 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                        "das runde Transportzeichen trägt wieder einen sichtbaren Namen — gewollt?")
     }
 
+    /// Kreuz und Haken über der Leinwand tragen nur ihr Zeichen, wie in
+    /// Fotos — den Namen bekommt die Sprachausgabe, am Zeiger der
+    /// Einblendtext. Ein sichtbarer Name am iPad wäre wieder „Fertig“ und
+    /// „Sichern“ als Wort, und genau das sollte weg.
+    func testKreuzUndHakenTragenIhrenNamenNurFuerDieSprachausgabe() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let zeile = ausschnitt(text, von: "private var abschlusszeile", bis: "private var uebersicht: some View")
+        XCTAssertEqual(anzahl(zeile, ".help("), 2, "Kreuz und Haken haben nicht mehr je einen Einblendtext")
+        XCTAssertEqual(anzahl(zeile, ".accessibilityLabel("), 2, "Kreuz oder Haken ist für die Sprachausgabe stumm")
+        XCTAssertFalse(zeile.contains(" Label("), "Kreuz oder Haken trägt wieder ein Wort neben dem Zeichen")
+    }
+
     /// Die vier Pfeile des Verschiebekreuzes teilen sich eine Funktion
     /// (`pfeil`) — Einblendtext und Gegenstück stehen deshalb nur einmal im
     /// Quelltext, nicht viermal.
@@ -269,12 +281,12 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// zustandsabhängigen Erklärungen.
     func testEditorBereichViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertEqual(anzahl(text, ".help("), 13,
+        XCTAssertEqual(anzahl(text, ".help("), 14,
                        "EditorBereichView.swift hat jetzt eine andere Anzahl `.help(...)`-Stellen als "
-                       + "die Werkzeugleiste (3), „Neu“ in der Übersicht (1), die Kachel (1), "
+                       + "die Werkzeugleiste (3), das Plus der Übersicht (1), Kreuz und Haken (2), die Kachel (1), "
                        + "der Schalter „Nur bewegte“ (1), das Abspielsymbol (1), das Verschiebekreuz "
                        + "(1), die zwei Knöpfe am Einzelbildstreifen (2), das Nummernfeld (1), der "
-                       + "Sendeknopf (1) und das Nachladen-Zeichen der LaMetric-Zeile (1) — eine neue "
+                       + "Sendeknopf (1) — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")
     }
 }
