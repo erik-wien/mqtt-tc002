@@ -227,16 +227,36 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                        "das runde Transportzeichen trägt wieder einen sichtbaren Namen — gewollt?")
     }
 
-    /// Kreuz und Haken über der Leinwand tragen nur ihr Zeichen, wie in
-    /// Fotos — den Namen bekommt die Sprachausgabe, am Zeiger der
-    /// Einblendtext. Ein sichtbarer Name am iPad wäre wieder „Fertig“ und
-    /// „Sichern“ als Wort, und genau das sollte weg.
-    func testKreuzUndHakenTragenIhrenNamenNurFuerDieSprachausgabe() throws {
+    /// Die Abschlusszeile spricht je Plattform ihre eigene Sprache.
+    ///
+    /// Am Mac ein Winkel zurück und ein **beschrifteter** Knopf: Ein nacktes
+    /// ✗/✓-Paar über der Fläche ist die Sprache der Fingerbedienung und sah
+    /// dort fremd aus. Am iPad die runden Zeichen, wie Fotos sie über dem
+    /// bearbeiteten Bild stehen hat — dort bekommt den Namen die
+    /// Sprachausgabe, am Zeiger der Einblendtext.
+    ///
+    /// Mutation: den `#if os(macOS)`-Zweig entfernen — baut, übersetzt, und
+    /// der Mac trägt wieder zwei nackte Zeichen.
+    func testDieAbschlusszeileFolgtDerPlattform() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let zeile = ausschnitt(text, von: "private var abschlusszeile", bis: "private var uebersicht: some View")
-        XCTAssertEqual(anzahl(zeile, ".help("), 2, "Kreuz und Haken haben nicht mehr je einen Einblendtext")
-        XCTAssertEqual(anzahl(zeile, ".accessibilityLabel("), 2, "Kreuz oder Haken ist für die Sprachausgabe stumm")
-        XCTAssertFalse(zeile.contains(" Label("), "Kreuz oder Haken trägt wieder ein Wort neben dem Zeichen")
+        let zeile = ausschnitt(text, von: "private var abschlusszeile", bis: "private func rundzeichen")
+        XCTAssertTrue(zeile.contains("#if os(macOS)"),
+                      "die Abschlusszeile sieht auf beiden Oberflächen gleich aus — dann trägt "
+                      + "eine von beiden die Zeichensprache der anderen")
+        XCTAssertTrue(zeile.contains("Image(systemName: \"chevron.left\")"),
+                      "am Mac steht kein Winkel mehr, der zurückführt")
+        XCTAssertTrue(zeile.contains("Button(lok(\"Sichern\"))"),
+                      "am Mac trägt die Haupthandlung wieder kein Wort")
+        XCTAssertTrue(zeile.contains("rundzeichen(\"xmark\"") && zeile.contains("rundzeichen(\"checkmark\""),
+                      "am iPad stehen nicht mehr die beiden runden Zeichen")
+
+        // Das runde Zeichen trägt seinen Namen weiterhin nur für die
+        // Sprachausgabe und den Zeiger — sichtbar ist es das Symbol.
+        let rund = ausschnitt(text, von: "private func rundzeichen", bis: "private var uebersicht")
+        XCTAssertEqual(anzahl(rund, ".help("), 1, "das runde Zeichen hat keinen Einblendtext mehr")
+        XCTAssertEqual(anzahl(rund, ".accessibilityLabel("), 1,
+                       "das runde Zeichen ist für die Sprachausgabe stumm")
+        XCTAssertFalse(rund.contains(" Label("), "das runde Zeichen trägt wieder ein Wort neben dem Symbol")
     }
 
     /// Die vier Pfeile des Verschiebekreuzes teilen sich eine Funktion

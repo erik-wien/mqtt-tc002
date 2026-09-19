@@ -87,6 +87,8 @@ public struct EditorBereichView: View {
     /// Die beiden Groessen des Abspielknopfes, mitwachsend mit der
     /// eingestellten Textgroesse: gross am Bild, klein neben „Bild anhaengen".
     @ScaledMetric(relativeTo: .largeTitle) private var abspielGross: Double = 90
+    /// Die Kantenlaenge der runden Zeichen ueber der Leinwand.
+    @ScaledMetric(relativeTo: .headline) private var rundkante: Double = 44
     @ScaledMetric(relativeTo: .body) private var abspielKlein: Double = 22
     @State private var laedt = false
 
@@ -997,24 +999,56 @@ public struct EditorBereichView: View {
     /// Zeichen, wie in Fotos; `Label` schriebe am Mac das Wort dazu.
     private var abschlusszeile: some View {
         HStack {
+            #if os(macOS)
+            // Am Mac ein Winkel zurueck und ein beschrifteter Knopf: Ein
+            // nacktes ✗/✓-Paar ueber der Flaeche ist die Sprache der
+            // Fingerbedienung. Der Mac beschriftet seine Knoepfe, und wo es
+            // zurueckgeht, steht ein Winkel.
             Button { fertigAnfragen() } label: {
-                Image(systemName: "xmark")
+                Image(systemName: "chevron.left")
             }
             .knopfBefehl()
             .keyboardShortcut(.cancelAction)
-            .help(lok("Fertig"))
-            .accessibilityLabel(Text("Fertig"))
+            .help(lok("Zurück zur Übersicht"))
+            .accessibilityLabel(Text("Zurück zur Übersicht"))
             Spacer()
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
             Spacer()
-            Button { sichernAnfragen() } label: {
-                Image(systemName: "checkmark")
-            }
-            .knopfHaupthandlung()
-            .help(lok("Sichern"))
-            .accessibilityLabel(Text("Sichern"))
+            Button(lok("Sichern")) { sichernAnfragen() }
+                .knopfHaupthandlung()
+            #else
+            // Am iPad die runden Zeichen, wie Fotos sie ueber dem Bild
+            // stehen hat: kein Wort, dafuer eine Trefferflaeche, die der
+            // Finger sicher trifft.
+            rundzeichen("xmark", beschriftung: lok("Fertig"), haupt: false) { fertigAnfragen() }
+                .keyboardShortcut(.cancelAction)
+            Spacer()
+            Text(name.isEmpty ? lok("Ohne Namen") : name)
+                .font(.headline).lineLimit(1)
+            Spacer()
+            rundzeichen("checkmark", beschriftung: lok("Sichern"), haupt: true) { sichernAnfragen() }
+            #endif
         }
+    }
+
+    /// Ein Zeichen in einem Kreis, wie Fotos es ueber dem bearbeiteten Bild
+    /// zeigt. Die Kantenlaenge waechst mit der eingestellten Textgroesse mit;
+    /// 44 Punkte sind das Mindestmass einer Trefferflaeche am Finger.
+    @ViewBuilder
+    private func rundzeichen(_ symbol: String, beschriftung: String,
+                             haupt: Bool, tun: @escaping () -> Void) -> some View {
+        Button(action: tun) {
+            Image(systemName: symbol)
+                .font(.headline)
+                .frame(width: rundkante, height: rundkante)
+                .background(haupt ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary),
+                            in: Circle())
+                .foregroundStyle(haupt ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+        }
+        .buttonStyle(.plain)
+        .help(beschriftung)
+        .accessibilityLabel(Text(beschriftung))
     }
 
     // MARK: - Uebersicht
