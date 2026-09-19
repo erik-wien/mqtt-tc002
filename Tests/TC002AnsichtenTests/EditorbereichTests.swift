@@ -359,6 +359,39 @@ final class EditorbereichTests: XCTestCase {
                       "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
     }
 
+    /// Die Karte „Werkzeug" trägt Farbe und Stift, sonst nichts. „Alles
+    /// löschen" wählt kein Werkzeug, es wirft weg — es stand dort als einzige
+    /// zerstörende Handlung in Warnfarbe zwischen zwei Wählern. Sein Platz ist
+    /// die letzte Zeile des Reiters „Malen", dieselbe Bauart wie „Verlauf
+    /// löschen" in den Einstellungen.
+    ///
+    /// Eine Rückfrage gibt es nicht und soll es nicht geben: `schritt()` legt
+    /// den Stand auf den Rückgängig-Stapel, bevor geleert wird.
+    ///
+    /// Mutation: den Knopf zurück in die Karte schieben — baut, übersetzt, und
+    /// am Gerät steht die Warnfarbe wieder zwischen den Werkzeugen.
+    func testAllesLoeschenIstKeinWerkzeug() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let karte = ausschnitt(text, von: "Section(\"Werkzeug\")", bis: "Section {")
+        for element in ["ColorPicker(\"Farbe\"", "Picker(\"Stift\""] {
+            XCTAssertTrue(karte.contains(element),
+                          "\(element) fehlt in der Karte „Werkzeug“ — dann prüft dieser Test die falsche Stelle")
+        }
+        XCTAssertFalse(karte.contains("Alles löschen"),
+                       "„Alles löschen“ steht wieder in der Karte „Werkzeug“ — eine zerstörende "
+                       + "Handlung in Warnfarbe, dauerhaft sichtbar zwischen zwei Wählern")
+
+        let malen = ausschnitt(text, von: "private var malenAbschnitte", bis: "private var animationAbschnitte")
+        XCTAssertTrue(malen.contains("Button(\"Alles löschen\", role: .destructive)"),
+                      "„Alles löschen“ ist aus dem Reiter „Malen“ verschwunden — oder es ist nicht "
+                      + "mehr als zerstörend gekennzeichnet")
+        XCTAssertTrue(malen.contains(".knopfZerstoerend()"),
+                      "„Alles löschen“ trägt keinen zerstörenden Stil mehr")
+        XCTAssertFalse(text.contains("rueckfrage = .leeren"),
+                       "vor dem Leeren wird wieder gefragt — „Rückgängig“ holt es zurück, "
+                       + "die Frage wäre eine ohne Anlass")
+    }
+
     /// Ein geladenes Bild will man auch sehen. Aus einer Datei wie von
     /// LaMetric: Beide Wege enden bei `geladenUebernehmen`, und der
     /// entscheidet an einer Stelle, ob gefragt wird.

@@ -623,8 +623,6 @@ public struct EditorBereichView: View {
                     .accessibilityLabel("Radieren").tag(true)
             }
             .pickerStyle(.segmented)
-            Button("Alles löschen", role: .destructive) { schritt(); leinwand.bildLeeren(); arbeitsstandSichern() }
-                .knopfZerstoerend()
         }
 
         Section {
@@ -657,6 +655,23 @@ public struct EditorBereichView: View {
                 .knopfBefehl()
                 .disabled(einfuegbare.isEmpty)
             }
+        }
+
+        // Letzte Zeile des Reiters, nicht in der Karte „Werkzeug": Ein
+        // Werkzeug waehlt man, dieser Knopf wirft weg. Der zweite zulaessige
+        // Ort — ein Ueberlaufmenue in der Werkzeugleiste — scheidet aus: Die
+        // Leiste ist am iPad die Navigationsleiste der Detailspalte und
+        // schiebt schon heute uebereinander (siehe `werkzeugleiste`), und der
+        // Befehl gehoert zum Malen, waehrend die Leiste in allen drei Reitern
+        // steht. Dieselbe Bauart wie „Verlauf loeschen" in den Einstellungen.
+        //
+        // Ohne Rueckfrage: `schritt()` legt den Stand auf den
+        // Rueckgaengig-Stapel, „Rueckgaengig" holt das Geleerte zurueck.
+        Section {
+            Button("Alles löschen", role: .destructive) {
+                schritt(); leinwand.bildLeeren(); arbeitsstandSichern()
+            }
+            .knopfZerstoerend()
         }
     }
 

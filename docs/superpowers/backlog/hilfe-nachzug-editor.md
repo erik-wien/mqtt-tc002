@@ -28,3 +28,33 @@ Leinwand zeigt alle, das gerade bearbeitete hervorgehoben; ein Klick darauf
 schaltet die Leinwand um. Er steht nur da, wenn es mehr als ein Einzelbild
 gibt. „Bild anhängen" im Reiter „Animation" hängt ein leeres an und schaltet
 die Leinwand gleich darauf um."
+
+## 2. „Alles löschen" steht nicht mehr in der Karte „Werkzeug" (Nr. 7C)
+
+**Absatz a:** Abschnitt „Icons" — „Gemalt wird mit gedrückter Maustaste oder
+mit dem Finger. Im Inspektor stellt „Farbe" den Systemfarbwähler, „Stift"
+schaltet zwischen Malen und Radieren um, und „Alles löschen" leert das gerade
+bearbeitete Einzelbild — nicht die anderen."
+
+**Falsch daran:** Der Satz stellt „Alles löschen" neben die zwei Werkzeuge, wo
+es nicht mehr steht. Es ist die letzte Zeile des Reiters „Malen".
+
+**Soll lauten:** „Gemalt wird mit gedrückter Maustaste oder mit dem Finger. Im
+Inspektor stellt „Farbe" den Systemfarbwähler und „Stift" schaltet zwischen
+Malen und Radieren um. Ganz unten im Reiter „Malen" steht „Alles löschen"; es
+leert das gerade bearbeitete Einzelbild — nicht die anderen — und
+„Rückgängig" holt es zurück."
+
+**Absatz b:** Abschnitt „Senden" — „… Es und „Alles löschen" **im Inspektor**
+nicht verwechseln: „Alles löschen" leert die Leinwand, das ⊗ löscht die
+Anzeige auf der Uhr."
+
+**Falsch daran:** Nur die Ortsangabe; sie stimmt noch, ist aber ungenau
+geworden.
+
+**Soll lauten:** „… Es und „Alles löschen" im Reiter „Malen" nicht
+verwechseln: …" (Rest unverändert).
+
+**Nicht zu ändern:** Der Absatz „Ein Strich ist ein Schritt, nicht ein Pixel:
+… Je ein Schritt sind außerdem „Alles löschen", …" bleibt richtig — der Knopf
+legt weiterhin einen Schritt auf den Rückgängig-Stapel.
