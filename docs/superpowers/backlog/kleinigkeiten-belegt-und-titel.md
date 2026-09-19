@@ -23,6 +23,15 @@ Waechter: `LaufbehauptungTests`, `EinblendtextGegenstueckTests` —
 
 ## B. Der Name der Uhr im Titel
 
+> **Erledigt** (Bahn „Einstellungen"). Der Vorschlag kam nicht vom
+> Auftraggeber: `AppZustand.uhrHinzufuegen` trug die **Adresse** als Namen
+> ein, und `abfragen` ersetzte sie durch das **Praefix**, solange Name und
+> Adresse noch gleich waren. Beides ist weg — ohne getippten Namen heisst eine
+> neue Uhr „Uhr 1", „Uhr 2" (die erste freie Zahl), und das Blatt „Neue Uhr"
+> fragt ausserdem nach einem Namen. Das Praefix bleibt in der Kennzeile der
+> Uhrenliste. Tests in `Tests/TC002ModellTests/AppZustandTests.swift`.
+> Teil A bleibt offen.
+
 Der Titel des iPhone-Bildschirms lautet `<Name der Uhr> · an 4 Uhren`
 (`SendeniOS.swift:391–394`, `lokf("%@ · an %d Uhren", uhr.name, …)`). Auf
 dem Foto des Auftraggebers ist der Name der Praefix-String der Uhr

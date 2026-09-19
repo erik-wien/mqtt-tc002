@@ -1,5 +1,22 @@
 # Einstellungen: nach Themen gegliedert, mit Reitern
 
+> **Erledigt.** Zwei Abweichungen vom Papier, beide begruendet:
+>
+> - **Keine `TabView`, sondern eine Segmentwahl ueber dem Inhalt.** Das Papier
+>   liess das offen („wenn iPadOS die Reiter als Leiste unten zeichnet,
+>   stattdessen `Picker` mit `.segmented`") — genau das tut iPadOS 26, und dort
+>   gehoert die untere Leiste der App, nicht einem Bereich innerhalb eines
+>   Bereichs. Die Vorlage nennt die Segmentwahl fuer die zweite Ebene.
+> - **Hinzufuegen als Zeile am Fuss der Liste, nicht als `+` in der
+>   Werkzeugleiste.** Die Einstellungen stehen am Mac im Detailbereich eines
+>   `NavigationSplitView`; ein `.toolbar` daraus landet in der Fensterleiste
+>   neben dem Uhrenmenue. Eine Zeile „Uhr hinzufuegen …" ist die Bauart der
+>   Systemeinstellungen („Account hinzufuegen") und traegt auf allen drei
+>   Oberflaechen.
+>
+> Die Hilfe wurde **nicht** mitgeaendert; der Nachzug steht vollstaendig in
+> `hilfe-nachzug-einstellungen.md`.
+
 **Vom Auftraggeber bestellt, 19.09.2026:** *„die einstellungen gehören mit
 tabs strukturiert und besser nach themen gruppiert."* Vor Papier 8
 (`einstellungen-ohne-sichern-knopf.md`) zu bauen; dessen Knopf und

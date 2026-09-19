@@ -1,5 +1,32 @@
 # Einstellungen: kein „Sichern"-Knopf, Kennwort als vorhanden erkennbar
 
+> **Erledigt.** Aufgegangen in Papier 11 (`einstellungen-nach-themen.md`) und
+> dort mitgebaut. Was daraus wurde:
+>
+> - **Geprueft, was der Knopf sicherte:** nichts, was nicht schon gesichert
+>   waere. Adresse, Port und Benutzer haengen unmittelbar an `AppZustand` und
+>   stehen mit jedem Tastendruck in den Einstellungen (je ein `didSet` mit
+>   `merke`). Allein das Kennwort blieb, und das sichert das Feld beim
+>   Verlassen. Der Satz steht als Kommentar am Knopf.
+> - **Der Knopf heisst „Verbindung pruefen"** und tut nur das.
+>   `brokerSichernUndPruefen` behaelt seinen vorsorglichen `kennwortSichern()`
+>   — man kann den Knopf druecken, ohne das Feld verlassen zu haben.
+> - **Kennwort als vorhanden erkennbar:** nicht als `prompt` im Feld, sondern
+>   als Satz darunter („Ein Kennwort liegt im Schluesselbund." /
+>   „Es liegt kein Kennwort im Schluesselbund."). Ein `prompt` waere
+>   wirkungslos gewesen: `AppZustand.init` liest das Kennwort einmal, das Feld
+>   zeigt es also ohnehin als Punkte — leer ist es nur dort, wo das Lesen
+>   scheitert, und genau dort haette ein Platzhalter nichts gesagt.
+>   `AppZustand.kennwortVorhanden` fragt den Schluesselbund nicht nach dem
+>   Wert: `Schluesselbund.vorhanden` fragt ohne `kSecReturnData`, und ohne
+>   Nutzlast prueft der Schluesselbund keine Zugriffsliste und zieht keinen
+>   Dialog auf. Test gegen den zaehlenden Doppelgaenger in `AppZustandTests`.
+> - **Der obere Rand am iPad** hat sich mit den Reitern von selbst erledigt:
+>   Ueber der Form steht jetzt die Segmentwahl, die Karte beginnt nicht mehr
+>   buendig unter der Werkzeugleiste.
+> - **Die Hilfe** wurde nicht mitgeaendert; der Nachzug steht in
+>   `hilfe-nachzug-einstellungen.md`, Punkte 9 bis 11.
+
 **Gewicht: 8 von 10.**
 
 ## Was heute geschieht
