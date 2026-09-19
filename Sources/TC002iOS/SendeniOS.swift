@@ -514,6 +514,11 @@ struct SendeniOS: View {
                 if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
             }
         }
+        // Der waagrechte Rollbereich des Blaetterers nimmt sich senkrecht
+        // alles, was ihm angeboten wird — ueber und unter der Uhr stand
+        // dadurch eine leere Bahn. `fixedSize` gibt dem Kopf die Hoehe seines
+        // Inhalts, und die kennt die Vorschau ueber ihr Seitenverhaeltnis.
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 8)
     }
 

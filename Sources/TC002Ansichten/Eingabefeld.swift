@@ -27,6 +27,13 @@ public extension View {
     /// taete das nicht.
     func eingabefeld() -> some View {
         textFieldStyle(.roundedBorder)
+            // Linksbuendig, ausdruecklich: In einer `LabeledContent`-Zeile
+            // erbt das Feld die rechtsbuendige Lage des Wertes. Ein gefasstes
+            // Feld ist aber kein Wert, sondern eine Schreibflaeche — der Text
+            // lief darin nach rechts und unter das Loeschzeichen. Am Telefon
+            // bleibt der Wert rechts, dort steht er ohne Fassung
+            // (`eingabefeld(inZeile:)`).
+            .multilineTextAlignment(.leading)
     }
 
     /// Ein Feld in einer beschrifteten Zeile (`LabeledContent`), so wie es die

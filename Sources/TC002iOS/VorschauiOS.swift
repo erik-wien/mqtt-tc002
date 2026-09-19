@@ -36,13 +36,27 @@ struct VorschauiOS: View {
     /// Rahmen, damit Mac und Telefon dasselbe Raster zeigen.
     private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
 
-    /// Die groesste Kantenlaenge, bei der der ganze Rahmen in `breite` passt —
-    /// nach oben begrenzt, damit die Vorschau auf einem breiten Bildschirm
-    /// nicht ins Riesenhafte waechst.
+    /// Die Kantenlaenge, bei der der ganze Rahmen die Breite ausfuellt.
+    ///
+    /// Nicht fuer alle Gattungen dieselbe: Eine TC002 ist 52 Pixel breit, eine
+    /// AWTRIX NG 32 — bei gleicher Kantenlaenge bliebe die schmalere halb so
+    /// gross und saesse verloren in der Spalte. Gezeigt wird das Geraet, nicht
+    /// das Pixel.
+    ///
+    /// Nach oben begrenzt, damit ein einzelnes Pixel nicht zur Kachel wird.
     private func passendeKante(fuer breite: Double) -> Double {
         guard breite > 0 else { return 6 }
-        let faktor = Geraetezeichnung.fuer(typ).breitenFaktor
-        return min(6, breite / (Double(feld.breite) * faktor))
+        return min(12, breite / (Double(feld.breite) * Geraetezeichnung.fuer(typ).breitenFaktor))
+    }
+
+    /// Breite zu Hoehe des **ganzen Rahmens**, nicht des Displayfeldes. Daran
+    /// haengt, dass der `GeometryReader` genau so hoch wird, wie die Zeichnung
+    /// bei dieser Breite wirklich ist: Eine aus einer festen Kantenlaenge
+    /// gerechnete Hoehe liess oben und unten Weissraum stehen, sobald die
+    /// Breite eine kleinere erzwang.
+    private var seitenverhaeltnis: Double {
+        let z = Geraetezeichnung.fuer(typ)
+        return (Double(feld.breite) * z.breitenFaktor) / (Double(feld.hoehe) * z.hoehenFaktor)
     }
 
     var body: some View {
@@ -50,22 +64,14 @@ struct VorschauiOS: View {
             rahmen(kante: kante)
         } else {
             // `GeometryReader` und keine feste Zahl: Wie breit die Spalte ist,
-            // weiss nur der Aufrufer — und am Telefon ist sie schmaler als der
-            // Rahmen bei sechs Punkten je Pixel.
+            // weiss nur der Aufrufer. `aspectRatio` gibt ihm vorher die Hoehe,
+            // die zu dieser Breite gehoert — sonst muesste sie geraten werden.
             GeometryReader { geo in
-                let k = passendeKante(fuer: geo.size.width)
-                rahmen(kante: k)
-                    .frame(width: geo.size.width, alignment: .center)
+                rahmen(kante: passendeKante(fuer: geo.size.width))
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
             }
-            .frame(height: Double(feld.hoehe) * passendeKanteFuerHoehe)
+            .aspectRatio(seitenverhaeltnis, contentMode: .fit)
         }
-    }
-
-    /// Die Hoehe des `GeometryReader` muss feststehen, bevor er misst — sonst
-    /// waechst er ins Unbestimmte. Gerechnet mit der groessten Kantenlaenge;
-    /// faellt sie kleiner aus, bleibt oben und unten etwas Luft.
-    private var passendeKanteFuerHoehe: Double {
-        6 * Geraetezeichnung.fuer(typ).hoehenFaktor
     }
 
     private func rahmen(kante: Double) -> some View {
