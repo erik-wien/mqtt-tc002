@@ -458,7 +458,6 @@
 "Oben" = "Top";
 "Mittig" = "Middle";
 "Unten" = "Bottom";
-"Weitere Bedienelemente" = "More controls";
 
 /* Bereichsnamen der Seitenleiste und Abschnitte der Hilfe. Sie stehen als
    rawValue in einem enum und werden ueber lok(…) nachgeschlagen — der

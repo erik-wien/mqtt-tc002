@@ -71,3 +71,24 @@ die Vorschau nur eine Näherung; das (?) neben der Punktreihe sagt, warum.
 Wie groß die nächste Nutzlast wird, steht am ⏎ im Eingabefeld — es ist die
 Antwort auf „was passiert, wenn ich drücke". Wird sie auffällig groß, sagt
 es eine Zeile unter der Vorschau von selbst."
+
+---
+
+## 4. Die Formatpille — Reihenfolge und Schriftmenü
+
+**Steht da:** `HilfeiOS`, Absatz zur Formatpille.
+
+**Falsch daran:** Die Reihenfolge ist jetzt nach Häufigkeit geordnet: Icon,
+Schrift, Größe, Fett, Großbuchstaben, Farbe — die sechs sind ohne Schieben
+erreichbar —, dahinter die Ausrichtungen, Rand und Abstand, ganz hinten das
+Formatblatt und das Bild aus dem Bestand. Die Schriftwahl trägt ein Zeichen
+mit ihrem Wert daneben, wie die Größe, statt des Namens als blankem Wort.
+Der rechte Rand blendet aus, statt hart zu enden; den Pfeil, der dasselbe
+noch einmal sagte, gibt es nicht mehr.
+
+**Soll lauten:** „In der Pille über dem Eingabefeld steht links, was man am
+häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe.
+Dahinter die Ausrichtungen, Rand und Abstand, und ganz hinten das
+Formatblatt (Dauer, Lauftempo, mitlaufendes Icon) und das Bild aus dem
+Bestand. Wo die Pille am rechten Rand ausblendet, geht es weiter — dort
+schieben."
