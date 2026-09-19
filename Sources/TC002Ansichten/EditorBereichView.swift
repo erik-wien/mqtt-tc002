@@ -76,10 +76,12 @@ public struct EditorBereichView: View {
     @State private var meldung: String?
     @State private var lametricNummer = ""
     @State private var zeigeGalerie = false
-    /// Ob die Verschiebepfeile die ganze Animation treffen oder allein das
-    /// gewaehlte Einzelbild. Bei einem einzelnen Bild ist die Frage gegen-
-    /// standslos, dann steht der Schalter nicht da.
-    @State private var verschiebtNurDieses = false
+    /// Ob Verschieben, Drehen und Spiegeln die ganze Animation treffen oder
+    /// allein das gewaehlte Einzelbild. Ein Schalter fuer alle drei: Es ist
+    /// dieselbe Frage, und zwei Schalter nebeneinander waeren zwei Antworten
+    /// auf sie. Bei einem einzelnen Bild ist sie gegenstandslos, dann steht
+    /// der Schalter nicht da.
+    @State private var nurDiesesBild = false
     /// Fragt vor dem Sichern nach Nummer und Namen — bei einem neuen Stueck
     /// und bei jedem nummerngefuehrten Icon, damit ein bearbeitetes
     /// LaMetric-Icon das Vorbild nicht stillschweigend ersetzt.
@@ -636,10 +638,48 @@ public struct EditorBereichView: View {
             .pickerStyle(.segmented)
         }
 
+        // Eine Karte fuer alles, was die ganze Grafik bewegt, und darin als
+        // letzte Zeile die Wahl „Alle Bilder / Nur dieses": Sie gilt fuer
+        // Verschieben, Drehen und Spiegeln gleichermassen, und ein Schalter,
+        // der drei Zeilen ueber sich regiert, muss bei ihnen stehen. In einer
+        // zweiten Karte waere er entweder verdoppelt oder fuer die Haelfte
+        // dessen, was er tut, unsichtbar.
         Section {
             LabeledContent("Verschieben") { pfeilkreuz }
+            // Gesperrt statt beschnitten (siehe `Leinwand.drehbar`). Der Grund
+            // steht im Fuss der Karte und nicht als Einblendtext am gesperrten
+            // Knopf: Am iPad gibt es kein Verweilen, das ihn zeigte.
+            LabeledContent("Drehen") {
+                HStack(spacing: 6) {
+                    umformknopf("rotate.left", name: lok("Nach links drehen"), art: .linksherum)
+                    umformknopf("rotate.right", name: lok("Nach rechts drehen"), art: .rechtsherum)
+                }
+            }
+            .disabled(!leinwand.drehbar)
+            LabeledContent("Spiegeln") {
+                HStack(spacing: 6) {
+                    umformknopf("arrow.left.and.right.righttriangle.left.righttriangle.right",
+                                name: lok("Waagrecht spiegeln"), art: .waagrecht)
+                    umformknopf("arrow.up.and.down.righttriangle.up.righttriangle.down",
+                                name: lok("Senkrecht spiegeln"), art: .senkrecht)
+                }
+            }
+            if leinwand.bilder.count > 1 {
+                Picker("Gilt für", selection: $nurDiesesBild) {
+                    Text("Alle Bilder").tag(false)
+                    Text("Nur dieses").tag(true)
+                }
+                .pickerStyle(.segmented)
+            }
+        } header: {
+            Text("Umformen")
         } footer: {
-            Text("Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
+                if !leinwand.drehbar {
+                    Text("Gedreht wäre die Anzeige 16 × 52 hoch — diese Größe zeigt keine Uhr.")
+                }
+            }
         }
 
         if groesse.iconEinfuegbar {
@@ -827,20 +867,6 @@ public struct EditorBereichView: View {
     /// Pixel. Ein Kreuz und keine vier Knoepfe in einer Reihe: Richtung ist
     /// raeumlich, und in einer Reihe muesste man jedes Symbol einzeln lesen.
     private var pfeilkreuz: some View {
-        VStack(spacing: 6) {
-            pfeilgitter
-            if leinwand.bilder.count > 1 {
-                Picker("Verschieben", selection: $verschiebtNurDieses) {
-                    Text("Alle Bilder").tag(false)
-                    Text("Nur dieses").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-            }
-        }
-    }
-
-    private var pfeilgitter: some View {
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             GridRow {
                 Color.clear.frame(width: 1, height: 1)
@@ -870,8 +896,31 @@ public struct EditorBereichView: View {
     private func pfeil(_ symbol: String, name: String, dx: Int, dy: Int) -> some View {
         Button {
             schritt()
-            leinwand.verschieben(dx: dx, dy: dy,
-                                 nurDieses: verschiebtNurDieses && leinwand.bilder.count > 1)
+            leinwand.verschieben(dx: dx, dy: dy, nurDieses: nurDiesesBild && leinwand.bilder.count > 1)
+            arbeitsstandSichern()
+        } label: {
+            Label(name, systemImage: symbol).frame(width: 18, height: 18)
+        }
+        .namensichtbarAmIPad()
+        .knopfBefehl()
+        .help(name)
+        .accessibilityLabel(name)
+    }
+
+    /// Drehen und Spiegeln in derselben Bauart wie die Pfeile: ein Symbolknopf,
+    /// dessen Name dreifach dient (Sprachausgabe, Einblendtext am Mac,
+    /// sichtbar am iPad), und der Name kommt aus demselben Grund als
+    /// `lok(...)` vom Aufrufer.
+    ///
+    /// Ein Befehl, kein Zustand — deshalb ein Knopf und kein Waehler: Nach dem
+    /// Druck ist die Grafik gedreht, es bleibt nichts „gewaehlt" stehen.
+    /// Der Rueckgabewert von `umformen` bleibt hier ungenutzt: Er ist nur bei
+    /// einer Drehung auf nicht quadratischer Leinwand `false`, und dort ist der
+    /// Knopf gesperrt.
+    private func umformknopf(_ symbol: String, name: String, art: Leinwand.Umformung) -> some View {
+        Button {
+            schritt()
+            leinwand.umformen(art, nurDieses: nurDiesesBild && leinwand.bilder.count > 1)
             arbeitsstandSichern()
         } label: {
             Label(name, systemImage: symbol).frame(width: 18, height: 18)

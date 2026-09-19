@@ -461,6 +461,46 @@ final class EditorbereichTests: XCTestCase {
                        + "die Frage wäre eine ohne Anlass")
     }
 
+    /// Verschieben, Drehen und Spiegeln stehen in einer Karte und teilen sich
+    /// einen Schalter „Alle Bilder / Nur dieses“: Es ist dieselbe Frage, und
+    /// zwei Schalter wären zwei Antworten auf sie — welche gälte, sähe man
+    /// erst am Ergebnis.
+    ///
+    /// Gerechnet wird im Kern (`Leinwand.umformen`), und die Sperre ist die
+    /// Entscheidung, die kein Übersetzer trifft: Eine gedrehte 52 × 16 wäre
+    /// 16 × 52 und passt auf keine Uhr. Ohne `.disabled(!leinwand.drehbar)`
+    /// bliebe der Knopf drückbar und täte nichts — der Grund stünde nirgends.
+    ///
+    /// Mutation: `.disabled(!leinwand.drehbar)` entfernen — baut, übersetzt,
+    /// und auf der breiten Anzeige passiert beim Drehen wortlos nichts.
+    func testUmformenRechnetImKernUndTeiltDenSchalterMitDemVerschiebekreuz() throws {
+        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        let karte = ausschnitt(text, von: "LabeledContent(\"Verschieben\")", bis: "if groesse.iconEinfuegbar")
+
+        for art in ["art: .linksherum", "art: .rechtsherum", "art: .waagrecht", "art: .senkrecht"] {
+            XCTAssertTrue(karte.contains(art),
+                          "\(art) fehlt in der Karte „Umformen“ — eine der vier Umformungen ist weg")
+        }
+        XCTAssertTrue(karte.contains(".disabled(!leinwand.drehbar)"),
+                      "die Drehknöpfe sind auf einer 52 × 16 wieder drückbar — gedreht wäre sie "
+                      + "16 × 52, und diese Größe zeigt keine Uhr")
+        XCTAssertTrue(karte.contains("Gedreht wäre die Anzeige 16 × 52 hoch"),
+                      "der Fuß der Karte nennt den Grund der Sperre nicht mehr — am iPad gibt es "
+                      + "kein Verweilen, das ihn sonst zeigte")
+
+        let malen = ausschnitt(text, von: "private var malenAbschnitte", bis: "private var animationAbschnitte")
+        XCTAssertEqual(malen.components(separatedBy: "selection: $nurDiesesBild").count - 1, 1,
+                       "es steht nicht mehr genau ein Schalter „Alle Bilder / Nur dieses“ im Reiter "
+                       + "„Malen“ — zwei wären zwei Antworten auf dieselbe Frage")
+
+        let knopf = ausschnitt(text, von: "private func umformknopf(", bis: "\n    }")
+        XCTAssertTrue(knopf.contains("leinwand.umformen(art, nurDieses: nurDiesesBild"),
+                      "der Umformknopf fragt den Kern nicht mehr — oder er folgt dem gemeinsamen "
+                      + "Schalter nicht mehr")
+        XCTAssertFalse(knopf.contains("setzen(x:"),
+                       "die Ansicht setzt beim Umformen wieder selbst Pixel, statt im Kern zu rechnen")
+    }
+
     /// Ein geladenes Bild will man auch sehen. Aus einer Datei wie von
     /// LaMetric: Beide Wege enden bei `geladenUebernehmen`, und der
     /// entscheidet an einer Stelle, ob gefragt wird.
