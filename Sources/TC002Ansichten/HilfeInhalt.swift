@@ -124,7 +124,7 @@ public enum HilfeInhalt {
     /// dieselbe Zeile am Fuss der Liste und dasselbe Blatt dahinter.
     public static let uhrHinzufuegen: [Hilfebaustein] = [
         .ueberschrift("Uhr hinzufügen"),
-        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name; der Name ist freiwillig. Präfix und Geräteart stellt die App danach selbst fest."),
+        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name. Den Namen kannst du weglassen — dann heißt die Uhr „Uhr 1“, „Uhr 2“ und so fort, und du kannst sie später umbenennen. Alles Übrige — Themen-Präfix und Geräteart — stellt die App selbst fest."),
     ]
 
     /// Die zwei Wege, eine Uhr loszuwerden, und dass beide nachfragen
@@ -148,15 +148,18 @@ public enum HilfeInhalt {
     /// ermittelt, nie eingetippt (`AppZustand.abfragen`).
     public static let uhrAbfragen: [Hilfebaustein] = [
         .ueberschrift("Abfragen"),
-        .absatz("„Abfragen“ holt von der Uhr selbst das Themen-Präfix und die MAC-Adresse und zeigt das Präfix monospaced in der Zeile an. Das Häkchen- oder Warndreieck-Symbol daneben sagt, ob die Uhr gerade beim MQTT-Broker angemeldet ist — das ist aber nur die Anmeldung, keine Aussage darüber, ob die App auf das richtige Thema schreiben darf (mehr dazu unter „Wenn nichts erscheint“)."),
-        .absatz("Beides gehört zum MQTT-Betrieb. Steht die Uhr auf HTTP, wird kein Präfix gebraucht, das Symbol bleibt weg, und „Abfragen“ sagt dort nur eines — dass die Uhr antwortet. Geholt wird dabei in beiden Fällen auch, welche Anzeigen gerade auf ihr stehen."),
-        .absatz("Das Präfix lässt sich absichtlich nicht von Hand eintragen: es ist nicht dasselbe wie das in Ulanzi Studio eingestellte, die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt das wirksame Präfix selbst. Hat die Uhr gar kein Präfix eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
-        .absatz("Bei einer AWTRIX NG ist das Präfix dagegen genau das, was auf ihr eingestellt ist, ohne jeden Anhang. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das man liest."),
+        .absatz("„Abfragen“ fragt die Uhr selbst nach zwei Angaben: ihrem **Themen-Präfix** und ihrer MAC-Adresse. Das Themen-Präfix ist der Name, unter dem die Uhr am MQTT-Broker auf Nachrichten hört; steht er falsch, schickt die App ins Leere. Danach steht er in der Zeile, in einer Schreibmaschinenschrift — so lassen sich ähnliche Zeichen auseinanderhalten."),
+        .absatz("Daneben sagt ein Häkchen oder ein Warndreieck, ob die Uhr gerade beim MQTT-Broker angemeldet ist. Das ist aber nur die Anmeldung und keine Aussage darüber, ob die App auf das richtige Thema schreiben darf — mehr dazu unter „Wenn nichts erscheint“."),
+        .absatz("Beides gehört zum MQTT-Betrieb. Steht die Uhr auf HTTP, braucht es kein Präfix, das Zeichen bleibt weg, und „Abfragen“ sagt dort nur eines: dass die Uhr antwortet. Geholt wird in beiden Fällen auch, welche Anzeigen gerade auf ihr stehen."),
+        .absatz("Von Hand eintragen lässt sich das Präfix absichtlich nicht. Es ist nämlich nicht dasselbe wie das in Ulanzi Studio eingestellte: Die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt deshalb selbst, welches Präfix wirklich gilt. Hat die Uhr gar keines eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
+        .absatz("Bei einer AWTRIX NG ist das Präfix dagegen genau das, was auf ihr eingestellt ist, ohne jeden Anhang. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das du liest."),
         .absatz("Zwei Uhren dürfen dasselbe Präfix führen, und das ist brauchbar: Über MQTT **ist** das Präfix die Adresse, ein gemeinsames macht aus mehreren Uhren eine Gruppe. Was an sie geht, zeigen alle — ohne dass die App etwas mehrfach schicken müsste. Der Preis ist, dass sie von da an nicht mehr auseinanderhält, welche der beiden gerade etwas meldet: Belegte Plätze, mitgelesene Inhalte und das Anmeldezeichen gelten dann für die Gruppe, nicht für ein Gerät. Wer sie einzeln ansprechen will, gibt jeder ein eigenes Präfix — die Firmware kennt nur eines je Gerät, kein Gruppen- und Gerätepräfix nebeneinander wie WLED."),
         .absatz("Das Zeichen neben dem Präfix sagt, ob die Uhr gerade beim Broker angemeldet ist. Ein Warndreieck heißt: ist sie nicht. Eine AWTRIX NG nennt dann auch den Grund — „badCredentials“ etwa heißt, dass Benutzer und Kennwort, die **in der Uhr** eingetragen sind, der Broker nicht annimmt; die Angaben dieser App sind davon unberührt."),
 
-        .ueberschrift("Konfigurieren"),
-        .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen — und bei einer AWTRIX NG der Broker samt Präfix."),
+        .absatz("Antwortet eine Uhr auf die letzte Abfrage gar nicht, steht ein rotes Zeichen neben ihrem Namen — in der Uhrenliste und in der Uhrenwahl. Ein Fenster kommt dafür nicht: Eine stumme Uhr ist kein Fehler, den jemand wegklicken müsste. Sie ist aus, sie steht woanders, das WLAN schläft."),
+
+        .ueberschrift("Die Web-Oberfläche der Uhr"),
+        .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen — und bei einer AWTRIX NG der MQTT-Broker samt Präfix."),
     ]
 
     /// Womit die vier Brokerfelder beginnen: mit nichts. Gilt fuer beide

@@ -29,6 +29,20 @@ final class HilfebildTests: XCTestCase {
         }
     }
 
+    /// Die Sendezeile zeigt den blauen Sendeknopf im Feld — den gibt es am
+    /// Telefon nicht: `SendeniOS` ruft `eingabefeld(loeschbar:)` ohne
+    /// `senden:`, dort schickt allein die Eingabetaste (siehe den Kanon in
+    /// `.claude/skills/ui-umbau-pruefen`). Eine Abbildung eines Knopfs, den es
+    /// nicht gibt, schickt den Leser suchen.
+    func testDieTelefonhilfeZeigtNichtDieSendezeileDesSchreibtischs() throws {
+        XCTAssertFalse(try quelle("Sources/TC002iOS/HilfeiOS.swift")
+                        .contains(".abbildung(.sendezeile)"),
+                       "Die iPhone-Hilfe zeichnet einen Sendeknopf, den diese Oberfläche nicht hat.")
+        XCTAssertFalse(try quelle("Sources/TC002iOS/SendeniOS.swift")
+                        .contains("senden:"),
+                       "SendeniOS hat wieder einen Sendeknopf im Feld — dann gehört die Abbildung zurück in die Hilfe.")
+    }
+
     /// Die Abbildungen entstehen aus den Ansichten der App, nicht aus Dateien
     /// im Bündel: Eine aufgenommene Abbildung veraltet still, sobald sich die
     /// Darstellung ändert, und bräuchte je Sprache und Erscheinungsbild eine
