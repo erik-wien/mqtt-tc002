@@ -333,7 +333,8 @@ public struct EditorBereichView: View {
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
                            zubehoer: leinwand.bilder.count > 1
-                               ? AnyView(abspielknopf(abspielGross, aufDemBild: true)) : nil)
+                               ? AnyView(abspielknopf(abspielGross)) : nil,
+                           zubehoerMass: abspielGross)
                 // Am Werkstueck, nicht in einem Reiter: Wer den Inspektor
                 // nicht oeffnet, sah von sechzehn Einzelbildern nur eines mit
                 // einem Abspielzeichen. Fotos, Procreate und jeder
@@ -682,7 +683,7 @@ public struct EditorBereichView: View {
                 Button("Bild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
                 Spacer()
-                if leinwand.bilder.count > 1 { abspielknopf(abspielKlein, aufDemBild: false) }
+                if leinwand.bilder.count > 1 { abspielknopf(abspielKlein) }
             }
         }
 
@@ -715,24 +716,15 @@ public struct EditorBereichView: View {
     /// bevor SwiftUI ihn sieht: Ein Ternaer mit `String`-Zweig schlaegt selbst
     /// nichts mehr nach.
     ///
-    /// `aufDemBild` entscheidet die Faerbung. Auf der Leinwand liegt das
-    /// Zeichen ueber unbekannter Farbe: `primary` war auf einem schwarzen
-    /// Motiv unsichtbar. Deshalb weiss auf einer dunklen, halbdurchsichtigen
-    /// Scheibe, wie es AVKit und Fotos halten. Im Inspektor liegt es auf dem
-    /// Formularhintergrund und bleibt ein blosser Umriss.
-    private func abspielknopf(_ kante: Double, aufDemBild: Bool) -> some View {
+    /// Eine Fassung, zwei Groessen. Das Zeichen liegt nie ueber dem Bild
+    /// (`Malflaeche.zubehoer` setzt es daneben), sondern immer auf dem
+    /// Fensterhintergrund — es braucht deshalb weder eine Scheibe noch eine
+    /// eigene Farbe.
+    private func abspielknopf(_ kante: Double) -> some View {
         Button { abspielenUmschalten() } label: {
-            if aufDemBild {
-                Image(systemName: spielAb ? "pause.fill" : "play.fill")
-                    .font(.system(size: kante * 0.42, weight: .medium))
-                    .foregroundStyle(.white)
-                    .frame(width: kante, height: kante)
-                    .background(Circle().fill(.black.opacity(0.45)))
-            } else {
-                Image(systemName: spielAb ? "pause.circle" : "play.circle")
-                    .font(.system(size: kante, weight: .light))
-                    .foregroundStyle(.secondary)
-            }
+            Image(systemName: spielAb ? "pause.circle" : "play.circle")
+                .font(.system(size: kante, weight: .light))
+                .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
         .help(spielAb ? lok("Pause") : lok("Abspielen"))

@@ -27,27 +27,62 @@ struct Malflaeche: View {
     /// jedem einzelnen Pixel — das waeren hunderte Schreibvorgaenge je Strich.
     var nachStrich: () -> Void = {}
 
-    /// Was unten rechts am Raster steht — der Abspielknopf des Editors.
+    /// Was neben dem Raster steht — der Abspielknopf des Editors.
     ///
     /// Hier und nicht beim Aufrufer: Das Raster steht mittig in einer Flaeche,
     /// die viel groesser sein kann als es selbst; bei einem 8 × 8 liegt
     /// dazwischen fast das ganze Fenster. Nur diese Ansicht weiss, wo das Bild
     /// wirklich endet. `AnyView` statt eines Typparameters, damit der eine
     /// Aufrufer ohne Zubehoer nichts anzugeben braucht.
+    ///
+    /// **Neben dem Bild, nicht darin.** Ein Zeichen im Raster verdeckt Pixel,
+    /// die man malen will, und liegt ueber einer Farbe, die niemand kennt.
     var zubehoer: AnyView?
+
+    /// Wie breit und hoch das Zubehoer ist. Diese eine Zahl fehlt der
+    /// Flaeche, um dem Raster den Platz daneben abzuziehen: Das Raster
+    /// rechnet seine Kantenlaenge aus dem verfuegbaren Platz aus und nimmt
+    /// ihn sonst ganz — das Zubehoer stuende dann ausserhalb des Sichtfelds.
+    /// `AnyView` laesst sich nicht messen, ohne den Umbruch zu verzoegern.
+    var zubehoerMass: Double = 0
 
     @State private var imStrich = false
 
+    /// Ob das Bild breiter als hoch ist — die Anzeige (52 × 16) ist es, die
+    /// beiden Icons sind quadratisch.
+    private var breitesBild: Bool { leinwand.breite > leinwand.hoehe }
+
+    /// Das Raster und, wo eines gereicht wird, sein Zubehoer daneben.
+    ///
+    /// Wohin, entscheidet die Form des Bildes: Ein Icon ist quadratisch und
+    /// laesst rechts Platz; eine Anzeige ist dreimal so breit wie hoch und
+    /// nimmt die Spalte ganz ein — dort steht das Zubehoer knapp darunter.
+    @ViewBuilder
+    private func mitZubehoer(kante: Double) -> some View {
+        if breitesBild {
+            VStack(alignment: .trailing, spacing: 8) {
+                raster(kante: kante)
+                zubehoer
+            }
+        } else {
+            HStack(alignment: .center, spacing: 12) {
+                raster(kante: kante)
+                zubehoer
+            }
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
+            // Das Zubehoer steht neben einem Icon und unter einer Anzeige
+            // (siehe `mitZubehoer`) — abgezogen wird es deshalb einmal
+            // waagrecht, einmal senkrecht.
+            let platz = zubehoer == nil ? 0 : zubehoerMass + 12
             let kante = Malraster.kante(breite: leinwand.breite, hoehe: leinwand.hoehe,
-                                        verfuegbareBreite: geo.size.width,
-                                        verfuegbareHoehe: geo.size.height)
+                                        verfuegbareBreite: geo.size.width - (breitesBild ? 0 : platz),
+                                        verfuegbareHoehe: geo.size.height - (breitesBild ? platz : 0))
             ScrollView(.horizontal) {
-                raster(kante: kante)
-                    .overlay(alignment: .bottomTrailing) {
-                        if let zubehoer { zubehoer.padding(6) }
-                    }
+                mitZubehoer(kante: kante)
                     // Passt es, steht das Raster mittig in der Spalte; passt es
                     // nicht, ist der Rahmen kleiner als der Inhalt und die
                     // Rolle greift.

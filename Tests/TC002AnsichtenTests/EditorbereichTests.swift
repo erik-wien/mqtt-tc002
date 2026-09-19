@@ -290,14 +290,14 @@ final class EditorbereichTests: XCTestCase {
     func testDasAbspielsymbolStehtAnDerLeinwandUndNenntBeideZustaende() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
 
-        // Am Bild, nicht im Reiter „Animation" — sonst kaeme man an ein
+        // An der Leinwand, nicht im Reiter „Animation" — sonst kaeme man an ein
         // bewegtes, aus dem Bestand geoeffnetes Icon nur ueber einen Umweg.
-        // Am Bild selbst, als Zubehör der Malfläche: Das Raster steht mittig in
-        // einer Fläche, die viel größer sein kann als es — bei einem 8 × 8 lag
-        // der Knopf sonst fast ein Fenster weit darunter.
+        // Als Zubehör der Malfläche: Das Raster steht mittig in einer Fläche,
+        // die viel größer sein kann als es — bei einem 8 × 8 lag der Knopf
+        // sonst fast ein Fenster weit darunter.
         XCTAssertTrue(text.contains("zubehoer: leinwand.bilder.count > 1"),
-                      "das Wiedergabesymbol hängt nicht mehr am Bild")
-        XCTAssertTrue(text.contains("AnyView(abspielknopf(abspielGross, aufDemBild: true))"),
+                      "das Wiedergabesymbol hängt nicht mehr an der Leinwand")
+        XCTAssertTrue(text.contains("AnyView(abspielknopf(abspielGross))"),
                       "das Symbol steht auch bei einem einzigen Einzelbild da — dann ist es ein Knopf "
                       + "ohne Wirkung statt einer Auskunft darueber, dass sich hier etwas bewegt")
 
@@ -307,17 +307,14 @@ final class EditorbereichTests: XCTestCase {
         XCTAssertFalse(sekunden.contains("abspielknopf"),
                        "das Symbol steht wieder neben dem Sekundenwert — dort war es nicht gemeint")
 
-        // Zwei Orte, ausdrücklich gewollt: groß unter der Leinwand, klein
-        // neben „Bild anhängen" im Reiter „Animation", wo man Einzelbilder
-        // aufbaut und den Lauf gleich sehen will. Und zwei Fassungen: `auf
-        // DemBild` liegt über unbekannter Farbe und braucht seine eigene
-        // Scheibe, das kleine liegt auf dem Formularhintergrund.
-        XCTAssertTrue(text.contains("abspielknopf(abspielGross, aufDemBild: true)"),
-                      "unter der Leinwand steht kein großer Abspielknopf mehr — "
-                      + "oder er hält sich nicht mehr für einen auf dem Bild")
-        XCTAssertTrue(text.contains("abspielknopf(abspielKlein, aufDemBild: false)"),
-                      "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr — "
-                      + "oder er trägt jetzt die Scheibe, die auf das Bild gehört")
+        // Zwei Orte, ausdrücklich gewollt: groß an der Leinwand, klein neben
+        // „Bild anhängen" im Reiter „Animation", wo man Einzelbilder aufbaut
+        // und den Lauf gleich sehen will. Eine Fassung für beide: Das Zeichen
+        // liegt nie über dem Bild und braucht deshalb keine eigene Färbung.
+        XCTAssertTrue(text.contains("abspielknopf(abspielGross)"),
+                      "an der Leinwand steht kein großer Abspielknopf mehr")
+        XCTAssertTrue(text.contains("abspielknopf(abspielKlein)"),
+                      "neben „Bild anhängen“ steht kein kleiner Abspielknopf mehr")
         // Beide Maße hängen an `@ScaledMetric`: Eine feste Zahl hier hebelte
         // die Textgrößen-Einstellung des Systems aus.
         XCTAssertTrue(text.contains("@ScaledMetric(relativeTo: .largeTitle) private var abspielGross"),
@@ -327,24 +324,18 @@ final class EditorbereichTests: XCTestCase {
         // Play und Pause, nicht Play und Stopp: `stoppeAbspielen` bricht
         // nur die Schleife ab, das gezeigte Einzelbild bleibt stehen. Ein
         // `stop.fill` verspraeche einen Ruecksprung an den Anfang.
-        for zustand in ["\"play.circle\"", "\"pause.circle\"",
-                        "\"play.fill\"", "\"pause.fill\""] {
+        for zustand in ["\"play.circle\"", "\"pause.circle\""] {
             XCTAssertTrue(knopf.contains(zustand),
-                          "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen, "
-                          + "und das in beiden Fassungen (auf dem Bild gefüllt, im Inspektor als Umriss)")
+                          "\(zustand) fehlt — ein Knopf, der umschaltet, muss beides zeigen")
         }
         XCTAssertFalse(knopf.contains("stop.fill"),
                        "das Symbol verspricht wieder einen Stopp, hält aber nur an")
-        // Der Grund für die zweite Fassung: Das Zeichen liegt auf einem Bild,
-        // dessen Farbe niemand kennt. Schwarz auf schwarzem Motiv war
-        // unsichtbar — deshalb weiß auf dunkler Scheibe, wie in AVKit und
-        // Fotos. Ein Übersetzer sieht davon nichts.
-        XCTAssertTrue(knopf.contains(".foregroundStyle(.white)"),
-                      "das Zeichen auf dem Bild ist nicht mehr weiß — auf einem schwarzen Motiv "
-                      + "ist es damit unsichtbar")
-        XCTAssertTrue(knopf.contains("Circle().fill(.black.opacity("),
-                      "die dunkle Scheibe unter dem Zeichen fehlt — weiß allein verschwindet "
-                      + "auf einem weißen Motiv")
+        // Keine Scheibe, keine eigene Farbe: Beides brauchte es nur, solange
+        // das Zeichen über dem Bild lag. Steht es daneben, liegt es auf dem
+        // Fensterhintergrund — und ein weißes Zeichen wäre dort unsichtbar.
+        XCTAssertFalse(knopf.contains("Circle().fill(.black.opacity("),
+                       "unter dem Zeichen liegt wieder eine Scheibe — die braucht nur, was über "
+                       + "dem Bild liegt, und dort gehört es nicht hin")
         XCTAssertTrue(knopf.contains(".accessibilityLabel("),
                       "das Symbol trägt keine Beschriftung mehr — für die Sprachausgabe ist es dann stumm")
         // Zweimal, nicht dreimal: Der Knopf traegt sein Symbol ohne sichtbaren
@@ -357,6 +348,45 @@ final class EditorbereichTests: XCTestCase {
         }
         XCTAssertTrue(knopf.contains(".help("),
                       "das Symbol hat wieder keinen Einblendtext — am Mac ist es damit unbenannt")
+    }
+
+    /// Das Zubehör der Malfläche steht **neben** dem Raster, nicht darin.
+    ///
+    /// Als Überlagerung verdeckte der Abspielknopf Pixel, die man malen will,
+    /// und lag über einer Farbe, die niemand kennt — schwarz auf schwarzem
+    /// Motiv war er unsichtbar, und die Abhilfe (weiße Scheibe) machte aus
+    /// einem Bedienelement einen Fleck auf dem Werkstück.
+    ///
+    /// Wohin es ausweicht, entscheidet die Form des Bildes: Ein Icon ist
+    /// quadratisch und lässt rechts Platz, eine Anzeige ist dreimal so breit
+    /// wie hoch und nimmt die Spalte ganz ein — dort steht es darunter.
+    ///
+    /// Mutation: die beiden Zweige durch ein `.overlay` ersetzen — baut,
+    /// übersetzt, und der Knopf liegt wieder auf dem Bild.
+    func testDasZubehoerLiegtNebenDemRasterNichtDarauf() throws {
+        let text = try quelltext("Sources/TC002Ansichten/Malflaeche.swift")
+        XCTAssertFalse(text.contains(".overlay(alignment: .bottomTrailing)"),
+                       "das Zubehör liegt wieder als Überlagerung auf dem Raster — es verdeckt "
+                       + "damit Pixel, die man malen will")
+        XCTAssertTrue(text.contains("private var breitesBild: Bool { leinwand.breite > leinwand.hoehe }"),
+                      "die Form des Bildes entscheidet nicht mehr, wohin das Zubehör ausweicht")
+        let stelle = ausschnitt(text, von: "private func mitZubehoer", bis: "private func raster")
+        XCTAssertTrue(stelle.contains("if breitesBild"),
+                      "das Zubehör weicht nicht mehr nach der Form des Bildes aus")
+        XCTAssertTrue(stelle.contains("VStack") && stelle.contains("HStack"),
+                      "es gibt nicht mehr beide Wege — daneben beim Icon, darunter bei der Anzeige")
+
+        // Der Platz wird dem Raster **abgezogen**, bevor es seine Kantenlänge
+        // ausrechnet. Ohne das nimmt es die Spalte ganz ein, und das Zubehör
+        // steht außerhalb des Sichtfelds — am Gerät gesehen, kein Test hätte
+        // es gemeldet.
+        let mass = ausschnitt(text, von: "let platz = zubehoer == nil", bis: "ScrollView(.horizontal)")
+        XCTAssertTrue(mass.contains("geo.size.width - (breitesBild ? 0 : platz)"),
+                      "die Breite wird nicht mehr um das Zubehör gekürzt — beim Icon steht es "
+                      + "damit rechts außerhalb des Sichtfelds")
+        XCTAssertTrue(mass.contains("geo.size.height - (breitesBild ? platz : 0)"),
+                      "die Höhe wird nicht mehr um das Zubehör gekürzt — bei der Anzeige steht es "
+                      + "damit unterhalb des Sichtfelds")
     }
 
     /// Die Übersicht: zwei Zeilen Name, und je Größe ein eigenes Raster.
