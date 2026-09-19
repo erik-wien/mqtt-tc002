@@ -27,7 +27,7 @@ final class GrafiksperreAnsichtenTests: XCTestCase {
     /// sperren die Kachel damit.
     func testBeideIconauswahlenSperrenDieZuHohenKacheln() throws {
         for pfad in ["Sources/TC002Ansichten/IconAuswahlView.swift",
-                     "Sources/TC002iOS/IconauswahliOS.swift"] {
+                     "Sources/TC002iOS/IconsblattiOS.swift"] {
             let quelle = try ohneKommentare(pfad)
             XCTAssertTrue(quelle.contains("sperre("),
                           "\(pfad): fragt gar nicht nach der Sperre.")
@@ -38,22 +38,27 @@ final class GrafiksperreAnsichtenTests: XCTestCase {
 
     /// Und die Frage geht an die Zielmenge, nicht an die angesehene Uhr:
     /// Gesendet wird an `ziele()`.
+    ///
+    /// Am Schreibtisch stellt sie die Sendeansicht und reicht sie ans
+    /// Auswahlblatt weiter; am Telefon stellt sie das Icons-Blatt selbst, weil
+    /// es den Zustand ohnehin hat — es schickt von dort aus auch. Beides ist
+    /// dieselbe Zusicherung, nur an verschiedenen Stellen geschrieben.
     func testDieSperreKommtVonDenZieluhren() throws {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
-                     "Sources/TC002iOS/SendeniOS.swift"] {
+                     "Sources/TC002iOS/IconsblattiOS.swift"] {
             let quelle = try ohneKommentare(pfad)
             XCTAssertTrue(quelle.contains("zustand.grafikSperre(hoehe:"),
-                          "\(pfad): reicht keine Sperre an die Iconauswahl weiter.")
+                          "\(pfad): fragt die Zieluhren nicht nach der Sperre.")
         }
     }
 
-    /// Die Bildauswahl am Telefon darf nicht senden, ohne vorher zu prüfen,
-    /// ob die Zieluhr die Höhe überhaupt annimmt.
-    func testDieBildauswahlSchicktNichtInsLeere() throws {
-        let quelle = try ohneKommentare("Sources/TC002iOS/BildauswahliOS.swift")
+    /// Die Seite einer 52 × 16 am Telefon darf nicht senden, ohne vorher zu
+    /// prüfen, ob die Zieluhr die Höhe überhaupt annimmt.
+    func testDieAnzeigeseiteSchicktNichtInsLeere() throws {
+        let quelle = try ohneKommentare("Sources/TC002iOS/IconsblattiOS.swift")
         XCTAssertTrue(quelle.contains("zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard)"),
-                      "Die Bildauswahl fragt nicht, ob eine 16 Zeilen hohe Anzeige überhaupt ankommt.")
+                      "Die Anzeigeseite fragt nicht, ob eine 16 Zeilen hohe Anzeige überhaupt ankommt.")
         XCTAssertTrue(quelle.contains("sperre != nil"),
-                      "Die Bildauswahl kennt die Sperre, hindert aber nichts.")
+                      "Die Anzeigeseite kennt die Sperre, hindert aber nichts.")
     }
 }

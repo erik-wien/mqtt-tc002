@@ -3,7 +3,10 @@ import Foundation
 /// Ein Eintrag in der Liste der vorhandenen Zeichnungen — gleich aus welchem
 /// der drei Bestaende. Die Groesse ist sein Merkmal, nicht die Liste, in der er
 /// steht.
-public struct Editoreintrag: Equatable, Sendable, Identifiable {
+///
+/// `Hashable`, weil er am Telefon der Wert eines Navigationspfads ist
+/// (`NavigationStack(path:)`).
+public struct Editoreintrag: Hashable, Sendable, Identifiable {
     public var groesse: Leinwandgroesse
     public var name: String
     /// Die LaMetric-Nummer — nur beim kanonischen 8×8, sonst `nil`.

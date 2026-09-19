@@ -91,7 +91,6 @@ struct SendeniOS: View {
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
-    @State private var zeigeBilder = false
     // Misst die schiebbare Formatpille, um den rechten Rand nur auszublenden,
     // solange dort wirklich noch etwas liegt (siehe `zeigtMehr` unten).
     @State private var pilleInhaltsbreite: CGFloat = 0
@@ -367,12 +366,8 @@ struct SendeniOS: View {
             FormatblattiOS(tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
                            dauerText: $dauerText)
         }
-        .sheet(isPresented: $zeigeBilder) {
-            BildauswahliOS(platz: platz, zustand: zustand)
-        }
         .sheet(isPresented: $zeigeIcons) {
-            IconauswahliOS(gewaehlt: $gewaehltesIcon,
-                           sperre: { zustand.grafikSperre(hoehe: $0) })
+            IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)
         }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)
@@ -634,9 +629,8 @@ struct SendeniOS: View {
     /// stehen links und sind ohne Schieben erreichbar, dahinter die
     /// Ausrichtungen, Rand und Abstand.
     ///
-    /// Ganz hinten das Formatblatt und das Bild aus dem Bestand: Beide oeffnen
-    /// ein Blatt statt eines Menues, und Dauer, Lauftempo und mitlaufendes
-    /// Icon aendert man selten.
+    /// Ganz hinten das Formatblatt: Es oeffnet ein Blatt statt eines Menues,
+    /// und Dauer, Lauftempo und mitlaufendes Icon aendert man selten.
     private var formatleiste: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -658,9 +652,16 @@ struct SendeniOS: View {
                 }
                 // Symbol in einer Leiste, kein Befehlsknopf: Diese
                 // Pille ist die Werkzeugleiste des Telefons. Gilt fuer
-                // alle drei Knoepfe darin.
+                // beide Knoepfe darin.
                 .buttonStyle(.automatic)
-                .accessibilityLabel("Icon")
+                // Der eine Einstieg in die Sammlung. Daneben stand bis zuletzt
+                // ein unbeschriftetes 🖼 am Ende der Pille, das ein zweites
+                // Blatt allein mit den 52 × 16-Anzeigen oeffnete — zwei Tueren
+                // in denselben Bestand, und die zweite war die einzige, hinter
+                // der die Anzeigen ueberhaupt zu sehen waren. Dieser hier
+                // traegt schon das gewaehlte Icon als Gesicht und steht vorn;
+                // er zeigt jetzt alle drei Groessen.
+                .accessibilityLabel("Icons")
                 // `Picker` und nicht einzelne Knoepfe: Nur so traegt der
                 // gewaehlte Eintrag sein Haekchen, wie in den Menues der
                 // Einstellungen auch.
@@ -803,13 +804,6 @@ struct SendeniOS: View {
                 }
                 .buttonStyle(.automatic)
                 .accessibilityLabel("Format")
-                Button { zeigeBilder = true } label: {
-                    Image(systemName: "photo")
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.automatic)
-                .accessibilityLabel("Bild senden")
             }
             .font(.body)
             .padding(.horizontal, 12)

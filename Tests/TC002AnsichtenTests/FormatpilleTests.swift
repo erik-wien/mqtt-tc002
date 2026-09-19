@@ -48,7 +48,7 @@ final class FormatpilleTests: XCTestCase {
                         "isOn: $fett", "isOn: $grossbuchstaben", "Farbkreis(",
                         "Picker(\"Waagrecht\"", "Picker(\"Senkrecht\"",
                         "Picker(\"Rand\"", "Picker(\"Abstand\"",
-                        "zeigeFormat = true", "zeigeBilder = true"]
+                        "zeigeFormat = true"]
         var stellen: [Int] = []
         for marke in erwartet {
             guard let r = pille.range(of: marke) else {
@@ -58,9 +58,22 @@ final class FormatpilleTests: XCTestCase {
         }
         XCTAssertEqual(stellen, stellen.sorted(),
                        "Die Formatpille steht nicht mehr in der Reihenfolge Icon, Schrift, Größe, "
-                       + "Fett, Großbuchstaben, Farbe, waagrecht, senkrecht, Rand, Abstand, Format, "
-                       + "Bild — die drei, die man am ehesten ändert, müssen ohne Schieben "
+                       + "Fett, Großbuchstaben, Farbe, waagrecht, senkrecht, Rand, Abstand, "
+                       + "Format — die drei, die man am ehesten ändert, müssen ohne Schieben "
                        + "erreichbar bleiben")
+    }
+
+    /// Ein Einstieg in die Sammlung, nicht zwei. Das 🖼 am Ende der Pille
+    /// öffnete ein zweites Blatt allein mit den 52 × 16-Anzeigen; seit es das
+    /// Blatt „Icons" gibt, stehen sie dort neben den Icons, und ein zweiter
+    /// Weg dorthin wäre ein verwaister.
+    func testDieSammlungHatEinenEinstieg() throws {
+        let pille = try pille()
+        XCTAssertFalse(pille.contains("zeigeBilder = true"),
+                       "neben dem Icon-Knopf steht wieder ein eigener Knopf für die "
+                       + "52 × 16-Anzeigen — zwei Türen in denselben Bestand")
+        XCTAssertEqual(pille.components(separatedBy: "zeigeIcons = true").count - 1, 1,
+                       "die Formatpille öffnet das Icons-Blatt nicht mehr genau einmal")
     }
 
     /// Ein Zeichen und ein kurzer Wert, wie beim Groessenmenue daneben.
