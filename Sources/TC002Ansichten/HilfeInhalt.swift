@@ -208,7 +208,7 @@ public enum HilfeInhalt {
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
         .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
-        .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist — die Nutzlast wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
+        .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist: Die **Nutzlast** — so heißt hier und im Folgenden das Datenpaket, das die App an die Uhr schickt — wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
         .absatz("Sie spricht HTTP, kein MQTT: Ein MQTT-Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
 
@@ -391,7 +391,7 @@ public enum HilfeInhalt {
     /// `VorschauiOS`), und das Mitscrollen gibt es auf beiden.
     public static let iconImLauf: [Hilfebaustein] = [
         .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz, §4.2)."),
-        .absatz("Läuft der Text beim Weg „als Pixel“, wird das Icon in die Laufschrift hineingerechnet, statt als zweites Bild danebenzustehen — ob die Uhr zwei Bilder in einem Rahmen nebeneinander zeichnet, hat niemand geprüft, und so stellt sich die Frage nicht. Es steht dann fest links, der Text läuft rechts daneben durch, und seine Spalten bleiben schwarz, damit der Text nicht hinter ihm durchblitzt."),
+        .absatz("Läuft der Text beim Weg „als Pixel“, wird das Icon in die Laufschrift hineingerechnet, statt als zweites Bild danebenzustehen — ob die Uhr zwei Bilder in einer Sendung nebeneinander zeichnet, hat niemand geprüft, und so stellt sich die Frage nicht. Es steht dann fest links, der Text läuft rechts daneben durch, und seine Spalten bleiben schwarz, damit der Text nicht hinter ihm durchblitzt."),
         .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Setzt die Uhr den Text selbst, gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell sie den Text daneben laufen lässt."),
     ]
 
