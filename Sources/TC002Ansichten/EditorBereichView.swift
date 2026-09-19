@@ -93,6 +93,17 @@ public struct EditorBereichView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var abspielGross: Double = 90
     /// Die Kantenlaenge der runden Zeichen ueber der Leinwand.
     @ScaledMetric(relativeTo: .headline) private var rundkante: Double = 44
+    /// Die lichte Weite der Symbolknoepfe in der Karte „Umformen" — Pfeile,
+    /// Drehen, Spiegeln.
+    ///
+    /// Sie tragen **nur** ihr Zeichen, auf beiden Oberflaechen. Ein sichtbarer
+    /// Name am iPad (`namensichtbarAmIPad`) stand hier zwar, wurde aber vom
+    /// Rahmen weggeschnitten: Er blieb unsichtbar und beanspruchte trotzdem
+    /// Breite, und aus dem Kreis wurde ein liegendes Oval. Ein abgeschnittener
+    /// Name ist schlechter als keiner — die Namen stehen in der Sprachausgabe,
+    /// im Einblendtext am Zeiger und in der Hilfe. Ein Wort neben jedem der
+    /// vier Pfeile waere ohnehin nicht zu lesen.
+    @ScaledMetric(relativeTo: .body) private var umformkante: Double = 26
     @ScaledMetric(relativeTo: .body) private var abspielKlein: Double = 22
     @State private var laedt = false
 
@@ -895,10 +906,11 @@ public struct EditorBereichView: View {
             leinwand.verschieben(dx: dx, dy: dy, nurDieses: nurDiesesBild && leinwand.bilder.count > 1)
             arbeitsstandSichern()
         } label: {
-            Label(name, systemImage: symbol).frame(width: 18, height: 18)
+            Image(systemName: symbol)
+                .frame(width: umformkante, height: umformkante)
         }
-        .namensichtbarAmIPad()
         .knopfBefehl()
+        .buttonBorderShape(.circle)
         .help(name)
         .accessibilityLabel(name)
     }
@@ -919,10 +931,11 @@ public struct EditorBereichView: View {
             leinwand.umformen(art, nurDieses: nurDiesesBild && leinwand.bilder.count > 1)
             arbeitsstandSichern()
         } label: {
-            Label(name, systemImage: symbol).frame(width: 18, height: 18)
+            Image(systemName: symbol)
+                .frame(width: umformkante, height: umformkante)
         }
-        .namensichtbarAmIPad()
         .knopfBefehl()
+        .buttonBorderShape(.circle)
         .help(name)
         .accessibilityLabel(name)
     }

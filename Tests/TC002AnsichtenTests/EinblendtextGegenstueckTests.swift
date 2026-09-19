@@ -259,31 +259,37 @@ final class EinblendtextGegenstueckTests: XCTestCase {
         XCTAssertFalse(rund.contains(" Label("), "das runde Zeichen trägt wieder ein Wort neben dem Symbol")
     }
 
-    /// Die vier Pfeile des Verschiebekreuzes teilen sich eine Funktion
-    /// (`pfeil`) — Einblendtext und Gegenstück stehen deshalb nur einmal im
-    /// Quelltext, nicht viermal.
-    func testVerschiebekreuzZeigtNamenAuchAmIPad() throws {
+    /// Die Symbolknöpfe der Karte „Umformen“ tragen **nur** ihr Zeichen —
+    /// auf beiden Oberflächen — und sitzen in einem Kreis.
+    ///
+    /// Ein sichtbarer Name am iPad stand hier, wurde aber vom Rahmen
+    /// weggeschnitten: Er blieb unsichtbar und beanspruchte trotzdem Breite,
+    /// und aus dem Kreis wurde ein liegendes Oval. Ein abgeschnittener Name
+    /// ist schlechter als keiner; die Namen stehen in der Sprachausgabe, im
+    /// Einblendtext am Zeiger und in der Hilfe. Ein Wort neben jedem der vier
+    /// Pfeile wäre ohnehin nicht zu lesen.
+    ///
+    /// Mutation: `.buttonBorderShape(.circle)` entfernen — baut, übersetzt,
+    /// und am iPad steht wieder eine liegende Kapsel um einen Pfeil.
+    func testDieUmformknoepfeSindKreiseMitZeichen() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let funktion = ausschnitt(text, von: "private func pfeil(", bis: "\n    }")
-        XCTAssertEqual(anzahl(funktion, ".help("), 1,
-                       "die geteilte Pfeilfunktion hat nicht mehr genau einen Einblendtext")
-        XCTAssertEqual(anzahl(funktion, ".namensichtbarAmIPad()"), 1,
-                       "die geteilte Pfeilfunktion zeigt ihren Namen am iPad nicht mehr sichtbar an")
-    }
-
-    /// Dasselbe für die vier Knöpfe der Karte „Umformen“ (zweimal drehen,
-    /// zweimal spiegeln): eine geteilte Funktion, ein Einblendtext, ein
-    /// Gegenstück. Warum die gesperrten Drehknöpfe ihren Grund trotzdem nicht
-    /// als `.help(...)` tragen, steht an der Karte — ein Einblendtext am
-    /// gesperrten Knopf erreicht am iPad niemanden, die Begründung steht dort
-    /// im Fuß.
-    func testUmformknoepfeZeigenNamenAuchAmIPad() throws {
-        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let funktion = ausschnitt(text, von: "private func umformknopf(", bis: "\n    }")
-        XCTAssertEqual(anzahl(funktion, ".help("), 1,
-                       "die geteilte Umformfunktion hat nicht mehr genau einen Einblendtext")
-        XCTAssertEqual(anzahl(funktion, ".namensichtbarAmIPad()"), 1,
-                       "die geteilte Umformfunktion zeigt ihren Namen am iPad nicht mehr sichtbar an")
+        for (anker, was) in [("private func pfeil(", "die geteilte Pfeilfunktion"),
+                             ("private func umformknopf(", "die geteilte Umformfunktion")] {
+            let funktion = ausschnitt(text, von: anker, bis: "\n    }")
+            XCTAssertEqual(anzahl(funktion, ".help("), 1,
+                           "\(was) hat nicht mehr genau einen Einblendtext")
+            XCTAssertEqual(anzahl(funktion, ".accessibilityLabel("), 1,
+                           "\(was) ist für die Sprachausgabe stumm")
+            XCTAssertEqual(anzahl(funktion, ".namensichtbarAmIPad()"), 0,
+                           "\(was) trägt wieder einen sichtbaren Namen am iPad — der Rahmen "
+                           + "schneidet ihn weg, und aus dem Kreis wird ein Oval")
+            XCTAssertTrue(funktion.contains(".buttonBorderShape(.circle)"),
+                          "\(was) ist kein Kreis mehr — mit der Vorgabe wird daraus am iPad "
+                          + "eine liegende Kapsel")
+            XCTAssertTrue(funktion.contains("width: umformkante, height: umformkante"),
+                          "\(was) misst nicht mehr quadratisch — dann ist der Kreis ein Oval, "
+                          + "und das Zeichen klebt am Rand")
+        }
     }
 
     /// Das Nummernfeld erklärt, was die aktuelle Größe gerade aus ihm macht
