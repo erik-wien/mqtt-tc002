@@ -56,11 +56,37 @@ Arbeitsordner nicht an.** `build/` ist ignoriert und in einem frischen Klon
 nicht da; `hdiutil create` brach mit „No such file or directory" ab — mitten in
 `release.sh`, nach Tests, Bau und Signatur.
 
+## Nachtrag: drei Beanstandungen am iPad-Editor
+
+Der Auftraggeber sah sich den Editor an, waehrend der Durchgang lief.
+
+7. **Der Titel „Icons" nannte nicht, was offen ist**, und der Bildname stand
+   in einer eigenen Zeile ueber der Leinwand. Sein Vorschlag: „Icons — Matrix",
+   und dann koennten Sichern und Abbrechen mit nach oben. So ist es jetzt — am
+   iPad. Am Mac bleibt die Zeile: Dort traegt das Fenster den Programmnamen
+   und kann den Bildnamen nicht aufnehmen.
+8. **Der Grund fuer einen gesperrten Sendeknopf stand unter ihm** und damit am
+   unteren Rand der Ansicht, wo er abgeschnitten wurde. Wer eine AWTRIX als
+   Ziel hat, sah einen toten Knopf ohne Erklaerung — genau der Fall auf seinem
+   Bildschirmfoto. Der Satz steht jetzt ueber Bloecken und Knopf.
+9. **Eine gelungene Sendung meldete sich im Editor nicht.** Unter „Senden"
+   wird der Knopf eine Sekunde lang gruen; hier geschah nichts, und der
+   Slotblock daneben aendert sich nur, wenn die angesehene Uhr zugleich die
+   Zieluhr ist.
+
+**Die Rueckfrage vor dem Verwerfen funktioniert.** Nachgesehen, indem
+`rueckfrage` als Anfangswert gesetzt wurde: Der Dialog „Aenderungen
+verwerfen?" geht auf. `ungesichert` vergleicht die Leinwand gegen den
+gesicherten Stand (`Leinwandverlauf.weichtAb`), den `oeffnen` setzt — nach
+jedem Strich weicht sie ab.
+
 ## Stand der Fassung 1.6
 
 `./release.sh 1.6` ist **bis zur Notarisierung** gelaufen: getestet, gebaut,
 App und mitreisendes Werkzeug mit der Developer ID signiert, Abbild geschnürt
-und signiert — `erzeugt/mac/MQTT-TC002-1.6.dmg`, 4,1 MB.
+und signiert — 4,1 MB. Das Abbild ist danach **weggeräumt**: Es stammte von
+einem Stand vor den drei Nachträgen oben und war nicht notarisiert; ein
+solches Abbild herumliegen zu lassen lädt dazu ein, es weiterzugeben.
 
 **Die Notarisierung fehlt**, und sie lässt sich nicht nachholen, ohne dass der
 Auftraggeber einmal seine Zugangsdaten ablegt:
