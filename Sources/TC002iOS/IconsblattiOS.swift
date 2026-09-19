@@ -622,14 +622,27 @@ private struct IconseiteiOS: View {
 /// geschickt, statt sich in den Sendebildschirm zu setzen.
 private struct AnzeigeseiteiOS: View {
     let eintrag: Editoreintrag
-    let platz: Int
     @Bindable var zustand: AppZustand
     /// Schliesst das ganze Blatt — nach dem Senden gibt es hier nichts mehr
     /// zu tun.
     let fertig: () -> Void
 
+    /// Der Platz wird **hier** gewaehlt, nicht drueben im Sendebildschirm.
+    /// Wer ein Bild ausgesucht hat, entscheidet im selben Atemzug, wohin es
+    /// geht; zurueckzugehen, nur um den Platz zu stellen, und dann wieder
+    /// herzufinden, war der Umweg, der den Weg unbrauchbar machte. Der Platz
+    /// aus dem Sendebildschirm ist die Vorgabe.
+    @State private var platz: Int
     @State private var laeuft = false
     @State private var meldung: String?
+
+    init(eintrag: Editoreintrag, platz: Int, zustand: AppZustand,
+         fertig: @escaping () -> Void) {
+        self.eintrag = eintrag
+        self.zustand = zustand
+        self.fertig = fertig
+        _platz = State(initialValue: platz)
+    }
 
     /// Warum eine ganze 52 × 16-Anzeige an keine der Zieluhren gehen kann.
     ///
@@ -638,6 +651,14 @@ private struct AnzeigeseiteiOS: View {
     /// nicht", aber ein Satz, der eine Sperre beschreibt, ohne dass eine da
     /// ist, ist schlimmer als keiner.
     private var sperre: String? { zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard) }
+
+    /// Welche Plaetze der angesehenen Uhr belegt sind — dieselbe Quelle wie
+    /// im Sendebildschirm.
+    private var belegte: Set<Int> { zustand.belegtePlaetze() }
+
+    private func loeschen(_ i: Int) {
+        Task { await zustand.loeschen(Meldungsplatz.name(fuer: i)) }
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -655,6 +676,27 @@ private struct AnzeigeseiteiOS: View {
             Text("Eine 52 × 16-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            // Dieselben Bloecke wie im Sendebildschirm, aus derselben
+            // Rechnung (`AppZustand.slotzustand`): Derselbe Platz derselben
+            // Uhr soll hier nicht etwas anderes zeigen. Antippen waehlt.
+            VStack(spacing: 6) {
+                Text("Auf welchen Platz?")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
+                        Button { platz = i } label: {
+                            Slotblock(platz: i,
+                                      zustand: zustand.slotzustand(i, belegt: belegte.contains(i)),
+                                      gewaehlt: platz == i,
+                                      mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002)
+                        }
+                        .buttonStyle(.plain)
+                        .slotmenue(belegt: belegte.contains(i),
+                                   loeschen: { loeschen(i) },
+                                   zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
+                    }
+                }
+            }
             Spacer()
             if let sperre {
                 Label(sperre, systemImage: "exclamationmark.triangle")
