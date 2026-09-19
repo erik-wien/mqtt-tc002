@@ -1049,10 +1049,16 @@ public struct EditorBereichView: View {
             // nacktes ✗/✓-Paar ueber der Flaeche ist die Sprache der
             // Fingerbedienung. Der Mac beschriftet seine Knoepfe, und wo es
             // zurueckgeht, steht ein Winkel.
+            //
+            // `buttonBorderShape(.circle)` und nicht die Vorgabe: `.bordered`
+            // zeichnet am Mac ein Rechteck mit runden Ecken. Um ein einzelnes
+            // Zeichen gehoert dort ein Kreis — so haelt es die Navigation in
+            // Fotos und im Finder.
             Button { fertigAnfragen() } label: {
                 Image(systemName: "chevron.left")
             }
             .knopfBefehl()
+            .buttonBorderShape(.circle)
             .keyboardShortcut(.cancelAction)
             .help(lok("Zurück zur Übersicht"))
             .accessibilityLabel(Text("Zurück zur Übersicht"))
