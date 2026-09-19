@@ -37,13 +37,13 @@ public enum HilfeInhalt {
     /// anders aus.
     public static let betriebsart: [Hilfebaustein] = [
         .ueberschrift("Betriebsart: HTTP oder MQTT"),
-        .absatz("Jede Uhr hat auf ihrer Seite eine eigene Wahl mit zwei Einträgen: „HTTP“ und „MQTT“. Gesendet wird auf beiden Wegen dieselbe Anzeige — dieselben Bytes, nur ein anderer Kanal; an Text, Schrift, Farbe und Icon ändert sich nichts. Der Unterschied liegt daneben, und er ist ein Tausch:"),
-        .tabelle([
-            ("HTTP", "Die Uhr antwortet. Anlegen, Löschen und Umschalten quittiert sie, und eine abgewiesene Sendung ist als solche zu erkennen. Es braucht weder Broker noch Präfix."),
-            ("MQTT", "Die Uhr antwortet nie (siehe „Wenn nichts erscheint“). Dafür liest die App am Broker mit, was andere an dieselbe Uhr schicken — und nur so kann ein Block eine fremde Sendung zeigen."),
-        ]),
-        .absatz("Was ein Broker dabei **nicht** kann: nebenbei die HTTP-Sendungen mithören. Am 13.09.2026 wurde 45 Sekunden lang auf allen drei Themen einer Uhr gehorcht, mit einer Löschung über HTTP mittendrin — es kam eine einzige Nachricht, und die sagte nur, dass die Uhr online ist. Die Uhr reicht ihre HTTP-Vorgänge nicht über MQTT weiter. Ein zusätzlich eingetragener Broker ist im HTTP-Betrieb deshalb nicht das halbe Mitlesen, sondern gar keines."),
-        .absatz("Für neue Uhren ist HTTP die Vorgabe. Eine Uhr, die vor dieser Fassung eingerichtet wurde, bleibt auf MQTT: Sie wurde so eingerichtet, und ein stiller Wechsel nähme ihr das Mitlesen, ohne dass jemand darum gebeten hätte. Umstellen lässt sich beides jederzeit; der Wechsel wirkt sofort."),
+        .absatz("Auf der Seite jeder Uhr wählst du, auf welchem der beiden Wege sie beschickt wird: „HTTP“ oder „MQTT“. Die Anzeige selbst ist auf beiden Wegen dieselbe — an Text, Schrift, Farbe und Icon ändert sich nichts. Was sich ändert, ist, was du hinterher weißt."),
+        .untertitel("HTTP"),
+        .absatz("Die Uhr antwortet. Sie bestätigt jede Anzeige, jede Löschung und jedes Umschalten, und eine abgewiesene Sendung erkennst du als solche. Du brauchst dafür weder einen MQTT-Broker noch ein Themen-Präfix — nur die Adresse der Uhr."),
+        .untertitel("MQTT"),
+        .absatz("Die Uhr antwortet nie; was das für die Fehlersuche heißt, steht unter „Wenn nichts erscheint“. Dafür liest die App am MQTT-Broker mit, was andere Programme an dieselbe Uhr schicken — nur so kann einer der fünf Blöcke eine fremde Sendung zeigen."),
+        .absatz("Beides zugleich gibt es nicht. Ein MQTT-Broker kann die HTTP-Sendungen nicht nebenbei mithören: Die Uhr reicht sie nicht an ihn weiter. Nachgemessen am 13.09.2026 — 45 Sekunden auf allen drei Themen einer Uhr gehorcht, mit einer Löschung über HTTP mittendrin, und es kam eine einzige Nachricht, die nur sagte, dass die Uhr online ist. Ein zusätzlich eingetragener Broker bringt im HTTP-Betrieb deshalb kein halbes Mitlesen, sondern gar keines."),
+        .absatz("Eine neu eingetragene Uhr steht auf HTTP. Eine Uhr, die du vor dieser Fassung eingerichtet hast, bleibt auf MQTT — ein stiller Wechsel nähme ihr das Mitlesen. Umstellen kannst du jederzeit, der Wechsel wirkt sofort."),
     ]
 
     /// Die zweite Achse neben der Betriebsart: was fuer ein Geraet
@@ -58,12 +58,13 @@ public enum HilfeInhalt {
         .absatz("Neben der Betriebsart hat jede Uhr eine zweite Wahl: welche Firmware auf ihr läuft. „Abfragen“ stellt das selbst fest und trägt es ein. Von Hand zu wählen ist es nur dort, wo das nicht gelingt — eine AWTRIX kann ihre Schnittstelle hinter eine Anmeldung stellen, und dann antwortet sie auf keine Frage."),
         .absatz("Der Unterschied ist einer im Grundsatz: Die Werksfirmware bekommt von dieser App **fertige Pixel**, eine AWTRIX NG bekommt den **Text** und setzt ihn mit ihrer eigenen Schrift. Alles Weitere folgt daraus."),
         .abbildung(.geraetegroessen),
-        .tabelle([
-            ("Besser auf der AWTRIX", "Umlaute, Akzente, das Eurozeichen und Kyrillisch kann ihre Schrift von Haus aus; ein Zeichen, das sie nicht hat, wird zu einem Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst, ohne GIF und ohne Größengrenze. Und sie antwortet auf jede Sendung — eine abgewiesene wird als solche gemeldet, was über MQTT sonst nie vorkommt."),
-            ("Fällt dort weg", "Schriftart, Größe, Fett, Rand und Zeichenabstand steuern unsere eigene Rasterung — wo das Gerät selbst setzt, gibt es daran nichts zu drehen. Senkrecht ausrichten geht nicht, ihre Grundlinie liegt fest; rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen im Einblendtext, warum."),
-            ("Geht dort nicht", "Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides wird abgelehnt statt stillschweigend verschluckt."),
-        ]),
-        .absatz("Die fünf Blöcke zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in der Ersatzschrift. Genau steht der Text dort in der eingebauten Schrift der Uhr, die diese App nicht kennt — der Block sagt also, was auf dem Platz liegt, nicht, wie es dort aussieht. Bis September 2026 zeigte er gar nichts, weil er nur ein 52 × 16-Bild rechnen konnte; das war die stärkere Behauptung, nämlich „wir wissen es nicht“, obwohl die App es selbst geschickt hatte. Belegt ist dabei genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
+        .untertitel("Was auf einer AWTRIX NG besser ist"),
+        .absatz("Ihre Schrift kann Umlaute, Akzente, das Eurozeichen und Kyrillisch von Haus aus, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst, ohne Größengrenze. Und sie antwortet auf jede Sendung — eine abgewiesene meldet sie als abgewiesen, was über MQTT sonst nie vorkommt."),
+        .untertitel("Was dort wegfällt"),
+        .absatz("Schriftart, Größe, Fett, Rand und Zeichenabstand steuern, wie **diese App** den Text in Pixel umsetzt. Setzt die Uhr ihn selbst, gibt es daran nichts zu drehen. Senkrecht ausrichten geht ebenfalls nicht, ihre Grundlinie liegt fest, und rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen beim Antippen, warum."),
+        .untertitel("Was dort nicht geht"),
+        .absatz("Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16 Pixel, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides lehnt sie ab, statt es stillschweigend zu verschlucken."),
+        .absatz("Die fünf Blöcke unter der Vorschau zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in einer Ersatzschrift. Die Uhr setzt den Text mit ihrer eigenen Schrift, und die kennt diese App nicht — der Block sagt dir also, was auf dem Platz liegt, nicht, wie es dort aussieht. Ob ein Platz belegt ist, weiß er dafür genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der
@@ -74,21 +75,24 @@ public enum HilfeInhalt {
 
     /// Wie die Einstellungen gegliedert sind (`Einstellungsthema`). Das Erste,
     /// was man wissen will — und auf beiden Oberflaechen dieselben fuenf
-    /// Themen in derselben Reihenfolge. Nur ihre Darstellung unterscheidet
+    /// Bereiche in derselben Reihenfolge. Nur ihre Darstellung unterscheidet
     /// sich, und das steht im Absatz selbst.
+    ///
+    /// Keine Ueberschrift ueber der Aufzaehlung: „Fuenf Themen" nannte die
+    /// Anzahl statt der Sache. Die Namen stehen in der Aufzaehlung, und der
+    /// Abschnitt heisst ohnehin „Einstellungen".
     public static let themen: [Hilfebaustein] = [
-        .ueberschrift("Fünf Themen"),
-        .absatz("Die Einstellungen sind nach Themen gegliedert. Am Mac und auf dem iPad steht die Wahl als Segmentwahl über dem Inhalt, auf dem Telefon als Liste, deren Einträge auf je eine Seite führen."),
-        .tabelle([
-            ("Uhren", "die eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt"),
-            ("Broker", "Adresse, Port, Benutzer, Kennwort und die Prüfung"),
-            ("Aufzeichnung", "Verlauf und Protokoll"),
-            ("iCloud", "der Abgleich"),
-            ("Erweitert", "die virtuelle Uhr"),
+        .absatz("Die Einstellungen sind in fünf Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite."),
+        .punkte([
+            "**Uhren** — deine eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt.",
+            "**Broker** — Adresse, Port, Benutzer und Kennwort des MQTT-Brokers, dazu die Prüfung der Verbindung.",
+            "**Aufzeichnung** — Verlauf und Protokoll.",
+            "**iCloud** — Synchronisation deiner Geräte.",
+            "**Erweitert** — die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",
         ]),
-        .ueberschrift("Die Seite einer Uhr"),
-        .absatz("Eine Zeile in der Liste antippen öffnet die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Geräteart, Betriebsart, „Auf der Uhr“ (nur bei der Werksfirmware), „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser Uhr, nicht der angesehenen."),
-        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse, Präfix und Geräteart, und rechts das Anmeldezeichen."),
+        .ueberschrift("Konfigurieren der Pixel Uhr"),
+        .absatz("Tippst du unter „Uhren“ eine Zeile an, öffnet sich die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Geräteart, Betriebsart, „Auf der Uhr“ (nur bei einer Ulanzi mit Werksfirmware), „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser einen Uhr, nicht der gerade angesehenen."),
+        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse, Themen-Präfix und Geräteart, und rechts das Zeichen, ob sie beim MQTT-Broker angemeldet ist."),
     ]
 
     /// Womit die App beginnt, solange nichts eingerichtet ist
@@ -201,10 +205,10 @@ public enum HilfeInhalt {
     public static let fuenfPlaetze: [Hilfebaustein] = [
         .absatz("„Senden“ setzt aus Text, Farbe und wahlweise einem Icon eine Anzeige zusammen und schickt sie an die Uhr. In der Mitte stehen fünf Blöcke, je einer für einen der fünf festen Plätze der Uhr — die Ziffer unter dem Block sagt, welcher es ist, auf dem Gerät heißen sie `meldung1` bis `meldung5`. Ein Antippen wählt den Platz, unter dem die Anzeige danach bei „Verlauf“ auftaucht."),
         .absatz("Jeder Block zeigt einen von drei Zuständen, an der Form erkennbar, nicht nur an der Farbe:"),
-        .tabelle([
-            ("frei", "gestrichelter, leerer Rahmen — kein Name auf diesem Platz."),
-            ("belegt, Inhalt bekannt", "die Pixel, verkleinert. Sie stammen entweder aus einer mitgelesenen Sendung oder aus dem, was sich diese Installation für den Platz gemerkt hat — im zweiten Fall ist es eine Erinnerung und kann überholt sein."),
-            ("belegt, Inhalt unbekannt", "grau gefüllter Block mit einem Fragezeichen, ohne Pixel."),
+        .punkte([
+            "**Frei** — ein gestrichelter, leerer Rahmen. Auf diesem Platz liegt nichts.",
+            "**Belegt, Inhalt bekannt** — die Pixel, verkleinert. Sie stammen aus einer mitgelesenen Sendung oder aus dem, was sich diese App für den Platz gemerkt hat; im zweiten Fall ist es eine Erinnerung und kann überholt sein.",
+            "**Belegt, Inhalt unbekannt** — ein grauer Block mit einem Fragezeichen, ohne Pixel.",
         ]),
         .absatz("Ein Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin steht — der Platz ist belegt, der Inhalt bleibt unbekannt."),
         .absatz("Auf denselben Platz senden ersetzt, was dort steht; ein anderer Platz tritt daneben, und die Uhr blättert zwischen den belegten Plätzen. Das gilt für jede Zieluhr: ein Platz zählt schon als belegt, wenn ihn nur eine davon kennt — die Blöcke zeigen dabei immer den Stand der gerade aktiven Uhr."),
@@ -300,15 +304,14 @@ public enum HilfeInhalt {
     /// beiden Oberflaechen — deshalb hier und nicht zweimal.
     public static let groesse: [Hilfebaustein] = [
         .ueberschrift("Größe"),
-        .absatz("„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine Liste:"),
-        .tabelle([
-            ("Micro 5", "10, 14 und 16 Pixel"),
-            ("Silkscreen", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
-            ("Tiny5", "7, 8, 9, 10, 12, 14 und 16 Pixel"),
-            ("alle anderen Schriften", "der volle Bereich 6 bis 16 Pixel"),
+        .absatz("„Größe“ bietet nicht jede Zahl an, sondern je Schrift eine eigene Liste:"),
+        .punkte([
+            "**Micro 5** — 10, 14 und 16 Pixel.",
+            "**Silkscreen** und **Tiny5** — 7, 8, 9, 10, 12, 14 und 16 Pixel.",
+            "**Alle anderen Schriften** — der volle Bereich von 6 bis 16 Pixel.",
         ]),
-        .absatz("Die drei Listen haben Lücken, und das ist kein Versehen: Eine Pixelschrift franst zwischen ihrer Entwurfsgröße und deren Vielfachen ohne Kantenglättung willkürlich aus, und welche Größen das trifft, folgt keiner Schrittweite. Angeboten wird deshalb, was beim Durchsehen der Schriftprobe bestanden hat — mit den Augen entschieden, nicht gerechnet: Die Messung dort kann eine Größe ausschließen, nie eine empfehlen."),
-        .absatz("Für die übrigen Schriften gibt es keine solche Durchsicht; dort bleibt es beim vollen Bereich. Beim Wechsel der Schrift springt eine Größe, die auf der neuen Liste fehlt, auf die nächstgelegene — 15 wird bei Silkscreen zu 14, nicht zu 7. Eine eingestellte Größe, die auf keiner Liste steht, bleibt wählbar, bis man selbst eine andere wählt."),
+        .absatz("Die Lücken in den ersten drei Listen sind kein Versehen. Eine Pixelschrift ist für eine bestimmte Größe gezeichnet; dazwischen franst sie ohne Kantenglättung aus, und welche Größen das trifft, folgt keiner Regel. Angeboten wird deshalb, was beim Durchsehen der Schriftprobe bestanden hat — mit den Augen entschieden, nicht gerechnet."),
+        .absatz("Wechselst du die Schrift und die eingestellte Größe steht nicht auf ihrer Liste, springt sie auf die nächstgelegene: 15 wird bei Silkscreen zu 14, nicht zu 7. Eine Größe, die auf keiner Liste steht, bleibt eingestellt, bis du selbst eine andere wählst."),
     ]
 
     /// Micro 5 bei mittleren Groessen — eine Eigenschaft der Schrift.

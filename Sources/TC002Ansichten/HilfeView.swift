@@ -54,12 +54,12 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.wasEsTut
                 + [
                     .absatz("Welcher Weg für eine Uhr gilt, steht unten bei „Einstellungen“ unter „Betriebsart“. Unabhängig davon spricht die App eine Uhr für ein paar Abfragen und Einstellungen immer selbst per HTTP an."),
-                    .ueberschrift("Bereiche"),
-                    .tabelle([
-                        ("Senden", "Text und Icon verschicken"),
-                        ("Icons", "Icons und ganze Anzeigen malen"),
-                        ("Protokoll", "die technische Mitschrift — nur da, wenn eingeschaltet"),
-                        ("Einstellungen", "fünf Themen: Uhren, Broker, Aufzeichnung, iCloud, Erweitert"),
+                    .ueberschrift("Die vier Bereiche in der Seitenleiste"),
+                    .punkte([
+                        "**Senden** — Text und Icon verschicken.",
+                        "**Icons** — Icons und ganze Anzeigen malen.",
+                        "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
+                        "**Einstellungen** — Uhren, Broker, Aufzeichnung, iCloud und Erweitert.",
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht je ein Dokument für beide Gattungen, die Wahl darüber sitzt über dem Inhaltsverzeichnis. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]

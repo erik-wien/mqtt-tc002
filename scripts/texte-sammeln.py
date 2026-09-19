@@ -54,13 +54,13 @@ ERSTES_ARGUMENT = [
     "Abschnittskopf",
 ]
 # Aufrufe, die eine *Liste* von Texten bekommen — die Hilfe baut ihre
-# Aufzaehlungen und Tabellen so. Hier steht der Text nicht hinter der Klammer,
-# sondern verteilt auf die Zeilen danach, deshalb die eigene Behandlung.
-LISTEN = ["punkte", "tabelle"]
+# Aufzaehlungen so. Hier steht der Text nicht hinter der Klammer, sondern
+# verteilt auf die Zeilen danach, deshalb die eigene Behandlung.
+LISTEN = ["punkte"]
 # Modifikatoren, deren einziges Argument ein LocalizedStringKey ist.
 MODIFIKATOREN = ["help", "navigationTitle", "navigationSubtitle", "accessibilityLabel"]
 # Eigene Bausteine der Hilfe und des Werkzeugs.
-EIGENE = ["lok", "lokf", "ueberschrift", "absatz"]
+EIGENE = ["lok", "lokf", "ueberschrift", "untertitel", "absatz"]
 # Schluesselwoerter von `@Parameter(...)` (AppIntents, Kurzbefehle.swift), die
 # als sichtbare Beschriftung in der Kurzbefehle-App auftauchen. Kein Aufruf
 # mit Text als erstem Argument, sondern ein benanntes Argument irgendwo in der
@@ -160,7 +160,7 @@ def brauchbar(schluessel):
 
 
 def aus_listen(text):
-    """Texte aus `punkte([...])` und `tabelle([...])`.
+    """Texte aus `punkte([...])`.
 
     Gesucht wird ab der oeffnenden Klammer bis zur passenden schliessenden;
     alles dazwischen an Zeichenketten gehoert dazu. Ueber den ganzen Dateitext,
