@@ -76,7 +76,25 @@ ist und bei einem Update nachzuprüfen wäre, in
   Ein frisch geklonter Baum hat den Haken nicht; einmalig
   `git config core.hooksPath .githooks`.
 - Das echte Gerät und der Broker im Hausnetz sind in Tests tabu — ebenso in
-  jeder Arbeit, die ein Agent ausführt. Ihre Adressen stehen in den
+  jeder Arbeit, die ein **Agent** ausführt.
+
+  **Ausnahme für die Sitzung selbst, erteilt am 19.09.2026.** Wer unmittelbar
+  mit dem Auftraggeber arbeitet, darf die installierte Mac-App starten, sie
+  abfragen und mitlesen lassen, sie fotografieren und auch Testmeldungen an
+  die echten Uhren schicken — der MQTT-Zugang ist dafür nicht eingeschränkt.
+  Vier Bedingungen:
+
+  1. **Aufräumen.** Was zum Ausprobieren auf eine Uhr geschickt wurde, wird
+     danach wieder gelöscht.
+  2. **Die virtuelle Uhr zuerst.** Wo sie oder der Simulator ausreichen,
+     werden sie genommen; das echte Gerät ist für das, was sich anders nicht
+     zeigen lässt.
+  3. **Subagenten nicht.** Sie laufen unbeaufsichtigt und in eigenen
+     Arbeitsbäumen. Eine Bahn, die nebenher eine Uhr in der Wohnung abfragt,
+     ist nicht gewollt.
+  4. **Kein Bildschirmfoto mit echten Adressen ins Repo.** Das Repo ist
+     öffentlich, und Bilder gehen am Haken `scripts/private-spuren.sh`
+     vorbei — der liest nur Text. Ihre Adressen stehen in den
   Einstellungen der App, nicht hier; wer sie braucht, bekommt sie im Auftrag
   genannt — eine veraltete Adresse hier schützt die falsche Maschine. Dafür
   gibt es Doppelgänger: `URLProtocol` für die

@@ -165,9 +165,17 @@ jedem Commit zurücknehmen, `grep -rn SCHAUBILD Sources/` muss leer sein.
 Der Startbereich steht im `init` von `SchreibtischView`, nicht an der
 Eigenschaft.
 
-Die **Mac-App nicht starten**: Sie liest die echte Einrichtung des Rechners
-und erreicht damit Uhr und Broker im Hausnetz (`CLAUDE.md`). Die
-Schreibtisch-Oberfläche ist am iPad zu belegen.
+**Die Mac-App darf die Sitzung selbst starten und fotografieren** — seit
+19.09.2026, samt Testmeldungen an die echten Uhren; die Bedingungen stehen in
+`CLAUDE.md` (aufräumen, virtuelle Uhr zuerst, keine echten Adressen im Repo).
+**Subagenten dürfen es nicht**; für sie bleibt die Schreibtisch-Oberfläche am
+iPad zu belegen.
+
+    open -a /Applications/MQTT-TC002.app
+    screencapture -x <scratchpad>/mac.png      # Bildschirmfoto
+
+Das Bild bleibt im Scratchpad. Es zeigt Adressen und Präfixe aus dem
+Hausnetz.
 
 Nach `ditto` gehört der Hinweis dazu, die App **zu beenden und neu zu
 starten** — ein laufendes Programm merkt vom getauschten Bündel nichts, und
