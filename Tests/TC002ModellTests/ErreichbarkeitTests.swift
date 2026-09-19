@@ -49,8 +49,11 @@ final class ErreichbarkeitTests: XCTestCase {
             XCTAssertTrue(try quelltext(datei).contains("Erreichbarkeitszeichen("),
                           "\(wo) zeigt nicht mehr an, dass eine Uhr nicht geantwortet hat")
         }
+        // Am Telefon steht es seit dem Streichen des Titelmenues an derselben
+        // Stelle wie am Schreibtisch: neben dem Namen unter der Vorschau.
         XCTAssertTrue(try quelltext("Sources/TC002iOS/SendeniOS.swift")
-                        .contains("zustand.erreichbar[id] == false"),
-                      "der Titel am Telefon zeigt nicht mehr an, dass die Uhr nicht geantwortet hat")
+                        .contains("Erreichbarkeitszeichen(zustand: zustand, id: uhr.id)"),
+                      "am Telefon steht neben dem Uhrennamen nicht mehr, dass die Uhr nicht "
+                      + "geantwortet hat")
     }
 }

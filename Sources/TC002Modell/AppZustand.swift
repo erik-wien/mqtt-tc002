@@ -1230,10 +1230,17 @@ public final class AppZustand {
     /// hat. Die Oberflaeche braucht ihn fuer ihre Rueckmeldung: Ein gruenes
     /// Haekchen nach einer Sendung, die keine Uhr erreicht hat, waere eine
     /// Luege — was schiefging, steht dann in der Fehlerleiste.
+    /// `slotPixel`: Was auf dem Platz zu sehen sein wird, als Punktfeld.
+    ///
+    /// Ein Bild hat keine Regler, aus denen sich sein Aussehen neu rechnen
+    /// liesse (`slotOptionen` bleibt dort `nil`) — die Pixel sind aber
+    /// bekannt, die App hat sie selbst gerade verschickt. Ohne sie zeigte der
+    /// Block nach einer Bildsendung „unbekannt", obwohl niemand besser wusste,
+    /// was dort liegt.
     @discardableResult
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotIconKante: Int = 8,
-                       slotPlatz: Int? = nil) async -> Bool {
+                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Bool {
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
         // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
         // Der Verlauf erzaehlt, was man geschickt hat, und das war eine
@@ -1249,6 +1256,12 @@ public final class AppZustand {
             // wie jede andere gelungene Sendung.
             log(lokf("an %@ gesendet: %@ · %@", uhr.name, name, frame.beschreibung))
             guard let slotPlatz else { return }
+            // Was wir selbst geschickt haben, wissen wir — auch ohne Regler.
+            // Beim Mitlesen kommt es als GIF zurueck und liesse sich nicht
+            // mehr zerlegen; ohne diese Zeile stuende dort „unbekannt".
+            if let slotPixel {
+                slotInhalt[uhr.id, default: [:]][slotPlatz] = Slotbild(pixel: slotPixel)
+            }
             if let slotOptionen {
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
                                                               iconKante: slotIconKante,

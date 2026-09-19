@@ -2027,8 +2027,14 @@ public struct EditorBereichView: View {
         // Momentaufnahme wie in `SendenView.senden`: der Task soll den Platz
         // von jetzt sehen, nicht den beim spaeteren Ausfuehren.
         let slotPlatz = platz
+        // Was der Block danach zeigt: das erste Einzelbild, aber nur, wenn
+        // die Leinwand so gross ist wie die Anzeige. Ein Icon geht als Icon
+        // hinaus und fuellt den Platz nicht — sein Punktfeld waere fuer den
+        // Block das falsche Mass.
+        let slotPixel: [String?]? = groesse.istIcon ? nil : leinwand.bild
         Task {
-            await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz)
+            await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz,
+                                 slotPixel: slotPixel)
             laeuft = false
         }
     }

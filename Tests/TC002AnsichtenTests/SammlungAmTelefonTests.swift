@@ -59,8 +59,10 @@ final class SammlungAmTelefonTests: XCTestCase {
         let quelle = try blatt()
         XCTAssertTrue(quelle.contains("Bildsendung.rahmen(aus: eintrag.datei)"),
                       "Die Anzeigeseite baut keinen Rahmen mehr — von hier geht nichts hinaus.")
-        XCTAssertTrue(quelle.contains("zustand.senden(rahmen, als: name, slotPlatz: platz)"),
-                      "Die Anzeigeseite schickt nicht mehr auf den gewählten Meldungsplatz.")
+        XCTAssertTrue(quelle.contains("zustand.senden(rahmen, als: name, slotPlatz: platz, slotPixel: slotPixel)"),
+                      "Die Anzeigeseite schickt nicht mehr auf den gewählten Meldungsplatz — oder "
+                      + "sie reicht die Pixel nicht mehr weiter, und der Block sagt danach "
+                      + "„unbekannt“.")
     }
 
     /// Suchen, filtern, zurücksetzen — dieselben drei Fragen wie in der

@@ -723,8 +723,14 @@ private struct AnzeigeseiteiOS: View {
         do {
             let rahmen = try Bildsendung.rahmen(aus: eintrag.datei)
             let name = Meldungsplatz.name(fuer: platz)
+            // Was der Block danach zeigt: das erste Einzelbild der Datei. Ohne
+            // das stuende dort „unbekannt" — die Uhr schickt ein GIF zurueck,
+            // und aus dem laesst sich nichts mehr zerlegen.
+            let slotPixel = try? Bildraster.lesen(Data(contentsOf: eintrag.datei),
+                                                  breite: eintrag.groesse.breite,
+                                                  hoehe: eintrag.groesse.hoehe).first
             Task {
-                await zustand.senden(rahmen, als: name, slotPlatz: platz)
+                await zustand.senden(rahmen, als: name, slotPlatz: platz, slotPixel: slotPixel)
                 laeuft = false
                 fertig()
             }
