@@ -589,6 +589,52 @@ struct SendeniOS: View {
     /// Ganz hinten das Formatblatt: Es oeffnet ein Blatt statt eines Menues,
     /// und Dauer, Lauftempo und mitlaufendes Icon aendert man selten.
     private var formatleiste: some View {
+        // Das Zeichen **neben** der Pille, nicht darin: Innen lag es ueber dem
+        // letzten Element — auf dem Farbkreis — und sah aus, als gehoerte es
+        // dazu. Erik: *„die formatleiste sollte rechts ein ▶ bekommen, wenn
+        // weitere Optionen hereingescrollt werden können."* Das Ausblenden
+        // allein sagt, dass der Rand weich ist, nicht, dass dort noch etwas
+        // liegt.
+        //
+        // Nicht antippbar: Es zeigt eine Richtung, es ist kein Knopf — wer
+        // schiebt, schiebt die Pille.
+        HStack(spacing: 4) {
+            pille
+            if zeigtMehr {
+                Image(systemName: "arrowtriangle.right.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.horizontal, 8)
+        // Vier statt acht: Die Zeile wird damit acht Punkte flacher, ohne dass
+        // eine Trefferflaeche kleiner wird. Erik: *„Dafür könnte die ein wenig
+        // weniger hoch sein."*
+        .padding(.vertical, 4)
+    }
+
+    /// Ein Wert in der Formatpille, der ein Einblendmenue oeffnet — mit dem
+    /// Zeichen, das Apple dafuer vorsieht.
+    ///
+    /// `chevron.up.chevron.down` ist das Merkmal eines Pop-up-Knopfs; ohne es
+    /// sah „Silkscreen" oder „8" aus wie eine Anzeige, nicht wie eine Wahl.
+    /// Erik: *„Fonts und Größe haben keine Markierung, dass das Dropdowns
+    /// sind. Ich glaub da gehört ein ↕ hin."* Dasselbe Zeichen traegt der
+    /// Inspektor am Schreibtisch schon.
+    ///
+    /// Klein und angeschlagen: Es ist ein Merkmal, kein zweiter Wert.
+    private func menuewert(_ wert: Text) -> some View {
+        HStack(spacing: 2) {
+            wert
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var pille: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 Button { zeigeIcons = true } label: {
@@ -631,7 +677,7 @@ struct SendeniOS: View {
                     // der blosse Name in Akzentfarbe: Zwischen lauter Symbolen
                     // las sich das Wort wie ein Verweis, und in voller Groesse
                     // schob es den Rest der Pille aus dem Bild.
-                    Label { Text(schrift).font(.caption) } icon: { Image(systemName: "textformat") }
+                    Label { menuewert(Text(schrift).font(.caption)) } icon: { Image(systemName: "textformat") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!gattung.wirkt(.schriftart))
@@ -646,7 +692,7 @@ struct SendeniOS: View {
                         }
                     }
                 } label: {
-                    Label { Text(String(Int(groesse))) } icon: { Image(systemName: "textformat.size") }
+                    Label { menuewert(Text(String(Int(groesse)))) } icon: { Image(systemName: "textformat.size") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!gattung.wirkt(.groesse))
@@ -660,18 +706,27 @@ struct SendeniOS: View {
                 // Wie am Mac (`fettWirkt`): Auch Schriften und Groessen
                 // ohne fetten Schnitt sperren den Knopf, sonst waere er
                 // bedienbar, ohne etwas zu bewirken.
+                // Das Mass aussen, nicht innen: Der Knopfstil legt um seine
+                // Beschriftung noch einen eigenen Rand. Mit 44 Punkten innen
+                // wurde der Schalter rund 70 breit, und zwischen den beiden
+                // Zeichen klaffte eine Luecke, die nach Absicht aussah. Aussen
+                // gesetzt bleibt die Trefferflaeche 44 und der Knopf so
+                // schmal, wie sein Zeichen es braucht — wie bei den Menues
+                // daneben.
                 Toggle(isOn: $fett) {
-                    Image(systemName: "bold").frame(width: 44, height: 44)
+                    Image(systemName: "bold")
                 }
                 .toggleStyle(.button)
+                .frame(minWidth: 44, minHeight: 44)
                 .disabled(!fettWirkt)
                 .disabled(!gattung.wirkt(.fett))
                 .accessibilityLabel("Fett")
                 .accessibilityHint(Text(fettHinweis))
                 Toggle(isOn: $grossbuchstaben) {
-                    Image(systemName: "capslock").frame(width: 44, height: 44)
+                    Image(systemName: "capslock")
                 }
                 .toggleStyle(.button)
+                .frame(minWidth: 44, minHeight: 44)
                 .disabled(!kleinbuchstabenMoeglich)
                 .accessibilityLabel("Großbuchstaben")
                 .accessibilityHint(Text(grossHinweis))
@@ -734,7 +789,7 @@ struct SendeniOS: View {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
                     }
                 } label: {
-                    Label { Text(String(rand)) } icon: { Image(systemName: "arrow.up.and.down") }
+                    Label { menuewert(Text(String(rand))) } icon: { Image(systemName: "arrow.up.and.down") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
                 // Wie am Mac (SendenView.swift): bei "Mittig" wirkt der
@@ -749,7 +804,7 @@ struct SendeniOS: View {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
                     }
                 } label: {
-                    Label { Text(String(luecke)) } icon: { Image(systemName: "arrow.left.and.right") }
+                    Label { menuewert(Text(String(luecke))) } icon: { Image(systemName: "arrow.left.and.right") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!gattung.wirkt(.abstand))
@@ -793,11 +848,17 @@ struct SendeniOS: View {
         // Kapsel. So verblasst, was rechts hinausragt, samt dem Ende der
         // Kapsel.
         .mask(randverlauf)
+        // Das Zeichen **nach** der Maske: Sonst verblasste es mit dem Rand,
+        // den es erklaert. Erik: *„die formatleiste sollte rechts ein ▶
+        // bekommen, wenn weitere Optionen hereingescrollt werden können."*
+        // Das Ausblenden allein sagt, dass der Rand weich ist, nicht, dass
+        // dort noch etwas liegt.
+        //
+        // Nicht antippbar: Es zeigt eine Richtung, es ist kein Knopf — wer
+        // schiebt, schiebt die Pille.
         .onPreferenceChange(PilleInhaltsbreiteKey.self) { pilleInhaltsbreite = $0 }
         .onPreferenceChange(PilleVersatzKey.self) { pilleVersatz = $0 }
         .onPreferenceChange(PilleSichtbarKey.self) { pilleSichtbareBreite = $0 }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
     }
 
     /// Kein Sendeknopf — wie in Nachrichten. Die Eingabetaste schickt.

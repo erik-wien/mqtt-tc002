@@ -58,6 +58,11 @@ Erarbeitet am Gerät, jede Zeile ist einmal falsch gewesen.
   gesperrter Knopf sagt daneben, warum. Alles andere, was bloß erklärt, wie
   etwas zustande kommt, wandert hinter das Zeichen. Die Zahl steht da, der
   Grund dahinter.
+- **Apples HIG ist der Maßstab, auch über einem Wunsch.** Wörtlich:
+  *„Alle Angaben unter dem Vorbehalt, dass ich möglichst nahe am Apple HIG
+  bleiben will."* Wo ein Wunsch ein Zeichen oder eine Form beschreibt, für die
+  Apple schon eine hat, gilt Apples — und die Antwort sagt, welche das ist.
+  Ein „↕" für ein Einblendmenü heißt `chevron.up.chevron.down`.
 - **Keine Zahl ohne Bezugsgröße.** Wörtlich: *„Die einzige Engstelle ist die
   Uhr selbst … Aber iCloud und App ist das komplett egal."* Kilobyte in der
   Oberfläche beunruhigen, solange niemand sagen kann, wovon sie ein Teil sind

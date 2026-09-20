@@ -76,12 +76,19 @@ final class FormatpilleTests: XCTestCase {
                        "die Formatpille öffnet das Icons-Blatt nicht mehr genau einmal")
     }
 
-    /// Ein Zeichen und ein kurzer Wert, wie beim Groessenmenue daneben.
+    /// Ein Zeichen und ein kurzer Wert, wie beim Groessenmenue daneben — und
+    /// der Wert traegt das Merkmal eines Einblendmenues.
+    ///
+    /// `chevron.up.chevron.down` ist das, was Apple dafuer vorsieht; ohne es
+    /// sah „Silkscreen" aus wie eine Anzeige, nicht wie eine Wahl. Erik:
+    /// *„Fonts und Größe haben keine Markierung, dass das Dropdowns sind."*
     func testDieSchriftwahlIstEinSymbolmenue() throws {
         let pille = try pille()
-        XCTAssertTrue(pille.contains(#"Label { Text(schrift).font(.caption) } icon: { Image(systemName: "textformat") }"#),
+        XCTAssertTrue(pille.contains(#"Label { menuewert(Text(schrift).font(.caption)) } icon: { Image(systemName: "textformat") }"#),
                       "die Schriftwahl trägt wieder den Namen als blankes Wort — zwischen lauter "
                       + "Symbolen liest er sich wie ein Verweis")
+        XCTAssertTrue(pille.contains(#"Image(systemName: "chevron.up.chevron.down")"#),
+                      "dem Wert fehlt das Merkmal, dass er ein Menü öffnet")
         XCTAssertTrue(pille.contains(#"accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))"#),
                       "die Sprachausgabe nennt die Schrift nicht mehr beim Namen")
     }
