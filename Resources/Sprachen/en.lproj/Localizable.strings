@@ -417,6 +417,10 @@
 /* Sendeverlauf (18.09.2026) */
 "Verlauf führen" = "Keep a history";
 "Verlauf löschen" = "Delete history";
+"Verlauf löschen …" = "Clear history …";
+"Alle Einträge des Verlaufs wegwerfen" = "Throw away every entry in the history";
+"Verlauf löschen?" = "Clear the history?";
+"Die Liste der gesendeten Meldungen wird geleert. Was auf den Uhren steht, bleibt." = "The list of sent messages is emptied. What stands on the clocks remains.";
 "Platz %d" = "Slot %d";
 "Übernimmt diese Meldung samt Einstellungen" = "Takes over this message with its settings";
 "Der Verlauf ließ sich nicht schreiben." = "The history could not be written.";

@@ -39,13 +39,8 @@ public struct Verlaufsliste: View {
     public var body: some View {
         let zeilen = Verlaufsbau.zeilen(zustand)
         if !zeilen.isEmpty {
-            HStack {
-                Text(Verlaufsbau.ueberschrift)
-                    .font(.caption).fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 6)
+            Verlaufskopf(zustand: zustand)
+                .padding(.horizontal, 6)
             List(zeilen) { zeile in
                 Verlaufszeilenbild(zustand: zustand, zeile: zeile, uebernehmen: uebernehmen)
             }
@@ -82,9 +77,7 @@ public struct Verlaufsabschnitt: View {
                 // Zeilenrand: Der Kopf einer `List(.plain)` bringt sonst den
                 // Abstand eines eigenen Kapitels mit, und zwischen Slotleiste
                 // und Verlauf stand damit wieder eine leere Flaeche.
-                Text(Verlaufsbau.ueberschrift)
-                    .font(.caption).fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
+                Verlaufskopf(zustand: zustand)
                     .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
             }
         }
@@ -341,4 +334,46 @@ struct Verlaufszeilenbild: View {
         f.timeStyle = .short
         return f
     }()
+}
+
+/// Die Überschrift des Verlaufs und rechts daneben „Verlauf löschen …“.
+///
+/// Der Auftraggeber hat den Knopf in ein Bildschirmfoto hineingezeichnet und
+/// dazugeschrieben: *„Bitte Verlauf löschen ergänzen."* Es gab ihn nur unter
+/// „Einstellungen“ → „Aufzeichnung“ — weit weg von der Liste, die er leert.
+///
+/// Ein Wort ohne Fassung, kein Befehlsknopf: Im Kopf eines Listenabschnitts
+/// ist bloße Schrift der Kanon, wie „Bearbeiten“. Rot getönt ist es trotzdem,
+/// denn es wirft weg. Die drei Punkte sagen an, dass noch eine Rückfrage
+/// kommt.
+///
+/// Eine Fassung für beide Oberflächen: Der Kopf ist derselbe, nur seine
+/// Umgebung unterscheidet sich (eine `List(.plain)` am Schreibtisch, ein
+/// `Section`-Kopf am Telefon).
+struct Verlaufskopf: View {
+    @Bindable var zustand: AppZustand
+    @State private var fragt = false
+
+    var body: some View {
+        HStack {
+            Text(Verlaufsbau.ueberschrift)
+                .font(.caption).fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button(role: .destructive) { fragt = true } label: {
+                Text("Verlauf löschen …").font(.caption)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.red)
+            .help(lok("Alle Einträge des Verlaufs wegwerfen"))
+        }
+        .confirmationDialog(Text("Verlauf löschen?"), isPresented: $fragt, titleVisibility: .visible) {
+            Button("Löschen", role: .destructive) { zustand.verlaufLeeren() }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            // Eine Aussage ueber den Zustand, kein Erklaertext: Was die
+            // Loeschung anrichtet und was nicht.
+            Text("Die Liste der gesendeten Meldungen wird geleert. Was auf den Uhren steht, bleibt.")
+        }
+    }
 }

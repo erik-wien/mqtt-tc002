@@ -927,10 +927,17 @@ public struct SendenView: View {
             // `ControlSize`); von Hand eine Hoehe zu setzen haette Fokusring
             // und Innenabstaende auseinanderlaufen lassen.
             .controlSize(.extraLarge)
+            // Dieselbe Kapsel wie am Telefon. Erik: *„Die Textfläche am iPad
+            // gehört auch noch gerundet."* Und dieselbe auf beiden
+            // Schreibtischen: Was den Unterschied traegt, waere weder
+            // Bedienung noch Platz (`CLAUDE.md`) — es ist in beiden Faellen
+            // das Feld, in das man eine Meldung schreibt, und Nachrichten
+            // gibt ihm auf beiden Systemen diese Form.
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft,
-                         ausgang: ausgang)
+                         ausgang: ausgang,
+                         form: .kapsel)
             // Beschriftet die Eingabetaste der Bildschirmtastatur mit
             // „Senden" — auf dem iPad sichtbar, am Mac und an einer
             // angesteckten Tastatur ohne Wirkung.
