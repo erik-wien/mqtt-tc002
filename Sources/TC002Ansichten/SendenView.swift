@@ -235,6 +235,22 @@ public struct SendenView: View {
     /// zeigt die Vorschau die Werksfirmware, nicht gar nichts.
     private var geraeteart: Geraetetyp? { zustand.referenzUhr?.typ }
 
+    /// Das Seitenverhaeltnis des Vorschaubereichs — das **schmalste** aller
+    /// eingetragenen Uhren, nicht das der angesehenen.
+    ///
+    /// Ein Bereich, der dem angesehenen Geraet folgt, aendert beim Wischen
+    /// mitten in der Bewegung seine Hoehe; die Nachbarseite springt dann,
+    /// waehrend man sie hereinzieht. Das kleinste Verhaeltnis ist das
+    /// hoechste — darin hat jede Uhr Platz, und der Bereich steht still.
+    private var vorschauverhaeltnis: Double {
+        let alle = zustand.uhren.map { uhr -> Double in
+            let mass = Anzeigemass.fuer(uhr)
+            return Geraetezeichnung.fuer(uhr.typ).masse(inhaltHoehe: Double(mass.hoehe)).seitenverhaeltnis
+        }
+        return alle.min()
+            ?? Geraetezeichnung.fuer(geraeteart).masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis
+    }
+
     /// Dieselbe Auskunft, nur ohne `Optional` — die Reglertabelle im Kern
     /// fragt nach einer Gattung, nicht nach „vielleicht keiner".
     private var gattung: Geraetetyp { geraeteart ?? .tc002 }
@@ -264,39 +280,30 @@ public struct SendenView: View {
     /// wären sie schlicht das falsche Bild. Die Nachbarn zeigen ihr Standbild,
     /// bis man bei ihnen angekommen ist.
     @ViewBuilder
-    private func vorschau(fuer uhr: Uhr, angesehen: Bool, kante: Double) -> some View {
+    /// Eine Uhr in der Vorschau — mit **ihren** Massen, nicht denen der
+    /// gerade angesehenen.
+    ///
+    /// `platz` ist die Flaeche, die allen Seiten gemeinsam zur Verfuegung
+    /// steht; wie gross der Rahmen darin wird, rechnet jede Seite aus ihrer
+    /// eigenen Zeichnung. Der Name steht nicht mehr hier, sondern einmal
+    /// unter dem Blaetterer.
+    private func vorschau(fuer uhr: Uhr, angesehen: Bool, platz: CGSize) -> some View {
         let art = uhr.typ
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.naeherung(fuer: art ?? .tc002)
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
-        VStack(alignment: .leading, spacing: 4) {
-            VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
-                         kantenlaenge: kante,
-                         typ: art,
-                         icon: sitzt ? gewaehltesIcon?.datei : nil,
-                         iconKante: iconKante,
-                         laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
-            // Der Name unter der Uhr, die er benennt — und in der Vorschau
-            // selbst, damit er beim Blaettern mitwandert. Vorher stand er als
-            // Menue in der Mitte der Werkzeugleiste: Dort las er sich wie ein
-            // zweiter Fenstertitel, und alles, was rechts davon kam, rutschte
-            // in dieselbe Gruppe.
-            //
-            // Nur ab zwei Uhren: Bei einer einzigen benennt der Name nichts,
-            // was sich unterscheiden liesse.
-            //
-            // Leise: Er beantwortet eine Frage, die man selten stellt — welche
-            // der Uhren man gerade ansieht. Gross gesetzt war er ein zweiter
-            // Titel unter dem Bild und zog den Blick von der Uhr weg, um die
-            // es geht.
-            if zustand.uhren.count > 1 {
-                Text(uhr.name)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
+        let einheit = Geraetezeichnung.fuer(art).masse(inhaltHoehe: Double(uhrmass.hoehe))
+        let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
+                               (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
+        return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
+                            kantenlaenge: kante,
+                            typ: art,
+                            icon: sitzt ? gewaehltesIcon?.datei : nil,
+                            iconKante: iconKante,
+                            laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+            .frame(width: platz.width, height: platz.height)
     }
+
 
     private var passt: Bool {
         Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
@@ -424,65 +431,38 @@ public struct SendenView: View {
                 // TC002-Front) waeren fuer eine zweite Geraeteart falsch, und
                 // der Rahmen wuerde still beschnitten — keine Meldung, nur ein
                 // Bild, das nicht ganz passt.
+                // Jede Seite vermisst **ihre eigene** Uhr. Vorher wurde die
+                // Kantenlaenge einmal fuer die angesehene gerechnet und an
+                // alle Seiten weitergereicht: Beim Wischen von einer AWTRIX
+                // (32 × 8) auf eine TC002 (52 × 16) bekam die Nachbarseite
+                // fremde Masse und wuchs ueber ihren Rahmen hinaus.
                 GeometryReader { geo in
-                    let zeichnung = Geraetezeichnung.fuer(geraeteart)
-                    // Nicht `breitenFaktor`: Der setzt eine bereits ausgemessene
-                    // Feldbreite in Punkten voraus, hier steht aber nur die
-                    // Spaltenzahl des Pixelfelds. Bei der TC002 trifft sie
-                    // zufaellig fast genau die Zeichnung, bei der AWTRIX
-                    // unterschaetzte das die wirkliche Rahmenbreite um rund ein
-                    // Viertel — genau das Mass, um das die Vorschau am iPad zu
-                    // breit geriet, weil dort weniger Luft bleibt, es
-                    // aufzufangen. `masse(inhaltHoehe:)` rechnet dieselbe Formel
-                    // wie `GeraeteRahmen` selbst.
-                    let einheit = zeichnung.masse(inhaltHoehe: Double(feld.hoehe))
-                    // Punktreihe und Name brauchen Platz unter dem Rahmen,
-                    // sonst schoeben sie ihn beim Erscheinen um ihre Hoehe
-                    // hinauf.
-                    let punktehoehe: Double = (zustand.uhren.count > 1 || gattung.setztSelbst) ? 20 : 0
-                    let namenshoehe: Double = zustand.uhren.count > 1 ? 18 : 0
-                    let nachBreite = (geo.size.width - 24) / einheit.rahmenBreite
-                    let nachHoehe = (geo.size.height - 24 - punktehoehe - namenshoehe) / einheit.rahmenHoehe
-                    // Nach oben nur durch den Platz begrenzt, nicht durch eine
-                    // Zahl: Ein Deckel von 14 reichte der TC002 mit ihren 52
-                    // Spalten, liess die AWTRIX NG mit 32 aber halb so gross
-                    // und verloren in der Flaeche stehen. Gezeigt wird das
-                    // Geraet, nicht das Pixel — die Hoehe des Bereichs
-                    // begrenzt ohnehin.
-                    let kante = max(4, (min(nachBreite, nachHoehe)).rounded(.down))
-                    // Die Punkte gehoeren an die Vorschau, nicht an den
-                    // unteren Rand ihres Bereichs: Ausserhalb des
-                    // `GeometryReader` rutschten sie mit dessen Dehnung nach
-                    // unten weg. Sie sitzen im selben mittigen Stapel, direkt
-                    // unter dem Rahmen.
-                    VStack(spacing: 6) {
-                        Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
-                            vorschau(fuer: uhr, angesehen: angesehen, kante: kante)
-                        }
-                        // Das Zeichen neben der Punktreihe, nicht ein Satz
-                        // unter dem Bild: Zwei Zeilen Erklaerung unter jeder
-                        // Vorschau lesen sich wie ein Beipackzettel, und
-                        // Apples eigene Apps erklaeren sich nicht unter jedem
-                        // Element. `Hilfezeichen` traegt denselben Satz auf
-                        // beiden Wegen — am Zeiger im Einblendtext, am Finger
-                        // als Blase.
-                        HStack(spacing: 8) {
-                            Uhrenpunkte(zustand: zustand)
-                            if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
-                        }
+                    Uhrenblaetterer(zustand: zustand) { uhr, angesehen in
+                        vorschau(fuer: uhr, angesehen: angesehen, platz: geo.size)
                     }
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                 }
-                // Nur so hoch, wie die Breite es zulaesst. Ohne das nahm der
-                // Bereich die ganze Resthoehe und stellte die Uhr mittig
-                // hinein: Am iPad blieb rund ein Drittel der Seite leer, weil
-                // dort die Breite die Groesse begrenzt, nicht die Hoehe. Am
-                // Mac, wo das Fenster breiter als hoch ist, aendert sich
-                // nichts — dann greift weiter die Hoehe.
-                .aspectRatio(Geraetezeichnung.fuer(geraeteart)
-                                .masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis,
-                             contentMode: .fit)
+                // Das Verhaeltnis, in das **jede** eingetragene Uhr passt, und
+                // nicht das der angesehenen: Sonst aenderte der Bereich seine
+                // Hoehe mitten im Wischen.
+                .aspectRatio(vorschauverhaeltnis, contentMode: .fit)
                 .frame(maxWidth: .infinity)
+
+                // Name und Punktreihe stehen **unter** dem Bereich, nicht
+                // darin. Innen nahmen sie ihm rund 40 Punkte Hoehe weg, und
+                // weil der Bereich nur so hoch ist, wie sein
+                // Seitenverhaeltnis erlaubt, wurde der Rahmen genau um diese
+                // Punkte schmaler als die Spalte — er sah klein aus und liess
+                // oben Luft stehen.
+                if zustand.uhren.count > 1 {
+                    Text(zustand.referenzUhr?.name ?? "")
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                HStack(spacing: 8) {
+                    Uhrenpunkte(zustand: zustand)
+                    if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             // Nicht mehr `maxHeight: .infinity`: Der Bereich ist seit dem
             // Seitenverhaeltnis oben so hoch, wie die Uhr ihn braucht. Der

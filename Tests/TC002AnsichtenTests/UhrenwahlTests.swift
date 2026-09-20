@@ -52,8 +52,12 @@ final class UhrenwahlTests: XCTestCase {
                            + "liest er sich als zweiter Titel und schiebt den Inspektorknopf "
                            + "aus dem rechten Rand")
         }
+        // Der Name steht **unter** dem Blätterer und nennt die angesehene Uhr,
+        // nicht mehr in jeder Seite die ihre. Innen nahm er dem Bereich rund
+        // 20 Punkte Höhe weg, und weil dessen Höhe am Seitenverhältnis hängt,
+        // wurde der Rahmen um genau diese Punkte schmaler als die Spalte.
         let senden = try ohneKommentare("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(senden.contains("Text(uhr.name)"),
+        XCTAssertTrue(senden.contains("Text(zustand.referenzUhr?.name ?? \"\")"),
                       "SendenView: die Vorschau ist nicht mehr beschriftet — dann steht nirgends, "
                       + "welche Uhr man gerade ansieht")
     }
