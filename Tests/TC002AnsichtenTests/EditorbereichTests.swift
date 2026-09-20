@@ -440,7 +440,7 @@ final class EditorbereichTests: XCTestCase {
     func testAllesLoeschenIstKeinWerkzeug() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
         let karte = ausschnitt(text, von: "Section(\"Werkzeug\")", bis: "Section {")
-        for element in ["ColorPicker(\"Farbe\"", "Picker(\"Werkzeug\""] {
+        for element in ["Farbkreis(farbe:", "Picker(\"Werkzeug\""] {
             XCTAssertTrue(karte.contains(element),
                           "\(element) fehlt in der Karte „Werkzeug“ — dann prüft dieser Test die falsche Stelle")
         }
@@ -552,7 +552,7 @@ final class EditorbereichTests: XCTestCase {
     /// und auf der breiten Anzeige passiert beim Drehen wortlos nichts.
     func testUmformenRechnetImKernUndTeiltDenSchalterMitDemVerschiebekreuz() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let karte = ausschnitt(text, von: "LabeledContent(\"Verschieben\")", bis: "if groesse.iconEinfuegbar")
+        let karte = ausschnitt(text, von: "Text(\"Verschieben\")", bis: "if groesse.iconEinfuegbar")
 
         for art in ["art: .linksherum", "art: .rechtsherum", "art: .waagrecht", "art: .senkrecht"] {
             XCTAssertTrue(karte.contains(art),

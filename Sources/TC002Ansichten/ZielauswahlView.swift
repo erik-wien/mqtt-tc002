@@ -227,6 +227,34 @@ private extension View {
         #endif
     }
 
+    /// Die Pille im Inhalt des Editors, neben dem ✕ und dem Haken.
+    ///
+    /// Am Finger die Systemfassung. Am Mac von Hand: Dort zeichnet ein
+    /// `.bordered`-Knopf auch mit `buttonBorderShape(.capsule)` ein Rechteck
+    /// mit festem Radius — an einem 34 Punkte hohen Knopf gemessen rund 10
+    /// statt der 17, die eine Pille hätte; `.roundedRectangle(radius: 18)`
+    /// wird ebenso gekappt.
+    ///
+    /// Die Form ist damit nicht gegen Apple, sondern die, die Apple selbst
+    /// nimmt: Vorschau und Fotos setzen ihre Werkzeuge über dem Bild in eine
+    /// Pille, und „Fertig" daneben ist ebenfalls eine. Erik, mit einem Bild
+    /// davon: *„apple macht auch pillen, nicht runde vierecke."*
+    ///
+    /// Das ✕ daneben bleibt ein Systemknopf — bei gleicher Breite und Höhe
+    /// trifft `.circle` die Form.
+    @ViewBuilder
+    func pille() -> some View {
+        #if os(macOS)
+        buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(.quaternary, in: Capsule())
+            .contentShape(Capsule())
+        #else
+        knopfBefehl().buttonBorderShape(.capsule).controlSize(.large)
+        #endif
+    }
+
     /// Die Fassung je Stelle — in der Leiste keine eigene, im Inhalt eine
     /// Pille neben dem ✕ und dem Haken.
     @ViewBuilder
@@ -235,9 +263,8 @@ private extension View {
         case .leiste: buttonStyle(.plain)
         // Eine Pille und kein Kreis: Das Abzeichen braucht rechts Platz, und
         // ein Kreis hätte ihn allein dadurch bekommen, dass die Antenne darin
-        // kleiner wird. `.large`, damit die Pille so hoch wird wie das ✕ und
-        // der Haken daneben.
-        case .rund: knopfBefehl().buttonBorderShape(.capsule).controlSize(.large)
+        // kleiner wird.
+        case .rund: pille()
         }
     }
 }

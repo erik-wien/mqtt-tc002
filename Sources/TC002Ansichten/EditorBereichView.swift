@@ -101,7 +101,11 @@ public struct EditorBereichView: View {
     /// Name ist schlechter als keiner — die Namen stehen in der Sprachausgabe,
     /// im Einblendtext am Zeiger und in der Hilfe. Ein Wort neben jedem der
     /// vier Pfeile waere ohnehin nicht zu lesen.
-    @ScaledMetric(relativeTo: .body) private var umformkante: Double = 26
+    ///
+    /// 42 und nicht 26: Bei 26 und auch bei 32 sass der Kreis dem Zeichen auf der
+    /// Haut, am deutlichsten bei den breiten Zeichen für Drehen und Spiegeln.
+    /// Erik, zweimal: *„mach die Transform Schaltflächen größer"*, *„nein zu eng"*.
+    @ScaledMetric(relativeTo: .body) private var umformkante: Double = 42
     @ScaledMetric(relativeTo: .body) private var abspielKlein: Double = 22
     @State private var laedt = false
 
@@ -160,6 +164,21 @@ public struct EditorBereichView: View {
     /// wo immer er noch gebraucht wird (`HilfezeichenTests` hält das fest).
     private static var lametricHilfe: String {
         lok("Icons für solche Uhren werden über LaMetric-Nummern angesprochen. Die Nummer stammt aus der LaMetric Icon Gallery, ist beim 8×8 zugleich der Dateiname und muss darum eindeutig sein. Ein über sie geholtes Icon ist immer ein 8×8 und landet im 8×8-Bestand — gleich, was gerade auf der Leinwand liegt.")
+    }
+
+    /// Die Erklärungen hinter den (i) im Inspektor. Konstanten wie
+    /// `lametricHilfe`, damit der Wortlaut ein Übersetzungsschlüssel bleibt.
+    ///
+    /// Sie standen im Fuss ihrer Karte. Erik: *„beide erklärungen sind
+    /// sinnvoll, aber bitte — wie besprochen — in (i) verstecken."* Ein Satz,
+    /// der nichts über den konkreten Zustand sagt, gehört nicht in die
+    /// Fläche.
+    private static var verschiebenHilfe: String {
+        lok("Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
+    }
+
+    private static var abspielenHilfe: String {
+        lok("Mehrere Einzelbilder ergeben beim Sichern ein animiertes GIF.")
     }
 
     /// Was der Inspektor zeigt.
@@ -624,7 +643,13 @@ public struct EditorBereichView: View {
         }
 
         Section("Werkzeug") {
-            ColorPicker("Farbe", selection: farbe)
+            // Derselbe Farbwähler wie unter „Senden" und am Telefon: Das
+            // blanke Systemfeld ist bei weißer Farbe auf hellem Grund nicht
+            // mehr als Bedienelement zu erkennen (siehe `Farbkreis`). Der
+            // Editor hatte ihn als einzige Stelle nie bekommen. Erik: *„ist
+            // der Color Picker eine Regression, oder war der nie anders?
+            // Bitte den gleichen wie am iPad."*
+            LabeledContent("Farbe") { Farbkreis(farbe: farbe) }
             // Wie die Groessenwahl darueber: blanker Segmentschalter ueber die
             // ganze Zeile. Den Namen traegt der Kopf der Karte; er ein zweites
             // Mal als Zeilenbeschriftung nimmt den drei Symbolen nur Breite.
@@ -650,7 +675,18 @@ public struct EditorBereichView: View {
         // zweiten Karte waere er entweder verdoppelt oder fuer die Haelfte
         // dessen, was er tut, unsichtbar.
         Section {
-            LabeledContent("Verschieben") { pfeilkreuz }
+            // Das (i) steht an der Zeile, nicht am Kopf der Karte: Der Satz
+            // gilt für das Verschieben, nicht für Drehen und Spiegeln. Erik:
+            // *„Das (?) bezüglich Shift gehört zu shift, nicht zu
+            // Transform."*
+            LabeledContent {
+                pfeilkreuz
+            } label: {
+                HStack(spacing: 6) {
+                    Text("Verschieben")
+                    Hilfezeichen(Self.verschiebenHilfe)
+                }
+            }
             // Gesperrt statt beschnitten (siehe `Leinwand.drehbar`). Der Grund
             // steht im Fuss der Karte und nicht als Einblendtext am gesperrten
             // Knopf: Am iPad gibt es kein Verweilen, das ihn zeigte.
@@ -679,11 +715,11 @@ public struct EditorBereichView: View {
         } header: {
             Text("Umformen")
         } footer: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Was am Rand hinausgeschoben wird, kommt gegenüber wieder herein.")
-                if !leinwand.drehbar {
-                    Text("Gedreht wäre die Anzeige 16 × 52 hoch — diese Größe zeigt keine Uhr.")
-                }
+            // Im Fuss bleibt allein, was über den **konkreten** Zustand etwas
+            // aussagt: warum das Drehen gerade gesperrt ist. Die Erklärung,
+            // wie das Verschieben wirkt, steht hinter dem (i) im Kopf.
+            if !leinwand.drehbar {
+                Text("Gedreht wäre die Anzeige 16 × 52 hoch — diese Größe zeigt keine Uhr.")
             }
         }
 
@@ -759,9 +795,7 @@ public struct EditorBereichView: View {
                 }
             }
         } header: {
-            Text("Abspielen")
-        } footer: {
-            Text("Mehrere Einzelbilder ergeben beim Sichern ein animiertes GIF.")
+            Abschnittskopf("Abspielen", hilfe: Self.abspielenHilfe)
         }
     }
 

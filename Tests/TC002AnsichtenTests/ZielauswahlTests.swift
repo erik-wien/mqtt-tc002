@@ -44,6 +44,28 @@ final class ZielauswahlTests: XCTestCase {
         }
     }
 
+    /// Überall derselbe Farbwähler.
+    ///
+    /// `Farbkreis` steht in `CLAUDE.md` als eine der zwei begründeten
+    /// Ausnahmen vom Systembedienelement: Das blanke Feld ist bei weißer Farbe
+    /// auf hellem Grund nicht mehr zu erkennen. Der Editor hatte ihn als
+    /// einzige Stelle nie bekommen. Erik: *„Bitte den gleichen wie am iPad."*
+    ///
+    /// Mutation: irgendwo wieder `ColorPicker` einsetzen — baut, übersetzt,
+    /// und dieselbe Wahl sieht an zwei Stellen verschieden aus.
+    func testAlleOberflaechenNehmenDenselbenFarbwaehler() throws {
+        for datei in ["Sources/TC002iOS/SendeniOS.swift",
+                      "Sources/TC002Ansichten/SendenView.swift",
+                      "Sources/TC002Ansichten/EditorBereichView.swift"] {
+            let text = try quelltext(datei)
+            XCTAssertTrue(text.contains("Farbkreis(farbe:"),
+                          "\(datei) benutzt nicht mehr den gemeinsamen Farbkreis")
+            XCTAssertFalse(text.contains("ColorPicker("),
+                           "\(datei) zeigt wieder das blanke Systemfeld — bei weißer Farbe auf "
+                           + "hellem Grund ist das kein erkennbares Bedienelement")
+        }
+    }
+
     /// Die Wahl steht in einem `Blatt`, nicht in einem `Menu`: Nur das Blatt
     /// bleibt beim Anhaken offen und hat einen eigenen Weg hinaus.
     func testDieWahlStehtInEinemBlattUndNichtInEinemMenue() throws {
