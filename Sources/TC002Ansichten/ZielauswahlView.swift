@@ -86,14 +86,17 @@ public struct ZielauswahlView: View {
     /// Einblendtext, die Sprachausgabe und das Blatt selbst.
     private var zeichen: some View {
         Image(systemName: "antenna.radiowaves.left.and.right")
-            // Der Platz fuer die Zahl gehört zum Zeichen, statt sie mit
+            // Der Platz für die Zahl gehört zum Zeichen, statt sie mit
             // `offset` darüber hinauszuschieben: Die Werkzeugleiste des
-            // Telefons legt einen Kreis um ihr Element und schneidet alles ab,
+            // Telefons legt eine Fassung um ihr Element und schneidet alles ab,
             // was außerhalb liegt — von „2/3" blieb ein halbes „2".
-            // Auf beiden Seiten gleich viel, sonst säße die Antenne im Kreis
-            // nicht mehr mittig.
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
+            //
+            // Der Platz kommt rechts dazu, nicht ringsum: Ringsum blieb die
+            // Fassung ein Kreis und die Antenne darin wurde kleiner. Erik:
+            // *„das Symbol kleiner machen ist der falsche weg. Den Kreis zur
+            // etwas breiteren Pille zu machen der richtige."*
+            .padding(.trailing, 20)
+            .padding(.top, 2)
             // Hochgestellt und winzig, wie eine Fussnote: „2/4" sagt in zwei
             // Zeichen, was der Satz daneben in fünf Wörtern sagte. Erik: *„das
             // empfänger symbol könnte auch so eine hochgestellte minimale
@@ -224,16 +227,17 @@ private extension View {
         #endif
     }
 
-    /// Die Fassung je Stelle — in der Leiste keine eigene, im Inhalt ein
-    /// Kreis wie beim ✕ und beim Haken.
+    /// Die Fassung je Stelle — in der Leiste keine eigene, im Inhalt eine
+    /// Pille neben dem ✕ und dem Haken.
     @ViewBuilder
     func fassung(_ stil: ZielauswahlView.Zielstil) -> some View {
         switch stil {
         case .leiste: buttonStyle(.plain)
-        // `.large`, damit der Kreis so gross wird wie das ✕ und der Haken
-        // darueber: Drei Kreise verschiedener Groesse untereinander lesen sich
-        // wie drei verschiedene Arten von Knopf.
-        case .rund: knopfBefehl().buttonBorderShape(.circle).controlSize(.large)
+        // Eine Pille und kein Kreis: Das Abzeichen braucht rechts Platz, und
+        // ein Kreis hätte ihn allein dadurch bekommen, dass die Antenne darin
+        // kleiner wird. `.large`, damit die Pille so hoch wird wie das ✕ und
+        // der Haken daneben.
+        case .rund: knopfBefehl().buttonBorderShape(.capsule).controlSize(.large)
         }
     }
 }

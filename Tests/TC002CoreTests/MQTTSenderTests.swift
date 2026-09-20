@@ -73,7 +73,13 @@ final class MQTTSenderTests: XCTestCase {
                                 benutzer: "x", kennwort: "falsch", clientID: "tc002-app")
 
         XCTAssertThrowsError(try MQTTSender().senden(Data("HI".utf8), an: "t", zugang: zugang)) { fehler in
-            guard case MQTTFehler.abgelehnt(let code) = fehler else { return XCTFail("falscher Fehler") }
+            guard case MQTTFehler.abgelehnt(let code) = fehler else {
+                // Den wirklichen Fehler nennen: „falscher Fehler" allein ist bei
+                // einem Aussetzer nicht nachzuvollziehen, und der Unterschied
+                // zwischen Zeitueberschreitung und `.nichtVerbunden` sagt, wo
+                // gesucht werden muss.
+                return XCTFail("erwartet: abgelehnt(4), bekommen: \(fehler)")
+            }
             XCTAssertEqual(code, 4)
             XCTAssertTrue((fehler as? LocalizedError)?.errorDescription?.contains("Kennwort") == true)
         }
@@ -118,7 +124,13 @@ final class MQTTSenderTests: XCTestCase {
                                 benutzer: "x", kennwort: "falsch", clientID: "tc002-app-pruef")
 
         XCTAssertThrowsError(try MQTTSender().pruefen(zugang: zugang)) { fehler in
-            guard case MQTTFehler.abgelehnt(let code) = fehler else { return XCTFail("falscher Fehler") }
+            guard case MQTTFehler.abgelehnt(let code) = fehler else {
+                // Den wirklichen Fehler nennen: „falscher Fehler" allein ist bei
+                // einem Aussetzer nicht nachzuvollziehen, und der Unterschied
+                // zwischen Zeitueberschreitung und `.nichtVerbunden` sagt, wo
+                // gesucht werden muss.
+                return XCTFail("erwartet: abgelehnt(4), bekommen: \(fehler)")
+            }
             XCTAssertEqual(code, 4)
         }
     }
