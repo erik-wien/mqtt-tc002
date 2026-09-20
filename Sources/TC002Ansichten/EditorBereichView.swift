@@ -1283,20 +1283,6 @@ public struct EditorBereichView: View {
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
-            // Der Grund ueber den Knoepfen, nicht darunter: Unter ihnen stand
-            // er am unteren Rand der Ansicht und wurde dort abgeschnitten —
-            // ein gesperrter Sendeknopf ohne sichtbaren Grund ist eine
-            // Sackgasse. Sichtbar und nicht als Einblendtext: Am Finger gibt
-            // es kein Verweilen.
-            if zustand.ziele().isEmpty {
-                Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            } else if keineNimmtGemaltes {
-                Label("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.",
-                      systemImage: "info.circle")
-                    .font(.footnote).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
             // Zwei Zeilen: die Bloecke oben, Empfaenger und Sendezeichen
             // darunter rechts. In einer Zeile passte es am iPad nicht — dort
             // ist die mittlere Spalte neben Seitenleiste und Inspektor rund
@@ -1309,6 +1295,12 @@ public struct EditorBereichView: View {
             // Leinwand ist der Inhalt.
             HStack(spacing: 8) {
                 Spacer()
+                // Der Grund steht hinter einem antippbaren Zeichen, nicht als
+                // Satz unter den Bloecken. Erik: *„Der Erklärungstext gefällt
+                // mir nicht, die macht die UI unrund … Bitte weglassen, wenn
+                // die Hilfe reicht, ein klickbares (i) mit Einblendhilfe oder
+                // eine Fehlermeldung."*
+                if let grund = sendesperre { Hilfezeichen(grund, warnung: true) }
                 ZielauswahlView(zustand: zustand)
                 sendeKnopf
             }
@@ -1357,6 +1349,21 @@ public struct EditorBereichView: View {
             Sendezeichen(senden: { senden() }, gelungen: gelungen)
                 .disabled(zustand.ziele().isEmpty || keineNimmtGemaltes)
         }
+    }
+
+    /// Warum gerade nichts hinausgehen kann — `nil`, wenn es geht.
+    ///
+    /// Ein Satz, der nur den Zustand benennt, und er steht hinter einem
+    /// Zeichen statt als Absatz in der Ansicht: Wer weiss, was eine AWTRIX
+    /// ist, liest ihn nie wieder.
+    private var sendesperre: String? {
+        if zustand.ziele().isEmpty {
+            return lok("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
+        }
+        if keineNimmtGemaltes {
+            return lok("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.")
+        }
+        return nil
     }
 
     /// Keine der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf

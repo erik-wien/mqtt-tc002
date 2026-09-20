@@ -42,6 +42,16 @@ Erarbeitet am Gerät, jede Zeile ist einmal falsch gewesen.
 - **Erklärtexte: ein Satz.** Was länger ist, gehört hinter ein `Hilfezeichen`
   (?) oder in die Hilfe. Zwei Absätze unter einem Schalter heißen, dass der
   Schalter falsch heißt oder am falschen Ort steht.
+- **Erklärender Text steht nicht in der Oberfläche.** Wörtlich, am
+  20.09.2026: *„Der Erklärungstext gefällt mir nicht, die macht die UI unrund
+  und User, die sich auskennen, werden unnötig genervt. Bitte weglassen, wenn
+  die Hilfe reicht, ein klickbares (i) mit Einblendhilfe oder eine
+  Fehlermeldung, wenn der User was versucht zu machen, was nicht geht."* Drei
+  zulässige Formen, in dieser Reihenfolge: nichts (die Hilfe trägt es), ein
+  `Hilfezeichen`, eine Fehlermeldung an der Handlung. **Die Ausnahme:** Ein
+  Satz darf stehen, wenn er eine Aussage über den **konkreten Zustand**
+  macht — der Name der geladenen Grafik, die angesehene Uhr, was auf einem
+  Platz liegt. Nicht, wie etwas funktioniert.
 - **Keine Rechtfertigung, wo nichts im Weg steht.** Wörtlich verlangt:
   *„weniger direkte Rechtfertigungsversuche, wenn keine direkte Gefahr
   besteht. Gerne aber mehr (?)"*. Sichtbar bleibt, was jemanden aufhält — ein
