@@ -86,7 +86,16 @@ struct ZielauswahlView: View {
                     .font(.system(size: 9, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-                    .offset(x: 12, y: -6)
+                    // Eine graue Pille darunter, kein blanker Text: Frei
+                    // neben dem Zeichen stehend las sich die Zahl wie ein
+                    // Ausrutscher. Erik: *„¼ gehört imho in eine graue Pille.
+                    // So schaut's jedenfalls nicht gut aus."* Ein Abzeichen
+                    // an einem Symbol ist der gewoehnliche Weg — Apple setzt
+                    // es an Tableisten und Listenzeilen ebenso.
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(.quaternary))
+                    .offset(x: 14, y: -7)
                     // Sie darf den Knopf nicht breiter machen, sonst sitzt das
                     // Zeichen in der Leiste nicht mehr mittig.
                     .fixedSize()
