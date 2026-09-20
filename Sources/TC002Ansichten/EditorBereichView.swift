@@ -413,8 +413,16 @@ public struct EditorBereichView: View {
                 werkzeugleiste
             }
         }
+        // In der Uebersicht gibt es nichts zu inspizieren, also ist er dort
+        // zu. Der Setzer nimmt das aber nicht an: SwiftUI meldet das Zuklappen
+        // zurueck, und `zeigeInspektor` stuende danach auf `false` — das
+        // naechste geoeffnete Bild bekaeme keinen Inspektor mehr, obwohl ihn
+        // niemand weggeklickt hat. Geschrieben wird deshalb nur, was der
+        // Benutzer am offenen Bild selbst umschaltet.
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
-                                        set: { zeigeInspektor = $0 })) { inspektor }
+                                        set: { neu in
+                                            if !zeigtUebersicht { zeigeInspektor = neu }
+                                        })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
         // An der Ansicht, nicht am Knopf im Inspektor: Den gibt es in der
         // Uebersicht nicht, und das Plus dort oeffnet dieselbe Dateiwahl.
@@ -747,23 +755,6 @@ public struct EditorBereichView: View {
                 .knopfBefehl()
                 .disabled(einfuegbare.isEmpty)
             }
-        }
-
-        // Letzte Zeile des Reiters, nicht in der Karte „Werkzeug": Ein
-        // Werkzeug waehlt man, dieser Knopf wirft weg. Der zweite zulaessige
-        // Ort — ein Ueberlaufmenue in der Werkzeugleiste — scheidet aus: Die
-        // Leiste ist am iPad die Navigationsleiste der Detailspalte und
-        // schiebt schon heute uebereinander (siehe `werkzeugleiste`), und der
-        // Befehl gehoert zum Malen, waehrend die Leiste in allen drei Reitern
-        // steht. Dieselbe Bauart wie „Verlauf loeschen" in den Einstellungen.
-        //
-        // Ohne Rueckfrage: `schritt()` legt den Stand auf den
-        // Rueckgaengig-Stapel, „Rueckgaengig" holt das Geleerte zurueck.
-        Section {
-            Button("Alles löschen", role: .destructive) {
-                schritt(); leinwand.bildLeeren(); arbeitsstandSichern()
-            }
-            .knopfZerstoerend()
         }
     }
 

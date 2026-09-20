@@ -16,6 +16,12 @@ final class EditorbereichTests: XCTestCase {
 
     /// Quelltext ohne Kommentare — sonst zählte jeder Satz mit, der etwas
     /// bloß erwähnt, und diese Datei erwähnt ihre Vorgänger.
+    private func swiftDateien(unter ordner: String) -> [String] {
+        let basis = Self.wurzel.appendingPathComponent(ordner)
+        let inhalt = (try? FileManager.default.contentsOfDirectory(atPath: basis.path)) ?? []
+        return inhalt.filter { $0.hasSuffix(".swift") }.sorted().map { "\(ordner)/\($0)" }
+    }
+
     private func quelltext(_ pfad: String) throws -> String {
         let url = Self.wurzel.appendingPathComponent(pfad)
         let roh = try String(contentsOf: url, encoding: .utf8)
@@ -426,20 +432,28 @@ final class EditorbereichTests: XCTestCase {
                       "das Maß der Kachel hängt nicht mehr an einer abgeleiteten Eigenschaft")
     }
 
-    /// Die Karte „Werkzeug" trägt Farbe und die Werkzeugwahl, sonst nichts. „Alles
-    /// löschen" wählt kein Werkzeug, es wirft weg — es stand dort als einzige
-    /// zerstörende Handlung in Warnfarbe zwischen zwei Wählern. Sein Platz ist
-    /// die letzte Zeile des Reiters „Malen", dieselbe Bauart wie „Verlauf
-    /// löschen" in den Einstellungen.
+    /// Die Karte „Werkzeug" trägt Farbe und die Werkzeugwahl, sonst nichts —
+    /// und „Alles löschen" gibt es überhaupt nicht mehr.
     ///
-    /// Eine Rückfrage gibt es nicht und soll es nicht geben: `schritt()` legt
-    /// den Stand auf den Rückgängig-Stapel, bevor geleert wird.
+    /// Der Knopf leerte das gerade bearbeitete Einzelbild. Er stand zuerst in
+    /// der Karte „Werkzeug" (eine zerstörende Handlung in Warnfarbe zwischen
+    /// zwei Wählern), dann als letzte Zeile des Reiters „Malen". Der
+    /// Auftraggeber: *„Das Feature ‚Alles Löschen‘ im Icon Editor bitte von
+    /// allen Plattformen entfernen."* Wer die Fläche leeren will, nimmt den
+    /// Radierer oder fängt mit „Neu" an.
     ///
-    /// Mutation: den Knopf zurück in die Karte schieben — baut, übersetzt, und
-    /// am Gerät steht die Warnfarbe wieder zwischen den Werkzeugen.
-    func testAllesLoeschenIstKeinWerkzeug() throws {
+    /// Mutation: den Knopf irgendwo wieder einsetzen — baut, übersetzt, und
+    /// die zerstörende Handlung ist wieder da.
+    func testAllesLoeschenGibtEsNichtMehr() throws {
+        for pfad in swiftDateien(unter: "Sources/TC002Ansichten")
+            + swiftDateien(unter: "Sources/TC002iOS")
+            + swiftDateien(unter: "Sources/TC002App") {
+            XCTAssertFalse(try quelltext(pfad).contains("Alles löschen"),
+                           "\(pfad) zeigt wieder „Alles löschen“")
+        }
+
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let karte = ausschnitt(text, von: "Section(\"Werkzeug\")", bis: "Section {")
+        let karte = ausschnitt(text, von: "Section(\"Werkzeug\")", bis: "if groesse.iconEinfuegbar")
         for element in ["Farbkreis(farbe:", "Picker(\"Werkzeug\""] {
             XCTAssertTrue(karte.contains(element),
                           "\(element) fehlt in der Karte „Werkzeug“ — dann prüft dieser Test die falsche Stelle")
@@ -451,19 +465,6 @@ final class EditorbereichTests: XCTestCase {
             XCTAssertTrue(karte.contains(fall),
                           "\(fall) fehlt im Werkzeugwähler — ein Werkzeug steht woanders als bei den anderen")
         }
-        XCTAssertFalse(karte.contains("Alles löschen"),
-                       "„Alles löschen“ steht wieder in der Karte „Werkzeug“ — eine zerstörende "
-                       + "Handlung in Warnfarbe, dauerhaft sichtbar zwischen zwei Wählern")
-
-        let malen = ausschnitt(text, von: "private var malenAbschnitte", bis: "private var animationAbschnitte")
-        XCTAssertTrue(malen.contains("Button(\"Alles löschen\", role: .destructive)"),
-                      "„Alles löschen“ ist aus dem Reiter „Malen“ verschwunden — oder es ist nicht "
-                      + "mehr als zerstörend gekennzeichnet")
-        XCTAssertTrue(malen.contains(".knopfZerstoerend()"),
-                      "„Alles löschen“ trägt keinen zerstörenden Stil mehr")
-        XCTAssertFalse(text.contains("rueckfrage = .leeren"),
-                       "vor dem Leeren wird wieder gefragt — „Rückgängig“ holt es zurück, "
-                       + "die Frage wäre eine ohne Anlass")
     }
 
     /// Die Reihenfolge der Mittelspalte ist auf allen drei Sendeflächen
