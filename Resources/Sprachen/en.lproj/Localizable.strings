@@ -697,8 +697,6 @@
 "Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe." = "How long the clock shows this one message before it moves on. Empty or 0: no setting of its own.";
 "Senkrecht ausrichten" = "Vertical alignment";
 "Gerät" = "Device";
-"Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück." = "Only the stock firmware accepts a drawn image. The AWTRIX has eight rows instead of sixteen — an image squeezed onto them would not be the same image, and sending it would come back as silence.";
-"Auf die Uhr senden" = "Send to the clock";
 "„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt." = "\"%@\" is not a valid address. Correct the clock's address in the settings — a single space is enough to break it.";
 "Zeit" = "Time";
 "GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt." = "GPL-3.0. No PixDeck source code is included — what came from there is knowledge about the device, and that is not copyrightable.";
@@ -785,7 +783,6 @@
 
 /* SchreibtischView.swift — der Bereich heisst seit dem Anwendertest „Icons" */
 "Icons" = "Icons";
-"Icons — %@" = "Icons — %@";
 
 /* EditorBereichView.swift — die Uebersicht des Bestands im Hauptfenster */
 "Holen" = "Fetch";

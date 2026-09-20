@@ -115,9 +115,6 @@ public struct EditorBereichView: View {
     ///
     /// Gemerkt wird der Inhalt, nicht die URL — warum, steht bei
     /// `dateiUebernehmen`.
-    /// Welchen Block der Zeiger gerade ueberfaehrt — `nil` heisst keinen.
-    /// Nur daran haengt das ⊗; am Finger tut es das Kontextmenue.
-    @State private var ueberfahrenerPlatz: Int?
     @State private var zeigeDateiImport = false
     @State private var zeigeImportBlatt = false
     @State private var importDaten: Data?
@@ -338,14 +335,13 @@ public struct EditorBereichView: View {
             if zeigtUebersicht {
                 uebersicht
             } else {
-                // Am Mac steht der Name mit Zurueck und „Sichern" ueber der
-                // Leinwand; das Fenster traegt den Programmnamen und kann ihn
-                // nicht aufnehmen. Am iPad gibt es einen Navigationstitel —
-                // dort steht „Icons — <Name>", und die beiden Knoepfe liegen
-                // in der Werkzeugleiste, wo iPadOS sie erwartet.
-                #if os(macOS)
+                // Name und Abschluss stehen **im** Mittelteil, nicht in der
+                // Navigationsleiste. Die reicht ueber Mittelspalte und
+                // Inspektor; ein Knopf an ihrem rechten Ende landet damit
+                // ueber dem Inspektor, und der Titel sitzt bei 58 Prozent der
+                // Breite statt mittig. Erik: *„der sichern schaltfläche gehört
+                // in den mittleren teil, nicht in den inspektor"*.
                 abschlusszeile
-                #endif
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, werkzeug: werkzeug,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
@@ -397,21 +393,8 @@ public struct EditorBereichView: View {
                 // eine Frage statt einer Auskunft. Der Name steht jetzt an der
                 // Leiste, die er betrifft.
                 werkzeugleiste
-                #if !os(macOS)
-                abschlussknoepfe
-                #endif
             }
         }
-        // Der Titel sagt, was offen ist, nicht bloss, wo man ist: „Icons"
-        // stand auch dann da, wenn ein bestimmtes Bild auf der Leinwand lag,
-        // und der Name darunter in einer eigenen Zeile. Am Mac gibt es diesen
-        // Titel nicht — dort traegt das Fenster den Programmnamen.
-        #if !os(macOS)
-        .navigationTitle(zeigtUebersicht
-                         ? lok("Icons")
-                         : lokf("Icons — %@", name.isEmpty ? lok("Ohne Namen") : name))
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
         .inspector(isPresented: Binding(get: { zeigeInspektor && !zeigtUebersicht },
                                         set: { zeigeInspektor = $0 })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
@@ -1001,29 +984,25 @@ public struct EditorBereichView: View {
         }
     }
 
+    /// Eine Kachel der Einzelbildleiste — dasselbe `Pixelraster` wie im
+    /// Slotblock darunter, nur kleiner.
+    ///
+    /// 44 Punkte breit und nicht mehr 34: Eine Kachel, die man antippt, ist
+    /// das Mindestmass einer Trefferflaeche. Sie bleibt deutlich kleiner als
+    /// ein Slotblock, und das hat einen Grund — in die Leiste passen sechzehn
+    /// Einzelbilder, in die Blockreihe fuenf Plaetze.
     private func bildVorschau(_ i: Int) -> some View {
-        Canvas { kontext, groesse in
-            let kante = groesse.width / Double(leinwand.breite)
-            for y in 0..<leinwand.hoehe {
-                for x in 0..<leinwand.breite {
-                    let feld = CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                      width: kante, height: kante)
-                    let p = leinwand.bilder[i][y * leinwand.breite + x]
-                    kontext.fill(Path(feld), with: .color(p.flatMap(Color.init(hex:)) ?? .black))
-                }
-            }
-        }
-        // Die Vorschau behaelt das Seitenverhaeltnis der Leinwand: bei 52×16
-        // ist ein Quadrat nicht dasselbe Bild, sondern ein anderes.
-        .frame(width: 34, height: 34 * Double(leinwand.hoehe) / Double(leinwand.breite))
-        .background(Color.black)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-        .overlay(RoundedRectangle(cornerRadius: 3)
-            .stroke(leinwand.aktuell == i ? Color.accentColor : Color.secondary.opacity(0.4),
-                    lineWidth: leinwand.aktuell == i ? 2 : 1))
-        // Ein Bild zu waehlen aendert nichts an der Zeichnung und ist deshalb
-        // kein Schritt fuer „Rueckgaengig".
-        .onTapGesture { stoppeAbspielen(); leinwand.waehlen(i) }
+        Pixelraster(punkte: leinwand.bilder[i],
+                    mass: Anzeigemass(breite: leinwand.breite, hoehe: leinwand.hoehe))
+            .frame(width: 44)
+            .background(Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
+            .overlay(RoundedRectangle(cornerRadius: 3)
+                .stroke(leinwand.aktuell == i ? Color.accentColor : Color.secondary.opacity(0.4),
+                        lineWidth: leinwand.aktuell == i ? 2 : 1))
+            // Ein Bild zu waehlen aendert nichts an der Zeichnung und ist
+            // deshalb kein Schritt fuer „Rueckgaengig".
+            .onTapGesture { stoppeAbspielen(); leinwand.waehlen(i) }
     }
 
     /// Eine Zeile der Liste der Vorhandenen — mit der Groesse als Merkmal, weil
@@ -1062,27 +1041,6 @@ public struct EditorBereichView: View {
     /// Werkzeugleiste: Dort saessen sie am rechten Fensterrand, also über dem
     /// Inspektor, und nicht über dem Stueck, das sie betreffen. Nur die
     /// Zeichen, wie in Fotos; `Label` schriebe am Mac das Wort dazu.
-    /// Abbrechen und Sichern in der Werkzeugleiste — am iPad, wo es eine
-    /// gibt. `cancellationAction` und `confirmationAction` und nicht feste
-    /// Seiten: iPadOS setzt sie selbst links und rechts, und die
-    /// Eingabetaste findet „Sichern" darueber von allein.
-    #if !os(macOS)
-    @ToolbarContentBuilder
-    private var abschlussknoepfe: some ToolbarContent {
-        ToolbarItem(placement: .cancellationAction) {
-            Button { fertigAnfragen() } label: {
-                Label(lok("Fertig"), systemImage: "xmark")
-            }
-            .help(lok("Fertig"))
-            .accessibilityLabel(Text("Fertig"))
-        }
-        ToolbarItem(placement: .confirmationAction) {
-            Button(lok("Sichern")) { sichernAnfragen() }
-                .knopfHaupthandlung()
-        }
-    }
-    #endif
-
     private var abschlusszeile: some View {
         HStack {
             #if os(macOS)
@@ -1327,21 +1285,6 @@ public struct EditorBereichView: View {
                 Text(Sendungsstand.satz(art: lok("Animation"), bilder: leinwand.bilder.count))
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            // Zwei Zeilen: die Bloecke oben, Empfaenger und Sendeknopf
-            // darunter rechts.
-            //
-            // In einer Zeile passte es am iPad nicht. Dort ist die mittlere
-            // Spalte neben Seitenleiste und Inspektor rund 450 Punkte breit,
-            // die Zeile braucht rund 500 (fuenf Bloecke à 44, Empfaenger,
-            // Knopf). Beschnitten wurde dann nicht die Zeile, sondern der
-            // ganze Stapel: Er ist so breit wie sein breitestes Kind und sass
-            // mittig in der Spalte — links fehlte das halbe
-            // Abbrechen-Zeichen, rechts das halbe „Senden".
-            //
-            // Kein `ViewThatFits`: Die Bloecke dehnen sich, ihre gemessene
-            // Idealbreite ist deshalb auch am Mac groesser als die Spalte,
-            // und die Wahl fiel ohnehin immer auf die zweizeilige Form. Zwei
-            // Zeilen ueberall sind ehrlicher als eine Wahl, die keine ist.
             // Der Grund ueber den Knoepfen, nicht darunter: Unter ihnen stand
             // er am unteren Rand der Ansicht und wurde dort abgeschnitten —
             // ein gesperrter Sendeknopf ohne sichtbaren Grund ist eine
@@ -1356,8 +1299,14 @@ public struct EditorBereichView: View {
                     .font(.footnote).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            // Zwei Zeilen: die Bloecke oben, Empfaenger und Sendezeichen
+            // darunter rechts. In einer Zeile passte es am iPad nicht — dort
+            // ist die mittlere Spalte neben Seitenleiste und Inspektor rund
+            // 450 Punkte breit, die Zeile braucht rund 500. Beschnitten wurde
+            // dann nicht die Zeile, sondern der ganze Stapel: Er ist so breit
+            // wie sein breitestes Kind und sass mittig in der Spalte.
             VStack(spacing: 8) {
-                HStack(spacing: 6) { slotBloecke }
+                slotBloecke
                 // Der Empfaenger neben dem Knopf, der sendet — dieselbe
                 // Nachbarschaft wie unter „Senden", wo er neben dem
                 // Eingabefeld steht. Hier gibt es kein Feld, wohl aber einen
@@ -1371,38 +1320,11 @@ public struct EditorBereichView: View {
         }
     }
 
-    /// Dieselben Bloecke wie unter „Senden", aus derselben Rechnung
-    /// (`AppZustand.slotzustand`) — derselbe Platz derselben Uhr soll hier
-    /// nicht etwas anderes zeigen. Antippen waehlt hier nur den Platz: Regler,
-    /// die sich wiederherstellen liessen, gibt es beim Malen nicht.
-    @ViewBuilder
+    /// Dieselbe Leiste wie unter „Senden" und am Telefon. Ein Druck waehlt
+    /// hier nur den Platz: Regler, die sich wiederherstellen liessen, gibt es
+    /// beim Malen nicht.
     private var slotBloecke: some View {
-        ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
-            Button { platz = i } label: {
-                Slotblock(platz: i,
-                          zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                          gewaehlt: platz == i,
-                          // Das Mass der angesehenen Uhr: Ihren Stand zeigt
-                          // der Block, und auf einer NG sind das 32×8.
-                          mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002)
-            }
-            .buttonStyle(.plain)
-            .onHover { drueber in ueberfahrenerPlatz = drueber ? i : nil }
-            // Dieselbe Bedienung wie unter „Senden": Am Finger das
-            // Kontextmenue, am Zeiger zusaetzlich das ⊗ beim Ueberfahren. Ein
-            // dauerhaftes ⊗ sah aus wie der Wackelmodus des Startbildschirms
-            // und verdeckte das Motiv des Blocks.
-            .slotmenue(belegt: belegtePlaetze.contains(i),
-                       loeschen: { slotLoeschen(i) },
-                       zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
-            .overlay(alignment: .topTrailing) {
-                if ueberfahrenerPlatz == i {
-                    MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                         belegt: belegtePlaetze.contains(i))
-                        .offset(x: 8, y: -8)
-                }
-            }
-        }
+        Slotleiste(zustand: zustand, gewaehlt: platz) { platz = $0 }
     }
 
     /// Ohne `.defaultAction` — die Eingabetaste gehoert „Sichern".
@@ -1422,32 +1344,24 @@ public struct EditorBereichView: View {
     /// `lok` in beiden Zweigen: Ein Ternaer mit einem `String`-Zweig zwingt
     /// SwiftUI in die `StringProtocol`-Ueberladung, und die schlaegt nichts
     /// nach — der Eintrag staende in `en.lproj` und wuerde nie gefunden.
-    /// Derselbe Dreiklang wie unter „Senden": Wort, Dreher, gruener Haken.
-    /// Ohne ihn sagte im Editor nichts, dass etwas hinausgegangen ist — der
-    /// Slotblock daneben aendert sich nur, wenn die angesehene Uhr zugleich
-    /// die Zieluhr ist.
+    /// Derselbe blaue Pfeil wie unter „Senden" und am Telefon
+    /// (`Sendezeichen`), nicht ein umrandeter Knopf mit dem Wort „Senden".
+    /// Erik: *„empfänger und senden sind auch falsch."* — es ist dieselbe
+    /// Handlung, also dasselbe Zeichen.
+    ///
+    /// Der Dreher waehrend des Sendens und der gruene Haken danach stecken im
+    /// Zeichen: drei Zustaende einer Stelle, nicht drei Stellen.
     @ViewBuilder
     private var sendeKnopf: some View {
-        if gelungen {
-            Label(lok("Hinausgeschickt"), systemImage: "checkmark.circle.fill")
-                .labelStyle(.iconOnly)
-                .font(.title2)
-                .foregroundStyle(.green)
-                .frame(minWidth: 44, minHeight: 28)
-                .transition(.opacity)
-                .accessibilityLabel(Text("Hinausgeschickt"))
+        if laeuft {
+            ProgressView()
+                .controlSize(.small)
+                .frame(width: 28, height: 28)
+                .accessibilityLabel(Text("Sende…"))
         } else {
-            sendeknopfEcht
+            Sendezeichen(senden: { senden() }, gelungen: gelungen)
+                .disabled(zustand.ziele().isEmpty || keineNimmtGemaltes)
         }
-    }
-
-    private var sendeknopfEcht: some View {
-        Button(laeuft ? lok("Sende…") : lok("Senden")) { senden() }
-            .knopfBefehl()
-            .disabled(laeuft || zustand.ziele().isEmpty || keineNimmtGemaltes)
-            .help(keineNimmtGemaltes
-                  ? lok("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild, und geschickt käme es als Stille zurück.")
-                  : lok("Auf die Uhr senden"))
     }
 
     /// Keine der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf
@@ -1695,10 +1609,6 @@ public struct EditorBereichView: View {
         zeigtUebersicht = true
     }
 
-    private func slotLoeschen(_ i: Int) {
-        let name = Meldungsplatz.name(fuer: i)
-        Task { await zustand.loeschen(name) }
-    }
 
     private func anklicken(_ eintrag: Editoreintrag) {
         oeffnen(eintrag)

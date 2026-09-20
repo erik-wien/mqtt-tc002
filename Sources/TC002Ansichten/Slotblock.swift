@@ -83,7 +83,7 @@ public struct Slotblock: View {
             case .bekannt(let punkte):
                 ZStack {
                     RoundedRectangle(cornerRadius: Self.eckenradius).fill(.black)
-                    Slotraster(punkte: punkte, mass: mass)
+                    Pixelraster(punkte: punkte, mass: mass)
                         .clipShape(RoundedRectangle(cornerRadius: Self.eckenradius))
                     RoundedRectangle(cornerRadius: Self.eckenradius).stroke(.quaternary)
                 }
@@ -158,30 +158,6 @@ public extension View {
             }
         } else {
             self
-        }
-    }
-}
-
-/// Zeichnet ein volles 52×16-Punkteraster in die verfügbare Fläche — dieselbe
-/// Form, die `Slotzustand.bekannt` trägt. Rein darstellend, wie `GeraeteRahmen`:
-/// keine eigene Rasterung, kein Bezug zu `Meldungsbau`.
-private struct Slotraster: View {
-    let punkte: [String?]
-    let mass: Anzeigemass
-
-    var body: some View {
-        Canvas { kontext, groesse in
-            let spalten = mass.breite
-            let zeilen = mass.hoehe
-            guard punkte.count == spalten * zeilen else { return }
-            let kante = groesse.width / Double(spalten)
-            for y in 0..<zeilen {
-                for x in 0..<spalten {
-                    guard let hex = punkte[y * spalten + x], let farbe = Color(hex: hex) else { continue }
-                    let kaestchen = CGRect(x: Double(x) * kante, y: Double(y) * kante, width: kante, height: kante)
-                    kontext.fill(Path(kaestchen), with: .color(farbe))
-                }
-            }
         }
     }
 }

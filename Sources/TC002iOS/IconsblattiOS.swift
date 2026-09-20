@@ -28,31 +28,21 @@ struct IconbildiOS: View {
     }
 }
 
-/// Zeichnet ein bereits gelesenes Pixelraster in die verfügbare Fläche — der
-/// gemeinsame Kern von `IconbildiOS` (ein stehendes Einzelbild) und der
-/// Einzelansicht, die zusätzlich laufende Icons zeigt. Quadratisch, weil ein
-/// Icon quadratisch ist; beide Größen werden damit gleich groß gezeigt, das
-/// 16×16 ist nicht das doppelt so große Bild, sondern das feinere.
+/// Ein Icon als Bild — dasselbe `Pixelraster` wie im Slotblock und in der
+/// Einzelbildleiste des Editors, nur quadratisch gefasst.
+///
+/// Quadratisch, weil ein Icon quadratisch ist; beide Größen werden damit
+/// gleich groß gezeigt, das 16 × 16 ist nicht das doppelt so große Bild,
+/// sondern das feinere.
 private struct IconRasteriOS: View {
     let pixel: [String?]
     /// 8 oder 16 — siehe `IconbildiOS.pixelkante`.
     var pixelkante: Int = 8
 
     var body: some View {
-        Canvas { kontext, groesse in
-            guard pixel.count == pixelkante * pixelkante else { return }
-            let kante = groesse.width / Double(pixelkante)
-            for y in 0..<pixelkante {
-                for x in 0..<pixelkante {
-                    guard let farbe = pixel[y * pixelkante + x], let c = Color(hex: farbe) else { continue }
-                    kontext.fill(Path(CGRect(x: Double(x) * kante, y: Double(y) * kante,
-                                             width: kante, height: kante)), with: .color(c))
-                }
-            }
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .background(.black)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
+        Pixelraster(punkte: pixel, mass: Anzeigemass(breite: pixelkante, hoehe: pixelkante))
+            .background(.black)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
     }
 }
 

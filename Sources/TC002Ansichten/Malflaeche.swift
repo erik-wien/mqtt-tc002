@@ -98,6 +98,34 @@ struct Malflaeche: View {
                            alignment: .center)
             }
             .scrollIndicators(.automatic)
+            .zeigerAmWerkzeug(werkzeugzeichen)
+        }
+    }
+
+    /// Der Zeiger über dem Raster trägt das Werkzeug, das gerade gewählt ist —
+    /// Pinsel, Radierer oder Farbeimer, dieselben Zeichen wie im Inspektor.
+    ///
+    /// Erik: *„können wir am mac die form der maus innerhalb des grafik
+    /// rasters an die funktion anpassen?"* Ja, und ohne AppKit: `pointerStyle`
+    /// ist SwiftUI und nimmt ein beliebiges Bild. Diese Datei bleibt damit
+    /// plattformfrei (siehe `CLAUDE.md`).
+    ///
+    /// Es gibt den Aufruf ab macOS 15 und iPadOS 18; darunter bleibt der
+    /// Systemzeiger. Das Fuellsymbol wiederum kam erst 2025 — ein unbekannter
+    /// Name zeichnet nichts, und ein unsichtbarer Zeiger wäre schlimmer als
+    /// ein gewöhnlicher.
+    ///
+    /// Die Spitze liegt links unten: Dort trägt der Pinsel seine Farbe, und
+    /// der Eimer gießt dorthin.
+    private var werkzeugzeichen: String {
+        switch werkzeug {
+        case .malen: return "paintbrush.pointed.fill"
+        case .radieren: return "eraser.fill"
+        case .fuellen:
+            if #available(iOS 26, macOS 26, *) {
+                return "paint.bucket.classic"
+            }
+            return "drop.fill"
         }
     }
 
@@ -137,5 +165,31 @@ struct Malflaeche: View {
                 imStrich = false
                 nachStrich()
             })
+    }
+}
+
+extension View {
+    /// Setzt das Werkzeugzeichen als Zeiger — wo es das gibt.
+    ///
+    /// Eigene Erweiterung und kein `if #available` mitten im Rumpf: Ein
+    /// `some View`, dessen Typ vom Systemstand abhängt, lässt sich nicht
+    /// schreiben, ohne beide Zweige gleich zu machen. So bleibt der Rumpf
+    /// darüber lesbar.
+    ///
+    /// `pointerStyle` gibt es nur unter macOS — unter iPadOS gestaltet man
+    /// den Zeiger über `hoverEffect`, und ein Finger hat ohnehin keinen. Kein
+    /// `import AppKit`: Der Aufruf ist SwiftUI, die Datei bleibt
+    /// plattformfrei (`CLAUDE.md`).
+    @ViewBuilder
+    func zeigerAmWerkzeug(_ zeichen: String) -> some View {
+        #if os(macOS)
+        if #available(macOS 15, *) {
+            pointerStyle(.image(Image(systemName: zeichen), hotSpot: .bottomLeading))
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
     }
 }

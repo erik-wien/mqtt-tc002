@@ -385,11 +385,6 @@ public struct SendenView: View {
             .map(\.pixel)
     }
 
-    /// Über welchem Slotblock der Zeiger gerade steht — daran hängt allein
-    /// das ⊗ (siehe `slotZeile`). Am iPad bleibt der Wert `nil`: Dort gibt es
-    /// kein Überfahren, und `onHover` meldet nichts.
-    @State private var ueberfahrenerPlatz: Int?
-
     /// Zeichen, die die eingebaute Gerätschrift nicht kennt: keine Umlaute, von
     /// den Satzzeichen nur `%`, `.`, `-`, `:` (Gerätereferenz, §1). Nur fürs
     /// Vorwarnen beim Weg „als Text" gedacht — die Uhr meldet ein fehlendes
@@ -896,41 +891,10 @@ public struct SendenView: View {
     /// Bedienungen: Auf dem iPad gibt es kein Ueberfahren, dort bleibt das
     /// Menue der einzige Weg — und ein Zeichen, das immer dasteht, sah aus wie
     /// der Wackelmodus des Home-Bildschirms.
+    /// Die fuenf Bloecke — dieselbe Leiste wie im Editor und am Telefon.
+    /// Ein Druck holt hier zusaetzlich die gemerkten Regler zurueck.
     private var slotZeile: some View {
-        HStack(spacing: 6) {
-            ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
-                Button { slotWaehlen(i) } label: {
-                    Slotblock(platz: i,
-                              zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                              gewaehlt: platz == i,
-                              mass: mass)
-                }
-                .buttonStyle(.plain)
-                .onHover { drueber in ueberfahrenerPlatz = drueber ? i : nil }
-                .slotmenue(belegt: belegtePlaetze.contains(i),
-                           loeschen: { slotLoeschen(i) },
-                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
-                // Das ⊗ liegt ueber dem Block und ausserhalb seines
-                // Knopfes: Innen waere es Teil von dessen Beschriftung und
-                // loeste beim Tippen die Platzwahl aus statt zu loeschen.
-                // Etwas nach aussen versetzt, damit es die Vorschau im Block
-                // nicht verdeckt.
-                .overlay(alignment: .topTrailing) {
-                    if ueberfahrenerPlatz == i {
-                        MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                             belegt: belegtePlaetze.contains(i))
-                            .offset(x: 8, y: -8)
-                    }
-                }
-            }
-        }
-    }
-
-    /// Raeumt den Platz auf den gewaehlten Uhren — derselbe Weg, den auch das
-    /// ⊗ nimmt (`AppZustand.loeschen`), samt Slotgedaechtnis.
-    private func slotLoeschen(_ i: Int) {
-        let name = Meldungsplatz.name(fuer: i)
-        Task { await zustand.loeschen(name) }
+        Slotleiste(zustand: zustand, gewaehlt: platz) { slotWaehlen($0) }
     }
 
     /// Das Eingabefeld fuer die Meldung. Einmal geschrieben, weil beide Zweige

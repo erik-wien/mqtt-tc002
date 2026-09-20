@@ -424,37 +424,10 @@ struct SendeniOS: View {
     /// jeder Block ein Fuenftel der Breite und wird dadurch um die Haelfte
     /// groesser. Die 44 Punkte bleiben als Mindestmass in `Slotblock` stehen,
     /// wo sie hingehoeren.
+    /// Dieselbe Leiste wie am Schreibtisch und im Editor. Ein Druck holt
+    /// hier wie unter „Senden" zusaetzlich die gemerkten Regler zurueck.
     private var blockZeile: some View {
-        HStack(spacing: 8) {
-            ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
-                Button { slotWaehlen(i) } label: {
-                    Slotblock(platz: i,
-                              zustand: zustand.slotzustand(i, belegt: belegtePlaetze.contains(i)),
-                              gewaehlt: platz == i,
-                              mass: mass)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-                // Das Loeschen gehoert an den Block, den es betrifft, nicht
-                // als sechster Knopf daneben — und es steht im Kontextmenue,
-                // nicht als Zeichen am Block. Ein rotes ⊗ an jedem belegten
-                // Block sah aus wie der Wackelmodus des Home-Bildschirms, also
-                // wie ein Zustand, den man absichtlich betritt; es verdeckte
-                // das Motiv, und seine Trefferflaeche lag auf dem Block, der
-                // selbst ein Knopf ist. Der lange Druck ist die Geste, die das
-                // System dafuer vorsieht.
-                .slotmenue(belegt: belegtePlaetze.contains(i),
-                           loeschen: { slotLoeschen(i) },
-                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
-            }
-        }
-    }
-
-    /// Raeumt den Platz auf den gewaehlten Uhren — derselbe Weg wie am
-    /// Schreibtisch (`AppZustand.loeschen`), samt Slotgedaechtnis.
-    private func slotLoeschen(_ i: Int) {
-        let name = Meldungsplatz.name(fuer: i)
-        Task { await zustand.loeschen(name) }
+        Slotleiste(zustand: zustand, gewaehlt: platz) { slotWaehlen($0) }
     }
 
     /// Die Mitte der Sendeansicht als eigenes Glied.

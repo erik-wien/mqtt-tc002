@@ -33,50 +33,51 @@ final class SlotmenueTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    /// **Jede** Blockreihe haengt dasselbe Menue an ihren Block — auch die im
-    /// Editor. Sie blieb beim Umbau zurueck und trug als einzige weiter ein
-    /// dauerhaftes ⊗: zwei Blockreihen in derselben App, verschieden zu
-    /// bedienen.
-    func testBeideBloeckeTragenDasselbeMenue() throws {
+    /// Es gibt nur **eine** Blockreihe: `Slotleiste`. Alle drei Sendeflächen
+    /// benutzen sie, statt jede ihre eigene zu bauen.
+    ///
+    /// Vorher stand sie dreimal da und lief auseinander — einmal mit sechs
+    /// Punkten Abstand, einmal mit acht, einmal ohne das ⊗, und der Editor
+    /// blieb bei einem Umbau ganz zurück. Der Auftraggeber: *„verwende bitte
+    /// möglichst das selbe objekt."*
+    ///
+    /// Mutation: in einer der drei Ansichten wieder eine eigene Reihe aus
+    /// `Slotblock` bauen — baut, übersetzt, und zwei Blockreihen derselben App
+    /// verhalten sich wieder verschieden.
+    func testAlleDreiBenutzenDieselbeLeiste() throws {
         for datei in ["Sources/TC002iOS/SendeniOS.swift",
                       "Sources/TC002Ansichten/SendenView.swift",
                       "Sources/TC002Ansichten/EditorBereichView.swift"] {
             let text = try quelltext(datei)
-            XCTAssertTrue(text.contains(".slotmenue(belegt:"),
-                          "\(datei): der Slotblock hat sein Kontextmenü verloren — am Finger gibt "
-                          + "es dann keinen Weg mehr zum Löschen")
+            XCTAssertTrue(text.contains("Slotleiste(zustand: zustand, gewaehlt:"),
+                          "\(datei) benutzt nicht mehr die gemeinsame Slotleiste")
+            XCTAssertFalse(text.contains("Slotblock("),
+                           "\(datei) baut seine Blockreihe wieder selbst")
         }
     }
 
-    /// Und keine Blockreihe zeigt das ⊗ dauerhaft: Am Zeiger haengt es am
-    /// Ueberfahren, am Finger gibt es nur das Menue.
-    func testKeinBlockTraegtDasZeichenDauerhaft() throws {
-        for datei in ["Sources/TC002Ansichten/SendenView.swift",
-                      "Sources/TC002Ansichten/EditorBereichView.swift"] {
-            let text = try quelltext(datei)
-            XCTAssertTrue(text.contains("if ueberfahrenerPlatz == i {"),
-                          "\(datei): das ⊗ haengt nicht mehr am Ueberfahren — dann steht es "
-                          + "dauerhaft ueber dem Block und verdeckt sein Motiv")
-        }
+    /// Menü und ⊗ hängen an der Leiste, und dort nur einmal.
+    func testDieLeisteTraegtMenueUndZeichen() throws {
+        let text = try quelltext("Sources/TC002Ansichten/Slotleiste.swift")
+        XCTAssertTrue(text.contains(".slotmenue(belegt:"),
+                      "der Slotblock hat sein Kontextmenü verloren — am Finger gibt es dann "
+                      + "keinen Weg mehr zum Löschen")
+        XCTAssertTrue(text.contains("if ueberfahren == i {"),
+                      "das ⊗ hängt nicht mehr am Überfahren — dann steht es dauerhaft über dem "
+                      + "Block und verdeckt sein Motiv")
+        XCTAssertTrue(text.contains(".onHover { drueber in ueberfahren = drueber ? i : nil }"),
+                      "niemand setzt `ueberfahren` mehr — das ⊗ erschiene nie")
     }
 
-    /// Am Telefon gibt es das Zeichen ueberhaupt nicht mehr.
+    /// Am Telefon gibt es das Zeichen nicht: Dort meldet `onHover` nichts,
+    /// die gemeinsame Leiste zeigt es deshalb von selbst nie. Was hier geprüft
+    /// wird, ist, dass es die Ansicht nicht doch wieder selbst anhängt.
     func testDasTelefonHatKeinLoeschzeichenAmBlock() throws {
         let text = try quelltext("Sources/TC002iOS/SendeniOS.swift")
         XCTAssertFalse(text.contains("xmark.circle.fill"),
                        "am Telefon steht wieder ein rotes ⊗ an den Blöcken")
         XCTAssertFalse(text.contains("MeldungLoeschenKnopf"),
                        "der Löschknopf am Block ist am Telefon wieder da")
-    }
-
-    /// Am Schreibtisch bleibt es, aber nur unter dem Zeiger.
-    func testAmSchreibtischErscheintDasZeichenNurUnterDemZeiger() throws {
-        let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(text.contains("ueberfahrenerPlatz == i"),
-                      "das ⊗ hängt nicht mehr am Überfahren — dann steht es wieder dauerhaft da, "
-                      + "und am iPad, wo es kein Überfahren gibt, ebenfalls")
-        XCTAssertTrue(text.contains(".onHover { drueber in ueberfahrenerPlatz = drueber ? i : nil }"),
-                      "niemand setzt `ueberfahrenerPlatz` mehr — das ⊗ erschiene nie")
     }
 
     /// Ein Block, auf dem etwas Fremdes liegt, traegt ein Zeichen und kein

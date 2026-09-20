@@ -468,25 +468,31 @@ final class EditorbereichTests: XCTestCase {
                        + "die Frage wäre eine ohne Anlass")
     }
 
-    /// Bloecke oben, Empfaenger und Sendeknopf darunter — zwei Zeilen, nicht
-    /// eine. In einer Zeile braucht sie rund 500 Punkte (fuenf Bloecke à 44,
-    /// Empfaenger, Knopf); die mittlere Spalte am iPad im Hochformat bietet
+    /// Blöcke oben, Empfänger und Sendezeichen darunter — zwei Zeilen, nicht
+    /// eine. In einer Zeile braucht sie rund 500 Punkte (fünf Blöcke à 44,
+    /// Empfänger, Zeichen); die mittlere Spalte am iPad im Hochformat bietet
     /// neben Seitenleiste und Inspektor rund 450. Beschnitten wurde dann der
-    /// ganze Stapel, weil er so breit ist wie sein breitestes Kind: links
-    /// fehlte das halbe Abbrechen-Zeichen, rechts das halbe „Senden".
+    /// ganze Stapel, weil er so breit ist wie sein breitestes Kind.
+    ///
+    /// Und beides sind dieselben Objekte wie unter „Senden": `ZielauswahlView`
+    /// und `Sendezeichen`. Erik: *„empfänger und senden sind auch falsch."* —
+    /// vorher stand hier eine Kapsel neben einem umrandeten Knopf „Senden".
     ///
     /// Mutation: die beiden HStacks wieder zu einem zusammenziehen — baut,
-    /// uebersetzt, und am iPad ist der Editor an beiden Raendern angeschnitten.
+    /// übersetzt, und am iPad ist der Editor an beiden Rändern angeschnitten.
     func testDieSendezeileDesEditorsStehtInZweiZeilen() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let stelle = ausschnitt(text, von: "HStack(spacing: 6) { slotBloecke }", bis: "zustand.ziele().isEmpty")
-        XCTAssertTrue(stelle.contains("ZielauswahlView(zustand: zustand)") && stelle.contains("sendeKnopf"),
-                      "Empfänger und Sendeknopf stehen nicht mehr unter den Blöcken — dann prüft "
+        let stelle = ausschnitt(text, von: "VStack(spacing: 8) {", bis: "private var sendeKnopf")
+        XCTAssertTrue(stelle.contains("slotBloecke") && stelle.contains("ZielauswahlView(zustand: zustand)"),
+                      "Empfänger und Sendezeichen stehen nicht mehr unter den Blöcken — dann prüft "
                       + "dieser Test die falsche Stelle")
         XCTAssertFalse(stelle.contains("ViewThatFits"),
                        "die Zeilenzahl hängt wieder an einer Messung. Die Blöcke dehnen sich, "
                        + "ihre Idealbreite ist auch am Mac größer als die Spalte — die Wahl fiel "
                        + "ohnehin immer gleich aus.")
+        XCTAssertTrue(text.contains("Sendezeichen(senden: { senden() }, gelungen: gelungen)"),
+                      "der Editor baut sich wieder einen eigenen Sendeknopf statt des Zeichens, "
+                      + "das „Senden“ und das Telefon benutzen")
     }
 
     /// Der Eimer rechnet im Kern (`Leinwand.fuellen`) und wirkt genau einmal je
