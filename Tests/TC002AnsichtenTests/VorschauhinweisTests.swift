@@ -84,17 +84,19 @@ final class VorschauhinweisTests: XCTestCase {
                        "die Nutzlastzeile steht wieder unter der Vorschau")
     }
 
-    /// Und was hinausgeht, steht am Sendezeichen — die Art und die Zahl der
-    /// Einzelbilder, keine Größe.
-    func testWasHinausgehtStehtAmSendezeichen() throws {
+    /// Am Sendezeichen steht nur noch das Wort „Senden".
+    ///
+    /// Die Zahl der Einzelbilder ist in den Inspektor gewandert
+    /// (`SendungsstandTests`); ein Einblendtext gibt es am Finger ohnehin
+    /// nicht. Was hier bleibt, ist die Zusicherung, dass das Zeichen selbst
+    /// noch da ist und sagt, was es tut.
+    func testAmSendezeichenStehtDieHandlung() throws {
         let sendenView = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertTrue(sendenView.contains("auskunft: nutzlastauskunft"),
-                      "das Eingabefeld bekommt nicht mehr gesagt, was hinausgeht")
+        XCTAssertFalse(sendenView.contains("auskunft:"),
+                       "am Sendezeichen steht wieder eine Auskunft statt der Handlung")
         let feld = try quelltext("Sources/TC002Ansichten/Eingabefeld.swift")
         XCTAssertTrue(feld.contains("auskunft ?? lok(\"Senden\")"),
-                      "das ⏎ zeigt die Auskunft nicht mehr — dann steht nirgends, was hinausgeht")
-        XCTAssertTrue(sendenView.contains("Sendungsstand.satz(art: lok(\"Laufschrift\")"),
-                      "die Auskunft nennt nicht mehr Art und Zahl der Einzelbilder")
+                      "das ⏎ sagt nicht mehr, was es tut")
         // Die Sprachausgabe bekommt weiter das Wort, nicht die Auskunft: Sie
         // sagt, was der Knopf tut. Seit der Knopf eine Sekunde lang gelungen
         // aussieht, sind es zwei Wörter — beide sagen eine Handlung, keines

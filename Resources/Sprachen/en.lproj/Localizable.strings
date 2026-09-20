@@ -161,7 +161,6 @@
 "%@ geöffnet (%d Bilder)." = "%@ opened (%d frames).";
 "%@ geöffnet." = "%@ opened.";
 "%d Rechtecke" = "%d rectangles";
-"Waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst." = "Horizontal runs of the same color are merged into one rectangle before sending.";
 "Dauer (Sek.)" = "Duration (sec.)";
 "Uhr entscheidet" = "Clock decides";
 "Erst unter „Einstellungen“ eine Uhr eintragen und abfragen." = "First enter and query a clock under Settings.";
@@ -384,7 +383,6 @@
 "Größe %d" = "Size %d";
 "Großbuchstaben" = "Capital letters";
 "Laufschrift" = "Scrolling";
-"%@ · %d Bilder" = "%@ · %d frames";
 "Gilt nur, wenn der Text nicht ins Display passt." = "Only applies when the text does not fit the display.";
 
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung." = "Only an approximation — the clock sets this text itself and shows it differently. If it scrolls because it does not fit, the scroll speed of this message applies.";
@@ -1014,3 +1012,5 @@
 "„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen — und bei einer AWTRIX NG der MQTT-Broker samt Präfix." = "“Configure” opens the clock's web interface in the browser. Everything this app does not set is there: Wi-Fi, brightness, the built-in displays — and on an AWTRIX NG the MQTT broker along with the prefix.";
 "Die Eingabetaste schickt. Am rechten Rand des Feldes steht dafür ein blauer runder Knopf mit Pfeil, den du ebenso anklicken kannst; er erscheint, sobald etwas im Feld steht, und weicht während des Sendens einem Fortschrittsdreher. Ist die Anzeige hinaus, wird er eine Sekunde lang grün und zeigt einen Haken — die Rückmeldung sitzt da, wo du gedrückt hast. Links daneben leert ein ⊗ das Feld. Auf dem iPad heißt die Eingabetaste der Bildschirmtastatur „Senden“." = "The return key sends. At the right edge of the field there is a blue round button with an arrow for it, which you can click just as well; it appears as soon as there is something in the field, and gives way to a spinner while sending. Once the display is out it turns green for a second and shows a check mark — the feedback sits where you pressed. Beside it on the left, a ⊗ clears the field. On the iPad the on-screen keyboard's return key is labelled “Send”.";
 "Geht dabei etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint ein Hinweisfenster mit dem Grund. Bei mehreren Zieluhren steht dort eine Zeile je betroffener Uhr; die übrigen werden trotzdem beliefert." = "If something goes wrong — the clock unreachable, the clock rejecting the display, a wrong broker password, an unreachable broker, a timeout, an unreadable icon file — a notice window appears with the reason. With several target clocks there is one line per clock affected; the rest are served all the same.";
+
+"Anzahl" = "Count";

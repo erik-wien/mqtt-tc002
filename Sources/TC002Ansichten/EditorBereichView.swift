@@ -354,8 +354,15 @@ public struct EditorBereichView: View {
                 // Videoschnitt stellen ihre Bilder unter die Leinwand.
                 // Nur bei mehr als einem Bild — bei einem gaebe es nichts zu
                 // waehlen.
+                // Die Reihenfolge ist auf allen drei Sendeflaechen dieselbe:
+                // Werkstueck, was unmittelbar dazugehoert, dann die
+                // Slotleiste, dann die Sendezeile. Erik: *„die frames section
+                // muss jedenfalls zwischen vorschau und slotleiste
+                // eingeschoben werden, weil sie unmittelbar zum bild
+                // gehört."*
                 if leinwand.bilder.count > 1 { einzelbildstreifen }
                 fusszeile
+                slotBloecke
                 sendezeile
             }
         }
@@ -487,16 +494,6 @@ public struct EditorBereichView: View {
 
     @ViewBuilder
     private var fusstexte: some View {
-        if groesse.sendbar {
-            // Die Zahl steht da, die Erklaerung dahinter liegt hinter dem (?):
-            // Wie die Rechtecke zustande kommen, muss nicht jeder lesen, der
-            // nur sehen will, wie viele es sind.
-            HStack(spacing: 6) {
-                Text(lokf("%d Rechtecke", feld.alsDrawBefehle().count))
-                Hilfezeichen(lok("Waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst."))
-            }
-            .font(.footnote).foregroundStyle(.secondary)
-        }
         // Nur als Auffangnetz: Die Meldung steht im Abschnitt „Dieses Bild",
         // gleich unter den Knoepfen — hier bleibt sie fuer den einen Fall, in
         // dem es den Abschnitt gerade nicht gibt: Der Inspektor ist
@@ -745,6 +742,13 @@ public struct EditorBereichView: View {
     @ViewBuilder
     private var animationAbschnitte: some View {
         Section("Einzelbilder") {
+            // Die Anzahl steht hier und nicht mehr unter der Leinwand. Erik:
+            // *„die info über die anzahl der frames gehört in den
+            // inspector/animation."* Unter dem Bild zaehlte sie, was die
+            // Bildleiste daneben ohnehin zeigt.
+            LabeledContent("Anzahl") {
+                Text(verbatim: "\(leinwand.bilder.count)").monospacedDigit()
+            }
             HStack {
                 Button("Frame anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
@@ -1279,12 +1283,6 @@ public struct EditorBereichView: View {
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
-            // Nur bei mehreren Einzelbildern: Bei einem gibt es nichts zu
-            // zaehlen. Derselbe Satz wie unter „Senden" (`Sendungsstand`).
-            if leinwand.bilder.count > 1 {
-                Text(Sendungsstand.satz(art: lok("Animation"), bilder: leinwand.bilder.count))
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
             // Der Grund ueber den Knoepfen, nicht darunter: Unter ihnen stand
             // er am unteren Rand der Ansicht und wurde dort abgeschnitten —
             // ein gesperrter Sendeknopf ohne sichtbaren Grund ist eine
@@ -1305,17 +1303,14 @@ public struct EditorBereichView: View {
             // 450 Punkte breit, die Zeile braucht rund 500. Beschnitten wurde
             // dann nicht die Zeile, sondern der ganze Stapel: Er ist so breit
             // wie sein breitestes Kind und sass mittig in der Spalte.
-            VStack(spacing: 8) {
-                slotBloecke
-                // Der Empfaenger neben dem Knopf, der sendet — dieselbe
-                // Nachbarschaft wie unter „Senden", wo er neben dem
-                // Eingabefeld steht. Hier gibt es kein Feld, wohl aber einen
-                // Sendeknopf: Die Leinwand ist der Inhalt.
-                HStack(spacing: 8) {
-                    Spacer()
-                    ZielauswahlView(zustand: zustand)
-                    sendeKnopf
-                }
+            // Der Empfaenger neben dem Zeichen, das sendet — dieselbe
+            // Nachbarschaft wie unter „Senden", wo er neben dem Eingabefeld
+            // steht. Hier gibt es kein Feld, wohl aber ein Sendezeichen: Die
+            // Leinwand ist der Inhalt.
+            HStack(spacing: 8) {
+                Spacer()
+                ZielauswahlView(zustand: zustand)
+                sendeKnopf
             }
         }
     }

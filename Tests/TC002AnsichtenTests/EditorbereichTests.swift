@@ -60,8 +60,6 @@ final class EditorbereichTests: XCTestCase {
     /// geschrieben.
     func testDieUnterschiedeWerdenAbgeleitetUndNichtAufgezaehlt() throws {
         let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        XCTAssertTrue(text.contains("groesse.sendbar"),
-                      "die Sendezeile hängt nicht mehr an der abgeleiteten Eigenschaft")
         XCTAssertTrue(text.contains("groesse.mitNummer"),
                       "das Nummernfeld hängt nicht mehr an der abgeleiteten Eigenschaft")
         XCTAssertTrue(text.contains("groesse.iconEinfuegbar"),
@@ -468,31 +466,56 @@ final class EditorbereichTests: XCTestCase {
                        + "die Frage wäre eine ohne Anlass")
     }
 
-    /// Blöcke oben, Empfänger und Sendezeichen darunter — zwei Zeilen, nicht
-    /// eine. In einer Zeile braucht sie rund 500 Punkte (fünf Blöcke à 44,
-    /// Empfänger, Zeichen); die mittlere Spalte am iPad im Hochformat bietet
-    /// neben Seitenleiste und Inspektor rund 450. Beschnitten wurde dann der
-    /// ganze Stapel, weil er so breit ist wie sein breitestes Kind.
+    /// Die Reihenfolge der Mittelspalte ist auf allen drei Sendeflächen
+    /// dieselbe: **Werkstück, was unmittelbar dazugehört, Slotleiste,
+    /// Sendezeile.**
     ///
-    /// Und beides sind dieselben Objekte wie unter „Senden": `ZielauswahlView`
-    /// und `Sendezeichen`. Erik: *„empfänger und senden sind auch falsch."* —
-    /// vorher stand hier eine Kapsel neben einem umrandeten Knopf „Senden".
+    /// Erik: *„die frames section muss jedenfalls zwischen vorschau und
+    /// slotleiste eingeschoben werden, weil sie unmittelbar zum bild
+    /// gehört."* Vorher saß die Slotleiste unter „Senden“ direkt unter der
+    /// Vorschau und im Editor ganz unten über der Sendezeile — dieselben
+    /// Bausteine, zwei Abfolgen.
     ///
-    /// Mutation: die beiden HStacks wieder zu einem zusammenziehen — baut,
-    /// übersetzt, und am iPad ist der Editor an beiden Rändern angeschnitten.
-    func testDieSendezeileDesEditorsStehtInZweiZeilen() throws {
-        let text = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
-        let stelle = ausschnitt(text, von: "VStack(spacing: 8) {", bis: "private var sendeKnopf")
-        XCTAssertTrue(stelle.contains("slotBloecke") && stelle.contains("ZielauswahlView(zustand: zustand)"),
-                      "Empfänger und Sendezeichen stehen nicht mehr unter den Blöcken — dann prüft "
-                      + "dieser Test die falsche Stelle")
-        XCTAssertFalse(stelle.contains("ViewThatFits"),
-                       "die Zeilenzahl hängt wieder an einer Messung. Die Blöcke dehnen sich, "
-                       + "ihre Idealbreite ist auch am Mac größer als die Spalte — die Wahl fiel "
-                       + "ohnehin immer gleich aus.")
-        XCTAssertTrue(text.contains("Sendezeichen(senden: { senden() }, gelungen: gelungen)"),
-                      "der Editor baut sich wieder einen eigenen Sendeknopf statt des Zeichens, "
-                      + "das „Senden“ und das Telefon benutzen")
+    /// Geprüft wird an den Stellen im Quelltext, nicht am Bild: Eine
+    /// vertauschte Reihenfolge übersetzt anstandslos.
+    ///
+    /// Mutation: in einer der drei Ansichten die Slotleiste hinter die
+    /// Sendezeile schieben — baut, übersetzt, und die Spalten laufen wieder
+    /// auseinander.
+    func testDieReihenfolgeDerMittelspalteIstUeberallDieselbe() throws {
+        let stellen = [
+            ("Sources/TC002Ansichten/SendenView.swift",
+             ["Uhrenblaetterer(zustand: zustand)", "slotZeile", "Verlaufsliste("]),
+            ("Sources/TC002Ansichten/EditorBereichView.swift",
+             ["Malflaeche(leinwand:", "einzelbildstreifen", "slotBloecke", "sendezeile"]),
+        ]
+        for (datei, reihe) in stellen {
+            let text = try quelltext(datei)
+            var vorher = -1
+            for marke in reihe {
+                guard let bereich = text.range(of: marke) else {
+                    return XCTFail("\(datei): „\(marke)“ gibt es nicht mehr — dann prüft dieser "
+                                   + "Test die falsche Stelle")
+                }
+                let jetzt = text.distance(from: text.startIndex, to: bereich.lowerBound)
+                XCTAssertGreaterThan(jetzt, vorher,
+                                     "\(datei): „\(marke)“ steht nicht mehr an seinem Platz in "
+                                     + "der Reihenfolge \(reihe.joined(separator: " → "))")
+                vorher = jetzt
+            }
+        }
+
+        // Am Telefon steht die Spalte in einer `List`, und die Bausteine sind
+        // dort vor ihrer Verwendung erklaert — die Reihenfolge im Quelltext
+        // sagt darum nichts. Geprueft werden deshalb die beiden Stellen, an
+        // denen sie wirklich gesetzt wird.
+        let telefon = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        let mitte = ausschnitt(telefon, von: "private var mitte: some View {", bis: "private var liste")
+        XCTAssertTrue(mitte.contains("vorschaukopf") && mitte.contains("liste"),
+                      "am Telefon stehen Vorschau und Liste nicht mehr untereinander")
+        let liste = ausschnitt(telefon, von: "private var liste: some View {", bis: "Verlaufsabschnitt(")
+        XCTAssertTrue(liste.contains("blockZeile"),
+                      "am Telefon steht die Slotleiste nicht mehr vor dem Verlauf")
     }
 
     /// Der Eimer rechnet im Kern (`Leinwand.fuellen`) und wirkt genau einmal je

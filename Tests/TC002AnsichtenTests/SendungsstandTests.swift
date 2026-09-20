@@ -36,15 +36,24 @@ final class SendungsstandTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    /// Was hinausgeht, steht als ein Satz da — an beiden Stellen derselbe.
+    /// Die Zahl der Einzelbilder steht im Inspektor, nicht unter dem Bild.
     ///
-    /// In Tests gibt es kein Bündel, `lok` fällt auf den deutschen Wortlaut
-    /// zurück; genau der steht hier.
-    func testDerSatzNenntArtUndZahlDerBilder() {
-        XCTAssertEqual(Sendungsstand.satz(art: "Laufschrift", bilder: 119),
-                       "Laufschrift · 119 Bilder")
-        XCTAssertEqual(Sendungsstand.satz(art: "Animation", bilder: 6),
-                       "Animation · 6 Bilder")
+    /// Erik: *„die info über die anzahl der frames gehört in den
+    /// inspector/animation."* Unter der Leinwand zählte sie, was die
+    /// Bildleiste daneben ohnehin zeigt; am Sendezeichen stand sie in einem
+    /// Einblendtext, den es am Finger nicht gibt.
+    func testDieZahlDerEinzelbilderStehtImInspektor() throws {
+        let editor = try quelltext("Sources/TC002Ansichten/EditorBereichView.swift")
+        XCTAssertTrue(editor.contains("Section(\"Einzelbilder\")")
+                      && editor.contains("Text(verbatim: \"\\(leinwand.bilder.count)\")"),
+                      "die Anzahl steht nicht mehr in der Karte „Einzelbilder“ des Inspektors")
+        let senden = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        XCTAssertTrue(senden.contains("LabeledContent(\"Einzelbilder\")"),
+                      "im Abschnitt „Laufschrift“ steht nicht mehr, wie viele Einzelbilder "
+                      + "daraus werden")
+        XCTAssertFalse(senden.contains("auskunft:"),
+                       "die Zahl steht wieder im Einblendtext am Sendezeichen — am Finger gibt "
+                       + "es dort kein Verweilen")
     }
 
     /// Keine Kilobyte, keine Schwelle, keine Warnung — in keiner der drei
@@ -65,13 +74,4 @@ final class SendungsstandTests: XCTestCase {
         }
     }
 
-    /// Und die gemeinsame Stelle kennt selbst keine Größe — sonst käme sie von
-    /// dort aus zurück.
-    func testDerGemeinsameSatzKenntKeineGroesse() throws {
-        let text = try quelltext("Sources/TC002Ansichten/Sendungsstand.swift")
-        for verboten in ["KB", "bytes", "1024"] {
-            XCTAssertFalse(text.contains(verboten),
-                           "der gemeinsame Satz rechnet wieder in Bytes („\(verboten)“)")
-        }
-    }
 }

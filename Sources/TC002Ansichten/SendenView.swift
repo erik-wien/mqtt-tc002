@@ -671,6 +671,15 @@ public struct SendenView: View {
     @ViewBuilder
     private var laufschriftAbschnitt: some View {
         Section("Laufschrift") {
+            // Wie viele Einzelbilder daraus werden, steht hier und nicht mehr
+            // im Einblendtext am Sendezeichen — dieselbe Regel wie im Editor:
+            // Die Zahl gehoert in den Inspektor. Nur wenn der Text laeuft;
+            // sonst gibt es keine.
+            if !passt, !laufschriftFrames.isEmpty {
+                LabeledContent("Einzelbilder") {
+                    Text(verbatim: "\(laufschriftFrames.count)").monospacedDigit()
+                }
+            }
             Picker("Tempo", selection: $tempo) {
                 Text("langsam").tag(Lauftempo.langsam)
                 Text("mittel").tag(Lauftempo.mittel)
@@ -914,7 +923,6 @@ public struct SendenView: View {
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft,
-                         auskunft: nutzlastauskunft,
                          gelungen: gelungen)
             // Beschriftet die Eingabetaste der Bildschirmtastatur mit
             // „Senden" — auf dem iPad sichtbar, am Mac und an einer
@@ -931,13 +939,7 @@ public struct SendenView: View {
     /// Werksfirmware gibt es nichts Besonderes zu sagen — dann bleibt es beim
     /// Wort „Senden".
     ///
-    /// `Nutzlastzeile.stand` und kein eigener Wortlaut: Derselbe Satz steht
-    /// im Warnfall sichtbar unter der Vorschau, und zwei Fassungen wären zwei
-    /// Übersetzungsschlüssel.
-    private var nutzlastauskunft: String? {
-        guard !gattung.setztSelbst, !passt, !laufschriftFrames.isEmpty else { return nil }
-        return Sendungsstand.satz(art: lok("Laufschrift"), bilder: laufschriftFrames.count)
-    }
+
 
     /// Ob es überhaupt etwas zu senden gibt und jemanden, der es nimmt.
     private var sendenMoeglich: Bool {
