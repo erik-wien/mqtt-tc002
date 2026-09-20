@@ -77,14 +77,23 @@ final class UhrenwahlTests: XCTestCase {
         }
     }
 
-    /// Jede Uhr einzeln wählbar, auf jeder Oberfläche: Beide gehen über
+    /// Jede Uhr einzeln wählbar, auf jeder Oberfläche — und zwar über
     /// `zielUmschalten`, wo die Regel steht, dass die Menge nie leer wird.
+    ///
+    /// Das Telefon hatte dafür eine eigene Liste; seit sie dieselbe
+    /// `ZielauswahlView` ist wie am Schreibtisch, steht der Aufruf nur noch
+    /// dort. Geprüft wird deshalb beides: dass die Wahl in der gemeinsamen
+    /// Ansicht über `zielUmschalten` geht, und dass jede Sendefläche sie
+    /// zeigt.
     func testJedeOberflaecheKannJedeUhrEinzelnWaehlen() throws {
-        for pfad in ["Sources/TC002Ansichten/ZielauswahlView.swift",
+        XCTAssertTrue(try ohneKommentare("Sources/TC002Ansichten/ZielauswahlView.swift")
+                        .contains("zielUmschalten("),
+                      "ZielauswahlView: wählt Ziele nicht einzeln.")
+        for pfad in ["Sources/TC002Ansichten/SendenView.swift",
+                     "Sources/TC002Ansichten/EditorBereichView.swift",
                      "Sources/TC002iOS/SendeniOS.swift"] {
-            let quelle = try ohneKommentare(pfad)
-            XCTAssertTrue(quelle.contains("zielUmschalten("),
-                          "\(pfad): wählt Ziele nicht einzeln.")
+            XCTAssertTrue(try ohneKommentare(pfad).contains("ZielauswahlView(zustand: zustand"),
+                          "\(pfad): zeigt die Zielwahl nicht.")
         }
     }
 

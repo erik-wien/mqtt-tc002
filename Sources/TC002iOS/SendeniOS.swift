@@ -861,43 +861,13 @@ struct SendeniOS: View {
         .onPreferenceChange(PilleSichtbarKey.self) { pilleSichtbareBreite = $0 }
     }
 
-    /// Kein Sendeknopf — wie in Nachrichten. Die Eingabetaste schickt.
-    /// `axis: .vertical` fuegt bei Return sonst einen Zeilenumbruch ein, statt
-    /// abzuschicken; das `.onChange` unten faengt genau dieses eine Zeichen ab,
-    /// bevor es im Feld erscheint, und sendet an seiner Stelle. Ein echter
-    /// Zeilenumbruch laesst sich damit nicht mehr eintippen — gewollt, die Uhr
-    /// zeigt ohnehin nur eine Zeile.
+    /// An wen die naechste Meldung geht — dasselbe Bedienelement wie am
+    /// Schreibtisch und im Editor (`ZielauswahlView`).
     ///
-    /// Daneben steht die Zielwahl — dasselbe Ziel wie im Titelmenü
-    /// (`angesehene`, `zustand.anMehrereUhren`), nur an einer Stelle, die man
-    /// nicht erst am Titel suchen muss. Bei nur einer eingerichteten Uhr gibt
-    /// es nichts zu wählen, wie beim Titelmenü, und dort steht dann nichts.
-    /// An wen die naechste Meldung geht. Die Zahl steht immer da, auch die 1:
-    /// „an eine" und „noch nichts gewaehlt" saehen sonst gleich aus.
-    @ViewBuilder
+    /// Hier stand ein `Menu`, das sich nach jedem Antippen schloss. Die Wahl
+    /// ist eine Mehrfachauswahl; sie gehoert in ein Blatt, das stehen bleibt.
     private var empfaengermenue: some View {
-        if zustand.uhren.count > 1 {
-            Menu {
-                Section("Senden an") {
-                    ForEach(zustand.uhren) { uhr in
-                        Button {
-                            zustand.zielUmschalten(uhr.id)
-                        } label: {
-                            Label(uhr.name, systemImage: zustand.zielIDs.contains(uhr.id)
-                                  ? "checkmark.circle.fill" : "circle")
-                        }
-                    }
-                    Button("Alle") { zustand.zielIDs = Set(zustand.uhren.map(\.id)) }
-                    Button("Nur die angesehene") {
-                        if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
-                    }
-                }
-            } label: {
-                Label(lokf("Empfänger · %d", zustand.ziele().count),
-                      systemImage: "antenna.radiowaves.left.and.right")
-            }
-            .accessibilityLabel(Text("Ziel wählen"))
-        }
+        ZielauswahlView(zustand: zustand, stil: .leiste)
     }
 
     /// Ob es etwas zu senden gibt und jemanden, der es nimmt. Dieselbe Frage

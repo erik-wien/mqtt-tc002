@@ -3,18 +3,31 @@ import TC002Core
 import TC002Modell
 
 /// Waehlt, an welche Uhr oder Uhren gesendet wird. Ein Knopf, der das Ziel
-/// benennt, oeffnet ein Blatt mit einer Zeile je Uhr. Von „Senden“ und „Editor“
-/// gemeinsam genutzt — zwei verschiedene Bedienungen fuer dieselbe Sache waeren
-/// schlimmer als gar keine.
+/// benennt, oeffnet ein Blatt mit einer Zeile je Uhr. Von allen drei
+/// Sendeflaechen gemeinsam genutzt — zwei verschiedene Bedienungen fuer
+/// dieselbe Sache waeren schlimmer als gar keine.
+///
+/// **Ein Blatt und kein `Menu`.** Am Telefon stand hier ein Menue mit einer
+/// Zeile je Uhr; es schloss sich nach jedem Antippen, und wer drei Uhren
+/// waehlen wollte, oeffnete es dreimal. Ein Menue fuehrt genau einen Befehl
+/// aus — eine Mehrfachauswahl gehoert nach Apples Vorgabe in ein Blatt, das
+/// stehen bleibt, bis man es schliesst. Erik: *„Bei der Empängerauswahl nicht
+/// nach jeder Auswahl gleich schließen sondern ein schließen (x)
+/// hinzufügen."*
 ///
 /// Erscheint erst ab zwei eingerichteten Uhren: bei nur einer ist die Wahl
 /// bedeutungslos, und ein gesperrter oder ausgegrauter Knopf waere nur
 /// zusaetzliche, wirkungslose Flaeche.
-struct ZielauswahlView: View {
+public struct ZielauswahlView: View {
     @Bindable var zustand: AppZustand
     /// Wo der Knopf steht — davon haengt seine Fassung ab, nicht sein Inhalt.
     var stil: Zielstil = .leiste
     @State private var zeigeBlatt = false
+
+    public init(zustand: AppZustand, stil: Zielstil = .leiste) {
+        self.zustand = zustand
+        self.stil = stil
+    }
 
     /// Zwei Stellen, zwei Fassungen desselben Knopfs.
     ///
@@ -25,7 +38,7 @@ struct ZielauswahlView: View {
     /// Im Inhalt des Editors gibt es keine Leiste, die eine Fassung
     /// mitbraechte — dort traegt er seine eigene, rund wie das ✕ und der
     /// Haken darueber.
-    enum Zielstil: Equatable, Sendable {
+    public enum Zielstil: Equatable, Sendable {
         case leiste, rund
     }
 
@@ -47,7 +60,7 @@ struct ZielauswahlView: View {
         return lokf("an %d Uhren", gewaehlt.count)
     }
 
-    var body: some View {
+    public var body: some View {
         if zustand.uhren.count > 1 {
             Button {
                 // Vor dem Oeffnen konkretisieren: sonst zeigte das Blatt bei
@@ -61,7 +74,7 @@ struct ZielauswahlView: View {
             .fassung(stil)
             .help(beschriftung)
             .accessibilityLabel(Text(beschriftung))
-            .sheet(isPresented: $zeigeBlatt) { blatt }
+            .sheet(isPresented: $zeigeBlatt) { blatt.halbeHoehe() }
         }
     }
 
@@ -73,31 +86,32 @@ struct ZielauswahlView: View {
     /// Einblendtext, die Sprachausgabe und das Blatt selbst.
     private var zeichen: some View {
         Image(systemName: "antenna.radiowaves.left.and.right")
+            // Der Platz fuer die Zahl gehört zum Zeichen, statt sie mit
+            // `offset` darüber hinauszuschieben: Die Werkzeugleiste des
+            // Telefons legt einen Kreis um ihr Element und schneidet alles ab,
+            // was außerhalb liegt — von „2/3" blieb ein halbes „2".
+            // Auf beiden Seiten gleich viel, sonst säße die Antenne im Kreis
+            // nicht mehr mittig.
+            .padding(.horizontal, 11)
+            .padding(.vertical, 8)
             // Hochgestellt und winzig, wie eine Fussnote: „2/4" sagt in zwei
-            // Zeichen, was der Satz daneben in fuenf Woertern sagte, und
-            // nimmt dem Knopf keine Breite. Erik: *„das empfänger symbol
-            // könnte auch so eine hochgestellte minimale bekommen, die zeigt
-            // 2/4 uhren sind ausgewählt."*
-            //
-            // `alignment: .topTrailing` mit einem Versatz nach aussen: Innen
-            // laege sie ueber der Antenne.
+            // Zeichen, was der Satz daneben in fünf Wörtern sagte. Erik: *„das
+            // empfänger symbol könnte auch so eine hochgestellte minimale
+            // bekommen, die zeigt 2/4 uhren sind ausgewählt."*
             .overlay(alignment: .topTrailing) {
                 Text(verbatim: "\(gewaehlteIDs.count)/\(zustand.uhren.count)")
                     .font(.system(size: 9, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-                    // Eine graue Pille darunter, kein blanker Text: Frei
-                    // neben dem Zeichen stehend las sich die Zahl wie ein
+                    // Eine graue Pille darunter, kein blanker Text: Frei neben
+                    // dem Zeichen stehend las sich die Zahl wie ein
                     // Ausrutscher. Erik: *„¼ gehört imho in eine graue Pille.
-                    // So schaut's jedenfalls nicht gut aus."* Ein Abzeichen
-                    // an einem Symbol ist der gewoehnliche Weg — Apple setzt
-                    // es an Tableisten und Listenzeilen ebenso.
+                    // So schaut's jedenfalls nicht gut aus."* Ein Abzeichen an
+                    // einem Symbol ist der gewöhnliche Weg — Apple setzt es an
+                    // Tableisten und Listenzeilen ebenso.
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(Capsule().fill(.quaternary))
-                    .offset(x: 14, y: -7)
-                    // Sie darf den Knopf nicht breiter machen, sonst sitzt das
-                    // Zeichen in der Leiste nicht mehr mittig.
                     .fixedSize()
                     .allowsHitTesting(false)
             }
@@ -183,12 +197,33 @@ struct ZielauswahlView: View {
             }
             .frame(minHeight: 160)
             }
+            // Nur am Mac: Dort hat ein Blatt keine eigene Groesse und
+            // schrumpfte sonst auf die Breite seiner laengsten Zeile. Am
+            // Finger gibt die Hoehe des Blattes das Mass vor (`halbeHoehe`),
+            // und 280 Punkte Mindesthoehe stuenden ihr im Weg.
+            #if os(macOS)
             .frame(minWidth: 340, minHeight: 280)
+            #endif
         }
     }
 }
 
 private extension View {
+    /// Am Finger nimmt das Blatt die halbe Hoehe und laesst sich hochziehen.
+    ///
+    /// Vier Uhren sind vier Zeilen; ueber die ganze Hoehe gezogen stand
+    /// darunter mehr Leerflaeche als Inhalt. `presentationDetents` gibt es
+    /// nicht unter macOS — dort ist ein Blatt ohnehin ein Fenster in
+    /// Inhaltsgroesse.
+    @ViewBuilder
+    func halbeHoehe() -> some View {
+        #if os(macOS)
+        self
+        #else
+        presentationDetents([.medium, .large])
+        #endif
+    }
+
     /// Die Fassung je Stelle — in der Leiste keine eigene, im Inhalt ein
     /// Kreis wie beim ✕ und beim Haken.
     @ViewBuilder

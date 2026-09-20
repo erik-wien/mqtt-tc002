@@ -387,10 +387,8 @@
 
 "Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung." = "Only an approximation — the clock sets this text itself and shows it differently. If it scrolls because it does not fit, the scroll speed of this message applies.";
 "Nur die angesehene" = "Only the one shown";
-"Senden an" = "Send to";
 "Welche Uhr diese Ansicht zeigt" = "Which clock this view shows";
 "Das Ziel folgt dem Blick **nicht**: Wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat. Das war am Telefon bis September 2026 anders — dort waren beide dasselbe —, und ist es seit der eigenen Zielwahl auch dort nicht mehr." = "The target does **not** follow your gaze: changing the clock shown still sends where you set it. On the phone this was different until September 2026 — there the two were one — and since it got its own target chooser, it no longer is.";
-"Empfänger · %d" = "Recipients · %d";
 "Protokoll führen" = "Keep a log";
 /* Protokoll: was gesendet wurde, was scheiterte, was uebersprungen wurde (18.09.2026) */
 "%d Rechtecke" = "%d rectangles";
@@ -432,7 +430,6 @@
 "Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe." = "How long the clock shows this one message before paging on. Empty or 0: no setting of its own.";
 /* TC002iOS/SendeniOS.swift */
 "Angesehene Uhr" = "Clock shown";
-"Ziel wählen" = "Choose target";
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
 "Ausrichtung" = "Alignment";
 "Linksbündig" = "Left-aligned";
