@@ -54,7 +54,7 @@ public struct SendenView: View {
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     /// Eine Sekunde nach einer gelungenen Sendung — siehe `Sendezeichen`.
-    @State private var gelungen = false
+    @State private var ausgang = Sendeschau.offen
     /// Die Einzelbilder der Laufschrift — einmal je Aenderung an Text oder
     /// Formatierung berechnet (`.task(id:)`), nicht bei jedem Neuzeichnen der
     /// mit `TimelineView` laufenden Vorschau. Fuellt zugleich die Groessenanzeige.
@@ -485,7 +485,14 @@ public struct SendenView: View {
             // Der Empfaenger steht links oben in der Werkzeugleiste — neben
             // dem Eingabefeld wurde er beim ersten Anwendertest fuer einen
             // Sendeknopf gehalten.
-            textFeld
+            // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
+            // in einem Dialog (siehe `AppZustand.teilfehler`).
+            HStack(spacing: 8) {
+                if ausgang == .teilweise, let offen = zustand.teilfehler {
+                    Hilfezeichen(offen, warnung: true)
+                }
+                textFeld
+            }
             if zustand.ziele().isEmpty {
                 Text("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -923,7 +930,7 @@ public struct SendenView: View {
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { senden() } : nil,
                          laeuft: laeuft,
-                         gelungen: gelungen)
+                         ausgang: ausgang)
             // Beschriftet die Eingabetaste der Bildschirmtastatur mit
             // „Senden" — auf dem iPad sichtbar, am Mac und an einer
             // angesteckten Tastatur ohne Wirkung.
@@ -949,11 +956,14 @@ public struct SendenView: View {
     /// Eine Sekunde gruen mit Haken, dann wieder der Pfeil. Die Dauer steht
     /// hier und nicht im Zeichen: Sie gehoert zum Ablauf des Sendens, nicht
     /// zum Aussehen des Knopfes.
-    private func gelungenZeigen() async {
-        gelungen = true
+    /// Den Haken eine Sekunde lang stehen lassen — gruen, wenn alle
+    /// Zieluhren genommen haben, gelb, wenn nur manche.
+    private func ausgangZeigen(_ bilanz: Sendebilanz) async {
+        ausgang = bilanz.ganz ? .ganz : .teilweise
         try? await Task.sleep(for: .seconds(1))
-        gelungen = false
+        ausgang = .offen
     }
+
 
     private func senden() {
         laeuft = true
@@ -980,8 +990,8 @@ public struct SendenView: View {
                                                   slotIcon: slotIcon, slotIconKante: iconKante,
                                                   slotPlatz: slotPlatz)
             laeuft = false
-            guard angekommen else { return }
-            await gelungenZeigen()
+            guard !angekommen.nichts else { return }
+            await ausgangZeigen(angekommen)
         }
     }
 }

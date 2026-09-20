@@ -170,7 +170,7 @@ final class SendefeldTests: XCTestCase {
         XCTAssertTrue(eingabe.contains("senden: sendenMoeglich ? { Task { await senden() } } : nil"),
                       "im Eingabefeld steht kein Sendepfeil mehr — mit unten liegender Tastatur "
                       + "ist ein getippter Text dann nicht abzuschicken")
-        XCTAssertTrue(eingabe.contains("laeuft: laeuft") && eingabe.contains("gelungen: gelungen"),
+        XCTAssertTrue(eingabe.contains("laeuft: laeuft") && eingabe.contains("ausgang: ausgang"),
                       "Dreher und Haken teilen sich die Stelle nicht mehr mit dem Pfeil — dann "
                       + "stehen dort zwei Dinge nebeneinander")
     }

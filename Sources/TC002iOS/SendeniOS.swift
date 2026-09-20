@@ -87,7 +87,7 @@ struct SendeniOS: View {
     /// Eine Sekunde nach einer gelungenen Sendung — am Telefon an der Stelle
     /// des Fortschrittsdrehers, weil dort die Eingabetaste schickt und es
     /// keinen Sendeknopf gibt, der gruen werden koennte.
-    @State private var gelungen = false
+    @State private var ausgang = Sendeschau.offen
     @State private var zeigeFormat = false
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
@@ -858,12 +858,16 @@ struct SendeniOS: View {
         // Ohne `auskunft`: Was hinausgeht, steht am Telefon schon ueber den
         // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
         // gibt es am Finger ohnehin nicht.
-        TextField("Text", text: $text, axis: .vertical)
+        HStack(spacing: 8) {
+            if ausgang == .teilweise, let offen = zustand.teilfehler {
+                Hilfezeichen(offen, warnung: true)
+            }
+            TextField("Text", text: $text, axis: .vertical)
             .lineLimit(1...3)
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { Task { await senden() } } : nil,
                          laeuft: laeuft,
-                         gelungen: gelungen)
+                         ausgang: ausgang)
             .submitLabel(.send)
             .disabled(laeuft)
             .onChange(of: text) { _, neu in
@@ -872,8 +876,9 @@ struct SendeniOS: View {
                 guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                 Task { await senden() }
             }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 8)
     }
 
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
@@ -924,10 +929,10 @@ struct SendeniOS: View {
                                                   slotIcon: gewaehltesIcon?.nummer,
                                                   slotIconKante: gewaehltesIcon?.kante ?? 8,
                                                   slotPlatz: platz)
-            if angekommen {
-                gelungen = true
+            if !angekommen.nichts {
+                ausgang = angekommen.ganz ? .ganz : .teilweise
                 try? await Task.sleep(for: .seconds(1))
-                gelungen = false
+                ausgang = .offen
             }
         } catch {
             zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"

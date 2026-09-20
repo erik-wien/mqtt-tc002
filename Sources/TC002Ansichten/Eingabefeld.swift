@@ -138,7 +138,7 @@ public extension View {
                      senden: (() -> Void)?,
                      laeuft: Bool,
                      auskunft: String? = nil,
-                     gelungen: Bool = false) -> some View {
+                     ausgang: Sendeschau = .offen) -> some View {
         eingabefeld()
             .overlay(alignment: .trailing) {
                 HStack(spacing: 6) {
@@ -156,7 +156,7 @@ public extension View {
                             .controlSize(.small)
                             .accessibilityLabel(Text("Sende…"))
                     } else if let senden, !text.wrappedValue.isEmpty {
-                        Sendezeichen(senden: senden, auskunft: auskunft, gelungen: gelungen)
+                        Sendezeichen(senden: senden, auskunft: auskunft, ausgang: ausgang)
                     }
                 }
                 .padding(.trailing, 4)
@@ -182,29 +182,30 @@ struct Sendezeichen: View {
     /// senden:laeuft:auskunft:)`). Die Sprachausgabe bekommt weiter das Wort:
     /// Sie sagt, was der Knopf tut, nicht wie groß die Nutzlast wird.
     var auskunft: String?
-    /// Eine Sekunde nach einer gelungenen Sendung: gruen und mit Haken.
+    /// Eine Sekunde nach einer Sendung: ein Haken statt des Pfeils — gruen,
+    /// wenn alle Zieluhren genommen haben, gelb, wenn nur manche.
     ///
     /// Die Rueckmeldung sitzt an der Stelle, an der man gedrueckt hat, und
     /// nicht anderswo auf dem Bildschirm. Ohne sie sagte nichts, dass etwas
     /// hinausging — die Slotleiste aendert sich zwar, aber nur bei der
     /// angesehenen Uhr, und wer eine andere ansieht, sah gar nichts.
-    var gelungen: Bool = false
+    var ausgang: Sendeschau = .offen
 
     @ScaledMetric(relativeTo: .body) private var kante: Double = 26
     @ScaledMetric(relativeTo: .body) private var pfeil: Double = 13
 
     var body: some View {
         Button(action: senden) {
-            Image(systemName: gelungen ? "checkmark" : "arrow.up")
+            Image(systemName: ausgang == .offen ? "arrow.up" : "checkmark")
                 .font(.system(size: pfeil, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: kante, height: kante)
-                .background(Circle().fill(gelungen ? AnyShapeStyle(.green) : AnyShapeStyle(.tint)))
+                .background(Circle().fill(ausgang.farbe))
         }
         .buttonStyle(.plain)
-        .disabled(gelungen)
-        .animation(.easeInOut(duration: 0.15), value: gelungen)
-        .help(gelungen ? lok("Hinausgeschickt") : (auskunft ?? lok("Senden")))
-        .accessibilityLabel(Text(gelungen ? lok("Hinausgeschickt") : lok("Senden")))
+        .disabled(ausgang != .offen)
+        .animation(.easeInOut(duration: 0.15), value: ausgang)
+        .help(ausgang.wort ?? auskunft ?? lok("Senden"))
+        .accessibilityLabel(Text(ausgang.wort ?? lok("Senden")))
     }
 }

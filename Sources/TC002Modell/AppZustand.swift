@@ -70,6 +70,12 @@ public final class AppZustand {
     /// kein Gedaechtnis: nur, was waehrend dieser Verbindung gesendet wurde.
     public var slotInhalt: [UUID: [Int: Slotbild]] = [:]
 
+    /// Warum eine Sendung nur teilweise ankam — `nil`, wenn alles oder nichts
+    /// ankam. Steht neben dem Sendezeichen, nicht in einem Dialog: Wer eine
+    /// 16 Zeilen hohe Grafik an eine gemischte Gruppe schickt, hat nichts
+    /// falsch gemacht, und die TC002 hat sie ja bekommen.
+    public var teilfehler: String?
+
     public var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
     public var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
     public var benutzer: String { didSet { merke(benutzer, "benutzer"); brokerStand = .unbekannt } }
@@ -1157,8 +1163,9 @@ public final class AppZustand {
     /// MQTTSender wartet bis zu acht Sekunden, eine unerreichbare Uhr darf die
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
+    @discardableResult
     private func anZiele(_ tat: @escaping @Sendable (Anzeigen) throws -> Void,
-                         was: String = "", erledigt: (Uhr) -> Void) async {
+                         was: String = "", erledigt: (Uhr) -> Void) async -> Int {
         let ziele = ziele()
         // Wer uebersprungen wird, steht im Protokoll: `ziele()` filtert
         // still heraus, was nicht beschickbar ist — einer MQTT-Uhr fehlt dann
@@ -1174,7 +1181,7 @@ public final class AppZustand {
             let meldung = lok("Keine Uhr eingerichtet. Unter „Einstellungen“ eine eintragen und abfragen.")
             fehler = meldung
             log(meldung)
-            return
+            return 0
         }
         var fehlschlaege: [Sendefehler] = []
         await withTaskGroup(of: Sendeausgang?.self) { gruppe in
@@ -1209,6 +1216,9 @@ public final class AppZustand {
             }
         }
         fehler = zusammengefasst(fehlschlaege)
+        // Wie viele es haetten nehmen sollen — `Sendebilanz` braucht die Zahl,
+        // um „teilweise" von „ganz" zu unterscheiden.
+        return ziele.count
     }
 
     /// Ob diese Uhr ueberhaupt gemeint war — sonst stuende bei jeder Sendung
@@ -1251,13 +1261,13 @@ public final class AppZustand {
     @discardableResult
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotIconKante: Int = 8,
-                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Bool {
+                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
         // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
         // Der Verlauf erzaehlt, was man geschickt hat, und das war eine
         // Meldung, auch wenn sie an drei Uhren ging.
         var erreicht: [String] = []
-        await anZiele({ try $0.zeigen(frame, auf: name) },
+        let ziele = await anZiele({ try $0.zeigen(frame, auf: name) },
                       was: lokf("Sendung „%@“", name)) { uhr in
             erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
@@ -1298,7 +1308,18 @@ public final class AppZustand {
         }
         verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,
                          platz: slotPlatz, erreicht: erreicht)
-        return !erreicht.isEmpty
+        // Ist etwas angekommen, ist der Rest kein Fall fuer einen Dialog: Ein
+        // Dialog gehoert dem, was jemand richtigstellen kann, und „die AWTRIX
+        // nimmt keine sechzehn Zeilen" ist eine Tatsache ueber das Geraet.
+        // Der Satz steht stattdessen neben dem Sendezeichen, das dabei gelb
+        // wird statt gruen.
+        if !erreicht.isEmpty, let offen = fehler {
+            teilfehler = offen
+            fehler = nil
+        } else {
+            teilfehler = nil
+        }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
     }
 
     /// Traegt eine gelungene Sendung in den Verlauf ein.

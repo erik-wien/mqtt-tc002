@@ -901,6 +901,7 @@
 "Keine der Uhren antwortet. Kam gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen." = "None of the clocks answers. If you were just asked for local network access, allow it and query again.";
 "Zurück zur Übersicht" = "Back to the overview";
 "Hinausgeschickt" = "Sent";
+"Nur an manche Uhren hinausgeschickt" = "Sent to some clocks only";
 "Filter" = "Filter";
 "Nur bewegte" = "Animated only";
 "Auf welchen Platz?" = "To which slot?";

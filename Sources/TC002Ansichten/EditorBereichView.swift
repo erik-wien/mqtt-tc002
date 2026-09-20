@@ -50,7 +50,7 @@ public struct EditorBereichView: View {
     @State private var laeuft = false
     /// Eine Sekunde nach einer gelungenen Sendung: gruener Haken an der
     /// Stelle des Sendeknopfs. Wie `gelungen` in den beiden Sendeansichten.
-    @State private var gelungen = false
+    @State private var ausgang = Sendeschau.offen
     @Environment(\.scenePhase) private var phase
 
     // Sichern und Bestand.
@@ -1300,7 +1300,14 @@ public struct EditorBereichView: View {
                 // mir nicht, die macht die UI unrund … Bitte weglassen, wenn
                 // die Hilfe reicht, ein klickbares (i) mit Einblendhilfe oder
                 // eine Fehlermeldung."*
-                if let grund = sendesperre { Hilfezeichen(grund, warnung: true) }
+                // Erst der Teilerfolg, dann die Sperre: Beides zugleich gibt
+                // es nicht, und solange der gelbe Haken steht, ist er das
+                // Neuere.
+                if ausgang == .teilweise, let offen = zustand.teilfehler {
+                    Hilfezeichen(offen, warnung: true)
+                } else if let grund = sendesperre {
+                    Hilfezeichen(grund, warnung: true)
+                }
                 ZielauswahlView(zustand: zustand)
                 sendeKnopf
             }
@@ -1346,7 +1353,7 @@ public struct EditorBereichView: View {
                 .frame(width: 28, height: 28)
                 .accessibilityLabel(Text("Sende…"))
         } else {
-            Sendezeichen(senden: { senden() }, gelungen: gelungen)
+            Sendezeichen(senden: { senden() }, ausgang: ausgang)
                 .disabled(zustand.ziele().isEmpty || keineNimmtGemaltes)
         }
     }
@@ -2000,10 +2007,10 @@ public struct EditorBereichView: View {
             let hinaus = await zustand.senden(frame, als: anzeigenName, slotPlatz: slotPlatz,
                                               slotPixel: slotPixel)
             laeuft = false
-            guard hinaus else { return }
-            withAnimation { gelungen = true }
+            guard !hinaus.nichts else { return }
+            withAnimation { ausgang = hinaus.ganz ? .ganz : .teilweise }
             try? await Task.sleep(for: .seconds(1))
-            withAnimation { gelungen = false }
+            withAnimation { ausgang = .offen }
         }
     }
 }

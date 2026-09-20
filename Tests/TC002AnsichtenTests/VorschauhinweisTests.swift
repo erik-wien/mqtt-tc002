@@ -101,7 +101,9 @@ final class VorschauhinweisTests: XCTestCase {
         // sagt, was der Knopf tut. Seit der Knopf eine Sekunde lang gelungen
         // aussieht, sind es zwei Wörter — beide sagen eine Handlung, keines
         // eine Größe.
-        XCTAssertTrue(feld.contains("lok(\"Hinausgeschickt\") : lok(\"Senden\")"),
+        // Drei Zustaende seit dem gelben Haken (`Sendeschau`): Das Wort kommt
+        // von dort, nicht mehr aus einem Ternaer im Feld.
+        XCTAssertTrue(feld.contains("Text(ausgang.wort ?? lok(\"Senden\"))"),
                       "die Sprachausgabe sagt nicht mehr, was der Knopf tut")
         XCTAssertFalse(feld.contains("accessibilityLabel(Text(auskunft"),
                        "die Sprachausgabe liest die Auskunft vor statt der Handlung")
