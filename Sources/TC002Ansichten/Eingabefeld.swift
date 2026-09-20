@@ -134,33 +134,87 @@ public extension View {
     /// Kleingedrucktes unter der Vorschau; sie ist aber die Antwort auf „was
     /// passiert, wenn ich drücke" und gehört dorthin, wo man drückt. `nil`
     /// heißt: nichts Besonderes zu sagen, dann bleibt es beim Wort „Senden".
+    @ViewBuilder
     func eingabefeld(loeschbar text: Binding<String>,
                      senden: (() -> Void)?,
                      laeuft: Bool,
                      auskunft: String? = nil,
-                     ausgang: Sendeschau = .offen) -> some View {
-        eingabefeld()
-            .overlay(alignment: .trailing) {
-                HStack(spacing: 6) {
-                    if !text.wrappedValue.isEmpty, !laeuft {
-                        Button { text.wrappedValue = "" } label: {
-                            Image(systemName: "xmark.circle.fill")
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
-                        .help(lok("Leeren"))
-                        .accessibilityLabel(Text("Leeren"))
-                    }
-                    if laeuft {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityLabel(Text("Sende…"))
-                    } else if let senden, !text.wrappedValue.isEmpty {
-                        Sendezeichen(senden: senden, auskunft: auskunft, ausgang: ausgang)
-                    }
+                     ausgang: Sendeschau = .offen,
+                     form: Feldform = .gefasst) -> some View {
+        switch form {
+        case .gefasst:
+            eingabefeld()
+                .overlay(alignment: .trailing) {
+                    Feldzeichen(text: text, senden: senden, laeuft: laeuft,
+                                auskunft: auskunft, ausgang: ausgang)
+                        .padding(.trailing, 4)
                 }
-                .padding(.trailing, 4)
+        case .kapsel:
+            HStack(spacing: 6) {
+                // `.plain`: Die Fassung zeichnet die Kapsel aussen herum. Der
+                // Systemstil brachte seine eigene mit, und zwei Raender
+                // uebereinander sind ein Rahmen im Rahmen.
+                textFieldStyle(.plain)
+                    .multilineTextAlignment(.leading)
+                Feldzeichen(text: text, senden: senden, laeuft: laeuft,
+                            auskunft: auskunft, ausgang: ausgang)
             }
+            .padding(.leading, 14)
+            .padding(.trailing, 5)
+            .padding(.vertical, 5)
+            .overlay(Capsule().stroke(.separator, lineWidth: 1))
+            .contentShape(Capsule())
+        }
+    }
+}
+
+/// Welche Form das Eingabefeld traegt.
+///
+/// `gefasst` ist der Systemstil `.roundedBorder`: ein Rechteck mit kleinem
+/// Radius, wie es Formulare und Inspektoren tragen.
+///
+/// `kapsel` ist die Form, die Nachrichten seinem Textfeld gibt — rund an
+/// beiden Enden, eine Haarlinie als Rand, die Zeichen innen am rechten Ende.
+/// Ein Nachbau mit Begruendung (`CLAUDE.md`, „Bedienelemente so, wie Apple sie
+/// festlegt"): Das Telefon ist hier ein Nachrichtenfenster, und `.roundedBorder`
+/// sieht dort aus wie ein Formularfeld. Der Auftraggeber, mit einem
+/// Bildschirmfoto aus Nachrichten: *„Die Textfläche am iPhone ist noch nicht
+/// so, wie ich gerne hätte. Vorbild iMessage."*
+public enum Feldform: Equatable, Sendable {
+    case gefasst, kapsel
+}
+
+/// Was am rechten Ende des Feldes steht: das Loeschzeichen und, wo es eines
+/// gibt, der Sendepfeil.
+///
+/// Ein eigener Baustein, weil beide Formen dasselbe zeigen — einmal als
+/// Ueberlagerung im Systemfeld, einmal als Nachbar in der Kapsel.
+private struct Feldzeichen: View {
+    @Binding var text: String
+    let senden: (() -> Void)?
+    let laeuft: Bool
+    var auskunft: String?
+    var ausgang: Sendeschau = .offen
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if !text.isEmpty, !laeuft {
+                Button { text = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(lok("Leeren"))
+                .accessibilityLabel(Text("Leeren"))
+            }
+            if laeuft {
+                ProgressView()
+                    .controlSize(.small)
+                    .accessibilityLabel(Text("Sende…"))
+            } else if let senden, !text.isEmpty {
+                Sendezeichen(senden: senden, auskunft: auskunft, ausgang: ausgang)
+            }
+        }
     }
 }
 

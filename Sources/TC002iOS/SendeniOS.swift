@@ -867,7 +867,8 @@ struct SendeniOS: View {
             .eingabefeld(loeschbar: $text,
                          senden: sendenMoeglich ? { Task { await senden() } } : nil,
                          laeuft: laeuft,
-                         ausgang: ausgang)
+                         ausgang: ausgang,
+                         form: .kapsel)
             .submitLabel(.send)
             .disabled(laeuft)
             .onChange(of: text) { _, neu in
