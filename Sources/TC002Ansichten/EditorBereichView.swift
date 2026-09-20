@@ -324,14 +324,6 @@ public struct EditorBereichView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Dieselbe Stelle wie unter „Senden": oben rechts ueber der
-            // Leinwand, nicht unten in der Sendezeile — dort war sie zwischen
-            // Dauerfeld, Zwischenraum und Sendeknopf gequetscht und
-            // abgeschnitten, und an einer anderen Stelle als in der Ansicht
-            // daneben.
-            //
-            // Ohne zweite Uhr zeigt `ZielauswahlView` nichts, die Zeile bleibt
-            // dann leer.
             if zeigtUebersicht {
                 uebersicht
             } else {
@@ -342,13 +334,6 @@ public struct EditorBereichView: View {
                 // Breite statt mittig. Erik: *„der sichern schaltfläche gehört
                 // in den mittleren teil, nicht in den inspektor"*.
                 abschlusszeile
-                // Der Empfaenger eine Zeile unter dem Abschluss: Im
-                // Sendemodul sitzt er links oben in der Werkzeugleiste, hier
-                // ist diese Stelle vom ✕ belegt. Erik: *„Da sein Platz aber
-                // durch das (x) belegt ist, schlage ich vor das
-                // Empfängersymbol eine Zeile drunter zu stellen."*
-                ZielauswahlView(zustand: zustand, stil: .rund)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, werkzeug: werkzeug,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
@@ -1052,6 +1037,17 @@ public struct EditorBereichView: View {
     /// Werkzeugleiste: Dort saessen sie am rechten Fensterrand, also über dem
     /// Inspektor, und nicht über dem Stueck, das sie betreffen. Nur die
     /// Zeichen, wie in Fotos; `Label` schriebe am Mac das Wort dazu.
+    /// Der Empfaenger neben dem Zeichen zum Schliessen, nicht darunter.
+    ///
+    /// Erik erst: *„schlage ich vor das Empfängersymbol eine Zeile drunter zu
+    /// stellen"*, dann: *„Schlechte Entscheidung von mir, das
+    /// Empfängersymbol gehört neben das x, nicht drunter."* In derselben
+    /// Zeile liest sich die Reihe als das, was sie ist — drei Knoepfe ueber
+    /// dem Werkstueck.
+    private var empfaenger: some View {
+        ZielauswahlView(zustand: zustand, stil: .rund)
+    }
+
     private var abschlusszeile: some View {
         HStack {
             #if os(macOS)
@@ -1072,6 +1068,7 @@ public struct EditorBereichView: View {
             .keyboardShortcut(.cancelAction)
             .help(lok("Zurück zur Übersicht"))
             .accessibilityLabel(Text("Zurück zur Übersicht"))
+            empfaenger
             Spacer()
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
@@ -1088,6 +1085,7 @@ public struct EditorBereichView: View {
             // Finger sicher trifft.
             rundzeichen("xmark", beschriftung: lok("Fertig"), haupt: false) { fertigAnfragen() }
                 .keyboardShortcut(.cancelAction)
+            empfaenger
             Spacer()
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
