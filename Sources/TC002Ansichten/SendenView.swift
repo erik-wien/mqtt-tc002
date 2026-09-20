@@ -488,7 +488,7 @@ public struct SendenView: View {
             // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
             // in einem Dialog (siehe `AppZustand.teilfehler`).
             HStack(spacing: 8) {
-                if ausgang == .teilweise, let offen = zustand.teilfehler {
+                if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, warnung: true)
                 }
                 textFeld

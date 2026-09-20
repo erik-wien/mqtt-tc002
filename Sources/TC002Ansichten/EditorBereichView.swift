@@ -1301,9 +1301,13 @@ public struct EditorBereichView: View {
                 // die Hilfe reicht, ein klickbares (i) mit Einblendhilfe oder
                 // eine Fehlermeldung."*
                 // Erst der Teilerfolg, dann die Sperre: Beides zugleich gibt
-                // es nicht, und solange der gelbe Haken steht, ist er das
-                // Neuere.
-                if ausgang == .teilweise, let offen = zustand.teilfehler {
+                // es nicht, und der Teilerfolg ist das Neuere.
+                //
+                // Am `teilfehler` und nicht am gelben Haken: Der steht nur
+                // eine Sekunde. Ein Satz, der in einer Sekunde verschwindet,
+                // ist nicht zu lesen und schon gar nicht anzutippen. Er bleibt
+                // bis zur naechsten Sendung, die ihn setzt oder raeumt.
+                if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, warnung: true)
                 } else if let grund = sendesperre {
                     Hilfezeichen(grund, warnung: true)

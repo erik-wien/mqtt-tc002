@@ -859,7 +859,7 @@ struct SendeniOS: View {
         // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
         // gibt es am Finger ohnehin nicht.
         HStack(spacing: 8) {
-            if ausgang == .teilweise, let offen = zustand.teilfehler {
+            if let offen = zustand.teilfehler {
                 Hilfezeichen(offen, warnung: true)
             }
             TextField("Text", text: $text, axis: .vertical)
