@@ -569,6 +569,19 @@ public struct EditorBereichView: View {
     /// Formatinspektor unter „Senden": abgesetzte Karten mit kleiner, grauer
     /// Ueberschrift, Ausrichtung und Zeilenabstand von selbst, und Rollen bei
     /// Bedarf ebenso.
+    /// Der Farbeimer, wo es ihn gibt, sonst der Tropfen.
+    ///
+    /// `paint.bucket.classic` kam mit den Symbolen von 2025 und steht erst ab
+    /// iOS 26 und macOS 26 bereit; die App laeuft ab iOS 17 und macOS 14. Ein
+    /// unbekannter Symbolname zeichnet nichts und meldet auch nichts — das
+    /// Segment bliebe auf einem aelteren System leer.
+    private static var fuellsymbol: String {
+        if #available(iOS 26, macOS 26, *) {
+            return "paint.bucket.classic"
+        }
+        return "drop.fill"
+    }
+
     private var inspektor: some View {
         VStack(spacing: 0) {
             modusWahl
@@ -646,14 +659,12 @@ public struct EditorBereichView: View {
             //
             // Ein Eimer statt eines vierten Knopfes: Fuellen ist ein Werkzeug
             // wie Stift und Radierer — man waehlt es und tippt dann ins Bild.
-            // `drop.fill` und nicht `paint.bucket.classic`: Das gibt es erst ab
-            // SF Symbols 7 (iOS 26), die App laeuft ab iOS 17.
             Picker("Werkzeug", selection: $werkzeug) {
                 Image(systemName: "paintbrush.pointed")
                     .accessibilityLabel("Malen").tag(Malwerkzeug.malen)
                 Image(systemName: "eraser")
                     .accessibilityLabel("Radieren").tag(Malwerkzeug.radieren)
-                Image(systemName: "drop.fill")
+                Image(systemName: Self.fuellsymbol)
                     .accessibilityLabel("Mit Farbe füllen").tag(Malwerkzeug.fuellen)
             }
             .pickerStyle(.segmented)
