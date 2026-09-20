@@ -12,7 +12,22 @@ import TC002Modell
 /// zusaetzliche, wirkungslose Flaeche.
 struct ZielauswahlView: View {
     @Bindable var zustand: AppZustand
+    /// Wo der Knopf steht — davon haengt seine Fassung ab, nicht sein Inhalt.
+    var stil: Zielstil = .leiste
     @State private var zeigeBlatt = false
+
+    /// Zwei Stellen, zwei Fassungen desselben Knopfs.
+    ///
+    /// In der Werkzeugleiste zeichnet iPadOS schon eine Kapsel um jedes
+    /// Element; ein eigener Befehlsknopf darin ergab eine Pille in der Pille.
+    /// Erik, mit einem Kringel um die Stelle: *„Pille um die Pille???"*
+    ///
+    /// Im Inhalt des Editors gibt es keine Leiste, die eine Fassung
+    /// mitbraechte — dort traegt er seine eigene, rund wie das ✕ und der
+    /// Haken darueber.
+    enum Zielstil: Equatable, Sendable {
+        case leiste, rund
+    }
 
     /// Was der Knopf gerade bedeutet, mit Fallback auf die aktive Uhr — genau
     /// das, was `AppZustand.ziele()` auch tatsaechlich verschickt.
@@ -41,24 +56,42 @@ struct ZielauswahlView: View {
                 if zustand.zielIDs.isEmpty { zustand.zielIDs = gewaehlteIDs }
                 zeigeBlatt = true
             } label: {
-                // Dasselbe Zeichen wie am Telefon (dort das Antennensymbol
-                // neben dem Eingabefeld), dazu das Wort — nicht ein ganzer
-                // Satz als Beschriftung („an: Küche", „an 2 Uhren"), der
-                // neben dem Titelmenue wie ein zweiter Titel laese. Wohin es
-                // geht, sagt der Einblendtext und das Blatt selbst.
-                // Die Zahl steht immer da, auch die 1: Sie wegzulassen
-                // hiess, zwei Zustaende auf dasselbe Bild abzubilden: „an eine"
-                // und „noch nichts gewaehlt" saehen gleich aus, und wer die
-                // Zahl sucht, faende bei genau einem Empfaenger nichts und
-                // fragte sich, ob der Knopf gerade etwas anderes meint.
-                Label(lokf("Empfänger · %d", gewaehlteIDs.count),
-                      systemImage: "antenna.radiowaves.left.and.right")
+                zeichen
             }
-            .knopfBefehl()
+            .fassung(stil)
             .help(beschriftung)
             .accessibilityLabel(Text(beschriftung))
             .sheet(isPresented: $zeigeBlatt) { blatt }
         }
+    }
+
+    /// Nur das Antennensymbol, kein Wort.
+    ///
+    /// Es stand einmal „Empfänger · 2" daran. Erik: *„Die Empfängerschaltfläche
+    /// ist noch ein Artefakt von früher, dafür haben wir im Sendemodul ein
+    /// neues Symbol, das ich bitte zu übernehmen."* Wohin es geht, sagt der
+    /// Einblendtext, die Sprachausgabe und das Blatt selbst.
+    private var zeichen: some View {
+        Image(systemName: "antenna.radiowaves.left.and.right")
+            // Hochgestellt und winzig, wie eine Fussnote: „2/4" sagt in zwei
+            // Zeichen, was der Satz daneben in fuenf Woertern sagte, und
+            // nimmt dem Knopf keine Breite. Erik: *„das empfänger symbol
+            // könnte auch so eine hochgestellte minimale bekommen, die zeigt
+            // 2/4 uhren sind ausgewählt."*
+            //
+            // `alignment: .topTrailing` mit einem Versatz nach aussen: Innen
+            // laege sie ueber der Antenne.
+            .overlay(alignment: .topTrailing) {
+                Text(verbatim: "\(gewaehlteIDs.count)/\(zustand.uhren.count)")
+                    .font(.system(size: 9, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .offset(x: 12, y: -6)
+                    // Sie darf den Knopf nicht breiter machen, sonst sitzt das
+                    // Zeichen in der Leiste nicht mehr mittig.
+                    .fixedSize()
+                    .allowsHitTesting(false)
+            }
     }
 
     private var blatt: some View {
@@ -142,6 +175,21 @@ struct ZielauswahlView: View {
             .frame(minHeight: 160)
             }
             .frame(minWidth: 340, minHeight: 280)
+        }
+    }
+}
+
+private extension View {
+    /// Die Fassung je Stelle — in der Leiste keine eigene, im Inhalt ein
+    /// Kreis wie beim ✕ und beim Haken.
+    @ViewBuilder
+    func fassung(_ stil: ZielauswahlView.Zielstil) -> some View {
+        switch stil {
+        case .leiste: buttonStyle(.plain)
+        // `.large`, damit der Kreis so gross wird wie das ✕ und der Haken
+        // darueber: Drei Kreise verschiedener Groesse untereinander lesen sich
+        // wie drei verschiedene Arten von Knopf.
+        case .rund: knopfBefehl().buttonBorderShape(.circle).controlSize(.large)
         }
     }
 }

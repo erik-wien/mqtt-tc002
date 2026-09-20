@@ -489,7 +489,7 @@ public struct SendenView: View {
             // in einem Dialog (siehe `AppZustand.teilfehler`).
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
-                    Hilfezeichen(offen, warnung: true)
+                    Hilfezeichen(offen, gewicht: .teilweise)
                 }
                 textFeld
             }

@@ -35,9 +35,14 @@ final class KnopfstilTests: XCTestCase {
     ]
 
     /// Was als ausdrücklicher Stil gilt.
+    ///
+    /// `.fassung(` zählt mit: Es wählt zwischen zweien der drei Aufrufe,
+    /// je nachdem, wo der Knopf steht (`ZielauswahlView.Zielstil`). In der
+    /// Werkzeugleiste zeichnet iPadOS schon eine Kapsel, ein Befehlsknopf
+    /// darin ergab eine Pille in der Pille.
     private static let stile = [
         ".knopfBefehl()", ".knopfHaupthandlung()", ".knopfZerstoerend()",
-        ".buttonStyle(",
+        ".buttonStyle(", ".fassung(",
     ]
 
     private static let ordner = [

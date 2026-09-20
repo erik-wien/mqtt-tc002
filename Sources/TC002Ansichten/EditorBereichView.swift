@@ -342,6 +342,13 @@ public struct EditorBereichView: View {
                 // Breite statt mittig. Erik: *„der sichern schaltfläche gehört
                 // in den mittleren teil, nicht in den inspektor"*.
                 abschlusszeile
+                // Der Empfaenger eine Zeile unter dem Abschluss: Im
+                // Sendemodul sitzt er links oben in der Werkzeugleiste, hier
+                // ist diese Stelle vom ✕ belegt. Erik: *„Da sein Platz aber
+                // durch das (x) belegt ist, schlage ich vor das
+                // Empfängersymbol eine Zeile drunter zu stellen."*
+                ZielauswahlView(zustand: zustand, stil: .rund)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Malflaeche(leinwand: $leinwand, farbe: farbe.wrappedValue, werkzeug: werkzeug,
                            vorStrich: { verlauf.merken(leinwand) },
                            nachStrich: arbeitsstandSichern,
@@ -1308,11 +1315,10 @@ public struct EditorBereichView: View {
                 // ist nicht zu lesen und schon gar nicht anzutippen. Er bleibt
                 // bis zur naechsten Sendung, die ihn setzt oder raeumt.
                 if let offen = zustand.teilfehler {
-                    Hilfezeichen(offen, warnung: true)
+                    Hilfezeichen(offen, gewicht: .teilweise)
                 } else if let grund = sendesperre {
-                    Hilfezeichen(grund, warnung: true)
+                    Hilfezeichen(grund, gewicht: .sperre)
                 }
-                ZielauswahlView(zustand: zustand)
                 sendeKnopf
             }
         }

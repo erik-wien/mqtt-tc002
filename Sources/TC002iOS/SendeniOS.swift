@@ -860,7 +860,7 @@ struct SendeniOS: View {
         // gibt es am Finger ohnehin nicht.
         HStack(spacing: 8) {
             if let offen = zustand.teilfehler {
-                Hilfezeichen(offen, warnung: true)
+                Hilfezeichen(offen, gewicht: .teilweise)
             }
             TextField("Text", text: $text, axis: .vertical)
             .lineLimit(1...3)

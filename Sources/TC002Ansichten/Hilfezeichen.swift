@@ -22,35 +22,67 @@ import TC002Core
 /// unten hereinfährt — es ist eine Fußnote, keine Ansicht.
 public struct Hilfezeichen: View {
     private let text: String
-    private let warnung: Bool
+    private let gewicht: Gewicht
+
+    /// Wie dringend das ist, was dahintersteht.
+    ///
+    /// Drei Faelle, weil es drei gibt: eine Erklaerung, ein Hinweis auf etwas,
+    /// das nur zum Teil gelungen ist, und eine Sperre. Der Auftraggeber:
+    /// *„gemischte empfänger: gelbes Dreieck, keine TC oder nur TC001: rotes
+    /// dreieck."* Beides mit derselben Farbe zu zeigen hiesse, „es ist etwas
+    /// angekommen" und „es kann nichts ankommen" gleich auszusehen.
+    public enum Gewicht: Equatable, Sendable {
+        /// Ein (?) — hier steht eine Erklaerung.
+        case erklaerung
+        /// Ein gelbes Dreieck — etwas ist gelungen, etwas nicht.
+        case teilweise
+        /// Ein rotes Dreieck — so geht es gar nicht.
+        case sperre
+
+        var zeichen: String {
+            self == .erklaerung ? "questionmark.circle" : "exclamationmark.triangle.fill"
+        }
+
+        var farbe: AnyShapeStyle {
+            switch self {
+            case .erklaerung: return AnyShapeStyle(.secondary)
+            case .teilweise: return AnyShapeStyle(.yellow)
+            case .sperre: return AnyShapeStyle(.red)
+            }
+        }
+
+        var wort: String {
+            self == .erklaerung ? lok("Hilfe") : lok("Warnung")
+        }
+    }
     @State private var zeigt = false
 
     /// `text` ist fertig übersetzt hereinzugeben (`lok(…)`): Er wird als
     /// gewöhnliches `String` weitergereicht, und das schlägt SwiftUI nicht nach.
     ///
-    /// `warnung: true` macht daraus dasselbe Zeichen mit anderer Aussage: ein
-    /// oranges Dreieck statt des Fragezeichens. Es steht dort, wo nicht bloß
-    /// etwas zu erklären, sondern etwas im Weg ist — eine Wahl, die so nicht
-    /// ankommen kann. Derselbe Bau, weil der Grund auf beiden Oberflächen
-    /// antippbar sein muss und nicht nur beim Verweilen erscheinen darf.
-    public init(_ text: String, warnung: Bool = false) {
+    /// `gewicht` macht daraus dasselbe Zeichen mit anderer Aussage: ein
+    /// Dreieck statt des Fragezeichens, gelb oder rot. Es steht dort, wo nicht
+    /// bloß etwas zu erklären, sondern etwas im Weg ist. Derselbe Bau, weil
+    /// der Grund auf beiden Oberflächen antippbar sein muss und nicht nur beim
+    /// Verweilen erscheinen darf.
+    public init(_ text: String, gewicht: Gewicht = .erklaerung) {
         self.text = text
-        self.warnung = warnung
+        self.gewicht = gewicht
     }
 
     public var body: some View {
         Button { zeigt = true } label: {
-            Image(systemName: warnung ? "exclamationmark.triangle.fill" : "questionmark.circle")
+            Image(systemName: gewicht.zeichen)
                 .font(.caption)
         }
         .buttonStyle(.borderless)
-        .foregroundStyle(warnung ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+        .foregroundStyle(gewicht.farbe)
         .help(text)
         // `lok` in beiden Zweigen: Ein Ternär mit zwei Zeichenketten zwingt
         // `Text` in die `StringProtocol`-Überladung, und die schlägt nichts
         // nach — beide Wörter stünden in `en.lproj` und blieben trotzdem
         // deutsch (CLAUDE.md, „Sprachen").
-        .accessibilityLabel(Text(warnung ? lok("Warnung") : lok("Hilfe")))
+        .accessibilityLabel(Text(gewicht.wort))
         .popover(isPresented: $zeigt) {
             Text(text)
                 .font(.callout)

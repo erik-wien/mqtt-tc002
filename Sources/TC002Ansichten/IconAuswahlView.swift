@@ -114,7 +114,7 @@ struct IconAuswahlView: View {
             // Das Dreieck sagt, warum nichts ankaeme; weggenommen wird die
             // Wahl nur von Hand.
             if let icon = gewaehltesIcon, let grund = sperre(icon.kante) {
-                Hilfezeichen(grund, warnung: true)
+                Hilfezeichen(grund, gewicht: .sperre)
             }
         }
         .sheet(isPresented: $zeigeBlatt) { blatt.onAppear { bewegungLesen() } }
