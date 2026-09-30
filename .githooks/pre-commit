@@ -1,2 +1,6 @@
 #!/bin/sh
+# Zuerst die globale Geheimnis-Pruefung (mcp/git-hooks), falls eingerichtet --
+# der eigene core.hooksPath dieses Repositories umgeht sie sonst.
+g="$(git config --global --get core.hooksPath)/pre-commit"
+if [ -x "$g" ]; then "$g" || exit 1; fi
 exec "$(git rev-parse --show-toplevel)/scripts/private-spuren.sh"
