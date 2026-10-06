@@ -1,116 +1,67 @@
 {
-  "fill-specializations" : [
+  "fill-specializations": [
     {
-      "value" : {
-        "linear-gradient" : [
+      "value": {
+        "linear-gradient": [
           "srgb:0.20392,0.31373,0.49804,1.00000",
           "srgb:0.10588,0.16471,0.29020,1.00000"
         ],
-        "orientation" : {
-          "start" : {
-            "x" : 0.5,
-            "y" : 0
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
           },
-          "stop" : {
-            "x" : 0.5,
-            "y" : 0.7
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
           }
         }
       }
     },
     {
-      "appearance" : "dark",
-      "value" : {
-        "linear-gradient" : [
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
           "srgb:0.08627,0.13333,0.22745,1.00000",
           "srgb:0.05882,0.09412,0.16078,1.00000"
         ],
-        "orientation" : {
-          "start" : {
-            "x" : 0.5,
-            "y" : 0
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
           },
-          "stop" : {
-            "x" : 0.5,
-            "y" : 0.7
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
           }
         }
       }
     }
   ],
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "glass" : false,
-          "image-name" : "vorne-3-pixel.svg",
-          "name" : "vorne-3-pixel"
-        },
-        {
-          "image-name" : "vorne-2-display.svg",
-          "name" : "vorne-2-display"
+          "glass": false,
+          "image-name": "icon.svg",
+          "name": "icon"
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "specular" : false,
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
-        {
-          "image-name" : "vorne-1-gehaeuse.svg",
-          "name" : "vorne-1-gehaeuse"
-        }
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "specular" : true,
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
-        {
-          "hidden" : true,
-          "image-name" : "hinten-signal.svg",
-          "name" : "hinten-signal"
-        },
-        {
-          "image-name" : "mqtt-icon-solid.svg",
-          "name" : "mqtt-icon-solid",
-          "position" : {
-            "scale" : 1.5,
-            "translation-in-points" : [
-              -0.07499999999993179,
-              -145.50000000000006
-            ]
-          }
-        }
-      ],
-      "shadow" : {
-        "kind" : "layer-color",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }

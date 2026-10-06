@@ -417,3 +417,10 @@ Rechteverwaltung zusaetzlich.
 
 Ist es doch passiert: Systemeinstellungen > Datenschutz & Sicherheit >
 Lokales Netzwerk > den Eintrag aus- und wieder einschalten.
+
+## App-Icon
+
+Quelle: `suite-mqtt-tc001.svg` aus der Icon-Chaser-Ablage (MeineIcons), Stand 06.10.2026. Mac: `Resources/AppIcon.icon`
+(eine Ebene `Assets/icon.svg`), iOS: `Resources/AppIconiOS.xcassets/.../icon-1024.png` (per `rsvg-convert -w 1024`, ohne Alpha).
+Fallen beim `actool`-Bau: das SVG braucht `width="1024" height="1024"` (sonst winzig mitten im Icon), und `icon.json`
+braucht `fill-specializations` — ohne Füllung bricht der Export still ab („Icon: keines gefunden“).
