@@ -28,6 +28,8 @@ ist und bei einem Update nachzuprüfen wäre, in
   Webansicht, und `WKWebView` ist nur über `NSViewRepresentable` bzw.
   `UIViewRepresentable` einzusetzen. Der Unterschied betrifft vier Zeilen und
   bleibt in dieser Datei.
+- **TestFlight (iOS) über Xcode Cloud nur per Tag `testflight/<datum>` oder „Start Build“** — ein Push auf `main`
+  baut nichts mehr (Erik 06.10.2026, Tester bekam sonst je Push eine Mail). Tag nur auf Eriks Wunsch setzen.
 - **Dieselbe App, überall dasselbe Können — Unterschiede brauchen einen
   Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
   ist nur zulässig, wenn ihn die **Bedienung** (Maus und Zeiger gegen Finger)
