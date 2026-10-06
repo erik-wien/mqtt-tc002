@@ -105,9 +105,9 @@ if [ "${TC002_VERTEILEN:-1}" = "1" ]; then
     xcrun stapler validate /Applications/MQTT-TC002.app >/dev/null
     echo "installiert: /Applications/MQTT-TC002.app"
     if [ -d "$ZIEL_ICLOUD" ]; then
-        rm -rf "$ZIEL_ICLOUD/MQTT-TC002.app"
-        ditto "$APP" "$ZIEL_ICLOUD/MQTT-TC002.app"
-        echo "kopiert: $ZIEL_ICLOUD/MQTT-TC002.app"
+        rm -rf "$ZIEL_ICLOUD/MQTT-TC002.app" "$ZIEL_ICLOUD"/MQTT-TC002-*.dmg
+        cp "$DMG" "$ZIEL_ICLOUD/"
+        echo "kopiert: $ZIEL_ICLOUD/$(basename "$DMG")"
     else
         echo "Hinweis: $ZIEL_ICLOUD fehlt — nicht kopiert" >&2
     fi

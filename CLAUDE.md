@@ -360,7 +360,7 @@ Nicht im Quelltext eintragen. `build.sh` nimmt sie aus `TC002_VERSION` oder vom
 jüngsten Tag, die Baunummer ist die Zahl der Commits. `release.sh <fassung>`
 setzt die Variable, bricht bei geändertem Arbeitsbaum ab und prüft hinterher
 die Info.plist gegen sein Argument. Danach heftet es das Ticket auch an die App, installiert sie nach
-`/Applications` (per `ditto`) und kopiert sie nach iCloud `Emir/Eriks Apps` (aus: `TC002_VERTEILEN=0`).
+`/Applications` (per `ditto`) und legt das DMG (nicht die App) nach iCloud `Emir/Eriks Apps`, ältere DMGs und eine App-Kopie dort entfernt es (aus: `TC002_VERTEILEN=0`).
 
 **Beim iOS-Ziel schreibt der Schritt in die Quell-Plist, nicht ins Bündel** —
 und zwar **vor** dem Bau (`preBuildScripts`). Xcode kopiert
