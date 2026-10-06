@@ -60,7 +60,7 @@ tell application "Finder"
         set toolbar visible of container window to false
         set statusbar visible of container window to false
         -- 660 x 420 Inhaltsflaeche, genau das Mass des Hintergrundbildes
-        set the bounds of container window to {200, 120, 860, 540}
+        set the bounds of container window to {200, 120, 860, 650} -- 420 Bild + ~110 fuer Titel-, Symbol- und Statusleiste (macOS 26+)
         set opts to the icon view options of container window
         set arrangement of opts to not arranged
         set icon size of opts to 96
