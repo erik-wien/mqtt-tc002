@@ -32,7 +32,7 @@ PLIST="${PROJECT_DIR:?}/${INFOPLIST_FILE:?}"
 [ -f "$PLIST" ] || { echo "warning: Info.plist nicht gefunden: $PLIST"; exit 0; }
 
 cd "${PROJECT_DIR:?}"
-VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')}"
+VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null | sed 's/^v//')}"
 [ -n "$VERSION" ] || VERSION="0.0"
 BAUNUMMER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 

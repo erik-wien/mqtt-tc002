@@ -15,7 +15,7 @@ git diff --quiet 2>/dev/null || COMMIT="$COMMIT+"
 # Die Fassung kommt von aussen (release.sh setzt sie) oder vom juengsten Tag —
 # fest eingetragen driftete sie: ein DMG „1.5" mit einer App, die sich als 1.4
 # ausgibt. Die Baunummer ist die Zahl der Commits, damit sie von selbst steigt.
-VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')}"
+VERSION="${TC002_VERSION:-$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null | sed 's/^v//')}"
 [ -n "$VERSION" ] || VERSION="0.0"
 BAUNUMMER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 # Alles Erzeugte liegt unter `erzeugt/` — die fertige Mac-App also in
