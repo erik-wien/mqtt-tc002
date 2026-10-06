@@ -111,6 +111,14 @@ if [ "${TC002_VERTEILEN:-1}" = "1" ]; then
     else
         echo "Hinweis: $ZIEL_ICLOUD fehlt — nicht kopiert" >&2
     fi
+    # Werbeseite www.eriks.cloud/apps: festes DMG unter downloads/ (Ablauf: ~/GitSwift/CLAUDE.md, „Werbeseiten“).
+    WEB_DMG="MQTT-TC002.dmg"
+    [ -d "$HOME/GitSwift/Marketing/downloads" ] && cp "$DMG" "$HOME/GitSwift/Marketing/downloads/$WEB_DMG"
+    if rsync -t --chmod=Fu=rw,Fgo=r "$DMG" "akadbrain:/opt/homebrew/var/www/apps/downloads/$WEB_DMG"; then
+        echo "hochgeladen: https://www.eriks.cloud/apps/downloads/$WEB_DMG"
+    else
+        echo "Hinweis: Upload nach akadbrain fehlgeschlagen — Werbeseite zeigt noch das alte DMG" >&2
+    fi
     open /Applications/MQTT-TC002.app
 fi
 
