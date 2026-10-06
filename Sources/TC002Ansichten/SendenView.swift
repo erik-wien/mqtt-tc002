@@ -279,7 +279,7 @@ public struct SendenView: View {
     /// deren Maß gerechnet (`laufschriftSchluessel`), und auf einem anderen
     /// wären sie schlicht das falsche Bild. Die Nachbarn zeigen ihr Standbild,
     /// bis man bei ihnen angekommen ist.
-    @ViewBuilder
+    ///
     /// Eine Uhr in der Vorschau — mit **ihren** Massen, nicht denen der
     /// gerade angesehenen.
     ///

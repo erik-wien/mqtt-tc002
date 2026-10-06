@@ -28,7 +28,7 @@ ist und bei einem Update nachzuprüfen wäre, in
   Webansicht, und `WKWebView` ist nur über `NSViewRepresentable` bzw.
   `UIViewRepresentable` einzusetzen. Der Unterschied betrifft vier Zeilen und
   bleibt in dieser Datei.
-- **TestFlight (iOS): Erik startet von Hand** („Start Build“ in Xcode Cloud), auf Wunsch per Tag `testflight/<datum>`;
+- **TestFlight (iOS): Erik startet von Hand** („Start Build“ in Xcode Cloud), auf Wunsch per Tag: `testflight-me/<datum>` = Workflow „Nur Ich“ (nur Erik), `testflight/<datum>` = Default (Tester);
   ein Push auf `main` baut nichts (06.10.2026). Mac-App nie über Xcode Cloud — `release.sh` lokal.
 - **Dieselbe App, überall dasselbe Können — Unterschiede brauchen einen
   Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
