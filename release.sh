@@ -108,9 +108,6 @@ if [ "${TC002_VERTEILEN:-1}" = "1" ]; then
         rm -rf "$ZIEL_ICLOUD/MQTT-TC002.app"
         ditto "$APP" "$ZIEL_ICLOUD/MQTT-TC002.app"
         echo "kopiert: $ZIEL_ICLOUD/MQTT-TC002.app"
-        rm -f "$ZIEL_ICLOUD"/MQTT-TC002-*.dmg
-        cp "$DMG" "$ZIEL_ICLOUD/"
-        echo "kopiert: $ZIEL_ICLOUD/$(basename "$DMG")"
     else
         echo "Hinweis: $ZIEL_ICLOUD fehlt — nicht kopiert" >&2
     fi
