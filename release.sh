@@ -91,6 +91,29 @@ hdiutil attach "$DMG" -noautoopen -readonly >/dev/null
 spctl -a -vvv -t install "/Volumes/MQTT-TC002/MQTT-TC002.app"
 hdiutil detach "/Volumes/MQTT-TC002" >/dev/null
 
+echo "== Verteilen =="
+# Die App selbst bekommt das Ticket auch (Apple hat sie im Abbild mitgeprueft), dann:
+# auf diesem Mac installieren und in den geteilten iCloud-Ordner legen.
+# Abschalten: TC002_VERTEILEN=0 ./release.sh <fassung>
+if [ "${TC002_VERTEILEN:-1}" = "1" ]; then
+    xcrun stapler staple "$APP"
+    ZIEL_ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Emir/Eriks Apps"
+    osascript -e 'quit app id "cloud.eriks.mqtt-tc002"' 2>/dev/null || true
+    sleep 1
+    # An Ort und Stelle ersetzen, nie rm -rf (Freigabe „Lokales Netzwerk“, siehe CLAUDE.md).
+    ditto "$APP" /Applications/MQTT-TC002.app
+    xcrun stapler validate /Applications/MQTT-TC002.app >/dev/null
+    echo "installiert: /Applications/MQTT-TC002.app"
+    if [ -d "$ZIEL_ICLOUD" ]; then
+        rm -rf "$ZIEL_ICLOUD/MQTT-TC002.app"
+        ditto "$APP" "$ZIEL_ICLOUD/MQTT-TC002.app"
+        echo "kopiert: $ZIEL_ICLOUD/MQTT-TC002.app"
+    else
+        echo "Hinweis: $ZIEL_ICLOUD fehlt — nicht kopiert" >&2
+    fi
+    open /Applications/MQTT-TC002.app
+fi
+
 echo
 echo "fertig: $DMG ($(du -h "$DMG" | cut -f1))"
 echo
