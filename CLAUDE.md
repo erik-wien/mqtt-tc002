@@ -30,6 +30,7 @@ ist und bei einem Update nachzuprüfen wäre, in
   bleibt in dieser Datei.
 - **TestFlight (iOS): Erik startet von Hand** („Start Build“ in Xcode Cloud), auf Wunsch per Tag: `testflight-me/<datum>` = Workflow „Nur Ich“ (nur Erik), `testflight/<datum>` = Default (Tester);
   ein Push auf `main` baut nichts (06.10.2026). Mac-App nie über Xcode Cloud — `release.sh` lokal.
+  **App-Store-Einreichung (Lehre Icon Chaser 07.10.2026):** Build nur auswählbar, wenn (a) seine Fassung = Version der Store-Seite (Fassung kommt aus dem jüngsten `v*`-Tag am gebauten Commit — „Rebuild“ eines alten Builds baut den alten Commit, also neuer „Start Build“ auf main) und (b) Archive › **Distribution Preparation = „App Store Connect“** (bei „TestFlight (Internal Testing Only)“ bleibt der Build in „Add Build“ grau, ohne Begründung).
 - **Dieselbe App, überall dasselbe Können — Unterschiede brauchen einen
   Grund.** Was die eine Oberfläche kann, kann die andere auch. Ein Unterschied
   ist nur zulässig, wenn ihn die **Bedienung** (Maus und Zeiger gegen Finger)
