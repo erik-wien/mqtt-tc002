@@ -1,8 +1,63 @@
 [
   {
+    "nummer": "haus-16",
+    "name": "Haus 16×16",
+    "kategorie": "Symbols"
+  },
+  {
     "nummer": "radar-16",
     "name": "Radar 16×16",
     "kategorie": "Symbols"
+  },
+  {
+    "nummer": "wolke-16",
+    "name": "Wolke 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "wolke-zieht-16",
+    "name": "Wolke zieht 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "regen-16",
+    "name": "Regen 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "schnee-16",
+    "name": "Schnee 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "nebel-16",
+    "name": "Nebel 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "gewitter-16",
+    "name": "Gewitter 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "teils-bewoelkt-16",
+    "name": "Teils bewölkt 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "mond-16",
+    "name": "Mond 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "mond-wolke-16",
+    "name": "Mond mit Wolke 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "thermometer-16",
+    "name": "Thermometer °C 16×16",
+    "kategorie": "Environment"
   },
   {
     "nummer": "sonne-16",
@@ -10,8 +65,123 @@
     "kategorie": "Environment"
   },
   {
-    "nummer": "haus-16",
-    "name": "Haus 16×16",
+    "nummer": "warnung-16",
+    "name": "Achtung 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "uhr-16",
+    "name": "Uhr 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "herz-16",
+    "name": "Herz 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "herzschlag-16",
+    "name": "Herzschlag 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "feuer-16",
+    "name": "Feuer 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "smiley-16",
+    "name": "Smiley 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "smiley-zwinkert-16",
+    "name": "Smiley zwinkert 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "note-16",
+    "name": "Musiknote 16×16",
     "kategorie": "Symbols"
+  },
+  {
+    "nummer": "play-16",
+    "name": "Abspielen 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "papierflieger-16",
+    "name": "Papierflieger 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "funk-16",
+    "name": "Funkwellen 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "muenze-16",
+    "name": "Münze 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "flagge-at-16",
+    "name": "Flagge Österreich 16×16",
+    "kategorie": "Flags"
+  },
+  {
+    "nummer": "post-16",
+    "name": "Post 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "glocke-16",
+    "name": "Glocke 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "haken-16",
+    "name": "Haken 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "kreuz-16",
+    "name": "Kreuz 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "akku-16",
+    "name": "Akku 16×16",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "wlan-16",
+    "name": "WLAN 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "kaffee-16",
+    "name": "Kaffee 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "muell-16",
+    "name": "Mülleimer 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "auto-16",
+    "name": "Auto 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "kalender-16",
+    "name": "Kalender 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "labyrinth-16",
+    "name": "Labyrinth 16×16",
+    "kategorie": "Games"
   }
 ]

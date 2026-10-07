@@ -504,9 +504,11 @@ final class IconsTests: XCTestCase {
         defaults.set(true, forKey: "icons.grundschatzUebernommen")
         let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [quelle], kante: 16)
 
-        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults, schluessel: Iconsammlung.merker16), 3)
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults, schluessel: Iconsammlung.merker16), 37)
         let alle = sammlung.alle()
-        XCTAssertEqual(Set(alle.map(\.nummer)), ["radar-16", "sonne-16", "haus-16"])
+        XCTAssertEqual(alle.count, 37)
+        XCTAssertTrue(["radar-16", "sonne-16", "haus-16", "labyrinth-16"].allSatisfy { k in alle.contains { $0.nummer == k } })
+        XCTAssertTrue(alle.allSatisfy { $0.nummer.hasSuffix("-16") })
         XCTAssertTrue(alle.allSatisfy { $0.kante == 16 })
         XCTAssertEqual(alle.first { $0.nummer == "radar-16" }?.name, "Radar 16×16")
         XCTAssertEqual(try sammlung.einzelbilder(fuer: try XCTUnwrap(alle.first { $0.nummer == "radar-16" })).count, 16)
