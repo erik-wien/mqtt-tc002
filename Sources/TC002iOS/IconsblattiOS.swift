@@ -109,7 +109,8 @@ struct IconsblattiOS: View {
     private var bestand: Editorbestand {
         Editorbestand(icons8: Iconsammlung(schreibordner: Iconordner.eigene,
                                            leseordner: [Iconordner.mitgeliefert]),
-                      icons16: Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16),
+                      icons16: Iconsammlung(schreibordner: Iconordner.eigene16,
+                                            leseordner: [Iconordner.mitgeliefert16], kante: 16),
                       bilder: Bildersammlung(ordner: Bilderordner.eigene))
     }
 

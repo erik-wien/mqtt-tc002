@@ -112,7 +112,7 @@ ln -sf /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 ~/.local/bin/mqtttc
 
 ```bash
 mqtttc002 "Kaffee fertig"
-mqtttc002 senden "Post da" --icon 1673 --farbe "#FFAA00" --dauer 10
+mqtttc002 senden "Post da" --icon post --farbe "#FFAA00" --dauer 10
 mqtttc002 senden Achtung --an Küche --zentriert --unten
 mqtttc002 uhren            # was eingerichtet ist, * sind die Ziele
 mqtttc002 icons            # Nummer und Name

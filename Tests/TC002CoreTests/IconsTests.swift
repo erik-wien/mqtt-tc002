@@ -459,6 +459,65 @@ final class IconsTests: XCTestCase {
                        "ein zuvor geloeschtes Icon darf nicht zurueckkommen")
     }
 
+    /// Der Grundschatz im Repo (`Icons/`): jede Datei hat einen Namenseintrag,
+    /// ist als 8×8 lesbar, und die Uebernahme legt ihn vollstaendig an, ohne
+    /// ein vorhandenes eigenes Icon (auch eines aus dem alten Bestand) anzufassen.
+    func testMitgelieferterGrundschatzIstVollstaendigUndUebernehmbar() throws {
+        let quelle = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Icons")
+        let dateien = try FileManager.default.contentsOfDirectory(at: quelle, includingPropertiesForKeys: nil)
+            .filter { ["gif", "png", "jpg"].contains($0.pathExtension.lowercased()) }
+        XCTAssertEqual(dateien.count, 36)
+        let eintraege = try JSONSerialization.jsonObject(with: Data(contentsOf: quelle.appendingPathComponent("names.json")))
+            as? [[String: String]] ?? []
+        XCTAssertEqual(Set(eintraege.compactMap { $0["nummer"] }),
+                       Set(dateien.map { $0.deletingPathExtension().lastPathComponent }))
+        for datei in dateien {
+            XCTAssertNoThrow(try Bildraster.lesenMitZeiten(datei, breite: 8, hoehe: 8), datei.lastPathComponent)
+        }
+
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        try Data("GIF89a-alt".utf8).write(to: eigen.appendingPathComponent("1673.gif"))
+        try Data("GIF89a-eigen".utf8).write(to: eigen.appendingPathComponent("sonne.gif"))
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [quelle])
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: UUID().uuidString))
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults), 35,
+                       "die Nummer ist der Dateiname ohne Endung: sonne.gif belegt auch sonne")
+        XCTAssertEqual(try Data(contentsOf: eigen.appendingPathComponent("1673.gif")), Data("GIF89a-alt".utf8))
+        XCTAssertEqual(sammlung.mitgelieferteUebernehmen(), 0, "Wiederherstellen findet danach nichts mehr")
+        XCTAssertEqual(sammlung.alle().first { $0.nummer == "radar" }?.name, "Radar")
+    }
+
+    /// Der mitgelieferte 16×16-Bestand (`Icons16/`): einmalige Uebernahme mit
+    /// eigenem Merker, Wiederherstellen ergaenzt nur Fehlendes, die Icons
+    /// kommen mit Kante 16 aus dem 16er-Ordner.
+    func testMitgelieferte16erKommenEinmalUndWiederherstellenErgaenztNurFehlendes() throws {
+        let quelle = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Icons16")
+        let eigen = temp()
+        try FileManager.default.createDirectory(at: eigen, withIntermediateDirectories: true)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: UUID().uuidString))
+        // Der 8×8-Merker ist schon gesetzt (bestehende Installation): die 16er kommen trotzdem.
+        defaults.set(true, forKey: "icons.grundschatzUebernommen")
+        let sammlung = Iconsammlung(schreibordner: eigen, leseordner: [quelle], kante: 16)
+
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults, schluessel: Iconsammlung.merker16), 3)
+        let alle = sammlung.alle()
+        XCTAssertEqual(Set(alle.map(\.nummer)), ["radar-16", "sonne-16", "haus-16"])
+        XCTAssertTrue(alle.allSatisfy { $0.kante == 16 })
+        XCTAssertEqual(alle.first { $0.nummer == "radar-16" }?.name, "Radar 16×16")
+        XCTAssertEqual(try sammlung.einzelbilder(fuer: try XCTUnwrap(alle.first { $0.nummer == "radar-16" })).count, 16)
+
+        try FileManager.default.removeItem(at: eigen.appendingPathComponent("haus-16.png"))
+        XCTAssertEqual(sammlung.grundschatzEinmalUebernehmen(defaults: defaults, schluessel: Iconsammlung.merker16), 0,
+                       "einmalig: ein geloeschtes Icon kommt nicht von selbst zurueck")
+        XCTAssertEqual(sammlung.mitgelieferteUebernehmen(), 1, "Wiederherstellen holt nur das fehlende haus-16")
+        XCTAssertEqual(sammlung.mitgelieferteUebernehmen(), 0)
+    }
+
     /// Schlaegt die erste Uebernahme fehl — der Leseordner ist nicht da, etwa
     /// beim Start aus `swift run` —, darf der Merker nicht gesetzt sein: der
     /// naechste Start bekommt noch einen Versuch.

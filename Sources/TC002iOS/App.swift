@@ -20,6 +20,7 @@ struct TC002iOSApp: App {
         Schriften.registrieren()
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
             .grundschatzEinmalUebernehmen()
+        Iconsammlung.grundschatz16().grundschatzEinmalUebernehmen(schluessel: Iconsammlung.merker16)
     }
 
     var body: some Scene {

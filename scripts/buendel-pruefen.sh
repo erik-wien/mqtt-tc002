@@ -72,6 +72,11 @@ if [ ! -d "$APP/Icons" ] || [ -z "$(find "$APP/Icons" -type f -print -quit 2>/de
     fehlt=1
 fi
 
+if [ ! -d "$APP/Icons16" ] || [ -z "$(find "$APP/Icons16" -type f -print -quit 2>/dev/null)" ]; then
+    echo "fehlt   Icons16 (Ordner mit mindestens einer Datei)"
+    fehlt=1
+fi
+
 if [ ! -e "$APP/Assets.car" ]; then
     echo "fehlt   Assets.car"
     fehlt=1

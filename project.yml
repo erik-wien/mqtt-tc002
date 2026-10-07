@@ -18,6 +18,9 @@ targets:
       - path: Icons
         type: folder
         buildPhase: resources
+      - path: Icons16
+        type: folder
+        buildPhase: resources
       - path: Resources/Schriften
         type: folder
         buildPhase: resources

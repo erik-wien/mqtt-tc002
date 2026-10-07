@@ -1,152 +1,182 @@
 [
   {
-    "nummer": "12246",
-    "name": "Animated cloud",
+    "nummer": "sonne",
+    "name": "Sonne",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "wolke",
+    "name": "Wolke",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "wolke-zieht",
+    "name": "Wolke zieht",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "regen",
+    "name": "Regen",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "schnee",
+    "name": "Schnee",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "nebel",
+    "name": "Nebel",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "gewitter",
+    "name": "Gewitter",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "teils-bewoelkt",
+    "name": "Teils bewölkt",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "mond",
+    "name": "Mond",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "mond-wolke",
+    "name": "Mond mit Wolke",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "thermometer",
+    "name": "Thermometer °C",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "warnung",
+    "name": "Achtung",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "12294",
-    "name": "cloud",
+    "nummer": "uhr",
+    "name": "Uhr",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "12676",
-    "name": "Spotify",
+    "nummer": "herz",
+    "name": "Herz",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "1278",
-    "name": "RSS",
-    "kategorie": "Logos"
+    "nummer": "herzschlag",
+    "name": "Herzschlag",
+    "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "13499",
-    "name": "Austria",
+    "nummer": "feuer",
+    "name": "Feuer",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "smiley",
+    "name": "Smiley",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "smiley-zwinkert",
+    "name": "Smiley zwinkert",
+    "kategorie": "Indicators & Notifications"
+  },
+  {
+    "nummer": "note",
+    "name": "Musiknote",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "play",
+    "name": "Abspielen",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "papierflieger",
+    "name": "Papierflieger",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "haus",
+    "name": "Haus",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "funk",
+    "name": "Funkwellen",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "muenze",
+    "name": "Münze",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "flagge-at",
+    "name": "Flagge Österreich",
     "kategorie": "Flags"
   },
   {
-    "nummer": "1630",
-    "name": "Smiling Sun",
-    "kategorie": "Emoji"
-  },
-  {
-    "nummer": "1673",
-    "name": "Swiss Snow",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "17056",
-    "name": "Fog",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "2056",
-    "name": "Temperature Celcius",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "22461",
-    "name": "Home Assistant",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "2284",
-    "name": "Rainy",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "2286",
-    "name": "PartlyCloudy",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "2416",
-    "name": "Rain",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "2981",
-    "name": "Severe TStorm",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "3061",
-    "name": "Mario",
-    "kategorie": "Games"
-  },
-  {
-    "nummer": "31570",
-    "name": "telegram new",
-    "kategorie": "Games"
-  },
-  {
-    "nummer": "3579",
-    "name": "Home Assistant",
-    "kategorie": "Logos"
-  },
-  {
-    "nummer": "53785",
-    "name": "heartbeat",
-    "kategorie": "Social"
-  },
-  {
-    "nummer": "54631",
-    "name": "Moon cloud soleil nuage",
-    "kategorie": "Environment"
-  },
-  {
-    "nummer": "6111",
-    "name": "Attention",
+    "nummer": "post",
+    "name": "Post",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "64078",
-    "name": "Telegram",
-    "kategorie": "Logos"
-  },
-  {
-    "nummer": "7320",
-    "name": "Youtube",
+    "nummer": "glocke",
+    "name": "Glocke",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "7756",
-    "name": "Best Real Fire Flame",
-    "kategorie": "Holidays"
+    "nummer": "haken",
+    "name": "Haken",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "82",
-    "name": "Clock",
+    "nummer": "kreuz",
+    "name": "Kreuz",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "akku",
+    "name": "Akku",
     "kategorie": "Indicators & Notifications"
   },
   {
-    "nummer": "962",
-    "name": "Moon",
-    "kategorie": "Environment"
+    "nummer": "wlan",
+    "name": "WLAN",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "Dinotec",
-    "name": "Dinotec",
-    "kategorie": ""
+    "nummer": "kaffee",
+    "name": "Kaffee",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "Home Assistant",
-    "name": "Home Assistant",
-    "kategorie": ""
+    "nummer": "muell",
+    "name": "Mülleimer",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "Pure Heart",
-    "name": "Pure Heart",
-    "kategorie": ""
+    "nummer": "auto",
+    "name": "Auto",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "Scan",
-    "name": "Scan",
-    "kategorie": ""
+    "nummer": "kalender",
+    "name": "Kalender",
+    "kategorie": "Symbols"
   },
   {
-    "nummer": "Smile Animation",
-    "name": "Smile Animation",
-    "kategorie": ""
+    "nummer": "radar",
+    "name": "Radar",
+    "kategorie": "Symbols"
   }
 ]

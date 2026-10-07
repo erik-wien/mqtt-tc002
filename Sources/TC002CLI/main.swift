@@ -54,7 +54,7 @@ OPTIONEN FUER „senden"
 
 BEISPIELE
   mqtttc002 "Kaffee fertig"
-  mqtttc002 senden "Post da" --icon 1673 --farbe "#FFAA00"
+  mqtttc002 senden "Post da" --icon post --farbe "#FFAA00"
   mqtttc002 senden Achtung --an Kueche --dauer 10 --zentriert
   mqtttc002 loeschen cli
 

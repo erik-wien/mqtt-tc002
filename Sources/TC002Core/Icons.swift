@@ -691,8 +691,8 @@ public struct Iconsammlung {
     /// statt "noch nie uebernommen" heissen, und ein zuvor geloeschtes Icon
     /// duerfte dann nicht zurueckkommen.
     @discardableResult
-    public func grundschatzEinmalUebernehmen(defaults: UserDefaults = .standard) -> Int {
-        let schluessel = "icons.grundschatzUebernommen"
+    public func grundschatzEinmalUebernehmen(defaults: UserDefaults = .standard,
+                                             schluessel: String = "icons.grundschatzUebernommen") -> Int {
         guard !defaults.bool(forKey: schluessel) else { return 0 }
         let kopiert = mitgelieferteUebernehmen()
         // Der Merker erst hinterher, und nur, wenn tatsaechlich etwas da war:
@@ -702,6 +702,14 @@ public struct Iconsammlung {
         if kopiert > 0 || leseordnerLeer() { defaults.set(true, forKey: schluessel) }
         return kopiert
     }
+
+    /// Der mitgelieferte 16×16-Bestand: eigener Merker, damit auch Installationen,
+    /// die den 8×8-Grundschatz schon haben, die 16er einmal bekommen.
+    public static func grundschatz16() -> Iconsammlung {
+        Iconsammlung(schreibordner: Iconordner.eigene16, leseordner: [Iconordner.mitgeliefert16], kante: 16)
+    }
+
+    public static let merker16 = "icons.grundschatz16Uebernommen"
 
     /// Ob in keinem Leseordner eine Bilddatei liegt — dann gibt es nichts zu
     /// holen, und der Merker darf trotz 0 kopierter Dateien gesetzt werden.

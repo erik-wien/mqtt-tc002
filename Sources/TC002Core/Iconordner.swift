@@ -13,6 +13,13 @@ public enum Iconordner {
             ?? URL(fileURLWithPath: "Icons")
     }
 
+    /// Die mitgelieferten 16×16-Icons, im Bundle neben `Icons`. Sie kommen in
+    /// `eigene16`, nicht in `eigene`: je Groesse ein eigener Bestand.
+    public static var mitgeliefert16: URL {
+        Programmbuendel.eigenes.resourceURL?.appendingPathComponent("Icons16")
+            ?? URL(fileURLWithPath: "Icons16")
+    }
+
     /// Selbst gemalte und von LaMetric geholte Icons, 8×8. Im Bundle haetten sie
     /// nichts verloren: dort waeren sie beim naechsten Bau weg, und unter
     /// /Applications ist der Ordner nicht beschreibbar.

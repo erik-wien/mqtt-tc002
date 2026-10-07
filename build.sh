@@ -190,6 +190,7 @@ ${ICON_EINTRAEGE}
 PLIST
 
 cp -R Icons "$APP/Contents/Resources/Icons"
+cp -R Icons16 "$APP/Contents/Resources/Icons16"
 cp -R Resources/Schriften "$APP/Contents/Resources/Schriften"
 cp docs/tc002-protokoll.md "$APP/Contents/Resources/tc002-protokoll.md"
 # Die englische Fassung, wenn es sie gibt — die Ansicht waehlt danach.

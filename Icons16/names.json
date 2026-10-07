@@ -1,0 +1,17 @@
+[
+  {
+    "nummer": "radar-16",
+    "name": "Radar 16×16",
+    "kategorie": "Symbols"
+  },
+  {
+    "nummer": "sonne-16",
+    "name": "Sonne 16×16",
+    "kategorie": "Environment"
+  },
+  {
+    "nummer": "haus-16",
+    "name": "Haus 16×16",
+    "kategorie": "Symbols"
+  }
+]

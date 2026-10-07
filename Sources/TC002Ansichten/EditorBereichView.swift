@@ -1956,7 +1956,7 @@ public struct EditorBereichView: View {
     private func grundschatzWiederherstellen() {
         let quelle = Iconsammlung(schreibordner: Iconordner.eigene,
                                   leseordner: [Iconordner.mitgeliefert])
-        let anzahl = quelle.mitgelieferteUebernehmen()
+        let anzahl = quelle.mitgelieferteUebernehmen() + Iconsammlung.grundschatz16().mitgelieferteUebernehmen()
         vorhandene = bestand.alle()
         bewegungLesen()
         meldung = anzahl > 0
