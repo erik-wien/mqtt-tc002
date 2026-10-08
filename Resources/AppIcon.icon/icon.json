@@ -3,8 +3,8 @@
     {
       "value": {
         "linear-gradient": [
-          "srgb:0.20392,0.31373,0.49804,1.00000",
-          "srgb:0.10588,0.16471,0.29020,1.00000"
+          "srgb:0.74510,0.77647,0.81961,1.00000",
+          "srgb:0.50196,0.54902,0.62745,1.00000"
         ],
         "orientation": {
           "start": {
@@ -22,8 +22,8 @@
       "appearance": "dark",
       "value": {
         "linear-gradient": [
-          "srgb:0.08627,0.13333,0.22745,1.00000",
-          "srgb:0.05882,0.09412,0.16078,1.00000"
+          "srgb:0.29020,0.43529,0.65882,1.00000",
+          "srgb:0.20392,0.32157,0.49804,1.00000"
         ],
         "orientation": {
           "start": {
@@ -43,10 +43,114 @@
       "layers": [
         {
           "glass": false,
-          "image-name": "icon.svg",
-          "name": "icon"
+          "image-name": "wellen-nacht.svg",
+          "name": "wellen-nacht",
+          "hidden-specializations": [
+            {
+              "value": true
+            },
+            {
+              "appearance": "dark",
+              "value": false
+            }
+          ]
+        },
+        {
+          "glass": false,
+          "image-name": "wellen.svg",
+          "name": "wellen",
+          "hidden-specializations": [
+            {
+              "value": false
+            },
+            {
+              "appearance": "dark",
+              "value": true
+            }
+          ]
         }
       ],
+      "name": "Wellen",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name": "uhr.svg",
+          "name": "uhr"
+        }
+      ],
+      "name": "Uhr",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name": "logo.svg",
+          "name": "logo"
+        }
+      ],
+      "name": "Logo",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name": "band-nacht.svg",
+          "name": "band-nacht",
+          "hidden-specializations": [
+            {
+              "value": true
+            },
+            {
+              "appearance": "dark",
+              "value": false
+            }
+          ]
+        },
+        {
+          "glass": false,
+          "image-name": "band.svg",
+          "name": "band",
+          "hidden-specializations": [
+            {
+              "value": false
+            },
+            {
+              "appearance": "dark",
+              "value": true
+            }
+          ]
+        }
+      ],
+      "name": "Band",
       "shadow": {
         "kind": "neutral",
         "opacity": 0.5

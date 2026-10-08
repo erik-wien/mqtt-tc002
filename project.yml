@@ -37,8 +37,7 @@ targets:
       # fuer den Mac in build.sh.
       - path: Resources/Sprachen/de.lproj
         buildPhase: resources
-      - path: Resources/AppIconiOS.xcassets
-        buildPhase: resources
+      - path: Resources/AppIcon.icon
       # Die GPL-3.0 gehoert ins Buendel, nicht nur als Verweis: Das Ueber-Blatt
       # zeigt den Text an, und die Lizenz verlangt, ihn mitzuliefern. Die drei
       # OFL-Texte der Pixelschriften fahren schon mit, weil `Resources/Schriften`

@@ -423,7 +423,9 @@ Lokales Netzwerk > den Eintrag aus- und wieder einschalten.
 
 ## App-Icon
 
-Quelle: `suite-mqtt-tc001.svg` aus der Icon-Chaser-Ablage (MeineIcons), Stand 06.10.2026. Mac: `Resources/AppIcon.icon`
-(eine Ebene `Assets/icon.svg`), iOS: `Resources/AppIconiOS.xcassets/.../icon-1024.png` (per `rsvg-convert -w 1024`, ohne Alpha).
+Quelle: `suite-mqtt-tc001.svg` aus der Icon-Chaser-Ablage (MeineIcons), Stand 06.10.2026; seit 08.10.2026 mit Tag-/Nachthintergrund
+(Freigabe: `docs/mockups/2026-10-08-app-icons-tag-nacht.md`). Mac **und** iOS: `Resources/AppIcon.icon` (Ebenen `wellen`, `uhr`, `logo`, `band`;
+`wellen-nacht`/`band-nacht` sind die Nachtfassungen, per `hidden-specializations` je Darstellung ein-/ausgeblendet — `image-name-specializations`
+übersetzt `actool` still ohne Wirkung). Kein Hintergrund-Rechteck in den SVGs, sonst verdeckt es `fill-specializations`.
 Fallen beim `actool`-Bau: das SVG braucht `width="1024" height="1024"` (sonst winzig mitten im Icon), und `icon.json`
 braucht `fill-specializations` — ohne Füllung bricht der Export still ab („Icon: keines gefunden“).
