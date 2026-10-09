@@ -104,7 +104,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.fuenfPlaetze, HilfeInhalt.blockwissenAnfang,
         HilfeInhalt.blockwissenSchluss, HilfeInhalt.wegeRegel,
         HilfeInhalt.blockierendeAnzeige, HilfeInhalt.blockLoeschen,
-        HilfeInhalt.dauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
+        HilfeInhalt.dauer, HilfeInhalt.nachricht, HilfeInhalt.lebensdauer, HilfeInhalt.zeichen, HilfeInhalt.schriftart,
         HilfeInhalt.groesse, HilfeInhalt.microFuenf, HilfeInhalt.fettUndGross,
         HilfeInhalt.randUndAbstand, HilfeInhalt.breiteUndAusrichtung,
         HilfeInhalt.iconOderAnzeige, HilfeInhalt.iconImLauf, HilfeInhalt.verlaufHerkunft,

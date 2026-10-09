@@ -263,7 +263,7 @@ public enum HilfeInhalt {
     /// Zeiger ist der eine begruendete Unterschied und deshalb als solcher
     /// benannt.
     public static let blockLoeschen: [Hilfebaustein] = [
-        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „Löschen“ räumt den Platz auf den gewählten Uhren. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
+        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „In der Schleife“ nimmt die Anzeige aus dem Umlauf der Uhr, ohne sie zu löschen — der Platz bleibt belegt, der Block erscheint grau, und ein zweiter Druck auf den Eintrag schaltet sie wieder ein. „Löschen“ räumt den Platz auf den gewählten Uhren. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
         .absatz("Am Zeiger erscheint zusätzlich ein rotes ⊗ in der Ecke des Blocks, solange der Zeiger darüber steht — so wie Safari das Schließzeichen seiner Tabs zeigt. Am Finger gibt es kein Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der Wackelmodus des Home-Bildschirms."),
     ]
 
@@ -273,6 +273,24 @@ public enum HilfeInhalt {
     public static let dauer: [Hilfebaustein] = [
         .absatz("Der Unterschied zwischen „Dauer“ und „Seitenwechsel“ ist die Reichweite. Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, die fünf Meldungen. Wie schnell sie das tut, sagt der Seitenwechsel, und er gilt für alle. Die Dauer reist dagegen mit einer einzelnen Meldung mit und gibt ihr eine eigene Standzeit; leer oder 0 heißt keine Angabe, dann bleibt es beim Seitenwechsel."),
         .absatz("Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht."),
+    ]
+
+    /// Wie lange eine neue Anzeige lebt. Die Regler heissen auf beiden
+    /// Oberflaechen gleich; nur der Ort ist verschieden (Reiter „Zeit“ am
+    /// Schreibtisch, Blatt „Format“ am iPhone), und den nennen die Aufrufer.
+    public static let lebensdauer: [Hilfebaustein] = [
+        .ueberschrift("Lebensdauer"),
+        .absatz("Eine neue Anzeige verschwindet nach 30 Minuten von selbst: „Nach“ und die Einheit (Minuten oder Stunden) stellen die Zeit ein, „Dann“ sagt, was geschieht — „Entfernen“ löscht die Anzeige auf der Uhr, „Rot markieren“ lässt sie stehen und setzt einen dunkelroten Rand. Mit „Behalten“ bleibt sie, bis man sie löscht oder ersetzt; „Nach“ und „Dann“ sind dann gesperrt."),
+        .absatz("Der Platz merkt sich die Werte wie die übrigen Regler, bis er gelöscht oder mit anderen Werten neu belegt wird. Eine Nachricht hat keine Lebensdauer."),
+    ]
+
+    /// Die Nachricht (im Protokoll eine Benachrichtigung): gleich auf beiden
+    /// Oberflaechen, nur der Ort der Regler unterscheidet sich.
+    public static let nachricht: [Hilfebaustein] = [
+        .ueberschrift("Anzeige oder Nachricht"),
+        .absatz("Das Segment „Anzeige | Nachricht“ über dem Eingabefeld bestimmt, was „Senden“ schickt. Eine Anzeige liegt auf einem der fünf Plätze und läuft in der Schleife der Uhr. Eine Nachricht unterbricht die Schleife einmal und belegt keinen Platz; bei „Nachricht“ sind die fünf Blöcke deshalb ausgegraut."),
+        .absatz("Die Regler der Nachricht: „Halten“ lässt sie stehen, bis sie zurückgezogen wird; „Aufwecken“ zeigt sie auch bei ausgeschaltetem Display; „Ersetzen“ verdrängt die sichtbare Nachricht, statt sich hinter ihr einzureihen; „Durchläufe“ sagt, wie oft ein laufender Text durchzieht. Voreingestellt sind Halten und Aufwecken an, Ersetzen aus, zwei Durchläufe. Die Dauer gilt wie bei einer Anzeige."),
+        .absatz("Solange eine gehaltene Nachricht steht, die diese App geschickt hat, erscheint neben dem Segment „Nachricht zurückziehen“. Nachricht und Zurückziehen gelten für alle gewählten Uhren."),
     ]
 
     /// Umlaute und Sonderzeichen: eine Eigenschaft der Uhr.

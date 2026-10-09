@@ -100,7 +100,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.blockLoeschen
                 + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
-                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift.")]
+                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift, der Lebensdauer und den Reglern der Nachricht. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet.")]
+                + HilfeInhalt.nachricht
+                + HilfeInhalt.lebensdauer
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),

@@ -116,6 +116,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken. Die Blockreihe im Bereich „Icons“ verhält sich genauso."),
                 ]
                 + HilfeInhalt.dauer
+                + [
+                    .absatz("Lebensdauer und Nachricht stehen im Reiter „Zeit“ des Inspektors. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet."),
+                ]
+                + HilfeInhalt.nachricht
+                + HilfeInhalt.lebensdauer
                 + HilfeInhalt.zeichen
                 + [
                     .ueberschrift("Formatierung"),
