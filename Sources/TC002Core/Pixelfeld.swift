@@ -49,19 +49,21 @@ public struct Pixelfeld: Equatable, Sendable {
         punkte = Array(repeating: nil, count: breite * hoehe)
     }
 
-    /// Fasst waagrechte Laeufe gleicher Farbe zu einem Rechteck zusammen.
-    public func alsDrawBefehle() -> [DrawBefehl] {
-        var befehle: [DrawBefehl] = []
-        for y in 0..<hoehe {
-            var x = 0
-            while x < breite {
-                guard let farbe = punkte[y * breite + x] else { x += 1; continue }
-                var laenge = 1
-                while x + laenge < breite, punkte[y * breite + x + laenge] == farbe { laenge += 1 }
-                befehle.append(DrawBefehl(x: x, y: y, breite: laenge, hoehe: 1, farbe: farbe))
-                x += laenge
+    /// Das Feld in 2 × 2 grossen Bloecken, so wie NG eine Anzeige zeichnet,
+    /// solange `enlargeApps` gilt (§1.1): Ein Block ist gesetzt, sobald einer
+    /// seiner vier Punkte es ist, und nimmt dessen Farbe.
+    public func inDoppelpixeln() -> Pixelfeld {
+        var aus = Pixelfeld(breite: breite, hoehe: hoehe)
+        for y in stride(from: 0, to: hoehe, by: 2) {
+            for x in stride(from: 0, to: breite, by: 2) {
+                let farbe = [(0, 0), (1, 0), (0, 1), (1, 1)]
+                    .lazy.compactMap { self.farbe(x: x + $0.0, y: y + $0.1) }.first
+                guard let farbe else { continue }
+                for (dx, dy) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+                    aus.setzen(x: x + dx, y: y + dy, farbe: farbe)
+                }
             }
         }
-        return befehle
+        return aus
     }
 }

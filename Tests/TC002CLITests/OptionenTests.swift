@@ -125,16 +125,19 @@ final class OptionenTests: XCTestCase {
             .appendingPathComponent(UUID().uuidString))
     }
 
-    /// Der Rahmen traegt Text und Regler als Herkunft: Die Uhr setzt den Text
-    /// selbst, es gehen keine Pixel hinaus.
-    func testDerRahmenTraegtDieOptionenAlsHerkunft() throws {
+    /// Der Werkzeug-Rahmen geht als Pixel hinaus (`Pixelweg`); mit
+    /// „als Text" traegt er Text und Regler als Herkunft.
+    func testDerRahmenGehtAlsPixelUndAlsTextMitHerkunft() throws {
         let o = try Optionen.zerlegt(["senden", "Hi", "--rechts", "--unten"])
         var m = o.meldung
         m.text = "Hi"
         let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-        XCTAssertTrue(rahmen.draw.isEmpty)
-        XCTAssertTrue(rahmen.bilder.isEmpty)
-        let herkunft = try XCTUnwrap(rahmen.herkunft)
+        XCTAssertNotNil(rahmen.pixel)
+        XCTAssertNil(rahmen.herkunft)
+        m.weg = .text
+        let textrahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
+        XCTAssertNil(textrahmen.pixel)
+        let herkunft = try XCTUnwrap(textrahmen.herkunft)
         XCTAssertEqual(herkunft.optionen.text, "Hi")
         XCTAssertEqual(herkunft.optionen.waagrecht, .rechts)
         XCTAssertEqual(herkunft.optionen.senkrecht, .unten)

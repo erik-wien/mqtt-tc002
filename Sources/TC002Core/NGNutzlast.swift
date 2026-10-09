@@ -10,17 +10,25 @@ import Foundation
 /// Einsicht gebaut, dass ein Sender ohne Rueckkanal nichts beweist — also wird
 /// hier gesagt, was nicht geht, statt es zu schicken und zu hoffen.
 public enum NGFehler: Error, LocalizedError {
-    /// Eine Sendung ohne Meldungsoptionen — ein gemaltes Bild, eine Bildersammlung.
-    case keinPixelweg
-    /// Ein Icon in einem Format, das NG nicht liest.
+    /// Ein Icon in einem Format, das NG hier nicht gebrauchen kann.
     case iconFormat(String)
+    /// Eine Anzeige, die selbst ueber HTTP nicht passt (2 MiB, §8).
+    case zuGross(bytes: Int)
+    /// Eine Anzeige zu gross fuer MQTT, die Uhr hat aber keine Adresse fuer HTTP.
+    case keineAdresseFuerGrosse(bytes: Int)
+    /// Ein Rahmen ohne Text und ohne Pixel.
+    case leer
 
     public var errorDescription: String? {
         switch self {
-        case .keinPixelweg:
-            return lok("Ein gemaltes Bild lässt sich noch nicht an die Uhr schicken: Die AWTRIX NG bekommt von dieser App Text und Regler, kein Pixelfeld.")
         case .iconFormat(let typ):
-            return lokf("Die AWTRIX NG liest nur GIF und JPEG, dieses Icon ist %@. Ein anderes wählen oder es ohne Icon schicken.", typ)
+            return lokf("Ein Icon schickt die App an die AWTRIX NG nur als GIF, dieses ist %@. Ein anderes wählen oder es ohne Icon schicken.", typ)
+        case .zuGross(let bytes):
+            return lokf("Diese Anzeige ist zu groß: %d KB, die Uhr nimmt höchstens 2 MB. Kürzeren Text oder weniger Bilder wählen.", (bytes + 1023) / 1024)
+        case .keineAdresseFuerGrosse(let bytes):
+            return lokf("Diese Anzeige ist mit %d KB zu groß für MQTT (höchstens 8 KB), und für die Uhr ist keine Adresse eingetragen, über die sie als HTTP-Anfrage ginge. Unter „Einstellungen“ die Adresse eintragen.", (bytes + 1023) / 1024)
+        case .leer:
+            return lok("Es gibt nichts zu senden.")
         }
     }
 }
@@ -107,26 +115,27 @@ public enum NGNutzlast {
         return Int((unsere / AwtrixNG.grundgeschwindigkeit * 100).rounded())
     }
 
-    /// Base64 eines Icons ohne den `data:…;base64,`-Vorsatz.
+    /// Das Icon so, wie es in `icon` steht: als Data-URL `data:image/gif;base64,…`.
     ///
-    /// NG entscheidet allein nach der Laenge (§5.3): bis 64 Zeichen eine
-    /// Kennung im Dateisystem des Geraets, darueber Base64 unmittelbar im
-    /// Text. Bliebe der Vorsatz stehen, waere es zwar weiter lang genug — aber
-    /// die Bytes danach waeren kein Bild.
+    /// NG entscheidet nach der Form (§5.3): bis 64 Zeichen eine Kennung im
+    /// Dateisystem der Uhr, eine Data-URL das Bild selbst, reines Base64 ohne
+    /// Vorsatz ist `422`. Unsere Icons liegen in der App, nicht unter `/ICONS`
+    /// der Uhr, also geht das Bild mit.
     ///
-    /// PNG wird abgewiesen statt stillschweigend geschickt: NG liest nur GIF
-    /// und JPEG und faellt sonst auf die Anordnung ohne Icon zurueck, ohne
-    /// etwas zu melden.
+    /// Nur GIF: NG liest kein PNG (die Data-URL wird abgewiesen) und schneidet
+    /// ein JPEG auf 8 × 8 zu; beides faellt sonst still auf „kein Icon" oder auf
+    /// ein falsches Bild. Die Gegenseite (`Pixelweg.alsGIF`) wandelt vorher um.
     public static func icon(ausDatenURI uri: String) throws -> String {
         let teile = uri.split(separator: ",", maxSplits: 1, omittingEmptySubsequences: false)
         guard teile.count == 2, teile[0].hasPrefix("data:") else { return uri }
         let kopf = teile[0].lowercased()
-        if kopf.contains("image/png") { throw NGFehler.iconFormat("PNG") }
-        guard kopf.contains("image/gif") || kopf.contains("image/jpeg") else {
+        guard kopf.hasPrefix("data:image/gif;base64") else {
+            if kopf.contains("image/png") { throw NGFehler.iconFormat("PNG") }
+            if kopf.contains("image/jpeg") { throw NGFehler.iconFormat("JPEG") }
             throw NGFehler.iconFormat(String(kopf.dropFirst("data:".count)
                 .replacingOccurrences(of: ";base64", with: "")))
         }
-        return String(teile[1])
+        return uri
     }
 
     /// Die Anzeige als JSON. Die Reihenfolge der Schluessel ist festgelegt,

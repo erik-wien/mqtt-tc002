@@ -194,7 +194,7 @@ struct SendeniOS: View {
 
     /// Womit die Vorschau rastert: mit fester Näherungsschrift, weil das Gerät
     /// den Text selbst setzt. Gesendet werden unverändert `optionen`.
-    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung }
+    private var vorschauOptionen: Meldungsoptionen { optionen.fuerVorschau }
 
     /// Die Vorschau einer bestimmten Uhr — jede hat ihr eigenes Maß. Die Laufschrift bekommt nur die angesehene: Ihre
     /// Einzelbilder sind auf deren Maß gerechnet und wären auf einem anderen
@@ -202,7 +202,7 @@ struct SendeniOS: View {
     @ViewBuilder
     private func vorschau(fuer uhr: Uhr, angesehen: Bool) -> some View {
         let uhrmass = Anzeigemass.fuer(uhr)
-        let o = optionen.naeherung
+        let o = optionen.fuerVorschau
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
         VStack(spacing: 4) {
             VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
@@ -253,14 +253,14 @@ struct SendeniOS: View {
     /// `.help`; VoiceOver bekommt denselben Wortlaut wie die Mac-Hilfe
     /// (`SendenView.fettHilfe`) als accessibilityHint mit.
     private var fettHinweis: String {
-        if let grund = AwtrixNG.begruendung(.fett) { return grund }
+        if let grund = AwtrixNG.begruendung(.fett, weg: optionen.weg) { return grund }
         if !fettWirkt { return lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift) }
         return lok("Fett")
     }
 
     /// Wie `fettHinweis`, fuer Grossbuchstaben (`SendenView.grossHilfe`, Mac).
     private var grossHinweis: String {
-        if let grund = AwtrixNG.begruendung(.grossbuchstaben) { return grund }
+        if let grund = AwtrixNG.begruendung(.grossbuchstaben, weg: optionen.weg) { return grund }
         if kleinbuchstabenMoeglich {
             return lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
         }
@@ -271,7 +271,7 @@ struct SendeniOS: View {
     /// dieselben zwei Saetze wie `.help(...)` an der Schriftart-Auswahl der
     /// Mac-Fassung (SendenView.swift).
     private var schriftartHinweis: String {
-        if let grund = AwtrixNG.begruendung(.schriftart) { return grund }
+        if let grund = AwtrixNG.begruendung(.schriftart, weg: optionen.weg) { return grund }
         return lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
     }
 
@@ -279,7 +279,7 @@ struct SendeniOS: View {
     /// zurueckgestellt — sonst zeigte das Menue
     /// „rechtsbuendig" und die Uhr setzte linksbuendig.
     private func ausrichtungPruefen() {
-        guard !AwtrixNG.waagrechteAusrichtungen.contains(horizontal) else { return }
+        guard !AwtrixNG.waagrechteAusrichtungen(weg: optionen.weg).contains(horizontal) else { return }
         horizontal = .links
     }
 
@@ -455,7 +455,7 @@ struct SendeniOS: View {
             // Oberflaeche sagt, sagt die andere auch.
             HStack(spacing: 8) {
                 Uhrenpunkte(zustand: zustand)
-                Hilfezeichen(AwtrixNG.vorschauhinweis)
+                if optionen.weg == .text { Hilfezeichen(AwtrixNG.vorschauhinweis) }
             }
         }
         // Der waagrechte Rollbereich des Blaetterers nimmt sich senkrecht
@@ -668,7 +668,7 @@ struct SendeniOS: View {
                     Label { menuewert(Text(schrift).font(.caption)) } icon: { Image(systemName: "textformat") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!AwtrixNG.wirkt(.schriftart))
+                .disabled(!AwtrixNG.wirkt(.schriftart, weg: optionen.weg))
                 .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                 .accessibilityHint(Text(schriftartHinweis))
                 Menu {
@@ -683,9 +683,9 @@ struct SendeniOS: View {
                     Label { menuewert(Text(String(Int(groesse)))) } icon: { Image(systemName: "textformat.size") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!AwtrixNG.wirkt(.groesse))
+                .disabled(!AwtrixNG.wirkt(.groesse, weg: optionen.weg))
                 .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
-                .accessibilityHint(Text(AwtrixNG.begruendung(.groesse) ?? lok("Schriftgröße")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.groesse, weg: optionen.weg) ?? lok("Schriftgröße")))
                 // `Toggle` im Knopfstil statt eines `Button`, der seinen
                 // Zustand selbst faerbt: Der getoente Hintergrund im
                 // Zustand „an" und das Merkmal `.isSelected` fuer die
@@ -707,7 +707,7 @@ struct SendeniOS: View {
                 .toggleStyle(.button)
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!fettWirkt)
-                .disabled(!AwtrixNG.wirkt(.fett))
+                .disabled(!AwtrixNG.wirkt(.fett, weg: optionen.weg))
                 .accessibilityLabel("Fett")
                 .accessibilityHint(Text(fettHinweis))
                 Toggle(isOn: $grossbuchstaben) {
@@ -736,7 +736,7 @@ struct SendeniOS: View {
                             .tag(SendenHAusrichtung.links)
                         Label("Zentriert", systemImage: "text.aligncenter")
                             .tag(SendenHAusrichtung.mittig)
-                        if AwtrixNG.waagrechteAusrichtungen.contains(.rechts) {
+                        if AwtrixNG.waagrechteAusrichtungen(weg: optionen.weg).contains(.rechts) {
                             Label("Rechtsbündig", systemImage: "text.alignright")
                                 .tag(SendenHAusrichtung.rechts)
                         }
@@ -769,9 +769,9 @@ struct SendeniOS: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
-                .disabled(!AwtrixNG.wirkt(.senkrecht))
+                .disabled(!AwtrixNG.wirkt(.senkrecht, weg: optionen.weg))
                 .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
-                .accessibilityHint(Text(AwtrixNG.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.senkrecht, weg: optionen.weg) ?? lok("Senkrecht ausrichten")))
                 Menu {
                     Picker("Rand", selection: $rand) {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
@@ -784,9 +784,9 @@ struct SendeniOS: View {
                 // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
                 // Wirkung.
                 .disabled(vertikal == .mittig)
-                .disabled(!AwtrixNG.wirkt(.rand))
+                .disabled(!AwtrixNG.wirkt(.rand, weg: optionen.weg))
                 .accessibilityLabel(Text(lokf("Rand %d", rand)))
-                .accessibilityHint(Text(AwtrixNG.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.rand, weg: optionen.weg) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
                 Menu {
                     Picker("Abstand", selection: $luecke) {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
@@ -795,7 +795,7 @@ struct SendeniOS: View {
                     Label { menuewert(Text(String(luecke))) } icon: { Image(systemName: "arrow.left.and.right") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!AwtrixNG.wirkt(.abstand))
+                .disabled(!AwtrixNG.wirkt(.abstand, weg: optionen.weg))
                 .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
                 Button { zeigeFormat = true } label: {
                     Image(systemName: "paintbrush")
@@ -928,7 +928,7 @@ struct SendeniOS: View {
         laeuft = true
         defer { laeuft = false }
         do {
-            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung)
+            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung, mass: mass)
             // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
             // am Mac (SendenView.senden()).
             let slotOptionen = optionen

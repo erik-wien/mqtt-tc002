@@ -241,7 +241,7 @@ public struct SendenView: View {
 
     /// Siehe `.task(id:)` oben.
     private func ausrichtungPruefen() {
-        guard !AwtrixNG.waagrechteAusrichtungen.contains(horizontal) else { return }
+        guard !AwtrixNG.waagrechteAusrichtungen(weg: optionen.weg).contains(horizontal) else { return }
         horizontal = .links
     }
     /// Auf wie vielen Punkten die Vorschau rechnet: den Maßen der Uhr, auf
@@ -250,9 +250,9 @@ public struct SendenView: View {
 
     /// Die Optionen, mit denen die Vorschau rastert — mit fester
     /// Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
-    /// (`Meldungsoptionen.naeherung`). Was gesendet wird, sind unverändert
+    /// (`Meldungsoptionen.fuerVorschau`). Was gesendet wird, sind unverändert
     /// `optionen`: `gebauterRahmen` fragt hier nicht.
-    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung }
+    private var vorschauOptionen: Meldungsoptionen { optionen.fuerVorschau }
 
     /// Die Vorschau einer bestimmten Uhr. Jede hat ihr eigenes Maß;
     /// beim Blättern müssen die Nachbarn deshalb selbst
@@ -272,7 +272,7 @@ public struct SendenView: View {
     /// unter dem Blaetterer.
     private func vorschau(fuer uhr: Uhr, angesehen: Bool, platz: CGSize) -> some View {
         let uhrmass = Anzeigemass.fuer(uhr)
-        let o = optionen.naeherung
+        let o = optionen.fuerVorschau
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
         let einheit = Geraetezeichnung.tc002.masse(inhaltHoehe: Double(uhrmass.hoehe))
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
@@ -299,7 +299,7 @@ public struct SendenView: View {
     private var waagrechtWirktNicht: Bool { !passt }
 
     private func gebauterRahmen() throws -> Frame {
-        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung)
+        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung, mass: mass)
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
@@ -433,7 +433,7 @@ public struct SendenView: View {
                 }
                 HStack(spacing: 8) {
                     Uhrenpunkte(zustand: zustand)
-                    Hilfezeichen(AwtrixNG.vorschauhinweis)
+                    if optionen.weg == .text { Hilfezeichen(AwtrixNG.vorschauhinweis) }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -719,7 +719,7 @@ public struct SendenView: View {
                         // Nimmt, was uebrig ist — der Name ist das Lange von
                         // beiden.
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .reglersperre(.schriftart, sonst: lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
+                        .reglersperre(.schriftart, weg: optionen.weg, sonst: lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                         // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                         // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -731,7 +731,7 @@ public struct SendenView: View {
                         }
                         .labelsHidden()
                         .fixedSize()
-                        .reglersperre(.groesse, sonst: eigenesRaster
+                        .reglersperre(.groesse, weg: optionen.weg, sonst: eigenesRaster
                               ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
                               : lok("Schriftgröße"))
                 }
@@ -745,12 +745,12 @@ public struct SendenView: View {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
                             .toggleStyle(.button)
                             .disabled(!fettWirkt)
-                            .reglersperre(.fett, sonst: fettHilfe)
+                            .reglersperre(.fett, weg: optionen.weg, sonst: fettHilfe)
                             .accessibilityLabel(Text("Fett"))
                         Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
                             .toggleStyle(.button)
                             .disabled(!kleinbuchstabenMoeglich)
-                            .reglersperre(.grossbuchstaben, sonst: grossHilfe)
+                            .reglersperre(.grossbuchstaben, weg: optionen.weg, sonst: grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
                         // Kein blankes Systemfeld: Bei weisser Schrift
                         // stuende dort ein weisser Fleck auf hellem Grund —
@@ -774,12 +774,12 @@ public struct SendenView: View {
                     Schrittwahl("Rand", wert: $rand, bereich: 0...3)
                 }
                 .disabled(vertikal == .mittig)
-                .reglersperre(.rand)
+                .reglersperre(.rand, weg: optionen.weg)
 
                 LabeledContent("Abstand") {
                     Schrittwahl("Abstand", wert: $luecke, bereich: 0...3)
                 }
-                .reglersperre(.abstand)
+                .reglersperre(.abstand, weg: optionen.weg)
 
                 // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
                 // die Ausrichtung bei Pages.
@@ -797,7 +797,7 @@ public struct SendenView: View {
                 Picker("Waagrecht", selection: $horizontal) {
                     Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
                     Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
-                    if AwtrixNG.waagrechteAusrichtungen.contains(.rechts) {
+                    if AwtrixNG.waagrechteAusrichtungen(weg: optionen.weg).contains(.rechts) {
                         Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
                     }
                 }
@@ -812,7 +812,7 @@ public struct SendenView: View {
                     Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
                 }
                 .pickerStyle(.segmented)
-                .reglersperre(.senkrecht)
+                .reglersperre(.senkrecht, weg: optionen.weg)
             }
         }
         .formStyle(.grouped)

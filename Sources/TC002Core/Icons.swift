@@ -139,6 +139,11 @@ public enum Bildraster {
         public var pixel: [String?]
         /// Sekunden bis zum naechsten Bild, aus der Datei gelesen.
         public var dauer: Double
+
+        public init(pixel: [String?], dauer: Double) {
+            self.pixel = pixel
+            self.dauer = dauer
+        }
     }
 
     /// Wie `lesen`, aber mit den Standzeiten je Einzelbild aus der Datei — fuer
@@ -269,6 +274,16 @@ public enum Bildraster {
     }
 
     /// "#RRGGBB" in drei Bytes. Alles Unbrauchbare wird schwarz.
+    static func rgb(_ farbe: String?) -> (UInt8, UInt8, UInt8) { zerlegen(farbe) }
+
+    /// Eine Bildzeit, wie ein GIF sie tragen kann: ganze Hundertstel, mindestens
+    /// zwei. NG macht aus 0 hundert Millisekunden (§5.3), eine 0 wird nie
+    /// geschrieben.
+    static func gifZeit(_ sekunden: Double) -> Double {
+        guard sekunden.isFinite else { return 0.1 }
+        return Double(max(2, Int((min(sekunden, 600) * 100).rounded()))) / 100
+    }
+
     private static func zerlegen(_ farbe: String?) -> (UInt8, UInt8, UInt8) {
         guard var s = farbe else { return (0, 0, 0) }
         if s.hasPrefix("#") { s.removeFirst() }

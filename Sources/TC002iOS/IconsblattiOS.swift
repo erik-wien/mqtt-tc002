@@ -624,10 +624,6 @@ private struct AnzeigeseiteiOS: View {
         _platz = State(initialValue: platz)
     }
 
-    /// Eine ganze Anzeige laesst sich noch nicht an die Uhr schicken
-    /// (`NGFehler.keinPixelweg`): Der Knopf ist gesperrt und sagt warum.
-    private var sperre: String? { NGFehler.keinPixelweg.errorDescription }
-
     /// Welche Plaetze der angesehenen Uhr belegt sind — dieselbe Quelle wie
     /// im Sendebildschirm.
     private var belegte: Set<Int> { zustand.belegtePlaetze() }
@@ -674,16 +670,12 @@ private struct AnzeigeseiteiOS: View {
                 }
             }
             Spacer()
-            if let sperre {
-                Label(sperre, systemImage: "exclamationmark.triangle")
-                    .font(.footnote).foregroundStyle(.orange)
-            }
             if let meldung {
                 Text(meldung).font(.footnote).foregroundStyle(.secondary)
             }
             Button(lokf("An Platz %d senden", platz)) { senden() }
                 .knopfHaupthandlung()
-                .disabled(laeuft || sperre != nil)
+                .disabled(laeuft)
         }
         .padding()
         .navigationTitle(eintrag.name)
@@ -691,7 +683,7 @@ private struct AnzeigeseiteiOS: View {
     }
 
     /// Der Rahmen wird im Kern gebaut (`Bildsendung.rahmen`) — ein Einzelbild
-    /// als Rechtecke, mehrere als GIF. Dieselbe Entscheidung wie im Editor am
+    /// als Standbild, mehrere als GIF. Dieselbe Entscheidung wie im Editor am
     /// Schreibtisch, an einer Stelle.
     private func senden() {
         laeuft = true

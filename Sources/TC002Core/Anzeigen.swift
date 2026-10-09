@@ -16,17 +16,20 @@ public struct Anzeigen {
     /// drei Taetigkeiten sind auf beiden Wegen dieselben, und jeder Aufrufer
     /// — App, Werkzeug, Kurzbefehl — soll genau einen Typ kennen.
     private enum Kanal {
-        case mqtt(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String)
+        case mqtt(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String, ausweich: Geraet?)
         case http(Geraet)
     }
     private let kanal: Kanal
 
-    public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String) {
+    /// `ausweich`: dieselbe Uhr ueber HTTP, fuer die eine Anzeige, die nicht in
+    /// eine MQTT-Nachricht passt (`Pixelweg.zustellweg`).
+    public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String,
+                ausweich: Geraet? = nil) {
         var normalisiert = praefix
         while normalisiert.hasSuffix("/") {
             normalisiert.removeLast()
         }
-        kanal = .mqtt(sender: sender, zugang: zugang, praefix: normalisiert)
+        kanal = .mqtt(sender: sender, zugang: zugang, praefix: normalisiert, ausweich: ausweich)
     }
 
     /// Der HTTP-Kanal. Kein Praefix, kein Broker — nur die Adresse der Uhr.
@@ -37,25 +40,38 @@ public struct Anzeigen {
     /// Was auf dem Thema landet bzw. im Rumpf steht — dieselben Bytes auf
     /// beiden Kanaelen.
     ///
-    /// AWTRIX NG setzt den Text selbst; ihr nuetzen unsere Pixel nichts, sie
-    /// braucht die Regler, aus denen sie entstanden (`Frame.herkunft`). Fehlen
-    /// die — ein gemaltes Bild, ein Bild aus der Sammlung —, wird nichts
-    /// geschickt und gesagt, warum (`NGFehler.keinPixelweg`): MQTT 3.1.1 kennt
-    /// keinen Rueckkanal fuer eine abgelehnte Veroeffentlichung, und
-    /// stillschweigend nichts zu tun ist das Gegenteil einer Loesung.
+    /// Pixel (`Frame.pixel`) gehen als Layout hinaus (`Pixelweg`), Text samt
+    /// Reglern setzt die Uhr selbst (`Frame.herkunft`). Ein Rahmen ohne beides
+    /// wird nicht geschickt: MQTT 3.1.1 kennt keinen Rueckkanal fuer eine
+    /// abgelehnte Veroeffentlichung, und stillschweigend nichts zu tun ist das
+    /// Gegenteil einer Loesung.
     public static func nutzlast(_ frame: Frame) throws -> String {
-        guard let herkunft = frame.herkunft else { throw NGFehler.keinPixelweg }
+        if let pixel = frame.pixel { return try Pixelweg.nutzlast(pixel, dauer: frame.dauer) }
+        guard let herkunft = frame.herkunft else { throw NGFehler.leer }
         return try NGNutzlast.anzeige(herkunft.optionen,
                                       iconDatenURI: herkunft.iconDatenURI)
     }
 
+    /// Schickt die Anzeige. Passt sie ueber MQTT samt Thema nicht in 8192 Byte,
+    /// geht sie ueber HTTP an dieselbe Uhr: NG verwirft Groesseres ohne
+    /// Antwort, und eine stumm verlorene Sendung waere das Schlimmste.
     public func zeigen(_ frame: Frame, auf name: String) throws {
         let json = try Self.nutzlast(frame)
+        let daten = Data(json.utf8)
         switch kanal {
-        case .mqtt(let sender, let zugang, let praefix):
-            try sender.senden(Data(json.utf8), an: NGThema.anzeige(praefix: praefix, name: name),
-                              zugang: zugang)
+        case .mqtt(let sender, let zugang, let praefix, let ausweich):
+            let thema = NGThema.anzeige(praefix: praefix, name: name)
+            let weg = try Pixelweg.zustellweg(nutzlastBytes: daten.count,
+                                              themaBytes: thema.utf8.count, betriebsart: .mqtt)
+            switch weg {
+            case .mqtt:
+                try sender.senden(daten, an: thema, zugang: zugang)
+            case .http:
+                guard let ausweich else { throw NGFehler.keineAdresseFuerGrosse(bytes: daten.count) }
+                try ausweich.anzeigeSetzen(json, name: name)
+            }
         case .http(let geraet):
+            _ = try Pixelweg.zustellweg(nutzlastBytes: daten.count, themaBytes: 0, betriebsart: .http)
             try geraet.anzeigeSetzen(json, name: name)
         }
     }
@@ -64,7 +80,7 @@ public struct Anzeigen {
     /// ueber HTTP mit `DELETE`. Genau null Bytes loeschen (§3.2).
     public func loeschen(_ name: String) throws {
         switch kanal {
-        case .mqtt(let sender, let zugang, let praefix):
+        case .mqtt(let sender, let zugang, let praefix, _):
             try sender.senden(Data(), an: NGThema.anzeige(praefix: praefix, name: name), zugang: zugang)
         case .http(let geraet):
             try geraet.anzeigeLoeschen(name: name)
@@ -73,7 +89,7 @@ public struct Anzeigen {
 
     public func umschalten(auf name: String) throws {
         switch kanal {
-        case .mqtt(let sender, let zugang, let praefix):
+        case .mqtt(let sender, let zugang, let praefix, _):
             try sender.senden(Data(NGNutzlast.umschalten(auf: name).utf8),
                               an: NGThema.umschalten(praefix: praefix), zugang: zugang)
         case .http(let geraet):
@@ -118,7 +134,11 @@ public struct Anzeigen {
             return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung))
         case .mqtt:
             guard !uhr.praefix.isEmpty, let zugang = brokerzugang() else { return nil }
-            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix)
+            // Mit Adresse ueber HTTP erreichbar, falls eine Anzeige fuer MQTT zu
+            // gross ist; ohne bleibt es bei der Meldung vor dem Senden.
+            let ausweich = uhr.host.isEmpty ? nil : Geraet(host: uhr.host, sitzung: sitzung)
+            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix,
+                            ausweich: ausweich)
         }
     }
 }

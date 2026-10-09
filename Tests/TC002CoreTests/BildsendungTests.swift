@@ -16,18 +16,19 @@ final class BildsendungTests: XCTestCase {
         return f
     }
 
-    /// Ein Einzelbild geht als `draw` — Rechtecke, klein und exakt.
-    func testEinStehendesBildGehtAlsRechtecke() throws {
+    /// Ein Einzelbild geht als Standbild.
+    func testEinStehendesBildGehtAlsStandbild() throws {
         let sammlung = Bildersammlung(ordner: temp())
         let gemaltes = try sammlung.sichern(name: "Einer", feld: feld(punkt: (3, 2), farbe: "#FF8800"))
 
         let rahmen = try Bildsendung.rahmen(aus: gemaltes.datei)
-        XCTAssertEqual(rahmen.draw.count, 1)
-        XCTAssertTrue(rahmen.bilder.isEmpty, "ein stehendes Bild braucht kein GIF")
+        let pixel = try XCTUnwrap(rahmen.pixel)
+        XCTAssertEqual(pixel.bilder.count, 1, "ein stehendes Bild braucht kein GIF")
+        XCTAssertEqual(pixel.bilder[0].pixel[2 * 52 + 3], "#FF8800")
         XCTAssertNil(rahmen.dauer)
     }
 
-    /// Mehrere gehen als GIF — Rechtecke kennen keine Zeit.
+    /// Mehrere gehen als GIF, mit ihren Standzeiten.
     func testMehrereEinzelbilderGehenAlsGif() throws {
         let sammlung = Bildersammlung(ordner: temp())
         var eins = [String?](repeating: nil, count: 52 * 16); eins[0] = "#FF0000"
@@ -35,9 +36,10 @@ final class BildsendungTests: XCTestCase {
         let gemaltes = try sammlung.sichern(name: "Laeufer", bilder: [eins, zwei], verzoegerung: 0.2)
 
         let rahmen = try Bildsendung.rahmen(aus: gemaltes.datei, dauer: 7)
-        XCTAssertTrue(rahmen.draw.isEmpty)
-        XCTAssertEqual(rahmen.bilder.count, 1)
-        XCTAssertTrue(rahmen.bilder[0].datenURI.hasPrefix("data:image/gif;base64,"))
+        let pixel = try XCTUnwrap(rahmen.pixel)
+        XCTAssertEqual(pixel.bilder.count, 2)
+        XCTAssertEqual(pixel.bilder.map(\.dauer), [0.2, 0.2])
+        XCTAssertTrue(try Pixelweg.nutzlast(pixel, dauer: nil).contains("data:image/gif;base64,"))
         XCTAssertEqual(rahmen.dauer, 7)
     }
 
@@ -69,14 +71,14 @@ final class BildsendungBeideWegeTests: XCTestCase {
 
         let ausDatei = try Bildsendung.rahmen(aus: gemaltes.datei)
         let ausSpeicher = try Bildsendung.rahmen(aus: [punkte], verzoegerung: 0.2)
-        XCTAssertEqual(ausDatei.draw, ausSpeicher.draw)
-        XCTAssertTrue(ausDatei.bilder.isEmpty && ausSpeicher.bilder.isEmpty)
+        XCTAssertEqual(ausDatei.pixel?.bilder.map(\.pixel), ausSpeicher.pixel?.bilder.map(\.pixel))
+        XCTAssertEqual(ausDatei.pixel?.bilder.count, 1)
     }
 }
 
 extension BildsendungTests {
-    /// Ein gemaltes Icon geht an die Uhr — als GIF, nicht als Pixelfeld. Ohne
-    /// die Herkunft am Rahmen wies `Anzeigen.nutzlast` es als „gemaltes Bild“ ab.
+    /// Ein gemaltes Icon geht an die Uhr — als GIF im Feld `icon`, nicht als
+    /// Pixelfeld ueber das ganze Display.
     func testEinGemaltesIconTraegtSeineHerkunftUndGehtAnEineNG() throws {
         let bilder: [[String?]] = [Array(repeating: "#FF0000", count: 64),
                                    Array(repeating: "#00FF00", count: 64)]
@@ -90,12 +92,12 @@ extension BildsendungTests {
         XCTAssertTrue(nutzlast.contains("\"icon\""), "die NG-Nutzlast trägt kein Icon")
     }
 
-    /// Eine ganze Anzeige bleibt, was sie war: Sie bekommt keine Herkunft,
-    /// denn der Pixelweg fehlt noch (`NGFehler.keinPixelweg`).
-    func testEineGanzeAnzeigeBekommtKeineHerkunft() throws {
+    /// Eine ganze Anzeige bekommt keine Herkunft, sondern Pixel.
+    func testEineGanzeAnzeigeGehtAlsPixel() throws {
         let bild: [[String?]] = [Array(repeating: "#FFFFFF", count: 52 * 16)]
         let rahmen = try Bildsendung.rahmen(aus: bild, verzoegerung: 0.1)
         XCTAssertNil(rahmen.herkunft, "eine ganze Anzeige gibt sich als Icon aus")
+        XCTAssertNotNil(rahmen.pixel)
     }
 
     /// Ein 16×16 trägt seine Herkunft und geht an NG: Das Display ist sechzehn

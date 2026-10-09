@@ -756,7 +756,7 @@ public final class AppZustand {
         let mass = Anzeigemass.fuer(uhr)
         let schluessel = Rasterschluessel(stand: stand, breite: mass.breite, hoehe: mass.hoehe)
         if let fertig = gerastertePixel[schluessel] { return fertig }
-        let pixel = Meldungsbau.feld(optionen.naeherung,
+        let pixel = Meldungsbau.feld(optionen.fuerVorschau,
                                      mitIcon: stand.icon != nil,
                                      iconKante: stand.iconKanteOderAcht, mass: mass).punkteRoh
         // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt

@@ -1307,9 +1307,9 @@ public struct EditorBereichView: View {
     /// Der gerade bearbeitete Stand geht an eine Uhr — in jeder Groesse.
     ///
     /// Ein Icon ist fuer sich keine Anzeige, und doch will man sehen, wie es
-    /// auf dem Geraet aussieht: `Bildsendung.rahmen` setzt es als Bild in die
-    /// linke obere Ecke. Fuer eine Probe ist genau das gemeint; wer es als
-    /// Zubehoer einer Meldung will, waehlt es unter „Senden".
+    /// auf dem Geraet aussieht: `Bildsendung.rahmen` schickt es als Icon ohne
+    /// Text. Fuer eine Probe ist genau das gemeint; wer es als Zubehoer einer
+    /// Meldung will, waehlt es unter „Senden".
     private var sendezeile: some View {
         VStack(alignment: .leading, spacing: 8) {
             Divider()
@@ -1387,7 +1387,7 @@ public struct EditorBereichView: View {
                 .accessibilityLabel(Text("Sende…"))
         } else {
             Sendezeichen(senden: { senden() }, ausgang: ausgang)
-                .disabled(zustand.ziele().isEmpty || gemaltesGesperrt)
+                .disabled(zustand.ziele().isEmpty)
         }
     }
 
@@ -1400,18 +1400,7 @@ public struct EditorBereichView: View {
         if zustand.ziele().isEmpty {
             return lok("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
         }
-        if gemaltesGesperrt {
-            return NGFehler.keinPixelweg.errorDescription
-        }
         return nil
-    }
-
-    /// Eine ganze Anzeige laesst sich noch nicht an die Uhr schicken
-    /// (`NGFehler.keinPixelweg`) — dann ist der Knopf gesperrt, statt ins
-    /// Leere zu senden. Ein Icon geht dagegen als GIF hinaus
-    /// (`Bildsendung.rahmen` haengt ihm die Herkunft an).
-    private var gemaltesGesperrt: Bool {
-        !groesse.istIcon && !zustand.ziele().isEmpty
     }
 
     // MARK: - Blatt „Oeffnen"
@@ -2002,8 +1991,8 @@ public struct EditorBereichView: View {
     /// Block rechnete daraus beim naechsten Start ohne Broker weiter den alten
     /// Text. `AppZustand.senden` wirft ihn deshalb je erreichter Uhr weg.
     ///
-    /// Ein einzelnes Bild geht als `draw` hinaus — klein und exakt. Mehrere
-    /// gehen als ein animiertes GIF: Rechtecke kennen keine Zeit.
+    /// Ein einzelnes Bild geht als Standbild hinaus, mehrere als animiertes GIF
+    /// (`Pixelweg`).
     private func senden() {
         // Die Entscheidung steht im Kern (`Bildsendung.rahmen`), nicht hier:
         // Dasselbe trifft das Telefon, wenn es ein Bild aus dem Bestand

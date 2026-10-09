@@ -1,7 +1,8 @@
 import SwiftUI
 import TC002Core
 
-/// Einen Regler sperren, den AWTRIX NG gar nicht kennt — und sagen warum.
+/// Einen Regler sperren, den der gewählte Weg nicht kennt — und sagen warum.
+/// Auf dem Pixelweg ist keiner gesperrt, bei „als Text" die, die NG nicht kennt.
 ///
 /// Zwei Achsen, zwei Stellen: Ob ein Regler zum gewählten Weg passt,
 /// entscheidet die Ansicht selbst und hat es schon immer über `.disabled`
@@ -23,8 +24,8 @@ import TC002Core
 /// Rückstandsdokument.
 extension View {
     @ViewBuilder
-    func reglersperre(_ regler: Regler, sonst gewohnt: String? = nil) -> some View {
-        let grund = AwtrixNG.begruendung(regler)
+    func reglersperre(_ regler: Regler, weg: SendeWeg, sonst gewohnt: String? = nil) -> some View {
+        let grund = AwtrixNG.begruendung(regler, weg: weg)
         if let hinweis = grund ?? gewohnt {
             self.disabled(grund != nil).help(hinweis)
         } else {

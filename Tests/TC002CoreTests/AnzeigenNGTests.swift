@@ -17,8 +17,7 @@ final class AnzeigenNGTests: XCTestCase {
     /// Ein Rahmen, wie ihn `Meldungsbau.rahmen` baut: mit den Reglern, aus
     /// denen er entstand.
     private func rahmenMitHerkunft(_ text: String = "hallo") -> Frame {
-        Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 2, hoehe: 1, farbe: "#00FF66")],
-              herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: text)))
+        Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: text, weg: .text)))
     }
 
     private func ngKanal(_ sender: NachrichtSendend, praefix: String = "wohnzimmer/uhr") -> Anzeigen {
@@ -54,22 +53,16 @@ final class AnzeigenNGTests: XCTestCase {
         XCTAssertEqual(sender.gesendet.first?.nutzlast, #"{"name":"meldung2"}"#)
     }
 
-    // MARK: - Was auf einer AWTRIX nicht geht
+    // MARK: - Was nicht abgeschickt wird
 
-    /// Der Kern der Regel „die Oberflaeche sagt es, statt still zu
-    /// scheitern". Ein gemaltes Bild bringt keine Regler mit; der Pixelweg
-    /// fehlt noch. Also wird nichts geschickt und
-    /// gesagt, warum.
-    func testEinGemaltesBildGehtNichtAnEineAwtrixUndSagtDas() {
+    /// Ein Rahmen ohne Text und ohne Pixel ist nichts zu senden — und wird
+    /// nicht gesendet.
+    func testEinLeererRahmenWirdNichtGesendet() {
         let sender = NGMitschreiber()
-        let gemalt = Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 52, hoehe: 16, farbe: "#FF0000")])
-
-        XCTAssertThrowsError(try ngKanal(sender).zeigen(gemalt, auf: "meldung1")) { fehler in
-            guard case NGFehler.keinPixelweg = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
+        XCTAssertThrowsError(try ngKanal(sender).zeigen(Frame(), auf: "meldung1")) { fehler in
+            guard case NGFehler.leer = fehler else { return XCTFail("war stattdessen \(fehler)") }
         }
-        XCTAssertTrue(sender.gesendet.isEmpty, "es darf nichts abgeschickt worden sein")
+        XCTAssertTrue(sender.gesendet.isEmpty)
     }
 
     // MARK: - Der Kanal einer Uhr

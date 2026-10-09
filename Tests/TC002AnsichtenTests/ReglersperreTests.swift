@@ -34,7 +34,7 @@ final class ReglersperreTests: XCTestCase {
     /// wächst diese Menge von selbst mit — genau darum wird sie berechnet und
     /// nicht abgeschrieben.
     private var gesperrte: [Regler] {
-        Regler.allCases.filter { !AwtrixNG.wirkt($0) }
+        Regler.allCases.filter { !AwtrixNG.wirkt($0, weg: .text) }
     }
 
     func testJederGesperrteReglerIstAmMacVerdrahtet() throws {
@@ -63,7 +63,7 @@ final class ReglersperreTests: XCTestCase {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
                      "Sources/TC002iOS/SendeniOS.swift"] {
             let quelle = try quelltext(pfad)
-            XCTAssertTrue(quelle.contains("waagrechteAusrichtungen.contains(.rechts)"),
+            XCTAssertTrue(quelle.contains("waagrechteAusrichtungen(weg: optionen.weg).contains(.rechts)"),
                           "\(pfad) bietet „rechtsbündig“ ungefragt an")
         }
     }
@@ -71,6 +71,16 @@ final class ReglersperreTests: XCTestCase {
     /// Und dass die Firmware überhaupt eine Meinung dazu hat — sonst prüfte der
     /// Test oben eine Bedingung, die immer wahr ist.
     func testNGKenntKeinRechtsbuendig() {
-        XCTAssertFalse(AwtrixNG.waagrechteAusrichtungen.contains(.rechts))
+        XCTAssertFalse(AwtrixNG.waagrechteAusrichtungen(weg: .text).contains(.rechts))
+    }
+
+    /// Auf dem Pixelweg rastert die App selbst: Nichts ist gesperrt, auch
+    /// rechtsbuendig nicht.
+    func testAufDemPixelwegIstNichtsGesperrt() {
+        for regler in Regler.allCases {
+            XCTAssertTrue(AwtrixNG.wirkt(regler, weg: .pixel))
+            XCTAssertNil(AwtrixNG.begruendung(regler, weg: .pixel))
+        }
+        XCTAssertTrue(AwtrixNG.waagrechteAusrichtungen(weg: .pixel).contains(.rechts))
     }
 }

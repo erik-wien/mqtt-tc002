@@ -1,4 +1,6 @@
 import Foundation
+import ImageIO
+import CoreGraphics
 
 /// Ein JSON-Wert, der sich vergleichen und über Threads reichen lässt. Hält
 /// den Zustand der virtuellen NG-Uhr (`[String: Any]` wäre weder `Equatable`
@@ -108,8 +110,9 @@ public struct NGUhrzustand: Equatable, Sendable {
 ///
 /// Gehalten wird der Zustand, damit sich die Wirkung eines Aufrufs prüfen
 /// lässt. Gezeichnet werden von der aktiven Anzeige nur die Zeichenbefehle
-/// `pixel`, `pixels`, `line`, `rect`, `rectFill` und `bitmap` (`bildschirm`);
-/// Text, Icons, Kreise und Effekte bleiben schwarz.
+/// `pixel`, `pixels`, `line`, `rect`, `rectFill` und `bitmap` (`bildschirm`)
+/// sowie das erste Bild eines GIFs in `icon` einer Layout-Region; Text, Kreise
+/// und Effekte bleiben schwarz.
 ///
 /// Bewusst nicht geprüft:
 /// - Inhalt einer App- oder Benachrichtigungsnutzlast über „gültiges JSON-
@@ -363,8 +366,14 @@ public enum VirtuelleNGUhr {
             }
             guard case .liste(let regionen)? = layout["regions"] else { return bild.punkte }
             for region in regionen {
-                guard case .objekt(let r) = region, case .liste(let kasten)? = r["box"],
-                      case .liste(let befehle)? = r["draw"] else { continue }
+                guard case .objekt(let r) = region, case .liste(let kasten)? = r["box"] else { continue }
+                let befehle: [JSONWert]
+                let gif: GIFBild?
+                if case .liste(let b)? = r["draw"] {
+                    befehle = b; gif = nil
+                } else if case .text(let uri)? = r["icon"], let g = gifBild(uri) {
+                    befehle = []; gif = g
+                } else { continue }
                 let k = kasten.compactMap(\.ganzzahl)
                 // Box und Ursprung kommen vom Absender; ein Feld in dieser
                 // Groesse gaebe es nie, und es wuerde Speicher kosten.
@@ -374,6 +383,16 @@ public enum VirtuelleNGUhr {
                 if let w = r["color"], let f = farbwert(w) { farbe = f }
                 var brett = Brett(breite: k[2], hoehe: k[3])
                 for befehl in befehle { zeichne(befehl, auf: &brett, farbe: farbe) }
+                if let gif {
+                    // Mittig im Kasten (`align`/`valign` Vorgabe `center`, §9.2);
+                    // was nicht passt, wird abgeschnitten (`setze`). Dunkel in
+                    // einem Bild ist schwarz, im ersten Bild sind durchsichtige
+                    // Pixel schwarz (§5.3).
+                    let ox = (k[2] - gif.breite) / 2, oy = (k[3] - gif.hoehe) / 2
+                    for y in 0..<gif.hoehe {
+                        for x in 0..<gif.breite { brett.setze(ox + x, oy + y, gif.punkte[y * gif.breite + x]) }
+                    }
+                }
                 for y in 0..<k[3] {
                     for x in 0..<k[2] where brett.belegt[y * k[2] + x] {
                         bild.setze(k[0] + x, k[1] + y, brett.punkte[y * k[2] + x])
@@ -401,6 +420,41 @@ public enum VirtuelleNGUhr {
             }
         }
         return bild.punkte
+    }
+
+    /// Das erste Bild eines GIFs aus einer Data-URL, gepackt als RGB.
+    struct GIFBild {
+        let breite: Int, hoehe: Int
+        let punkte: [Int]
+    }
+
+    /// Hoechstens so viel Base64 wird gelesen und so gross darf das Bild sein:
+    /// Die Nutzlast kommt vom Absender, Speicher und Rechenzeit der virtuellen
+    /// Uhr duerfen nicht von ihm abhaengen.
+    private static let hoechsteGIFLaenge = 2 * 1024 * 1024
+    private static let hoechsteGIFKante = 256
+
+    private static func gifBild(_ uri: String) -> GIFBild? {
+        let kopf = "data:image/gif;base64,"
+        guard uri.hasPrefix(kopf), uri.utf8.count <= hoechsteGIFLaenge,
+              let daten = Data(base64Encoded: String(uri.dropFirst(kopf.count))),
+              let quelle = CGImageSourceCreateWithData(daten as CFData, nil),
+              CGImageSourceGetCount(quelle) > 0,
+              let eigenschaften = CGImageSourceCopyPropertiesAtIndex(quelle, 0, nil) as? [CFString: Any],
+              let b = eigenschaften[kCGImagePropertyPixelWidth] as? Int,
+              let h = eigenschaften[kCGImagePropertyPixelHeight] as? Int,
+              (1...hoechsteGIFKante).contains(b), (1...hoechsteGIFKante).contains(h),
+              let bild = CGImageSourceCreateImageAtIndex(quelle, 0, nil) else { return nil }
+        var bytes = [UInt8](repeating: 0, count: b * h * 4)
+        guard let kontext = CGContext(data: &bytes, width: b, height: h, bitsPerComponent: 8,
+                                      bytesPerRow: b * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        kontext.draw(bild, in: CGRect(x: 0, y: 0, width: b, height: h))
+        // Vor Schwarz gelegt: Durchsichtiges bleibt 0, also schwarz.
+        let punkte = (0..<(b * h)).map { i in
+            Int(bytes[4 * i]) << 16 | Int(bytes[4 * i + 1]) << 8 | Int(bytes[4 * i + 2])
+        }
+        return GIFBild(breite: b, hoehe: h, punkte: punkte)
     }
 
     private static func farbwert(_ w: JSONWert) -> Int? {

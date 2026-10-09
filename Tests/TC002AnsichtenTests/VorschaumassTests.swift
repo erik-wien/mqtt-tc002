@@ -56,14 +56,14 @@ final class VorschaumassTests: XCTestCase {
         }
     }
 
-    /// Und sie rastern mit der Näherung, nicht mit der gespeicherten Schrift:
-    /// Auf NG ist die Schriftwahl gesperrt, der gemerkte Wert kann trotzdem
-    /// „Tiny5, 16 px" sein.
+    /// Und sie rastern mit `fuerVorschau`: auf dem Pixelweg mit den gesendeten
+    /// Optionen, bei „als Text" mit der Näherung — dort ist die Schriftwahl
+    /// gesperrt, der gemerkte Wert kann trotzdem „Tiny5, 16 px" sein.
     func testDieSendeansichtenRasternMitDerNaeherung() throws {
         for pfad in Self.stellen {
             let quelle = try ohneKommentare(pfad)
-            XCTAssertTrue(quelle.contains("optionen.naeherung"),
-                          "\(pfad): rastert die Vorschau ohne `naeherung`.")
+            XCTAssertTrue(quelle.contains("optionen.fuerVorschau"),
+                          "\(pfad): rastert die Vorschau ohne `fuerVorschau`.")
         }
     }
 

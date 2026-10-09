@@ -506,13 +506,18 @@ final class AppZustandTests: XCTestCase {
         XCTAssertTrue(AppZustand(schluesselbund: schluesselbund).verlaufAn)
     }
 
+    /// Ein Pixelbild ohne Regler, wie ein gemaltes.
+    private static let leeresBild = Frame(pixel: Pixelinhalt(
+        breite: 52, hoehe: 16,
+        bilder: [Bildraster.Einzelbild(pixel: [String?](repeating: nil, count: 832), dauer: 1)]))
+
     /// Ohne Regler kein Eintrag: Ein gemaltes Bild kommt ohne sie her; ein
     /// Eintrag, den anzutippen nichts taete, waere eine Falle.
     func testEinGemaltesBildStehtNichtImVerlauf() async throws {
         let zustand = try zustandMitEinerUhr()
         zustand.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
 
-        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung1", slotPlatz: 1)
+        await zustand.senden(Self.leeresBild, als: "meldung1", slotPlatz: 1)
 
         XCTAssertTrue(zustand.verlauf().isEmpty)
     }
@@ -523,7 +528,7 @@ final class AppZustandTests: XCTestCase {
         zustand.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
         zustand.verlaufAn = false
 
-        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung1",
+        await zustand.senden(Self.leeresBild, als: "meldung1",
                              slotOptionen: Meldungsoptionen(text: "x"), slotPlatz: 1)
 
         XCTAssertTrue(zustand.verlauf().isEmpty)

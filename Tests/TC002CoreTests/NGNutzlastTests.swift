@@ -114,15 +114,13 @@ final class NGNutzlastTests: XCTestCase {
 
     // MARK: - Das Icon
 
-    /// NG entscheidet allein nach der Laenge (§5.3): bis 64 Zeichen eine
-    /// Kennung im Dateisystem des Geraets, darueber Base64 unmittelbar im
-    /// Text. Bliebe der `data:`-Vorsatz stehen, waere die Nutzlast zwar lang
-    /// genug — aber die Bytes waeren kein Bild.
-    func testIconVerliertDenDatenVorsatz() throws {
+    /// Eine Data-URL traegt das Bild selbst; reines Base64 ohne Vorsatz oder
+    /// eine Kennung ueber 64 Zeichen ist `422` (§5.3).
+    func testIconBleibtEineDataURL() throws {
         let json = try NGNutzlast.anzeige(optionen(),
                                           iconDatenURI: "data:image/gif;base64,R0lGODlhAQ==")
-        XCTAssertTrue(json.contains(#""icon":"R0lGODlhAQ==""#))
-        XCTAssertFalse(json.contains("data:image"))
+        XCTAssertTrue(json.contains(#""icon":"data:image/gif;base64,R0lGODlhAQ==""#),
+                      "reines Base64 ohne Vorsatz ist 422 (§5.3)")
     }
 
     /// NG liest kein PNG (§5.3) und faellt bei einem unlesbaren Icon
@@ -138,10 +136,9 @@ final class NGNutzlastTests: XCTestCase {
         }
     }
 
-    /// JPEG geht — die Gegenprobe, damit die Pruefung oben nicht alles abweist.
-    func testJpegGehtDurch() throws {
-        XCTAssertTrue(try NGNutzlast.anzeige(optionen(), iconDatenURI: "data:image/jpeg;base64,/9j/4A")
-            .contains(#""icon":"/9j/4A""#))
+    /// JPEG schneidet NG auf 8 × 8 zu (§5.3); die App schickt nur GIF.
+    func testJpegWirdAbgewiesen() {
+        XCTAssertThrowsError(try NGNutzlast.anzeige(optionen(), iconDatenURI: "data:image/jpeg;base64,/9j/4A"))
     }
 
     /// `iconMode` bildet genau die Frage ab, die „Icon mitlaufen lassen"
@@ -212,7 +209,7 @@ final class AwtrixNGReglerTests: XCTestCase {
     /// und keiner mehr. Farbe, Dauer und das mitlaufende Icon wirken dort
     /// unveraendert, Tempo und Großbuchstaben in anderer Gestalt.
     func testAufNGFallenGenauDieRasterreglerWeg() {
-        let gesperrt = Regler.allCases.filter { !AwtrixNG.wirkt($0) }
+        let gesperrt = Regler.allCases.filter { !AwtrixNG.wirkt($0, weg: .text) }
         XCTAssertEqual(Set(gesperrt),
                        [.schriftart, .groesse, .fett, .senkrecht, .rand, .abstand])
     }
@@ -221,8 +218,8 @@ final class AwtrixNGReglerTests: XCTestCase {
     /// nicht sagt, warum es nicht geht — genau das, was dieser Durchgang
     /// vermeiden soll.
     func testJederGesperrteReglerHatEinenSatzDazu() {
-        for regler in Regler.allCases where !AwtrixNG.wirkt(regler) {
-            let satz = AwtrixNG.begruendung(regler)
+        for regler in Regler.allCases where !AwtrixNG.wirkt(regler, weg: .text) {
+            let satz = AwtrixNG.begruendung(regler, weg: .text)
             XCTAssertNotNil(satz, "\(regler) ist gesperrt und sagt nicht, warum")
             XCTAssertFalse(satz?.isEmpty ?? true)
         }
@@ -232,6 +229,6 @@ final class AwtrixNGReglerTests: XCTestCase {
     /// ginge nur ueber eine Verschiebung in Pixeln, und dafuer muesste die App
     /// die Breite des Textes in einer Schrift kennen, die sie nicht hat.
     func testRechtsbuendigGibtEsNicht() {
-        XCTAssertEqual(AwtrixNG.waagrechteAusrichtungen, [.links, .mittig])
+        XCTAssertEqual(AwtrixNG.waagrechteAusrichtungen(weg: .text), [.links, .mittig])
     }
 }

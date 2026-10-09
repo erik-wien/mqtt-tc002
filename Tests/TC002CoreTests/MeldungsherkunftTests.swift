@@ -21,6 +21,7 @@ final class MeldungsherkunftTests: XCTestCase {
     func testEinStehenderRahmenTraegtSeineRegler() throws {
         var o = Meldungsoptionen(text: "hi")
         o.farbe = "#FF0000"
+        o.weg = .text
         let rahmen = try Meldungsbau.rahmen(o, icon: nil, sammlung: leereSammlung())
         XCTAssertEqual(rahmen.herkunft?.optionen, o)
     }
@@ -28,17 +29,17 @@ final class MeldungsherkunftTests: XCTestCase {
     /// Auch ein langer Text ist ein Rahmen mit Herkunft und ohne Pixel: Die
     /// Uhr laesst ihn selbst durchlaufen.
     func testAuchEinLangerTextTraegtSeineRegler() throws {
-        let o = Meldungsoptionen(text: "ein ziemlich langer Text, der bestimmt nicht mehr hineinpasst")
+        let o = Meldungsoptionen(text: "ein ziemlich langer Text, der bestimmt nicht mehr hineinpasst",
+                                 weg: .text)
         let rahmen = try Meldungsbau.rahmen(o, icon: nil, sammlung: leereSammlung())
-        XCTAssertTrue(rahmen.draw.isEmpty)
-        XCTAssertTrue(rahmen.bilder.isEmpty)
+        XCTAssertNil(rahmen.pixel)
         XCTAssertEqual(rahmen.herkunft?.optionen.text, o.text)
     }
 
     /// Ein von Hand gebauter Rahmen — gemalt, aus der Bildersammlung — hat
     /// keine. Das ist kein Versaeumnis, sondern die Auskunft.
     func testEinSelbstGebauterRahmenHatKeineHerkunft() {
-        XCTAssertNil(Frame(draw: [DrawBefehl(x: 0, y: 0, breite: 1, hoehe: 1, farbe: "#FFFFFF")]).herkunft)
+        XCTAssertNil(Frame(pixel: Pixelinhalt(breite: 1, hoehe: 1, bilder: [])).herkunft)
     }
 }
 

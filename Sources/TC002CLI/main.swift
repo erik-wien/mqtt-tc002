@@ -29,8 +29,8 @@ AUFRUF
 
 Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
 Text und Icon. Von „senden" gelten dafuer nur --an, --name und --dauer; alles
-Uebrige formatiert Text, den es dort nicht gibt. Bilder lassen sich vorerst
-nicht an die Uhr schicken; ein Bild von 8x8 oder 16x16 geht als Icon.
+Uebrige formatiert Text, den es dort nicht gibt. Ein Einzelbild geht pixelgenau
+als Standbild an die Uhr, mehrere als animiertes GIF.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.

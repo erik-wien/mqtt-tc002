@@ -7,7 +7,7 @@ final class TextrasterTests: XCTestCase {
         var feld = Pixelfeld()
         Textraster.rastern("HI", schrift: "Menlo", groesse: 11, farbe: "#00FF66",
                            x: 1, y: 3, feld: &feld)
-        XCTAssertGreaterThan(feld.alsDrawBefehle().count, 3)
+        XCTAssertGreaterThan(feld.punkteRoh.compactMap { $0 }.count, 3)
     }
 
     func testBreiteWaechstMitDerZeichenzahl() {
@@ -88,14 +88,14 @@ final class TextrasterTests: XCTestCase {
         var mitUmlaut = Pixelfeld(), ohne = Pixelfeld()
         Textraster.rastern("Ä", schrift: "Menlo", groesse: 11, farbe: "#FFFFFF", x: 1, y: 3, feld: &mitUmlaut)
         Textraster.rastern("A", schrift: "Menlo", groesse: 11, farbe: "#FFFFFF", x: 1, y: 3, feld: &ohne)
-        XCTAssertNotEqual(mitUmlaut.alsDrawBefehle(), ohne.alsDrawBefehle(),
+        XCTAssertNotEqual(mitUmlaut.punkteRoh, ohne.punkteRoh,
                           "die Punkte des Ä müssen zusätzliche Pixel erzeugen")
     }
 
     func testLeererTextLaesstDasFeldUnberuehrt() {
         var feld = Pixelfeld()
         Textraster.rastern("", schrift: "Menlo", groesse: 11, farbe: "#FFFFFF", x: 0, y: 0, feld: &feld)
-        XCTAssertTrue(feld.alsDrawBefehle().isEmpty)
+        XCTAssertTrue(feld.punkteRoh.allSatisfy { $0 == nil })
     }
 
     /// Fett muss mehr Pixel schwaerzen als der normale Schnitt bei gleicher Groesse.

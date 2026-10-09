@@ -121,7 +121,12 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
 }
 
 extension Meldungsoptionen {
-    /// Die Vorschau einer NG-Uhr ist eine Näherung, immer dieselbe.
+    /// Die Optionen, mit denen die Vorschau rastert: auf dem Pixelweg die
+    /// gesendeten selbst (die Vorschau zeigt genau das Feld, das hinausgeht),
+    /// beim Text im Geraetefont die Naeherung.
+    public var fuerVorschau: Meldungsoptionen { weg == .pixel ? self : naeherung }
+
+    /// Die Vorschau von „als Text" ist eine Näherung, immer dieselbe.
     ///
     /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl
     /// ist dort gesperrt (`AwtrixNG.wirkt(.schriftart)`). Der gespeicherte
@@ -235,7 +240,9 @@ public enum Meldungsbau {
         Textraster.einsetzen(puffer(o, mass: mass),
                              x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
                              y: versatzY(o, mass: mass), in: &f)
-        return f
+        // „Als Text" zeichnet NG vergroessert auf 26 × 8 (§1.1); die Vorschau
+        // deutet das mit 2 × 2 grossen Punkten an.
+        return o.weg == .text ? f.inDoppelpixeln() : f
     }
 
     /// Die Einzelbilder der Laufschrift. Getrennt von `rahmen`, weil die
@@ -245,21 +252,82 @@ public enum Meldungsbau {
                                   iconBilder: [[String?]],
                                   iconKante: Int = 8,
                                   mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
-        Textraster.laufschriftEinzelbilder(
+        let bilder = Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
             versatzY: versatzY(o, mass: mass), iconBilder: iconBilder, iconKante: iconKante,
             iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand, mass: mass)
+        // Die Zeit, die das GIF tatsaechlich traegt (ganze Hundertstel):
+        // Vorschau und Sendung laufen gleich schnell.
+        return bilder.map { b in
+            let pixel = o.weg == .text
+                ? Pixelfeld(breite: mass.breite, hoehe: mass.hoehe, punkte: b.pixel)?
+                    .inDoppelpixeln().punkteRoh ?? b.pixel
+                : b.pixel
+            return Bildraster.Einzelbild(pixel: pixel, dauer: Bildraster.gifZeit(b.dauer))
+        }
     }
 
-    /// Der Rahmen zu einer Meldung: Er traegt Text und Regler samt Icon als
-    /// `Meldungsherkunft`, aus der AWTRIX NG die Anzeige baut
-    /// (`NGNutzlast.anzeige`). Pixel traegt er nicht.
-    public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung) throws -> Frame {
-        Frame(dauer: o.dauer,
-              herkunft: Meldungsherkunft(
-                optionen: o,
-                iconDatenURI: try icon.map { try sammlung.datenURI(fuer: $0) }))
+    /// Der Rahmen zu einer Meldung.
+    ///
+    /// `.pixel`: die App rastert selbst und schickt Pixel (`Pixelweg`) — ein
+    /// Standbild, wenn der Text passt, sonst die Einzelbilder der Laufschrift,
+    /// die auch die Vorschau abspielt. Ein Icon steckt in den Pixeln.
+    ///
+    /// `.text`: Text und Regler samt Icon als `Meldungsherkunft`, aus der NG
+    /// die Anzeige in ihrer Schrift setzt (`NGNutzlast.anzeige`).
+    public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
+                              mass: Anzeigemass = .vorgabe) throws -> Frame {
+        switch o.weg {
+        case .text:
+            return Frame(dauer: o.dauer,
+                         herkunft: Meldungsherkunft(
+                            optionen: o,
+                            iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }))
+        case .pixel:
+            return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer)
+        }
+    }
+
+    /// Die Pixel einer Meldung — dieselbe Rechnung, die die Vorschau zeigt.
+    static func pixelinhalt(_ o: Meldungsoptionen, icon: Icon?, mass: Anzeigemass) throws -> Pixelinhalt {
+        let mitIcon = icon != nil
+        let kante = icon?.kante ?? 8
+        let iconBilder = icon.flatMap {
+            try? Bildraster.lesenMitZeiten($0.datei, breite: kante, hoehe: kante)
+        } ?? []
+        let bilder: [Bildraster.Einzelbild]
+        if passt(o, mitIcon: mitIcon, iconKante: kante, mass: mass) {
+            let text = feld(o, mitIcon: mitIcon, iconKante: kante, mass: mass)
+            let y = iconY(kante: kante, mass: mass)
+            // Ein bewegtes Icon neben stehendem Text: jedes Icon-Bild ein
+            // Einzelbild, mit der Zeit aus der Datei.
+            bilder = (iconBilder.isEmpty ? [nil] : iconBilder.map { Optional($0) }).map { ib in
+                var f = text
+                if let ib {
+                    for dy in 0..<kante {
+                        for dx in 0..<kante {
+                            if let p = ib.pixel[dy * kante + dx] { f.setzen(x: dx, y: y + dy, farbe: p) }
+                        }
+                    }
+                }
+                return Bildraster.Einzelbild(pixel: f.punkteRoh, dauer: Bildraster.gifZeit(ib?.dauer ?? 1))
+            }
+        } else {
+            bilder = laufschriftBilder(o, iconBilder: iconBilder.map(\.pixel), iconKante: kante, mass: mass)
+        }
+        let inhalt = Pixelinhalt(breite: mass.breite, hoehe: mass.hoehe, bilder: bilder)
+        try Pixelweg.pruefen(inhalt)
+        return inhalt
+    }
+
+    /// Das Icon als GIF-Data-URL; eine PNG- oder JPEG-Datei wird umgerechnet
+    /// (`NGNutzlast.icon` nimmt nur GIF).
+    static func iconAlsGIF(_ icon: Icon, sammlung: Iconsammlung) throws -> String {
+        let uri = try sammlung.datenURI(fuer: icon)
+        if uri.hasPrefix("data:image/gif;") { return uri }
+        let bilder = try Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)
+        return try Pixelweg.gifDatenURI(Pixelinhalt(breite: icon.kante, hoehe: icon.kante, bilder: bilder))
     }
 }
 

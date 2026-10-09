@@ -37,10 +37,11 @@ public enum AwtrixNG {
     /// diese Zahl waere jeder Prozentsatz geraten.
     public static let grundgeschwindigkeit = 21.0
 
-    /// Was ueber die Vorschau zu sagen ist.
+    /// Was ueber die Vorschau von „als Text" zu sagen ist.
     ///
-    /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Rasterung
-    /// ist nur eine Naeherung.
+    /// AWTRIX NG setzt den Text dort mit ihrer eigenen Schrift; unsere Rasterung
+    /// ist nur eine Naeherung. Auf dem Pixelweg zeigt die Vorschau dagegen
+    /// genau das Feld, das hinausgeht.
     ///
     /// Im Kern und nicht in der Ansicht: Beide Oberflaechen sagen denselben
     /// Satz, und zwei Abschriften waeren zwei Uebersetzungsschluessel. Er geht
@@ -50,9 +51,11 @@ public enum AwtrixNG {
         lok("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.")
     }
 
-    /// Ob dieser Regler etwas bewirkt. AWTRIX NG setzt den Text selbst, und
+    /// Ob dieser Regler etwas bewirkt. Auf dem Pixelweg rastert die App selbst,
+    /// und jeder Regler wirkt. Bei „als Text" setzt AWTRIX NG den Text, und
     /// damit fallen genau die Regler weg, die unsere Rasterung steuern.
-    public static func wirkt(_ regler: Regler) -> Bool {
+    public static func wirkt(_ regler: Regler, weg: SendeWeg) -> Bool {
+        guard weg == .text else { return true }
         switch regler {
         case .schriftart, .groesse, .fett, .senkrecht, .rand, .abstand: return false
         case .grossbuchstaben, .waagrecht, .tempo, .farbe, .dauer, .iconLaeuftMit: return true
@@ -66,8 +69,8 @@ public enum AwtrixNG {
     ///
     /// Die Saetze gehen als gewoehnliches `String` an `.help(_:)` weiter, das
     /// in dieser Ueberladung nichts nachschlaegt — deshalb `lok`.
-    public static func begruendung(_ regler: Regler) -> String? {
-        guard !wirkt(regler) else { return nil }
+    public static func begruendung(_ regler: Regler, weg: SendeWeg) -> String? {
+        guard !wirkt(regler, weg: weg) else { return nil }
         switch regler {
         case .schriftart:
             return lok("Die AWTRIX setzt den Text mit ihrer eigenen Schrift. Eine Schriftwahl gibt es dort nicht.")
@@ -86,14 +89,17 @@ public enum AwtrixNG {
         }
     }
 
-    /// Welche waagrechten Ausrichtungen NG kennt.
+    /// Welche waagrechten Ausrichtungen der Weg kennt.
     ///
-    /// Der einzige halbe Fall. NG kennt `textCenter` als bool: mittig oder
+    /// Auf dem Pixelweg alle drei, die App rastert. Bei „als Text" der einzige
+    /// halbe Fall. NG kennt `textCenter` als bool: mittig oder
     /// linksbuendig. Rechtsbuendig ginge nur ueber eine Verschiebung in Pixeln
     /// — und dafuer muesste diese App die Breite des Textes in einer Schrift
     /// kennen, die sie nicht hat. Ein Eintrag, der nichts taete, waere
     /// schlimmer als keiner.
-    public static let waagrechteAusrichtungen: [SendenHAusrichtung] = [.links, .mittig]
+    public static func waagrechteAusrichtungen(weg: SendeWeg) -> [SendenHAusrichtung] {
+        weg == .pixel ? SendenHAusrichtung.allCases : [.links, .mittig]
+    }
 }
 
 /// Die Regler der Sendeansicht, soweit die Firmware ueber sie entscheidet.

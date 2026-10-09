@@ -337,7 +337,7 @@ struct BildSendenIntent: AppIntent {
 
         let ziele = try zieleBestimmenFuerBild(e)
         // Dieselbe Entscheidung wie in App und Werkzeug: ein Einzelbild als
-        // Rechtecke, mehrere als GIF (`Bildsendung.rahmen`).
+        // Standbild, mehrere als GIF (`Bildsendung.rahmen`).
         let rahmen = try Bildsendung.rahmen(aus: gefunden.datei, dauer: (dauer ?? 0) > 0 ? dauer : nil)
         let anzeigenname = Meldungsplatz.name(fuer: platz ?? 1)
         try await Task.detached(priority: .userInitiated) {
