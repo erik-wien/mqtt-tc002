@@ -118,8 +118,25 @@ public struct NGUhrzustand: Equatable, Sendable {
 ///   Dort ist der Rumpf ein bloßer Name bzw. `true`/`false`,
 /// - unbekannte Schlüssel in `PATCH /display` (werden überlesen).
 ///
-/// Abweichung von der Doku, wo diese schweigt: `PUT /apps/{name}/enabled` auf
-/// eine unbekannte App ist `404 app not found`.
+/// Fundstellen (Herstellerdoku `tc002/reference/`):
+/// - `http`, Apps › PUT pushed: ein Array legt `{name}0`, `{name}1` … an;
+/// - `http`, Settings › PATCH: Antwort ist `200` mit allen Einstellungen;
+/// - `http`, Apps › PUT active: ein kaputter JSON-Rumpf wird als Name gelesen
+///   und ergibt `404 app not found`;
+/// - `http`, Apps › Names: ungültiger App-Name ist `400 invalidName` mit
+///   `field: "name"`;
+/// - `limits`: 32 Benachrichtigungen einschließlich der angezeigten, bei
+///   `stack: true` (Vorgabe) und voller Schlange `507`, `stack: false` ersetzt
+///   die angezeigte; 50 Push-Apps, gezählt werden nur neue Namen, ein Array
+///   gilt ganz oder gar nicht;
+/// - `conventions`: die fünf Farbformen (siehe `farbe(_:)`).
+///
+/// Annahmen der Emulation, wo die Doku schweigt:
+/// - `PUT /apps/{name}/enabled` auf eine unbekannte App ist `404 app not found`;
+/// - ein einzelnes Objekt ersetzt nur die App `{name}`, ein Array zusätzlich
+///   `{name}0`, `{name}1` …;
+/// - Einstellungen: ein Wert mit anderem Typ als die Vorgabe ist
+///   `422 wrong type`; `null`-Vorgaben nehmen jeden Typ.
 public enum VirtuelleNGUhr {
     public typealias Anfrage = Virtuelleuhr.Anfrage
     public typealias Antwort = Virtuelleuhr.Antwort
@@ -127,7 +144,8 @@ public enum VirtuelleNGUhr {
     /// Rumpfgrenze der Firmware.
     public static let maxRumpf = 2 * 1024 * 1024
     static let maxPushApps = 50
-    static let maxWarteschlange = 10
+    /// Einschließlich der gerade angezeigten (`reference/limits`).
+    static let maxWarteschlange = 32
 
     // MARK: - Vorgaben (Messung NG 1.2.2, TC002)
 
@@ -409,7 +427,7 @@ public enum VirtuelleNGUhr {
                 || ($0 >= 97 && $0 <= 122) || $0 == 95 || $0 == 45 }
     }
 
-    private static let ungueltigerName = fehler(400, "invalidName", "invalid name")
+    private static let ungueltigerName = fehler(400, "invalidName", "invalid name", feld: "name")
 
     private static func appSenden(_ name: String, _ a: Anfrage, _ z: inout NGUhrzustand) -> Antwort {
         guard gueltigerName(name) else { return ungueltigerName }
@@ -433,14 +451,17 @@ public enum VirtuelleNGUhr {
         }
 
         var apps = z.apps
+        // Nur neue Namen zählen gegen die Grenze; ein Array gilt ganz oder gar nicht.
+        let vorhanden = Set(apps.filter { !$0.eingebaut }.map(\.name))
+        let neueNamen = neue.filter { !vorhanden.contains($0.0) }.count
+        guard vorhanden.count + neueNamen <= maxPushApps else {
+            return fehler(507, "insufficientStorage", "storage full")
+        }
         let ersetzt: (String) -> Bool = { n in
             if neue.count == 1, case .objekt = wert { return n == name }
             return n == name || Self.istNummeriert(n, von: name)
         }
         apps.removeAll { !$0.eingebaut && ersetzt($0.name) }
-        guard apps.filter({ !$0.eingebaut }).count + neue.count <= maxPushApps else {
-            return fehler(507, "insufficientStorage", "storage full")
-        }
         for (n, w) in neue {
             apps.append(NGApp(name: n, aktiv: true, eingebaut: false, nutzlast: w))
         }
@@ -507,10 +528,22 @@ public enum VirtuelleNGUhr {
             guard case .text(let s) = n else { return ungueltig("must be a string", feld: "name") }
             name = s
         }
-        guard z.benachrichtigungen.count < maxWarteschlange else {
-            return fehler(507, "insufficientStorage", "queue full")
+        var stapeln = true
+        if let st = o["stack"] {
+            guard case .bool(let b) = st else { return ungueltig("must be a boolean", feld: "stack") }
+            stapeln = b
         }
-        z.benachrichtigungen.append(NGBenachrichtigung(name: name, nutzlast: o))
+        let neu = NGBenachrichtigung(name: name, nutzlast: o)
+        if stapeln {
+            guard z.benachrichtigungen.count < maxWarteschlange else {
+                return fehler(507, "insufficientStorage", "queue full")
+            }
+            z.benachrichtigungen.append(neu)
+        } else if z.benachrichtigungen.isEmpty {
+            z.benachrichtigungen = [neu]
+        } else {
+            z.benachrichtigungen[0] = neu
+        }
         return ok
     }
 
@@ -530,22 +563,9 @@ public enum VirtuelleNGUhr {
         var neu = z.indikatoren[n - 1]
         switch o["color"] ?? .null {
         case .null, .zahl(0): neu.an = false
-        case .text(let s):
-            guard let hex = farbe(s) else { return ungueltig("invalid color", feld: "color") }
+        case let w:
+            guard let hex = farbe(w) else { return ungueltig("invalid color", feld: "color") }
             neu.farbe = hex; neu.an = true
-        case .zahl(let w):
-            guard let i = JSONWert.zahl(w).ganzzahl, (0...0xFFFFFF).contains(i) else {
-                return ungueltig("invalid color", feld: "color")
-            }
-            neu.farbe = String(format: "#%06X", i); neu.an = true
-        case .liste(let l):
-            let k = l.compactMap(\.ganzzahl)
-            guard k.count == 3, l.count == 3, k.allSatisfy({ (0...255).contains($0) }) else {
-                return ungueltig("invalid color", feld: "color")
-            }
-            neu.farbe = String(format: "#%02X%02X%02X", k[0], k[1], k[2]); neu.an = true
-        default:
-            return ungueltig("invalid color", feld: "color")
         }
         for (feld, ziel) in [("blinkMs", \NGIndikator.blinkMs), ("fadeMs", \NGIndikator.fadeMs)] {
             if let v = o[feld] {
@@ -559,9 +579,53 @@ public enum VirtuelleNGUhr {
         return ok
     }
 
-    /// `#RRGGBB` (Groß-/Kleinschreibung gleich), sonst `nil`.
-    private static func farbe(_ s: String) -> String? {
-        guard s.count == 7, s.hasPrefix("#"), s.dropFirst().allSatisfy(\.isHexDigit) else { return nil }
-        return s.uppercased()
+    /// Die fünf Farbformen der Doku (`reference/conventions`), als `#RRGGBB`
+    /// groß; `nil`, wenn keine passt. `"RRGGBB"` und `"RGB"` mit wahlfreiem `#`;
+    /// `[r,g,b]` mit auf 0–255 begrenzten Kanälen; `["HSV",h,s,v]` mit auf 0–359
+    /// umgebrochenem h und auf 0–100 begrenzten s, v; gepackte Ganzzahl
+    /// `0xRRGGBB`. Kanäle müssen ganze Zahlen sein, Bruchwerte werden abgewiesen.
+    static func farbe(_ w: JSONWert) -> String? {
+        func hex(_ r: Int, _ g: Int, _ b: Int) -> String { String(format: "#%02X%02X%02X", r, g, b) }
+        func begrenzt(_ n: Int, _ o: Int) -> Int { min(max(n, 0), o) }
+        switch w {
+        case .text(let t):
+            let h = t.hasPrefix("#") ? String(t.dropFirst()) : t
+            guard h.allSatisfy(\.isHexDigit) else { return nil }
+            if h.count == 6 { return "#" + h.uppercased() }
+            if h.count == 3 { return "#" + h.uppercased().map { "\($0)\($0)" }.joined() }
+            return nil
+        case .zahl:
+            guard let i = w.ganzzahl, (0...0xFFFFFF).contains(i) else { return nil }
+            return hex(i >> 16, (i >> 8) & 255, i & 255)
+        case .liste(let l):
+            if l.count == 3 {
+                let k = l.compactMap(\.ganzzahl)
+                guard k.count == 3 else { return nil }
+                return hex(begrenzt(k[0], 255), begrenzt(k[1], 255), begrenzt(k[2], 255))
+            }
+            if l.count == 4, l[0] == .text("HSV") {
+                let k = l[1...].compactMap(\.ganzzahl)
+                guard k.count == 3 else { return nil }
+                let h = Double(((k[0] % 360) + 360) % 360)
+                let sat = Double(begrenzt(k[1], 100)) / 100, v = Double(begrenzt(k[2], 100)) / 100
+                let c = v * sat
+                let x = c * (1 - abs((h / 60).truncatingRemainder(dividingBy: 2) - 1))
+                let m = v - c
+                let (r, g, b): (Double, Double, Double)
+                switch Int(h / 60) {
+                case 0: (r, g, b) = (c, x, 0)
+                case 1: (r, g, b) = (x, c, 0)
+                case 2: (r, g, b) = (0, c, x)
+                case 3: (r, g, b) = (0, x, c)
+                case 4: (r, g, b) = (x, 0, c)
+                default: (r, g, b) = (c, 0, x)
+                }
+                return hex(Int(((r + m) * 255).rounded()), Int(((g + m) * 255).rounded()),
+                           Int(((b + m) * 255).rounded()))
+            }
+            return nil
+        default:
+            return nil
+        }
     }
 }

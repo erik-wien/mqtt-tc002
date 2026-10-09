@@ -74,7 +74,7 @@ final class VirtuelleNGUhrTests: XCTestCase {
         XCTAssertEqual(e.objekt["brightness"], .zahl(128))
         XCTAssertEqual(e.objekt["transitionEffect"], .text("Rain"))
         XCTAssertEqual(e.objekt["timeColor"], .null)
-        XCTAssertEqual(e.objekt.count, 55)
+        XCTAssertEqual(e.objekt.count, 46)
     }
 
     func testAnzeigeVorgabe() {
@@ -117,7 +117,7 @@ final class VirtuelleNGUhrTests: XCTestCase {
         let e = senden("PATCH", "/settings", ##"{"brightness":80,"timeColor":"#00FF00"}"##, &z)
         XCTAssertEqual(e.status, 200)
         XCTAssertEqual(e.objekt["brightness"], .zahl(80))
-        XCTAssertEqual(e.objekt.count, 55)
+        XCTAssertEqual(e.objekt.count, 46)
         XCTAssertEqual(z.einstellungen["timeColor"], .text("#00FF00"))
         XCTAssertEqual(senden("GET", "/device", &z).objekt["brightness"], .zahl(80))
     }
@@ -183,9 +183,9 @@ final class VirtuelleNGUhrTests: XCTestCase {
         pruefeOK(senden("PUT", "/apps/pushed/wetter", #"{"text":"neu"}"#, &z))
         XCTAssertEqual(z.apps.count, 3)
 
-        pruefeFehler(senden("PUT", "/apps/pushed/a%20b", #"{"text":"x"}"#, &z), 400, "invalidName")
+        pruefeFehler(senden("PUT", "/apps/pushed/a%20b", #"{"text":"x"}"#, &z), 400, "invalidName", feld: "name")
         pruefeFehler(senden("PUT", "/apps/pushed/\(String(repeating: "a", count: 33))", #"{"text":"x"}"#, &z),
-                     400, "invalidName")
+                     400, "invalidName", feld: "name")
         pruefeFehler(senden("PUT", "/apps/pushed/ok", "{", &z), 400, "invalidJson")
         pruefeFehler(senden("PUT", "/apps/pushed/ok", "", &z), 422, "validationFailed", meldung: "body required")
         pruefeFehler(senden("PUT", "/apps/pushed/ok", "{}", &z), 422, "validationFailed", meldung: "body required")
@@ -194,7 +194,7 @@ final class VirtuelleNGUhrTests: XCTestCase {
         pruefeOK(senden("DELETE", "/apps/wetter", &z))
         XCTAssertEqual(z.apps.map(\.name), ["Time", "Status"])
         pruefeOK(senden("DELETE", "/apps/gibtsnicht", &z))
-        pruefeFehler(senden("DELETE", "/apps/a%20b", &z), 400, "invalidName")
+        pruefeFehler(senden("DELETE", "/apps/a%20b", &z), 400, "invalidName", feld: "name")
     }
 
     func testEinFeldMachtNummerierteApps() {
@@ -241,7 +241,7 @@ final class VirtuelleNGUhrTests: XCTestCase {
         pruefeOK(senden("PUT", "/apps/Status/enabled", "true", kopf: [:], &z))
         pruefeFehler(senden("PUT", "/apps/Status/enabled", "vielleicht", &z),
                      422, "validationFailed", meldung: "must be true or false")
-        pruefeFehler(senden("PUT", "/apps/a%20b/enabled", "true", &z), 400, "invalidName")
+        pruefeFehler(senden("PUT", "/apps/a%20b/enabled", "true", &z), 400, "invalidName", feld: "name")
         pruefeFehler(senden("PUT", "/apps/nix/enabled", "true", &z), 404, "notFound")
     }
 
@@ -272,8 +272,61 @@ final class VirtuelleNGUhrTests: XCTestCase {
         pruefeFehler(senden("POST", "/notifications", #"[{"text":"a"},{"text":"b"}]"#, &z),
                      422, "validationFailed", meldung: "one notification per request")
         pruefeFehler(senden("POST", "/notifications", #"{"name":5}"#, &z), 422, "validationFailed", feld: "name")
-        for _ in 0..<10 { pruefeOK(senden("POST", "/notifications", #"{"text":"x"}"#, &z)) }
+    }
+
+    func testWarteschlangeFasst32UndStackFalseErsetztDieAngezeigte() {
+        var z = NGUhrzustand()
+        for i in 0..<32 { pruefeOK(senden("POST", "/notifications", "{\"name\":\"n\(i)\"}", &z)) }
         pruefeFehler(senden("POST", "/notifications", #"{"text":"x"}"#, &z), 507, "insufficientStorage")
+        pruefeFehler(senden("POST", "/notifications", #"{"text":"x","stack":true}"#, &z), 507, "insufficientStorage")
+        pruefeFehler(senden("POST", "/notifications", #"{"stack":"nein"}"#, &z), 422, "validationFailed", feld: "stack")
+        pruefeOK(senden("POST", "/notifications", #"{"name":"neu","stack":false}"#, &z))
+        XCTAssertEqual(z.benachrichtigungen.count, 32)
+        XCTAssertEqual(z.benachrichtigungen[0].name, "neu")
+        XCTAssertEqual(z.benachrichtigungen[1].name, "n1")
+        var leer = NGUhrzustand()
+        pruefeOK(senden("POST", "/notifications", #"{"stack":false}"#, &leer))
+        XCTAssertEqual(leer.benachrichtigungen.count, 1)
+    }
+
+    func testFarbformen() {
+        let f = VirtuelleNGUhr.farbe
+        XCTAssertEqual(f(.text("FF8800")), "#FF8800")
+        XCTAssertEqual(f(.text("#ff8800")), "#FF8800")
+        XCTAssertEqual(f(.text("F80")), "#FF8800")
+        XCTAssertEqual(f(.text("#f80")), "#FF8800")
+        XCTAssertNil(f(.text("F8")))
+        XCTAssertNil(f(.text("GG0000")))
+        XCTAssertEqual(f(.zahl(16746496)), "#FF8800")
+        XCTAssertNil(f(.zahl(0x1000000)))
+        XCTAssertNil(f(.zahl(1.5)))
+        XCTAssertEqual(f(.liste([.zahl(255), .zahl(136), .zahl(0)])), "#FF8800")
+        // Begrenzt, nicht abgewiesen.
+        XCTAssertEqual(f(.liste([.zahl(300), .zahl(-5), .zahl(0)])), "#FF0000")
+        XCTAssertNil(f(.liste([.zahl(1.5), .zahl(0), .zahl(0)])))
+        XCTAssertNil(f(.liste([.zahl(1), .zahl(0)])))
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(0), .zahl(100), .zahl(100)])), "#FF0000")
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(120), .zahl(100), .zahl(100)])), "#00FF00")
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(240), .zahl(100), .zahl(50)])), "#000080")
+        // h wird umgebrochen, s und v begrenzt.
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(480), .zahl(100), .zahl(100)])), "#00FF00")
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(-120), .zahl(500), .zahl(100)])), "#0000FF")
+        XCTAssertEqual(f(.liste([.text("HSV"), .zahl(0), .zahl(-1), .zahl(100)])), "#FFFFFF")
+        XCTAssertNil(f(.liste([.text("HSV"), .zahl(0.5), .zahl(100), .zahl(100)])))
+        XCTAssertNil(f(.bool(true)))
+    }
+
+    func testIndikatorNimmtAlleFarbformen() {
+        var z = NGUhrzustand()
+        pruefeOK(senden("PUT", "/indicators/1", #"{"color":"F80"}"#, &z))
+        XCTAssertEqual(z.indikatoren[0].farbe, "#FF8800")
+        pruefeOK(senden("PUT", "/indicators/1", #"{"color":["HSV",240,100,100]}"#, &z))
+        XCTAssertEqual(z.indikatoren[0].farbe, "#0000FF")
+        pruefeOK(senden("PUT", "/indicators/1", #"{"color":[999,0,0]}"#, &z))
+        XCTAssertEqual(z.indikatoren[0].farbe, "#FF0000")
+        pruefeFehler(senden("PUT", "/indicators/1", #"{"color":[1.5,0,0]}"#, &z), 422, "validationFailed", feld: "color")
+        pruefeOK(senden("PUT", "/indicators/1", #"{"color":null}"#, &z))
+        XCTAssertFalse(z.indikatoren[0].an)
     }
 
     // MARK: Indikatoren
