@@ -77,6 +77,7 @@ public struct Nachrichtabschnitt: View {
                     Text(verbatim: "\(durchlaeufe)").monospacedDigit()
                 }
             }
+            .gesperrterStepper(!aktiv)
         } header: {
             Abschnittskopf("Nachricht", hilfe: lok("Eine Nachricht unterbricht die Schleife und belegt keinen Platz. Halten: bleibt stehen, bis sie zurückgezogen wird. Aufwecken: erscheint auch bei ausgeschaltetem Display. Ersetzen: verdrängt die sichtbare, statt sich hinten anzustellen. Durchläufe: wie oft ein laufender Text durchzieht. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
@@ -112,7 +113,7 @@ public struct Lebensdauerabschnitt: View {
                     Text(verbatim: "\(zahl)").monospacedDigit()
                 }
             }
-            .disabled(behalten)
+            .gesperrterStepper(behalten || !aktiv)
             Picker("Einheit", selection: $einheit) {
                 Text("Minuten").tag(Lebensdauereinheit.minuten)
                 Text("Stunden").tag(Lebensdauereinheit.stunden)
@@ -127,5 +128,17 @@ public struct Lebensdauerabschnitt: View {
             Abschnittskopf("Lebensdauer", hilfe: lok("Eine neue Anzeige verschwindet nach dieser Zeit von selbst, sofern „Behalten“ aus ist. „Rot markieren“ lässt sie stehen und setzt einen dunkelroten Rand. Der Platz merkt die Werte, bis er gelöscht oder neu belegt wird. Gilt nur für Anzeigen."))
         }
         .disabled(!aktiv)
+    }
+}
+
+private extension View {
+    /// Ein gesperrter `Stepper` zeigt sich unter iPadOS 26 nicht abgeblendet,
+    /// obwohl `.disabled` gilt (Simulator, 09.10.2026), anders als Schalter und
+    /// Menüs daneben. Darum zusätzlich die Blässe des Systems nachgezeichnet und
+    /// die Trefferprüfung abgeschaltet.
+    func gesperrterStepper(_ gesperrt: Bool) -> some View {
+        disabled(gesperrt)
+            .allowsHitTesting(!gesperrt)
+            .opacity(gesperrt ? 0.35 : 1)
     }
 }

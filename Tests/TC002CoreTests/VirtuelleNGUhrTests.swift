@@ -242,7 +242,50 @@ final class VirtuelleNGUhrTests: XCTestCase {
         pruefeFehler(senden("PUT", "/apps/Status/enabled", "vielleicht", &z),
                      422, "validationFailed", meldung: "must be true or false")
         pruefeFehler(senden("PUT", "/apps/a%20b/enabled", "true", &z), 400, "invalidName", feld: "name")
-        pruefeFehler(senden("PUT", "/apps/nix/enabled", "true", &z), 404, "notFound")
+        // Gemessen 09.10.2026: ein unbekannter Name ist ok und legt nichts an.
+        let vorher = z.apps
+        pruefeOK(senden("PUT", "/apps/nix/enabled", "true", kopf: [:], &z))
+        XCTAssertEqual(z.apps, vorher)
+    }
+
+    /// Gemessen 09.10.2026 (NG 1.2.2, TC002): `enabled:false` bleibt beim
+    /// Ersetzen und beim Löschen; das Inventar behält einen Geistereintrag
+    /// (`present:false`), den `enabled true` wegräumt.
+    func testAusgeschalteteAnzeigeBleibtBeiErsetzenUndLoeschenAusgeschaltet() {
+        var z = NGUhrzustand()
+        pruefeOK(senden("PUT", "/apps/pushed/eins", #"{"text":"a"}"#, &z))
+        pruefeOK(senden("PUT", "/apps/eins/enabled", "false", kopf: [:], &z))
+        func eintrag() -> [String: JSONWert]? {
+            guard case .liste(let l) = senden("GET", "/apps", &z).wert else { return nil }
+            for case .objekt(let o) in l where o["name"] == .text("eins") { return o }
+            return nil
+        }
+        XCTAssertEqual(eintrag()?["enabled"], .bool(false))
+        XCTAssertEqual(eintrag()?["inLoop"], .bool(false))
+        XCTAssertEqual(eintrag()?["present"], .bool(true))
+
+        pruefeOK(senden("PUT", "/apps/pushed/eins", #"{"text":"b"}"#, &z))
+        XCTAssertEqual(eintrag()?["enabled"], .bool(false), "ersetzt wird der Inhalt, nicht der Schalter")
+
+        pruefeOK(senden("DELETE", "/apps/eins", &z))
+        XCTAssertEqual(eintrag()?["enabled"], .bool(false))
+        XCTAssertEqual(eintrag()?["present"], .bool(false), "Geistereintrag")
+        XCTAssertEqual(eintrag()?["inLoop"], .bool(false))
+
+        pruefeOK(senden("PUT", "/apps/pushed/eins", #"{"text":"c"}"#, &z))
+        XCTAssertEqual(eintrag()?["present"], .bool(true))
+        XCTAssertEqual(eintrag()?["enabled"], .bool(false), "eine neue Sendung unter dem Namen bleibt unsichtbar")
+
+        pruefeOK(senden("DELETE", "/apps/eins", &z))
+        pruefeOK(senden("PUT", "/apps/eins/enabled", "true", kopf: [:], &z))
+        XCTAssertNil(eintrag(), "enabled true räumt den Geistereintrag weg")
+    }
+
+    func testEineEingeschalteteAnzeigeVerschwindetBeimLoeschenGanz() {
+        var z = NGUhrzustand()
+        pruefeOK(senden("PUT", "/apps/pushed/eins", #"{"text":"a"}"#, &z))
+        pruefeOK(senden("DELETE", "/apps/eins", &z))
+        XCTAssertNil(z.apps.first { $0.name == "eins" })
     }
 
     // MARK: Benachrichtigungen

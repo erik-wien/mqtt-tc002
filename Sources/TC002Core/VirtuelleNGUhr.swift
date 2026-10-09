@@ -76,6 +76,10 @@ public struct NGApp: Equatable, Sendable {
     /// Die Lebensdauer ist abgelaufen und `lifetimeExpiry` war `mark`: Die
     /// Anzeige bleibt, die Uhr zeichnet ihr einen dunkelroten Rahmen (§5.4).
     public var markiert = false
+    /// `present` im Inventar. `false` ist der Geistereintrag einer
+    /// ausgeschalteten Anzeige, die gelöscht wurde: Der Name bleibt, mit
+    /// `enabled:false`, bis jemand `enabled true` setzt (gemessen 09.10.2026).
+    public var vorhanden = true
 
     /// `lifetimeMs` der Nutzlast; `nil` bei 0 (nie) und wo es fehlt.
     public var lebensdauerMs: Int? {
@@ -154,7 +158,11 @@ public struct NGUhrzustand: Equatable, Sendable {
 /// - `conventions`: die fünf Farbformen (siehe `farbe(_:)`).
 ///
 /// Annahmen der Emulation, wo die Doku schweigt:
-/// - `PUT /apps/{name}/enabled` auf eine unbekannte App ist `404 app not found`;
+/// - `PUT /apps/{name}/enabled` auf einen unbekannten Namen ist ok und legt nichts
+///   an (gemessen 09.10.2026); `enabled` bleibt beim Ersetzen und beim Löschen
+///   erhalten (Geistereintrag `present:false`), `true` räumt ihn weg;
+/// - läuft die Lebensdauer einer ausgeschalteten Anzeige ab (`remove`), bleibt
+///   derselbe Geistereintrag (nicht gemessen);
 /// - ein einzelnes Objekt ersetzt nur die App `{name}`, ein Array zusätzlich
 ///   `{name}0`, `{name}1` …;
 /// - Einstellungen: ein Wert mit anderem Typ als die Vorgabe ist
@@ -644,8 +652,8 @@ public enum VirtuelleNGUhr {
     }
 
     private static func appEintrag(_ a: NGApp) -> JSONWert {
-        .objekt(["name": .text(a.name), "enabled": .bool(a.aktiv), "inLoop": .bool(a.aktiv),
-                 "slot": .null, "present": .bool(true),
+        .objekt(["name": .text(a.name), "enabled": .bool(a.aktiv), "inLoop": .bool(a.aktiv && a.vorhanden),
+                 "slot": .null, "present": .bool(a.vorhanden),
                  "origin": .text(a.eingebaut ? "builtin" : "pushed"),
                  "config": .bool(a.eingebaut && a.name == "Time")])
     }
@@ -755,7 +763,7 @@ public enum VirtuelleNGUhr {
 
         var apps = z.apps
         // Nur neue Namen zählen gegen die Grenze; ein Array gilt ganz oder gar nicht.
-        let vorhanden = Set(apps.filter { !$0.eingebaut }.map(\.name))
+        let vorhanden = Set(apps.filter { !$0.eingebaut && $0.vorhanden }.map(\.name))
         let neueNamen = neue.filter { !vorhanden.contains($0.0) }.count
         guard vorhanden.count + neueNamen <= maxPushApps else {
             return fehler(507, "insufficientStorage", "storage full")
@@ -764,9 +772,12 @@ public enum VirtuelleNGUhr {
             if neue.count == 1, case .objekt = wert { return n == name }
             return n == name || Self.istNummeriert(n, von: name)
         }
+        // Ersetzt wird der Inhalt, nicht der Schalter: Eine ausgeschaltete Anzeige
+        // bleibt ausgeschaltet (gemessen 09.10.2026).
+        let ausgeschaltet = Set(apps.filter { !$0.eingebaut && !$0.aktiv }.map(\.name))
         apps.removeAll { !$0.eingebaut && ersetzt($0.name) }
         for (n, w) in neue {
-            apps.append(NGApp(name: n, aktiv: true, eingebaut: false, nutzlast: w))
+            apps.append(NGApp(name: n, aktiv: !ausgeschaltet.contains(n), eingebaut: false, nutzlast: w))
         }
         z.apps = apps
         return ok
@@ -803,9 +814,21 @@ public enum VirtuelleNGUhr {
             z.apps[i].markiert = true
             return
         }
-        z.apps.remove(at: i)
-        if !z.apps.contains(where: { $0.name == z.aktiveApp }) {
-            z.aktiveApp = z.apps.first?.name ?? ""
+        inhaltEntfernen(i, &z)
+    }
+
+    /// Löscht den Inhalt. Eine ausgeschaltete Anzeige bleibt als Geistereintrag
+    /// (`present:false`) im Inventar, eine eingeschaltete verschwindet ganz.
+    private static func inhaltEntfernen(_ i: Int, _ z: inout NGUhrzustand) {
+        if z.apps[i].aktiv {
+            z.apps.remove(at: i)
+        } else {
+            z.apps[i].vorhanden = false
+            z.apps[i].nutzlast = nil
+            z.apps[i].markiert = false
+        }
+        if !z.apps.contains(where: { $0.name == z.aktiveApp && $0.vorhanden }) {
+            z.aktiveApp = z.apps.first(where: { $0.vorhanden })?.name ?? ""
         }
     }
 
@@ -816,9 +839,9 @@ public enum VirtuelleNGUhr {
 
     private static func appLoeschen(_ name: String, _ z: inout NGUhrzustand) -> Antwort {
         guard gueltigerName(name) else { return ungueltigerName }
-        z.apps.removeAll { !$0.eingebaut && ($0.name == name || istNummeriert($0.name, von: name)) }
-        if !z.apps.contains(where: { $0.name == z.aktiveApp }) {
-            z.aktiveApp = z.apps.first?.name ?? ""
+        for i in z.apps.indices.reversed()
+        where !z.apps[i].eingebaut && (z.apps[i].name == name || istNummeriert(z.apps[i].name, von: name)) {
+            inhaltEntfernen(i, &z)
         }
         return ok
     }
@@ -833,13 +856,13 @@ public enum VirtuelleNGUhr {
             }
             name = n
         }
-        guard z.apps.contains(where: { $0.name == name }) else { return appFehlt }
+        guard z.apps.contains(where: { $0.name == name && $0.vorhanden }) else { return appFehlt }
         z.aktiveApp = name
         return ok
     }
 
     private static func wechseln(_ schritt: Int, _ z: inout NGUhrzustand) {
-        let imLauf = z.apps.filter(\.aktiv).map(\.name)
+        let imLauf = z.apps.filter { $0.aktiv && $0.vorhanden }.map(\.name)
         guard !imLauf.isEmpty else { return }
         guard let i = imLauf.firstIndex(of: z.aktiveApp) else { z.aktiveApp = imLauf[0]; return }
         z.aktiveApp = imLauf[(i + schritt + imLauf.count) % imLauf.count]
@@ -849,7 +872,13 @@ public enum VirtuelleNGUhr {
         guard gueltigerName(name) else { return ungueltigerName }
         let text = String(decoding: a.koerper, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         guard text == "true" || text == "false" else { return ungueltig("must be true or false") }
-        guard let i = z.apps.firstIndex(where: { $0.name == name }) else { return appFehlt }
+        // Ein unbekannter Name ist ok und legt nichts an (gemessen 09.10.2026).
+        guard let i = z.apps.firstIndex(where: { $0.name == name }) else { return ok }
+        if !z.apps[i].vorhanden {
+            // Einschalten räumt den Geistereintrag weg; Ausschalten ändert nichts.
+            if text == "true" { z.apps.remove(at: i) }
+            return ok
+        }
         z.apps[i].aktiv = text == "true"
         return ok
     }

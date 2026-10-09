@@ -452,7 +452,7 @@ restore. Log, scripts, file routes, secrets export and firmware are blocked.
 | `PUT /api/v1/apps/active` | switch: `{"name","fast"}` (`fast` default `false`); a body not starting with `{` is taken as the name itself — broken JSON thus as a name and therefore `404`, not `400`; `503 serviceBusy` if an on-demand script cannot start |
 | `POST /api/v1/apps/next` · `/previous` | page forward and back |
 | `PUT /api/v1/apps/order` | `{"order":[…],"disabled":[…]}`; `disabled` is the complete list of the switched-off apps, `order` only together with it; duplicates in `order` run several times per round; `507 applied, not saved yet` means active until restart, not saved |
-| `PUT /api/v1/apps/{name}/enabled` | body `true`/`false`; a switched-off app keeps its place; any other body `422` |
+| `PUT /api/v1/apps/{name}/enabled` | body `true`/`false`; a switched-off app keeps its place; any other body `422`; 🔬 unknown name: ok, creates nothing; `true` clears a ghost entry (`present:false`), §7.2 |
 | `PUT /api/v1/apps/pushed/{name}` | create or replace an app (object or array) |
 | `DELETE /api/v1/apps/{name}` | delete an app; without effect on built-in apps (`Time`, `Status`) but `200` |
 | `GET` / `PATCH /api/v1/apps/builtin/{name}/config` | settings of a built-in app |
@@ -957,6 +957,17 @@ scripts. Keys that do not apply are absent: `icon` (pushed apps with an icon),
 `{message, line?, hook?}`) and `meta` (scripts), `config` (apps with settings).
 The order survives restarts only for apps named in an order call; switched-off
 pushed apps stay off after being sent again.
+
+🔬 **Switched-off pushed app (09.10.2026, NG 1.2.2, TC002, over HTTP):**
+`enabled:false` and `inLoop:false` with `present:true`. `PUT /api/v1/apps/pushed/{name}`
+on a switched-off name **replaces the content, the app stays switched off**.
+`DELETE /api/v1/apps/{name}` removes the content, but the name stays in the
+inventory as a ghost entry (`enabled:false`, `inLoop:false`, `present:false`); a
+later push under the same name is **still switched off** and would run
+invisibly. `PUT /api/v1/apps/{name}/enabled` with `true` clears the ghost entry.
+Enabling an unknown name returns ok and creates nothing. Consequence for
+clients: "occupied" is `present:true`; whoever deletes a switched-off display
+sets `enabled true` afterwards.
 
 ❓ Why `slot` is `null` for both measured apps although `inLoop true` is
 reported is not explained (the docs say `slot` is "integer or `null`").

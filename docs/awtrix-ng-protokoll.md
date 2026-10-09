@@ -466,7 +466,7 @@ Dateirouten, Geheimnisexport und Firmware sind gesperrt.
 | `PUT /api/v1/apps/active` | umschalten: `{"name","fast"}` (`fast` Vorgabe `false`); ein Rumpf, der nicht mit `{` beginnt, gilt als der Name selbst — kaputtes JSON also als Name und damit `404`, nicht `400`; `503 serviceBusy`, wenn ein Skript auf Abruf nicht starten kann |
 | `POST /api/v1/apps/next` · `/previous` | vor- und zurückblättern |
 | `PUT /api/v1/apps/order` | `{"order":[…],"disabled":[…]}`; `disabled` ist die vollständige Liste der Abgeschalteten, `order` nur zusammen damit; Doppelte in `order` laufen mehrfach je Runde; `507 applied, not saved yet` heißt: bis zum Neustart aktiv, nicht gespeichert |
-| `PUT /api/v1/apps/{name}/enabled` | Rumpf `true`/`false`; eine abgeschaltete App behält ihren Platz; jeder andere Rumpf `422` |
+| `PUT /api/v1/apps/{name}/enabled` | Rumpf `true`/`false`; eine abgeschaltete App behält ihren Platz; jeder andere Rumpf `422`; 🔬 unbekannter Name: ok, legt nichts an; `true` räumt einen Geistereintrag (`present:false`) weg, §7.2 |
 | `PUT /api/v1/apps/pushed/{name}` | Anzeige anlegen oder ersetzen (Objekt oder Feld) |
 | `DELETE /api/v1/apps/{name}` | Anzeige löschen; bei eingebauten Apps (`Time`, `Status`) wirkungslos, aber `200` |
 | `GET` / `PATCH /api/v1/apps/builtin/{name}/config` | Einstellungen einer eingebauten App |
@@ -981,6 +981,17 @@ fehlen: `icon` (gepushte mit Icon), `import` (Module), `skipped`, `headless`,
 `config` (Apps mit Einstellungen). Die Anordnung gilt über Neustarts nur für
 Apps, die in einem Anordnungsaufruf genannt wurden; abgeschaltete gepushte Apps
 bleiben nach erneutem Senden aus.
+
+🔬 **Ausgeschaltete gepushte App (09.10.2026, NG 1.2.2, TC002, per HTTP):**
+`enabled:false` und `inLoop:false` bei `present:true`. `PUT /api/v1/apps/pushed/{name}`
+auf einen ausgeschalteten Namen **ersetzt den Inhalt, die App bleibt
+ausgeschaltet**. `DELETE /api/v1/apps/{name}` löscht den Inhalt, der Name bleibt
+aber als Geistereintrag im Inventar (`enabled:false`, `inLoop:false`,
+`present:false`); eine spätere Sendung unter demselben Namen ist **weiterhin
+ausgeschaltet** und liefe unsichtbar. `PUT /api/v1/apps/{name}/enabled` mit
+`true` räumt den Geistereintrag weg. Auf einen unbekannten Namen antwortet
+`enabled` ok und legt nichts an. Folge für Clients: „belegt“ ist `present:true`;
+wer eine ausgeschaltete Anzeige löscht, setzt danach `enabled true`.
 
 ❓ Warum `slot` bei beiden gemessenen Apps `null` ist, obwohl `inLoop true`
 dasteht, ist nicht erklärt (die Doku nennt `slot` „Ganzzahl oder `null`“).

@@ -199,12 +199,30 @@ final class BenachrichtigungPruefstandTests: XCTestCase {
         XCTAssertEqual(s.zustand.apps.first { $0.name == "meldung1" }?.aktiv, true)
     }
 
-    func testEineUnbekannteAnzeigeSchaltenIstEineAbweisung() throws {
-        let (_, _, uhr) = try gestartet()
-        XCTAssertThrowsError(try uhr.schalten("gibtsnicht", an: false)) { f in
-            guard case GeraetFehler.ngAbgewiesen(let status, _, _) = f else { return XCTFail("war \(f)") }
-            XCTAssertEqual(status, 404)
-        }
+    /// Gemessen 09.10.2026: Ein unbekannter Name ist ok und legt nichts an.
+    func testEinUnbekannterNameBeimSchaltenIstOkUndLegtNichtsAn() throws {
+        let (s, port, uhr) = try gestartet()
+        try uhr.schalten("gibtsnicht", an: true)
+        try uhr.schalten("gibtsnicht", an: false)
+        XCTAssertNil(s.zustand.apps.first { $0.name == "gibtsnicht" })
+        XCTAssertEqual(try Geraet(host: "127.0.0.1:\(port)").anzeigeninventar(), [])
+    }
+
+    /// Gemessen 09.10.2026 an einer echten Uhr: ausgeschaltet bleibt beim
+    /// Ersetzen und beim Löschen, das Inventar sagt es.
+    func testDasInventarNenntEnabledUndPresentBeimGeist() throws {
+        let (_, port, uhr) = try gestartet()
+        let g = Geraet(host: "127.0.0.1:\(port)")
+        try uhr.zeigen(text(), auf: "meldung1")
+        try uhr.schalten("meldung1", an: false)
+        XCTAssertEqual(try g.anzeigeninventar(), [Inventareintrag(name: "meldung1", aktiv: false, vorhanden: true)])
+        try uhr.zeigen(text("neu"), auf: "meldung1")
+        XCTAssertEqual(try g.anzeigeninventar(), [Inventareintrag(name: "meldung1", aktiv: false, vorhanden: true)])
+        try uhr.loeschen("meldung1")
+        XCTAssertEqual(try g.anzeigeninventar(), [Inventareintrag(name: "meldung1", aktiv: false, vorhanden: false)])
+        XCTAssertEqual(try g.anzeigennamen(), [], "ein Geist ist nicht belegt")
+        try uhr.schalten("meldung1", an: true)
+        XCTAssertEqual(try g.anzeigeninventar(), [])
     }
 
     func testUmschaltenUndBlaettern() throws {

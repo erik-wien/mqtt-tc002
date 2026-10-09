@@ -44,7 +44,8 @@ final class NachrichtOberflaecheTests: XCTestCase {
     /// „Nach“ und „Dann“ sind bei „Behalten“ gesperrt, nicht versteckt.
     func testBehaltenSperrtNachUndDannStattSieZuVerstecken() throws {
         let text = try quelltext("Sources/TC002Ansichten/Nachrichtbausteine.swift")
-        XCTAssertEqual(text.components(separatedBy: ".disabled(behalten)").count - 1, 3)
+        XCTAssertEqual(text.components(separatedBy: ".disabled(behalten)").count - 1, 2)
+        XCTAssertTrue(text.contains(".gesperrterStepper(behalten || !aktiv)"), "„Nach“ ist bei „Behalten“ nicht gesperrt")
         XCTAssertFalse(text.contains("if !behalten"), "„Nach“/„Dann“ werden ausgeblendet")
     }
 

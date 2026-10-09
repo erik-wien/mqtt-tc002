@@ -62,10 +62,12 @@ public final class AppZustand {
     /// noch nicht zurückgezogen hat. Die Uhr meldet das nicht zurück; es ist
     /// die Buchführung der App und gilt, bis sie zurückzieht oder neu startet.
     public private(set) var gehalteneNachrichten: Set<UUID> = []
-    /// Die Anzeigen, die die App je Uhr aus der Schleife genommen hat
-    /// (`anzeigeSchalten`). Sie bleiben belegt; nur der Auftritt entfällt. Der
-    /// Stand liegt nur im Speicher: Die Uhr behält ihn, die App weiß es nach
-    /// einem Neustart nicht mehr.
+    /// Die Anzeigen, die bei der Uhr ausgeschaltet sind (`enabled:false` im
+    /// Inventar, `GET /api/v1/apps`), einschließlich Geistereinträgen gelöschter
+    /// Anzeigen (`present:false`). Sie bleiben belegt; nur der Auftritt entfällt.
+    /// Die Uhr entscheidet: Jede Inventarantwort ersetzt den Stand, eine
+    /// erfolgreiche `anzeigeSchalten` setzt ihn bis dahin vorab. Ohne HTTP-Antwort
+    /// (nur MQTT) bleibt der letzte bekannte Wert.
     public private(set) var ausgeschalteteAnzeigen: [UUID: Set<String>] = [:]
     /// Wer von `frischBestaetigt` schon eine Meldung ohne sich ueberlebt hat.
     private var karenzVerbraucht: [UUID: Set<String>] = [:]
@@ -431,8 +433,21 @@ public final class AppZustand {
     ///
     /// Es sind nur Namen: belegt oder frei ist damit Tatsache, was auf
     /// einem Platz steht, bleibt geraten (`slotzustand`).
-    func belegungGemeldet(_ namen: [String]?, fuer id: UUID,
+    func belegungGemeldet(_ eintraege: [Inventareintrag], fuer id: UUID,
                           gedaechtnis: Slotgedaechtnis = .gemeinsam) {
+        belegungGemeldet(eintraege.filter(\.vorhanden).map(\.name), fuer: id,
+                         ausgeschaltet: Set(eintraege.filter { !$0.aktiv }.map(\.name)),
+                         gedaechtnis: gedaechtnis)
+    }
+
+    /// `ausgeschaltet` ist `nil`, wo die Quelle es nicht kennt; dann bleibt der
+    /// letzte bekannte Stand. Er wird nach dem Aufräumen gesetzt, damit ein
+    /// Geistereintrag (gelöscht, aber ausgeschaltet) bekannt bleibt.
+    func belegungGemeldet(_ namen: [String]?, fuer id: UUID, ausgeschaltet: Set<String>? = nil,
+                          gedaechtnis: Slotgedaechtnis = .gemeinsam) {
+        defer {
+            if let ausgeschaltet { ausgeschalteteAnzeigen[id] = ausgeschaltet.isEmpty ? nil : ausgeschaltet }
+        }
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         // Was die Uhr meldet, ist bestaetigt — es braucht keine Karenz mehr.
         // Was sie nicht meldet, obwohl wir es gerade geschickt haben,
@@ -497,10 +512,10 @@ public final class AppZustand {
         // von denen eine tot ist, nacheinander dessen Plaetze belegt.
         Task { [weak self] in
             do {
-                let namen = try await Hintergrund.lauf {
-                    try Geraet(host: host, sitzung: sitzung).anzeigennamen()
+                let eintraege = try await Hintergrund.lauf {
+                    try Geraet(host: host, sitzung: sitzung).anzeigeninventar()
                 }
-                self?.belegungGemeldet(namen, fuer: id)
+                self?.belegungGemeldet(eintraege, fuer: id)
             } catch {
                 let grund = (error as? LocalizedError)?.errorDescription ?? "\(error)"
                 self?.belegungGemeldet(nil, fuer: id)
@@ -563,9 +578,6 @@ public final class AppZustand {
         // bliebe der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht
         // mehr gibt.
         gemeldeteAnzeigen[id]?.removeAll { $0 == name }
-        // Eine gelöschte Anzeige hat keinen Schalter mehr; eine neue unter
-        // demselben Namen läuft wieder in der Schleife.
-        ausgeschalteteAnzeigen[id]?.remove(name)
     }
 
     /// Was nach einer erfolgreichen Loeschung auf einer Uhr zu buchen ist:
@@ -940,7 +952,7 @@ public final class AppZustand {
         // dort, wo es hingehoert.
         Task { [weak self] in
             do {
-                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [String]?) in
+                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [Inventareintrag]?) in
                     let geraet = Geraet(host: host, sitzung: sitzung)
                     // In einem Zug: Praefix, MAC und Anzeigemass.
                     //
@@ -960,7 +972,7 @@ public final class AppZustand {
                     // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
                     // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
                     // Praefix und Verbindungsstand noch lange nicht gescheitert.
-                    let namen = try? geraet.anzeigennamen()
+                    let namen = try? geraet.anzeigeninventar()
                     return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen)
                 }
                 let (praefix, mac, mass, steht, grund, namen) = geholt
@@ -1425,7 +1437,15 @@ public final class AppZustand {
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
     /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
     public func loeschen(_ name: String, gedaechtnis: Slotgedaechtnis = .gemeinsam) async {
-        await anZiele({ anzeigen, _ in try anzeigen.loeschen(name) }) { uhr, _ in
+        // Eine ausgeschaltete Anzeige bleibt nach dem Löschen als Geistereintrag
+        // ausgeschaltet; jede spätere Sendung unter dem Namen wäre unsichtbar.
+        // Darum danach `enabled true` (gemessen 09.10.2026).
+        let ausgeschaltet = ausgeschalteteAnzeigen
+        await anZiele({ anzeigen, uhr in
+            try anzeigen.loeschen(name)
+            if ausgeschaltet[uhr.id]?.contains(name) == true { try anzeigen.schalten(name, an: true) }
+        }) { uhr, _ in
+            ausgeschalteteAnzeigen[uhr.id]?.remove(name)
             anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
             log(lokf("auf %@ gelöscht: %@", uhr.name, name))
         }

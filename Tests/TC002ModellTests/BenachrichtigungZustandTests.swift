@@ -299,16 +299,59 @@ final class BenachrichtigungZustandTests: XCTestCase {
         XCTAssertFalse(z.nachrichtGehalten)
     }
 
-    func testAusgeschalteterPlatzBleibtBelegtUndEineLoeschungHebtDenSchalterAuf() async throws {
+    func testAusgeschalteterPlatzBleibtBelegtUndDieUhrEntscheidet() async throws {
         let z = try zustand(mqttUhr, sender: Mitschreiber())
         XCTAssertTrue(z.inSchleife(platz: 2))
         await z.anzeigeSchalten("meldung2", an: false)
-        XCTAssertFalse(z.inSchleife(platz: 2))
+        XCTAssertFalse(z.inSchleife(platz: 2), "vorab gesetzt")
         XCTAssertTrue(z.inSchleife(platz: 1))
-        await z.anzeigeSchalten("meldung2", an: true)
+        // Der nächste Bericht der Uhr gewinnt.
+        z.belegungGemeldet([Inventareintrag(name: "meldung2")], fuer: mqttUhr.id)
         XCTAssertTrue(z.inSchleife(platz: 2))
-        await z.anzeigeSchalten("meldung2", an: false)
-        z.anzeigeGeloescht("meldung2", fuer: mqttUhr, gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        z.belegungGemeldet([Inventareintrag(name: "meldung1", aktiv: false),
+                            Inventareintrag(name: "meldung3")], fuer: mqttUhr.id)
+        XCTAssertFalse(z.inSchleife(platz: 1))
+        XCTAssertTrue(z.inSchleife(platz: 3))
+        // Ohne Auskunft (nur MQTT) bleibt der letzte bekannte Stand.
+        z.belegungGemeldet(nil, fuer: mqttUhr.id)
+        XCTAssertFalse(z.inSchleife(platz: 1))
+    }
+
+    func testNurWasDieUhrAlsVorhandenMeldetIstBelegt() throws {
+        let z = try zustand(mqttUhr, sender: Mitschreiber())
+        z.belegungGemeldet([Inventareintrag(name: "meldung1", aktiv: false, vorhanden: false),
+                            Inventareintrag(name: "meldung2")], fuer: mqttUhr.id)
+        XCTAssertEqual(z.belegtePlaetze(), [2])
+    }
+
+    /// Gemessen 09.10.2026: Eine gelöschte ausgeschaltete Anzeige bliebe
+    /// ausgeschaltet; die nächste Sendung unter dem Namen wäre unsichtbar.
+    func testBeimLoeschenEinerAusgeschaltetenAnzeigeKommtEnabledTrue() async throws {
+        let sender = Mitschreiber()
+        let z = try zustand(mqttUhr, sender: sender)
+        z.belegungGemeldet([Inventareintrag(name: "meldung2", aktiv: false),
+                            Inventareintrag(name: "meldung3")], fuer: mqttUhr.id)
+        await z.loeschen("meldung2", gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        XCTAssertEqual(sender.gesendet.count, 2, sender.gesendet.map(\.thema).description)
+        XCTAssertEqual(sender.gesendet[1].thema, "kue/uhr/cmd/apps/meldung2/enabled")
+        XCTAssertEqual(String(decoding: sender.gesendet[1].nutzlast, as: UTF8.self), "true")
         XCTAssertTrue(z.inSchleife(platz: 2))
+
+        await z.loeschen("meldung3", gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        XCTAssertEqual(sender.gesendet.count, 3, "eine eingeschaltete Anzeige braucht kein enabled")
+    }
+
+    func testBeimLoeschenUeberHTTPRaeumtEnabledTrueDenGeistWeg() async throws {
+        let (s, port) = try serverStarten()
+        let uhr = Uhr(name: "Flur", host: "127.0.0.1:\(port)", praefix: "", betriebsart: .http)
+        let z = try zustand(uhr)
+        let a = Anzeigen(geraet: Geraet(host: uhr.host), anzeigemass: .vorgabe)
+        try a.zeigen(Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: "x", weg: .text))), auf: "meldung2")
+        try a.schalten("meldung2", an: false)
+        z.belegungGemeldet(try Geraet(host: uhr.host).anzeigeninventar(), fuer: uhr.id)
+        XCTAssertFalse(z.inSchleife(platz: 2))
+        await z.loeschen("meldung2", gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        XCTAssertEqual(try Geraet(host: uhr.host).anzeigeninventar(), [], "kein Geistereintrag")
+        XCTAssertNil(s.zustand.apps.first { $0.name == "meldung2" })
     }
 }

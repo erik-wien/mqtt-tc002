@@ -110,10 +110,15 @@ public struct Geraet {
     /// Ueber MQTT gibt es das nicht: „Eine Liste aller Anzeigen gibt es ueber
     /// MQTT nicht" (§3.5). Dieser Weg ist der einzige.
     public func anzeigennamen() throws -> [String] {
-        guard let namen = Anzeigen.namenAusNGInventar(try holeFeld("/api/v1/apps")) else {
+        try anzeigeninventar().filter(\.vorhanden).map(\.name)
+    }
+
+    /// Dasselbe mit `enabled` und `present` je Anzeige, samt Geistereinträgen.
+    public func anzeigeninventar() throws -> [Inventareintrag] {
+        guard let eintraege = Anzeigen.eintraegeAusNGInventar(try holeFeld("/api/v1/apps")) else {
             throw GeraetFehler.unerwarteteAntwort("/api/v1/apps")
         }
-        return namen
+        return eintraege
     }
 
     /// Setzt eine benannte Anzeige — dieselbe Nutzlast wie ueber MQTT, nur ueber

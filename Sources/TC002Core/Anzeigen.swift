@@ -294,13 +294,42 @@ extension Anzeigen {
     ///
     /// `nil` heisst „das war kein lesbares Inventar"; die leere Liste heisst
     /// „es liegt keine eigene Anzeige darauf".
+    ///
+    /// Nur `present:true` zählt als belegt: Eine ausgeschaltete Anzeige, die
+    /// gelöscht wurde, bleibt als Geistereintrag (`present:false`) im Inventar
+    /// (gemessen 09.10.2026, `docs/awtrix-ng-protokoll.md` §7.2).
     public static func namenAusNGInventar(_ feld: Any?) -> [String]? {
+        eintraegeAusNGInventar(feld)?.filter(\.vorhanden).map(\.name)
+    }
+
+    /// Wie `namenAusNGInventar`, aber mit `enabled` und `present` und auch mit
+    /// den Geistereinträgen. Fehlt ein Feld, gilt die Anzeige als eingeschaltet
+    /// und vorhanden (ältere Firmware nennt beides nicht).
+    public static func eintraegeAusNGInventar(_ feld: Any?) -> [Inventareintrag]? {
         guard let eintraege = feld as? [[String: Any]] else { return nil }
         return eintraege.compactMap { eintrag in
             guard eintrag["origin"] as? String == "pushed",
                   let name = eintrag["name"] as? String else { return nil }
-            return name
+            return Inventareintrag(name: name,
+                                   aktiv: eintrag["enabled"] as? Bool ?? true,
+                                   vorhanden: eintrag["present"] as? Bool ?? true)
         }
+    }
+}
+
+/// Eine eigene Anzeige im Inventar der Uhr. `aktiv == false` heißt: nicht in der
+/// Schleife (`enabled`). `vorhanden == false` ist ein Geistereintrag: Der Inhalt
+/// ist gelöscht, die Abschaltung bleibt, und eine spätere Sendung unter demselben
+/// Namen wäre unsichtbar, bis jemand `enabled true` setzt.
+public struct Inventareintrag: Equatable, Sendable {
+    public var name: String
+    public var aktiv: Bool
+    public var vorhanden: Bool
+
+    public init(name: String, aktiv: Bool = true, vorhanden: Bool = true) {
+        self.name = name
+        self.aktiv = aktiv
+        self.vorhanden = vorhanden
     }
 }
 

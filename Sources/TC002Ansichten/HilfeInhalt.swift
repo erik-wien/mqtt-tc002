@@ -263,7 +263,7 @@ public enum HilfeInhalt {
     /// Zeiger ist der eine begruendete Unterschied und deshalb als solcher
     /// benannt.
     public static let blockLoeschen: [Hilfebaustein] = [
-        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „In der Schleife“ nimmt die Anzeige aus dem Umlauf der Uhr, ohne sie zu löschen — der Platz bleibt belegt, der Block erscheint grau, und ein zweiter Druck auf den Eintrag schaltet sie wieder ein. „Löschen“ räumt den Platz auf den gewählten Uhren. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
+        .absatz("Ein langer Druck auf einen belegten Block — mit der Maus ein Rechtsklick — öffnet sein Menü: „Zeigen“ schaltet die Uhr auf diese Meldung um, „In der Schleife“ nimmt die Anzeige aus dem Umlauf der Uhr, ohne sie zu löschen — der Platz bleibt belegt, der Block erscheint grau, und ein zweiter Druck auf den Eintrag schaltet sie wieder ein. Ob eine Anzeige in der Schleife läuft, sagt die Uhr selbst; die App liest es beim Abfragen mit. „Löschen“ räumt den Platz auf den gewählten Uhren und schaltet den Namen dabei wieder ein, falls er ausgeschaltet war — sonst bliebe die nächste Sendung auf diesem Platz unsichtbar. Ein freier Platz hat weder etwas zu zeigen noch zu löschen und bekommt deshalb kein Menü."),
         .absatz("Am Zeiger erscheint zusätzlich ein rotes ⊗ in der Ecke des Blocks, solange der Zeiger darüber steht — so wie Safari das Schließzeichen seiner Tabs zeigt. Am Finger gibt es kein Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der Wackelmodus des Home-Bildschirms."),
     ]
 
