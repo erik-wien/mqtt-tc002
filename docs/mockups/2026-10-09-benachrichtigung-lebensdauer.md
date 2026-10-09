@@ -27,7 +27,7 @@ Erik, 09.10.2026:
 1. **Variante A** — Segment über dem Eingabefeld.
 2. Die Oberfläche sagt **„Nachricht“** (Segment „Anzeige | Nachricht“, „Nachricht zurückziehen“). Im Code und im Protokoll bleibt `notification`/Benachrichtigung.
 3. Vorgaben der Nachricht: **Halten ein, Aufwecken ein, Ersetzen aus, Durchläufe 2.** Dauer wie bei der Anzeige.
-4. Lebensdauer: Vorgabe **aus** — eine Anzeige wird nicht von selbst entfernt, sie bleibt, bis man sie löscht. Schaltet man sie ein: Einheit wählbar (Minuten/Stunden), Aktion danach Vorgabe „Entfernen“.
+4. Lebensdauer: Vorgabe **ein** — eine neue Anzeige verschwindet von selbst; wer sie behalten will, schaltet das ab (dann bleibt sie, bis man sie löscht). Vorgabezeit 30 min (aus dem Mockup, zur Korrektur offen), Einheit wählbar (Minuten/Stunden), Aktion danach Vorgabe „Entfernen“.
 5. Der Platz **merkt** die Lebensdauer als Regler — bis der Platz gelöscht wird oder eine neue Sendung mit anderen Werten kommt.
 6. Ja: Ein/Aus im Kontextmenü des Blocks („In der Schleife“), ausgeschaltet grau. Der Platz bleibt belegt, die Anzeige auf der Uhr gespeichert; sie läuft nur nicht in der Schleife.
 7. Ja: „Zurückziehen“ nur bei gehaltener Nachricht sichtbar.
