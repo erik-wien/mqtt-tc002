@@ -53,14 +53,39 @@ final class PixelwegTests: XCTestCase {
 
     // MARK: - Bewegtes
 
+    /// Das GIF aus dem `icon` der Anzeige — ohne Layout, denn im Layout nimmt
+    /// NG ein Data-URL-Icon nur bis rund 8 KB (gemessen 09.10.2026).
     private func gifDaten(_ json: String) throws -> Data {
         let objekt = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
-        let layout = try XCTUnwrap(objekt["layout"] as? [String: Any])
-        let regionen = try XCTUnwrap(layout["regions"] as? [[String: Any]])
-        let uri = try XCTUnwrap(regionen[0]["icon"] as? String)
+        XCTAssertNil(objekt["layout"], "Bewegtes geht ohne Layout")
+        let uri = try XCTUnwrap(objekt["icon"] as? String)
         XCTAssertTrue(uri.hasPrefix("data:image/gif;base64,"))
-        XCTAssertEqual(regionen[0]["box"] as? [Int], [0, 0, 52, 16])
         return try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst("data:image/gif;base64,".count))))
+    }
+
+    func testBewegtesLaeuftMindestensEinenDurchlauf() throws {
+        let zwei = inhalt([bild(dauer: 1.0), bild(dauer: 0.5)])
+        func dauerMs(_ d: Int?) throws -> Int {
+            let json = try Pixelweg.nutzlast(zwei, dauer: d)
+            let o = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+            return try XCTUnwrap(o["durationMs"] as? Int)
+        }
+        XCTAssertEqual(try dauerMs(nil), 1500, "ohne Nutzerdauer ein Durchlauf, sonst schneidet die Uhr bei 7 s ab")
+        XCTAssertEqual(try dauerMs(1), 1500, "eine kuerzere Nutzerdauer schneidet nicht ab")
+        XCTAssertEqual(try dauerMs(12), 12000, "eine laengere Nutzerdauer gilt")
+    }
+
+    func testEinZuGrossesGifWirdVorDemSendenAbgewiesen() throws {
+        // Rauschen laesst sich nicht packen: 512 Bilder sind weit ueber 56 KiB.
+        var zufall = SystemRandomNumberGenerator()
+        let laut = (0..<Pixelweg.hoechsteBildzahl).map { _ in
+            Bildraster.Einzelbild(pixel: (0..<832).map { _ in
+                String(format: "#%06X", Int.random(in: 0..<0x1000000, using: &zufall)) }, dauer: 0.08)
+        }
+        XCTAssertThrowsError(try Pixelweg.nutzlast(inhalt(laut), dauer: nil)) { fehler in
+            guard case NGFehler.laufschriftZuLang = fehler else { return XCTFail("war \(fehler)") }
+            XCTAssertFalse((fehler as? LocalizedError)?.errorDescription?.isEmpty ?? true)
+        }
     }
 
     /// Das GIF traegt die Bildzeiten (ganze Hundertstel) und die Pixel; was bei
@@ -145,6 +170,8 @@ final class PixelwegTests: XCTestCase {
         let json = try Anzeigen.nutzlast(rahmen)
         let thema = NGThema.anzeige(praefix: "wohnzimmer/uhr", name: "meldung1").utf8.count
         let weg = try Pixelweg.zustellweg(nutzlastBytes: json.utf8.count, themaBytes: thema, betriebsart: .mqtt)
+        XCTAssertLessThan(json.utf8.count, Pixelweg.hoechsteGIFBytes * 4 / 3 + 100)
+        XCTAssertEqual(weg, .http)
         print("MESSUNG Laufschrift „Grüße aus Wien“: \(pixel.bilder.count) Bilder, \(json.utf8.count) Byte, Weg \(weg)")
     }
 
@@ -327,6 +354,28 @@ final class PixelwegTests: XCTestCase {
         XCTAssertEqual(CGImageSourceGetCount(try XCTUnwrap(CGImageSourceCreateWithData(erste as CFData, nil))),
                        rahmen.pixel?.bilder.count)
         XCTAssertEqual(try bildschirm(port).count, 832)
+    }
+
+    /// Eine Laufschrift ueber den neuen Weg (GIF als `icon` der Anzeige): Ab
+    /// einem Bild mit sichtbarem Text steht dieses Bild auf dem Schirm, in vollen
+    /// 52 × 16 trotz `enlargeApps`.
+    func testLaufschriftKommtAmPruefstandAn() throws {
+        let (server, port) = try serverStarten()
+        defer { server.beenden() }
+        let rahmen = try Meldungsbau.rahmen(gruesse(), icon: nil, sammlung: sammlung())
+        var pixel = try XCTUnwrap(rahmen.pixel)
+        pixel.bilder = Array(pixel.bilder.dropFirst(60))
+        let erstes = pixel.bilder[0].pixel
+        XCTAssertTrue(erstes.contains { $0 != nil }, "Testvoraussetzung: sichtbarer Text")
+        let uhr = Anzeigen(geraet: Geraet(host: "127.0.0.1:\(port)"))
+        try uhr.zeigen(Frame(pixel: pixel), auf: "meldung1")
+        try uhr.umschalten(auf: "meldung1")
+
+        let p = try warteAufBild(port) { $0.contains { $0 != 0 } }
+        for (i, farbe) in erstes.enumerated() {
+            let soll = farbe.flatMap { Int($0.dropFirst(), radix: 16) } ?? 0
+            XCTAssertEqual(p[i], soll, "Pixel \(i)")
+        }
     }
 
     func testKleinesStandbildGehtUeberMQTT() throws {

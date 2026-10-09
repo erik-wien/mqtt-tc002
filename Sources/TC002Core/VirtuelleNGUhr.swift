@@ -419,6 +419,17 @@ public enum VirtuelleNGUhr {
                 }
             }
         }
+        // Ein GIF als `icon` der Anzeige, groesser als 26 × 8 (bei
+        // `enlargeApps`) bzw. als das Raster: Die Anzeige rechnet dann auf dem
+        // vollen 52 × 16 (§1.1; gemessen 09.10.2026), das Bild sitzt mittig.
+        // Kleinere Icons zeichnet die Emulation nicht. Das erste Bild genuegt.
+        if case .text(let uri)? = nutzlast["icon"], let g = gifBild(uri),
+           g.breite > breite / faktor || g.hoehe > hoehe / faktor {
+            let ox = (breite - g.breite) / 2, oy = (hoehe - g.hoehe) / 2
+            for y in 0..<g.hoehe {
+                for x in 0..<g.breite { bild.setze(ox + x, oy + y, g.punkte[y * g.breite + x]) }
+            }
+        }
         return bild.punkte
     }
 

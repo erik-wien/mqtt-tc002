@@ -34,9 +34,9 @@ public enum Zustellweg: Equatable, Sendable {
 /// Eine `layout`-Region ueber das ganze Raster rechnet dagegen auf 52 × 16:
 ///
 /// - Standbild: `draw` mit einem `bitmap` (Base64-RGB888), rund 3,3 KB.
-/// - Bewegtes: `icon` als `data:image/gif;base64,…` mit einem animierten GIF in
-///   Rastergroesse; es laeuft mit den Bildzeiten der Datei (beides gemessen
-///   09.10.2026, NG 1.2.2, TC002).
+/// - Bewegtes: `icon` der Anzeige als `data:image/gif;base64,…` mit einem
+///   animierten GIF in Rastergroesse; es laeuft mit den Bildzeiten der Datei
+///   (beides gemessen 09.10.2026, NG 1.2.2, TC002).
 ///
 /// Reine Funktionen: nichts wird gesendet oder gelesen.
 public enum Pixelweg {
@@ -53,22 +53,39 @@ public enum Pixelweg {
     /// Rumpf ueber HTTP (§8), `413` darueber.
     public static let httpGrenze = 2 * 1024 * 1024
 
+    /// Hoechste GIF-Groesse fuer Bewegtes. Gemessen am 09.10.2026 (NG 1.2.2,
+    /// TC002, HTTP): Als `icon` der Anzeige nimmt NG ein GIF bis 58 761 Byte an
+    /// und weist eines von 87 KB ab (`field: icon`). 56 KiB liegen darunter.
+    public static let hoechsteGIFBytes = 56 * 1024
+
     /// Die Nutzlast der Anzeige. `dauer` in Sekunden wie bei den Reglern,
     /// gesendet als `durationMs`.
+    ///
+    /// Ein Standbild ist ein Layout mit einem `bitmap`. Bewegtes ist das GIF
+    /// als `icon` der Anzeige, **ohne** Layout: Im Layout nimmt NG ein
+    /// Data-URL-`icon` nur bis rund 8 KB Base64 (7508 Zeichen angenommen, 8796
+    /// abgewiesen, `422 invalid icon`; gemessen 09.10.2026), als Icon der Anzeige
+    /// dagegen bis `hoechsteGIFBytes`. Ein Icon, das groesser ist als 26 × 8,
+    /// schaltet die Anzeige auf das volle Raster (§1.1); gemessen landet ein
+    /// 52 × 16-GIF pixelgenau und laeuft mit den Bildzeiten der Datei.
+    ///
+    /// Bei Bewegtem gilt mindestens die Laufzeit eines Durchlaufs als
+    /// `durationMs`; die Uhr schneidet sonst nach `appDurationMs` (7000) ab. Eine
+    /// laengere Dauer des Nutzers geht vor.
     public static func nutzlast(_ inhalt: Pixelinhalt, dauer: Int?) throws -> String {
         try pruefen(inhalt)
         let b = inhalt.breite, h = inhalt.hoehe
-        let kopf = #"{"id":"bild","box":[0,0,\#(b),\#(h)],"#
-        let region: String
         if inhalt.bilder.count == 1 {
             let daten = rgb888(inhalt.bilder[0].pixel).base64EncodedString()
-            region = kopf + #""draw":[["bitmap",0,0,\#(b),\#(h),"\#(daten)"]]}"#
-        } else {
-            region = kopf + #""icon":"\#(try gifDatenURI(inhalt))"}"#
+            var json = #"{"layout":{"version":1,"regions":[{"id":"bild","box":[0,0,\#(b),\#(h)],"draw":[["bitmap",0,0,\#(b),\#(h),"\#(daten)"]]}]}"#
+            if let dauer { json += #","durationMs":\#(dauer * 1000)"# }
+            return json + "}"
         }
-        var json = #"{"layout":{"version":1,"regions":[\#(region)]}"#
-        if let dauer { json += #","durationMs":\#(dauer * 1000)"# }
-        return json + "}"
+        let uri = try gifDatenURI(inhalt)
+        let bytes = (uri.utf8.count - "data:image/gif;base64,".utf8.count) / 4 * 3
+        guard bytes <= hoechsteGIFBytes else { throw NGFehler.laufschriftZuLang(bytes: bytes) }
+        let durchlauf = Int(inhalt.bilder.reduce(0.0) { $0 + Bildraster.gifZeit($1.dauer) } * 1000)
+        return #"{"icon":"\#(uri)","durationMs":\#(max(durchlauf, (dauer ?? 0) * 1000))}"#
     }
 
     /// Mass und Bildzahl, bevor etwas gebaut wird.

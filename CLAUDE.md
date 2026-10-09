@@ -151,11 +151,15 @@ ist und bei einem Update nachzuprüfen wäre, in
   Uhr still lahm (gemessen 09.10.2026). Eine Uhr ohne Präfix ist über MQTT
   nicht beschickbar; Einträge aus der Zeit vor dem Einrichtungsstand 2 holen
   es neu (`AppZustand.fehlendePraefixeHolen`).
-- **Bilder pixelgenau nur als Layout.** Bei `enlargeApps` (Vorgabe) zeichnet
+- **Bilder pixelgenau.** Bei `enlargeApps` (Vorgabe) zeichnet
   NG Text, Icon und `draw` einer Anzeige auf 26×8, jedes Pixel 2×2; eine
   `layout`-Region `[0,0,52,16]` mit `bitmap` (Base64-RGB888, rund 3,3 KB)
-  landet pixelgenau; Bewegtes geht als animiertes GIF im Feld `icon` einer
-  solchen Region (`Pixelweg`, Bildzeiten ganze Hundertstel, mindestens 20 ms).
+  landet pixelgenau. Bewegtes geht als animiertes GIF im `icon` der Anzeige,
+  **ohne** `layout` (`Pixelweg`; Bildzeiten ganze Hundertstel, mindestens 20 ms;
+  ein Icon über 26×8 schaltet die Anzeige auf 52×16): Im Layout nimmt NG ein
+  Data-URL-Icon nur bis rund 8 KB Base64, als Anzeigen-Icon bis 58 761 Byte GIF
+  (gemessen 09.10.2026) — die App erlaubt höchstens 56 KiB und meldet darüber
+  vor dem Senden. `durationMs` ist bei Bewegtem mindestens ein Durchlauf.
   Die globale Einstellung der Uhr fasst die App dafür nicht an. Passt eine
   Nutzlast samt Thema nicht in 8192 Byte, verwirft NG sie über MQTT ohne
   Antwort: Dann geht diese eine Anzeige über HTTP an dieselbe Uhr

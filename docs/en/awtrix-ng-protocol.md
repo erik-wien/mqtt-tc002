@@ -660,6 +660,16 @@ layout without icon.
 frame times (0 becomes 100 ms) and its own colors. Transparent pixels show what
 the previous frame drew there; in the first frame they are black.
 
+🔬 **A GIF as a data URL in the `icon` of a layout region** is accepted up to
+7508 Base64 characters and rejected from 8796 (`422 validationFailed` "invalid
+icon", `field` `layout.regions[0].icon`; measured 09.10.2026, NG 1.2.2, TC002,
+over HTTP). **As the `icon` of the display directly** (without `layout`) a 52×16
+GIF up to 58,761 bytes (78,348 Base64 characters) is accepted and one of 87 KB
+rejected (`field` `icon`). An icon larger than 26×8 switches the display to the
+full grid (§1.1): the GIF lands pixel-exact in 52×16 (a 1-pixel column across
+all 16 rows and the corner pixel (0,0) are right, no stray colors) and plays
+animated with the frame times of the file.
+
 📄 `iconMode`: `fixed` leaves the icon in place and lets the text run past it;
 `pushOnce` lets the text push it out **once**, after which it stays gone and the
 text starts at x=0; `push` brings it back on every run.
@@ -981,6 +991,8 @@ running device log; `GET /api/v1/files` the file store with `usedBytes` and
 | extra icons (`icons`) | 4 per app, in addition to `icon` | `422`, the whole request refused |
 | display size | **52 × 16** = 832 pixels, fixed | — |
 | GIF | must fit the width and height of the display | shrink larger ones first; a too-large GIF is not shown |
+| 🔬 GIF as data URL, `icon` of a layout region | about 8 KB Base64 (7508 characters accepted, 8796 rejected) | `422 validationFailed` "invalid icon", `field` `layout.regions[0].icon` |
+| 🔬 GIF as data URL, `icon` of the display | at least 58,761 bytes of GIF accepted, 87 KB rejected | `field` `icon` |
 | icon from a web address: address | 2048 characters, `http(s)`, no spaces | `422`, `field` = `icon` |
 | icon from a web address: file size · load time | 1 MB · 15 s | image not shown, the log names the server |
 | icon from a web address: JPEG | up to 8192 × 8192; progressive 1920 × 1280 (4:2:0), 1600 × 1200 (4:2:2), 1000 × 1000 (4:4:4) | image not shown |

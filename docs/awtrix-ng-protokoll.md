@@ -677,6 +677,16 @@ eigenen Bildzeiten (0 wird 100 ms) und seine eigenen Farben. Durchsichtige
 Pixel zeigen, was das vorige Bild dort gezeichnet hat; im ersten Bild sind sie
 schwarz.
 
+🔬 **Ein GIF als Data-URL im `icon` einer Layout-Region** wird bis 7508 Zeichen
+Base64 angenommen und ab 8796 abgewiesen (`422 validationFailed` „invalid
+icon“, `field` `layout.regions[0].icon`; gemessen 09.10.2026, NG 1.2.2, TC002,
+über HTTP). **Als `icon` der Anzeige direkt** (ohne `layout`) wird ein 52×16-GIF
+bis 58 761 Byte (78 348 Zeichen Base64) angenommen und eines von 87 KB
+abgewiesen (`field` `icon`). Ein Icon größer als 26×8 schaltet die Anzeige auf
+das volle Raster (§1.1): Das GIF landet pixelgenau in 52×16 (eine 1-Pixel-Spalte
+über alle 16 Zeilen und das Eckpixel (0,0) stimmen, keine Fremdfarben) und läuft
+animiert mit den Bildzeiten der Datei.
+
 📄 `iconMode`: `fixed` lässt das Icon stehen und den Text daran vorbeilaufen;
 `pushOnce` lässt den Text es **einmal** hinausschieben, danach bleibt es weg und
 der Text beginnt bei x=0; `push` holt es in jedem Laufdurchgang zurück.
@@ -1003,6 +1013,8 @@ mit `usedBytes` und `totalBytes` (ohne die reservierte Mindestfreifläche).
 | Zusatzicons (`icons`) | 4 je Anzeige, zusätzlich zu `icon` | `422`, die ganze Anfrage abgewiesen |
 | Anzeigegröße | **52 × 16** = 832 Pixel, fest | — |
 | GIF | muss in Breite und Höhe der Anzeige passen | größere vorher verkleinern; ein zu großes GIF wird nicht gezeigt |
+| 🔬 GIF als Data-URL, `icon` einer Layout-Region | rund 8 KB Base64 (7508 Zeichen angenommen, 8796 abgewiesen) | `422 validationFailed` „invalid icon“, `field` `layout.regions[0].icon` |
+| 🔬 GIF als Data-URL, `icon` der Anzeige | mindestens 58 761 Byte GIF (angenommen), 87 KB abgewiesen | `field` `icon` |
 | Icon aus Webadresse: Adresse | 2048 Zeichen, `http(s)`, ohne Leerzeichen | `422`, `field` = `icon` |
 | Icon aus Webadresse: Dateigröße · Ladezeit | 1 MB · 15 s | Bild wird nicht gezeigt, das Protokoll nennt den Server |
 | Icon aus Webadresse: JPEG | bis 8192 × 8192; progressiv 1920 × 1280 (4:2:0), 1600 × 1200 (4:2:2), 1000 × 1000 (4:4:4) | Bild wird nicht gezeigt |
