@@ -59,8 +59,7 @@ final class UhrenserverGrenzenTests: XCTestCase {
             let port = UInt16.random(in: 20_000...60_000)
             let s = Uhrenserver(port: port)
             do {
-                try s.starten()
-                Thread.sleep(forTimeInterval: 0.05)
+                try s.starten()          // kehrt erst zurück, wenn der Dienst annimmt
                 server = s
                 return port
             } catch { continue }
@@ -80,9 +79,15 @@ final class UhrenserverGrenzenTests: XCTestCase {
             }
         }
         verbindung.stateUpdateHandler = { zustand in
-            if case .ready = zustand {
+            switch zustand {
+            case .ready:
                 verbindung.send(content: bytes, completion: .contentProcessed { _ in })
                 lesen()
+            // `.waiting` ist bei NWConnection auch „Verbindung verweigert“ und
+            // endet nie von selbst; ohne diesen Zweig bliebe daraus eine
+            // Zeitüberschreitung ohne Hinweis auf die Ursache.
+            case .waiting, .failed: fertig.fulfill()
+            default: break
             }
         }
         verbindung.start(queue: .global())
@@ -121,7 +126,7 @@ final class UhrenserverGrenzenTests: XCTestCase {
     // MARK: Eindeutigkeit des Kopfes
 
     private func anfrage(_ kopfzeilen: String) -> String {
-        let port = (try? gestartet()) ?? 0
+        guard let port = try? gestartet() else { XCTFail("kein Dienst"); return "" }
         return roh(port, Data(("PUT /api/v1/apps/pushed/x HTTP/1.1\r\n" + kopfzeilen + "\r\n\r\n").utf8))
     }
 

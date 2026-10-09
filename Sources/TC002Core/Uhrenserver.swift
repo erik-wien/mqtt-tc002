@@ -13,6 +13,18 @@ import Network
 /// anstandslos mitmacht, und spart die Buchführung über offene Verbindungen —
 /// bei einer Uhr, die auf demselben Rechner steht, kostet der Aufbau nichts.
 public final class Uhrenserver: @unchecked Sendable {
+    /// Was der Listener auf seiner Warteschlange meldet, für den wartenden
+    /// Aufrufer von `starten()`.
+    private final class Lauscherstand: @unchecked Sendable {
+        private let sperre = NSLock()
+        private var _bereit = false
+        private var _grund: String?
+        func bereit() { sperre.lock(); _bereit = true; sperre.unlock() }
+        func scheitert(_ grund: String) { sperre.lock(); if _grund == nil { _grund = grund }; sperre.unlock() }
+        var istBereit: Bool { sperre.lock(); defer { sperre.unlock() }; return _bereit }
+        var grund: String? { sperre.lock(); defer { sperre.unlock() }; return _grund }
+    }
+
     /// Die Vorgabe. Fest und nicht vom Betriebssystem vergeben: Die Adresse
     /// steht als `127.0.0.1:8752` in den Einstellungen, und die sollen nach
     /// einem Neustart noch stimmen.
@@ -43,9 +55,16 @@ public final class Uhrenserver: @unchecked Sendable {
         return lauscher != nil
     }
 
-    /// Startet den Dienst. Wirft, wenn der Port belegt ist — dann läuft
-    /// entweder schon eine virtuelle Uhr oder etwas Fremdes hört dort zu, und
-    /// beides ist eine Auskunft, keine Kleinigkeit zum Verschlucken.
+    /// Startet den Dienst und kehrt erst zurück, wenn er annimmt. Wirft, wenn
+    /// der Port belegt ist — dann läuft entweder schon eine virtuelle Uhr oder
+    /// etwas Fremdes hört dort zu, und beides ist eine Auskunft, keine
+    /// Kleinigkeit zum Verschlucken.
+    ///
+    /// `NWListener` meldet einen belegten Port nicht beim Anlegen, sondern erst
+    /// als Zustandswechsel auf seiner Warteschlange; und ein Verbindungsversuch
+    /// vor `.ready` bleibt bei `NWConnection` in `.waiting` hängen, ohne je zu
+    /// scheitern. Wer nicht wartet, verbindet sich unter Last mit einem Port,
+    /// an dem nie jemand zuhört, und wartet ohne Ende auf eine Antwort.
     public func starten() throws {
         sperre.lock()
         let schonDa = lauscher != nil
@@ -61,7 +80,21 @@ public final class Uhrenserver: @unchecked Sendable {
         neu.newConnectionHandler = { [weak self] verbindung in
             self?.bedienen(verbindung)
         }
+        let bereit = DispatchSemaphore(value: 0)
+        let stand = Lauscherstand()
+        neu.stateUpdateHandler = { zustand in
+            switch zustand {
+            case .ready: stand.bereit(); bereit.signal()
+            case .failed(let fehler): stand.scheitert(fehler.localizedDescription); bereit.signal()
+            case .waiting(let fehler): stand.scheitert(fehler.localizedDescription)
+            default: break
+            }
+        }
         neu.start(queue: schlange)
+        guard bereit.wait(timeout: .now() + 5) == .success, stand.istBereit else {
+            neu.cancel()
+            throw GeraetFehler.nichtErreichbar(stand.grund ?? lok("Der Port nimmt keine Verbindung an."))
+        }
         sperre.lock(); lauscher = neu; sperre.unlock()
     }
 
