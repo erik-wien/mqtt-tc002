@@ -420,23 +420,16 @@ public enum VirtuelleNGUhr {
             }
         case "line":
             guard let x1 = zahl(0), let y1 = zahl(1), let x2 = zahl(2), let y2 = zahl(3) else { return }
-            let f = farbeAn(4)
-            var (x, y) = (x1, y1)
-            let dx = abs(x2 - x1), dy = -abs(y2 - y1)
-            let sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1
-            var fehler = dx + dy
-            while true {
-                brett.setze(x, y, f)
-                if x == x2 && y == y2 { break }
-                let e2 = 2 * fehler
-                if e2 >= dy { fehler += dy; x += sx }
-                if e2 <= dx { fehler += dx; y += sy }
-            }
+            linie(x1, y1, x2, y2, farbeAn(4), auf: &brett)
         case "rect", "rectFill":
             guard let x = zahl(0), let y = zahl(1), let w = zahl(2), let h = zahl(3), w > 0, h > 0 else { return }
             let f = farbeAn(4)
-            for j in y..<(y + h) {
-                for i in x..<(x + w) where name == "rectFill" || i == x || i == x + w - 1 || j == y || j == y + h - 1 {
+            // Auf das Brett beschnitten, bevor iteriert wird. Die Werte sind
+            // durch `JSONWert.ganzzahl` auf ±1e15 begrenzt, die Summen laufen
+            // nicht ueber.
+            for j in bereich(y, y + h - 1, bis: brett.hoehe - 1) {
+                for i in bereich(x, x + w - 1, bis: brett.breite - 1)
+                where name == "rectFill" || i == x || i == x + w - 1 || j == y || j == y + h - 1 {
                     brett.setze(i, j, f)
                 }
             }
@@ -456,12 +449,65 @@ public enum VirtuelleNGUhr {
             default:
                 return
             }
-            for i in 0..<min(farben.count, w * h) {
-                guard let f = farben[i] else { continue }
-                brett.setze(x + i % w, y + i / w, f)
+            // Nur die sichtbaren Zeilen und Spalten; der Index in die Daten
+            // zaehlt trotzdem ab der Ecke des Bildes. `w * h` wird nie
+            // gebildet: Es kaeme ueber den Wertebereich.
+            let zeilen = (farben.count - 1) / w
+            guard !farben.isEmpty else { return }
+            for j in bereich(0, min(h - 1, zeilen), bis: brett.hoehe - 1 - y, ab: -y) {
+                for i in bereich(0, w - 1, bis: brett.breite - 1 - x, ab: -x) {
+                    let index = j * w + i
+                    guard index < farben.count else { break }
+                    if let f = farben[index] { brett.setze(x + i, y + j, f) }
+                }
             }
         default:
             return
+        }
+    }
+
+    /// Die Werte von `von` bis `bis` (beide eingeschlossen), nach oben auf
+    /// `hoechstens` und nach unten auf `ab` (Vorgabe 0) beschnitten; leer, wenn
+    /// nichts uebrig bleibt.
+    private static func bereich(_ von: Int, _ bis: Int, bis hoechstens: Int, ab: Int = 0) -> Range<Int> {
+        let unten = max(von, ab), oben = min(bis, hoechstens)
+        return unten..<max(unten, oben + 1)
+    }
+
+    /// Bresenham mit beiden Endpunkten. Liegt ein Endpunkt ausserhalb, wird die
+    /// Strecke vorher auf das Brett beschnitten (Liang-Barsky) — sonst liefe
+    /// die Schleife ueber die ganze Laenge der Strecke.
+    private static func linie(_ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int, _ f: Int, auf brett: inout Brett) {
+        var (ax, ay, bx, by) = (x1, y1, x2, y2)
+        let (breite, hoehe) = (brett.breite, brett.hoehe)
+        let innen = { (x: Int, y: Int) in x >= 0 && y >= 0 && x < breite && y < hoehe }
+        if !(innen(ax, ay) && innen(bx, by)) {
+            let dx = Double(x2 - x1), dy = Double(y2 - y1)
+            var t0 = 0.0, t1 = 1.0
+            let p = [-dx, dx, -dy, dy]
+            let q = [Double(x1), Double(brett.breite - 1 - x1), Double(y1), Double(brett.hoehe - 1 - y1)]
+            for k in 0..<4 {
+                if p[k] == 0 {
+                    if q[k] < 0 { return }
+                } else {
+                    let t = q[k] / p[k]
+                    if p[k] < 0 { t0 = max(t0, t) } else { t1 = min(t1, t) }
+                }
+            }
+            guard t0 <= t1 else { return }
+            ax = Int((Double(x1) + t0 * dx).rounded()); ay = Int((Double(y1) + t0 * dy).rounded())
+            bx = Int((Double(x1) + t1 * dx).rounded()); by = Int((Double(y1) + t1 * dy).rounded())
+        }
+        var (x, y) = (ax, ay)
+        let ddx = abs(bx - ax), ddy = -abs(by - ay)
+        let sx = ax < bx ? 1 : -1, sy = ay < by ? 1 : -1
+        var fehler = ddx + ddy
+        while true {
+            brett.setze(x, y, f)
+            if x == bx && y == by { break }
+            let e2 = 2 * fehler
+            if e2 >= ddy { fehler += ddy; x += sx }
+            if e2 <= ddx { fehler += ddx; y += sy }
         }
     }
 

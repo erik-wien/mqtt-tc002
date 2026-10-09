@@ -159,4 +159,60 @@ final class VirtuelleNGUhrBildTests: XCTestCase {
         XCTAssertEqual(pixel[52], 0xFF0000)
         XCTAssertEqual(pixel[2], 0)
     }
+
+    // MARK: Extremwerte
+
+    /// Beschnitten wird vor dem Iterieren: Diese Befehle duerfen weder lange
+    /// laufen noch Speicher anlegen.
+    private func schnell(_ nutzlast: String, datei: StaticString = #filePath, zeile: UInt = #line) throws -> [Int] {
+        let start = Date()
+        let b = try bild(nutzlast)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 0.1, file: datei, line: zeile)
+        return b
+    }
+
+    func testRiesigesRectFillFuelltNurDasRaster() throws {
+        let b = try schnell(#"{"draw":[["rectFill",0,0,2000000000,2000000000,"FF0000"]]}"#)
+        XCTAssertEqual(belegt(b).count, 52 * 16)
+        let negativ = try schnell(#"{"draw":[["rectFill",-2000000000,-2000000000,4000000000,4000000000,"FF0000"]]}"#)
+        XCTAssertEqual(belegt(negativ).count, 52 * 16)
+    }
+
+    func testRiesigesRectZeichnetNurSichtbareKanten() throws {
+        let b = try schnell(#"{"draw":[["rect",-5,-5,2000000000,2000000000,"FF0000"]]}"#)
+        XCTAssertTrue(belegt(b).isEmpty)
+        let rand = try schnell(#"{"draw":[["rect",0,0,2000000000,2000000000,"FF0000"]]}"#)
+        // Linke und obere Kante sichtbar: 26 + 8 - 1 Canvaspunkte, verdoppelt.
+        XCTAssertEqual(belegt(rand).count, (26 + 8 - 1) * 4)
+    }
+
+    func testLinienMitRiesigenEndpunkten() throws {
+        let b = try schnell(#"{"draw":[["line",-1000000000,0,1000000000,0,"FF0000"]]}"#)
+        XCTAssertEqual(belegt(b).count, 26 * 2 * 2)
+        let schraeg = try schnell(#"{"draw":[["line",-1000000000000,-1000000000000,1000000000000,1000000000000,"FF0000"]]}"#)
+        XCTAssertFalse(belegt(schraeg).isEmpty)
+        let draussen = try schnell(#"{"draw":[["line",100,100,2000000000,2000000000,"FF0000"]]}"#)
+        XCTAssertTrue(belegt(draussen).isEmpty)
+    }
+
+    func testRiesigesBitmapLiestHoechstensDieDaten() throws {
+        let roh = Data([0xFF, 0, 0, 0, 0xFF, 0, 0, 0, 0xFF]).base64EncodedString()
+        let b = try schnell(#"{"draw":[["bitmap",0,0,2000000000,2000000000,""# + roh + #""]]}"#)
+        XCTAssertEqual(b[0], 0xFF0000)
+        XCTAssertEqual(b[2], 0x00FF00)
+        XCTAssertEqual(b[4], 0x0000FF)
+        XCTAssertEqual(belegt(b).count, 3 * 4)
+    }
+
+    func testTeilsichtbaresBitmapZaehltDieDatenabInDerEcke() throws {
+        // 2 × 2, links oben bei (-1,-1): sichtbar bleibt nur das vierte Feld.
+        let b = try schnell(#"{"draw":[["bitmap",-1,-1,2,2,["FF0000","00FF00","0000FF","FFFF00"]]]}"#)
+        XCTAssertEqual(belegt(b), [[0, 0], [1, 0], [0, 1], [1, 1]])
+        XCTAssertEqual(b[0], 0xFFFF00)
+    }
+
+    func testPixelMitRiesigenKoordinaten() throws {
+        let b = try schnell(#"{"draw":[["pixel",900000000000000,-900000000000000,"FF0000"],["pixels","FF0000",1000000000000,5]]}"#)
+        XCTAssertTrue(belegt(b).isEmpty)
+    }
 }

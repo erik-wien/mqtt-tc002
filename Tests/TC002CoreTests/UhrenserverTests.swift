@@ -1,3 +1,4 @@
+import Network
 import XCTest
 @testable import TC002Core
 
@@ -38,5 +39,82 @@ final class UhrenserverZerlegenTests: XCTestCase {
         XCTAssertEqual(a.methode, "GET")
         XCTAssertEqual(a.pfad, "/api/v1/device")
         XCTAssertTrue(a.koerper.isEmpty)
+    }
+}
+
+/// Die Grenzen des Dienstes, ueber den echten Weg auf `127.0.0.1`: Eine
+/// Anfrage, die mehr verspricht, als der Dienst nimmt, wird abgewiesen, bevor
+/// sie gelesen ist.
+final class UhrenserverGrenzenTests: XCTestCase {
+    private var server: Uhrenserver?
+
+    override func tearDown() {
+        server?.beenden()
+        server = nil
+        super.tearDown()
+    }
+
+    private func gestartet() throws -> UInt16 {
+        for _ in 0..<20 {
+            let port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port)
+            do {
+                try s.starten()
+                Thread.sleep(forTimeInterval: 0.05)
+                server = s
+                return port
+            } catch { continue }
+        }
+        throw XCTSkip("kein freier Port")
+    }
+
+    /// Schickt rohe Bytes und liest die Antwort bis zum Schliessen.
+    private func roh(_ port: UInt16, _ bytes: Data) -> String {
+        let verbindung = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
+        let fertig = expectation(description: "Antwort")
+        nonisolated(unsafe) var antwort = Data()
+        func lesen() {
+            verbindung.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { teil, _, ende, fehler in
+                if let teil { antwort.append(teil) }
+                if ende || fehler != nil { fertig.fulfill() } else { lesen() }
+            }
+        }
+        verbindung.stateUpdateHandler = { zustand in
+            if case .ready = zustand {
+                verbindung.send(content: bytes, completion: .contentProcessed { _ in })
+                lesen()
+            }
+        }
+        verbindung.start(queue: .global())
+        wait(for: [fertig], timeout: 5)
+        verbindung.cancel()
+        return String(decoding: antwort, as: UTF8.self)
+    }
+
+    func testEinVersprochenerZuGrosserRumpfWirdSofortMit413Beantwortet() throws {
+        let port = try gestartet()
+        let antwort = roh(port, Data("PUT /api/v1/apps/pushed/x HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 99999999999\r\n\r\n".utf8))
+        XCTAssertTrue(antwort.hasPrefix("HTTP/1.1 413"), antwort)
+        XCTAssertTrue(antwort.contains("payloadTooLarge"))
+    }
+
+    func testNegativeUndUngueltigeLaengenSindVierhundert() throws {
+        let port = try gestartet()
+        for wert in ["-5", "abc", ""] {
+            let antwort = roh(port, Data("PUT /api/v1/apps/pushed/x HTTP/1.1\r\nContent-Length: \(wert)\r\n\r\n".utf8))
+            XCTAssertTrue(antwort.hasPrefix("HTTP/1.1 400"), "\(wert): \(antwort)")
+        }
+    }
+
+    func testEinKopfOhneEndeUeberDerGrenzeWirdAbgewiesen() throws {
+        let port = try gestartet()
+        let antwort = roh(port, Data(("GET /x HTTP/1.1\r\nX-Fuell: " + String(repeating: "a", count: 40_000)).utf8))
+        XCTAssertTrue(antwort.hasPrefix("HTTP/1.1 400"), String(antwort.prefix(80)))
+    }
+
+    func testEinRumpfAnDerGrenzeWirdNochGelesen() throws {
+        XCTAssertNil(Uhrenserver.vorabpruefung(Data("PUT /x HTTP/1.1\r\nContent-Length: \(VirtuelleNGUhr.maxRumpf)\r\n\r\n".utf8)))
+        XCTAssertEqual(Uhrenserver.vorabpruefung(Data("PUT /x HTTP/1.1\r\nContent-Length: \(VirtuelleNGUhr.maxRumpf + 1)\r\n\r\n".utf8))?.status, 413)
+        XCTAssertNil(Uhrenserver.vorabpruefung(Data("GET /x HTTP/1.1\r\n".utf8)))
     }
 }

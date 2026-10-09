@@ -87,6 +87,10 @@ public final class Uhrenserver: @unchecked Sendable {
             if let teil { daten.append(teil) }
             if fehler != nil { verbindung.cancel(); return }
 
+            if let abweisung = Self.vorabpruefung(daten) {
+                self.senden(verbindung, abweisung)
+                return
+            }
             if let anfrage = Self.zerlegen(daten) {
                 self.antworten(verbindung, auf: anfrage)
                 return
@@ -105,7 +109,10 @@ public final class Uhrenserver: @unchecked Sendable {
         if let beiAenderung {
             DispatchQueue.main.async { beiAenderung(neuerZustand) }
         }
+        senden(verbindung, antwort)
+    }
 
+    private func senden(_ verbindung: NWConnection, _ antwort: Virtuelleuhr.Antwort) {
         var kopf = "HTTP/1.1 \(antwort.status) \(Self.grund(antwort.status))\r\n"
         kopf += "Content-Type: \(antwort.inhaltstyp)\r\n"
         kopf += "Content-Length: \(antwort.koerper.count)\r\n"
@@ -129,6 +136,37 @@ public final class Uhrenserver: @unchecked Sendable {
         case 507: return "Insufficient Storage"
         default: return "Error"
         }
+    }
+
+    // MARK: - Grenzen
+
+    /// Der Kopfbereich (Anfragezeile und Kopfzeilen) ist hoechstens so gross.
+    static let maxKopf = 16 * 1024
+
+    /// Weist eine Anfrage ab, bevor sie vollstaendig gelesen ist, wenn sie die
+    /// Grenzen sprengt: Ohne das wuchse der Puffer, solange `Content-Length`
+    /// mehr verspricht, und die Rumpfgrenze griffe erst nach dem Empfang.
+    ///
+    /// - kein Ende des Kopfes innerhalb von `maxKopf`: `400`;
+    /// - `Content-Length` ungueltig oder negativ: `400`;
+    /// - `Content-Length` ueber `VirtuelleNGUhr.maxRumpf`: `413`, sofort.
+    static func vorabpruefung(_ daten: Data) -> Virtuelleuhr.Antwort? {
+        let zuGross = VirtuelleNGUhr.fehler(413, "payloadTooLarge", "payload too large")
+        let schlecht = VirtuelleNGUhr.fehler(400, "badRequest", "bad request")
+        guard let ende = daten.range(of: Data("\r\n\r\n".utf8)) else {
+            return daten.count > maxKopf ? schlecht : nil
+        }
+        guard ende.lowerBound <= maxKopf else { return schlecht }
+        let kopf = String(decoding: daten[daten.startIndex..<ende.lowerBound], as: UTF8.self)
+        for zeile in kopf.components(separatedBy: "\r\n").dropFirst() {
+            guard let doppelpunkt = zeile.firstIndex(of: ":"),
+                  zeile[..<doppelpunkt].lowercased().trimmingCharacters(in: .whitespaces) == "content-length"
+            else { continue }
+            let wert = zeile[zeile.index(after: doppelpunkt)...].trimmingCharacters(in: .whitespaces)
+            guard let laenge = Int(wert), laenge >= 0 else { return schlecht }
+            return laenge > VirtuelleNGUhr.maxRumpf ? zuGross : nil
+        }
+        return nil
     }
 
     // MARK: - Bytes zu einer Anfrage
