@@ -40,7 +40,7 @@ public struct Anzeigen {
     /// Was auf dem Thema landet bzw. im Rumpf steht — dieselben Bytes auf
     /// beiden Kanaelen.
     ///
-    /// Pixel (`Frame.pixel`) gehen als Layout hinaus (`Pixelweg`), Text samt
+    /// Pixel (`Frame.pixel`) gehen als GIF-Icon hinaus (`Pixelweg`), Text samt
     /// Reglern setzt die Uhr selbst (`Frame.herkunft`). Ein Rahmen ohne beides
     /// wird nicht geschickt: MQTT 3.1.1 kennt keinen Rueckkanal fuer eine
     /// abgelehnte Veroeffentlichung, und stillschweigend nichts zu tun ist das

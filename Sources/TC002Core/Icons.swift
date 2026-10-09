@@ -273,9 +273,6 @@ public enum Bildraster {
         return bild
     }
 
-    /// "#RRGGBB" in drei Bytes. Alles Unbrauchbare wird schwarz.
-    static func rgb(_ farbe: String?) -> (UInt8, UInt8, UInt8) { zerlegen(farbe) }
-
     /// Eine Bildzeit, wie ein GIF sie tragen kann: ganze Hundertstel, mindestens
     /// zwei. NG macht aus 0 hundert Millisekunden (§5.3), eine 0 wird nie
     /// geschrieben.

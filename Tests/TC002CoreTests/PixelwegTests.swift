@@ -27,41 +27,70 @@ final class PixelwegTests: XCTestCase {
 
     // MARK: - Standbild
 
-    /// Byteweise gegen die Form, die am Geraet gemessen ist (09.10.2026):
-    /// Layout, eine Region ueber das ganze Raster, `bitmap` als Base64-RGB888.
-    func testStandbildByteweise() throws {
-        let json = try Pixelweg.nutzlast(inhalt([bild([0: "#FF0000", 52 * 16 - 1: "#0000FF"])]), dauer: nil)
-        var roh = Data(count: 52 * 16 * 3)
-        roh[0] = 255
-        roh[roh.count - 1] = 255
-        let erwartet = #"{"layout":{"version":1,"regions":[{"id":"bild","box":[0,0,52,16],"draw":[["bitmap",0,0,52,16,"# + "\"\(roh.base64EncodedString())\"" + #"]]}]}}"#
-        XCTAssertEqual(json, erwartet)
-    }
-
-    func testStandbildMitDauerSteuertDurationMs() throws {
-        let json = try Pixelweg.nutzlast(inhalt([bild()]), dauer: 12)
-        XCTAssertTrue(json.hasSuffix(#"}]},"durationMs":12000}"#), json.suffix(40).description)
-        XCTAssertNotNil(try? JSONSerialization.jsonObject(with: Data(json.utf8)))
-    }
-
-    /// Das gemessene Mass: rund 3,3 KB.
-    func testStandbildNutzlastHatRundDreiKommaDreiKB() throws {
-        let n = try Pixelweg.nutzlast(inhalt([bild()]), dauer: nil).utf8.count
-        XCTAssertTrue((3300...3600).contains(n), "\(n) Byte")
-        print("MESSUNG Standbild-Nutzlast: \(n) Byte")
-    }
-
-    // MARK: - Bewegtes
-
-    /// Das GIF aus dem `icon` der Anzeige — ohne Layout, denn im Layout nimmt
-    /// NG ein Data-URL-Icon nur bis rund 8 KB (gemessen 09.10.2026).
     private func gifDaten(_ json: String) throws -> Data {
         let objekt = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
-        XCTAssertNil(objekt["layout"], "Bewegtes geht ohne Layout")
+        XCTAssertNil(objekt["layout"], "kein Layout: der ESP32 kennt keines")
+        XCTAssertNil(objekt["draw"], "kein draw: auf der TC002 2 x 2 vergroessert")
         let uri = try XCTUnwrap(objekt["icon"] as? String)
         XCTAssertTrue(uri.hasPrefix("data:image/gif;base64,"))
         return try XCTUnwrap(Data(base64Encoded: String(uri.dropFirst("data:image/gif;base64,".count))))
     }
+
+    /// Ein Standbild ist ein GIF mit einem Bild in voller Anzeigegroesse, mit
+    /// langer Bildzeit.
+    func testStandbildIstEinBildGifInVollerGroesse() throws {
+        let json = try Pixelweg.nutzlast(inhalt([bild([0: "#FF0000", 52 * 16 - 1: "#0000FF"])]), dauer: nil)
+        let daten = try gifDaten(json)
+        let quelle = try XCTUnwrap(CGImageSourceCreateWithData(daten as CFData, nil))
+        XCTAssertEqual(CGImageSourceGetCount(quelle), 1)
+        let e = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(quelle, 0, nil) as? [CFString: Any])
+        XCTAssertEqual(e[kCGImagePropertyPixelWidth] as? Int, 52)
+        XCTAssertEqual(e[kCGImagePropertyPixelHeight] as? Int, 16)
+        let g = e[kCGImagePropertyGIFDictionary] as? [CFString: Any]
+        XCTAssertEqual(g?[kCGImagePropertyGIFUnclampedDelayTime] as? Double, Pixelweg.standbildzeit)
+        let punkte = try Bildraster.lesenMitZeiten(daten, breite: 52, hoehe: 16)
+        XCTAssertEqual(punkte[0].pixel[0], "#FF0000")
+        XCTAssertEqual(punkte[0].pixel[52 * 16 - 1], "#0000FF")
+        XCTAssertEqual(punkte[0].pixel[1], "#000000")
+        XCTAssertFalse(json.contains("durationMs"), "ohne Nutzerdauer gilt die der Uhr")
+    }
+
+    /// Die TC001 (32 x 8): dasselbe, im Mass ihrer Anzeige.
+    func testStandbildAufEinerTC001HatDasMassDerAnzeige() throws {
+        var p = [String?](repeating: nil, count: 32 * 8)
+        p[0] = "#FF0000"; p[32 * 8 - 1] = "#00FF00"
+        let json = try Pixelweg.nutzlast(
+            Pixelinhalt(breite: 32, hoehe: 8, bilder: [Bildraster.Einzelbild(pixel: p, dauer: 1)]), dauer: nil)
+        let punkte = try Bildraster.lesenMitZeiten(try gifDaten(json), breite: 32, hoehe: 8)
+        XCTAssertEqual(punkte[0].pixel[0], "#FF0000")
+        XCTAssertEqual(punkte[0].pixel[32 * 8 - 1], "#00FF00")
+    }
+
+    func testStandbildMitDauerSteuertDurationMs() throws {
+        let json = try Pixelweg.nutzlast(inhalt([bild()]), dauer: 12)
+        let o = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+        XCTAssertEqual(o["durationMs"] as? Int, 12000)
+    }
+
+    /// Das Mass: ein Standbild ist klein genug fuer eine MQTT-Nachricht.
+    func testStandbildNutzlastPasstInEineMQTTNachricht() throws {
+        let n = try Pixelweg.nutzlast(inhalt([bild()]), dauer: nil).utf8.count
+        XCTAssertLessThan(n, 2000)
+        print("MESSUNG Standbild-Nutzlast 52x16 leer: \(n) Byte")
+    }
+
+    func testStandbildGruessGroessen() throws {
+        for mass in [Anzeigemass.vorgabe, Anzeigemass(breite: 32, hoehe: 8)] {
+            let o = Meldungsoptionen(text: "Grüß", weg: .pixel, schrift: "Silkscreen", groesse: 8)
+            let rahmen = try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung(), mass: mass)
+            XCTAssertNotNil(rahmen.pixel)
+            let n = try Anzeigen.nutzlast(rahmen).utf8.count
+            print("MESSUNG Standbild „Grüß“ \(mass.breite)x\(mass.hoehe): \(n) Byte")
+            XCTAssertLessThan(n, Pixelweg.mqttGrenze - 100)
+        }
+    }
+
+    // MARK: - Bewegtes
 
     func testBewegtesLaeuftMindestensEinenDurchlauf() throws {
         let zwei = inhalt([bild(dauer: 1.0), bild(dauer: 0.5)])

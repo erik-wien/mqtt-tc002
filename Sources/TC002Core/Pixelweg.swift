@@ -26,17 +26,21 @@ public enum Zustellweg: Equatable, Sendable {
     case http
 }
 
-/// Der Pixelweg zu AWTRIX NG (`docs/awtrix-ng-protokoll.md` §1.1, §6, §8, §9).
+/// Der Pixelweg zu AWTRIX NG (`docs/awtrix-ng-protokoll.md` §1.1, §5.3, §8).
 ///
-/// `draw` direkt in einer Anzeige rechnet bei `enlargeApps` (Vorgabe der Uhr)
-/// auf 26 × 8 mit 2 × 2 je Pixel (gemessen 09.10.2026) und taugt nicht fuer
-/// pixelgenaue Bilder; die globale Einstellung faesst die App nicht an.
-/// Eine `layout`-Region ueber das ganze Raster rechnet dagegen auf 52 × 16:
+/// Alles Gerasterte geht als animiertes oder einbildriges GIF im `icon` der
+/// Anzeige hinaus, in **voller Anzeigegroesse der Ziel-Uhr** (`Uhr.anzeigemass`,
+/// 52 × 16 der TC002, 32 × 8 der TC001). Gemessen am 09.10.2026 (NG 1.2.2):
 ///
-/// - Standbild: `draw` mit einem `bitmap` (Base64-RGB888), rund 3,3 KB.
-/// - Bewegtes: `icon` der Anzeige als `data:image/gif;base64,…` mit einem
-///   animierten GIF in Rastergroesse; es laeuft mit den Bildzeiten der Datei
-///   (beides gemessen 09.10.2026, NG 1.2.2, TC002).
+/// - Ein Icon, das groesser ist als 26 × 8, schaltet die TC002 auf das volle
+///   Raster; das GIF landet dort pixelgenau (Eckpixel exakt). Auf der TC001
+///   (ESP32) gibt es kein `enlargeApps`, das GIF landet in 32 × 8 ebenso.
+/// - `draw`/`bitmap` direkt in der Anzeige ist auf der TC002 2 × 2
+///   vergroessert; `layout` gibt es auf dem ESP32 nicht
+///   (`422 unknown field`, `capabilities.layout` fehlt). Beide Wege entfallen.
+///
+/// Ein GIF kleiner als das Anzeigemass waere auf der TC002 vergroessert: Die
+/// Masse des Inhalts sind darum immer genau das Anzeigemass.
 ///
 /// Reine Funktionen: nichts wird gesendet oder gelesen.
 public enum Pixelweg {
@@ -53,39 +57,35 @@ public enum Pixelweg {
     /// Rumpf ueber HTTP (§8), `413` darueber.
     public static let httpGrenze = 2 * 1024 * 1024
 
-    /// Hoechste GIF-Groesse fuer Bewegtes. Gemessen am 09.10.2026 (NG 1.2.2,
-    /// TC002, HTTP): Als `icon` der Anzeige nimmt NG ein GIF bis 58 761 Byte an
-    /// und weist eines von 87 KB ab (`field: icon`). 56 KiB liegen darunter.
+    /// Hoechste GIF-Groesse. Gemessen am 09.10.2026 (NG 1.2.2, TC002, HTTP):
+    /// Als `icon` der Anzeige nimmt NG ein GIF bis 58 761 Byte an und weist
+    /// eines von 87 KB ab (`field: icon`). 56 KiB liegen darunter.
     public static let hoechsteGIFBytes = 56 * 1024
 
-    /// Die Nutzlast der Anzeige. `dauer` in Sekunden wie bei den Reglern,
-    /// gesendet als `durationMs`.
-    ///
-    /// Ein Standbild ist ein Layout mit einem `bitmap`. Bewegtes ist das GIF
-    /// als `icon` der Anzeige, **ohne** Layout: Im Layout nimmt NG ein
-    /// Data-URL-`icon` nur bis rund 8 KB Base64 (7508 Zeichen angenommen, 8796
-    /// abgewiesen, `422 invalid icon`; gemessen 09.10.2026), als Icon der Anzeige
-    /// dagegen bis `hoechsteGIFBytes`. Ein Icon, das groesser ist als 26 × 8,
-    /// schaltet die Anzeige auf das volle Raster (§1.1); gemessen landet ein
-    /// 52 × 16-GIF pixelgenau und laeuft mit den Bildzeiten der Datei.
+    /// Bildzeit eines Standbilds im GIF: lang, damit die Uhr nicht vor Ablauf
+    /// der Standzeit zum naechsten Bild des GIFs weiterschaltet.
+    public static let standbildzeit = 1.0
+
+    /// Die Nutzlast der Anzeige: das GIF als `icon`, ohne Layout. `dauer` in
+    /// Sekunden wie bei den Reglern, gesendet als `durationMs`.
     ///
     /// Bei Bewegtem gilt mindestens die Laufzeit eines Durchlaufs als
     /// `durationMs`; die Uhr schneidet sonst nach `appDurationMs` (7000) ab. Eine
-    /// laengere Dauer des Nutzers geht vor.
+    /// laengere Dauer des Nutzers geht vor. Ein Standbild traegt `durationMs`
+    /// nur, wenn der Nutzer eine Dauer gewaehlt hat; sonst gilt die der Uhr.
     public static func nutzlast(_ inhalt: Pixelinhalt, dauer: Int?) throws -> String {
         try pruefen(inhalt)
-        let b = inhalt.breite, h = inhalt.hoehe
-        if inhalt.bilder.count == 1 {
-            let daten = rgb888(inhalt.bilder[0].pixel).base64EncodedString()
-            var json = #"{"layout":{"version":1,"regions":[{"id":"bild","box":[0,0,\#(b),\#(h)],"draw":[["bitmap",0,0,\#(b),\#(h),"\#(daten)"]]}]}"#
-            if let dauer { json += #","durationMs":\#(dauer * 1000)"# }
-            return json + "}"
-        }
-        let uri = try gifDatenURI(inhalt)
+        let uri = try gifDatenURI(inhalt, festeZeit: inhalt.istBewegt ? nil : standbildzeit)
         let bytes = (uri.utf8.count - "data:image/gif;base64,".utf8.count) / 4 * 3
         guard bytes <= hoechsteGIFBytes else { throw NGFehler.laufschriftZuLang(bytes: bytes) }
-        let durchlauf = Int(inhalt.bilder.reduce(0.0) { $0 + Bildraster.gifZeit($1.dauer) } * 1000)
-        return #"{"icon":"\#(uri)","durationMs":\#(max(durchlauf, (dauer ?? 0) * 1000))}"#
+        var json = #"{"icon":"\#(uri)""#
+        if inhalt.istBewegt {
+            let durchlauf = Int(inhalt.bilder.reduce(0.0) { $0 + Bildraster.gifZeit($1.dauer) } * 1000)
+            json += #","durationMs":\#(max(durchlauf, (dauer ?? 0) * 1000))"#
+        } else if let dauer {
+            json += #","durationMs":\#(dauer * 1000)"#
+        }
+        return json + "}"
     }
 
     /// Mass und Bildzahl, bevor etwas gebaut wird.
@@ -97,21 +97,11 @@ public enum Pixelweg {
         }
     }
 
-    /// Dunkel ist schwarz: `nil` heisst bei uns „aus", ein `bitmap` kennt keine
-    /// Durchsicht.
-    static func rgb888(_ pixel: [String?]) -> Data {
-        var daten = Data(capacity: pixel.count * 3)
-        for farbe in pixel {
-            let (r, g, bl) = Bildraster.rgb(farbe)
-            daten.append(contentsOf: [r, g, bl])
-        }
-        return daten
-    }
-
-    /// Das animierte GIF. Durchsichtiges wird schwarz gefuellt: Durchsichtige
+    /// Das GIF. Durchsichtiges wird schwarz gefuellt: Durchsichtige
     /// Pixel zeigen auf NG, was das vorige Bild dort gezeichnet hat (§5.3), und
-    /// eine Laufschrift bliebe sonst als Spur stehen.
-    static func gifDatenURI(_ inhalt: Pixelinhalt) throws -> String {
+    /// eine Laufschrift bliebe sonst als Spur stehen. `festeZeit` ersetzt die
+    /// Bildzeiten (Standbild).
+    static func gifDatenURI(_ inhalt: Pixelinhalt, festeZeit: Double? = nil) throws -> String {
         guard let daten = CFDataCreateMutable(nil, 0),
               let senke = CGImageDestinationCreateWithData(daten, UTType.gif.identifier as CFString,
                                                            inhalt.bilder.count, nil)
@@ -123,7 +113,7 @@ public enum Pixelweg {
             let gefuellt = bild.pixel.map { $0 ?? "#000000" }
             let eigenschaften = [
                 kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFUnclampedDelayTime:
-                                                    Bildraster.gifZeit(bild.dauer)]
+                                                    festeZeit ?? Bildraster.gifZeit(bild.dauer)]
             ] as CFDictionary
             CGImageDestinationAddImage(
                 senke, try Bildraster.cgBild(aus: gefuellt, breite: inhalt.breite, hoehe: inhalt.hoehe),
