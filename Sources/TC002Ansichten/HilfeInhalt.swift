@@ -37,7 +37,7 @@ public enum HilfeInhalt {
         .ueberschrift("Was ist MQTT?"),
         .absatz("MQTT ist die Sprache, in der Geräte im Haus einander Nachrichten hinterlassen. In der Mitte steht ein Programm, das die Nachrichten annimmt und weiterreicht: der **MQTT-Broker**, meist ein kleiner Server im eigenen Netz. Wer etwas zu sagen hat, legt es dort unter einem Namen ab — dem Thema —, und wer es haben will, meldet sich für dieses Thema an und bekommt jede neue Nachricht zugestellt. Die Uhren hängen selbst an einem solchen Broker; diese App legt ihre Anzeigen dort für sie ab."),
         .ueberschrift("Wer den Text setzt"),
-        .absatz("Die Uhr setzt den Text mit ihrer eigenen Schrift. Schriftart, Größe, Fett, Rand und Abstand steuern deshalb nur die Vorschau; sie sind gesperrt und sagen beim Antippen, warum."),
+        .absatz("Die App rastert den Text selbst und schickt der Uhr Pixel, so wie die Vorschau sie zeigt. Schriftart, Größe, Fett, Rand und Abstand wirken auf der Uhr deshalb genau so, wie du sie siehst."),
         .absatz("Ein paar Dinge macht die App immer selbst über HTTP, gleich welcher Weg für eine Uhr eingestellt ist: die Uhr abfragen, holen, welche Anzeigen gerade auf ihr stehen, und die Einstellungen des Geräts schreiben."),
     ]
 
@@ -64,14 +64,12 @@ public enum HilfeInhalt {
     /// Fenster. Alles Weitere steht in der Geraetereferenz.
     public static let geraeteart: [Hilfebaustein] = [
         .ueberschrift("Die Uhr: AWTRIX NG"),
-        .absatz("Die App spricht AWTRIX NG: Sie schickt der Uhr den **Text** samt Reglern, und die Uhr setzt ihn mit ihrer eigenen Schrift. Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
-        .untertitel("Was die Uhr besser kann"),
-        .absatz("Ihre Schrift kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch von Haus aus, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst. Und sie antwortet auf jede Sendung über HTTP — eine abgewiesene meldet sie als abgewiesen."),
-        .untertitel("Was dort wegfällt"),
-        .absatz("Schriftart, Größe, Fett, Rand und Zeichenabstand steuern, wie diese App den Text in Pixel umsetzt. Setzt die Uhr ihn selbst, gibt es daran nichts zu drehen. Senkrecht ausrichten geht ebenfalls nicht, ihre Grundlinie liegt fest, und rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen beim Antippen, warum."),
-        .untertitel("Was zurzeit nicht geht"),
-        .absatz("Ein gemaltes Bild und ein Bild aus der Sammlung lassen sich im Augenblick nicht an die Uhr schicken; Icons gehen als Bild neben dem Text hinaus. Die Dateien bleiben erhalten."),
-        .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau: eine Näherung in einer Ersatzschrift. Die Uhr setzt den Text mit ihrer eigenen Schrift, und die kennt diese App nicht — der Block sagt dir also, was auf dem Platz liegt, nicht, wie es dort aussieht. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
+        .absatz("Die App spricht AWTRIX NG und schickt der Uhr **Pixel**: Text rastert sie selbst, und was die Vorschau zeigt, kommt Punkt für Punkt auf dem Display an. Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
+        .untertitel("Text in der Schrift der Uhr"),
+        .absatz("Über Kurzbefehle lässt sich ein Text auch „als Text“ schicken. Dann setzt ihn die Uhr mit ihrer eigenen Schrift, vergrößert auf 26 × 8 Punkte: Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch und lässt langen Text von selbst laufen. Eine Wahl der Schrift, einen fetten Schnitt, Rand und Zeichenabstand gibt es dort nicht; senkrecht ausrichten geht ebenfalls nicht, und rechtsbündig kennt sie nicht."),
+        .untertitel("Große Anzeigen"),
+        .absatz("Ein Standbild ist rund 3 KB groß. Eine Laufschrift besteht aus vielen Einzelbildern und passt nicht in eine MQTT-Nachricht (höchstens 8 KB): Sie geht dann als HTTP-Anfrage an die Adresse der Uhr, die dafür eingetragen sein muss. Fehlt sie, sagt die App es vor dem Senden, statt die Anzeige verloren gehen zu lassen. Mehr als 2 MB nimmt die Uhr gar nicht."),
+        .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
     /// Die Ueberschrift des Brokerabschnitts und was darunter steht. Beide
@@ -216,7 +214,7 @@ public enum HilfeInhalt {
         .absatz("Jeder Block zeigt einen von drei Zuständen, an der Form erkennbar, nicht nur an der Farbe:"),
         .punkte([
             "**Frei** — ein gestrichelter, leerer Rahmen. Auf diesem Platz liegt nichts.",
-            "**Belegt, Inhalt bekannt** — die Pixel, verkleinert. Sie sind aus dem gerechnet, was sich diese App für den Platz gemerkt hat, mit der Näherungsschrift der Vorschau; es ist eine Erinnerung und kann überholt sein.",
+            "**Belegt, Inhalt bekannt** — die Pixel, verkleinert. Sie sind aus dem gerechnet, was sich diese App für den Platz gemerkt hat, so, wie die Vorschau sie rechnet; es ist eine Erinnerung und kann überholt sein.",
             "**Belegt, Inhalt unbekannt** — ein grauer Block mit einem Fragezeichen, ohne Pixel.",
         ]),
         .absatz("Ein Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin steht — der Platz ist belegt, der Inhalt bleibt unbekannt."),
@@ -249,9 +247,9 @@ public enum HilfeInhalt {
 
     /// Wann ein Text steht und wann er laeuft: Die Uhr entscheidet das.
     public static let wegeRegel: [Hilfebaustein] = [
-        .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die Uhr: Passt er in die verfügbare Breite, bleibt er stehen, sonst läuft er durch. Die App schickt dazu immer den Text samt Reglern, nie Pixel."),
+        .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die Breite: Passt er in die verfügbare Breite, bleibt er stehen, sonst läuft er durch — als Folge von Einzelbildern, die die Vorschau genauso abspielt."),
         .abbildung(.stehtOderLaeuft),
-        .absatz("Die Vorschau ist nur eine Näherung, weil die Uhr den Text mit ihrer eigenen Schrift setzt; das (?) neben der Punktreihe unter ihr sagt, warum."),
+        .absatz("Nur bei „als Text“ ist die Vorschau eine Näherung, weil die Uhr den Text dann mit ihrer eigenen Schrift setzt; das (?) neben der Punktreihe unter ihr sagt, warum."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -280,7 +278,7 @@ public enum HilfeInhalt {
     /// Umlaute und Sonderzeichen: eine Eigenschaft der Uhr.
     public static let zeichen: [Hilfebaustein] = [
         .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
-        .absatz("Die Uhr setzt den Text selbst, mit ihrer eingebauten Schrift. Sie kennt Umlaute, „ß“, Akzente, das Eurozeichen und Kyrillisch; ein Zeichen, das sie nicht hat, wird zum Fragezeichen (Gerätereferenz, §1)."),
+        .absatz("Die App rastert die Zeichen selbst, mit einer der mitgelieferten Pixelschriften; Umlaute und „ß“ gehören dazu. Setzt die Uhr den Text („als Text“), nimmt sie ihre eingebaute Schrift: Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen (Gerätereferenz, §1)."),
     ]
 
     /// Die Schriftauswahl und die drei mitgelieferten Pixelschriften. Beide

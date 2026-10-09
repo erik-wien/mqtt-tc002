@@ -11,9 +11,12 @@ Stores; das Repo, die Bündelkennung `cloud.eriks.mqtt-tc002`, der Datenordner
 und der Befehl `mqtttc002` behalten ihren Namen — daran hängen Identität,
 Freigaben und vorhandene Bestände) ist eine App für macOS, iPhone und iPad,
 die Text, Bilder und selbst gemalte Icons an eine oder mehrere
-Ulanzi-TC002-Pixeluhren mit der Firmware AWTRIX NG schickt. Die Uhr setzt den
-Text mit ihrer eigenen Schrift. Der Weg dorthin führt entweder direkt über HTTP
-oder über einen MQTT-Broker, auf den die Uhr hört.
+Ulanzi-TC002-Pixeluhren mit der Firmware AWTRIX NG schickt. Die App rastert
+Text und Bilder selbst und schickt sie pixelgenau (Standbild als `bitmap` in
+einem Layout, Bewegtes als animiertes GIF); auf Wunsch setzt die Uhr den Text
+mit ihrer eigenen Schrift. Der Weg dorthin führt entweder direkt über HTTP oder
+über einen MQTT-Broker, auf den die Uhr hört; was für eine MQTT-Nachricht
+(8192 Byte) zu groß ist, geht über HTTP an dieselbe Uhr.
 
 ## Bauen
 
@@ -28,15 +31,12 @@ vorausgesetzt wird macOS 14 aufwärts.
   eingetragen wird hier nichts.
 - **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
   zusammensetzen und verschicken. Fünf Blöcke zeigen dabei die festen Plätze
-  der Uhr, samt Inhalt, wo die App ihn kennt. Die Vorschau entsteht aus
-  demselben Raster wie die gesendete Nachricht, ist aber nur eine Näherung:
-  Die Uhr setzt den Text selbst. Schriftart, Größe, Fett, Rand und Abstand
-  sind deshalb gesperrt.
+  der Uhr, samt Inhalt, wo die App ihn kennt. Die Vorschau zeigt
+  genau das Pixelfeld, das hinausgeht.
 - **Editor** — Pixel malen; die Größe der Leinwand entscheidet, was dabei
   herauskommt: ein 8×8 ist das LaMetric-Icon mit Nummer, ein 16×16 eines
-  ohne, ein 52×16 die ganze Anzeige. Eine ganze Anzeige lässt sich zurzeit nicht
-  an die Uhr schicken. Mehrere
-  Einzelbilder ergeben ein animiertes GIF. Icons lassen sich außerdem über
+  ohne, ein 52×16 die ganze Anzeige. Eine ganze Anzeige geht
+  pixelgenau an die Uhr; mehrere Einzelbilder ergeben ein animiertes GIF. Icons lassen sich außerdem über
   eine LaMetric-Nummer nachladen.
 - **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
   umschalten oder löschen. Diese Liste führt
@@ -77,9 +77,10 @@ weite Buchstabenpaare.
 
 Die eingebaute Schrift der Uhr kennt keine Umlaute und kaum Satzzeichen. Die
 App umgeht das, indem sie Text nicht als Zeichenkette schickt, sondern selbst
-mit CoreText rastert und als `draw`-Rechtecke überträgt — damit gehen „ä“,
-„ö“, „ü“ und „ß“ trotzdem, und die Vorschau zeigt exakt das Bild, das auch
-gesendet wird, weil beide aus demselben Pixelfeld stammen.
+mit CoreText rastert und als Pixel überträgt — damit gehen „ä“, „ö“, „ü“ und
+„ß“ trotzdem, und die Vorschau zeigt exakt das Bild, das auch gesendet wird,
+weil beide aus demselben Pixelfeld stammen. Ein Standbild ist rund 3,4 KB groß,
+eine Laufschrift wie „Grüße aus Wien“ rund 9 KB und geht deshalb über HTTP.
 
 ## Icons
 

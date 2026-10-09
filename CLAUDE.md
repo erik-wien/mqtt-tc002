@@ -154,8 +154,12 @@ ist und bei einem Update nachzuprüfen wäre, in
 - **Bilder pixelgenau nur als Layout.** Bei `enlargeApps` (Vorgabe) zeichnet
   NG Text, Icon und `draw` einer Anzeige auf 26×8, jedes Pixel 2×2; eine
   `layout`-Region `[0,0,52,16]` mit `bitmap` (Base64-RGB888, rund 3,3 KB)
-  landet pixelgenau. Die globale Einstellung der Uhr fasst die App dafür
-  nicht an.
+  landet pixelgenau; Bewegtes geht als animiertes GIF im Feld `icon` einer
+  solchen Region (`Pixelweg`, Bildzeiten ganze Hundertstel, mindestens 20 ms).
+  Die globale Einstellung der Uhr fasst die App dafür nicht an. Passt eine
+  Nutzlast samt Thema nicht in 8192 Byte, verwirft NG sie über MQTT ohne
+  Antwort: Dann geht diese eine Anzeige über HTTP an dieselbe Uhr
+  (`Pixelweg.zustellweg`), und ohne Adresse meldet die App es vor dem Senden.
 - Blockierende Netzaufrufe nie auf dem Hauptthread: `AppZustand` ist
   `@MainActor`-isoliert, die eigentlichen Aufrufe laufen in `Task.detached`.
 - Je Uhr eine eigene MQTT-Client-Kennung, sonst trennt der Broker die

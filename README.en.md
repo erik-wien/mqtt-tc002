@@ -7,9 +7,12 @@ Send messages to the Ulanzi TC002 (Pixbar, 52×16, AWTRIX NG firmware) — over 
 ## What the app does
 
 MQTT-TC002 is a macOS app that sends text, images and hand-drawn icons to one
-or more Ulanzi TC002 pixel clocks running the AWTRIX NG firmware. The clock sets
-the text in its own font. The route there is either straight over HTTP or
-through an MQTT broker the clock listens to.
+or more Ulanzi TC002 pixel clocks running the AWTRIX NG firmware. The app
+rasterizes text and images itself and sends them pixel-exact (a still as a
+`bitmap` in a layout, anything moving as an animated GIF); on request the clock
+sets the text in its own font. The route there is either straight over HTTP or
+through an MQTT broker the clock listens to; whatever is too big for an MQTT
+message (8192 bytes) goes to the same clock over HTTP.
 
 ## Building
 
@@ -24,11 +27,10 @@ dependencies; macOS 14 or newer is required.
   nothing is entered by hand here.
 - **Send** — assemble text and optionally an icon into a named display and
   send it off. Five blocks show the clock's fixed slots, with their content
-  where the app knows it. The preview comes from the same raster as the
-  message that is sent, but is only an approximation: the clock sets the text
-  itself. Font, size, bold, margin and spacing are therefore locked.
-- **Draw** — a free 52×16 canvas, which turns into rectangles instead of
-  single pixels when sent.
+  where the app knows it. The preview shows exactly
+  the pixel field that is sent.
+- **Draw** — a free 52×16 canvas; a single frame goes out as a still, several
+  as an animated GIF with their frame times.
 - **Icons** — draw your own 8×8 images or fetch them via a LaMetric number.
 - **Displays** — switch or delete what the app has already created on the
   active clock. The app keeps this list
@@ -69,7 +71,7 @@ are sometimes too tight and sometimes too loose.
 
 The built-in font of the clock does not know umlauts and barely any
 punctuation. The app gets around that by not sending text as a string, but
-rasterizing it itself with CoreText and transmitting it as `draw` rectangles —
+rasterizing it itself with CoreText and transmitting it as pixels —
 that way "ä", "ö", "ü" and "ß" work anyway, and the preview shows exactly the
 image that is also sent, because both come from the same pixel field.
 
