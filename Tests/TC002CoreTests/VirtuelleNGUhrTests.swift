@@ -422,7 +422,7 @@ final class VirtuelleNGUhrAmDrahtTests: XCTestCase {
     private func gestartet() throws -> (Uhrenserver, UInt16) {
         for _ in 0..<20 {
             let port = UInt16.random(in: 20_000...60_000)
-            let s = Uhrenserver(port: port, ngZustand: NGUhrzustand())
+            let s = Uhrenserver(port: port)
             do {
                 try s.starten()
                 Thread.sleep(forTimeInterval: 0.05)
@@ -461,16 +461,16 @@ final class VirtuelleNGUhrAmDrahtTests: XCTestCase {
 
         let (s2, _) = try anfrage(port, "PATCH", "/api/v1/settings", #"{"brightness":42}"#)
         XCTAssertEqual(s2, 200)
-        XCTAssertEqual(server.ngZustand?.helligkeit, 42)
+        XCTAssertEqual(server.zustand.helligkeit, 42)
 
         let (s3, _) = try anfrage(port, "PUT", "/api/v1/apps/pushed/wetter", #"{"text":"hi"}"#)
         XCTAssertEqual(s3, 200)
-        XCTAssertEqual(server.ngZustand?.apps.map(\.name), ["Time", "Status", "wetter"])
+        XCTAssertEqual(server.zustand.apps.map(\.name), ["Time", "Status", "wetter"])
 
         let (s4, e4) = try anfrage(port, "PATCH", "/api/v1/settings", #"{"brightness":999}"#)
         XCTAssertEqual(s4, 422)
         XCTAssertEqual((e4["error"] as? [String: Any])?["field"] as? String, "brightness")
-        XCTAssertEqual(server.ngZustand?.helligkeit, 42)
+        XCTAssertEqual(server.zustand.helligkeit, 42)
 
         let (s5, e5) = try anfrage(port, "PUT", "/api/v1/apps/pushed/x", #"{"text":"hi"}"#, json: false)
         XCTAssertEqual(s5, 415)
@@ -480,8 +480,4 @@ final class VirtuelleNGUhrAmDrahtTests: XCTestCase {
         XCTAssertEqual(s6, 404)
     }
 
-    func testDieWerksfirmwareBleibtDieVorgabe() throws {
-        let s = Uhrenserver(port: 1)
-        XCTAssertNil(s.ngZustand)
-    }
 }

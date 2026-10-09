@@ -101,11 +101,13 @@ public struct NGUhrzustand: Equatable, Sendable {
 }
 
 /// Beantwortet die HTTP-Anfragen einer AWTRIX-NG-1.2.2-Uhr auf der TC002 — als
-/// reine Funktion, Gegenstück zu `Virtuelleuhr` (Werksfirmware). Fehlerform,
-/// Statuscodes und Meldungen folgen der Herstellerdoku (`reference/errors`).
+/// reine Funktion. Fehlerform, Statuscodes und Meldungen folgen der
+/// Herstellerdoku (`reference/errors`).
 ///
-/// Gehalten wird nur der Zustand, damit sich die Wirkung eines Aufrufs prüfen
-/// lässt. Gerendert wird nicht: `display/screen` liefert ein schwarzes Bild.
+/// Gehalten wird der Zustand, damit sich die Wirkung eines Aufrufs prüfen
+/// lässt. Gezeichnet werden von der aktiven Anzeige nur die Zeichenbefehle
+/// `pixel`, `pixels`, `line`, `rect`, `rectFill` und `bitmap` (`bildschirm`);
+/// Text, Icons, Kreise und Effekte bleiben schwarz.
 ///
 /// Bewusst nicht geprüft:
 /// - Inhalt einer App- oder Benachrichtigungsnutzlast über „gültiges JSON-
@@ -268,8 +270,8 @@ public enum VirtuelleNGUhr {
         case .anzeige:
             return anfrage.methode == "GET" ? json(anzeige(z)) : anzeigeAendern(anfrage, &z)
         case .bildschirm:
-            let punkte = Array(repeating: "0", count: 832).joined(separator: ",")
-            return Antwort(koerper: Data(#"{"width":52,"height":16,"pixels":[\#(punkte)]}"#.utf8))
+            let punkte = bildschirm(z).map(String.init).joined(separator: ",")
+            return Antwort(koerper: Data(#"{"width":\#(breite),"height":\#(hoehe),"pixels":[\#(punkte)]}"#.utf8))
         case .apps: return json(.liste(z.apps.map(appEintrag)))
         case .faehigkeiten: return json(capabilities)
         case .ton: return json(audio)
@@ -297,6 +299,169 @@ public enum VirtuelleNGUhr {
         switch route {
         case .appAktiv, .appFreigabe: return false
         default: return true
+        }
+    }
+
+    // MARK: - Bildspeicher
+
+    public static let breite = 52
+    public static let hoehe = 16
+
+    /// Ein Zeichenbrett mit Ursprung oben links; was außerhalb liegt, fällt weg.
+    private struct Brett {
+        let breite: Int, hoehe: Int
+        var punkte: [Int]
+        /// Welche Punkte ein Befehl berührt hat — Schwarz ist eine Farbe und
+        /// kein „nichts".
+        var belegt: [Bool]
+        init(breite: Int, hoehe: Int, fuellung: Int = 0) {
+            self.breite = breite; self.hoehe = hoehe
+            punkte = [Int](repeating: fuellung, count: breite * hoehe)
+            belegt = [Bool](repeating: false, count: breite * hoehe)
+        }
+        mutating func setze(_ x: Int, _ y: Int, _ farbe: Int) {
+            guard x >= 0, y >= 0, x < breite, y < hoehe else { return }
+            punkte[y * breite + x] = farbe
+            belegt[y * breite + x] = true
+        }
+    }
+
+    /// Was die Uhr gerade zeigt: `breite × hoehe` gepackte RGB-Werte,
+    /// zeilenweise von oben links. Gezeigt wird die erste Benachrichtigung,
+    /// sonst die aktive App.
+    ///
+    /// Gemessen an NG 1.2.2 auf der TC002 (09.10.2026, `enlargeApps: true`):
+    /// `draw` einer Anzeige rechnet auf einem Raster von 26 × 8, jedes Pixel
+    /// belegt 2 × 2 (`["pixel",0,0]` belegt 0…1 × 0…1, `["pixel",51,15]` fällt
+    /// weg); in einem `layout` rechnet `draw` auf dem vollen 52 × 16 relativ
+    /// zur Box der Region. Ohne `enlargeApps` rechnet auch die Anzeige auf
+    /// 52 × 16.
+    public static func bildschirm(_ z: NGUhrzustand) -> [Int] {
+        var bild = Brett(breite: breite, hoehe: hoehe)
+        let nutzlast: [String: JSONWert]
+        if let meldung = z.benachrichtigungen.first {
+            nutzlast = meldung.nutzlast
+        } else if case .objekt(let o)? = z.apps.first(where: { $0.name == z.aktiveApp })?.nutzlast {
+            nutzlast = o
+        } else {
+            return bild.punkte
+        }
+        var vorgabe = 0xFFFFFF
+        if let w = z.einstellungen["textColor"], let f = farbwert(w) { vorgabe = f }
+        if let w = nutzlast["textColor"], let f = farbwert(w) { vorgabe = f }
+
+        if case .objekt(let layout)? = nutzlast["layout"] {
+            if let w = layout["backgroundColor"], let f = farbwert(w) {
+                bild = Brett(breite: breite, hoehe: hoehe, fuellung: f)
+            }
+            guard case .liste(let regionen)? = layout["regions"] else { return bild.punkte }
+            for region in regionen {
+                guard case .objekt(let r) = region, case .liste(let kasten)? = r["box"],
+                      case .liste(let befehle)? = r["draw"] else { continue }
+                let k = kasten.compactMap(\.ganzzahl)
+                guard k.count == 4, k[2] > 0, k[3] > 0 else { continue }
+                var farbe = vorgabe
+                if let w = r["color"], let f = farbwert(w) { farbe = f }
+                var brett = Brett(breite: k[2], hoehe: k[3])
+                for befehl in befehle { zeichne(befehl, auf: &brett, farbe: farbe) }
+                for y in 0..<k[3] {
+                    for x in 0..<k[2] where brett.belegt[y * k[2] + x] {
+                        bild.setze(k[0] + x, k[1] + y, brett.punkte[y * k[2] + x])
+                    }
+                }
+            }
+            return bild.punkte
+        }
+
+        let faktor = z.einstellungen["enlargeApps"] == .bool(false) ? 1 : 2
+        var brett = Brett(breite: breite / faktor, hoehe: hoehe / faktor)
+        if let w = nutzlast["backgroundColor"], let f = farbwert(w) {
+            brett = Brett(breite: brett.breite, hoehe: brett.hoehe, fuellung: f)
+        }
+        if case .liste(let befehle)? = nutzlast["draw"] {
+            for befehl in befehle { zeichne(befehl, auf: &brett, farbe: vorgabe) }
+        }
+        for y in 0..<brett.hoehe {
+            for x in 0..<brett.breite {
+                for dy in 0..<faktor {
+                    for dx in 0..<faktor {
+                        bild.setze(x * faktor + dx, y * faktor + dy, brett.punkte[y * brett.breite + x])
+                    }
+                }
+            }
+        }
+        return bild.punkte
+    }
+
+    private static func farbwert(_ w: JSONWert) -> Int? {
+        guard let hex = farbe(w) else { return nil }
+        return Int(hex.dropFirst(), radix: 16)
+    }
+
+    /// Ein Zeichenbefehl. Unbekannte und kaputte Befehle zeichnen nichts.
+    private static func zeichne(_ befehl: JSONWert, auf brett: inout Brett, farbe vorgabe: Int) {
+        guard case .liste(let teile) = befehl, case .text(let name)? = teile.first else { return }
+        let a = Array(teile.dropFirst())
+        func zahl(_ i: Int) -> Int? { a.indices.contains(i) ? a[i].ganzzahl : nil }
+        func farbeAn(_ i: Int) -> Int {
+            guard a.indices.contains(i), let f = farbwert(a[i]) else { return vorgabe }
+            return f
+        }
+        switch name {
+        case "pixel":
+            guard let x = zahl(0), let y = zahl(1) else { return }
+            brett.setze(x, y, farbeAn(2))
+        case "pixels":
+            let f = farbeAn(0)
+            let koordinaten = a.dropFirst().compactMap(\.ganzzahl)
+            guard koordinaten.count == a.count - 1 else { return }
+            for i in stride(from: 0, to: koordinaten.count - 1, by: 2) {
+                brett.setze(koordinaten[i], koordinaten[i + 1], f)
+            }
+        case "line":
+            guard let x1 = zahl(0), let y1 = zahl(1), let x2 = zahl(2), let y2 = zahl(3) else { return }
+            let f = farbeAn(4)
+            var (x, y) = (x1, y1)
+            let dx = abs(x2 - x1), dy = -abs(y2 - y1)
+            let sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1
+            var fehler = dx + dy
+            while true {
+                brett.setze(x, y, f)
+                if x == x2 && y == y2 { break }
+                let e2 = 2 * fehler
+                if e2 >= dy { fehler += dy; x += sx }
+                if e2 <= dx { fehler += dx; y += sy }
+            }
+        case "rect", "rectFill":
+            guard let x = zahl(0), let y = zahl(1), let w = zahl(2), let h = zahl(3), w > 0, h > 0 else { return }
+            let f = farbeAn(4)
+            for j in y..<(y + h) {
+                for i in x..<(x + w) where name == "rectFill" || i == x || i == x + w - 1 || j == y || j == y + h - 1 {
+                    brett.setze(i, j, f)
+                }
+            }
+        case "bitmap":
+            guard a.count == 5, let x = zahl(0), let y = zahl(1), let w = zahl(2), let h = zahl(3),
+                  w > 0, h > 0 else { return }
+            var farben: [Int?] = []
+            switch a[4] {
+            case .text(let roh):
+                guard let daten = Data(base64Encoded: roh) else { return }
+                let bytes = [UInt8](daten)
+                for i in 0..<(bytes.count / 3) {
+                    farben.append(Int(bytes[3 * i]) << 16 | Int(bytes[3 * i + 1]) << 8 | Int(bytes[3 * i + 2]))
+                }
+            case .liste(let l):
+                farben = l.map(farbwert)
+            default:
+                return
+            }
+            for i in 0..<min(farben.count, w * h) {
+                guard let f = farben[i] else { continue }
+                brett.setze(x + i % w, y + i / w, f)
+            }
+        default:
+            return
         }
     }
 

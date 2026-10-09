@@ -1,0 +1,42 @@
+import XCTest
+@testable import TC002Core
+
+/// Das Zerlegen roher Bytes zu einer Anfrage — die einzige Stelle im
+/// `Uhrenserver`, die etwas rechnet und nicht bloß Netz ist.
+final class UhrenserverZerlegenTests: XCTestCase {
+    private func bytes(_ text: String) -> Data { Data(text.utf8) }
+
+    func testEineVollstaendigeAnfrageWirdZerlegt() throws {
+        let roh = bytes("PUT /api/v1/apps/pushed/meldung1 HTTP/1.1\r\n"
+                        + "Host: 127.0.0.1:8752\r\nContent-Length: 16\r\n\r\n"
+                        + #"{"text":"hallo"}"#)
+        let a = try XCTUnwrap(Uhrenserver.zerlegen(roh))
+        XCTAssertEqual(a.methode, "PUT")
+        XCTAssertEqual(a.pfad, "/api/v1/apps/pushed/meldung1")
+        XCTAssertEqual(String(decoding: a.koerper, as: UTF8.self), #"{"text":"hallo"}"#)
+    }
+
+    /// Unvollständig heißt weiterlesen, nicht raten: Ein Rumpf kommt in
+    /// mehreren Paketen; wer beim ersten antwortet, verwirft den Rest.
+    func testEinHalberRumpfIstNochKeineAnfrage() {
+        let ohneRumpf = bytes("PUT /api/v1/apps/pushed/a HTTP/1.1\r\nContent-Length: 20\r\n\r\n{\"te")
+        XCTAssertNil(Uhrenserver.zerlegen(ohneRumpf))
+        let ohneKopfende = bytes("GET /api/v1/device HTTP/1.1\r\nHost: x\r\n")
+        XCTAssertNil(Uhrenserver.zerlegen(ohneKopfende))
+    }
+
+    /// Die Abfrage kommt dekodiert an.
+    func testEineKodierteAbfrageWirdDekodiert() throws {
+        let roh = bytes("POST /x?name=mein%20Platz HTTP/1.1\r\nContent-Length: 0\r\n\r\n")
+        let a = try XCTUnwrap(Uhrenserver.zerlegen(roh))
+        XCTAssertEqual(a.abfrage["name"], "mein Platz")
+    }
+
+    /// Ohne Rumpf und ohne `Content-Length` — so kommt jedes `GET`.
+    func testEinGetOhneRumpf() throws {
+        let a = try XCTUnwrap(Uhrenserver.zerlegen(bytes("GET /api/v1/device HTTP/1.1\r\nHost: x\r\n\r\n")))
+        XCTAssertEqual(a.methode, "GET")
+        XCTAssertEqual(a.pfad, "/api/v1/device")
+        XCTAssertTrue(a.koerper.isEmpty)
+    }
+}

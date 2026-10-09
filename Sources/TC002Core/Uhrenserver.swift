@@ -2,11 +2,11 @@ import Foundation
 import Network
 
 /// Das Beiwerk zur virtuellen Uhr: ein winziger HTTP-Dienst, der auf einem
-/// Port des eigenen Rechners zuhört und jede Anfrage an `Virtuelleuhr`
+/// Port des eigenen Rechners zuhört und jede Anfrage an `VirtuelleNGUhr`
 /// weiterreicht.
 ///
 /// Hier steht nur Netz und Bytes. Was eine Uhr auf welche Anfrage antwortet,
-/// steht in `Virtuelleuhr` — und ist dort ohne Steckdose geprüft.
+/// steht in `VirtuelleNGUhr` — und ist dort ohne Steckdose geprüft.
 ///
 /// HTTP/1.1, eine Anfrage je Verbindung. Nach der Antwort wird geschlossen
 /// (`Connection: close`). Das ist die einfachste Form, die `URLSession`
@@ -22,29 +22,18 @@ public final class Uhrenserver: @unchecked Sendable {
     private let schlange = DispatchQueue(label: "cloud.eriks.mqtt-tc002.virtuelle-uhr")
     private var lauscher: NWListener?
     private let sperre = NSLock()
-    private var _zustand: Uhrzustand
-    private var _ngZustand: NGUhrzustand?
+    private var _zustand: NGUhrzustand
 
     /// Wird nach jeder Anfrage aufgerufen, die etwas verändert hat — auf dem
     /// Hauptthread, damit die Anzeige sich daran hängen kann.
-    public var beiAenderung: ((Uhrzustand) -> Void)?
+    public var beiAenderung: ((NGUhrzustand) -> Void)?
 
-    /// Mit `ngZustand` antwortet der Dienst als AWTRIX NG (`VirtuelleNGUhr`),
-    /// sonst als Werksfirmware (`Virtuelleuhr`).
-    public init(port: UInt16 = Uhrenserver.vorgabePort, zustand: Uhrzustand = Uhrzustand(),
-                ngZustand: NGUhrzustand? = nil) {
+    public init(port: UInt16 = Uhrenserver.vorgabePort, zustand: NGUhrzustand = NGUhrzustand()) {
         self.port = NWEndpoint.Port(rawValue: port) ?? 8752
         self._zustand = zustand
-        self._ngZustand = ngZustand
     }
 
-    /// `nil`, solange der Dienst die Werksfirmware gibt.
-    public var ngZustand: NGUhrzustand? {
-        sperre.lock(); defer { sperre.unlock() }
-        return _ngZustand
-    }
-
-    public var zustand: Uhrzustand {
+    public var zustand: NGUhrzustand {
         sperre.lock(); defer { sperre.unlock() }
         return _zustand
     }
@@ -109,17 +98,11 @@ public final class Uhrenserver: @unchecked Sendable {
 
     private func antworten(_ verbindung: NWConnection, auf anfrage: Virtuelleuhr.Anfrage) {
         sperre.lock()
-        let antwort: Virtuelleuhr.Antwort
-        if _ngZustand != nil {
-            antwort = VirtuelleNGUhr.beantworten(anfrage, &_ngZustand!)
-        } else {
-            antwort = Virtuelleuhr.beantworten(anfrage, &_zustand)
-        }
+        let antwort = VirtuelleNGUhr.beantworten(anfrage, &_zustand)
         let neuerZustand = _zustand
-        let ngAktiv = _ngZustand != nil
         sperre.unlock()
 
-        if let beiAenderung, !ngAktiv {
+        if let beiAenderung {
             DispatchQueue.main.async { beiAenderung(neuerZustand) }
         }
 

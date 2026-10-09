@@ -21,7 +21,7 @@ public final class Virtuelleuhrbetrieb {
     private static let schluessel = "virtuelleuhr.an"
 
     public private(set) var laeuft = false
-    public private(set) var zustand = Uhrzustand()
+    public private(set) var zustand = NGUhrzustand()
     /// Warum sie nicht läuft — etwa, weil der Port belegt ist.
     public private(set) var fehler: String?
 
@@ -64,12 +64,6 @@ public final class Virtuelleuhrbetrieb {
         UserDefaults.standard.set(false, forKey: Self.schluessel)
     }
 
-    /// Was die Uhr gerade zeigt, als Pixelfeld — `nil`, wenn dort nichts liegt
-    /// oder die Nutzlast sich nicht zerlegen lässt (ein Lauf-GIF etwa). Der
-    /// Rückweg ist derselbe, den die App beim Mitlesen über MQTT geht.
-    public func bild(von name: String?) -> Pixelfeld? {
-        guard let name, let daten = zustand.anzeigen[name],
-              let punkte = Anzeigen.pixelAusCustomNutzlast(daten) else { return nil }
-        return Pixelfeld(punkte: punkte)
-    }
+    /// Was die Uhr gerade zeigt: gepackte RGB-Werte, `VirtuelleNGUhr.breite × hoehe`.
+    public var bildschirm: [Int] { VirtuelleNGUhr.bildschirm(zustand) }
 }
