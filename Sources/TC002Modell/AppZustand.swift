@@ -992,6 +992,9 @@ public final class AppZustand {
     /// damit eine gelungene Sendung nachstellen, ohne dass ein Geraet im
     /// Netz haengt (das waere hier ohnehin verboten, siehe CLAUDE.md).
     @ObservationIgnored public var netzsitzung: URLSession = .shared
+    /// Die Naht fuers Senden ueber MQTT — der Test schiebt einen Doppelgaenger
+    /// unter und braucht keinen Broker.
+    @ObservationIgnored var mqttSender: NachrichtSendend = MQTTSender()
 
     public func anzeigen(fuer uhr: Uhr) -> Anzeigen? {
         // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
@@ -999,7 +1002,7 @@ public final class AppZustand {
         // gleichzeitige Sendungen an mehrere Uhren gegenseitig hinaus.
         let kennung = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
         return Anzeigen.fuer(uhr, brokerzugang: zugang?.mit(clientID: kennung),
-                             sitzung: netzsitzung)
+                             sitzung: netzsitzung, sender: mqttSender)
     }
 
     /// Liefert `anzeigen(fuer:)` nichts, fehlt eines von dreien: das Präfix —
@@ -1035,7 +1038,7 @@ public final class AppZustand {
     /// einer einzelnen anzulasten („Küche: Der Broker hat nicht geantwortet.")
     /// schickt den Leser ans falsche Ende und steht bei fünf Zieluhren auch noch
     /// fünfmal da.
-    private enum Sendefehler {
+    private enum Sendefehler: Sendable {
         case broker(String)
         case uhr(String)
 
@@ -1048,9 +1051,16 @@ public final class AppZustand {
         }
     }
 
-    private enum Sendeausgang {
-        case erfolg(Uhr)
+    private enum Sendeausgang<Ergebnis: Sendable>: Sendable {
+        case erfolg(Uhr, Ergebnis)
         case gescheitert(Sendefehler)
+    }
+
+    /// Was eine Uhr bekommen hat: der fuer sie gebaute Rahmen und der Weg, auf
+    /// dem er hinausging. Nur ueber MQTT antwortet die Uhr auf `/result`.
+    private struct Zugestellt: Sendable {
+        let frame: Frame
+        let weg: Zustellweg
     }
 
     /// Ein Brokerfehler in Worten, die zur Abhilfe führen: welcher Broker, was zu
@@ -1121,8 +1131,10 @@ public final class AppZustand {
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
     @discardableResult
-    private func anZiele(_ tat: @escaping @Sendable (Anzeigen) throws -> Void,
-                         was: String = "", erledigt: (Uhr) -> Void) async -> Int {
+    private func anZiele<Ergebnis: Sendable>(
+        _ tat: @escaping @Sendable (Anzeigen, Uhr) throws -> Ergebnis,
+        was: String = "", erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
+        let abweisungenVorher = abweisungsZaehler
         let ziele = ziele()
         // Wer uebersprungen wird, steht im Protokoll: `ziele()` filtert
         // still heraus, was nicht beschickbar ist — einer MQTT-Uhr fehlt dann
@@ -1141,7 +1153,7 @@ public final class AppZustand {
             return 0
         }
         var fehlschlaege: [Sendefehler] = []
-        await withTaskGroup(of: Sendeausgang?.self) { gruppe in
+        await withTaskGroup(of: Sendeausgang<Ergebnis>?.self) { gruppe in
             for uhr in ziele {
                 gruppe.addTask { [weak self] in
                     guard let selbst = self else { return nil }
@@ -1149,8 +1161,7 @@ public final class AppZustand {
                         return await .gescheitert(selbst.zugangsfehler(uhr))
                     }
                     do {
-                        try tat(anzeigen)
-                        return .erfolg(uhr)
+                        return .erfolg(uhr, try tat(anzeigen, uhr))
                     } catch {
                         return await .gescheitert(selbst.einordnen(error, uhr: uhr))
                     }
@@ -1160,7 +1171,7 @@ public final class AppZustand {
             // Buchführung gehört deshalb hierher, nicht in den Zweig.
             for await ausgang in gruppe {
                 switch ausgang {
-                case .erfolg(let uhr): erledigt(uhr)
+                case .erfolg(let uhr, let ergebnis): erledigt(uhr, ergebnis)
                 case .gescheitert(let f):
                     fehlschlaege.append(f)
                     // Fehlschlaege gehoeren ins Protokoll, nicht nur in die
@@ -1172,7 +1183,13 @@ public final class AppZustand {
                 }
             }
         }
-        fehler = zusammengefasst(fehlschlaege)
+        // Abweisungen, die waehrend des Sendens auf `/result` eintrafen, bleiben
+        // stehen: Die Gruppe wartet auf die langsamste Uhr (bis acht Sekunden),
+        // eine schnelle antwortet in der Zeit laengst, und ein
+        // blosses Zuweisen wuerde ihre Meldung wegwischen.
+        let abweisungen = Array(abweisungstexte.suffix(max(0, abweisungsZaehler - abweisungenVorher)))
+        let zeilen = ([zusammengefasst(fehlschlaege)].compactMap { $0 }) + abweisungen
+        fehler = zeilen.isEmpty ? nil : zeilen.joined(separator: "\n")
         // Wie viele es haetten nehmen sollen — `Sendebilanz` braucht die Zahl,
         // um „teilweise" von „ganz" zu unterscheiden.
         return ziele.count
@@ -1215,19 +1232,29 @@ public final class AppZustand {
     /// bekannt, die App hat sie selbst gerade verschickt. Ohne sie zeigte der
     /// Block nach einer Bildsendung „unbekannt", obwohl niemand besser wusste,
     /// was dort liegt.
+    ///
+    /// `bau` baut den Rahmen je Uhr aus deren Anzeigemass: Eine Gruppe aus
+    /// 52 × 16 und 32 × 8 bekommt zwei gerasterte Bilder und nicht eines, das
+    /// auf der einen falsch sitzt.
     @discardableResult
-    public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
+    public func senden(rahmenFuer bau: @escaping @Sendable (Anzeigemass) throws -> Frame,
+                       als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: String? = nil, slotIconKante: Int = 8,
                        slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
+        let abweisungenVorher = abweisungsZaehler
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
         // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
         // Der Verlauf erzaehlt, was man geschickt hat, und das war eine
         // Meldung, auch wenn sie an drei Uhren ging.
         var erreicht: [String] = []
-        let ziele = await anZiele({ try $0.zeigen(frame, auf: name) },
-                      was: lokf("Sendung „%@“", name)) { uhr in
+        let ziele = await anZiele({ anzeigen, uhr in
+            let frame = try bau(Anzeigemass.fuer(uhr))
+            return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name))
+        }, was: lokf("Sendung „%@“", name)) { uhr, zugestellt in
+            let frame = zugestellt.frame
             erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
+            if zugestellt.weg == .mqtt { antwortErwarten(name, uhr: uhr) }
             // Mehr als der Platzname: Was hinausging, haengt an drei Fragen —
             // auf welchem Weg, wie gross, und mit welchem Text. Ein „als
             // Text", das die Uhr abschneidet, saehe im Protokoll sonst aus
@@ -1239,6 +1266,9 @@ public final class AppZustand {
             // Was wir selbst geschickt haben, wissen wir — auch ohne Regler.
             // Beim Mitlesen kommt es als GIF zurueck und liesse sich nicht
             // mehr zerlegen; ohne diese Zeile stuende dort „unbekannt".
+            // Nur, wenn das Bild zur Anzeige dieser Uhr gehoert.
+            let mass = Anzeigemass.fuer(uhr)
+            let slotPixel = slotPixel.flatMap { $0.count == mass.breite * mass.hoehe ? $0 : nil }
             if let slotPixel {
                 slotInhalt[uhr.id, default: [:]][slotPlatz] = Slotbild(pixel: slotPixel)
             }
@@ -1272,13 +1302,25 @@ public final class AppZustand {
         // antwortet nicht" ist eine Tatsache ueber das Geraet.
         // Der Satz steht stattdessen neben dem Sendezeichen, das dabei gelb
         // wird statt gruen.
-        if !erreicht.isEmpty, let offen = fehler {
+        if !erreicht.isEmpty, abweisungsZaehler == abweisungenVorher, let offen = fehler {
             teilfehler = offen
             fehler = nil
         } else {
             teilfehler = nil
         }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Dasselbe mit einem fertigen Rahmen — Editor und Bildersammlung: ein Bild in
+    /// einem Mass, das fuer eine Uhr anderer Groesse nicht gilt und dort
+    /// abgewiesen wird (`NGFehler.massPasstNicht`).
+    @discardableResult
+    public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
+                       slotIcon: String? = nil, slotIconKante: Int = 8,
+                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
+        await senden(rahmenFuer: { _ in frame }, als: name, slotOptionen: slotOptionen,
+                     slotIcon: slotIcon, slotIconKante: slotIconKante,
+                     slotPlatz: slotPlatz, slotPixel: slotPixel)
     }
 
     /// Traegt eine gelungene Sendung in den Verlauf ein.
@@ -1343,7 +1385,7 @@ public final class AppZustand {
     /// Entfernt eine Anzeige von allen gewählten Uhren. Eine leere Nutzlast auf
     /// dem Thema löscht sie — genau null Bytes, nicht "" und nicht {} (§3.2).
     public func loeschen(_ name: String, gedaechtnis: Slotgedaechtnis = .gemeinsam) async {
-        await anZiele({ try $0.loeschen(name) }) { uhr in
+        await anZiele({ anzeigen, _ in try anzeigen.loeschen(name) }) { uhr, _ in
             anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
             log(lokf("auf %@ gelöscht: %@", uhr.name, name))
         }
@@ -1361,6 +1403,59 @@ public final class AppZustand {
             return [aktiveUhr].compactMap { $0 }.filter(\.beschickbar)
         }
         return uhren.filter { zielIDs.contains($0.id) && $0.beschickbar }
+    }
+
+    // MARK: - Antworten auf /result
+
+    /// Wie lange die Uhr Zeit hat, auf eine MQTT-Sendung zu antworten
+    /// (`<Thema>/result`, §3.4). Sie antwortet innerhalb von Millisekunden; die
+    /// Frist deckt ein langsames Netz ab. Nur fuer Tests einstellbar.
+    @ObservationIgnored var ergebnisFrist: Duration = .seconds(5)
+    /// Zaehlt die Abweisungen und haelt ihre Texte (hoechstens 20), damit
+    /// `anZiele` sie nicht mit dem Ergebnis des Sendens ueberschreibt.
+    @ObservationIgnored private var abweisungsZaehler = 0
+    @ObservationIgnored private var abweisungstexte: [String] = []
+    /// Je Uhr und Anzeige eine Frist, die auf die Antwort wartet.
+    @ObservationIgnored private var ausstehendeAntworten: [String: Task<Void, Never>] = [:]
+
+    private func antwortSchluessel(_ name: String, _ id: UUID) -> String { "\(id.uuidString)|\(name)" }
+
+    /// Nach einer Sendung ueber MQTT: Der Broker hat sie genommen, ob die Uhr
+    /// sie nimmt, sagt erst `<Thema>/result`. Bleibt die Antwort aus, hat das
+    /// Thema keine Route getroffen (§3.3) — eine Warnung neben dem Sendezeichen,
+    /// kein Fehler: Es kann auch am Mitlesen liegen.
+    ///
+    /// Nur, solange das Mitlesen steht; ohne es wuerde das Ausbleiben
+    /// nichts beweisen.
+    private func antwortErwarten(_ name: String, uhr: Uhr) {
+        guard horchtGerade[uhr.id] == true else { return }
+        let schluessel = antwortSchluessel(name, uhr.id)
+        ausstehendeAntworten[schluessel]?.cancel()
+        let frist = ergebnisFrist
+        ausstehendeAntworten[schluessel] = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: frist)
+            guard !Task.isCancelled, let self else { return }
+            self.ausstehendeAntworten[schluessel] = nil
+            let meldung = lokf("%@ hat „%@“ nicht beantwortet — Thema und Präfix prüfen.", uhr.name, name)
+            self.log(meldung)
+            if self.teilfehler?.contains(meldung) != true {
+                self.teilfehler = [self.teilfehler, meldung].compactMap { $0 }.joined(separator: "\n")
+            }
+        }
+    }
+
+    /// Reisst das Mitlesen ab, beweist eine ausbleibende Antwort nichts mehr.
+    private func antwortenVerwerfen(fuer id: UUID) {
+        for (schluessel, aufgabe) in ausstehendeAntworten where schluessel.hasPrefix(id.uuidString) {
+            aufgabe.cancel()
+            ausstehendeAntworten[schluessel] = nil
+        }
+    }
+
+    private func abweisungMerken(_ meldung: String) {
+        abweisungsZaehler += 1
+        abweisungstexte.append(meldung)
+        if abweisungstexte.count > 20 { abweisungstexte.removeFirst() }
     }
 
     // MARK: - Zuhören
@@ -1383,7 +1478,7 @@ public final class AppZustand {
         uhr.wirksameBetriebsart == .mqtt && !uhr.praefix.isEmpty
     }
     private var horcher: [UUID: Horcher] = [:]
-    private var horchtGerade: [UUID: Bool] = [:]
+    var horchtGerade: [UUID: Bool] = [:]
     private var horchenErlaubt = false
 
     /// Alles, dessen Änderung ein bestehendes Abonnement ungültig macht.
@@ -1429,6 +1524,7 @@ public final class AppZustand {
         horcher.abonnent.beenden()
         self.horcher[id] = nil
         horchtGerade[id] = nil
+        antwortenVerwerfen(fuer: id)
         gemeldeteAnzeigen[id] = nil
         geraetOnline[id] = nil
         slotInhalt[id] = nil
@@ -1548,6 +1644,10 @@ public final class AppZustand {
 
         if rest.hasSuffix("/result") {
             let name = String(rest.dropLast("/result".count))
+            // Eine Antwort ist da, gleich welche.
+            let schluessel = antwortSchluessel(name, id)
+            ausstehendeAntworten[schluessel]?.cancel()
+            ausstehendeAntworten[schluessel] = nil
             switch NGNutzlast.ergebnis(nutzlast) {
             case .gelungen, .unlesbar: return
             case .abgewiesen(let grund):
@@ -1556,6 +1656,7 @@ public final class AppZustand {
                 // auftaucht — auf der MQTT-Ebene war alles in Ordnung.
                 let meldung = lokf("%@ hat „%@“ abgewiesen: %@", uhr.name, name, grund)
                 fehler = meldung
+                abweisungMerken(meldung)
                 log(meldung)
             }
             return
@@ -1582,9 +1683,10 @@ public final class AppZustand {
     /// Nur ins Protokoll, nicht in `fehler`: ein Abriss im Hintergrund darf nicht
     /// mitten in der Arbeit ein Hinweisfenster aufziehen. Und nur bei Änderung —
     /// der Abonnent versucht es von selbst immer wieder.
-    private func horchzustand(_ steht: Bool, _ grund: String?, fuer id: UUID) {
+    func horchzustand(_ steht: Bool, _ grund: String?, fuer id: UUID) {
         guard let uhr = uhren.first(where: { $0.id == id }), horchtGerade[id] != steht else { return }
         horchtGerade[id] = steht
+        if !steht { antwortenVerwerfen(fuer: id) }
         if steht {
             log(lokf("hört bei %@ mit", uhr.name))
         } else {

@@ -635,7 +635,6 @@
 "Den Abstand zwischen den Zeichen bestimmt auf der AWTRIX ihre eigene Schrift." = "On the AWTRIX, the spacing between characters is set by its own font.";
 /* NGNutzlast.swift */
 "Ein Icon schickt die App an die AWTRIX NG nur als GIF, dieses ist %@. Ein anderes wählen oder es ohne Icon schicken." = "The app sends an icon to the AWTRIX NG only as a GIF, this one is %@. Choose another or send without an icon.";
-"%@ (%@)" = "%@ (%@)";
 /* AppZustand.swift — AWTRIX NG */
 "%@ hat „%@“ abgewiesen: %@" = "%@ rejected “%@”: %@";
 /* HilfeInhalt.swift — Geraeteart */
@@ -970,3 +969,13 @@
 "Es gibt nichts zu senden." = "There is nothing to send.";
 "Pixelbild" = "Pixel image";
 "Diese Laufschrift ist zu lang: Ihr Bild wäre %d KB groß, die Uhr nimmt höchstens 56 KB. Den Text kürzen." = "This scrolling text is too long: its image would be %d KB, the clock takes at most 56 KB. Shorten the text.";
+"Dieses Bild ist %d × %d Punkte groß, die Anzeige dieser Uhr hat %d × %d. Es wurde nicht gesendet; ein Bild in der Größe der Anzeige wählen." = "This image is %d × %d dots, the display of this clock has %d × %d. It was not sent; choose an image the size of the display.";
+"%@, Feld „%@“" = "%@, field \"%@\"";
+"Kein gültiges JSON" = "Not valid JSON";
+"Ungültiger Wert" = "Invalid value";
+"Nicht gefunden" = "Not found";
+"Speicher der Uhr voll" = "Clock storage full";
+"Nicht verfügbar" = "Not available";
+"Fehler in der Uhr" = "Error in the clock";
+"Ungültiger Name" = "Invalid name";
+"%@ hat „%@“ nicht beantwortet — Thema und Präfix prüfen." = "%@ did not answer for \"%@\" — check topic and prefix.";

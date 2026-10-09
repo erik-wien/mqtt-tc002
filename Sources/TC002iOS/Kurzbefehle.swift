@@ -158,7 +158,6 @@ struct MeldungSendenIntent: AppIntent {
 
         let slotPlatz = platz ?? 1
         let name = Meldungsplatz.name(fuer: slotPlatz)
-        let rahmen = try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung)
         // Momentaufnahme fuer das Slotgedaechtnis (siehe unten): `optionen`
         // ist ab hier nicht mehr veraendert.
         let slotOptionen = optionen
@@ -177,7 +176,10 @@ struct MeldungSendenIntent: AppIntent {
                 // Betriebsart, die fuer diese Uhr eingestellt ist.
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
                     clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
-                try anzeigen.zeigen(rahmen, auf: name)
+                // Je Uhr in deren Anzeigemass gerastert.
+                try anzeigen.zeigen(try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung,
+                                                           mass: Anzeigemass.fuer(ziel)),
+                                    auf: name)
                 erledigt.append(ziel.name)
                 // Erfolgreich gesendet: das Gedaechtnis merkt sich die Regler
                 // fuer diesen Platz auf dieser Uhr. Schlaegt das Schreiben

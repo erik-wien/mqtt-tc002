@@ -927,23 +927,22 @@ struct SendeniOS: View {
     private func senden() async {
         laeuft = true
         defer { laeuft = false }
-        do {
-            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung, mass: mass)
-            // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
-            // am Mac (SendenView.senden()).
-            let slotOptionen = optionen
-            let angekommen = await zustand.senden(rahmen, als: Meldungsplatz.name(fuer: platz),
-                                                  slotOptionen: slotOptionen,
-                                                  slotIcon: gewaehltesIcon?.nummer,
-                                                  slotIconKante: gewaehltesIcon?.kante ?? 8,
-                                                  slotPlatz: platz)
-            if !angekommen.nichts {
-                ausgang = angekommen.ganz ? .ganz : .teilweise
-                try? await Task.sleep(for: .seconds(1))
-                ausgang = .offen
-            }
-        } catch {
-            zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
+        // am Mac (SendenView.senden()). Gerastert wird je Uhr in deren Mass.
+        let slotOptionen = optionen
+        let icon = gewaehltesIcon
+        let sammlung = sammlung
+        let angekommen = await zustand.senden(
+            rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+            als: Meldungsplatz.name(fuer: platz),
+            slotOptionen: slotOptionen,
+            slotIcon: gewaehltesIcon?.nummer,
+            slotIconKante: gewaehltesIcon?.kante ?? 8,
+            slotPlatz: platz)
+        if !angekommen.nichts {
+            ausgang = angekommen.ganz ? .ganz : .teilweise
+            try? await Task.sleep(for: .seconds(1))
+            ausgang = .offen
         }
     }
 }

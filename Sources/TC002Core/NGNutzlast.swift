@@ -20,6 +20,11 @@ public enum NGFehler: Error, LocalizedError {
     case laufschriftZuLang(bytes: Int)
     /// Ein Rahmen ohne Text und ohne Pixel.
     case leer
+    /// Ein fertiges Bild, dessen Mass nicht das der Anzeige dieser Uhr ist. Ein
+    /// GIF in anderer Groesse landet nicht pixelgenau (auf der TC002 kleiner als
+    /// 26 x 8 vergroessert, sonst mittig oder abgeschnitten); gesendet wird es
+    /// darum nicht.
+    case massPasstNicht(bildBreite: Int, bildHoehe: Int, anzeigeBreite: Int, anzeigeHoehe: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -33,6 +38,8 @@ public enum NGFehler: Error, LocalizedError {
             return lokf("Diese Laufschrift ist zu lang: Ihr Bild wäre %d KB groß, die Uhr nimmt höchstens 56 KB. Den Text kürzen.", (bytes + 1023) / 1024)
         case .leer:
             return lok("Es gibt nichts zu senden.")
+        case .massPasstNicht(let bb, let bh, let ab, let ah):
+            return lokf("Dieses Bild ist %d × %d Punkte groß, die Anzeige dieser Uhr hat %d × %d. Es wurde nicht gesendet; ein Bild in der Größe der Anzeige wählen.", bb, bh, ab, ah)
         }
     }
 }
@@ -197,10 +204,27 @@ public enum NGNutzlast {
               let ok = woerterbuch["ok"] as? Bool else { return .unlesbar }
         guard !ok else { return .gelungen }
         let fehler = woerterbuch["error"] as? [String: Any]
-        let code = fehler?["code"] as? String ?? lok("ohne Begründung")
+        guard let code = fehler?["code"] as? String else { return .abgewiesen(lok("ohne Begründung")) }
+        // Der Code bleibt stehen (er ist es, nach dem man sucht); davor in Worten,
+        // was er heisst.
+        let genannt = codeText(code).map { lokf("%@: %@", $0, code) } ?? code
         if let feld = fehler?["field"] as? String, !feld.isEmpty {
-            return .abgewiesen(lokf("%@ (%@)", code, feld))
+            return .abgewiesen(lokf("%@, Feld „%@“", genannt, feld))
         }
-        return .abgewiesen(code)
+        return .abgewiesen(genannt)
+    }
+
+    /// Die Fehlercodes, die NG ueber MQTT meldet (§3.4).
+    private static func codeText(_ code: String) -> String? {
+        switch code {
+        case "invalidJson": return lok("Kein gültiges JSON")
+        case "validationFailed": return lok("Ungültiger Wert")
+        case "notFound": return lok("Nicht gefunden")
+        case "insufficientStorage": return lok("Speicher der Uhr voll")
+        case "unavailable": return lok("Nicht verfügbar")
+        case "internalError": return lok("Fehler in der Uhr")
+        case "invalidName": return lok("Ungültiger Name")
+        default: return nil
+        }
     }
 }

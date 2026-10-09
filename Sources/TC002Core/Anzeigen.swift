@@ -20,11 +20,15 @@ public struct Anzeigen {
         case http(Geraet)
     }
     private let kanal: Kanal
+    /// Das Anzeigemass der Ziel-Uhr, falls bekannt: Ein fertiges Bild in anderer
+    /// Groesse wird vor dem Senden abgewiesen (`NGFehler.massPasstNicht`).
+    private let anzeigemass: Anzeigemass?
 
     /// `ausweich`: dieselbe Uhr ueber HTTP, fuer die eine Anzeige, die nicht in
     /// eine MQTT-Nachricht passt (`Pixelweg.zustellweg`).
     public init(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String,
-                ausweich: Geraet? = nil) {
+                ausweich: Geraet? = nil, anzeigemass: Anzeigemass? = nil) {
+        self.anzeigemass = anzeigemass
         var normalisiert = praefix
         while normalisiert.hasSuffix("/") {
             normalisiert.removeLast()
@@ -33,7 +37,8 @@ public struct Anzeigen {
     }
 
     /// Der HTTP-Kanal. Kein Praefix, kein Broker — nur die Adresse der Uhr.
-    public init(geraet: Geraet) {
+    public init(geraet: Geraet, anzeigemass: Anzeigemass? = nil) {
+        self.anzeigemass = anzeigemass
         kanal = .http(geraet)
     }
 
@@ -55,7 +60,13 @@ public struct Anzeigen {
     /// Schickt die Anzeige. Passt sie ueber MQTT samt Thema nicht in 8192 Byte,
     /// geht sie ueber HTTP an dieselbe Uhr: NG verwirft Groesseres ohne
     /// Antwort, und eine stumm verlorene Sendung waere das Schlimmste.
-    public func zeigen(_ frame: Frame, auf name: String) throws {
+    @discardableResult
+    public func zeigen(_ frame: Frame, auf name: String) throws -> Zustellweg {
+        if let mass = anzeigemass, let pixel = frame.pixel,
+           pixel.breite != mass.breite || pixel.hoehe != mass.hoehe {
+            throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
+                                          anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
+        }
         let json = try Self.nutzlast(frame)
         let daten = Data(json.utf8)
         switch kanal {
@@ -70,9 +81,11 @@ public struct Anzeigen {
                 guard let ausweich else { throw NGFehler.keineAdresseFuerGrosse(bytes: daten.count) }
                 try ausweich.anzeigeSetzen(json, name: name)
             }
+            return weg
         case .http(let geraet):
             _ = try Pixelweg.zustellweg(nutzlastBytes: daten.count, themaBytes: 0, betriebsart: .http)
             try geraet.anzeigeSetzen(json, name: name)
+            return .http
         }
     }
 
@@ -127,18 +140,20 @@ public struct Anzeigen {
     /// Werkzeug oder einem Kurzbefehl nach einem Brokerkennwort, das sie
     /// nirgends benutzt — bei einer Automation ohne jemanden davor.
     public static func fuer(_ uhr: Uhr, brokerzugang: @autoclosure () -> MQTTZugang?,
-                            sitzung: URLSession = .shared) -> Anzeigen? {
+                            sitzung: URLSession = .shared,
+                            sender: NachrichtSendend = MQTTSender()) -> Anzeigen? {
         switch uhr.wirksameBetriebsart {
         case .http:
             guard !uhr.host.isEmpty else { return nil }
-            return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung))
+            return Anzeigen(geraet: Geraet(host: uhr.host, sitzung: sitzung),
+                            anzeigemass: Anzeigemass.fuer(uhr))
         case .mqtt:
             guard !uhr.praefix.isEmpty, let zugang = brokerzugang() else { return nil }
             // Mit Adresse ueber HTTP erreichbar, falls eine Anzeige fuer MQTT zu
             // gross ist; ohne bleibt es bei der Meldung vor dem Senden.
             let ausweich = uhr.host.isEmpty ? nil : Geraet(host: uhr.host, sitzung: sitzung)
-            return Anzeigen(sender: MQTTSender(), zugang: zugang, praefix: uhr.praefix,
-                            ausweich: ausweich)
+            return Anzeigen(sender: sender, zugang: zugang, praefix: uhr.praefix,
+                            ausweich: ausweich, anzeigemass: Anzeigemass.fuer(uhr))
         }
     }
 }

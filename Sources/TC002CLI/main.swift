@@ -241,7 +241,11 @@ func lauf() throws {
             return
         }
         try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
-            try anzeigen.zeigen(rahmen, auf: optionen.anzeigename)
+            // Je Uhr in deren Anzeigemass gerastert; `rahmen` oben dient dem
+            // Trockenlauf und der Byte-Angabe.
+            try anzeigen.zeigen(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
+                                                       mass: Anzeigemass.fuer(uhr)),
+                                auf: optionen.anzeigename)
             // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
             // entspricht, gibt es einen Platz, den sich das Slotgedaechtnis
             // merken koennte — bei einem frei gewaehlten Namen (Vorgabe

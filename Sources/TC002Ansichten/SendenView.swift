@@ -251,7 +251,7 @@ public struct SendenView: View {
     /// Die Optionen, mit denen die Vorschau rastert — mit fester
     /// Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
     /// (`Meldungsoptionen.fuerVorschau`). Was gesendet wird, sind unverändert
-    /// `optionen`: `gebauterRahmen` fragt hier nicht.
+    /// `optionen`: `senden()` fragt hier nicht.
     private var vorschauOptionen: Meldungsoptionen { optionen.fuerVorschau }
 
     /// Die Vorschau einer bestimmten Uhr. Jede hat ihr eigenes Maß;
@@ -297,10 +297,6 @@ public struct SendenView: View {
     /// Wirkung: `Textraster.laufschriftEinzelbilder` schiebt ihn immer von
     /// ganz aussen durchs Fenster und fragt `horizontal` gar nicht erst ab.
     private var waagrechtWirktNicht: Bool { !passt }
-
-    private func gebauterRahmen() throws -> Frame {
-        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung, mass: mass)
-    }
 
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
     /// die einzige Stelle, an der „Großbuchstaben" wirkt. Das Eingabefeld
@@ -935,16 +931,6 @@ public struct SendenView: View {
 
     private func senden() {
         laeuft = true
-        let frame: Frame
-        do {
-            frame = try gebauterRahmen()
-        } catch {
-            // Ohne Meldung ginge die Anzeige bei unlesbarer Icondatei kommentarlos
-            // ohne das gewaehlte Icon hinaus.
-            zustand.fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-            laeuft = false
-            return
-        }
         let anzeigenName = Meldungsplatz.name(fuer: platz)
         // Momentaufnahme fuer das Slotgedaechtnis: `optionen` ist berechnet,
         // nicht gespeichert — der Task unten soll den Stand von jetzt sehen,
@@ -952,11 +938,18 @@ public struct SendenView: View {
         let slotOptionen = optionen
         let slotPlatz = platz
         let slotIcon = gewaehltesIcon?.nummer
+        let icon = gewaehltesIcon
+        let sammlung = sammlung
         Task {
-            let angekommen = await zustand.senden(frame, als: anzeigenName,
-                                                  slotOptionen: slotOptionen,
-                                                  slotIcon: slotIcon, slotIconKante: iconKante,
-                                                  slotPlatz: slotPlatz)
+            // Gerastert wird je Uhr in deren Mass (`senden(rahmenFuer:)`). Ein
+            // Fehler dabei, etwa eine unlesbare Icondatei, steht mit dem Namen der
+            // Uhr in der Fehlerleiste, statt das Icon kommentarlos wegzulassen.
+            let angekommen = await zustand.senden(
+                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+                als: anzeigenName,
+                slotOptionen: slotOptionen,
+                slotIcon: slotIcon, slotIconKante: iconKante,
+                slotPlatz: slotPlatz)
             laeuft = false
             guard !angekommen.nichts else { return }
             await ausgangZeigen(angekommen)

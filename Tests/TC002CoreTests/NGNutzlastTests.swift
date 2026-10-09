@@ -173,10 +173,10 @@ final class NGNutzlastTests: XCTestCase {
         XCTAssertEqual(NGNutzlast.ergebnis(Data(#"{"ok":true}"#.utf8)), .gelungen)
         XCTAssertEqual(
             NGNutzlast.ergebnis(Data(#"{"ok":false,"error":{"code":"validationFailed","message":"invalid value","field":"durationMs"}}"#.utf8)),
-            .abgewiesen("validationFailed (durationMs)"))
+            .abgewiesen("Ungültiger Wert: validationFailed, Feld „durationMs“"))
         XCTAssertEqual(
             NGNutzlast.ergebnis(Data(#"{"ok":false,"error":{"code":"notFound","message":"not found"}}"#.utf8)),
-            .abgewiesen("notFound"))
+            .abgewiesen("Nicht gefunden: notFound"))
     }
 
     /// Etwas ohne `ok` ist keine Antwort auf ein Kommando — und darf nicht als
