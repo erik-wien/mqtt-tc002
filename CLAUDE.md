@@ -2,8 +2,8 @@
 
 Arbeitsregeln für dieses Repo. Was die App tut, steht in `README.md`; wie man
 sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
-`docs/awtrix-ng-protokoll.md` (AWTRIX NG auf der Ulanzi TC002, 52×16 — die
-einzige unterstützte Firmware; die Werksfirmware fiel am 09.10.2026 weg); was
+`docs/awtrix-ng-protokoll.md` (AWTRIX NG auf der Ulanzi TC001, 32×8, und TC002,
+52×16 — die einzige unterstützte Firmware; die Werksfirmware fiel am 09.10.2026 weg); was
 uns an einer Firmware als Mangel aufgefallen
 ist und bei einem Update nachzuprüfen wäre, in
 `docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
@@ -151,19 +151,29 @@ ist und bei einem Update nachzuprüfen wäre, in
   Uhr still lahm (gemessen 09.10.2026). Eine Uhr ohne Präfix ist über MQTT
   nicht beschickbar; Einträge aus der Zeit vor dem Einrichtungsstand 2 holen
   es neu (`AppZustand.fehlendePraefixeHolen`).
-- **Bilder pixelgenau.** Bei `enlargeApps` (Vorgabe) zeichnet
-  NG Text, Icon und `draw` einer Anzeige auf 26×8, jedes Pixel 2×2; eine
-  `layout`-Region `[0,0,52,16]` mit `bitmap` (Base64-RGB888, rund 3,3 KB)
-  landet pixelgenau. Bewegtes geht als animiertes GIF im `icon` der Anzeige,
-  **ohne** `layout` (`Pixelweg`; Bildzeiten ganze Hundertstel, mindestens 20 ms;
-  ein Icon über 26×8 schaltet die Anzeige auf 52×16): Im Layout nimmt NG ein
-  Data-URL-Icon nur bis rund 8 KB Base64, als Anzeigen-Icon bis 58 761 Byte GIF
-  (gemessen 09.10.2026) — die App erlaubt höchstens 56 KiB und meldet darüber
-  vor dem Senden. `durationMs` ist bei Bewegtem mindestens ein Durchlauf.
-  Die globale Einstellung der Uhr fasst die App dafür nicht an. Passt eine
-  Nutzlast samt Thema nicht in 8192 Byte, verwirft NG sie über MQTT ohne
-  Antwort: Dann geht diese eine Anzeige über HTTP an dieselbe Uhr
-  (`Pixelweg.zustellweg`), und ohne Adresse meldet die App es vor dem Senden.
+- **Bilder pixelgenau: ein Weg für alle Uhren.** Alles Gerasterte geht als
+  GIF-Data-URL im `icon` der Anzeige, **in genau dem Anzeigemaß der Ziel-Uhr**
+  (`Uhr.anzeigemass`: 52×16 TC002, 32×8 TC001; `Pixelweg`), ein Standbild als GIF
+  mit einem Bild (Bildzeit 1 s), Bewegtes mit seinen Bildzeiten (ganze
+  Hundertstel, mindestens 20 ms). Gemessen 09.10.2026, NG 1.2.2: das GIF landet
+  auf beiden pixelgenau; `layout` gibt es auf dem ESP32 nicht (`422 unknown
+  field`), `draw`/`bitmap` direkt sind auf der TC002 2×2 vergrößert (26×8) — beide
+  Wege entfallen. Ein GIF ≤ 26×8 würde auf der TC002 vergrößert, darum nie
+  kleiner als die Anzeige. Grenzen: höchstens 56 KiB GIF (NG nimmt als
+  Anzeigen-Icon 58 761 Byte, weist 87 KB ab), `durationMs` bei Bewegtem
+  mindestens ein Durchlauf; „Grüß“ als Standbild: 197 Byte (52×16), 169 Byte
+  (32×8). Passt eine Nutzlast samt Thema nicht in 8192 Byte, verwirft NG sie
+  über MQTT ohne Antwort: Dann geht diese eine Anzeige über HTTP an dieselbe Uhr
+  (`Pixelweg.zustellweg`), ohne Adresse meldet die App es vor dem Senden.
+  Die globale Einstellung der Uhr fasst die App nicht an.
+- **Je Uhr ihr Maß.** Gerastert wird je Zieluhr (`AppZustand.senden(rahmenFuer:)`,
+  CLI, Kurzbefehl); ein fertiges Bild (Editor, Sammlung) in falschem Maß weist
+  `Anzeigen.zeigen` für diese Uhr ab (`NGFehler.massPasstNicht`).
+- **`<Thema>/result` ist die einzige Antwort einer MQTT-Sendung.** Die App liest
+  sie mit: `ok:false` wird zur Fehlermeldung (Code übersetzt, Feld), bleibt sie
+  nach `ergebnisFrist` (5 s) aus, steht eine Warnung neben dem Sendezeichen
+  (`teilfehler`). Abweisungen dürfen von `anZiele` nicht überschrieben werden —
+  es wartet auf die langsamste Uhr. Kurzbefehl und CLI lesen nicht mit.
 - Blockierende Netzaufrufe nie auf dem Hauptthread: `AppZustand` ist
   `@MainActor`-isoliert, die eigentlichen Aufrufe laufen in `Task.detached`.
 - Je Uhr eine eigene MQTT-Client-Kennung, sonst trennt der Broker die

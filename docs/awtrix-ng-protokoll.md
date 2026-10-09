@@ -2,8 +2,8 @@
 
 *[English version](en/awtrix-ng-protocol.md)*
 
-Was eine Ulanzi TC002 mit der Firmware **AWTRIX NG 1.2.2** kann und wie man sie
-anspricht — über MQTT und über HTTP. Diese Beschreibung ist von unserer App
+Was eine Ulanzi TC002 oder TC001 mit der Firmware **AWTRIX NG 1.2.2** kann und
+wie man sie anspricht — über MQTT und über HTTP. Diese Beschreibung ist von unserer App
 unabhängig: sie gilt genauso für `mosquitto_pub`, Node-RED, Home Assistant oder
 ein eigenes Skript.
 
@@ -16,10 +16,18 @@ Jede Angabe trägt ihre Herkunft:
 | ❓ | offen — steht in der Doku nicht, oder nicht gemessen |
 
 **Die Doku-Angaben beziehen sich auf den Stand des TC002-Zweigs vom
-09.10.2026 (Fassung 1.2.2)**, die Messungen auf ein Gerät mit **AWTRIX NG 1.2.2**
-(`boardType tc002`, `soc armv7l`), per HTTP-`GET` gelesen am 09.10.2026. Was
-hier 🔬 trägt, gilt zunächst für dieses eine Gerät und diesen einen Bau; was 📄
-trägt, für die Firmware im Allgemeinen. **MQTT ist an diesem Gerät noch nicht
+09.10.2026 (Fassung 1.2.2)**, die Messungen auf **zwei Geräte**, beide mit
+**AWTRIX NG 1.2.2**, per HTTP gemessen am 09.10.2026:
+
+| Gerät | Anzeige | Plattform |
+|---|---|---|
+| Ulanzi **TC002** | 52 × 16 | Linux (`boardType tc002`, `soc armv7l`) |
+| Ulanzi **TC001** | 32 × 8 | ESP32 |
+
+Was hier 🔬 trägt, gilt zunächst für das genannte Gerät und diesen einen Bau —
+steht keines dabei, ist es die TC002; was 📄 trägt, für die Firmware im
+Allgemeinen. Die Fähigkeiten der beiden unterscheiden sich (`layout`,
+`enlargeApps`; siehe §1.1, §5.3, §9). **MQTT ist an diesem Gerät noch nicht
 gemessen** — alles zu MQTT ist 📄. 🔬-Angaben „gemessen an 1.1.0/TC001“ stammen
 von einer früheren Firmware auf einem 32×8-Gerät und sind nicht neu bestätigt.
 
@@ -50,6 +58,10 @@ Icon größer als 26×8 ist.
 
 🔬 `enlargeApps` steht am gemessenen Gerät auf `true` (Einstellungen und
 `capabilities`).
+
+🔬 **TC001 (ESP32, 32 × 8), 09.10.2026:** Hier gibt es kein `enlargeApps`; `draw`
+und `bitmap` direkt in der Anzeige rechnen auf den vollen 32 × 8 Pixeln,
+pixelgenau.
 
 🔬 **Die Koordinaten von `draw` gelten bei vergrößerten Apps auf dem
 26×8-Raster** (gemessen am 09.10.2026 über `GET /api/v1/display/screen`, mit
@@ -687,6 +699,24 @@ das volle Raster (§1.1): Das GIF landet pixelgenau in 52×16 (eine 1-Pixel-Spal
 über alle 16 Zeilen und das Eckpixel (0,0) stimmen, keine Fremdfarben) und läuft
 animiert mit den Bildzeiten der Datei.
 
+🔬 **Pixelgenaue Bilder auf beiden Geräten (09.10.2026, NG 1.2.2, per HTTP):**
+Ein GIF als Data-URL im `icon` der Anzeige, **in voller Anzeigegröße**, landet
+pixelgenau (Eckpixel exakt) — auf der **TC001 in 32 × 8**, auf der **TC002 in
+52 × 16**, dort animiert, sobald es mehrere Bilder hat. Ein einbildriges GIF ist
+ein Standbild. Die anderen Wege taugen nicht für beide:
+
+| Weg | TC001 (ESP32, 32 × 8) | TC002 (52 × 16) |
+|---|---|---|
+| `layout` mit `draw`/`bitmap` | `422 validationFailed` „unknown field“, `field` `layout`: der ESP32 hat keine Layouts (`capabilities.layout` fehlt) | pixelgenau |
+| `draw`/`bitmap` direkt in der Anzeige | pixelgenau (kein `enlargeApps`) | 2 × 2 vergrößert, nur 26 × 8 (§1.1) |
+| GIF als Data-URL im `icon` der Anzeige, volle Größe | **pixelgenau** | **pixelgenau**, animiert |
+
+Ein GIF, das nicht größer ist als 26 × 8, schaltet die TC002 nicht auf das volle
+Raster und wird dort vergrößert gezeichnet; das GIF muss darum genau das
+Anzeigemaß der Uhr haben. Über MQTT antwortet die TC001 auf ein `layout` mit
+`ok:false` auf `<Thema>/result` (§3.4); ohne Mitlesen dieses Themas bleibt die
+Abweisung unsichtbar.
+
 📄 `iconMode`: `fixed` lässt das Icon stehen und den Text daran vorbeilaufen;
 `pushOnce` lässt den Text es **einmal** hinausschieben, danach bleibt es weg und
 der Text beginnt bei x=0; `push` holt es in jedem Laufdurchgang zurück.
@@ -1011,7 +1041,7 @@ mit `usedBytes` und `totalBytes` (ohne die reservierte Mindestfreifläche).
 | Benachrichtigungen je Anfrage | 1 | `422 validationFailed` |
 | Punkte in `barChart` / `lineChart` | 16 | der 17. und alle weiteren fallen weg, gezeichnet wird trotzdem |
 | Zusatzicons (`icons`) | 4 je Anzeige, zusätzlich zu `icon` | `422`, die ganze Anfrage abgewiesen |
-| Anzeigegröße | **52 × 16** = 832 Pixel, fest | — |
+| Anzeigegröße | TC002 **52 × 16** = 832 Pixel, fest; 🔬 TC001 **32 × 8** | — |
 | GIF | muss in Breite und Höhe der Anzeige passen | größere vorher verkleinern; ein zu großes GIF wird nicht gezeigt |
 | 🔬 GIF als Data-URL, `icon` einer Layout-Region | rund 8 KB Base64 (7508 Zeichen angenommen, 8796 abgewiesen) | `422 validationFailed` „invalid icon“, `field` `layout.regions[0].icon` |
 | 🔬 GIF als Data-URL, `icon` der Anzeige | mindestens 58 761 Byte GIF (angenommen), 87 KB abgewiesen | `field` `icon` |
@@ -1052,7 +1082,12 @@ Zeichen 7 996 Byte; Umlaute zählen im JSON zwei Byte.
 (Text, Icon, Diagramm, Fortschrittsbalken oder Zeichnung). Es steht als Block
 `layout` in der Nutzlast einer gepushten Anzeige oder Benachrichtigung (oder wird
 von einem Skript gezeichnet) und wird nicht als Datei im Gerät abgelegt.
-`capabilities.layout` ist `true` (🔬).
+`capabilities.layout` ist `true` (🔬, TC002).
+
+🔬 **Auf dem ESP32 (TC001) gibt es keine Layouts** (09.10.2026, NG 1.2.2):
+`capabilities.layout` fehlt, und ein `layout` in der Nutzlast weist das Gerät mit
+`422 validationFailed`, `message` „unknown field“, `field` `layout` ab. Wer beide
+Geräte bedient, nimmt für Gerastertes das GIF im `icon` der Anzeige (§5.3).
 
 ### 9.1 Raster und Kästen
 

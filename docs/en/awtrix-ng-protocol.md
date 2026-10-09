@@ -2,8 +2,8 @@
 
 *[Deutsche Fassung](../awtrix-ng-protokoll.md)*
 
-What an Ulanzi TC002 running **AWTRIX NG 1.2.2** can do and how to address it —
-over MQTT and over HTTP. This description is independent of our app: it applies
+What an Ulanzi TC002 or TC001 running **AWTRIX NG 1.2.2** can do and how to
+address it — over MQTT and over HTTP. This description is independent of our app: it applies
 just as well to `mosquitto_pub`, Node-RED, Home Assistant or a script of your
 own.
 
@@ -16,10 +16,18 @@ Every statement carries its provenance:
 | ❓ | open — the documentation does not say, or not measured |
 
 **The documented statements refer to the state of the TC002 branch as of
-2026-10-09 (version 1.2.2)**, the measurements to a device running **AWTRIX NG
-1.2.2** (`boardType tc002`, `soc armv7l`), read via HTTP `GET` on 2026-10-09.
-What carries 🔬 holds, to begin with, for that one device and that one build;
-what carries 📄 holds for the firmware in general. **MQTT has not yet been
+2026-10-09 (version 1.2.2)**, the measurements to **two devices**, both running **AWTRIX NG
+1.2.2**, measured via HTTP on 2026-10-09:
+
+| Device | Display | Platform |
+|---|---|---|
+| Ulanzi **TC002** | 52 × 16 | Linux (`boardType tc002`, `soc armv7l`) |
+| Ulanzi **TC001** | 32 × 8 | ESP32 |
+
+What carries 🔬 holds, to begin with, for the named device and that one build —
+where none is named, it is the TC002; what carries 📄 holds for the firmware in
+general. The capabilities of the two differ (`layout`, `enlargeApps`; see §1.1,
+§5.3, §9). **MQTT has not yet been
 measured on this device** — everything about MQTT is 📄. 🔬 statements marked
 "measured on 1.1.0/TC001" come from an earlier firmware on a 32×8 device and
 have not been re-confirmed.
@@ -50,6 +58,9 @@ written for an 8-row clock thus fills the panel. The global setting
 
 🔬 `enlargeApps` is `true` on the measured device (settings and
 `capabilities`).
+
+🔬 **TC001 (ESP32, 32 × 8), 2026-10-09:** There is no `enlargeApps` here; `draw`
+and `bitmap` directly in the app compute on the full 32 × 8 pixels, pixel-exact.
 
 🔬 **The coordinates of `draw` apply to the 26×8 grid in enlarged apps**
 (measured on 2026-10-09 via `GET /api/v1/display/screen`, with `enlargeApps:
@@ -670,6 +681,23 @@ full grid (§1.1): the GIF lands pixel-exact in 52×16 (a 1-pixel column across
 all 16 rows and the corner pixel (0,0) are right, no stray colors) and plays
 animated with the frame times of the file.
 
+🔬 **Pixel-exact images on both devices (2026-10-09, NG 1.2.2, via HTTP):** A
+GIF as a data URL in the `icon` of the app, **at the full display size**, lands
+pixel-exact (corner pixels exact) — on the **TC001 at 32 × 8**, on the **TC002 at
+52 × 16**, there animated as soon as it has several frames. A one-frame GIF is a
+still image. The other routes do not work for both:
+
+| Route | TC001 (ESP32, 32 × 8) | TC002 (52 × 16) |
+|---|---|---|
+| `layout` with `draw`/`bitmap` | `422 validationFailed` "unknown field", `field` `layout`: the ESP32 has no layouts (`capabilities.layout` is missing) | pixel-exact |
+| `draw`/`bitmap` directly in the app | pixel-exact (no `enlargeApps`) | enlarged 2 × 2, only 26 × 8 (§1.1) |
+| GIF as a data URL in the `icon` of the app, full size | **pixel-exact** | **pixel-exact**, animated |
+
+A GIF no larger than 26 × 8 does not switch the TC002 to the full grid and is drawn
+enlarged there; the GIF must therefore have exactly the display size of the clock.
+Over MQTT the TC001 answers a `layout` with `ok:false` on `<topic>/result` (§3.4);
+without listening to that topic the rejection stays invisible.
+
 📄 `iconMode`: `fixed` leaves the icon in place and lets the text run past it;
 `pushOnce` lets the text push it out **once**, after which it stays gone and the
 text starts at x=0; `push` brings it back on every run.
@@ -989,7 +1017,7 @@ running device log; `GET /api/v1/files` the file store with `usedBytes` and
 | notifications per request | 1 | `422 validationFailed` |
 | points in `barChart` / `lineChart` | 16 | the 17th and all further ones drop, it is drawn anyway |
 | extra icons (`icons`) | 4 per app, in addition to `icon` | `422`, the whole request refused |
-| display size | **52 × 16** = 832 pixels, fixed | — |
+| display size | TC002 **52 × 16** = 832 pixels, fixed; 🔬 TC001 **32 × 8** | — |
 | GIF | must fit the width and height of the display | shrink larger ones first; a too-large GIF is not shown |
 | 🔬 GIF as data URL, `icon` of a layout region | about 8 KB Base64 (7508 characters accepted, 8796 rejected) | `422 validationFailed` "invalid icon", `field` `layout.regions[0].icon` |
 | 🔬 GIF as data URL, `icon` of the display | at least 58,761 bytes of GIF accepted, 87 KB rejected | `field` `icon` |
@@ -1029,7 +1057,12 @@ whole MQTT message** (topic and JSON): text of 1 000 characters 1 096 bytes, of
 📄 A **layout** divides the display into boxes, each showing exactly one content
 (text, icon, chart, progress bar or drawing). It stands as the block `layout` in
 the payload of a pushed app or notification (or is drawn by a script) and is not
-stored as a file on the device. `capabilities.layout` is `true` (🔬).
+stored as a file on the device. `capabilities.layout` is `true` (🔬, TC002).
+
+🔬 **The ESP32 (TC001) has no layouts** (2026-10-09, NG 1.2.2): `capabilities.layout`
+is missing, and a `layout` in the payload is rejected with `422 validationFailed`,
+`message` "unknown field", `field` `layout`. Whoever serves both devices uses the
+GIF in the `icon` of the app for anything rasterized (§5.3).
 
 ### 9.1 Grid and boxes
 
