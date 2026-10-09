@@ -153,7 +153,7 @@ public struct Geraet {
     /// `Content-Type: application/json` ist bei `PUT` Pflicht: Ohne ihn wird
     /// die Anfrage abgewiesen, bevor der Rumpf ueberhaupt gelesen wird.
     private func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws {
-        var anfrage = URLRequest(url: try url(pfad))
+        var anfrage = try self.anfrage(url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
             anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -204,6 +204,13 @@ public struct Geraet {
         return url
     }
 
+    /// Jede Anfrage an die Uhr umgeht den lokalen Zwischenspeicher: Eine dort
+    /// liegende Weiterleitung oder Antwort einer frueheren Firmware wuerde still
+    /// befolgt, und Geraetezustand ist eine Momentaufnahme.
+    private func anfrage(_ url: URL) -> URLRequest {
+        URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
+    }
+
     /// Die einzige Stelle, an der aus Adresse und Pfad eine URL wird.
     ///
     /// Ein Leerzeichen in der eingetragenen Adresse laesst
@@ -223,7 +230,7 @@ public struct Geraet {
     /// Wie `hole`, nur fuer eine Antwort, die oben ein Feld ist statt eines
     /// Objekts — `GET /api/v1/apps` ist die einzige, die diese App liest.
     private func holeFeld(_ pfad: String) throws -> [Any] {
-        let daten = try fuehreAus(URLRequest(url: try url(pfad)))
+        let daten = try fuehreAus(try anfrage(url(pfad)))
         guard let objekt = try? JSONSerialization.jsonObject(with: daten),
               let feld = objekt as? [Any] else {
             throw GeraetFehler.unerwarteteAntwort(pfad)
@@ -232,7 +239,7 @@ public struct Geraet {
     }
 
     private func hole(_ pfad: String) throws -> [String: Any] {
-        let daten = try fuehreAus(URLRequest(url: try url(pfad)))
+        let daten = try fuehreAus(try anfrage(url(pfad)))
         let objekt: Any
         do {
             objekt = try JSONSerialization.jsonObject(with: daten)

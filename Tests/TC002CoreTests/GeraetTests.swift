@@ -15,6 +15,8 @@ final class Doppelgaenger: URLProtocol {
     /// Rumpf ueberhaupt gelesen wird.
     nonisolated(unsafe) static var inhaltstypen: [String: String] = [:]
     nonisolated(unsafe) static var pfade: [String] = []
+    /// Die Cache-Richtlinie je Pfad, wie sie die Anfrage mitbringt.
+    nonisolated(unsafe) static var cacheRichtlinien: [String: URLRequest.CachePolicy] = [:]
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for r: URLRequest) -> URLRequest { r }
@@ -24,6 +26,7 @@ final class Doppelgaenger: URLProtocol {
         Self.pfade.append(pfad)
         Self.abfragen[pfad] = request.url?.query ?? ""
         Self.methoden[pfad] = request.httpMethod ?? ""
+        Self.cacheRichtlinien[pfad] = request.cachePolicy
         Self.inhaltstypen[pfad] = request.value(forHTTPHeaderField: "Content-Type") ?? ""
         if let koerper = request.httpBody ?? request.httpBodyStream.map({ s -> Data in
             s.open(); defer { s.close() }

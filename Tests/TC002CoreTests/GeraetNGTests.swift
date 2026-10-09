@@ -34,6 +34,22 @@ final class GeraetNGTests: XCTestCase {
         Doppelgaenger.pfade = []
     }
 
+    // MARK: - Kein Zwischenspeicher
+
+    /// Jede Anfrage an die Uhr geht am lokalen Zwischenspeicher vorbei.
+    func testAnfragenUmgehenDenZwischenspeicher() throws {
+        Doppelgaenger.cacheRichtlinien = [:]
+        let g = geraet()
+        _ = try g.praefixUndBasis()
+        _ = try g.anzeigennamen()
+        try g.anzeigeLoeschen(name: "meldung2")
+        XCTAssertFalse(Doppelgaenger.cacheRichtlinien.isEmpty)
+        for (pfad, richtlinie) in Doppelgaenger.cacheRichtlinien {
+            XCTAssertEqual(richtlinie, .reloadIgnoringLocalCacheData, pfad)
+        }
+        XCTAssertNotNil(Doppelgaenger.cacheRichtlinien["/api/v1/device"])
+    }
+
     // MARK: - Das Praefix
 
     /// NG nimmt `mqttPrefix` genau so, wie es dasteht. Haengte die App etwas
