@@ -24,18 +24,22 @@ public struct UeberView: View {
 
     public init() {}
 
-    /// Fassung samt Commit. Die Nummer allein sagt nicht, welchen Bau man vor
-    /// sich hat — zwischen zwei Veroeffentlichungen entstehen viele, und alle
-    /// tragen dieselbe. Der angehaengte Commit macht ein laufendes Programm
-    /// eindeutig zuordenbar; ein „+" heisst, es wurde aus einem geaenderten,
-    /// nicht eingecheckten Stand gebaut. Das iOS-Projekt traegt ihn nicht ein,
-    /// dort bleibt es bei der Nummer.
+    /// Fassung samt Baunummer und Commit. Die Fassung allein sagt nicht, welchen
+    /// Bau man vor sich hat — zwischen zwei Veroeffentlichungen entstehen
+    /// viele, und alle tragen dieselbe. Die Baunummer ist die, nach der
+    /// TestFlight und App Store Connect sortieren; der Commit macht ein
+    /// laufendes Programm eindeutig zuordenbar, ein „+" heisst, es wurde aus
+    /// einem geaenderten, nicht eingecheckten Stand gebaut. Das iOS-Projekt
+    /// traegt den Commit nicht ein, dort bleibt es bei Fassung und Bau.
     private var fassung: String {
         let info = Programmbuendel.eigenes.infoDictionary
         let nummer = info?["CFBundleShortVersionString"] as? String ?? "–"
-        guard let commit = info?["TC002Commit"] as? String,
-              !commit.isEmpty, commit != "unbekannt" else { return nummer }
-        return "\(nummer) (\(commit))"
+        let bau = (info?["CFBundleVersion"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        var zusatz = bau.map { [$0] } ?? []
+        if let commit = info?["TC002Commit"] as? String, !commit.isEmpty, commit != "unbekannt" {
+            zusatz.append(commit)
+        }
+        return zusatz.isEmpty ? nummer : "\(nummer) (\(zusatz.joined(separator: ", ")))"
     }
 
     public var body: some View {
