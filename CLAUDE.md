@@ -2,7 +2,9 @@
 
 Arbeitsregeln für dieses Repo. Was die App tut, steht in `README.md`; wie man
 sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
-`docs/tc002-protokoll.md`; was uns an dessen Firmware als Mangel aufgefallen
+`docs/awtrix-ng-protokoll.md` (AWTRIX NG auf der Ulanzi TC002, 52×16 — die
+einzige unterstützte Firmware; die Werksfirmware fiel am 09.10.2026 weg); was
+uns an einer Firmware als Mangel aufgefallen
 ist und bei einem Update nachzuprüfen wäre, in
 `docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
 
@@ -132,9 +134,11 @@ ist und bei einem Update nachzuprüfen wäre, in
   genannt — eine veraltete Adresse hier schützt die falsche Maschine. Dafür
   gibt es Doppelgänger: `URLProtocol` für die
   HTTP-Schnittstelle des Geräts, `NachrichtSendend` für das MQTT-Senden.
-- **Ohne Gerät ausprobieren: die virtuelle Uhr.** `Virtuelleuhr` beantwortet
-  die Anfragen einer Ulanzi-Werksfirmware als reine Funktion, `Uhrenserver`
-  hängt sie an einen Port. In den Einstellungen ist sie ein Schalter; in Tests
+- **Ohne Gerät ausprobieren: die virtuelle Uhr.** `VirtuelleNGUhr` beantwortet
+  die HTTP-Anfragen einer AWTRIX NG 1.2.2 (TC002) als reine Funktion und
+  zeichnet `draw`-Befehle (in einer Anzeige 26×8 verdoppelt, im Layout 52×16);
+  `Uhrenserver` hängt sie an einen Port, nur auf `127.0.0.1`. Wo die
+  Herstellerdoku schweigt, steht die Annahme im Doc-Comment. In den Einstellungen ist sie ein Schalter; in Tests
   ist sie die Naht, an der sich der **ganze** HTTP-Weg prüfen lässt, ohne die
   Regel oben zu verletzen — die Testreihe hört sich selbst zu, auf
   `127.0.0.1` und einem Port, den sie selbst aufmacht. Wer etwas am Sendeweg
@@ -142,8 +146,16 @@ ist und bei einem Update nachzuprüfen wäre, in
 - Die MQTT-Bytes sind gegen eine echte Aufzeichnung von `mosquitto_pub`
   geprüft (`MQTTPaketTests`). Dieser Test wird nicht abgeschwächt.
 - Das Themen-Präfix nie hart eintragen, immer über `Geraet.themenPraefix()`
-  ermitteln — es weicht vom eingestellten Präfix ab (siehe
-  `docs/tc002-protokoll.md`, §2).
+  von der Uhr holen: `mqttPrefix` wörtlich, leer die Geräte-uid
+  (`docs/awtrix-ng-protokoll.md` §2). Ein `#` darin legt den MQTT-Client der
+  Uhr still lahm (gemessen 09.10.2026). Eine Uhr ohne Präfix ist über MQTT
+  nicht beschickbar; Einträge aus der Zeit vor dem Einrichtungsstand 2 holen
+  es neu (`AppZustand.fehlendePraefixeHolen`).
+- **Bilder pixelgenau nur als Layout.** Bei `enlargeApps` (Vorgabe) zeichnet
+  NG Text, Icon und `draw` einer Anzeige auf 26×8, jedes Pixel 2×2; eine
+  `layout`-Region `[0,0,52,16]` mit `bitmap` (Base64-RGB888, rund 3,3 KB)
+  landet pixelgenau. Die globale Einstellung der Uhr fasst die App dafür
+  nicht an.
 - Blockierende Netzaufrufe nie auf dem Hauptthread: `AppZustand` ist
   `@MainActor`-isoliert, die eigentlichen Aufrufe laufen in `Task.detached`.
 - Je Uhr eine eigene MQTT-Client-Kennung, sonst trennt der Broker die
@@ -245,14 +257,16 @@ Vorgabe `--name cli` ist keiner davon, und `mqtttc002 senden "…"` ohne
 an zwei Stellen, und sie entscheiden verschieden:
 
 - **Was ein Block zeigt**, entscheidet `AppZustand.slotzustand(_:belegt:)`
-  (`Sources/TC002Modell/AppZustand.swift`) für alle drei Ansichten gleich —
-  **ohne** Prüfsummenvergleich. Fehlen mitgelesene Pixel, rechnet es das Bild
-  aus dem gemerkten Stand neu; ein Block kann damit eine Erinnerung zeigen.
-- **Ob die Regler übernommen werden**, entscheidet `slotWaehlen` in den beiden
-  Sendeansichten (`Sources/TC002App/SendenView.swift`,
-  `Sources/TC002iOS/SendeniOS.swift`) — nur bei mitgelesenen Pixeln *und*
-  passender Prüfsumme, sonst hat seither jemand anderes auf den Platz
-  geschrieben (Hilfe → Senden erklärt das aus Anwendersicht).
+  (`Sources/TC002Modell/AppZustand.swift`) für alle drei Ansichten gleich.
+  Fehlt mitgelesener Inhalt, rechnet es das Bild aus dem gemerkten Stand neu;
+  ein Block kann damit eine Erinnerung zeigen.
+- **Ob die Regler übernommen werden**, entscheidet
+  `AppZustand.wiederherstellbarerStand(platz:fuer:)`, gerufen von `slotWaehlen`
+  in beiden Sendeansichten: nur, wenn ein gemerkter Stand da ist und die App
+  nicht gesehen hat, dass seither jemand anderes auf den Platz geschrieben hat
+  (`fremdBeschrieben`). Gesehen wird das nur beim Mitlesen über MQTT; NG nennt
+  über HTTP nur Namen, nicht den Inhalt (Hilfe → Senden erklärt das aus
+  Anwendersicht).
 
 **Neben der Reglerdatei liegt eine zweite, `<uuid>-bilder.json`**, und sie
 gehört allein der App: Was ohne Regler hinausgeht — ein gemaltes Bild, eine
@@ -282,8 +296,8 @@ nicht mehr steht:
   aus und ruft deshalb selbst;
 - eine **leere** Nutzlast beim Mitlesen: Genau null Bytes heißen, die Anzeige
   wurde auf der Uhr entfernt — gleich von wem. Der Platz zählt dann wieder als
-  frei (`anzeigeVergessen`), ohne auf eine erneute `customList` zu warten, die
-  nicht belegt ist.
+  frei (`anzeigeVergessen`), ohne auf eine erneute Abfrage der App-Liste zu
+  warten.
 
 Gelöscht wird über einen Anzeigennamen; nur die fünf festen Plätze haben
 überhaupt eine Erinnerung (`Meldungsplatz.platz(fuerName:)`), „cli" hat nichts
