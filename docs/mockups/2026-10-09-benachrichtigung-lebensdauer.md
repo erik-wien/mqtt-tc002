@@ -22,4 +22,13 @@ Mockup: `2026-10-09-benachrichtigung-lebensdauer.html`. Grundlage: `docs/awtrix-
 
 ## Entscheidung
 
-(leer)
+Erik, 09.10.2026:
+
+1. **Variante A** — Segment über dem Eingabefeld.
+2. Die Oberfläche sagt **„Nachricht“** (Segment „Anzeige | Nachricht“, „Nachricht zurückziehen“). Im Code und im Protokoll bleibt `notification`/Benachrichtigung.
+3. Vorgaben der Nachricht: **Halten ein, Aufwecken ein, Ersetzen aus, Durchläufe 2.** Dauer wie bei der Anzeige.
+4. Lebensdauer: Vorgabe **aus**, Einheit **wählbar (Minuten/Stunden)**, Aktion danach Vorgabe **Entfernen** (Lesart von „ja“; offen zur Bestätigung).
+5. Der Platz **merkt** die Lebensdauer als Regler — bis der Platz gelöscht wird oder eine neue Sendung mit anderen Werten kommt.
+6. Rückfrage Eriks: „heißt, ich kann jetzt einen Platz besetzt lassen, aber ausblenden?“ — ja; Bestätigung der Form (Kontextmenü „In der Schleife“, grau) steht aus.
+7. Ja: „Zurückziehen“ nur bei gehaltener Nachricht sichtbar.
+8. Ja: Nachricht und Zurückziehen gelten für alle gewählten Uhren.
