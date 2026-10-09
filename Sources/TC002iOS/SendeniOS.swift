@@ -79,6 +79,17 @@ struct SendeniOS: View {
     @AppStorage("senden.icon") private var iconNummer = ""
     @AppStorage("senden.meldungsplatz") private var platz = 1
     @AppStorage("senden.dauer") private var dauerText = ""
+    /// Dieselben Schlüssel wie am Schreibtisch (`SendenView`): Anzeige oder
+    /// Nachricht, Nachrichtregler, Lebensdauer.
+    @AppStorage("senden.art") private var art: Sendeart = .anzeige
+    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = true
+    @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
+    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
+    @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
+    @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
+    @AppStorage("senden.lebensdauer.einheit") private var lebensdauerEinheit: Lebensdauereinheit = .minuten
+    @AppStorage("senden.lebensdauer.ablauf") private var lebensdauerAblauf: Lebensablauf = .entfernen
 
     @State private var gewaehltesIcon: Icon?
     @State private var laufschriftFrames: [Bildraster.Einzelbild] = []
@@ -166,6 +177,11 @@ struct SendeniOS: View {
         tempo = o.tempo
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
+        let l = Lebensdauerwahl(o.lebensdauer)
+        lebensdauerBehalten = l.behalten
+        lebensdauerZahl = l.zahl
+        lebensdauerEinheit = l.einheit
+        lebensdauerAblauf = l.ablauf
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon?.nummer)`.
         // Nummer und Kante: Das Telefon kennt nur den 8×8-Bestand. Ein am
         // Mac gemerkter Stand mit einem 16×16 findet hier also nichts — und
@@ -183,7 +199,17 @@ struct SendeniOS: View {
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
-                         dauer: dauer)
+                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer)
+    }
+
+    private var lebensdauerwahl: Lebensdauerwahl {
+        Lebensdauerwahl(behalten: lebensdauerBehalten, zahl: lebensdauerZahl,
+                        einheit: lebensdauerEinheit, ablauf: lebensdauerAblauf)
+    }
+
+    private var nachrichtwahl: Nachrichtwahl {
+        Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
+                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe)
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -353,7 +379,15 @@ struct SendeniOS: View {
         rumpf
         .sheet(isPresented: $zeigeFormat) {
             FormatblattiOS(tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
-                           dauerText: $dauerText)
+                           dauerText: $dauerText, art: art,
+                           nachrichtHalten: $nachrichtHalten,
+                           nachrichtAufwecken: $nachrichtAufwecken,
+                           nachrichtErsetzen: $nachrichtErsetzen,
+                           nachrichtDurchlaeufe: $nachrichtDurchlaeufe,
+                           lebensdauerBehalten: $lebensdauerBehalten,
+                           lebensdauerZahl: $lebensdauerZahl,
+                           lebensdauerEinheit: $lebensdauerEinheit,
+                           lebensdauerAblauf: $lebensdauerAblauf)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)
@@ -415,7 +449,7 @@ struct SendeniOS: View {
     /// Dieselbe Leiste wie am Schreibtisch und im Editor. Ein Druck holt
     /// hier wie unter „Senden" zusaetzlich die gemerkten Regler zurueck.
     private var blockZeile: some View {
-        Slotleiste(zustand: zustand, gewaehlt: platz) { slotWaehlen($0) }
+        Slotleiste(zustand: zustand, gewaehlt: platz, gesperrt: art == .nachricht) { slotWaehlen($0) }
     }
 
     /// Die Mitte der Sendeansicht als eigenes Glied.
@@ -877,24 +911,27 @@ struct SendeniOS: View {
         // Ohne `auskunft`: Was hinausgeht, steht am Telefon schon ueber den
         // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
         // gibt es am Finger ohnehin nicht.
-        HStack(spacing: 8) {
-            if let offen = zustand.teilfehler {
-                Hilfezeichen(offen, gewicht: .teilweise)
-            }
-            TextField("Text", text: $text, axis: .vertical)
-            .lineLimit(1...3)
-            .eingabefeld(loeschbar: $text,
-                         senden: sendenMoeglich ? { Task { await senden() } } : nil,
-                         laeuft: laeuft,
-                         ausgang: ausgang,
-                         form: .kapsel)
-            .submitLabel(.send)
-            .disabled(laeuft)
-            .onChange(of: text) { _, neu in
-                guard neu.hasSuffix("\n") else { return }
-                text = String(neu.dropLast())
-                guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                Task { await senden() }
+        VStack(spacing: 8) {
+            Sendeartwahl(zustand: zustand, art: $art)
+            HStack(spacing: 8) {
+                if let offen = zustand.teilfehler {
+                    Hilfezeichen(offen, gewicht: .teilweise)
+                }
+                TextField("Text", text: $text, axis: .vertical)
+                .lineLimit(1...3)
+                .eingabefeld(loeschbar: $text,
+                             senden: sendenMoeglich ? { Task { await senden() } } : nil,
+                             laeuft: laeuft,
+                             ausgang: ausgang,
+                             form: .kapsel)
+                .submitLabel(.send)
+                .disabled(laeuft)
+                .onChange(of: text) { _, neu in
+                    guard neu.hasSuffix("\n") else { return }
+                    text = String(neu.dropLast())
+                    guard !laeuft, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                    Task { await senden() }
+                }
             }
         }
         .padding(.horizontal)
@@ -932,13 +969,21 @@ struct SendeniOS: View {
         let slotOptionen = optionen
         let icon = gewaehltesIcon
         let sammlung = sammlung
-        let angekommen = await zustand.senden(
-            rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
-            als: Meldungsplatz.name(fuer: platz),
-            slotOptionen: slotOptionen,
-            slotIcon: gewaehltesIcon?.nummer,
-            slotIconKante: gewaehltesIcon?.kante ?? 8,
-            slotPlatz: platz)
+        // Eine Nachricht belegt keinen Platz und merkt sich nichts.
+        let angekommen: Sendebilanz
+        if art == .nachricht {
+            angekommen = await zustand.benachrichtigen(
+                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+                nachrichtwahl.optionen)
+        } else {
+            angekommen = await zustand.senden(
+                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+                als: Meldungsplatz.name(fuer: platz),
+                slotOptionen: slotOptionen,
+                slotIcon: gewaehltesIcon?.nummer,
+                slotIconKante: gewaehltesIcon?.kante ?? 8,
+                slotPlatz: platz)
+        }
         if !angekommen.nichts {
             ausgang = angekommen.ganz ? .ganz : .teilweise
             try? await Task.sleep(for: .seconds(1))

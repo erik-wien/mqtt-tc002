@@ -20,6 +20,17 @@ struct FormatblattiOS: View {
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
+    /// Anzeige oder Nachricht: Der Abschnitt der nicht gewählten Art ist
+    /// gesperrt, nicht versteckt — wie im Reiter „Zeit“ am Schreibtisch.
+    let art: Sendeart
+    @Binding var nachrichtHalten: Bool
+    @Binding var nachrichtAufwecken: Bool
+    @Binding var nachrichtErsetzen: Bool
+    @Binding var nachrichtDurchlaeufe: Int
+    @Binding var lebensdauerBehalten: Bool
+    @Binding var lebensdauerZahl: Int
+    @Binding var lebensdauerEinheit: Lebensdauereinheit
+    @Binding var lebensdauerAblauf: Lebensablauf
     @Environment(\.dismiss) private var schliessen
     /// `.numberPad` hat keine Eingabetaste — ohne „Fertig" bleibt die Tastatur
     /// stehen. Dieselbe Leiste wie am Nummernfeld der Iconauswahl und am Port
@@ -52,6 +63,12 @@ struct FormatblattiOS: View {
                     Text("Gilt nur, wenn der Text nicht ins Display passt.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Lebensdauerabschnitt(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                     einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf,
+                                     aktiv: art == .anzeige)
+                Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
+                                   ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
+                                   aktiv: art == .nachricht)
             }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {

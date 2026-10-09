@@ -30,12 +30,17 @@ public struct Slotblock: View {
     /// braucht das richtige Mass — sonst erwartet es die falsche Punktzahl
     /// und der Block bleibt leer.
     public let mass: Anzeigemass
+    /// Läuft die Anzeige in der Schleife der Uhr? Ausgeschaltet bleibt der
+    /// Platz belegt, der Block erscheint grau (und sagt es der Sprachausgabe).
+    public let inSchleife: Bool
 
-    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .vorgabe) {
+    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .vorgabe,
+                inSchleife: Bool = true) {
         self.platz = platz
         self.zustand = zustand
         self.gewaehlt = gewaehlt
         self.mass = mass
+        self.inSchleife = inSchleife
     }
 
     private var seitenverhaeltnis: Double { Double(mass.breite) / Double(mass.hoehe) }
@@ -104,6 +109,10 @@ public struct Slotblock: View {
             }
         }
         .aspectRatio(seitenverhaeltnis, contentMode: .fit)
+        // Grau und blass statt einer Farbe: Der Zustand hängt nicht allein am
+        // Farbton, und das Motiv bleibt erkennbar.
+        .saturation(inSchleife ? 1 : 0)
+        .opacity(inSchleife ? 1 : 0.45)
         .overlay {
             if gewaehlt {
                 RoundedRectangle(cornerRadius: Self.eckenradius)
@@ -122,9 +131,11 @@ public struct Slotblock: View {
         case .frei:
             return Text(lokf("Slot %d, frei", platz))
         case .bekannt:
-            return Text(lokf("Slot %d, belegt", platz))
+            return Text(inSchleife ? lokf("Slot %d, belegt", platz)
+                                   : lokf("Slot %d, belegt, nicht in der Schleife", platz))
         case .unbekannt:
-            return Text(lokf("Slot %d, unbekannt", platz))
+            return Text(inSchleife ? lokf("Slot %d, unbekannt", platz)
+                                   : lokf("Slot %d, unbekannt, nicht in der Schleife", platz))
         }
     }
 }
@@ -145,13 +156,28 @@ public extension View {
     ///
     /// Geteilt zwischen den Oberflächen — was der eine Block kann, kann der
     /// andere auch.
+    ///
+    /// „In der Schleife“ (nur wo `schalten` gereicht wird) nimmt die Anzeige
+    /// aus dem Umlauf der Uhr, ohne sie zu löschen; das Häkchen zeigt, ob sie
+    /// läuft.
     @ViewBuilder
     func slotmenue(belegt: Bool,
                    loeschen: @escaping () -> Void,
-                   zeigen: @escaping () -> Void) -> some View {
+                   zeigen: @escaping () -> Void,
+                   inSchleife: Bool = true,
+                   schalten: ((Bool) -> Void)? = nil) -> some View {
         if belegt {
             contextMenu {
                 Button(action: zeigen) { Label("Zeigen", systemImage: "eye") }
+                if let schalten {
+                    Button { schalten(!inSchleife) } label: {
+                        if inSchleife {
+                            Label("In der Schleife", systemImage: "checkmark")
+                        } else {
+                            Text("In der Schleife")
+                        }
+                    }
+                }
                 Button(role: .destructive, action: loeschen) {
                     Label("Löschen", systemImage: "trash")
                 }

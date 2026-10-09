@@ -22,15 +22,20 @@ public struct Slotleiste: View {
     @Bindable var zustand: AppZustand
     let gewaehlt: Int
     let waehlen: (Int) -> Void
+    /// Bei „Nachricht“ sind die Plätze kein Ziel: ausgegraut und gesperrt, aber
+    /// sichtbar, damit die Reihe nicht springt.
+    let gesperrt: Bool
 
     /// Über welchem Block der Zeiger steht — daran hängt allein das ⊗. Am
     /// Finger bleibt der Wert `nil`: Dort gibt es kein Überfahren, und
     /// gelöscht wird über das Kontextmenü (`slotmenue`).
     @State private var ueberfahren: Int?
 
-    public init(zustand: AppZustand, gewaehlt: Int, waehlen: @escaping (Int) -> Void) {
+    public init(zustand: AppZustand, gewaehlt: Int, gesperrt: Bool = false,
+                waehlen: @escaping (Int) -> Void) {
         self.zustand = zustand
         self.gewaehlt = gewaehlt
+        self.gesperrt = gesperrt
         self.waehlen = waehlen
     }
 
@@ -46,8 +51,9 @@ public struct Slotleiste: View {
                 Button { waehlen(i) } label: {
                     Slotblock(platz: i,
                               zustand: zustand.slotzustand(i, belegt: belegte.contains(i)),
-                              gewaehlt: gewaehlt == i,
-                              mass: mass)
+                              gewaehlt: gewaehlt == i && !gesperrt,
+                              mass: mass,
+                              inSchleife: zustand.inSchleife(platz: i))
                         // Die Blöcke teilen sich die Breite: Fünf Kästchen in
                         // der Mitte einer sonst leeren Zeile lasen sich wie
                         // eine Auswahl, die noch weitergeht.
@@ -60,7 +66,11 @@ public struct Slotleiste: View {
                 // des Startbildschirms und verdeckte das Motiv des Blocks.
                 .slotmenue(belegt: belegte.contains(i),
                            loeschen: { loeschen(i) },
-                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
+                           zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) },
+                           inSchleife: zustand.inSchleife(platz: i),
+                           schalten: { an in
+                               Task { await zustand.anzeigeSchalten(Meldungsplatz.name(fuer: i), an: an) }
+                           })
                 // Über dem Block und außerhalb seines Knopfes: Innen wäre es
                 // Teil von dessen Beschriftung und löste beim Tippen die
                 // Platzwahl aus statt zu löschen. Etwas nach außen versetzt,
@@ -74,6 +84,8 @@ public struct Slotleiste: View {
                 }
             }
         }
+        .disabled(gesperrt)
+        .opacity(gesperrt ? 0.4 : 1)
     }
 
     /// Räumt den Platz auf den gewählten Uhren — derselbe Weg, den auch das ⊗

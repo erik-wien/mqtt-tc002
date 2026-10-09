@@ -10,6 +10,17 @@ public struct SendenView: View {
     /// geteilter Zustand, deshalb @AppStorage statt des Umwegs ueber AppZustand.
     @AppStorage("senden.meldungsplatz") private var platz = 1
     @AppStorage("senden.dauer") private var dauerText = ""
+    /// Anzeige oder Nachricht. Die Nachricht belegt keinen Platz und hat ihre
+    /// eigenen Regler (`Nachrichtwahl`); die Lebensdauer gilt nur der Anzeige.
+    @AppStorage("senden.art") private var art: Sendeart = .anzeige
+    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = true
+    @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
+    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
+    @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
+    @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
+    @AppStorage("senden.lebensdauer.einheit") private var lebensdauerEinheit: Lebensdauereinheit = .minuten
+    @AppStorage("senden.lebensdauer.ablauf") private var lebensdauerAblauf: Lebensablauf = .entfernen
     @AppStorage("senden.text") private var text = "Hallo"
     /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
@@ -150,6 +161,11 @@ public struct SendenView: View {
         tempo = o.tempo
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
+        let l = Lebensdauerwahl(o.lebensdauer)
+        lebensdauerBehalten = l.behalten
+        lebensdauerZahl = l.zahl
+        lebensdauerEinheit = l.einheit
+        lebensdauerAblauf = l.ablauf
         // `iconNummer` folgt von selbst aus `.onChange(of: gewaehltesIcon)`.
         // Nummer und Kante, nicht nur die Nummer. Ein 16×16 traegt seinen
         // Dateinamen im selben Feld wie ein LaMetric-Icon seine Nummer; ohne
@@ -216,7 +232,17 @@ public struct SendenView: View {
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
-                         dauer: dauer)
+                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer)
+    }
+
+    private var lebensdauerwahl: Lebensdauerwahl {
+        Lebensdauerwahl(behalten: lebensdauerBehalten, zahl: lebensdauerZahl,
+                        einheit: lebensdauerEinheit, ablauf: lebensdauerAblauf)
+    }
+
+    private var nachrichtwahl: Nachrichtwahl {
+        Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
+                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe)
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -456,6 +482,7 @@ public struct SendenView: View {
             // Sendeknopf gehalten.
             // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
             // in einem Dialog (siehe `AppZustand.teilfehler`).
+            Sendeartwahl(zustand: zustand, art: $art)
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, gewicht: .teilweise)
@@ -625,6 +652,14 @@ public struct SendenView: View {
                 Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
                     laufschriftAbschnitt
                 }
+                // Beide immer da, der nicht gewählte gesperrt: Der Reiter
+                // soll beim Umschalten von Anzeige auf Nachricht nicht springen.
+                Lebensdauerabschnitt(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                     einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf,
+                                     aktiv: art == .anzeige)
+                Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
+                                   ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
+                                   aktiv: art == .nachricht)
             }
             .formStyle(.grouped)
         case .format:
@@ -848,7 +883,7 @@ public struct SendenView: View {
     /// Die fuenf Bloecke — dieselbe Leiste wie im Editor und am Telefon.
     /// Ein Druck holt hier zusaetzlich die gemerkten Regler zurueck.
     private var slotZeile: some View {
-        Slotleiste(zustand: zustand, gewaehlt: platz) { slotWaehlen($0) }
+        Slotleiste(zustand: zustand, gewaehlt: platz, gesperrt: art == .nachricht) { slotWaehlen($0) }
     }
 
     /// Das Eingabefeld fuer die Meldung. Einmal geschrieben, weil beide Zweige
@@ -930,6 +965,7 @@ public struct SendenView: View {
 
 
     private func senden() {
+        if art == .nachricht { nachrichtSenden(); return }
         laeuft = true
         let anzeigenName = Meldungsplatz.name(fuer: platz)
         // Momentaufnahme fuer das Slotgedaechtnis: `optionen` ist berechnet,
@@ -950,6 +986,25 @@ public struct SendenView: View {
                 slotOptionen: slotOptionen,
                 slotIcon: slotIcon, slotIconKante: iconKante,
                 slotPlatz: slotPlatz)
+            laeuft = false
+            guard !angekommen.nichts else { return }
+            await ausgangZeigen(angekommen)
+        }
+    }
+}
+
+extension SendenView {
+    /// Die Nachricht geht an alle gewählten Uhren, je in deren Maß, ohne Platz
+    /// und ohne Gedächtnis (`AppZustand.benachrichtigen`).
+    fileprivate func nachrichtSenden() {
+        laeuft = true
+        let o = optionen
+        let icon = gewaehltesIcon
+        let sammlung = sammlung
+        let wahl = nachrichtwahl.optionen
+        Task {
+            let angekommen = await zustand.benachrichtigen(
+                rahmenFuer: { try Meldungsbau.rahmen(o, icon: icon, sammlung: sammlung, mass: $0) }, wahl)
             laeuft = false
             guard !angekommen.nichts else { return }
             await ausgangZeigen(angekommen)
