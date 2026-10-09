@@ -146,11 +146,11 @@ public enum NGThema {
         case 3 where teile[0] == "apps" && teile[2] == "enabled" && !teile[1].isEmpty:
             return lokf("Schalter „%@“", teile[1])
         case 1 where teile[0] == "notify":
-            return lok("Benachrichtigung")
+            return lok("Nachricht")
         case 2 where teile[0] == "notify" && teile[1] == "dismiss":
-            return lok("Benachrichtigung zurückziehen")
+            return lok("Nachricht zurückziehen")
         case 3 where teile[0] == "notify" && teile[1] == "dismiss" && !teile[2].isEmpty:
-            return lokf("Benachrichtigung „%@“ zurückziehen", teile[2])
+            return lokf("Nachricht „%@“ zurückziehen", teile[2])
         default:
             return nil
         }

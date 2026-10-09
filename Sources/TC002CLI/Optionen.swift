@@ -9,7 +9,7 @@ struct Optionen {
     enum Befehl: Equatable {
         case senden(text: String)
         /// Eine einmalige Meldung über der Schleife (`cmd/notify`), keine Anzeige.
-        case benachrichtigen(text: String)
+        case nachricht(text: String)
         /// Die sichtbare Benachrichtigung wegnehmen, mit Namen die benannte.
         case zurueckziehen(name: String?)
         case loeschen(anzeige: String)
@@ -45,13 +45,18 @@ struct Optionen {
     var tempo: Lauftempo = .mittel
     var trocken = false
     /// Nur für Benachrichtigungen.
-    var halten = false
+    var halten = true
     var ersetzen = false
-    var aufwecken = false
-    var wiederholungen: Int?
+    var aufwecken = true
+    var wiederholungen: Int? = 2
+    /// Die erste Option, die nur eine Nachricht kennt — für die Meldung, wenn
+    /// sie bei „senden“ steht.
+    var nachrichtenoption: String?
     /// Nur für „senden": nach dieser Zeit verfällt die Anzeige von selbst.
     var lebensdauer: Int?
     var ablauf: Lebensablauf?
+    /// `--behalten`: die Anzeige verfällt nicht, sie bleibt bis zum Löschen.
+    var behalten = false
 
     enum Fehler: Error, LocalizedError {
         case unbekannteOption(String)
@@ -64,7 +69,7 @@ struct Optionen {
         /// still nichts bewirken.
         case optionGiltNurFuer(option: String, befehl: String)
         case keinAblauf(String)
-        case ablaufOhneLebensdauer
+        case behaltenMitLebensdauer
         case nichtPositiv(option: String, wert: String)
 
         var errorDescription: String? {
@@ -85,8 +90,8 @@ struct Optionen {
                 return lokf("„%@“ gilt nur für „%@“.", o, b)
             case .keinAblauf(let w):
                 return lokf("„%@“ ist kein Ablauf. Möglich: entfernen, markieren (remove, mark).", w)
-            case .ablaufOhneLebensdauer:
-                return lok("„--ablauf“ gehört zu „--lebensdauer“: ohne Lebensdauer verfällt nichts.")
+            case .behaltenMitLebensdauer:
+                return lok("„--behalten“ lässt die Anzeige stehen und verträgt sich nicht mit „--lebensdauer“ oder „--ablauf“.")
             case .nichtPositiv(let o, let w):
                 return lokf("„%@“ erwartet eine Zahl größer als 0, bekam aber „%@“.", o, w)
             }
@@ -107,8 +112,8 @@ struct Optionen {
         switch erstes {
         case "senden", "send":
             o.befehl = .senden(text: "")
-        case "benachrichtigen", "notify":
-            o.befehl = .benachrichtigen(text: "")
+        case "nachricht", "message":
+            o.befehl = .nachricht(text: "")
         case "zurueckziehen", "dismiss":
             o.befehl = .zurueckziehen(name: nil)
         case "loeschen", "delete":
@@ -167,18 +172,20 @@ struct Optionen {
             case "--abstand", "--gap":    o.abstand = try zahl()
             case "--dauer", "--duration": o.dauer = try zahl()
             case "--trocken", "--dry-run": o.trocken = true
-            case "--halten", "--hold":    o.halten = true
-            case "--ersetzen", "--replace": o.ersetzen = true
-            case "--aufwecken", "--wakeup": o.aufwecken = true
+            case "--nicht-halten", "--no-hold":     o.halten = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--ersetzen", "--replace":         o.ersetzen = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--nicht-wecken", "--no-wakeup":   o.aufwecken = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--wiederholungen", "--repeat":
                 let w = try wert()
                 guard let z = Int(w), z > 0 else { throw Fehler.nichtPositiv(option: arg, wert: w) }
                 o.wiederholungen = z
+                o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--lebensdauer", "--lifetime":
                 let w = try wert()
                 guard let z = Int(w) else { throw Fehler.keineZahl(option: arg, wert: w) }
                 guard z > 0 else { throw Fehler.nichtPositiv(option: arg, wert: w) }
                 o.lebensdauer = z
+            case "--behalten", "--keep":  o.behalten = true
             case "--ablauf", "--expiry":
                 let w = try wert()
                 switch w {
@@ -205,18 +212,18 @@ struct Optionen {
         }
 
         let freierText = freie.joined(separator: " ")
-        if o.ablauf != nil, o.lebensdauer == nil { throw Fehler.ablaufOhneLebensdauer }
+        if o.behalten, o.lebensdauer != nil || o.ablauf != nil { throw Fehler.behaltenMitLebensdauer }
         switch o.befehl {
         case .senden:
             guard !freierText.isEmpty else { throw Fehler.fehlenderText }
-            try o.nurFuerBenachrichtigungenPruefen()
+            try o.nurFuerNachrichtenPruefen()
             o.befehl = .senden(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
-        case .benachrichtigen:
+        case .nachricht:
             guard !freierText.isEmpty else { throw Fehler.fehlenderText }
             // Eine Benachrichtigung ignoriert die Lebensdauer (§5.4); sie
             // wegzulassen, ohne es zu sagen, wäre eine stille Zusage.
-            if o.lebensdauer != nil { throw Fehler.optionGiltNurFuer(option: "--lebensdauer", befehl: "senden") }
-            o.befehl = .benachrichtigen(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
+            if let option = o.lebensdaueroption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
+            o.befehl = .nachricht(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
         case .zurueckziehen:
             // Der Name steht als Wort hinter dem Befehl oder hinter `--name`;
             // fehlt beides, ist die sichtbare gemeint.
@@ -259,12 +266,18 @@ struct Optionen {
         return ergebnis
     }
 
+    /// Die erste Lebensdauer-Option, die da stand — an einer Nachricht ist keine
+    /// erlaubt.
+    var lebensdaueroption: String? {
+        if behalten { return "--behalten" }
+        if lebensdauer != nil { return "--lebensdauer" }
+        return ablauf != nil ? "--ablauf" : nil
+    }
+
     /// Die Felder aus §5.6 gehören einer Benachrichtigung; an einer Anzeige wären
     /// sie `422`.
-    private func nurFuerBenachrichtigungenPruefen() throws {
-        let falsch = [(halten, "--halten"), (ersetzen, "--ersetzen"), (aufwecken, "--aufwecken"),
-                      (wiederholungen != nil, "--wiederholungen")].first { $0.0 }
-        if let falsch { throw Fehler.optionGiltNurFuer(option: falsch.1, befehl: "benachrichtigen") }
+    private func nurFuerNachrichtenPruefen() throws {
+        if let option = nachrichtenoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "nachricht") }
     }
 
     private static func istFarbe(_ s: String) -> Bool {
@@ -285,8 +298,14 @@ struct Optionen {
         o.abstand = abstand
         o.tempo = tempo
         o.dauer = dauer
-        if case .senden = befehl, let lebensdauer {
-            o.lebensdauer = Lebensdauer(sekunden: lebensdauer, ablauf: ablauf ?? .entfernen)
+        // Ohne jede Angabe bleibt es `nil`, und das heißt: die Vorgabe (30 Minuten).
+        if case .senden = befehl {
+            if behalten {
+                o.lebensdauer = .aus
+            } else if lebensdauer != nil || ablauf != nil {
+                o.lebensdauer = Lebensdauer(sekunden: lebensdauer ?? Lebensdauer.vorgabe.sekunden,
+                                            ablauf: ablauf ?? .entfernen)
+            }
         }
         return o
     }

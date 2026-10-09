@@ -1429,10 +1429,10 @@ public final class AppZustand {
         var erreicht: [String] = []
         let ziele = await anZiele({ anzeigen, uhr in
             try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen)
-        }, was: lok("Benachrichtigung")) { uhr, weg in
+        }, was: lok("Nachricht")) { uhr, weg in
             erreicht.append(uhr.name)
-            if weg == .mqtt { antwortErwarten(lok("Benachrichtigung"), uhr: uhr) }
-            log(lokf("Benachrichtigung an %@ gesendet", uhr.name))
+            if weg == .mqtt { antwortErwarten(lok("Nachricht"), uhr: uhr) }
+            log(lokf("Nachricht an %@ gesendet", uhr.name))
         }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
     }
@@ -1444,9 +1444,9 @@ public final class AppZustand {
         var erreicht: [String] = []
         let ziele = await anZiele({ anzeigen, _ in
             try anzeigen.benachrichtigungZurueckziehen(name: name)
-        }, was: lok("Benachrichtigung zurückziehen")) { uhr, _ in
+        }, was: lok("Nachricht zurückziehen")) { uhr, _ in
             erreicht.append(uhr.name)
-            log(lokf("Benachrichtigung bei %@ zurückgezogen", uhr.name))
+            log(lokf("Nachricht bei %@ zurückgezogen", uhr.name))
         }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
     }

@@ -41,8 +41,16 @@ final class BenachrichtigungTests: XCTestCase {
     /// Die Vorgaben der Uhr gehen nicht mit: `stack:true`, `hold:false`,
     /// `wakeup:false` sind dort ohnehin gültig, und die MQTT-Grenze ist knapp.
     func testEineSchlichteBenachrichtigungTraegtNurDieAnzeige() throws {
-        let json = try NGNutzlast.benachrichtigung(textrahmen(), .init())
+        let json = try NGNutzlast.benachrichtigung(
+            textrahmen(), .init(halten: false, aufwecken: false, wiederholungen: nil))
         XCTAssertEqual(json, try Anzeigen.nutzlast(textrahmen()))
+    }
+
+    /// Die Vorgaben der App: bleibt stehen, weckt, läuft zweimal, wird eingereiht.
+    func testDieVorgabenEinerNachricht() throws {
+        let json = try NGNutzlast.benachrichtigung(textrahmen(), .init())
+        XCTAssertTrue(json.hasSuffix(#","hold":true,"wakeup":true,"repeat":2}"#), json)
+        XCTAssertFalse(json.contains("stack"), "Einreihen ist auch die Vorgabe der Uhr")
     }
 
     func testDieFelderDerBenachrichtigungStehenHinterDerAnzeige() throws {
@@ -148,8 +156,23 @@ final class BenachrichtigungTests: XCTestCase {
         XCTAssertNotNil(try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
     }
 
-    func testOhneLebensdauerBleibenDieBytesWieBisher() throws {
+    func testEinRahmenOhneLebensdauerTraegtKeineUndBleibtWieBisher() throws {
         XCTAssertFalse(try Anzeigen.nutzlast(textrahmen()).contains("lifetime"))
+    }
+
+    /// Ohne Angabe verschwindet eine neue Anzeige nach 30 Minuten; ausgeschaltet
+    /// (`Lebensdauer.aus`) trägt sie nichts.
+    func testDerRahmenbauSetztDieVorgabeUndDasAusschalten() throws {
+        let sammlung = Iconsammlung(schreibordner: FileManager.default.temporaryDirectory)
+        for weg in [SendeWeg.text, .pixel] {
+            let vorgabe = try Meldungsbau.rahmen(Meldungsoptionen(text: "x", weg: weg), icon: nil, sammlung: sammlung)
+            XCTAssertEqual(vorgabe.lebensdauer, Lebensdauer(sekunden: 1800, ablauf: .entfernen), "\(weg)")
+            XCTAssertTrue(try Anzeigen.nutzlast(vorgabe).hasSuffix(#","lifetimeMs":1800000,"lifetimeExpiry":"remove"}"#))
+            let aus = try Meldungsbau.rahmen(Meldungsoptionen(text: "x", weg: weg, lebensdauer: .aus),
+                                             icon: nil, sammlung: sammlung)
+            XCTAssertNil(aus.lebensdauer, "\(weg)")
+            XCTAssertFalse(try Anzeigen.nutzlast(aus).contains("lifetime"))
+        }
     }
 
     func testDerRahmenbauReichtDieLebensdauerDurch() throws {
@@ -349,5 +372,75 @@ final class ErgebnislauscherTests: XCTestCase {
         let a = anzeigen(broker, frist: 0.5) { themen.append($0) }
         XCTAssertNoThrow(try a.benachrichtigungZurueckziehen(name: "tuer"))
         XCTAssertEqual(themen, ["uhr/cmd/notify/dismiss/tuer"])
+    }
+}
+
+/// Die Lebensdauer wird mit dem Platz gemerkt (`Slotstand`) — ein Dateiformat mit
+/// mehreren Schreibern.
+final class LebensdauerImSlotgedaechtnisTests: XCTestCase {
+    private let uhr = UUID()
+    private func gedaechtnis() -> Slotgedaechtnis {
+        Slotgedaechtnis(ordner: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString))
+    }
+
+    func testDieLebensdauerKommtMitDenReglernZurueck() throws {
+        let g = gedaechtnis()
+        for ablauf in Lebensablauf.allCases {
+            let o = Meldungsoptionen(text: "x", lebensdauer: Lebensdauer(sekunden: 600, ablauf: ablauf))
+            XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhr, platz: 2))
+            XCTAssertEqual(g.gemerkt(fuer: uhr, platz: 2)?.optionen?.lebensdauer,
+                           Lebensdauer(sekunden: 600, ablauf: ablauf))
+        }
+    }
+
+    /// Neu beschickt mit anderen Werten: die neuen gelten; ohne Angabe: die Vorgabe.
+    func testNeuBeschicktUeberschreibtDieLebensdauer() throws {
+        let g = gedaechtnis()
+        _ = g.merken(Meldungsoptionen(text: "x", lebensdauer: Lebensdauer(sekunden: 60)),
+                     icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        let o = try XCTUnwrap(g.gemerkt(fuer: uhr, platz: 1)?.optionen)
+        XCTAssertNil(o.lebensdauer)
+        XCTAssertEqual(o.wirksameLebensdauer, .vorgabe)
+    }
+
+    /// Ausgeschaltet ist eine Angabe wie jede andere und kommt zurück.
+    func testBehaltenWirdGemerkt() throws {
+        let g = gedaechtnis()
+        _ = g.merken(Meldungsoptionen(text: "x", lebensdauer: .aus), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        let o = try XCTUnwrap(g.gemerkt(fuer: uhr, platz: 1)?.optionen)
+        XCTAssertEqual(o.lebensdauer, .aus)
+        XCTAssertNil(o.wirksameLebensdauer)
+    }
+
+    func testOhneLebensdauerBleibtDieDateiWieBisher() throws {
+        let stand = try XCTUnwrap({ () -> Slotstand? in
+            let g = gedaechtnis()
+            _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+            return g.gemerkt(fuer: uhr, platz: 1)
+        }())
+        let json = String(decoding: try JSONEncoder().encode(stand), as: UTF8.self)
+        XCTAssertFalse(json.contains("lebens"), json)
+        let mit = Slotstand(platz: 1, text: "x", weg: "pixel", schrift: "S", groesse: 8, fett: false,
+                            grossbuchstaben: false, rand: 1, abstand: 1, waagrecht: "links", senkrecht: "oben",
+                            farbe: "#000000", tempo: "mittel", iconLaeuftMit: false, icon: nil, dauer: nil,
+                            lebensdauer: 90, lebensablauf: "markieren", pruefsumme: "p")
+        let wieder = try JSONDecoder().decode(Slotstand.self, from: JSONEncoder().encode(mit))
+        XCTAssertEqual(wieder, mit)
+    }
+
+    /// Eine Datei aus der Zeit vor der Lebensdauer — von einer älteren Fassung
+    /// geschrieben — bleibt lesbar.
+    func testAlteDateiOhneLebensdauerIstLesbar() throws {
+        let json = """
+        {"platz":3,"text":"Bus","weg":"pixel","schrift":"Silkscreen","groesse":8,"fett":false,\
+        "grossbuchstaben":false,"rand":1,"abstand":1,"waagrecht":"links","senkrecht":"oben",\
+        "farbe":"#00FF66","tempo":"mittel","iconLaeuftMit":false,"dauer":10,"pruefsumme":"abcd"}
+        """
+        let stand = try JSONDecoder().decode(Slotstand.self, from: Data(json.utf8))
+        XCTAssertNil(stand.lebensdauer)
+        XCTAssertNil(stand.optionen?.lebensdauer)
+        XCTAssertEqual(stand.optionen?.wirksameLebensdauer, .vorgabe, "ohne Angabe gilt die Vorgabe")
+        XCTAssertEqual(stand.optionen?.dauer, 10)
     }
 }

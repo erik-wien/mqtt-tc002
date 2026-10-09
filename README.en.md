@@ -106,9 +106,17 @@ mqtttc002 send "Mail arrived" --icon post --color "#FFAA00" --duration 10
 mqtttc002 send Attention --to Kitchen --center --bottom
 mqtttc002 clocks           # what is set up, * marks the targets
 mqtttc002 icons            # number and name
+mqtttc002 send Weather --lifetime 600       # expires by itself after 10 minutes
+mqtttc002 message "Door open" --name door   # one-time message over the loop
+mqtttc002 dismiss door                      # take the message away again
 mqtttc002 delete cli       # take the display off the clock again
 mqtttc002 help             # every option
 ```
+
+A message stays, wakes the panel and runs through twice; `--no-hold`,
+`--no-wakeup`, `--replace` and `--repeat` change that. Over MQTT the tool waits
+for the clock's answer: if the clock rejects, the reason goes to the error
+output and the call ends with 1; if no answer comes there is only a warning.
 
 Every subcommand and option has a German spelling as well, because the app is
 German: `senden`, `loeschen`, `umschalten`, `uhren`, `--an`, `--farbe`,

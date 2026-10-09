@@ -115,11 +115,20 @@ mqtttc002 uhren            # was eingerichtet ist, * sind die Ziele
 mqtttc002 icons            # Nummer und Name
 mqtttc002 bilder           # die 16×52-Anzeigen aus dem Editor
 mqtttc002 bild Herz        # eine davon schicken, statt Text
+mqtttc002 senden Wetter --lebensdauer 600   # verfällt nach 10 Minuten von selbst
+mqtttc002 nachricht "Tür offen" --name tuer # einmalige Nachricht über der Schleife
+mqtttc002 zurueckziehen tuer                # die Nachricht wieder wegnehmen
 mqtttc002 loeschen cli     # die Anzeige wieder von der Uhr nehmen
 mqtttc002 hilfe            # alle Optionen
 ```
 
 Zu lange Texte laufen von selbst als GIF durch, genau wie in der App.
+
+Eine Nachricht bleibt stehen, weckt das Panel und läuft zweimal durch;
+`--nicht-halten`, `--nicht-wecken`, `--ersetzen` und `--wiederholungen` ändern das.
+Über MQTT wartet das Werkzeug auf die Antwort der Uhr: Weist sie ab, steht der
+Grund auf der Fehlerausgabe und der Aufruf endet mit 1; bleibt die Antwort aus,
+gibt es nur eine Warnung.
 `--trocken` zeigt Thema, Nutzlast und Größe, ohne zu senden — und nebenbei, ob
 ein Broker-Kennwort gefunden wurde. Beim ersten Lauf fragt macOS einmal, ob das
 Werkzeug an den Schlüsselbundeintrag der App darf.

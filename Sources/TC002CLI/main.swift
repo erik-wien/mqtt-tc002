@@ -19,8 +19,8 @@ ist — HTTP oder MQTT. "mqtttc002 uhren" zeigt ihn an.
 
 AUFRUF
   mqtttc002 [senden] <Text>        Text an die Uhren schicken
-  mqtttc002 benachrichtigen <Text> eine einmalige Meldung ueber der Schleife
-  mqtttc002 zurueckziehen [<Name>] die sichtbare Benachrichtigung wegnehmen,
+  mqtttc002 nachricht <Text>       eine einmalige Nachricht ueber der Schleife
+  mqtttc002 zurueckziehen [<Name>] die sichtbare Nachricht wegnehmen,
                                    mit Namen die benannte
   mqtttc002 loeschen <Anzeige>     eine benannte Anzeige entfernen
   mqtttc002 umschalten <Anzeige>   zu einer Anzeige wechseln
@@ -50,19 +50,23 @@ OPTIONEN FUER „senden"
   --rand <Zahl>       Abstand zum Rand bei oben/unten (Vorgabe: 1)
   --abstand <Zahl>    leere Spalten zwischen den Zeichen (Vorgabe: 1)
   --dauer <Sekunden>  wie lange die Uhr die Anzeige zeigt
-  --lebensdauer <Sekunden>   danach verfaellt die Anzeige von selbst (nur senden)
+  --lebensdauer <Sekunden>   nach dieser Zeit verfaellt die Anzeige von selbst
+                      (nur senden; Vorgabe: 1800, also 30 Minuten)
+  --behalten          die Anzeige verfaellt nicht, sie bleibt bis zum Loeschen
   --ablauf entfernen|markieren   was dann geschieht: loeschen oder mit rotem
                       Rahmen stehen lassen (Vorgabe: entfernen)
+                      Die Lebensdauer wird mit dem Platz gemerkt.
   --tempo langsam|mittel|schnell   nur fuer durchlaufenden Text
   --trocken           nur zeigen, was gesendet wuerde
 
-OPTIONEN FUER „benachrichtigen"
-  Text und Format wie bei „senden"; --name ist hier der Name der Benachrichtigung
+OPTIONEN FUER „nachricht"
+  Text und Format wie bei „senden"; --name ist hier der Name der Nachricht
   (nur darueber laesst sie sich zurueckziehen), --dauer wie lange sie steht.
-  --halten            bleibt stehen, bis sie zurueckgezogen wird
+  Vorgabe: Die Nachricht bleibt stehen, weckt das Panel und laeuft zweimal durch.
+  --nicht-halten      steht nur --dauer lang, statt bis zum Zurueckziehen
+  --nicht-wecken      erscheint nicht bei ausgeschaltetem Panel
   --ersetzen          ersetzt die sichtbare, statt sich hinten anzustellen
-  --aufwecken         erscheint auch bei ausgeschaltetem Panel
-  --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft
+  --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft (Vorgabe: 2)
 
 Ueber MQTT wartet das Werkzeug auf die Antwort der Uhr (<Thema>/result): Weist die
 Uhr ab, steht Code und Feld auf der Fehlerausgabe und der Aufruf endet mit 1.
@@ -73,7 +77,8 @@ BEISPIELE
   mqtttc002 senden "Post da" --icon post --farbe "#FFAA00"
   mqtttc002 senden Achtung --an Kueche --dauer 10 --zentriert
   mqtttc002 senden Wetter --lebensdauer 600 --ablauf markieren
-  mqtttc002 benachrichtigen "Tuer offen" --name tuer --halten --aufwecken
+  mqtttc002 senden Dauerhaft --behalten
+  mqtttc002 nachricht "Tuer offen" --name tuer
   mqtttc002 zurueckziehen tuer
   mqtttc002 loeschen cli
 
@@ -292,7 +297,7 @@ func lauf() throws {
             }
         }
 
-    case .benachrichtigen(let text):
+    case .nachricht(let text):
         var m = optionen.meldung
         m.text = text
         let bo = optionen.benachrichtigung
@@ -316,19 +321,19 @@ func lauf() throws {
         }
         // Eine Benachrichtigung ist keine Anzeige: kein Platz, also auch nichts
         // fuers Slotgedaechtnis.
-        try anAlle(lokf("Benachrichtigung gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
+        try anAlle(lokf("Nachricht gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
             try anzeigen.benachrichtigen(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
                                                                 mass: Anzeigemass.fuer(uhr)), bo)
         }
 
     case .zurueckziehen(let name):
         if optionen.trocken {
-            print(name.map { lokf("Würde die Benachrichtigung „%@“ zurückziehen.", $0) }
-                  ?? lok("Würde die sichtbare Benachrichtigung zurückziehen."))
+            print(name.map { lokf("Würde die Nachricht „%@“ zurückziehen.", $0) }
+                  ?? lok("Würde die sichtbare Nachricht zurückziehen."))
             return
         }
-        try anAlle(name.map { lokf("Benachrichtigung „%@“ zurückgezogen", $0) }
-                   ?? lok("sichtbare Benachrichtigung zurückgezogen")) { anzeigen, _ in
+        try anAlle(name.map { lokf("Nachricht „%@“ zurückgezogen", $0) }
+                   ?? lok("sichtbare Nachricht zurückgezogen")) { anzeigen, _ in
             try anzeigen.benachrichtigungZurueckziehen(name: name)
         }
 

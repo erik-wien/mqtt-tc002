@@ -193,51 +193,56 @@ final class BildbefehlTests: XCTestCase {
 
 }
 
-/// Die Befehle `benachrichtigen`/`zurueckziehen` und die Lebensdauer von `senden`.
+/// Die Befehle `nachricht`/`zurueckziehen` und die Lebensdauer von `senden`.
 final class BenachrichtigungsbefehlTests: XCTestCase {
 
-    func testBenachrichtigenAufDeutschUndEnglisch() throws {
-        XCTAssertEqual(try Optionen.zerlegt(["benachrichtigen", "Tür", "offen"]).befehl,
-                       .benachrichtigen(text: "Tür offen"))
-        XCTAssertEqual(try Optionen.zerlegt(["notify", "Door"]).befehl, .benachrichtigen(text: "Door"))
+    func testNachrichtAufDeutschUndEnglisch() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["nachricht", "Tür", "offen"]).befehl,
+                       .nachricht(text: "Tür offen"))
+        XCTAssertEqual(try Optionen.zerlegt(["message", "Door"]).befehl, .nachricht(text: "Door"))
     }
 
-    func testDieFelderEinerBenachrichtigung() throws {
-        let o = try Optionen.zerlegt(["benachrichtigen", "x", "--name", "tuer", "--halten", "--ersetzen",
-                                      "--aufwecken", "--wiederholungen", "3", "--dauer", "8"])
+    /// Vorgabe: bleibt stehen, weckt, läuft zweimal durch, wird eingereiht.
+    func testDieVorgabenEinerNachricht() throws {
+        let o = try Optionen.zerlegt(["nachricht", "x"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
-            name: "tuer", halten: true, einreihen: false, aufwecken: true, wiederholungen: 3))
+            name: nil, halten: true, einreihen: true, aufwecken: true, wiederholungen: 2))
+    }
+
+    func testDieOptionenZumAbschaltenUndAendern() throws {
+        let o = try Optionen.zerlegt(["nachricht", "x", "--name", "tuer", "--nicht-halten", "--ersetzen",
+                                      "--nicht-wecken", "--wiederholungen", "3", "--dauer", "8"])
+        XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
+            name: "tuer", halten: false, einreihen: false, aufwecken: false, wiederholungen: 3))
         XCTAssertEqual(o.meldung.dauer, 8)
 
-        let e = try Optionen.zerlegt(["notify", "x", "--hold", "--replace", "--wakeup", "--repeat", "3"])
+        let e = try Optionen.zerlegt(["message", "x", "--no-hold", "--replace", "--no-wakeup", "--repeat", "3"])
         XCTAssertEqual(e.benachrichtigung, Benachrichtigungsoptionen(
-            name: nil, halten: true, einreihen: false, aufwecken: true, wiederholungen: 3))
+            name: nil, halten: false, einreihen: false, aufwecken: false, wiederholungen: 3))
     }
 
     /// Ohne `--name` hat sie keinen — die Vorgabe „cli" gilt nur für Anzeigen.
-    func testOhneNamenHatDieBenachrichtigungKeinen() throws {
-        let o = try Optionen.zerlegt(["benachrichtigen", "x"])
-        XCTAssertNil(o.benachrichtigung.name)
-        XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen())
+    func testOhneNamenHatDieNachrichtKeinen() throws {
+        XCTAssertNil(try Optionen.zerlegt(["nachricht", "x"]).benachrichtigung.name)
     }
 
-    func testBenachrichtigenNimmtDieFormatoptionenWieSenden() throws {
-        let o = try Optionen.zerlegt(["benachrichtigen", "grüße", "--gross", "--farbe", "#FF0000",
+    func testNachrichtNimmtDieFormatoptionenWieSenden() throws {
+        let o = try Optionen.zerlegt(["nachricht", "grüße", "--gross", "--farbe", "#FF0000",
                                       "--icon", "12", "--zentriert", "--tempo", "schnell"])
-        XCTAssertEqual(o.befehl, .benachrichtigen(text: "GRÜSSE"))
+        XCTAssertEqual(o.befehl, .nachricht(text: "GRÜSSE"))
         XCTAssertEqual(o.farbe, "#FF0000")
         XCTAssertEqual(o.iconNummer, "12")
         XCTAssertEqual(o.waagrecht, .mittig)
         XCTAssertEqual(o.tempo, .schnell)
     }
 
-    func testBenachrichtigenOhneTextWirdGemeldet() {
-        XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "--halten"]))
+    func testNachrichtOhneTextWirdGemeldet() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "--ersetzen"]))
     }
 
     func testWiederholungenMuessenPositivSein() {
         for w in ["0", "-1", "viel"] {
-            XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "x", "--wiederholungen", w]), w) { f in
+            XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "x", "--wiederholungen", w]), w) { f in
                 XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--wiederholungen") == true)
             }
         }
@@ -266,7 +271,28 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
     func testOhneAblaufWirdEntfernt() throws {
         XCTAssertEqual(try Optionen.zerlegt(["senden", "x", "--lebensdauer", "9"]).meldung.lebensdauer,
                        Lebensdauer(sekunden: 9, ablauf: .entfernen))
-        XCTAssertNil(try Optionen.zerlegt(["senden", "x"]).meldung.lebensdauer)
+    }
+
+    /// Ohne jede Angabe gilt die Vorgabe: 30 Minuten, `remove`.
+    func testOhneAngabeGiltDieVorgabe() throws {
+        let m = try Optionen.zerlegt(["senden", "x"]).meldung
+        XCTAssertNil(m.lebensdauer)
+        XCTAssertEqual(m.wirksameLebensdauer, Lebensdauer(sekunden: 1800, ablauf: .entfernen))
+    }
+
+    func testNurDerAblaufAendertDieVorgabeDerZeit() throws {
+        let m = try Optionen.zerlegt(["senden", "x", "--ablauf", "markieren"]).meldung
+        XCTAssertEqual(m.wirksameLebensdauer, Lebensdauer(sekunden: 1800, ablauf: .markieren))
+    }
+
+    func testBehaltenSchaltetDieLebensdauerAb() throws {
+        for schalter in ["--behalten", "--keep"] {
+            let m = try Optionen.zerlegt(["senden", "x", schalter]).meldung
+            XCTAssertEqual(m.lebensdauer, Lebensdauer.aus)
+            XCTAssertNil(m.wirksameLebensdauer, "die Uhr bekommt kein lifetimeMs")
+        }
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--behalten", "--lebensdauer", "5"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--keep", "--ablauf", "mark"]))
     }
 
     func testLebensdauerBrauchtEineZahlGroesserNull() {
@@ -276,12 +302,9 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         }
     }
 
-    func testUnbekannterAblaufUndAblaufOhneLebensdauer() {
+    func testUnbekannterAblaufWirdGemeldet() {
         XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--lebensdauer", "5", "--ablauf", "morgen"])) { f in
             XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("morgen") == true)
-        }
-        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--ablauf", "markieren"])) { f in
-            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--lebensdauer") == true)
         }
     }
 
@@ -289,10 +312,11 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
     /// Benachrichtigungen ist an einer Anzeige `422`: Beides wird gesagt, statt
     /// still nichts zu bewirken.
     func testOptionenDieDerBefehlNichtKennt() {
-        XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "x", "--lebensdauer", "5"])) { f in
+        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "x", "--lebensdauer", "5"])) { f in
             XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--lebensdauer") == true)
         }
-        for option in ["--halten", "--ersetzen", "--aufwecken"] {
+        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "x", "--behalten"]))
+        for option in ["--nicht-halten", "--ersetzen", "--nicht-wecken"] {
             XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", option]), option) { f in
                 XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains(option) == true)
             }
@@ -302,7 +326,7 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
 
     /// Eine Benachrichtigung trägt keine Lebensdauer in ihren Optionen.
     func testDieMeldungEinerBenachrichtigungHatKeineLebensdauer() throws {
-        XCTAssertNil(try Optionen.zerlegt(["benachrichtigen", "x"]).meldung.lebensdauer)
+        XCTAssertNil(try Optionen.zerlegt(["nachricht", "x"]).meldung.lebensdauer)
     }
 
     // MARK: - Hilfetext und Zerleger
@@ -311,7 +335,7 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
     /// Wert, falscher Befehl) heißt: Die Option ist bekannt.
     private func zerleggerKennt(_ option: String) -> Bool {
         for args in [["senden", "x", option], ["senden", "x", option, "1"],
-                     ["notify", "x", option], ["notify", "x", option, "1"]] {
+                     ["message", "x", option], ["message", "x", option, "1"]] {
             do { _ = try Optionen.zerlegt(args); return true }
             catch Optionen.Fehler.unbekannteOption(let o) where o == option { continue }
             catch { return true }

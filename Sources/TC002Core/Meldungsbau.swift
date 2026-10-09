@@ -64,9 +64,20 @@ public enum Lebensablauf: String, CaseIterable, Sendable, Codable {
 /// Nach dieser Zeit verfällt eine Anzeige von selbst (`lifetimeMs`). Gilt nur
 /// für Anzeigen; Benachrichtigungen nehmen den Schlüssel an und ignorieren ihn,
 /// darum geht er dort gar nicht erst mit.
+///
+/// `sekunden == 0` heißt wie bei der Uhr: nie. So hat eine Anzeige drei
+/// Zustände, ohne dass ein Dateiformat einen vierten Schlüssel braucht:
+/// nichts gesetzt (`Meldungsoptionen.lebensdauer == nil`) gilt als `vorgabe`,
+/// 0 als bewusst ausgeschaltet, alles andere als gewählt.
 public struct Lebensdauer: Equatable, Sendable, Codable {
     public var sekunden: Int
     public var ablauf: Lebensablauf
+
+    /// Eine neue Anzeige verschwindet nach 30 Minuten von selbst, wenn nichts
+    /// anderes gewählt ist; wer sie behalten will, schaltet es ab.
+    public static let vorgabe = Lebensdauer(sekunden: 30 * 60, ablauf: .entfernen)
+    /// Bewusst keine: die Anzeige bleibt, bis sie ersetzt oder gelöscht wird.
+    public static let aus = Lebensdauer(sekunden: 0)
 
     public init(sekunden: Int, ablauf: Lebensablauf = .entfernen) {
         self.sekunden = sekunden
@@ -100,9 +111,18 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var tempo: Lauftempo = .mittel
     public var iconLaeuftMit: Bool = false
     public var dauer: Int?
-    /// Optional und ohne Vorgabewert in der Datei: Ältere Verlaufsdateien kennen
-    /// den Schlüssel nicht und müssen lesbar bleiben.
+    /// `nil` heißt `Lebensdauer.vorgabe`, nicht „keine": Ältere Verlaufsdateien und
+    /// andere Schreiber kennen den Schlüssel nicht und müssen lesbar bleiben —
+    /// ihre Anzeigen bekommen dann wie jede neue die Vorgabe. Ausgeschaltet ist
+    /// `Lebensdauer.aus`.
     public var lebensdauer: Lebensdauer?
+
+    /// Was die Uhr bekommt: die gewählte oder die Vorgabe; `nil`, wenn
+    /// ausgeschaltet.
+    public var wirksameLebensdauer: Lebensdauer? {
+        let l = lebensdauer ?? .vorgabe
+        return l.sekunden > 0 ? l : nil
+    }
 
     public init(text: String,
                 weg: SendeWeg = .pixel,
@@ -314,10 +334,10 @@ public enum Meldungsbau {
                          herkunft: Meldungsherkunft(
                             optionen: o,
                             iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }),
-                         lebensdauer: o.lebensdauer)
+                         lebensdauer: o.wirksameLebensdauer)
         case .pixel:
             return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer,
-                         lebensdauer: o.lebensdauer)
+                         lebensdauer: o.wirksameLebensdauer)
         }
     }
 

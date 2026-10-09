@@ -55,6 +55,14 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// Stelle, statt es an dreien zu wiederholen.
     public var iconKante: Int?
     public var dauer: Int?
+    /// Die Lebensdauer in Sekunden und was danach geschieht (`entfernen` oder
+    /// `markieren`). Optional aus demselben Grund wie `iconKante`: Dateiformat
+    /// mit mehreren Schreibern, aeltere Dateien tragen beides nicht. `nil` heisst
+    /// `Lebensdauer.vorgabe` bzw. `entfernen`, 0 ausdruecklich keine — eine Datei
+    /// ohne Angabe bekommt also beim Wiederherstellen die Vorgabe, wie jede neue
+    /// Anzeige.
+    public var lebensdauer: Int?
+    public var lebensablauf: String?
     /// Fingerabdruck der Pixel, die diese Regler zum Sendezeitpunkt ergeben
     /// haben (`Slotgedaechtnis.pruefsumme(pixel:)`). Der Kern dieses Typs:
     /// Weicht die ueber den Broker gesehene Nutzlast davon ab — zerlegt in
@@ -69,7 +77,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
     public init(platz: Int, text: String, weg: String, schrift: String, groesse: Double,
                 fett: Bool, grossbuchstaben: Bool, rand: Int, abstand: Int, waagrecht: String,
                 senkrecht: String, farbe: String, tempo: String, iconLaeuftMit: Bool,
-                icon: String?, iconKante: Int? = nil, dauer: Int?, pruefsumme: String) {
+                icon: String?, iconKante: Int? = nil, dauer: Int?,
+                lebensdauer: Int? = nil, lebensablauf: String? = nil, pruefsumme: String) {
         self.platz = platz
         self.text = text
         self.weg = weg
@@ -87,6 +96,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
         self.icon = icon
         self.iconKante = iconKante
         self.dauer = dauer
+        self.lebensdauer = lebensdauer
+        self.lebensablauf = lebensablauf
         self.pruefsumme = pruefsumme
     }
 
@@ -109,7 +120,11 @@ public struct Slotstand: Codable, Hashable, Sendable {
                                 groesse: groesse, fett: fett, farbe: farbe,
                                 grossbuchstaben: grossbuchstaben, waagrecht: waagrecht,
                                 senkrecht: senkrecht, rand: rand, abstand: abstand,
-                                tempo: tempo, iconLaeuftMit: iconLaeuftMit, dauer: dauer)
+                                tempo: tempo, iconLaeuftMit: iconLaeuftMit, dauer: dauer,
+                                lebensdauer: lebensdauer.map {
+                                    Lebensdauer(sekunden: $0,
+                                                ablauf: Lebensablauf(rawValue: lebensablauf ?? "") ?? .entfernen)
+                                })
     }
 }
 
@@ -275,6 +290,8 @@ public struct Slotgedaechtnis: Sendable {
             // Schluessel im Zwischenspeicher von `AppZustand.gerastert`.
             iconKante: (icon == nil || iconKante == 8) ? nil : iconKante,
             dauer: optionen.dauer,
+            lebensdauer: optionen.lebensdauer?.sekunden,
+            lebensablauf: optionen.lebensdauer.flatMap { $0.ablauf == .entfernen ? nil : $0.ablauf.rawValue },
             pruefsumme: Self.pruefsumme(pixel: pixel))
         // Ein Platz traegt entweder Regler oder ein Bild, nie beides: Wer hier
         // schreibt, hat zuletzt gesendet, und ein Bild von vorher gehoert

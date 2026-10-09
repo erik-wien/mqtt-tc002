@@ -18,8 +18,12 @@ public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
     /// Wie oft laufender Text über das Bild zieht (`repeat`).
     public var wiederholungen: Int?
 
-    public init(name: String? = nil, halten: Bool = false, einreihen: Bool = true,
-                aufwecken: Bool = false, wiederholungen: Int? = nil) {
+    /// Die Vorgaben dieser App weichen von denen der Uhr ab: Eine Nachricht
+    /// bleibt stehen (`halten`), weckt das Panel (`aufwecken`) und läuft zweimal
+    /// durch (`wiederholungen`); eingereiht wird sie wie bei der Uhr. Darum geht
+    /// `hold:true` und `wakeup:true` ausdrücklich hinaus.
+    public init(name: String? = nil, halten: Bool = true, einreihen: Bool = true,
+                aufwecken: Bool = true, wiederholungen: Int? = 2) {
         self.name = name
         self.halten = halten
         self.einreihen = einreihen

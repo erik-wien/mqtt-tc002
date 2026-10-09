@@ -79,6 +79,12 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Icon mitscrollen", description: "Gilt nur, wenn der Text nicht ins Display passt.")
     var iconLaeuftMit: Bool?
 
+    @Parameter(title: "Lebensdauer in Minuten", description: "Nach dieser Zeit verschwindet die Anzeige von selbst. Ohne Angabe: 30 Minuten.", inclusiveRange: (1, 1440))
+    var lebensdauer: Int?
+
+    @Parameter(title: "Behalten", description: "Die Anzeige verschwindet nicht von selbst, sondern bleibt, bis sie ersetzt oder entfernt wird.", default: false)
+    var behalten: Bool
+
     /// Die Formatangaben als das, was der Kern versteht. Die Regeln — was eine
     /// nicht angebotene Größe bedeutet, was ein Schriftwechsel mit ihr macht —
     /// stehen in `Formatangaben`, nicht hier: Sie sind eine Rechnung über
@@ -110,6 +116,8 @@ struct MeldungSendenIntent: AppIntent {
             \.$abstand
             \.$tempo
             \.$iconLaeuftMit
+            \.$lebensdauer
+            \.$behalten
         }
     }
 
@@ -130,6 +138,12 @@ struct MeldungSendenIntent: AppIntent {
         }
         optionen.text = text
         if let dauer, dauer > 0 { optionen.dauer = dauer }
+        // Ohne Angabe bleibt `nil`, und das heisst: die Vorgabe (30 Minuten).
+        if behalten {
+            optionen.lebensdauer = .aus
+        } else if let lebensdauer {
+            optionen.lebensdauer = Lebensdauer(sekunden: lebensdauer * 60)
+        }
 
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])
@@ -169,17 +183,26 @@ struct MeldungSendenIntent: AppIntent {
 
         // Blockierende Netzarbeit gehört nicht auf den Hauptthread, auch nicht
         // im Intent — dort wartet sonst das System auf uns.
+        let ausgeblieben = Ausgebliebene()
         let gesendet = try await Task.detached(priority: .userInitiated) { () -> [String] in
             var erledigt: [String] = []
             for ziel in ziele {
                 // Derselbe Kanal wie in der App: Der Kurzbefehl folgt der
-                // Betriebsart, die fuer diese Uhr eingestellt ist.
+                // Betriebsart, die fuer diese Uhr eingestellt ist. Ueber MQTT
+                // wartet die Sendung auf `<Thema>/result`: Weist die Uhr ab,
+                // zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus,
+                // steht ein Hinweis im Dialog.
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()))?
+                    .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(ziel.name) }) else { continue }
                 // Je Uhr in deren Anzeigemass gerastert.
-                try anzeigen.zeigen(try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung,
-                                                           mass: Anzeigemass.fuer(ziel)),
-                                    auf: name)
+                do {
+                    try anzeigen.zeigen(try Meldungsbau.rahmen(optionen, icon: icon, sammlung: sammlung,
+                                                               mass: Anzeigemass.fuer(ziel)),
+                                        auf: name)
+                } catch {
+                    throw KurzbefehlFehler(uhr: ziel.name, error)
+                }
                 erledigt.append(ziel.name)
                 // Erfolgreich gesendet: das Gedaechtnis merkt sich die Regler
                 // fuer diesen Platz auf dieser Uhr. Schlaegt das Schreiben
@@ -192,7 +215,8 @@ struct MeldungSendenIntent: AppIntent {
             return erledigt
         }.value
 
-        return .result(dialog: IntentDialog(stringLiteral: lokf("An %@ geschickt.", gesendet.joined(separator: ", "))))
+        return .result(dialog: IntentDialog(stringLiteral:
+            lokf("An %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis))
     }
 
     /// Die gemeinten Uhren, oder ein Fehler, der sagt was fehlt.
@@ -387,7 +411,7 @@ struct BildSendenIntent: AppIntent {
     }
 }
 
-/// Damit die beiden ohne Zutun in Siri und in der Suche auftauchen. Ohne diesen
+/// Damit sie ohne Zutun in Siri und in der Suche auftauchen. Ohne diesen
 /// Anbieter müsste man sie erst von Hand in einen Kurzbefehl einbauen.
 struct TC002Kurzbefehle: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
@@ -401,6 +425,16 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
                               "Send an image with \(.applicationName)"],
                     shortTitle: "Bild schicken",
                     systemImageName: "photo")
+        AppShortcut(intent: BenachrichtigungSendenIntent(),
+                    phrases: ["Schicke eine Nachricht mit \(.applicationName)",
+                              "Send a message with \(.applicationName)"],
+                    shortTitle: "Nachricht senden",
+                    systemImageName: "bell")
+        AppShortcut(intent: BenachrichtigungZurueckziehenIntent(),
+                    phrases: ["Ziehe eine Nachricht zurück mit \(.applicationName)",
+                              "Dismiss a message with \(.applicationName)"],
+                    shortTitle: "Nachricht zurückziehen",
+                    systemImageName: "bell.slash")
         AppShortcut(intent: MeldungLoeschenIntent(),
                     phrases: ["Nimm die Meldung von der Uhr mit \(.applicationName)",
                               "Clear a message with \(.applicationName)"],
