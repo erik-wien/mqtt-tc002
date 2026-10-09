@@ -58,6 +58,15 @@ public final class AppZustand {
     /// Widerspricht jemand ausdruecklich (Loeschen, leere Nutzlast), ist er
     /// sofort weg.
     private var frischBestaetigt: [UUID: Set<String>] = [:]
+    /// Die Uhren, auf denen die App eine gehaltene Nachricht hingeschickt und
+    /// noch nicht zurückgezogen hat. Die Uhr meldet das nicht zurück; es ist
+    /// die Buchführung der App und gilt, bis sie zurückzieht oder neu startet.
+    public private(set) var gehalteneNachrichten: Set<UUID> = []
+    /// Die Anzeigen, die die App je Uhr aus der Schleife genommen hat
+    /// (`anzeigeSchalten`). Sie bleiben belegt; nur der Auftritt entfällt. Der
+    /// Stand liegt nur im Speicher: Die Uhr behält ihn, die App weiß es nach
+    /// einem Neustart nicht mehr.
+    public private(set) var ausgeschalteteAnzeigen: [UUID: Set<String>] = [:]
     /// Wer von `frischBestaetigt` schon eine Meldung ohne sich ueberlebt hat.
     private var karenzVerbraucht: [UUID: Set<String>] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/availability`, §3.4).
@@ -554,6 +563,9 @@ public final class AppZustand {
         // bliebe der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht
         // mehr gibt.
         gemeldeteAnzeigen[id]?.removeAll { $0 == name }
+        // Eine gelöschte Anzeige hat keinen Schalter mehr; eine neue unter
+        // demselben Namen läuft wieder in der Schleife.
+        ausgeschalteteAnzeigen[id]?.remove(name)
     }
 
     /// Was nach einer erfolgreichen Loeschung auf einer Uhr zu buchen ist:
@@ -1431,6 +1443,7 @@ public final class AppZustand {
             try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen)
         }, was: lok("Nachricht")) { uhr, weg in
             erreicht.append(uhr.name)
+            if optionen.halten { gehalteneNachrichten.insert(uhr.id) }
             if weg == .mqtt { antwortErwarten(lok("Nachricht"), uhr: uhr) }
             log(lokf("Nachricht an %@ gesendet", uhr.name))
         }
@@ -1446,6 +1459,9 @@ public final class AppZustand {
             try anzeigen.benachrichtigungZurueckziehen(name: name)
         }, was: lok("Nachricht zurückziehen")) { uhr, _ in
             erreicht.append(uhr.name)
+            // Ein Name zieht nur eine bestimmte zurück; ob die gehaltene sichtbare
+            // dieselbe ist, wissen wir nicht — dann bleibt der Eintrag stehen.
+            if name == nil { gehalteneNachrichten.remove(uhr.id) }
             log(lokf("Nachricht bei %@ zurückgezogen", uhr.name))
         }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
@@ -1461,10 +1477,28 @@ public final class AppZustand {
             try anzeigen.schalten(name, an: an)
         }, was: lokf("Schalten von „%@“", name)) { uhr, _ in
             erreicht.append(uhr.name)
+            if an {
+                ausgeschalteteAnzeigen[uhr.id]?.remove(name)
+            } else {
+                ausgeschalteteAnzeigen[uhr.id, default: []].insert(name)
+            }
             log(an ? lokf("%@ auf %@ eingeschaltet", name, uhr.name)
                    : lokf("%@ auf %@ ausgeschaltet", name, uhr.name))
         }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Läuft der Platz bei der angesehenen Uhr in der Schleife? Ein ausgeschalteter
+    /// Platz bleibt belegt (`anzeigeSchalten`).
+    public func inSchleife(platz: Int) -> Bool {
+        guard let uhr = referenzUhr else { return true }
+        return ausgeschalteteAnzeigen[uhr.id]?.contains(Meldungsplatz.name(fuer: platz)) != true
+    }
+
+    /// Steht bei einer der gewählten Uhren eine gehaltene Nachricht, die die App
+    /// geschickt hat? Daran hängt „Nachricht zurückziehen“.
+    public var nachrichtGehalten: Bool {
+        ziele().contains { gehalteneNachrichten.contains($0.id) }
     }
 
     /// Eine Anzeige vor oder zurueck, bei den gewaehlten Uhren.

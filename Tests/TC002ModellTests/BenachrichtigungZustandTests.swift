@@ -279,4 +279,36 @@ final class BenachrichtigungZustandTests: XCTestCase {
         XCTAssertEqual(z.slotzustand(1, belegt: false), .frei)
         XCTAssertNil(Slotgedaechtnis.gemeinsam.gemerkt(fuer: uhr.id, platz: 1))
     }
+
+    // MARK: - Buchführung für die Oberfläche
+
+    func testZurueckziehenGiltNurFuerEineGehalteneNachricht() async throws {
+        let z = try zustand(mqttUhr, sender: Mitschreiber())
+        XCTAssertFalse(z.nachrichtGehalten)
+        await z.benachrichtigen(rahmenFuer: { _ in self.text() }, .init(halten: false))
+        XCTAssertFalse(z.nachrichtGehalten)
+        await z.benachrichtigen(rahmenFuer: { _ in self.text() }, .init(halten: true))
+        XCTAssertTrue(z.nachrichtGehalten)
+        await z.benachrichtigungZurueckziehen()
+        XCTAssertFalse(z.nachrichtGehalten)
+    }
+
+    func testEineAbgewieseneNachrichtIstNichtGehalten() async throws {
+        let z = try zustand(mqttUhr, sender: Mitschreiber())
+        await z.benachrichtigen(rahmenFuer: { _ in throw NGFehler.ungueltigerName("x") }, .init(halten: true))
+        XCTAssertFalse(z.nachrichtGehalten)
+    }
+
+    func testAusgeschalteterPlatzBleibtBelegtUndEineLoeschungHebtDenSchalterAuf() async throws {
+        let z = try zustand(mqttUhr, sender: Mitschreiber())
+        XCTAssertTrue(z.inSchleife(platz: 2))
+        await z.anzeigeSchalten("meldung2", an: false)
+        XCTAssertFalse(z.inSchleife(platz: 2))
+        XCTAssertTrue(z.inSchleife(platz: 1))
+        await z.anzeigeSchalten("meldung2", an: true)
+        XCTAssertTrue(z.inSchleife(platz: 2))
+        await z.anzeigeSchalten("meldung2", an: false)
+        z.anzeigeGeloescht("meldung2", fuer: mqttUhr, gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        XCTAssertTrue(z.inSchleife(platz: 2))
+    }
 }
