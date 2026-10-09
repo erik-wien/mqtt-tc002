@@ -83,6 +83,9 @@ public final class MQTTAbonnent: @unchecked Sendable {
 
     /// Wird bei jeder eintreffenden Nachricht gerufen, auf einer eigenen Warteschlange.
     public var beiNachricht: ((_ thema: String, _ nutzlast: Data) -> Void)?
+    /// Wird je bestaetigtem Abonnement (SUBACK) gerufen. Erst danach ist sicher,
+    /// dass der Broker eine Veroeffentlichung an diese Verbindung weiterreicht.
+    public var beiAbonniert: (() -> Void)?
     /// Wird gerufen, wenn die Verbindung steht oder abreisst.
     public var beiZustand: ((_ verbunden: Bool, _ grund: String?) -> Void)?
 
@@ -212,8 +215,12 @@ public final class MQTTAbonnent: @unchecked Sendable {
             guard let (thema, nutzlast) = MQTTPaket.publishGelesen(paket) else { return }
             beiNachricht?(thema, nutzlast)
         case 0x90:
-            if let antwort = MQTTPaket.subackGelesen(paket), !antwort.angenommen {
-                beiZustand?(false, lok("Der Broker hat das Abonnement abgelehnt."))
+            if let antwort = MQTTPaket.subackGelesen(paket) {
+                if antwort.angenommen {
+                    beiAbonniert?()
+                } else {
+                    beiZustand?(false, lok("Der Broker hat das Abonnement abgelehnt."))
+                }
             }
         case 0xD0:
             break                                   // PINGRESP — als Lebenszeichen oben verbucht

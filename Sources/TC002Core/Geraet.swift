@@ -137,6 +137,31 @@ public struct Geraet {
                       koerper: Data(NGNutzlast.umschalten(auf: name).utf8))
     }
 
+    /// Reiht eine Benachrichtigung ein (`POST /api/v1/notifications`, §5.6). Der
+    /// Name steht im Rumpf; `409`-artige Fälle gibt es hier nicht, eine volle
+    /// Warteschlange (32) ist `507`.
+    public func benachrichtigen(_ json: String) throws {
+        try ngAnfrage("POST", "/api/v1/notifications", koerper: Data(json.utf8))
+    }
+
+    /// Nimmt die sichtbare Benachrichtigung weg (`DELETE …/notifications/active`,
+    /// immer `200`) oder die benannte, auch eine wartende (`404`, wenn keine so heißt).
+    public func benachrichtigungZurueckziehen(name: String?) throws {
+        try ngAnfrage("DELETE", "/api/v1/notifications/" + (name.map(ngName) ?? "active"), koerper: nil)
+    }
+
+    /// Schaltet eine Anzeige ein oder aus (`PUT /api/v1/apps/{name}/enabled`,
+    /// Rumpf `true`/`false`). Eine abgeschaltete App behält ihren Platz in der Schleife.
+    public func anzeigeSchalten(name: String, an: Bool) throws {
+        try ngAnfrage("PUT", "/api/v1/apps/" + ngName(name) + "/enabled",
+                      koerper: Data((an ? "true" : "false").utf8))
+    }
+
+    /// Eine Anzeige vor oder zurück (`POST /api/v1/apps/next` bzw. `/previous`).
+    public func blaettern(vor: Bool) throws {
+        try ngAnfrage("POST", "/api/v1/apps/" + (vor ? "next" : "previous"), koerper: nil)
+    }
+
     /// Ein Anzeigenname im Pfad. `[A-Za-z0-9_-]{1,32}` ist alles, was NG
     /// annimmt (§8) — was daneben liegt, wird trotzdem kodiert statt von Hand
     /// eingesetzt, sonst zerlegte ein Schraegstrich im Namen die Route.

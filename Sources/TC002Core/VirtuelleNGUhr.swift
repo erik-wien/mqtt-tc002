@@ -59,6 +59,12 @@ public enum JSONWert: Equatable, Sendable, Codable {
 public struct NGBenachrichtigung: Equatable, Sendable {
     public var name: String?
     public var nutzlast: [String: JSONWert]
+
+    /// `hold`: bleibt, bis sie weggenommen wird. Gespeichert, nicht gespielt —
+    /// die virtuelle Uhr kennt keine Zeit.
+    public var haelt: Bool { nutzlast["hold"] == .bool(true) }
+    /// `wakeup`: erscheint auch bei ausgeschaltetem Panel.
+    public var weckt: Bool { nutzlast["wakeup"] == .bool(true) }
 }
 
 /// Eine App in der Liste der NG-Uhr. `nutzlast` ist bei eingebauten Apps `nil`.
@@ -67,6 +73,15 @@ public struct NGApp: Equatable, Sendable {
     public var aktiv: Bool
     public var eingebaut: Bool
     public var nutzlast: JSONWert?
+    /// Die Lebensdauer ist abgelaufen und `lifetimeExpiry` war `mark`: Die
+    /// Anzeige bleibt, die Uhr zeichnet ihr einen dunkelroten Rahmen (§5.4).
+    public var markiert = false
+
+    /// `lifetimeMs` der Nutzlast; `nil` bei 0 (nie) und wo es fehlt.
+    public var lebensdauerMs: Int? {
+        guard case .objekt(let o)? = nutzlast, let ms = o["lifetimeMs"]?.ganzzahl, ms > 0 else { return nil }
+        return ms
+    }
 }
 
 public struct NGIndikator: Equatable, Sendable {
@@ -725,11 +740,13 @@ public enum VirtuelleNGUhr {
         switch wert {
         case .objekt(let o):
             guard !o.isEmpty else { return ungueltig("body required") }
+            if let falsch = pruefeAnzeigenschluessel(o) { return falsch }
             neue = [(name, wert)]
         case .liste(let l):
             guard !l.isEmpty else { return ungueltig("body required") }
             for (i, e) in l.enumerated() {
-                guard case .objekt = e else { return ungueltig("must be an object", feld: "[\(i)]") }
+                guard case .objekt(let o) = e else { return ungueltig("must be an object", feld: "[\(i)]") }
+                if let falsch = pruefeAnzeigenschluessel(o) { return falsch }
                 neue.append((name + String(i), e))
             }
         default:
@@ -753,6 +770,43 @@ public enum VirtuelleNGUhr {
         }
         z.apps = apps
         return ok
+    }
+
+    /// Die Schlüssel, die nur `POST /notifications` annimmt (§5.6). In einer
+    /// gepushten Anzeige sind sie `422`.
+    static let nurFuerBenachrichtigungen = ["name", "hold", "stack", "wakeup", "sound"]
+
+    /// Prüft, was §5.4 und §5.6 für eine Anzeige verlangen: keine Schlüssel nur für
+    /// Benachrichtigungen, und `lifetimeExpiry` aus der Liste. Ein falscher Typ
+    /// bei `lifetimeMs` ist kein Fehler, der Wert wird übergangen (§5).
+    private static func pruefeAnzeigenschluessel(_ o: [String: JSONWert]) -> Antwort? {
+        if let falsch = nurFuerBenachrichtigungen.first(where: { o[$0] != nil }) {
+            return ungueltig("not allowed in an app", feld: falsch)
+        }
+        return pruefeAblauf(o)
+    }
+
+    private static func pruefeAblauf(_ o: [String: JSONWert]) -> Antwort? {
+        if case .text(let wort)? = o["lifetimeExpiry"], !["remove", "mark"].contains(wort) {
+            return ungueltig("must be remove or mark", feld: "lifetimeExpiry")
+        }
+        return nil
+    }
+
+    /// Die Lebensdauer einer Anzeige ist um: `remove` löscht sie, `mark` lässt
+    /// sie stehen und markiert sie. Die virtuelle Uhr kennt keine Zeit — der
+    /// Test oder der Aufrufer bestimmt, wann das geschieht.
+    public static func lebensdauerAbgelaufen(_ name: String, _ z: inout NGUhrzustand) {
+        guard let i = z.apps.firstIndex(where: { !$0.eingebaut && $0.name == name }),
+              z.apps[i].lebensdauerMs != nil else { return }
+        if case .objekt(let o)? = z.apps[i].nutzlast, o["lifetimeExpiry"] == .text("mark") {
+            z.apps[i].markiert = true
+            return
+        }
+        z.apps.remove(at: i)
+        if !z.apps.contains(where: { $0.name == z.aktiveApp }) {
+            z.aktiveApp = z.apps.first?.name ?? ""
+        }
     }
 
     private static func istNummeriert(_ n: String, von name: String) -> Bool {
@@ -812,8 +866,10 @@ public enum VirtuelleNGUhr {
         var name: String?
         if let n = o["name"] {
             guard case .text(let s) = n else { return ungueltig("must be a string", feld: "name") }
+            guard gueltigerName(s), s != "active" else { return ungueltigerName }
             name = s
         }
+        if let falsch = pruefeAblauf(o) { return falsch }
         var stapeln = true
         if let st = o["stack"] {
             guard case .bool(let b) = st else { return ungueltig("must be a boolean", feld: "stack") }

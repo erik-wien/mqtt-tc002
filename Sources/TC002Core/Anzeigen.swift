@@ -20,6 +20,15 @@ public struct Anzeigen {
         case http(Geraet)
     }
     private let kanal: Kanal
+
+    /// Wie lange und von wem auf `<Thema>/result` gewartet wird — nur für
+    /// Absender, die nicht ohnehin am Broker mitlesen (Werkzeug, Kurzbefehle).
+    private struct Quittung {
+        let lauscher: ErgebnisLauschend
+        let frist: TimeInterval
+        let beiAusbleiben: @Sendable (String) -> Void
+    }
+    private var quittung: Quittung?
     /// Das Anzeigemass der Ziel-Uhr, falls bekannt: Ein fertiges Bild in anderer
     /// Groesse wird vor dem Senden abgewiesen (`NGFehler.massPasstNicht`).
     private let anzeigemass: Anzeigemass?
@@ -42,6 +51,37 @@ public struct Anzeigen {
         kanal = .http(geraet)
     }
 
+    /// Dieselbe Uhr, aber jede MQTT-Sendung wartet auf die Antwort der Uhr
+    /// (`<Thema>/result`, §3.4): `ok:false` wirft `NGFehler.abgewiesen`, bleibt
+    /// die Antwort bis `frist` aus, ruft es `beiAusbleiben` mit dem Thema — eine
+    /// Warnung und kein Fehler, denn es kann auch am Mitlesen liegen (dieselbe
+    /// Bedeutung wie in der App). Über HTTP ändert sich nichts: Dort ist der
+    /// Status die Antwort.
+    public func quittierend(frist: TimeInterval = 5,
+                            lauscher: ErgebnisLauschend = MQTTErgebnislauscher(),
+                            beiAusbleiben: @escaping @Sendable (String) -> Void) -> Anzeigen {
+        var kopie = self
+        kopie.quittung = Quittung(lauscher: lauscher, frist: frist, beiAusbleiben: beiAusbleiben)
+        return kopie
+    }
+
+    /// Veröffentlicht, und wartet dabei — falls gewünscht — auf die Antwort.
+    private func veroeffentlichen(_ daten: Data, an thema: String, sender: NachrichtSendend,
+                                  zugang: MQTTZugang) throws {
+        guard let quittung else {
+            try sender.senden(daten, an: thema, zugang: zugang)
+            return
+        }
+        let antwort = try quittung.lauscher.erwarten(thema: thema, zugang: zugang, frist: quittung.frist) {
+            try sender.senden(daten, an: thema, zugang: zugang)
+        }
+        guard let antwort else { quittung.beiAusbleiben(thema); return }
+        // `.unlesbar` ist keine Antwort auf ein Kommando; die App liest es ebenso.
+        if case .abgewiesen(let grund) = NGNutzlast.ergebnis(antwort) {
+            throw NGFehler.abgewiesen(grund)
+        }
+    }
+
     /// Was auf dem Thema landet bzw. im Rumpf steht — dieselben Bytes auf
     /// beiden Kanaelen.
     ///
@@ -51,6 +91,14 @@ public struct Anzeigen {
     /// abgelehnte Veroeffentlichung, und stillschweigend nichts zu tun ist das
     /// Gegenteil einer Loesung.
     public static func nutzlast(_ frame: Frame) throws -> String {
+        let grund = try grundnutzlast(frame)
+        guard let lebensdauer = frame.lebensdauer else { return grund }
+        return NGNutzlast.ergaenzt(grund, um: NGNutzlast.lebensdauerfelder(lebensdauer))
+    }
+
+    /// Die Nutzlast ohne `lifetimeMs`/`lifetimeExpiry`: Eine Benachrichtigung
+    /// nimmt beide an und ignoriert sie, sie gehören nur in eine Anzeige.
+    static func grundnutzlast(_ frame: Frame) throws -> String {
         if let pixel = frame.pixel { return try Pixelweg.nutzlast(pixel, dauer: frame.dauer) }
         guard let herkunft = frame.herkunft else { throw NGFehler.leer }
         return try NGNutzlast.anzeige(herkunft.optionen,
@@ -76,7 +124,7 @@ public struct Anzeigen {
                                               themaBytes: thema.utf8.count, betriebsart: .mqtt)
             switch weg {
             case .mqtt:
-                try sender.senden(daten, an: thema, zugang: zugang)
+                try veroeffentlichen(daten, an: thema, sender: sender, zugang: zugang)
             case .http:
                 guard let ausweich else { throw NGFehler.keineAdresseFuerGrosse(bytes: daten.count) }
                 try ausweich.anzeigeSetzen(json, name: name)
@@ -94,7 +142,8 @@ public struct Anzeigen {
     public func loeschen(_ name: String) throws {
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, _):
-            try sender.senden(Data(), an: NGThema.anzeige(praefix: praefix, name: name), zugang: zugang)
+            try veroeffentlichen(Data(), an: NGThema.anzeige(praefix: praefix, name: name),
+                                 sender: sender, zugang: zugang)
         case .http(let geraet):
             try geraet.anzeigeLoeschen(name: name)
         }
@@ -103,10 +152,83 @@ public struct Anzeigen {
     public func umschalten(auf name: String) throws {
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, _):
-            try sender.senden(Data(NGNutzlast.umschalten(auf: name).utf8),
-                              an: NGThema.umschalten(praefix: praefix), zugang: zugang)
+            try veroeffentlichen(Data(NGNutzlast.umschalten(auf: name).utf8),
+                                 an: NGThema.umschalten(praefix: praefix), sender: sender, zugang: zugang)
         case .http(let geraet):
             try geraet.umschalten(auf: name)
+        }
+    }
+
+    /// Reiht eine Benachrichtigung ein (`cmd/notify` bzw. `POST /api/v1/notifications`).
+    /// Dieselbe Rasterung, dieselbe Größenweiche MQTT ↔ HTTP wie `zeigen` — nur
+    /// ohne Lebensdauer und mit den Feldern aus §5.6.
+    @discardableResult
+    public func benachrichtigen(_ frame: Frame, _ optionen: Benachrichtigungsoptionen = .init()) throws -> Zustellweg {
+        if let mass = anzeigemass, let pixel = frame.pixel,
+           pixel.breite != mass.breite || pixel.hoehe != mass.hoehe {
+            throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
+                                          anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
+        }
+        let json = try NGNutzlast.benachrichtigung(frame, optionen)
+        let daten = Data(json.utf8)
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix, let ausweich):
+            let thema = NGThema.benachrichtigung(praefix: praefix)
+            let weg = try Pixelweg.zustellweg(nutzlastBytes: daten.count,
+                                              themaBytes: thema.utf8.count, betriebsart: .mqtt)
+            switch weg {
+            case .mqtt:
+                try veroeffentlichen(daten, an: thema, sender: sender, zugang: zugang)
+            case .http:
+                guard let ausweich else { throw NGFehler.keineAdresseFuerGrosse(bytes: daten.count) }
+                try ausweich.benachrichtigen(json)
+            }
+            return weg
+        case .http(let geraet):
+            _ = try Pixelweg.zustellweg(nutzlastBytes: daten.count, themaBytes: 0, betriebsart: .http)
+            try geraet.benachrichtigen(json)
+            return .http
+        }
+    }
+
+    /// Nimmt die sichtbare Benachrichtigung weg, mit `name` die benannte (auch
+    /// eine wartende). Die sichtbare zu nehmen ist immer `200`, auch wenn keine
+    /// zu sehen ist; ein Name, den es nicht gibt, ist `404` bzw. `notFound`.
+    public func benachrichtigungZurueckziehen(name: String? = nil) throws {
+        if let name, !Benachrichtigungsoptionen.nameGueltig(name) {
+            throw NGFehler.ungueltigerName(name)
+        }
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix, _):
+            try veroeffentlichen(Data(), an: NGThema.zurueckziehen(praefix: praefix, name: name),
+                                 sender: sender, zugang: zugang)
+        case .http(let geraet):
+            try geraet.benachrichtigungZurueckziehen(name: name)
+        }
+    }
+
+    /// Schaltet eine Anzeige ein oder aus (`cmd/apps/<name>/enabled`). Sie behält
+    /// ihren Platz in der Schleife; nur ihr Auftritt entfällt.
+    public func schalten(_ name: String, an: Bool) throws {
+        guard Anzeigenname.gueltig(name) else { throw NGFehler.ungueltigerName(name) }
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix, _):
+            try veroeffentlichen(Data((an ? "true" : "false").utf8),
+                                 an: NGThema.freigabe(praefix: praefix, name: name),
+                                 sender: sender, zugang: zugang)
+        case .http(let geraet):
+            try geraet.anzeigeSchalten(name: name, an: an)
+        }
+    }
+
+    /// Eine Anzeige vor oder zurück in der Schleife.
+    public func blaettern(vor: Bool) throws {
+        switch kanal {
+        case .mqtt(let sender, let zugang, let praefix, _):
+            try veroeffentlichen(Data(), an: NGThema.blaettern(praefix: praefix, vor: vor),
+                                 sender: sender, zugang: zugang)
+        case .http(let geraet):
+            try geraet.blaettern(vor: vor)
         }
     }
 

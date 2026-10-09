@@ -50,6 +50,8 @@ public struct Frame: Equatable, Sendable {
     public var dauer: Int?
     /// Siehe `Meldungsherkunft` — steht daneben, nicht darin.
     public var herkunft: Meldungsherkunft?
+    /// Nur für Anzeigen (`Anzeigen.zeigen`); eine Benachrichtigung ignoriert sie.
+    public var lebensdauer: Lebensdauer?
 
     /// Was hier hinausgeht, in einem Satz — fuer das Protokoll.
     public var beschreibung: String {
@@ -60,11 +62,14 @@ public struct Frame: Equatable, Sendable {
             teile.append(lokf("Text „%@“", herkunft.optionen.text))
         }
         if let dauer { teile.append(lokf("%d s", dauer)) }
+        if let lebensdauer { teile.append(lokf("Lebensdauer %d s", lebensdauer.sekunden)) }
         return teile.joined(separator: " · ")
     }
 
-    public init(pixel: Pixelinhalt? = nil, dauer: Int? = nil, herkunft: Meldungsherkunft? = nil) {
+    public init(pixel: Pixelinhalt? = nil, dauer: Int? = nil, herkunft: Meldungsherkunft? = nil,
+                lebensdauer: Lebensdauer? = nil) {
         self.pixel = pixel; self.dauer = dauer
         self.herkunft = herkunft
+        self.lebensdauer = lebensdauer
     }
 }

@@ -25,6 +25,11 @@ public enum NGFehler: Error, LocalizedError {
     /// 26 x 8 vergroessert, sonst mittig oder abgeschnitten); gesendet wird es
     /// darum nicht.
     case massPasstNicht(bildBreite: Int, bildHoehe: Int, anzeigeBreite: Int, anzeigeHoehe: Int)
+    /// Ein Name, den die Uhr nicht annimmt (`[A-Za-z0-9_-]{1,32}`, §8) — und der
+    /// in einem MQTT-Thema ein Trennzeichen oder einen Platzhalter ergäbe.
+    case ungueltigerName(String)
+    /// `<Thema>/result` meldete `ok:false`; der Text nennt Code und Feld.
+    case abgewiesen(String)
 
     public var errorDescription: String? {
         switch self {
@@ -40,6 +45,10 @@ public enum NGFehler: Error, LocalizedError {
             return lok("Es gibt nichts zu senden.")
         case .massPasstNicht(let bb, let bh, let ab, let ah):
             return lokf("Dieses Bild ist %d × %d Punkte groß, die Anzeige dieser Uhr hat %d × %d. Es wurde nicht gesendet; ein Bild in der Größe der Anzeige wählen.", bb, bh, ab, ah)
+        case .ungueltigerName(let name):
+            return lokf("„%@“ ist kein Name, den die Uhr annimmt: erlaubt sind 1 bis 32 Zeichen aus Buchstaben, Ziffern, „_“ und „-“, und „active“ ist vergeben.", name)
+        case .abgewiesen(let grund):
+            return lokf("Die Uhr hat abgewiesen: %@", grund)
         }
     }
 }
@@ -76,6 +85,27 @@ public enum NGThema {
         "\(praefix)/cmd/apps/switch"
     }
 
+    /// Eine Benachrichtigung einreihen (`POST /api/v1/notifications`).
+    public static func benachrichtigung(praefix: String) -> String {
+        "\(praefix)/cmd/notify"
+    }
+
+    /// Die sichtbare Benachrichtigung wegnehmen — oder, mit Namen, die benannte,
+    /// auch eine wartende. Die Nutzlast wird ignoriert.
+    public static func zurueckziehen(praefix: String, name: String? = nil) -> String {
+        "\(praefix)/cmd/notify/dismiss" + (name.map { "/" + $0 } ?? "")
+    }
+
+    /// Eine Anzeige ein- oder ausschalten; die Nutzlast ist `true` oder `false`.
+    public static func freigabe(praefix: String, name: String) -> String {
+        "\(praefix)/cmd/apps/\(name)/enabled"
+    }
+
+    /// Vor und zurück in der Schleife; die Nutzlast wird ignoriert.
+    public static func blaettern(praefix: String, vor: Bool) -> String {
+        "\(praefix)/cmd/apps/" + (vor ? "next" : "previous")
+    }
+
     /// Wo NG auf ein Kommando antwortet (§3.4). Erfolg ist genau
     /// `{"ok":true}`; bleibt die Antwort ganz aus, hat das Thema keine Route
     /// getroffen.
@@ -87,6 +117,43 @@ public enum NGThema {
     /// Lesen am Suffix auseinandergehalten.
     public static func anzeigenMuster(praefix: String) -> String {
         "\(praefix)/cmd/apps/pushed/#"
+    }
+
+    /// Die Antworten auf Benachrichtigungen und ihr Zurückziehen. Das Muster
+    /// trifft auch die Kommandos selbst; beim Lesen zählt das Suffix `/result`.
+    public static func benachrichtigungenMuster(praefix: String) -> String {
+        "\(praefix)/cmd/notify/#"
+    }
+
+    /// Die Antworten auf das Ein- und Ausschalten. `+` trifft den Namen; ein
+    /// Muster auf `cmd/apps/#` hörte dagegen auch jede Sendung mit.
+    public static func freigabeErgebnisse(praefix: String) -> String {
+        "\(praefix)/cmd/apps/+/enabled/result"
+    }
+
+    /// Worauf ein `<Thema>/result` antwortet, in Worten für die Meldung — `nil`
+    /// für alles, was kein Ergebnis eines Kommandos dieser App ist. Bei einer
+    /// Anzeige ist es ihr Name, damit Meldungen und Frist unter demselben
+    /// Schlüssel stehen.
+    public static func ergebnisBezeichnung(thema: String, praefix: String) -> String? {
+        let vorsilbe = "\(praefix)/cmd/"
+        guard thema.hasPrefix(vorsilbe), thema.hasSuffix("/result") else { return nil }
+        let teile = thema.dropFirst(vorsilbe.count).dropLast("/result".count)
+            .split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        switch teile.count {
+        case 3 where teile[0] == "apps" && teile[1] == "pushed" && !teile[2].isEmpty:
+            return teile[2]
+        case 3 where teile[0] == "apps" && teile[2] == "enabled" && !teile[1].isEmpty:
+            return lokf("Schalter „%@“", teile[1])
+        case 1 where teile[0] == "notify":
+            return lok("Benachrichtigung")
+        case 2 where teile[0] == "notify" && teile[1] == "dismiss":
+            return lok("Benachrichtigung zurückziehen")
+        case 3 where teile[0] == "notify" && teile[1] == "dismiss" && !teile[2].isEmpty:
+            return lokf("Benachrichtigung „%@“ zurückziehen", teile[2])
+        default:
+            return nil
+        }
     }
 
     /// `online` bzw. — als Last Will — `offline`, aufbewahrt (§3.5).
@@ -181,6 +248,20 @@ public enum NGNutzlast {
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.
         if let dauer = o.dauer { teile.append(#""durationMs":\#(dauer * 1000)"#) }
         return "{" + teile.joined(separator: ",") + "}"
+    }
+
+    /// Hängt Felder an ein fertiges JSON-Objekt, ohne es neu zu bauen: Der
+    /// Pixelweg setzt sein JSON selbst zusammen, und die Schnappschusstests
+    /// vergleichen Bytes.
+    static func ergaenzt(_ json: String, um felder: [String]) -> String {
+        guard !felder.isEmpty, json.hasSuffix("}") else { return json }
+        return String(json.dropLast()) + "," + felder.joined(separator: ",") + "}"
+    }
+
+    /// `lifetimeMs` und `lifetimeExpiry` (§5.4) — ausdrücklich in beide
+    /// Richtungen, damit eine Anzeige nicht von einer Vorgabe der Uhr abhängt.
+    static func lebensdauerfelder(_ l: Lebensdauer) -> [String] {
+        [#""lifetimeMs":\#(l.sekunden * 1000)"#, #""lifetimeExpiry":"\#(l.ablauf.ng)""#]
     }
 
     /// Der Rumpf zum Umschalten — als JSON und nicht als blanker Name.

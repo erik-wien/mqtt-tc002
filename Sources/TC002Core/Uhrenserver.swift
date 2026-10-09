@@ -98,6 +98,18 @@ public final class Uhrenserver: @unchecked Sendable {
         sperre.lock(); lauscher = neu; sperre.unlock()
     }
 
+    /// Lässt die Lebensdauer einer Anzeige ablaufen (`VirtuelleNGUhr.lebensdauerAbgelaufen`).
+    /// Die virtuelle Uhr kennt keine Zeit; wann das geschieht, bestimmt der Aufrufer.
+    public func lebensdauerAblaufen(_ name: String) {
+        sperre.lock()
+        VirtuelleNGUhr.lebensdauerAbgelaufen(name, &_zustand)
+        let neuerZustand = _zustand
+        sperre.unlock()
+        if let beiAenderung {
+            DispatchQueue.main.async { beiAenderung(neuerZustand) }
+        }
+    }
+
     public func beenden() {
         sperre.lock()
         let alt = lauscher

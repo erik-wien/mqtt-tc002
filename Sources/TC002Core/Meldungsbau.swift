@@ -49,6 +49,31 @@ public enum Lauftempo: String, CaseIterable, Identifiable, Sendable, Codable {
     }
 }
 
+/// Was mit einer gepushten Anzeige geschieht, wenn ihre Lebensdauer um ist
+/// (`lifetimeExpiry`, `docs/awtrix-ng-protokoll.md` §5.4).
+public enum Lebensablauf: String, CaseIterable, Sendable, Codable {
+    /// `remove`: die Uhr löscht die Anzeige.
+    case entfernen
+    /// `mark`: die Anzeige bleibt, mit einem dunkelroten 1-px-Rahmen.
+    case markieren
+
+    /// Das Wort, das die Uhr erwartet.
+    var ng: String { self == .entfernen ? "remove" : "mark" }
+}
+
+/// Nach dieser Zeit verfällt eine Anzeige von selbst (`lifetimeMs`). Gilt nur
+/// für Anzeigen; Benachrichtigungen nehmen den Schlüssel an und ignorieren ihn,
+/// darum geht er dort gar nicht erst mit.
+public struct Lebensdauer: Equatable, Sendable, Codable {
+    public var sekunden: Int
+    public var ablauf: Lebensablauf
+
+    public init(sekunden: Int, ablauf: Lebensablauf = .entfernen) {
+        self.sekunden = sekunden
+        self.ablauf = ablauf
+    }
+}
+
 /// Alles, was eine Meldung ausmacht — ohne Ansicht, ohne Zustand.
 ///
 /// Die Felder entsprechen eins zu eins den `@AppStorage`-Werten der
@@ -75,6 +100,9 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var tempo: Lauftempo = .mittel
     public var iconLaeuftMit: Bool = false
     public var dauer: Int?
+    /// Optional und ohne Vorgabewert in der Datei: Ältere Verlaufsdateien kennen
+    /// den Schlüssel nicht und müssen lesbar bleiben.
+    public var lebensdauer: Lebensdauer?
 
     public init(text: String,
                 weg: SendeWeg = .pixel,
@@ -89,7 +117,8 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
                 abstand: Int = 1,
                 tempo: Lauftempo = .mittel,
                 iconLaeuftMit: Bool = false,
-                dauer: Int? = nil) {
+                dauer: Int? = nil,
+                lebensdauer: Lebensdauer? = nil) {
         self.text = text
         self.weg = weg
         self.schrift = schrift
@@ -104,6 +133,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
         self.tempo = tempo
         self.iconLaeuftMit = iconLaeuftMit
         self.dauer = dauer
+        self.lebensdauer = lebensdauer
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. geschickt wird — die einzige
@@ -283,9 +313,11 @@ public enum Meldungsbau {
             return Frame(dauer: o.dauer,
                          herkunft: Meldungsherkunft(
                             optionen: o,
-                            iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }))
+                            iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }),
+                         lebensdauer: o.lebensdauer)
         case .pixel:
-            return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer)
+            return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer,
+                         lebensdauer: o.lebensdauer)
         }
     }
 
