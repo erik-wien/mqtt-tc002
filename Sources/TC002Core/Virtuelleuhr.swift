@@ -59,13 +59,17 @@ public enum Virtuelleuhr {
         public var pfad: String
         public var abfrage: [String: String]
         public var koerper: Data
+        /// Kopfzeilen, Namen kleingeschrieben.
+        public var kopf: [String: String]
 
         public init(_ methode: String = "GET", _ pfad: String,
-                    abfrage: [String: String] = [:], koerper: Data = Data()) {
+                    abfrage: [String: String] = [:], koerper: Data = Data(),
+                    kopf: [String: String] = [:]) {
             self.methode = methode
             self.pfad = pfad
             self.abfrage = abfrage
             self.koerper = koerper
+            self.kopf = kopf
         }
     }
 

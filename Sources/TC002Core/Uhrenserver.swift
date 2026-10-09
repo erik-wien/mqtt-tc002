@@ -23,14 +23,25 @@ public final class Uhrenserver: @unchecked Sendable {
     private var lauscher: NWListener?
     private let sperre = NSLock()
     private var _zustand: Uhrzustand
+    private var _ngZustand: NGUhrzustand?
 
     /// Wird nach jeder Anfrage aufgerufen, die etwas verändert hat — auf dem
     /// Hauptthread, damit die Anzeige sich daran hängen kann.
     public var beiAenderung: ((Uhrzustand) -> Void)?
 
-    public init(port: UInt16 = Uhrenserver.vorgabePort, zustand: Uhrzustand = Uhrzustand()) {
+    /// Mit `ngZustand` antwortet der Dienst als AWTRIX NG (`VirtuelleNGUhr`),
+    /// sonst als Werksfirmware (`Virtuelleuhr`).
+    public init(port: UInt16 = Uhrenserver.vorgabePort, zustand: Uhrzustand = Uhrzustand(),
+                ngZustand: NGUhrzustand? = nil) {
         self.port = NWEndpoint.Port(rawValue: port) ?? 8752
         self._zustand = zustand
+        self._ngZustand = ngZustand
+    }
+
+    /// `nil`, solange der Dienst die Werksfirmware gibt.
+    public var ngZustand: NGUhrzustand? {
+        sperre.lock(); defer { sperre.unlock() }
+        return _ngZustand
     }
 
     public var zustand: Uhrzustand {
@@ -98,15 +109,21 @@ public final class Uhrenserver: @unchecked Sendable {
 
     private func antworten(_ verbindung: NWConnection, auf anfrage: Virtuelleuhr.Anfrage) {
         sperre.lock()
-        let antwort = Virtuelleuhr.beantworten(anfrage, &_zustand)
+        let antwort: Virtuelleuhr.Antwort
+        if _ngZustand != nil {
+            antwort = VirtuelleNGUhr.beantworten(anfrage, &_ngZustand!)
+        } else {
+            antwort = Virtuelleuhr.beantworten(anfrage, &_zustand)
+        }
         let neuerZustand = _zustand
+        let ngAktiv = _ngZustand != nil
         sperre.unlock()
 
-        if let beiAenderung {
+        if let beiAenderung, !ngAktiv {
             DispatchQueue.main.async { beiAenderung(neuerZustand) }
         }
 
-        var kopf = "HTTP/1.1 \(antwort.status) \(antwort.status == 200 ? "OK" : "Not Found")\r\n"
+        var kopf = "HTTP/1.1 \(antwort.status) \(Self.grund(antwort.status))\r\n"
         kopf += "Content-Type: \(antwort.inhaltstyp)\r\n"
         kopf += "Content-Length: \(antwort.koerper.count)\r\n"
         kopf += "Connection: close\r\n\r\n"
@@ -115,6 +132,20 @@ public final class Uhrenserver: @unchecked Sendable {
         verbindung.send(content: hinaus, completion: .contentProcessed { _ in
             verbindung.cancel()
         })
+    }
+
+    private static func grund(_ status: Int) -> String {
+        switch status {
+        case 200: return "OK"
+        case 400: return "Bad Request"
+        case 404: return "Not Found"
+        case 405: return "Method Not Allowed"
+        case 413: return "Payload Too Large"
+        case 415: return "Unsupported Media Type"
+        case 422: return "Unprocessable Entity"
+        case 507: return "Insufficient Storage"
+        default: return "Error"
+        }
     }
 
     // MARK: - Bytes zu einer Anfrage
@@ -135,13 +166,13 @@ public final class Uhrenserver: @unchecked Sendable {
         guard erste.count >= 2 else { return nil }
 
         var laenge = 0
+        var kopf: [String: String] = [:]
         for zeile in zeilen {
-            let teile = zeile.components(separatedBy: ":")
-            guard teile.count >= 2,
-                  teile[0].lowercased().trimmingCharacters(in: .whitespaces) == "content-length"
-            else { continue }
-            laenge = Int(teile[1].trimmingCharacters(in: .whitespaces)) ?? 0
+            guard let doppelpunkt = zeile.firstIndex(of: ":") else { continue }
+            let name = zeile[..<doppelpunkt].lowercased().trimmingCharacters(in: .whitespaces)
+            kopf[name] = zeile[zeile.index(after: doppelpunkt)...].trimmingCharacters(in: .whitespaces)
         }
+        if let wert = kopf["content-length"] { laenge = Int(wert) ?? 0 }
         let rumpf = daten[ende.upperBound...]
         guard rumpf.count >= laenge else { return nil }
 
@@ -153,6 +184,6 @@ public final class Uhrenserver: @unchecked Sendable {
         }
         return Virtuelleuhr.Anfrage(erste[0], teile?.path ?? erste[1],
                                     abfrage: abfrage,
-                                    koerper: Data(rumpf.prefix(laenge)))
+                                    koerper: Data(rumpf.prefix(laenge)), kopf: kopf)
     }
 }
