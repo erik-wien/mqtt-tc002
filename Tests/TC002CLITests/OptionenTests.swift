@@ -190,4 +190,158 @@ final class BildbefehlTests: XCTestCase {
         XCTAssertEqual(o.anzeigename, "meldung3")
         XCTAssertEqual(o.dauer, 7)
     }
+
+}
+
+/// Die Befehle `benachrichtigen`/`zurueckziehen` und die Lebensdauer von `senden`.
+final class BenachrichtigungsbefehlTests: XCTestCase {
+
+    func testBenachrichtigenAufDeutschUndEnglisch() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["benachrichtigen", "Tür", "offen"]).befehl,
+                       .benachrichtigen(text: "Tür offen"))
+        XCTAssertEqual(try Optionen.zerlegt(["notify", "Door"]).befehl, .benachrichtigen(text: "Door"))
+    }
+
+    func testDieFelderEinerBenachrichtigung() throws {
+        let o = try Optionen.zerlegt(["benachrichtigen", "x", "--name", "tuer", "--halten", "--ersetzen",
+                                      "--aufwecken", "--wiederholungen", "3", "--dauer", "8"])
+        XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
+            name: "tuer", halten: true, einreihen: false, aufwecken: true, wiederholungen: 3))
+        XCTAssertEqual(o.meldung.dauer, 8)
+
+        let e = try Optionen.zerlegt(["notify", "x", "--hold", "--replace", "--wakeup", "--repeat", "3"])
+        XCTAssertEqual(e.benachrichtigung, Benachrichtigungsoptionen(
+            name: nil, halten: true, einreihen: false, aufwecken: true, wiederholungen: 3))
+    }
+
+    /// Ohne `--name` hat sie keinen — die Vorgabe „cli" gilt nur für Anzeigen.
+    func testOhneNamenHatDieBenachrichtigungKeinen() throws {
+        let o = try Optionen.zerlegt(["benachrichtigen", "x"])
+        XCTAssertNil(o.benachrichtigung.name)
+        XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen())
+    }
+
+    func testBenachrichtigenNimmtDieFormatoptionenWieSenden() throws {
+        let o = try Optionen.zerlegt(["benachrichtigen", "grüße", "--gross", "--farbe", "#FF0000",
+                                      "--icon", "12", "--zentriert", "--tempo", "schnell"])
+        XCTAssertEqual(o.befehl, .benachrichtigen(text: "GRÜSSE"))
+        XCTAssertEqual(o.farbe, "#FF0000")
+        XCTAssertEqual(o.iconNummer, "12")
+        XCTAssertEqual(o.waagrecht, .mittig)
+        XCTAssertEqual(o.tempo, .schnell)
+    }
+
+    func testBenachrichtigenOhneTextWirdGemeldet() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "--halten"]))
+    }
+
+    func testWiederholungenMuessenPositivSein() {
+        for w in ["0", "-1", "viel"] {
+            XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "x", "--wiederholungen", w]), w) { f in
+                XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--wiederholungen") == true)
+            }
+        }
+    }
+
+    func testZurueckziehenSichtbareUndNachName() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["zurueckziehen"]).befehl, .zurueckziehen(name: nil))
+        XCTAssertEqual(try Optionen.zerlegt(["dismiss"]).befehl, .zurueckziehen(name: nil))
+        XCTAssertEqual(try Optionen.zerlegt(["zurueckziehen", "tuer"]).befehl, .zurueckziehen(name: "tuer"))
+        XCTAssertEqual(try Optionen.zerlegt(["dismiss", "--name", "tuer"]).befehl, .zurueckziehen(name: "tuer"),
+                       "sonst nähme `--name` stillschweigend die sichtbare weg")
+        XCTAssertEqual(try Optionen.zerlegt(["dismiss", "tuer", "--an", "Küche"]).ziele, ["Küche"])
+    }
+
+    // MARK: - Lebensdauer
+
+    func testLebensdauerUndAblauf() throws {
+        let o = try Optionen.zerlegt(["senden", "x", "--lebensdauer", "600", "--ablauf", "markieren"])
+        XCTAssertEqual(o.meldung.lebensdauer, Lebensdauer(sekunden: 600, ablauf: .markieren))
+        let e = try Optionen.zerlegt(["send", "x", "--lifetime", "5", "--expiry", "remove"])
+        XCTAssertEqual(e.meldung.lebensdauer, Lebensdauer(sekunden: 5, ablauf: .entfernen))
+        let m = try Optionen.zerlegt(["send", "x", "--lifetime", "5", "--expiry", "mark"])
+        XCTAssertEqual(m.meldung.lebensdauer?.ablauf, .markieren)
+    }
+
+    func testOhneAblaufWirdEntfernt() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["senden", "x", "--lebensdauer", "9"]).meldung.lebensdauer,
+                       Lebensdauer(sekunden: 9, ablauf: .entfernen))
+        XCTAssertNil(try Optionen.zerlegt(["senden", "x"]).meldung.lebensdauer)
+    }
+
+    func testLebensdauerBrauchtEineZahlGroesserNull() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--lebensdauer", "lang"]))
+        for w in ["0", "-3"] {
+            XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--lebensdauer", w]), w)
+        }
+    }
+
+    func testUnbekannterAblaufUndAblaufOhneLebensdauer() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--lebensdauer", "5", "--ablauf", "morgen"])) { f in
+            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("morgen") == true)
+        }
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--ablauf", "markieren"])) { f in
+            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--lebensdauer") == true)
+        }
+    }
+
+    /// Eine Benachrichtigung ignoriert die Lebensdauer, und ein Feld nur für
+    /// Benachrichtigungen ist an einer Anzeige `422`: Beides wird gesagt, statt
+    /// still nichts zu bewirken.
+    func testOptionenDieDerBefehlNichtKennt() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["benachrichtigen", "x", "--lebensdauer", "5"])) { f in
+            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--lebensdauer") == true)
+        }
+        for option in ["--halten", "--ersetzen", "--aufwecken"] {
+            XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", option]), option) { f in
+                XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains(option) == true)
+            }
+        }
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--wiederholungen", "2"]))
+    }
+
+    /// Eine Benachrichtigung trägt keine Lebensdauer in ihren Optionen.
+    func testDieMeldungEinerBenachrichtigungHatKeineLebensdauer() throws {
+        XCTAssertNil(try Optionen.zerlegt(["benachrichtigen", "x"]).meldung.lebensdauer)
+    }
+
+    // MARK: - Hilfetext und Zerleger
+
+    /// Ob `option` irgendwo erkannt wird. Eine andere Beanstandung (fehlender
+    /// Wert, falscher Befehl) heißt: Die Option ist bekannt.
+    private func zerleggerKennt(_ option: String) -> Bool {
+        for args in [["senden", "x", option], ["senden", "x", option, "1"],
+                     ["notify", "x", option], ["notify", "x", option, "1"]] {
+            do { _ = try Optionen.zerlegt(args); return true }
+            catch Optionen.Fehler.unbekannteOption(let o) where o == option { continue }
+            catch { return true }
+        }
+        return false
+    }
+
+    /// Jede Option, die ein Hilfetext nennt, muss der Zerleger kennen — sonst
+    /// steht dort eine Zusage, die „Unbekannte Option“ beantwortet. Gelesen wird
+    /// der Quelltext des deutschen Textes und die englische Übersetzung.
+    func testJedeOptionDerHilfeIstDemZerlegerBekannt() throws {
+        let wurzel = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let quellen = ["Sources/TC002CLI/main.swift", "Resources/Sprachen/en.lproj/Localizable.strings"]
+        for quelle in quellen {
+            var text = try String(contentsOf: wurzel.appendingPathComponent(quelle), encoding: .utf8)
+            if quelle.hasSuffix(".strings") {
+                text = try XCTUnwrap(text.split(separator: "\n").first { $0.hasPrefix("\"cli.hilfe\"") }.map(String.init))
+                    .replacingOccurrences(of: "\\n", with: "\n")
+            } else {
+                let anfang = try XCTUnwrap(text.range(of: "let hilfetext = \"\"\""))
+                text = String(text[anfang.upperBound...].prefix(upTo: try XCTUnwrap(text.range(of: "\"\"\"\n", range: anfang.upperBound..<text.endIndex)).lowerBound))
+            }
+            let optionen = Set(text.split(whereSeparator: { " \n|,()\"".contains($0) })
+                .map(String.init).filter { $0.hasPrefix("--") && $0.count > 3 }
+                .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: ".:;")) })
+            XCTAssertTrue(optionen.contains("--lebensdauer") || optionen.contains("--lifetime"), quelle)
+            for option in optionen where option != "--help" {
+                XCTAssertTrue(zerleggerKennt(option), "\(quelle): \(option) kennt der Zerleger nicht")
+            }
+        }
+    }
 }

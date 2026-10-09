@@ -19,6 +19,9 @@ ist — HTTP oder MQTT. "mqtttc002 uhren" zeigt ihn an.
 
 AUFRUF
   mqtttc002 [senden] <Text>        Text an die Uhren schicken
+  mqtttc002 benachrichtigen <Text> eine einmalige Meldung ueber der Schleife
+  mqtttc002 zurueckziehen [<Name>] die sichtbare Benachrichtigung wegnehmen,
+                                   mit Namen die benannte
   mqtttc002 loeschen <Anzeige>     eine benannte Anzeige entfernen
   mqtttc002 umschalten <Anzeige>   zu einer Anzeige wechseln
   mqtttc002 bild <Name>            ein fertiges Bild aus dem Bestand schicken
@@ -47,13 +50,31 @@ OPTIONEN FUER „senden"
   --rand <Zahl>       Abstand zum Rand bei oben/unten (Vorgabe: 1)
   --abstand <Zahl>    leere Spalten zwischen den Zeichen (Vorgabe: 1)
   --dauer <Sekunden>  wie lange die Uhr die Anzeige zeigt
+  --lebensdauer <Sekunden>   danach verfaellt die Anzeige von selbst (nur senden)
+  --ablauf entfernen|markieren   was dann geschieht: loeschen oder mit rotem
+                      Rahmen stehen lassen (Vorgabe: entfernen)
   --tempo langsam|mittel|schnell   nur fuer durchlaufenden Text
   --trocken           nur zeigen, was gesendet wuerde
+
+OPTIONEN FUER „benachrichtigen"
+  Text und Format wie bei „senden"; --name ist hier der Name der Benachrichtigung
+  (nur darueber laesst sie sich zurueckziehen), --dauer wie lange sie steht.
+  --halten            bleibt stehen, bis sie zurueckgezogen wird
+  --ersetzen          ersetzt die sichtbare, statt sich hinten anzustellen
+  --aufwecken         erscheint auch bei ausgeschaltetem Panel
+  --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft
+
+Ueber MQTT wartet das Werkzeug auf die Antwort der Uhr (<Thema>/result): Weist die
+Uhr ab, steht Code und Feld auf der Fehlerausgabe und der Aufruf endet mit 1.
+Kommt keine Antwort, gibt es nur eine Warnung — gleiche Bedeutung wie in der App.
 
 BEISPIELE
   mqtttc002 "Kaffee fertig"
   mqtttc002 senden "Post da" --icon post --farbe "#FFAA00"
   mqtttc002 senden Achtung --an Kueche --dauer 10 --zentriert
+  mqtttc002 senden Wetter --lebensdauer 600 --ablauf markieren
+  mqtttc002 benachrichtigen "Tuer offen" --name tuer --halten --aufwecken
+  mqtttc002 zurueckziehen tuer
   mqtttc002 loeschen cli
 
 Zu lange Texte laufen von selbst durch; das macht die App genauso.
@@ -198,8 +219,16 @@ func lauf() throws {
         for uhr in gewaehlte {
             // Derselbe Kanal, den auch die App und die Kurzbefehle benutzen —
             // ein Werkzeug, das anders sendet als die App, waere eine Falle.
+            let uhrname = uhr.name
+            // Ueber MQTT wartet jede Sendung auf `<Thema>/result` (§3.4): Eine
+            // Abweisung wirft und endet mit Exit-Code 1, das Ausbleiben der
+            // Antwort ist nur eine Warnung — sie kann auch am Mitlesen liegen.
             guard let anzeigen = Anzeigen.fuer(uhr, brokerzugang: einstellungen.zugang(
-                clientID: "tc002-cli-" + uhr.id.uuidString.prefix(8).lowercased())) else { continue }
+                clientID: "tc002-cli-" + uhr.id.uuidString.prefix(8).lowercased()))?
+                .quittierend(beiAusbleiben: { thema in
+                    fehlerAusgeben(lokf("Warnung: %@ hat nicht auf %@ geantwortet — Thema und Präfix prüfen.",
+                                        uhrname, thema))
+                }) else { continue }
             do {
                 try tun(anzeigen, uhr)
                 print(lokf("%@: %@", uhr.name, was))
@@ -261,6 +290,46 @@ func lauf() throws {
                     fehlerAusgeben(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, platz))
                 }
             }
+        }
+
+    case .benachrichtigen(let text):
+        var m = optionen.meldung
+        m.text = text
+        let bo = optionen.benachrichtigung
+        let rahmen = try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung)
+        let json = try NGNutzlast.benachrichtigung(rahmen, bo)
+        if optionen.trocken {
+            if Einstellungen.brokerNoetig(fuer: gewaehlte) {
+                print(lokf("Broker %@:%d, Konto %@, Kennwort %@", einstellungen.brokerHost, Int(einstellungen.brokerPort),
+                             einstellungen.benutzer ?? "—",
+                             einstellungen.kennwort == nil ? lok("fehlt") : lok("vorhanden")))
+            }
+            for uhr in gewaehlte {
+                switch uhr.wirksameBetriebsart {
+                case .http: print("POST http://\(uhr.host)/api/v1/notifications")
+                case .mqtt: print(NGThema.benachrichtigung(praefix: uhr.praefix))
+                }
+            }
+            print(json)
+            print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))
+            return
+        }
+        // Eine Benachrichtigung ist keine Anzeige: kein Platz, also auch nichts
+        // fuers Slotgedaechtnis.
+        try anAlle(lokf("Benachrichtigung gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
+            try anzeigen.benachrichtigen(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
+                                                                mass: Anzeigemass.fuer(uhr)), bo)
+        }
+
+    case .zurueckziehen(let name):
+        if optionen.trocken {
+            print(name.map { lokf("Würde die Benachrichtigung „%@“ zurückziehen.", $0) }
+                  ?? lok("Würde die sichtbare Benachrichtigung zurückziehen."))
+            return
+        }
+        try anAlle(name.map { lokf("Benachrichtigung „%@“ zurückgezogen", $0) }
+                   ?? lok("sichtbare Benachrichtigung zurückgezogen")) { anzeigen, _ in
+            try anzeigen.benachrichtigungZurueckziehen(name: name)
         }
 
     case .bild(let name):

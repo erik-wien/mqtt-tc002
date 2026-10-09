@@ -8,6 +8,10 @@ import TC002Core
 struct Optionen {
     enum Befehl: Equatable {
         case senden(text: String)
+        /// Eine einmalige Meldung über der Schleife (`cmd/notify`), keine Anzeige.
+        case benachrichtigen(text: String)
+        /// Die sichtbare Benachrichtigung wegnehmen, mit Namen die benannte.
+        case zurueckziehen(name: String?)
         case loeschen(anzeige: String)
         case umschalten(anzeige: String)
         case uhren
@@ -24,6 +28,9 @@ struct Optionen {
     var befehl: Befehl = .hilfe
     var ziele: [String] = []
     var anzeigename = "cli"
+    /// `--name` stand da. Bei „senden" gilt sonst die Vorgabe „cli"; bei einer
+    /// Benachrichtigung bedeutet kein Name: nur die sichtbare ist zurückziehbar.
+    var nameAngegeben = false
     var farbe = "#00FF66"
     var iconNummer: String?
     var schrift = "Silkscreen"
@@ -37,6 +44,14 @@ struct Optionen {
     var dauer: Int?
     var tempo: Lauftempo = .mittel
     var trocken = false
+    /// Nur für Benachrichtigungen.
+    var halten = false
+    var ersetzen = false
+    var aufwecken = false
+    var wiederholungen: Int?
+    /// Nur für „senden": nach dieser Zeit verfällt die Anzeige von selbst.
+    var lebensdauer: Int?
+    var ablauf: Lebensablauf?
 
     enum Fehler: Error, LocalizedError {
         case unbekannteOption(String)
@@ -45,6 +60,12 @@ struct Optionen {
         case keineFarbe(String)
         case fehlenderText
         case fehlenderBildname
+        /// Eine Option, die der gewählte Befehl nicht kennt — sie würde sonst
+        /// still nichts bewirken.
+        case optionGiltNurFuer(option: String, befehl: String)
+        case keinAblauf(String)
+        case ablaufOhneLebensdauer
+        case nichtPositiv(option: String, wert: String)
 
         var errorDescription: String? {
             switch self {
@@ -60,6 +81,14 @@ struct Optionen {
                 return lok("Was soll gesendet werden? Text als letztes Wort angeben.")
             case .fehlenderBildname:
                 return lok("Welches Bild? Den Namen angeben — „mqtttc002 bilder“ zeigt alle.")
+            case .optionGiltNurFuer(let o, let b):
+                return lokf("„%@“ gilt nur für „%@“.", o, b)
+            case .keinAblauf(let w):
+                return lokf("„%@“ ist kein Ablauf. Möglich: entfernen, markieren (remove, mark).", w)
+            case .ablaufOhneLebensdauer:
+                return lok("„--ablauf“ gehört zu „--lebensdauer“: ohne Lebensdauer verfällt nichts.")
+            case .nichtPositiv(let o, let w):
+                return lokf("„%@“ erwartet eine Zahl größer als 0, bekam aber „%@“.", o, w)
             }
         }
     }
@@ -78,6 +107,10 @@ struct Optionen {
         switch erstes {
         case "senden", "send":
             o.befehl = .senden(text: "")
+        case "benachrichtigen", "notify":
+            o.befehl = .benachrichtigen(text: "")
+        case "zurueckziehen", "dismiss":
+            o.befehl = .zurueckziehen(name: nil)
         case "loeschen", "delete":
             o.befehl = .loeschen(anzeige: "")
         case "umschalten", "switch":
@@ -120,7 +153,7 @@ struct Optionen {
 
             switch arg {
             case "--an", "--to":          o.ziele.append(try wert())
-            case "--name":                o.anzeigename = try wert()
+            case "--name":                o.anzeigename = try wert(); o.nameAngegeben = true
             case "--farbe", "--color":
                 let w = try wert()
                 guard Self.istFarbe(w) else { throw Fehler.keineFarbe(w) }
@@ -134,6 +167,25 @@ struct Optionen {
             case "--abstand", "--gap":    o.abstand = try zahl()
             case "--dauer", "--duration": o.dauer = try zahl()
             case "--trocken", "--dry-run": o.trocken = true
+            case "--halten", "--hold":    o.halten = true
+            case "--ersetzen", "--replace": o.ersetzen = true
+            case "--aufwecken", "--wakeup": o.aufwecken = true
+            case "--wiederholungen", "--repeat":
+                let w = try wert()
+                guard let z = Int(w), z > 0 else { throw Fehler.nichtPositiv(option: arg, wert: w) }
+                o.wiederholungen = z
+            case "--lebensdauer", "--lifetime":
+                let w = try wert()
+                guard let z = Int(w) else { throw Fehler.keineZahl(option: arg, wert: w) }
+                guard z > 0 else { throw Fehler.nichtPositiv(option: arg, wert: w) }
+                o.lebensdauer = z
+            case "--ablauf", "--expiry":
+                let w = try wert()
+                switch w {
+                case "entfernen", "remove": o.ablauf = .entfernen
+                case "markieren", "mark":   o.ablauf = .markieren
+                default: throw Fehler.keinAblauf(w)
+                }
             case "--tempo", "--speed":
                 let w = try wert()
                 guard let t = Lauftempo(rawValue: w) else {
@@ -153,10 +205,22 @@ struct Optionen {
         }
 
         let freierText = freie.joined(separator: " ")
+        if o.ablauf != nil, o.lebensdauer == nil { throw Fehler.ablaufOhneLebensdauer }
         switch o.befehl {
         case .senden:
             guard !freierText.isEmpty else { throw Fehler.fehlenderText }
+            try o.nurFuerBenachrichtigungenPruefen()
             o.befehl = .senden(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
+        case .benachrichtigen:
+            guard !freierText.isEmpty else { throw Fehler.fehlenderText }
+            // Eine Benachrichtigung ignoriert die Lebensdauer (§5.4); sie
+            // wegzulassen, ohne es zu sagen, wäre eine stille Zusage.
+            if o.lebensdauer != nil { throw Fehler.optionGiltNurFuer(option: "--lebensdauer", befehl: "senden") }
+            o.befehl = .benachrichtigen(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
+        case .zurueckziehen:
+            // Der Name steht als Wort hinter dem Befehl oder hinter `--name`;
+            // fehlt beides, ist die sichtbare gemeint.
+            o.befehl = .zurueckziehen(name: !freierText.isEmpty ? freierText : (o.nameAngegeben ? o.anzeigename : nil))
         case .loeschen:
             guard !freierText.isEmpty else { throw Fehler.fehlenderText }
             o.befehl = .loeschen(anzeige: freierText)
@@ -195,6 +259,14 @@ struct Optionen {
         return ergebnis
     }
 
+    /// Die Felder aus §5.6 gehören einer Benachrichtigung; an einer Anzeige wären
+    /// sie `422`.
+    private func nurFuerBenachrichtigungenPruefen() throws {
+        let falsch = [(halten, "--halten"), (ersetzen, "--ersetzen"), (aufwecken, "--aufwecken"),
+                      (wiederholungen != nil, "--wiederholungen")].first { $0.0 }
+        if let falsch { throw Fehler.optionGiltNurFuer(option: falsch.1, befehl: "benachrichtigen") }
+    }
+
     private static func istFarbe(_ s: String) -> Bool {
         guard s.hasPrefix("#"), s.count == 7 else { return false }
         return UInt32(s.dropFirst(), radix: 16) != nil
@@ -213,6 +285,16 @@ struct Optionen {
         o.abstand = abstand
         o.tempo = tempo
         o.dauer = dauer
+        if case .senden = befehl, let lebensdauer {
+            o.lebensdauer = Lebensdauer(sekunden: lebensdauer, ablauf: ablauf ?? .entfernen)
+        }
         return o
+    }
+
+    /// Die Felder einer Benachrichtigung (§5.6). Ohne `--name` hat sie keinen.
+    var benachrichtigung: Benachrichtigungsoptionen {
+        Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
+                                  einreihen: !ersetzen, aufwecken: aufwecken,
+                                  wiederholungen: wiederholungen)
     }
 }
