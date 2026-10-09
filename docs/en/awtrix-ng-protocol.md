@@ -51,10 +51,14 @@ written for an 8-row clock thus fills the panel. The global setting
 🔬 `enlargeApps` is `true` on the measured device (settings and
 `capabilities`).
 
-❓ Whether the coordinates of `draw`, `progress` and the charts apply to the
-26×8 grid in enlarged apps (that is, appear doubled) follows from the
-documentation only indirectly ("`y = 1` lines up with the rows of the app's own
-text"). To be measured on a device, ideally via `GET /api/v1/display/screen`.
+🔬 **The coordinates of `draw` apply to the 26×8 grid in enlarged apps**
+(measured on 2026-10-09 via `GET /api/v1/display/screen`, with `enlargeApps:
+true`): every command occupies 2×2 squares. `["pixel",0,0]` occupies columns
+0…1 and rows 0…1, `["pixel",51,15]` lies outside and drops out. In a `layout`,
+`draw` works on the full 52×16 instead, relative to the region's `box`. Without
+`enlargeApps` the display also works on 52×16.
+
+❓ Whether the same holds for `progress` and the charts is not measured.
 
 ### 1.2 The icon area
 
@@ -1285,8 +1289,8 @@ checked on a device):
 - ❓ **Everything about MQTT on the device:** topics, `/result` replies,
   `event/error`, `state/*`, Last Will and retention are known from the docs only,
   not measured — the client did not connect during the measurement (wildcard in the prefix).
-- ❓ **The grid of the draw commands, charts and the progress bar in enlarged
-  apps** (26×8 or 52×16, §1.1) and the height of the bar.
+- ❓ **The grid of the charts and the progress bar in enlarged apps** (26×8 or
+  52×16; measured for `draw`, §1.1) and the height of the bar.
 - ❓ **The unit of `iconGap`** in enlarged apps (columns of the 26×8 grid or of
   the display).
 - ❓ **Whether `POST /api/v1/device/sleep` exists over HTTP:** the MQTT part lists

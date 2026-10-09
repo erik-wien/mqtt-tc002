@@ -29,8 +29,8 @@ AUFRUF
 
 Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
 Text und Icon. Von „senden" gelten dafuer nur --an, --name und --dauer; alles
-Uebrige formatiert Text, den es dort nicht gibt. Eine AWTRIX NG nimmt so ein
-Bild nicht — ihre Anzeige ist 32x8.
+Uebrige formatiert Text, den es dort nicht gibt. Bilder lassen sich vorerst
+nicht an die Uhr schicken; ein Bild von 8x8 oder 16x16 geht als Icon.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
@@ -48,8 +48,6 @@ OPTIONEN FUER „senden"
   --abstand <Zahl>    leere Spalten zwischen den Zeichen (Vorgabe: 1)
   --dauer <Sekunden>  wie lange die Uhr die Anzeige zeigt
   --tempo langsam|mittel|schnell   nur fuer durchlaufenden Text
-  --geraeteschrift    die eingebaute Schrift der Uhr benutzen, statt
-                      selbst zu rastern. Kennt keine Umlaute.
   --trocken           nur zeigen, was gesendet wuerde
 
 BEISPIELE
@@ -217,7 +215,7 @@ func lauf() throws {
         var m = optionen.meldung
         m.text = text
         let rahmen = try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung)
-        let json = rahmen.alsJSON()
+        let json = try Anzeigen.nutzlast(rahmen)
         if optionen.trocken {
             // Der Trockenlauf ist auch die Auskunft darueber, womit gesendet
             // wuerde: Ein fehlendes Kennwort faellt sonst nirgends auf — MQTT
@@ -234,8 +232,8 @@ func lauf() throws {
             }
             for uhr in gewaehlte {
                 switch uhr.wirksameBetriebsart {
-                case .http: print("POST http://\(uhr.host)/api/custom?name=\(optionen.anzeigename)")
-                case .mqtt: print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
+                case .http: print("PUT http://\(uhr.host)/api/v1/apps/pushed/\(optionen.anzeigename)")
+                case .mqtt: print(NGThema.anzeige(praefix: uhr.praefix, name: optionen.anzeigename))
                 }
             }
             print(json)
@@ -269,15 +267,14 @@ func lauf() throws {
         guard let bild = bestand.alle().first(where: { $0.name == name }) else {
             throw Abbruch(lokf("Kein Bild namens „%@“. „mqtttc002 bilder“ zeigt alle.", name))
         }
-        // Dieselbe Entscheidung wie in der App: ein Einzelbild als Rechtecke,
-        // mehrere als GIF (`Bildsendung.rahmen`).
+        // Dieselbe Entscheidung wie in der App (`Bildsendung.rahmen`).
         let rahmen = try Bildsendung.rahmen(aus: bild.datei, dauer: optionen.dauer)
-        let json = rahmen.alsJSON()
+        let json = try Anzeigen.nutzlast(rahmen)
         if optionen.trocken {
             for uhr in gewaehlte {
                 switch uhr.wirksameBetriebsart {
-                case .http: print("POST http://\(uhr.host)/api/custom?name=\(optionen.anzeigename)")
-                case .mqtt: print("\(uhr.praefix)/custom/\(optionen.anzeigename)")
+                case .http: print("PUT http://\(uhr.host)/api/v1/apps/pushed/\(optionen.anzeigename)")
+                case .mqtt: print(NGThema.anzeige(praefix: uhr.praefix, name: optionen.anzeigename))
                 }
             }
             print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))

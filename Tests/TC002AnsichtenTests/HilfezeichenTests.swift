@@ -2,7 +2,7 @@ import XCTest
 
 /// Die sichtbare Fassung des Einblendtexts. Bis hierher hing jede
 /// Erklärung im Inspektor an `.help(…)` — am Mac beim Verweilen mit der Maus
-/// zu sehen, am iPad ohne Zeiger überhaupt nicht (`Gattungssperre.swift`
+/// zu sehen, am iPad ohne Zeiger überhaupt nicht (`Reglersperre.swift`
 /// begründet das, und Punkt 2 des Rückstandsdokuments führte es als offen).
 /// `Abschnittskopf` setzt deshalb ein antippbares (?) rechtsbündig neben die
 /// Gruppenüberschrift.
@@ -32,7 +32,6 @@ final class HilfezeichenTests: XCTestCase {
     private static let koepfe = [
         ("Sources/TC002Ansichten/SendenView.swift", "Schrift"),
         ("Sources/TC002Ansichten/EditorBereichView.swift", "Dieses Bild"),
-        ("Sources/TC002Ansichten/Uhreinstellungen.swift", "Auf der Uhr"),
         ("Sources/TC002Ansichten/Uhrseite.swift", "Betriebsart"),
         ("Sources/TC002Ansichten/Brokerabschnitt.swift", "MQTT-Broker"),
         ("Sources/TC002Ansichten/Aufzeichnungsabschnitt.swift", "Verlauf"),

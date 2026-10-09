@@ -1,7 +1,7 @@
 import SwiftUI
 import TC002Core
 
-/// Die Gerätereferenz: dieselbe Datei wie `docs/tc002-protokoll.md`, von
+/// Die Gerätereferenz: dieselbe Datei wie `docs/awtrix-ng-protokoll.md`, von
 /// `build.sh` ins App-Paket kopiert und hier dargestellt. Dafür braucht es
 /// einen Markdown-Zerleger — es gibt bewusst keine Paketabhängigkeit dafür,
 /// und die Datei kommt ausschließlich aus unserer eigenen Hand, die darin
@@ -10,11 +10,6 @@ import TC002Core
 public struct GeraeteReferenzView: View {
     @State private var ausgewaehlt: MarkdownAbschnitt.ID?
 
-    /// Zwei Geraete, zwei Dokumente: Welches gilt, waehlt der Leser — nicht
-    /// die eingerichtete Uhr: Die Referenz ist Nachschlagewerk, kein Zustand
-    /// der App, und wer wissen will, was eine AWTRIX kann, hat meist noch
-    /// keine eingetragen.
-    @State private var gattung: Geraetetyp = .tc002
     @State private var abschnitte: [MarkdownAbschnitt] = []
     @State private var ladefehler: String?
 
@@ -23,18 +18,12 @@ public struct GeraeteReferenzView: View {
     /// uebersetzt. Welche gilt, entscheidet dieselbe Wahl, die auch der Rest
     /// der Oberflaeche trifft; ohne englische Fassung bleibt es bei der
     /// deutschen.
-    private static func referenzdatei(_ gattung: Geraetetyp) -> URL? {
+    private static func referenzdatei() -> URL? {
         let englisch = Bundle.main.preferredLocalizations.first?.hasPrefix("en") == true
         // Die englische Fassung zuerst, die deutsche als Rueckfall — eine
         // fehlende Uebersetzung soll die Referenz nicht verschwinden lassen.
-        let namen: [String]
-        switch gattung {
-        case .tc002:
-            namen = englisch ? ["tc002-protocol.md", "tc002-protokoll.md"] : ["tc002-protokoll.md"]
-        case .awtrixNG:
-            namen = englisch ? ["awtrix-ng-protocol.md", "awtrix-ng-protokoll.md"]
+        let namen = englisch ? ["awtrix-ng-protocol.md", "awtrix-ng-protokoll.md"]
                              : ["awtrix-ng-protokoll.md"]
-        }
         return namen.lazy
             .compactMap { Bundle.main.resourceURL?.appendingPathComponent($0) }
             .first { FileManager.default.fileExists(atPath: $0.path) }
@@ -42,11 +31,9 @@ public struct GeraeteReferenzView: View {
 
     public init() {}
 
-    /// Gelesen wird beim Erscheinen und bei jedem Wechsel der Gattung
-    /// (`.task(id:)`), nicht im `init`: Die gewaehlte Gattung ist Zustand der
-    /// Ansicht, und ein `init` sieht sie nur einmal.
+    /// Gelesen wird beim Erscheinen (`.task`), nicht im `init`.
     private func laden() {
-        guard let url = Self.referenzdatei(gattung),
+        guard let url = Self.referenzdatei(),
               let text = try? String(contentsOf: url, encoding: .utf8) else {
             abschnitte = []
             ausgewaehlt = nil
@@ -55,8 +42,6 @@ public struct GeraeteReferenzView: View {
         }
         abschnitte = MarkdownDokument.gliedern(MarkdownDokument.parse(text))
         ladefehler = nil
-        // Beim Wechsel auf das erste Kapitel des neuen Dokuments: Eine Auswahl
-        // aus dem alten zeigte sonst auf nichts, und die rechte Seite bliebe leer.
         ausgewaehlt = abschnitte.first?.id
     }
 
@@ -77,20 +62,8 @@ public struct GeraeteReferenzView: View {
                 #endif
             } else {
                 NavigationSplitView {
-                    VStack(spacing: 0) {
-                        // Zwei Eigennamen, keine uebersetzbaren Saetze —
-                        // deshalb `verbatim` und nicht `lok`.
-                        Picker("Gerät", selection: $gattung) {
-                            ForEach(Geraetetyp.allCases, id: \.self) { art in
-                                Text(verbatim: art.beschriftung).tag(art)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .padding(8)
-                        List(abschnitte, selection: $ausgewaehlt) { a in
-                            Text(a.titel).tag(a.id)
-                        }
+                    List(abschnitte, selection: $ausgewaehlt) { a in
+                        Text(a.titel).tag(a.id)
                     }
                     .navigationSplitViewColumnWidth(min: 190, ideal: 230, max: 280)
                 } detail: {
@@ -121,7 +94,7 @@ public struct GeraeteReferenzView: View {
                 }
             }
         }
-        .task(id: gattung) { laden() }
+        .task { laden() }
     }
 }
 
@@ -150,7 +123,7 @@ private struct MarkdownAbschnitt: Identifiable {
 
 // MARK: - Zerleger
 //
-// Unterstützte Formen (alles, was in `docs/tc002-protokoll.md` vorkommt):
+// Unterstützte Formen (alles, was in `docs/awtrix-ng-protokoll.md` vorkommt):
 // Überschriften `#`/`##`/`###`, Absätze mit `fett`/`` `Code` ``/Links,
 // eingerückte ```-Codeblöcke, Aufzählungen mit `- ` UND mit `1. ` (beides kommt
 // in der Datei vor — §6 zählt durch), Zitatblöcke mit `> `, Tabellen mit `|`

@@ -5,7 +5,7 @@ import TC002Modell
 /// Das Thema „Uhren" der Einstellungen: je Uhr **eine** Zeile, die auf ihre
 /// Seite führt (`Uhrseite`), und darunter der Weg, eine weitere anzulegen.
 ///
-/// Eine Zeile und keine Karte: Name, darunter Adresse · Präfix · Gattung,
+/// Eine Zeile und keine Karte: Name, darunter Adresse · Präfix,
 /// rechts das Verbindungszeichen. Alles, was man mit einer Uhr tut, steht auf
 /// ihrer Seite — vorher standen zwölf Knöpfe auf dem Bildschirm, bevor die
 /// erste andere Einstellung kam.
@@ -88,7 +88,7 @@ public struct Uhrenliste: View {
         }
     }
 
-    /// Adresse, Themenpräfix und Geräteart in einer Zeile — mit Mittelpunkt
+    /// Adresse und Themenpräfix in einer Zeile — mit Mittelpunkt
     /// getrennt, wie es Listen in den Systemeinstellungen halten. Das Präfix
     /// nur im MQTT-Betrieb: Bei einer HTTP-Uhr stünde dort „noch nicht
     /// abgefragt" und schickte jemanden hinter etwas her, das diese Uhr nie
@@ -111,7 +111,6 @@ public struct Uhrenliste: View {
             teile.append(uhr.praefix.isEmpty ? lok("noch nicht abgefragt")
                                              : Themenpraefix.sichtbar(uhr.praefix))
         }
-        teile.append(lok(uhr.gattung.beschriftung))
         return teile.joined(separator: " · ")
     }
 }
@@ -147,7 +146,7 @@ private struct UhrHinzufuegenBlatt: View {
                             .eingabefeld(inZeile: kanon)
                     }
                 } footer: {
-                    Text("Präfix und Geräteart stellt die App selbst fest, sobald die Uhr antwortet.")
+                    Text("Das Präfix stellt die App selbst fest, sobald die Uhr antwortet.")
                         .font(kanon.fussnote)
                 }
             }

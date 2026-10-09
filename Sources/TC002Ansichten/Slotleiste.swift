@@ -34,10 +34,9 @@ public struct Slotleiste: View {
         self.waehlen = waehlen
     }
 
-    /// Das Maß der angesehenen Uhr: Eine AWTRIX NG zeigt 32 × 8, nicht die
-    /// 52 × 16 der Werksfirmware, und `Slotblock` braucht die richtige
+    /// Das Maß der angesehenen Uhr; `Slotblock` braucht die richtige
     /// Punktzahl — sonst bleibt der Block leer.
-    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
+    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .vorgabe }
 
     private var belegte: Set<Int> { zustand.belegtePlaetze() }
 

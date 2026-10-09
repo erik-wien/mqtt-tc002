@@ -75,10 +75,23 @@ final class EinstellungenTests: XCTestCase {
     }
 
     /// Eine Einstellungszeile, wie eine laufende Installation sie abgelegt hat:
-    /// ohne `typ`, denn den gab es beim Schreiben noch nicht.
+    /// ohne `typ` und ohne `einrichtung`.
     private static let alteZeile = """
     [{"id":"0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40","name":"Küche",\
     "host":"10.0.0.1","praefix":"awtrix_a86b","mac":"AA:BB"}]
+    """
+
+    /// Drei Uhren in der Form, in der frühere Fassungen sie geschrieben haben:
+    /// ohne `typ`, als `"tc002"` und als `"awtrixNG"` (mit den 32 × 8 einer
+    /// TC001). Die Kennungen sind Platzhalter.
+    private static let alteListe = """
+    [{"id":"0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40","name":"Küche",\
+    "host":"10.0.0.1","praefix":"awtrix_a86b","mac":"AA:BB","betriebsart":"mqtt"},\
+    {"id":"1F6F3A2B-7C5D-4FAC-8A4F-7B1D2E3F4A51","name":"Flur",\
+    "host":"10.0.0.2","praefix":"awtrix_c3d4","mac":"CC:DD","typ":"tc002","betriebsart":"http"},\
+    {"id":"2A703B3C-8D6E-4ABD-9B50-8C2E3F4A5B62","name":"Bad",\
+    "host":"10.0.0.3","praefix":"bad/uhr","mac":"EE:FF","typ":"awtrixNG",\
+    "panelbreite":32,"panelhoehe":8,"betriebsart":"mqtt"}]
     """
 
     /// Die Codable-Form von `Uhr` ist ein Dateiformat: Die App hat sie
@@ -89,69 +102,44 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertEqual(uhren.count, 1)
         XCTAssertEqual(uhren[0].name, "Küche")
         XCTAssertEqual(uhren[0].host, "10.0.0.1")
-        XCTAssertEqual(uhren[0].praefix, "awtrix_a86b")
         XCTAssertEqual(uhren[0].mac, "AA:BB")
-        XCTAssertNil(uhren[0].typ, "kein `typ` in der Datei heisst: TC002, wie bisher")
     }
 
-    /// Warum `typ` ein `Optional` ist — nachgemessen, nicht geglaubt.
-    ///
-    /// Swift setzt beim synthetisierten Decode keine Vorgabewerte fuer
-    /// fehlende Schluessel ein. Ein Pflichtfeld mit Vorgabe wirft deshalb
-    /// genauso `keyNotFound` wie eines ohne. Und weil beide Leser (`gelesen`
-    /// hier, `AppZustand.init` in der App) mit `try?` lesen und auf `?? []`
-    /// fallen, waere die Folge keine Fehlermeldung, sondern eine leere
-    /// Uhrenliste: alle eingerichteten Uhren still weg.
-    func testNurEinOptionalHaeltDieAlteDateiLesbar() throws {
-        /// Dieselbe Uhr, nur mit `typ` als Pflichtfeld samt Vorgabewert.
-        struct UhrMitPflichtfeld: Codable {
-            var id = UUID()
-            var name: String
-            var host: String
-            var praefix: String = ""
-            var mac: String = ""
-            var typ: Geraetetyp = .tc002
-        }
-        let alt = Data(Self.alteZeile.utf8)
-
-        XCTAssertThrowsError(try JSONDecoder().decode([UhrMitPflichtfeld].self, from: alt)) { fehler in
-            guard case DecodingError.keyNotFound(let schluessel, _) = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-            XCTAssertEqual(schluessel.stringValue, "typ",
-                           "der Vorgabewert traegt nicht — es fehlt der Schluessel")
-        }
-        // Und was die beiden Leser daraus machten: keine Meldung, keine Uhren.
-        XCTAssertNil(try? JSONDecoder().decode([UhrMitPflichtfeld].self, from: alt))
-
-        // Das Optional traegt.
-        XCTAssertEqual(try JSONDecoder().decode([Uhr].self, from: alt).count, 1)
+    /// Alle drei Altformen bleiben lesbar, ohne dass eine Uhr verloren geht
+    /// (die Leser lesen mit `try?`: ein Fehler waere eine leere Liste). Das
+    /// Präfix der Werksfirmware stimmt für NG nicht und wird verworfen, die
+    /// 32 × 8 ebenso; der Rest bleibt.
+    func testAlteUhrenAllerArtenBleibenLesbarUndVerlierenNurPraefixUndMass() throws {
+        let uhren = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteListe.utf8))
+        XCTAssertEqual(uhren.map(\.name), ["Küche", "Flur", "Bad"])
+        XCTAssertEqual(uhren.map(\.host), ["10.0.0.1", "10.0.0.2", "10.0.0.3"])
+        XCTAssertEqual(uhren.map(\.mac), ["AA:BB", "CC:DD", "EE:FF"])
+        XCTAssertEqual(uhren.map(\.praefix), ["", "", ""])
+        XCTAssertTrue(uhren.allSatisfy { $0.anzeigemass == (52, 16) })
+        XCTAssertEqual(uhren.map(\.wirksameBetriebsart), [.mqtt, .http, .mqtt])
     }
 
-    /// Die Gegenrichtung: Solange `typ` nil ist, schreibt der Encoder ihn gar
-    /// nicht — `encodeIfPresent` bekommen nur Optionals. Eine aeltere Fassung
-    /// der App liest die Datei damit weiterhin.
-    func testEinLeererTypLandetNichtInDerDatei() throws {
-        let daten = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1")])
+    /// Eine MQTT-Uhr ohne Präfix ist nicht beschickbar: Es wird nichts auf das
+    /// alte Thema gesendet, bis „Abfragen" das richtige geholt hat.
+    func testEineMigrierteMqttUhrIstBisZurAbfrageNichtBeschickbar() throws {
+        let uhren = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteListe.utf8))
+        XCTAssertFalse(uhren[0].beschickbar)
+        XCTAssertFalse(uhren[2].beschickbar)
+        XCTAssertTrue(uhren[1].beschickbar, "HTTP braucht kein Präfix")
+    }
+
+    /// Was die aktuelle Fassung schreibt, bleibt unverändert lesbar: Das
+    /// Präfix und das Maß überleben, ein `typ` wird nicht mehr geschrieben.
+    func testDieAktuelleFormUeberstehtDieDatei() throws {
+        let uhr = Uhr(name: "Flur", host: "10.0.0.2", praefix: "flur/uhr",
+                      panelbreite: 52, panelhoehe: 16)
+        let daten = try JSONEncoder().encode([uhr])
         let text = String(decoding: daten, as: UTF8.self)
-        XCTAssertFalse(text.contains("typ"), "war: \(text)")
-
-        let mitTyp = try JSONEncoder().encode([Uhr(name: "Küche", host: "10.0.0.1", typ: .tc002)])
-        XCTAssertTrue(String(decoding: mitTyp, as: UTF8.self).contains("\"typ\":\"tc002\""))
-    }
-
-    /// Der Rohwert von `awtrixNG` ist ein Dateiformat, kein Bezeichner:
-    /// Ein spaeter umbenannter Fall macht jede Uhr, die schon so eingetragen
-    /// ist, beim Lesen zum Fehler — und weil beide Leser mit `try?` lesen,
-    /// waere die Uhrenliste dann leer statt fehlerhaft. Deshalb hier
-    /// festgenagelt, in beide Richtungen.
-    func testAwtrixNGUeberstehtDenWegDurchDieDatei() throws {
-        let daten = try JSONEncoder().encode([Uhr(name: "Flur", host: "10.0.0.2", typ: .awtrixNG)])
-        XCTAssertTrue(String(decoding: daten, as: UTF8.self).contains("\"typ\":\"awtrixNG\""),
-                      "war: \(String(decoding: daten, as: UTF8.self))")
+        XCTAssertFalse(text.contains("\"typ\""), "war: \(text)")
 
         let zurueck = try JSONDecoder().decode([Uhr].self, from: daten)
-        XCTAssertEqual(zurueck[0].typ, .awtrixNG)
+        XCTAssertEqual(zurueck, [uhr])
+        XCTAssertEqual(zurueck[0].praefix, "flur/uhr")
     }
 
     // MARK: - Betriebsart
@@ -173,7 +161,7 @@ final class EinstellungenTests: XCTestCase {
                        "eine bestehende Einrichtung sendet weiter ueber den Broker")
     }
 
-    /// Wie bei `typ`: Solange nichts gewaehlt ist, schreibt der Encoder das
+    /// Solange nichts gewaehlt ist, schreibt der Encoder das
     /// Feld nicht — eine aeltere Fassung liest die Datei weiterhin. Und eine
     /// getroffene Wahl uebersteht das Schreiben und Lesen unveraendert.
     func testDieGewaehlteBetriebsartUeberstehtDieDatei() throws {

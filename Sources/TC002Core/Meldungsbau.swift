@@ -14,21 +14,12 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Co
     public var id: String { rawValue }
 }
 
-/// Der Weg, auf dem der Text zur Uhr kommt. `.pixel` (Vorgabe) rastert die App
-/// selbst — passt der Text, steht er starr, sonst laeuft er als GIF (siehe
-/// `passt`). `.text` schickt ihn stattdessen als `Textblock`, den die Uhr mit
-/// ihrer eigenen Schrift setzt (`docs/tc002-protokoll.md` §4.3, §5.4).
+/// Der Weg, auf dem der Text zur Uhr kommt. AWTRIX NG setzt den Text selbst
+/// (`Anzeigen.nutzlast`): Beide Stellungen schicken denselben Text samt
+/// Reglern, die Uhr sieht unsere Pixel nie.
 ///
-/// Die Oberflaechen bieten die Wahl nicht an: Auf einer AWTRIX NG hat sie
-/// keine Wirkung (`Anzeigen.nutzlast` schickt in beiden Stellungen den Text
-/// samt Reglern; unsere Pixel sehen diese Uhren nie), auf der Werksfirmware
-/// kostet `.text` Schriftwahl, Groesse und Fett, verliert Umlaute und laeuft
-/// nicht durch (gemessen, `docs/firmware-beobachtungen.md` Nr. 1) — gegen ein
-/// paar Kilobyte weniger Nutzlast kein Gewinn.
-///
-/// `.text` bleibt im Kern, weil `mqtttc002 --geraeteschrift` und der
-/// Kurzbefehl es ausdruecklich verlangen koennen und weil das Feld Teil des
-/// Dateiformats von Slotgedaechtnis und Verlauf ist.
+/// Das Feld bleibt, weil es Teil des Dateiformats von Slotgedaechtnis, Verlauf
+/// und Formatangaben ist, das auch andere Geraete im iCloud-Behaelter lesen.
 public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
     case pixel, text
     public var id: String { rawValue }
@@ -133,25 +124,22 @@ extension Meldungsoptionen {
     /// Die Vorschau einer NG-Uhr ist eine Näherung, immer dieselbe.
     ///
     /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl
-    /// ist dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der gespeicherte
-    /// Wert bleibt davon aber unberührt und kann „Tiny5, 16 px" sein — auf
-    /// acht Zeilen gerastert wäre das abgeschnitten, und die Vorschau zeigte
-    /// einen Fehler, den das Gerät gar nicht hat.
+    /// ist dort gesperrt (`AwtrixNG.wirkt(.schriftart)`). Der gespeicherte
+    /// Wert bleibt davon aber unberührt und kann „Tiny5, 16 px" sein — die
+    /// Vorschau zeigte dann eine Schrift, die das Gerät gar nicht hat.
     ///
     /// Gewählt ist Silkscreen in 8 px: eine Pixelschrift, die auf der
-    /// abgesegneten Liste steht (`Pixelgroessen.abgesegnet`) und in acht Zeilen
-    /// vollständig Platz hat.
+    /// abgesegneten Liste steht (`Pixelgroessen.abgesegnet`).
     ///
     /// Angerührt werden nur Schrift und Größe. Farbe, Ausrichtung, Abstand und
-    /// das mitlaufende Icon sind Regler, die NG kennt (`Geraetetyp.wirkt`) —
+    /// das mitlaufende Icon sind Regler, die NG kennt (`AwtrixNG.wirkt`) —
     /// sie zu ersetzen hieße, die Vorschau von der Einstellung abzukoppeln,
     /// die wirklich gesendet wird.
     ///
     /// Im Kern und nicht in den Ansichten: Mac und iPhone rufen dasselbe, sonst
     /// laufen zwei Abschriften derselben Tabelle früher oder später auseinander
-    /// (siehe `Regler` in `Geraetetyp.swift`).
-    public func naeherung(fuer gattung: Geraetetyp) -> Meldungsoptionen {
-        guard gattung.setztSelbst else { return self }
+    /// (siehe `Regler` in `AwtrixNG.swift`).
+    public var naeherung: Meldungsoptionen {
         var o = self
         o.schrift = "Silkscreen"
         o.groesse = 8
@@ -172,10 +160,9 @@ public enum Meldungsbau {
     public static func iconBreite(kante: Int = 8) -> Int { kante + iconLuecke }
 
     /// Auf welcher Zeile das Icon sitzt: senkrecht mittig im Feld. Auf den
-    /// sechzehn Zeilen der Werksfirmware ergibt das bei 8×8 die bekannte 4 und
-    /// bei 16×16 die 0 — ein 16×16 fuellt die volle Hoehe und schwimmt nicht.
-    /// Auf den acht Zeilen einer NG-Uhr tut das ein 8×8.
-    public static func iconY(kante: Int = 8, mass: Anzeigemass = .tc002) -> Int {
+    /// sechzehn Zeilen ergibt das bei 8×8 die 4 und bei 16×16 die 0 — ein
+    /// 16×16 fuellt die volle Hoehe und schwimmt nicht.
+    public static func iconY(kante: Int = 8, mass: Anzeigemass = .vorgabe) -> Int {
         mass.iconY(kante: kante)
     }
 
@@ -186,13 +173,13 @@ public enum Meldungsbau {
         mitIcon ? iconBreite(kante: iconKante) : 0
     }
     public static func flaecheBreite(mitIcon: Bool, iconKante: Int = 8,
-                                     mass: Anzeigemass = .tc002) -> Int {
+                                     mass: Anzeigemass = .vorgabe) -> Int {
         mass.breite - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
     }
 
     /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage für `versatzY`
     /// und für das fertige Feld.
-    public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .tc002) -> Pixelfeld {
+    public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         Textraster.rasterPuffer(o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
                                 fett: o.fett, farbe: o.farbe, luecke: o.abstand, mass: mass)
     }
@@ -208,14 +195,14 @@ public enum Meldungsbau {
     /// Einschalten den Text passend machen, den Schalter verschwinden lassen
     /// und ihn wieder umwerfen.
     public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
-                             mass: Anzeigemass = .tc002) -> Bool {
+                             mass: Anzeigemass = .vorgabe) -> Bool {
         breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
     /// Schriftgröße: `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie
     /// sie hinlegt, nicht an den oberen Rand.
-    public static func versatzY(_ o: Meldungsoptionen, mass: Anzeigemass = .tc002) -> Int {
+    public static func versatzY(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Int {
         guard let tinte = Textraster.tintenZeilen(puffer(o, mass: mass)) else { return 0 }
         let hoehe = tinte.letzte - tinte.erste + 1
         // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
@@ -229,7 +216,7 @@ public enum Meldungsbau {
     }
 
     public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
-                                mass: Anzeigemass = .tc002) -> Int {
+                                mass: Anzeigemass = .vorgabe) -> Int {
         let x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
         let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
         switch o.waagrecht {
@@ -243,7 +230,7 @@ public enum Meldungsbau {
     /// in derselben Phase, ausgerichtet wird durch Verschieben — sonst sähe
     /// dieselbe Schrift stehend anders aus als laufend.
     public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
-                            mass: Anzeigemass = .tc002) -> Pixelfeld {
+                            mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         var f = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
         Textraster.einsetzen(puffer(o, mass: mass),
                              x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
@@ -257,7 +244,7 @@ public enum Meldungsbau {
     public static func laufschriftBilder(_ o: Meldungsoptionen,
                                   iconBilder: [[String?]],
                                   iconKante: Int = 8,
-                                  mass: Anzeigemass = .tc002) -> [Bildraster.Einzelbild] {
+                                  mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
         Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
@@ -265,90 +252,14 @@ public enum Meldungsbau {
             iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand, mass: mass)
     }
 
-    public static func textblock(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
-                                 mass: Anzeigemass = .tc002) -> Textblock {
-        var t = Textblock(inhalt: o.gesendeterText)
-        t.schrifthoehe = Int(o.groesse)
-        t.x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
-        t.y = 0
-        t.farbe = o.farbe
-        t.ausrichtung = o.geraeteAusrichtung
-        t.vertikal = o.geraeteVertikal
-        t.flaeche = [flaecheX(mitIcon: mitIcon, iconKante: iconKante), 0,
-                     flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass), mass.hoehe]
-        return t
-    }
-
-    /// Baut den Rahmen für den gewählten Weg. Beim Pixel-Weg zwei Fälle, einer
-    /// je Entscheidung von `passt`: ein starrer `draw`-Rahmen mit dem Icon als
-    /// zweitem Bild, oder ein einziges animiertes GIF, in dem das Icon schon
-    /// steckt. Beim Text-Weg ein `Textblock`, den die Uhr selbst setzt.
-    ///
-    /// `vorberechnet` ist das bereits gebaute Laufschrift-GIF. Die Sendeansicht
-    /// hat es für die Vorschau ohnehin erzeugt; es zweimal zu rastern wäre die
-    /// teuerste Rechnung der App, doppelt ausgeführt.
-    public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
-                       vorberechnet: String? = nil) throws -> Frame {
-        var gebaut = try gebauterRahmen(o, icon: icon, sammlung: sammlung, vorberechnet: vorberechnet)
-        // Die Herkunft haengt an jedem Rahmen, den diese Funktion baut, und nur
-        // an ihnen. Ein gemaltes Bild kommt nicht hier vorbei, hat keine Regler
-        // und kann deshalb auch keine mitgeben; genau daran erkennt `Anzeigen`,
-        // dass es an eine AWTRIX NG nicht zu schicken ist.
-        //
-        // Das Icon wird hier noch einmal gelesen, obwohl der stehende Fall es
-        // schon in `bilder` traegt: Im laufenden Fall steckt es im GIF und
-        // liesse sich von dort nicht mehr herausloesen. Eine Icondatei je
-        // Sendung ist der Preis dafuer, dass es immer an derselben Stelle steht.
-        gebaut.herkunft = Meldungsherkunft(
-            optionen: o,
-            iconDatenURI: try icon.map { try sammlung.datenURI(fuer: $0) },
-            iconKante: icon?.kante ?? 8)
-        return gebaut
-    }
-
-    /// Der Rahmen selbst, ohne Herkunft — der Rumpf von `rahmen`.
-    private static func gebauterRahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
-                                       vorberechnet: String?) throws -> Frame {
-        let mitIcon = icon != nil
-        // Die einzige Stelle, an der die Groesse des Icons wirklich entschieden
-        // wird: Alles darunter rechnet mit ihr weiter, statt 8 anzunehmen.
-        let kante = icon?.kante ?? 8
-        switch o.weg {
-        case .pixel:
-            guard passt(o, mitIcon: mitIcon, iconKante: kante) else {
-                let uri: String
-                if let fertig = vorberechnet, !fertig.isEmpty {
-                    uri = fertig
-                } else {
-                    // Erst hier lesen: Liegt das GIF schon vor, waere das
-                    // Oeffnen der Icondatei bei jedem Senden umsonst.
-                    let iconBilder = icon.flatMap { i -> [[String?]]? in
-                        try? Bildraster.lesenMitZeiten(i.datei, breite: kante, hoehe: kante).map(\.pixel)
-                    } ?? []
-                    uri = try Textraster.laufschrift(
-                        o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
-                        farbe: o.farbe, schrittweite: o.tempo.schrittweite,
-                        bilddauer: o.tempo.bilddauer, versatzY: versatzY(o),
-                        iconBilder: iconBilder, iconKante: kante,
-                        iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand)
-                }
-                return Frame(bilder: [Bild(datenURI: uri, x: 0, y: 0)], dauer: o.dauer)
-            }
-            var frame = Frame(draw: feld(o, mitIcon: mitIcon, iconKante: kante).alsDrawBefehle(),
-                              dauer: o.dauer)
-            if let icon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon),
-                                         x: 0, y: iconY(kante: kante)))
-            }
-            return frame
-        case .text:
-            var frame = Frame(texte: [textblock(o, mitIcon: mitIcon, iconKante: kante)], dauer: o.dauer)
-            if let icon {
-                frame.bilder.append(Bild(datenURI: try sammlung.datenURI(fuer: icon),
-                                         x: 0, y: iconY(kante: kante)))
-            }
-            return frame
-        }
+    /// Der Rahmen zu einer Meldung: Er traegt Text und Regler samt Icon als
+    /// `Meldungsherkunft`, aus der AWTRIX NG die Anzeige baut
+    /// (`NGNutzlast.anzeige`). Pixel traegt er nicht.
+    public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung) throws -> Frame {
+        Frame(dauer: o.dauer,
+              herkunft: Meldungsherkunft(
+                optionen: o,
+                iconDatenURI: try icon.map { try sammlung.datenURI(fuer: $0) }))
     }
 }
 

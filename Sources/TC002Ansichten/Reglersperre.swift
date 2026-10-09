@@ -1,12 +1,12 @@
 import SwiftUI
 import TC002Core
 
-/// Einen Regler sperren, den die Geräteart gar nicht kennt — und sagen warum.
+/// Einen Regler sperren, den AWTRIX NG gar nicht kennt — und sagen warum.
 ///
 /// Zwei Achsen, zwei Stellen: Ob ein Regler zum gewählten Weg passt,
 /// entscheidet die Ansicht selbst und hat es schon immer über `.disabled`
-/// getan. Ob die Geräteart ihn überhaupt hergibt, entscheidet
-/// `Geraetetyp.wirkt` im Kern. Beides greift nebeneinander: `.disabled` ist
+/// getan. Ob die Firmware ihn überhaupt hergibt, entscheidet
+/// `AwtrixNG.wirkt` im Kern. Beides greift nebeneinander: `.disabled` ist
 /// kumulativ, ein zweites `true` weiter außen sperrt zusätzlich, und die
 /// Ansicht behält ihre eigene Bedingung unverändert.
 ///
@@ -23,9 +23,8 @@ import TC002Core
 /// Rückstandsdokument.
 extension View {
     @ViewBuilder
-    func gattungssperre(_ regler: Regler, _ art: Geraetetyp,
-                        sonst gewohnt: String? = nil) -> some View {
-        let grund = art.begruendung(regler)
+    func reglersperre(_ regler: Regler, sonst gewohnt: String? = nil) -> some View {
+        let grund = AwtrixNG.begruendung(regler)
         if let hinweis = grund ?? gewohnt {
             self.disabled(grund != nil).help(hinweis)
         } else {

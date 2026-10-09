@@ -178,6 +178,15 @@ final class VirtuelleNGUhrBildTests: XCTestCase {
         XCTAssertEqual(belegt(negativ).count, 52 * 16)
     }
 
+    /// Die Box einer Region kommt vom Absender; zu grosse Boxen werden
+    /// uebersprungen, statt ein Feld dieser Groesse anzulegen.
+    func testRiesigeRegionsboxWirdUebersprungen() throws {
+        for box in ["[0,0,2000000000,2000000000]", "[0,0,52,1000000000]", "[-2000000000,0,10,10]", "[0,0,-5,4]"] {
+            let b = try schnell(#"{"layout":{"version":1,"regions":[{"id":"a","box":"# + box + #","draw":[["rectFill",0,0,10,10,"FF0000"]]}]}}"#)
+            XCTAssertTrue(belegt(b).isEmpty, box)
+        }
+    }
+
     func testRiesigesRectZeichnetNurSichtbareKanten() throws {
         let b = try schnell(#"{"draw":[["rect",-5,-5,2000000000,2000000000,"FF0000"]]}"#)
         XCTAssertTrue(belegt(b).isEmpty)

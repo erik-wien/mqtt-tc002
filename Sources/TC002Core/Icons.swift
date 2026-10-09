@@ -344,7 +344,7 @@ public enum Bildraster {
     /// Unterschied, wohl aber ein technischer: In einer eingebackenen
     /// Laufschrift entscheidet genau diese Deckung ueber das
     /// GIF-Entsorgungsverfahren (`cgBild`), und ein deckendes Einzelbild
-    /// hinterlaesst auf der Uhr Loecher (`docs/tc002-protokoll.md`). Ein Icon
+    /// hinterlaesst auf der Uhr Loecher. Ein Icon
     /// ganz ohne andersfarbige Tinte bleibt unveraendert — ohne sie liesse
     /// sich Rand nicht von Zeichnung unterscheiden.
     public static func schwarzrandBegrenzt(_ pixel: [String?], breite: Int, hoehe: Int,

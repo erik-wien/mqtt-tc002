@@ -8,8 +8,8 @@ import Network
 /// gesammelt und erst herausgegeben, was vollstaendig da ist — abzulesen an der
 /// Restlaenge, die selbst schon mehrere Bytes lang sein kann.
 struct Paketstrom {
-    /// Mehr als das traegt kein Thema, auf das die App hoert: `customList` und
-    /// `status` sind ein paar hundert Byte JSON. Eine lesbare Restlaenge darf
+    /// Mehr als das traegt kein Thema, auf das die App hoert: die Antworten auf
+    /// `/result` und `availability` sind ein paar hundert Byte JSON. Eine lesbare Restlaenge darf
     /// laut Norm bis 268 MB gehen — so weit den Puffer wachsen zu lassen, hiesse
     /// einem kaputten oder boeswilligen Broker den Speicher zu ueberlassen.
     static let hoechstens = 1 << 20

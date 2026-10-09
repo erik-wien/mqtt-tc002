@@ -62,22 +62,9 @@ final class VorschaumassTests: XCTestCase {
     func testDieSendeansichtenRasternMitDerNaeherung() throws {
         for pfad in Self.stellen {
             let quelle = try ohneKommentare(pfad)
-            XCTAssertTrue(quelle.contains("optionen.naeherung(fuer: gattung)"),
+            XCTAssertTrue(quelle.contains("optionen.naeherung"),
                           "\(pfad): rastert die Vorschau ohne `naeherung`.")
         }
     }
 
-    /// Das vorberechnete GIF darf nicht in der falschen Größe ans Senden
-    /// gehen. Beide Oberflächen können an mehrere Uhren senden (am Mac über
-    /// `ZielauswahlView`, am Telefon über „An alle Uhren senden"), während
-    /// die Vorschau immer nur einer Uhr gilt. Steht sie auf einer NG, ist ihr
-    /// GIF 32 × 8 — einer gleichzeitig beschickten TC002 füllte das ein
-    /// Viertel ihrer Anzeige.
-    func testDasVorberechneteGifGehtNurInDerSendegroesseMit() throws {
-        for pfad in Self.stellen {
-            let quelle = try ohneKommentare(pfad)
-            XCTAssertTrue(quelle.contains("vorberechnet: mass == .tc002 ? laufschriftURI : nil"),
-                          "\(pfad): reicht das vorberechnete GIF ungeprüft ans Senden weiter.")
-        }
-    }
 }

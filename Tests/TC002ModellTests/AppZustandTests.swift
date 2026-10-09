@@ -485,7 +485,7 @@ final class AppZustandTests: XCTestCase {
         optionen.farbe = "#FF0000"
         optionen.tempo = .schnell
 
-        await zustand.senden(Frame(draw: [], dauer: nil), als: "meldung3",
+        await zustand.senden(Frame(herkunft: Meldungsherkunft(optionen: optionen)), als: "meldung3",
                              slotOptionen: optionen, slotIcon: "4711", slotIconKante: 8,
                              slotPlatz: 3)
 
@@ -639,22 +639,19 @@ final class AppZustandTests: XCTestCase {
         return uhr
     }
 
-    /// Eine Nutzlast, die sich nicht in Pixel zerlegen laesst — ein Lauf-GIF
-    /// oder der Weg „als Text" —, sagt zweierlei: Auf dem Platz liegt etwas
-    /// Neues, und wir kennen es nicht. Bliebe der alte Eintrag stehen, zeigte
-    /// der Block weiter das vorige Bild, obwohl auf der Uhr nachweislich etwas
-    /// anderes steht, und nichts meldete es.
-    func testUnzerlegbareNutzlastLoeschtDenAltenSlotinhalt() throws {
+    /// Eine mitgelesene Sendung von NG ist Text und Regler, keine Pixel. Sie
+    /// sagt zweierlei: Auf dem Platz liegt etwas Neues, und wir kennen es
+    /// nicht. Bliebe der alte Eintrag stehen, zeigte der Block weiter das
+    /// vorige Bild, obwohl auf der Uhr nachweislich etwas anderes steht.
+    func testEineMitgelesenSendungLoeschtDenAltenSlotinhalt() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.slotInhalt[uhr.id] = [1: Slotbild(pixel: [String?](repeating: "#00FF66", count: 4))]
+        XCTAssertNotNil(zustand.slotInhalt[uhr.id]?[1])
 
-        let hallo = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: hallo, fuer: uhr.id)
-        XCTAssertNotNil(zustand.slotInhalt[uhr.id]?[1], "Der Pixel-Weg muss ankommen.")
-
-        let laufschrift = Data("{\"image\":\"data:image/gif;base64,R0lGODlh\"}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: laufschrift, fuer: uhr.id)
+        zustand.gemeldet(thema: "pa/cmd/apps/pushed/meldung1",
+                         nutzlast: Data(#"{"text":"neu"}"#.utf8), fuer: uhr.id)
 
         XCTAssertNil(zustand.slotInhalt[uhr.id]?[1],
                      "Was nicht zerlegbar ist, darf den alten Eintrag nicht stehenlassen.")
@@ -715,12 +712,10 @@ final class AppZustandTests: XCTestCase {
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
         zustand.gemeldeteAnzeigen[uhr.id] = ["meldung1"]
-        let gemalt = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: gemalt, fuer: uhr.id,
-                         gedaechtnis: gedaechtnis)
+        zustand.slotInhalt[uhr.id] = [1: Slotbild(pixel: [String?](repeating: "#00FF66", count: 4))]
 
         // Was `Anzeigen.loeschen` schickt: genau null Bytes (§3.2).
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: Data(), fuer: uhr.id,
+        zustand.gemeldet(thema: "pa/cmd/apps/pushed/meldung1", nutzlast: Data(), fuer: uhr.id,
                          gedaechtnis: gedaechtnis)
 
         XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), [],
@@ -732,19 +727,19 @@ final class AppZustandTests: XCTestCase {
                      "Ein geräumter Platz darf keine Erinnerung zurücklassen.")
     }
 
-    /// Die Gegenprobe zur leeren Nutzlast: Eine nicht zerlegbare sagt nur, dass
-    /// dort etwas Unlesbares liegt — der Platz bleibt belegt, und die
-    /// Erinnerung bleibt stehen. Wer beide Faelle in einen Zweig faltet,
-    /// meldete hier einen freien Platz, obwohl ein Lauf-GIF darauf laeuft.
-    func testUnzerlegbareNutzlastLaesstBelegungUndErinnerungStehen() throws {
+    /// Die Gegenprobe zur leeren Nutzlast: Eine mitgelesene Sendung sagt nur,
+    /// dass dort etwas liegt, das wir nicht als Bild kennen — der Platz bleibt
+    /// belegt, und die Erinnerung bleibt stehen. Wer beide Faelle in einen
+    /// Zweig faltet, meldete hier einen freien Platz.
+    func testEineMitgelesenSendungLaesstBelegungUndErinnerungStehen() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
 
-        let laufschrift = Data("{\"image\":\"data:image/gif;base64,R0lGODlh\"}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: laufschrift, fuer: uhr.id,
+        zustand.gemeldet(thema: "pa/cmd/apps/pushed/meldung1",
+                         nutzlast: Data(#"{"text":"neu"}"#.utf8), fuer: uhr.id,
                          gedaechtnis: gedaechtnis)
 
         XCTAssertEqual(zustand.anzeigenAufUhr(uhr.id), ["meldung1"],
@@ -775,27 +770,6 @@ final class AppZustandTests: XCTestCase {
                        "Nach dem Merken neuer Regler darf nicht das alte Bild stehenbleiben.")
     }
 
-    /// Nach einer eingetroffenen Nachricht: Mitgelesene Pixel schlagen das
-    /// Gedaechtnis. Ein Zwischenspeicher, der das ganze Ergebnis je (Uhr,
-    /// Platz) haelt, zeigte hier weiter die Erinnerung.
-    func testGerechnetePixelVerfallenNachEingetroffenerNachricht() throws {
-        let uhr = try buehne()
-        let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let gemerkt = Meldungsoptionen(text: "gemerkt")
-        gedaechtnis.merken(gemerkt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
-        let zustand = AppZustand(schluesselbund: schluesselbund)
-        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh))
-
-        let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
-
-        let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
-        XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(mitgelesen),
-                       "Mitgelesene Pixel schlagen die Erinnerung — auch beim zweiten Blick.")
-    }
-
     /// Nach einem Verbindungsabriss: `slotInhalt` faellt weg, und der Block
     /// muss wieder auf die Erinnerung zurueckfallen statt die letzten
     /// mitgelesenen Pixel festzuhalten, die nun niemand mehr bestaetigt.
@@ -805,8 +779,7 @@ final class AppZustandTests: XCTestCase {
         let gemerkt = Meldungsoptionen(text: "gemerkt")
         gedaechtnis.merken(gemerkt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
-        let fremd = Data("{\"draw\":[{\"df\":[0,0,2,2,\"#00FF66\"]}]}".utf8)
-        zustand.gemeldet(thema: "pa/custom/meldung1", nutzlast: fremd, fuer: uhr.id)
+        zustand.slotInhalt[uhr.id] = [1: Slotbild(pixel: [String?](repeating: "#00FF66", count: 4))]
         let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
                        .bekannt(mitgelesen))
@@ -931,12 +904,10 @@ final class AppZustandTests: XCTestCase {
         XCTAssertFalse(meldung.contains("Abfragen"), "war: \(meldung)")
     }
 
-    /// Was ohne diese Buchung geschaehe: Ueber MQTT veroeffentlicht die Uhr
-    /// nach einer Aenderung ihre `customList` von selbst, die Auskunft kommt
-    /// also gleich nach. Ueber HTTP reicht sie nichts nach (gemessen) — ein
-    /// eben gefuellter Platz zeigte „frei", solange die alte Auskunft steht.
-    /// Gebucht wird nur, was die Uhr mit `code: 200` quittiert hat.
-    func testEineBestaetigteHttpSendungErgaenztDieAuskunftDerUhr() throws {
+    /// Was ohne diese Buchung geschaehe: Ueber HTTP reicht die Uhr nichts
+    /// nach — ein eben gefuellter Platz zeigte „frei", solange die alte
+    /// Auskunft steht. Gebucht wird nur, was die Uhr quittiert hat.
+    func testEineBestaetigteSendungErgaenztDieAuskunftDerUhr() throws {
         d.removeObject(forKey: "uhren")
         let zustand = AppZustand(schluesselbund: schluesselbund)
         let http = Uhr(name: "Küche", host: "10.0.0.1", betriebsart: .http)
@@ -948,9 +919,10 @@ final class AppZustandTests: XCTestCase {
         zustand.anzeigeBestaetigt("meldung1", fuer: http)
         zustand.anzeigeBestaetigt("meldung1", fuer: mqtt)
 
+        // AWTRIX NG nennt ihre Anzeigen ueber MQTT nicht (§3.5): Auch dort ist
+        // die Auskunft ein HTTP-Abruf von vorhin.
         XCTAssertEqual(zustand.gemeldeteAnzeigen[http.id], ["meldung3", "meldung1"])
-        XCTAssertEqual(zustand.gemeldeteAnzeigen[mqtt.id], ["meldung3"],
-                       "über MQTT sagt es die Uhr selbst — hier wäre es eine Behauptung")
+        XCTAssertEqual(zustand.gemeldeteAnzeigen[mqtt.id], ["meldung3", "meldung1"])
         XCTAssertEqual(zustand.bekannteAnzeigen[http.id], ["meldung1"])
         XCTAssertEqual(zustand.bekannteAnzeigen[mqtt.id], ["meldung1"])
     }
@@ -1079,19 +1051,18 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .app)
     }
 
-    /// Der ganze Weg ohne Netz: `belegungAbfragen` fragt `GET /api/customList`
-    /// und traegt die Antwort als Auskunft der Uhr ein. Der Pfad steht mit im
-    /// Test, weil `/customList` ohne `/api` nichts liefert — genau daran lag es.
+    /// Der ganze Weg ohne Netz: `belegungAbfragen` fragt `GET /api/v1/apps`
+    /// und traegt die Antwort als Auskunft der Uhr ein.
     func testBelegungWirdUeberDenApiPfadErfragt() throws {
         let zustand = try zustandMitEinerUhr()
         let id = try XCTUnwrap(zustand.aktiveID)
-        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung2","meldung5"],"count":2}"#
+        Belegungsdoppelgaenger.antwort = Self.inventar(["meldung2", "meldung5"])
         Belegungsdoppelgaenger.pfade = []
 
         zustand.belegungAbfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
         warteBis { zustand.gemeldeteAnzeigen[id] != nil }
 
-        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/customList"])
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/v1/apps"])
         XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung2", "meldung5"])
         XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
     }
@@ -1121,7 +1092,7 @@ final class AppZustandTests: XCTestCase {
     /// `Belegungsdoppelgaenger.marke`): Ohne ihn kann ein Nachzuegler aus
     /// einem frueheren Test in die Aufzeichnung des laufenden schreiben, und
     /// `testOhneAdresseWirdNichtGefragt` faellt dann sporadisch ueber ein
-    /// `/api/customList`, das es nicht bestellt hat.
+    /// `/api/v1/apps`, das es nicht bestellt hat.
     ///
     /// Hier steht die Unterscheidung deterministisch: eine Anfrage aus einer
     /// frueheren Sitzung gegen eine aus der laufenden, beide unmittelbar
@@ -1129,7 +1100,7 @@ final class AppZustandTests: XCTestCase {
     func testNurDieLaufendeProbeSchreibtInDieAufzeichnung() async throws {
         let frueher = Belegungsdoppelgaenger.sitzung()
         let jetzt = Belegungsdoppelgaenger.sitzung()
-        let url = try XCTUnwrap(URL(string: "http://uhr.test/api/customList"))
+        let url = try XCTUnwrap(URL(string: "http://uhr.test/api/v1/apps"))
 
         Belegungsdoppelgaenger.pfade = []
         _ = try? await frueher.data(from: url)
@@ -1137,7 +1108,7 @@ final class AppZustandTests: XCTestCase {
                        "ein Nachzuegler aus einer frueheren Probe gehoert nicht in diese Aufzeichnung")
 
         _ = try? await jetzt.data(from: url)
-        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/customList"],
+        XCTAssertEqual(Belegungsdoppelgaenger.pfade, ["/api/v1/apps"],
                        "die laufende Probe muss sehr wohl mitschreiben — sonst zeichnete nichts mehr auf")
     }
 
@@ -1169,7 +1140,7 @@ final class AppZustandTests: XCTestCase {
         let id = try XCTUnwrap(zustand.aktiveID)
         XCTAssertEqual(zustand.brokerHost, "", "ohne Broker: kein Abonnement, kein Netzverkehr")
         zustand.anzeigeGemerkt("meldung1", fuer: id)
-        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung2"],"count":1}"#
+        Belegungsdoppelgaenger.antwort = Self.inventar(["meldung2"])
 
         zustand.horchenStarten(sitzung: Belegungsdoppelgaenger.sitzung())
         warteBis { zustand.gemeldeteAnzeigen[id] != nil }
@@ -1187,7 +1158,7 @@ final class AppZustandTests: XCTestCase {
         let zustand = try zustandMitEinerUhr()
         let id = try XCTUnwrap(zustand.aktiveID)
         zustand.belegungGemeldet(nil, fuer: id)   // wie nach `inDenHintergrund`
-        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung5"],"count":1}"#
+        Belegungsdoppelgaenger.antwort = Self.inventar(["meldung5"])
 
         zustand.ausDemHintergrund(sitzung: Belegungsdoppelgaenger.sitzung())
         warteBis { zustand.gemeldeteAnzeigen[id] != nil }
@@ -1203,7 +1174,7 @@ final class AppZustandTests: XCTestCase {
         let id = try XCTUnwrap(zustand.aktiveID)
         zustand.anzeigeGemerkt("meldung1", fuer: id)
         Belegungsdoppelgaenger.vollstaendigeUhr()
-        Belegungsdoppelgaenger.antwort = #"{"apps":["meldung3"],"count":1}"#
+        Belegungsdoppelgaenger.antwort = Self.inventar(["meldung3"])
 
         zustand.abfragen(id, sitzung: Belegungsdoppelgaenger.sitzung())
         warteBis { zustand.gemeldeteAnzeigen[id] != nil }
@@ -1211,6 +1182,13 @@ final class AppZustandTests: XCTestCase {
         XCTAssertEqual(zustand.uhren[0].praefix, "awtrix_a86b", "das Bisherige muss weiter kommen")
         XCTAssertEqual(zustand.gemeldeteAnzeigen[id], ["meldung3"])
         XCTAssertEqual(zustand.anzeigenDerAktivenMitQuelle().quelle, .geraet)
+    }
+
+    /// Das Inventar einer AWTRIX NG (`GET /api/v1/apps`) mit diesen eigenen
+    /// Anzeigen und einer eingebauten, die nicht mitzaehlt.
+    private static func inventar(_ namen: [String]) -> String {
+        let eigene = namen.map { #"{"name":"\#($0)","origin":"pushed"}"# }
+        return "[" + (eigene + [#"{"name":"Time","origin":"builtin"}"#]).joined(separator: ",") + "]"
     }
 
     private func zustandMitEinerUhr() throws -> AppZustand {
@@ -1300,7 +1278,7 @@ final class AppZustandTests: XCTestCase {
 
 /// Faengt die HTTP-Abfragen an die Uhr ab. Kein Netz, keine Uhr.
 final class Belegungsdoppelgaenger: URLProtocol {
-    /// Die Antwort auf `/api/customList` — die Frage, um die es hier geht.
+    /// Die Antwort auf `/api/v1/apps` — die Frage, um die es hier geht.
     nonisolated(unsafe) static var antwort = "{}"
     /// Die uebrigen Endpunkte, die `abfragen` unterwegs braucht.
     nonisolated(unsafe) static var weitere: [String: String] = [:]
@@ -1332,9 +1310,9 @@ final class Belegungsdoppelgaenger: URLProtocol {
     /// Was eine Uhr antwortet, die Praefix, MAC und Verbindungsstand kennt.
     static func vollstaendigeUhr() {
         weitere = [
-            "/getMqttConfig": #"{"isMqtt":true,"mqtt_prefix":"awtrix"}"#,
-            "/getBase": #"{"mac":"aabbccdda86b","devSn":"TC002","mcuVer":"V1.0.17","appVer":"1.1.1"}"#,
-            "/getMqttStatus": #"{"code":200,"data":{"connected":true}}"#,
+            "/api/v1/device": #"{"uid":"aabbccdda86b","boardType":"awtrixng","mqtt":{"state":"connected"}}"#,
+            "/api/v1/system": #"{"mqttPrefix":"awtrix_a86b"}"#,
+            "/api/v1/capabilities": #"{"display":{"width":52,"height":16}}"#,
         ]
     }
 
@@ -1347,7 +1325,7 @@ final class Belegungsdoppelgaenger: URLProtocol {
         if request.value(forHTTPHeaderField: "X-Probe") == Self.marke {
             Self.pfade.append(pfad)
         }
-        let text = pfad == "/api/customList" ? Self.antwort : (Self.weitere[pfad] ?? "{}")
+        let text = pfad == "/api/v1/apps" ? Self.antwort : (Self.weitere[pfad] ?? "{}")
         let antwort = HTTPURLResponse(url: request.url!, statusCode: 200,
                                       httpVersion: nil, headerFields: nil)!
         client?.urlProtocol(self, didReceive: antwort, cacheStoragePolicy: .notAllowed)

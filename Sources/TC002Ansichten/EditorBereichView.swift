@@ -1387,7 +1387,7 @@ public struct EditorBereichView: View {
                 .accessibilityLabel(Text("Sende…"))
         } else {
             Sendezeichen(senden: { senden() }, ausgang: ausgang)
-                .disabled(zustand.ziele().isEmpty || keineNimmtGemaltes)
+                .disabled(zustand.ziele().isEmpty || gemaltesGesperrt)
         }
     }
 
@@ -1400,27 +1400,18 @@ public struct EditorBereichView: View {
         if zustand.ziele().isEmpty {
             return lok("Erst unter „Einstellungen“ eine Uhr eintragen und abfragen.")
         }
-        if keineNimmtGemaltes {
-            return lok("Ein gemaltes Bild nimmt nur die Werksfirmware an. Die AWTRIX hat acht Zeilen statt sechzehn — ein darauf gestauchtes Bild wäre nicht dasselbe Bild.")
+        if gemaltesGesperrt {
+            return NGFehler.keinPixelweg.errorDescription
         }
         return nil
     }
 
-    /// Keine der Zieluhren nimmt ein gemaltes Bild an — dann ist der Knopf
-    /// gesperrt, statt ins Leere zu senden.
-    ///
-    /// Absichtlich „keine" und nicht „eine": Sind mehrere Uhren gewählt und ist
-    /// nur eine davon eine AWTRIX, geht die Sendung an die übrigen und meldet
-    /// für diese eine den Fehler — das ist mehr Auskunft als ein gesperrter
-    /// Knopf, der auch die tauglichen Ziele mitsperrte. Ohne gewählte Uhr
-    /// greift schon `zustand.ziele().isEmpty` davor.
-    private var keineNimmtGemaltes: Bool {
-        // Ein Icon nimmt jede Uhr: Es geht als GIF hinaus, nicht als Pixelfeld
-        // (`Bildsendung.rahmen` haengt ihm die Herkunft an). Die Sperre gilt
-        // allein der ganzen Anzeige — die hat 16 Zeilen, eine AWTRIX acht.
-        guard !groesse.istIcon else { return false }
-        let ziele = zustand.ziele()
-        return !ziele.isEmpty && !ziele.contains { $0.gattung.nimmtGemaltes }
+    /// Eine ganze Anzeige laesst sich noch nicht an die Uhr schicken
+    /// (`NGFehler.keinPixelweg`) — dann ist der Knopf gesperrt, statt ins
+    /// Leere zu senden. Ein Icon geht dagegen als GIF hinaus
+    /// (`Bildsendung.rahmen` haengt ihm die Herkunft an).
+    private var gemaltesGesperrt: Bool {
+        !groesse.istIcon && !zustand.ziele().isEmpty
     }
 
     // MARK: - Blatt „Oeffnen"

@@ -35,7 +35,6 @@ struct Optionen {
     var rand = 1
     var abstand = 1
     var dauer: Int?
-    var geraeteschrift = false
     var tempo: Lauftempo = .mittel
     var trocken = false
 
@@ -134,7 +133,6 @@ struct Optionen {
             case "--rand", "--margin":    o.rand = try zahl()
             case "--abstand", "--gap":    o.abstand = try zahl()
             case "--dauer", "--duration": o.dauer = try zahl()
-            case "--geraeteschrift", "--device-font": o.geraeteschrift = true
             case "--trocken", "--dry-run": o.trocken = true
             case "--tempo", "--speed":
                 let w = try wert()
@@ -205,7 +203,6 @@ struct Optionen {
     /// Die Optionen der Kommandozeile als das, was der Kern versteht.
     var meldung: Meldungsoptionen {
         var o = Meldungsoptionen(text: "")
-        o.weg = geraeteschrift ? .text : .pixel
         o.schrift = schrift
         o.groesse = groesse
         o.fett = fett

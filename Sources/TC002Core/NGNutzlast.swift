@@ -14,17 +14,13 @@ public enum NGFehler: Error, LocalizedError {
     case keinPixelweg
     /// Ein Icon in einem Format, das NG nicht liest.
     case iconFormat(String)
-    /// Ein Icon, das hoeher ist als die acht Zeilen von NG.
-    case iconZuHoch(kante: Int)
 
     public var errorDescription: String? {
         switch self {
         case .keinPixelweg:
-            return lok("Ein gemaltes Bild lässt sich nicht an eine AWTRIX NG schicken: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8. Sie nimmt Text, kein Pixelfeld.")
+            return lok("Ein gemaltes Bild lässt sich noch nicht an die Uhr schicken: Die AWTRIX NG bekommt von dieser App Text und Regler, kein Pixelfeld.")
         case .iconFormat(let typ):
             return lokf("Die AWTRIX NG liest nur GIF und JPEG, dieses Icon ist %@. Ein anderes wählen oder es ohne Icon schicken.", typ)
-        case .iconZuHoch(let kante):
-            return lokf("Ein %d × %d-Icon passt nicht auf eine AWTRIX NG: Ihre Anzeige hat acht Zeilen, und ein zu hohes GIF spielt dort gar nicht. Ein 8 × 8-Icon wählen oder ohne Icon schicken.", kante, kante)
         }
     }
 }
@@ -67,30 +63,28 @@ public enum NGThema {
     public static func ergebnis(zu thema: String) -> String { thema + "/result" }
 
     /// Alles, was auf dieser Uhr an Anzeigen geschickt wird — auch von fremden
-    /// Absendern. Das Gegenstueck zu `<praefix>/custom/#` der Werksfirmware.
+    /// Absendern.
     /// Die `/result`-Antworten fallen unter dasselbe Muster und werden beim
     /// Lesen am Suffix auseinandergehalten.
     public static func anzeigenMuster(praefix: String) -> String {
         "\(praefix)/cmd/apps/pushed/#"
     }
 
-    /// `online` bzw. — als Last Will — `offline`, aufbewahrt (§3.5). Das
-    /// Gegenstueck zu `<praefix>/status` der Werksfirmware.
+    /// `online` bzw. — als Last Will — `offline`, aufbewahrt (§3.5).
     public static func erreichbarkeit(praefix: String) -> String { "\(praefix)/availability" }
 }
 
 /// Aus `Meldungsoptionen` wird die Nutzlast einer AWTRIX-NG-Anzeige
 /// (`docs/awtrix-ng-protokoll.md` §5).
 ///
-/// Eine reine Funktion, wie `Frame.alsJSON()`. Sie schickt nichts, liest
+/// Eine reine Funktion. Sie schickt nichts, liest
 /// nichts von der Platte und kennt weder Kanal noch Uhr — geprueft wird sie
 /// byteweise gegen die Geraetereferenz.
 ///
 /// Was hier nicht steht, ist so wichtig wie das, was dasteht: kein
 /// `scroll.mode`, kein `whenFits`, kein `font`. Die Vorgaben von NG
-/// (`wrap`, `static`, `small`) sind genau das Verhalten, das diese App auf der
-/// Werksfirmware von Hand nachbaut — der Text laeuft, wenn er nicht passt, und
-/// steht sonst still. Ein mitgeschickter Wert waere eine zweite Entscheidung
+/// (`wrap`, `static`, `small`) sind das gewuenschte Verhalten — der Text
+/// laeuft, wenn er nicht passt, und steht sonst still. Ein mitgeschickter Wert waere eine zweite Entscheidung
 /// ueber dieselbe Sache.
 public enum NGNutzlast {
     /// Dasselbe Wort, dieselbe Geschwindigkeit — auf jeder Uhr.
@@ -100,8 +94,8 @@ public enum NGNutzlast {
     /// Einzelbild und ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird
     /// auf die Geschwindigkeit, nicht auf `mittel` als Mitte (100): Das
     /// erhaelt zwar das Verhaeltnis der drei Stufen zueinander, nicht aber die
-    /// Geschwindigkeit — `mittel` liefe auf NG mit 21 statt 12 Pixeln je
-    /// Sekunde, fast doppelt so schnell wie auf der Werksfirmware, und die
+    /// Geschwindigkeit — `mittel` liefe mit 21 statt 12 Pixeln je
+    /// Sekunde, fast doppelt so schnell, und die
     /// Vorschau (die mit unseren Standzeiten abspielt) laege bei NG
     /// systematisch zu langsam.
     ///
@@ -110,7 +104,7 @@ public enum NGNutzlast {
     /// unterschritten.
     public static func tempo(_ t: Lauftempo) -> Int {
         let unsere = 1.0 / t.bilddauer   // Pixel je Sekunde, ein Pixel je Bild
-        return Int((unsere / Geraetetyp.ngGrundgeschwindigkeit * 100).rounded())
+        return Int((unsere / AwtrixNG.grundgeschwindigkeit * 100).rounded())
     }
 
     /// Base64 eines Icons ohne den `data:…;base64,`-Vorsatz.
@@ -137,8 +131,7 @@ public enum NGNutzlast {
 
     /// Die Anzeige als JSON. Die Reihenfolge der Schluessel ist festgelegt,
     /// damit die Schnappschusstests Bytes vergleichen koennen und nicht Mengen.
-    public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil,
-                               iconKante: Int = 8) throws -> String {
+    public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil) throws -> String {
         var teile: [String] = []
         // Nicht `gesendeterText`. Unser `uppercased()` macht aus „ß" ein
         // „SS"; NG versalisiert selbst und erhaelt dabei die Zeichen. Der
@@ -152,26 +145,19 @@ public enum NGNutzlast {
         teile.append(#""textColor":"\#(jsonEscape(o.farbe))""#)
         // Ebenfalls ausdruecklich: NGs Vorgabe ist `true`, unsere ist
         // linksbuendig. Rechtsbuendig kennt NG nicht — die Ansicht bietet es
-        // dort gar nicht erst an (`Geraetetyp.waagrechteAusrichtungen`), und
+        // dort gar nicht erst an (`AwtrixNG.waagrechteAusrichtungen`), und
         // wer eine alte Einstellung mitbringt, bekommt linksbuendig statt
         // einer stillen Umdeutung nach mittig.
         teile.append(#""textCenter":\#(o.waagrecht == .mittig)"#)
         teile.append(#""scroll":{"speed":\#(tempo(o.tempo))}"#)
         if let iconDatenURI, !iconDatenURI.isEmpty {
-            // Ein GIF, dessen erstes Bild hoeher ist als die Leinwand, spielt
-            // auf NG ueberhaupt nicht (§8) — ohne Meldung, ohne Fehler. Ein
-            // 16×16-Icon ist dort also nicht bloss zu gross, es faellt aus.
-            guard Geraetetyp.awtrixNG.iconKanten.contains(iconKante) else {
-                throw NGFehler.iconZuHoch(kante: iconKante)
-            }
             teile.append(#""icon":"\#(jsonEscape(try icon(ausDatenURI: iconDatenURI)))""#)
             // `push` holt das Icon in jedem Laufdurchgang zurueck — das ist
             // die Frage, die „Icon mitlaufen lassen" stellt. `fixed` laesst es
             // stehen und den Text daran vorbeilaufen.
             teile.append(#""iconMode":"\#(o.iconLaeuftMit ? "push" : "fixed")""#)
         }
-        // Sekunden bei der Werksfirmware, Millisekunden bei NG. Ein
-        // mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
+        // Millisekunden, nicht Sekunden. Ein mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.
         if let dauer = o.dauer { teile.append(#""durationMs":\#(dauer * 1000)"#) }
         return "{" + teile.joined(separator: ",") + "}"

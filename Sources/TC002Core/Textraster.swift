@@ -177,7 +177,7 @@ public enum Textraster {
     /// `leerzeichenBreite`.
     private static func zeichenTinte(_ zeichen: Character, schrift: String, groesse: Double,
                                      fett: Bool, farbe: String,
-                                     mass: Anzeigemass = .tc002) -> Pixelfeld {
+                                     mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         guard zeichen != " " else {
             return Pixelfeld(breite: leerzeichenBreite, hoehe: mass.hoehe)
         }
@@ -214,7 +214,7 @@ public enum Textraster {
     /// mal duenner, mal dicker aussehen lassen.
     public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
                                     fett: Bool, farbe: String, luecke: Int = 0,
-                                    mass: Anzeigemass = .tc002) -> Pixelfeld {
+                                    mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         let luecke = max(0, luecke)
         let zeichen = text.map { zeichenTinte($0, schrift: schrift, groesse: groesse, fett: fett,
                                               farbe: farbe, mass: mass) }
@@ -246,13 +246,13 @@ public enum Textraster {
     /// Feldhoehe sind Parameter — bei 8×8 auf sechzehn Zeilen sitzt es auf
     /// Zeile 4, bei 16×16 auf Zeile 0, und auf acht Zeilen fuellt ein 8×8 die
     /// volle Hoehe. Die Rechnung selbst steht in `Anzeigemass`.
-    static func iconY(kante: Int, mass: Anzeigemass = .tc002) -> Int { mass.iconY(kante: kante) }
+    static func iconY(kante: Int, mass: Anzeigemass = .vorgabe) -> Int { mass.iconY(kante: kante) }
 
     /// Laesst ein 52×16-Fenster ueber den gerasterten Text wandern — ein
     /// Einzelbild je `schrittweite` Pixel Versatz, von vollstaendig vor dem Text
     /// bis vollstaendig dahinter. Der gemeinsame Kern fuer die abspielende
     /// Vorschau (braucht die Farbraster direkt) und `laufschrift` unten (kodiert
-    /// sie zu einem GIF) — siehe `docs/tc002-protokoll.md` §4.2a.
+    /// sie zu einem GIF).
     ///
     /// `versatzY` verschiebt den Text senkrecht, genau wie im stehenden Weg — die
     /// Ausrichtung der Formatleiste gilt also auch hier.
@@ -278,7 +278,7 @@ public enum Textraster {
                                                bilddauer: Double, versatzY: Int = 0,
                                                iconBilder: [[String?]] = [], iconKante: Int = 8,
                                                iconLaeuftMit: Bool = false, luecke: Int = 0,
-                                               mass: Anzeigemass = .tc002) -> [Bildraster.Einzelbild] {
+                                               mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
         let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe,
                                   luecke: luecke, mass: mass)
         // Ein deckend schwarzer Rand um das Icon zwingt die eingebackene
@@ -366,7 +366,7 @@ public enum Textraster {
                                    bilddauer: Double, versatzY: Int = 0,
                                    iconBilder: [[String?]] = [], iconKante: Int = 8,
                                    iconLaeuftMit: Bool = false, luecke: Int = 0,
-                                   mass: Anzeigemass = .tc002) throws -> String {
+                                   mass: Anzeigemass = .vorgabe) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,

@@ -33,11 +33,9 @@ final class NGNutzlastTests: XCTestCase {
             ##"{"text":"Grüße","textCase":"asTyped","textColor":"#00FF66","textCenter":false,"scroll":{"speed":60}}"##)
     }
 
-    /// Der Text bleibt, wie er eingetippt wurde: Auf der Werksfirmware
-    /// macht `Meldungsoptionen.gesendeterText` aus „Großbuchstaben“ ein
-    /// `uppercased()` — und damit aus „ß“ ein „SS“. NG versalisiert selbst und
+    /// Der Text bleibt, wie er eingetippt wurde: NG versalisiert selbst und
     /// erhaelt dabei die Zeichen; der Schalter gehoert deshalb nach `textCase`
-    /// und nicht in den Text.
+    /// und nicht in den Text (`uppercased()` machte aus „ß“ ein „SS“).
     func testGrossbuchstabenGehenNachTextCaseUndNichtInDenText() throws {
         let json = try NGNutzlast.anzeige(optionen { $0.grossbuchstaben = true })
         XCTAssertTrue(json.contains(#""text":"Grüße""#), "der Text darf nicht versalisiert werden")
@@ -55,7 +53,7 @@ final class NGNutzlastTests: XCTestCase {
     /// `textCenter` ist ein bool. „mittig" ist `true`, alles andere ist
     /// `false` — auch „rechts", das NG nicht kennt und das die Ansicht auf
     /// einer NG-Uhr deshalb gar nicht anbietet
-    /// (`Geraetetyp.waagrechteAusrichtungen`). Eine stille Umdeutung nach
+    /// (`AwtrixNG.waagrechteAusrichtungen`). Eine stille Umdeutung nach
     /// mittig waere schlimmer als linksbuendig.
     func testNurMittigIstTextCenter() throws {
         XCTAssertTrue(try NGNutzlast.anzeige(optionen { $0.waagrecht = .mittig })
@@ -66,8 +64,7 @@ final class NGNutzlastTests: XCTestCase {
             .contains(#""textCenter":false"#))
     }
 
-    /// Sekunden bei der Werksfirmware, Millisekunden bei NG: Ein
-    /// mitgeschicktes `duration` waere ein unbekannter oberster Schluessel und
+    /// Millisekunden, nicht Sekunden: Ein mitgeschicktes `duration` waere ein unbekannter oberster Schluessel und
     /// damit `422` — laut, aber nur auf `/result`.
     func testDauerGehtInMillisekunden() throws {
         let json = try NGNutzlast.anzeige(optionen { $0.dauer = 10 })
@@ -87,8 +84,8 @@ final class NGNutzlastTests: XCTestCase {
     /// 21 Pixeln je Sekunde; unsere Stufen sind Standzeiten je Einzelbild und
     /// ergeben 8, 12 und 18 Pixel je Sekunde. Umgerechnet wird deshalb auf die
     /// Geschwindigkeit, nicht auf das Verhaeltnis der Stufen zueinander — bei
-    /// der Geraetevorgabe 100 liefe „mittel" auf NG mit 21 statt 12 Pixeln je
-    /// Sekunde, fast doppelt so schnell wie auf der Werksfirmware.
+    /// der Geraetevorgabe 100 liefe „mittel“ mit 21 statt 12 Pixeln je
+    /// Sekunde, fast doppelt so schnell.
     func testTempoWirdAufDieGeschwindigkeitUmgerechnet() {
         XCTAssertEqual(NGNutzlast.tempo(.langsam), 40)
         XCTAssertEqual(NGNutzlast.tempo(.mittel), 60)
@@ -101,14 +98,14 @@ final class NGNutzlastTests: XCTestCase {
     func testDerProzentsatzTrifftDieGeschwindigkeitDesPixelwegs() {
         for t in [Lauftempo.langsam, .mittel, .schnell] {
             let unsere = 1.0 / t.bilddauer                       // Pixel je Sekunde
-            let ihre = Double(NGNutzlast.tempo(t)) / 100 * Geraetetyp.ngGrundgeschwindigkeit
+            let ihre = Double(NGNutzlast.tempo(t)) / 100 * AwtrixNG.grundgeschwindigkeit
             XCTAssertEqual(ihre, unsere, accuracy: 1.0,
                            "\(t): NG liefe mit \(ihre) statt \(unsere) Pixeln je Sekunde")
         }
     }
 
     /// Ein Text mit Anfuehrungszeichen darf die Nutzlast nicht zerlegen —
-    /// dieselbe Maskierung wie beim Rahmen der Werksfirmware.
+    /// die Maskierung ist `jsonEscape`.
     func testAnfuehrungszeichenImTextWerdenMaskiert() throws {
         let json = try NGNutzlast.anzeige(optionen { $0.text = #"sagt "hallo""# })
         XCTAssertTrue(json.contains(#"\"hallo\""#))
@@ -145,20 +142,6 @@ final class NGNutzlastTests: XCTestCase {
     func testJpegGehtDurch() throws {
         XCTAssertTrue(try NGNutzlast.anzeige(optionen(), iconDatenURI: "data:image/jpeg;base64,/9j/4A")
             .contains(#""icon":"/9j/4A""#))
-    }
-
-    /// Ein 16×16-Icon ist auf NG nicht bloss gross: Ein GIF, dessen erstes
-    /// Bild hoeher ist als die Leinwand, spielt dort gar nicht — ohne
-    /// Meldung, ohne Fehler. Also gesagt statt geschickt.
-    func testEinSechzehnerIconWirdAbgewiesen() {
-        XCTAssertThrowsError(try NGNutzlast.anzeige(optionen(),
-                                                    iconDatenURI: "data:image/gif;base64,R0lGODlh",
-                                                    iconKante: 16)) { fehler in
-            guard case NGFehler.iconZuHoch(let kante) = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-            XCTAssertEqual(kante, 16)
-        }
     }
 
     /// `iconMode` bildet genau die Frage ab, die „Icon mitlaufen lassen"
@@ -210,10 +193,8 @@ final class NGNutzlastTests: XCTestCase {
 
     // MARK: - Die Themen
 
-    /// Kein `_<MAC4>`, kein `custom`: Die beiden Firmwares haben an
-    /// derselben Stelle voellig verschiedene Themen, und beide schweigen zu
-    /// einem falschen.
-    func testDieThemenSindDieVonNGUndNichtDieDerWerksfirmware() {
+    /// Kein `_<MAC4>`, kein `custom`: NG schweigt zu einem falschen Thema.
+    func testDieThemenSindDieVonNG() {
         XCTAssertEqual(NGThema.anzeige(praefix: "wohnzimmer/uhr", name: "meldung1"),
                        "wohnzimmer/uhr/cmd/apps/pushed/meldung1")
         XCTAssertEqual(NGThema.umschalten(praefix: "awtrixng"), "awtrixng/cmd/apps/switch")
@@ -224,24 +205,14 @@ final class NGNutzlastTests: XCTestCase {
     }
 }
 
-/// Welche Regler auf welcher Gattung ueberhaupt etwas bewirken.
-final class GeraetetypTests: XCTestCase {
-
-    /// Auf der Werksfirmware rastert die App selbst — jeder Regler formt das
-    /// Bild, keiner ist gegenstandslos.
-    func testAufDerWerksfirmwareWirktJederRegler() {
-        for regler in Regler.allCases {
-            XCTAssertTrue(Geraetetyp.tc002.wirkt(regler), "\(regler) müsste auf der TC002 wirken")
-            XCTAssertNil(Geraetetyp.tc002.begruendung(regler),
-                         "\(regler) ist nicht gesperrt und braucht keine Begründung")
-        }
-    }
+/// Welche Regler auf AWTRIX NG ueberhaupt etwas bewirken.
+final class AwtrixNGReglerTests: XCTestCase {
 
     /// Auf NG fallen genau die Regler weg, die unsere Rasterung steuern —
     /// und keiner mehr. Farbe, Dauer und das mitlaufende Icon wirken dort
     /// unveraendert, Tempo und Großbuchstaben in anderer Gestalt.
     func testAufNGFallenGenauDieRasterreglerWeg() {
-        let gesperrt = Regler.allCases.filter { !Geraetetyp.awtrixNG.wirkt($0) }
+        let gesperrt = Regler.allCases.filter { !AwtrixNG.wirkt($0) }
         XCTAssertEqual(Set(gesperrt),
                        [.schriftart, .groesse, .fett, .senkrecht, .rand, .abstand])
     }
@@ -250,26 +221,17 @@ final class GeraetetypTests: XCTestCase {
     /// nicht sagt, warum es nicht geht — genau das, was dieser Durchgang
     /// vermeiden soll.
     func testJederGesperrteReglerHatEinenSatzDazu() {
-        for regler in Regler.allCases where !Geraetetyp.awtrixNG.wirkt(regler) {
-            let satz = Geraetetyp.awtrixNG.begruendung(regler)
+        for regler in Regler.allCases where !AwtrixNG.wirkt(regler) {
+            let satz = AwtrixNG.begruendung(regler)
             XCTAssertNotNil(satz, "\(regler) ist gesperrt und sagt nicht, warum")
             XCTAssertFalse(satz?.isEmpty ?? true)
         }
     }
 
     /// `textCenter` ist ein bool: mittig oder linksbuendig. Rechtsbuendig
-    /// ginge nur ueber eine Verschiebung in Pixeln,
-    /// und dafuer muesste die App die Breite des Textes in einer Schrift
-    /// kennen, die sie nicht hat.
-    func testRechtsbuendigGibtEsNurAufDerWerksfirmware() {
-        XCTAssertEqual(Geraetetyp.tc002.waagrechteAusrichtungen, [.links, .mittig, .rechts])
-        XCTAssertEqual(Geraetetyp.awtrixNG.waagrechteAusrichtungen, [.links, .mittig])
-    }
-
-    /// Gemalt wird auf 52×16, NGs Anzeige ist 32×8. Ein gestauchtes Bild waere
-    /// nicht dasselbe Bild.
-    func testGemaltesNimmtNurDieWerksfirmware() {
-        XCTAssertTrue(Geraetetyp.tc002.nimmtGemaltes)
-        XCTAssertFalse(Geraetetyp.awtrixNG.nimmtGemaltes)
+    /// ginge nur ueber eine Verschiebung in Pixeln, und dafuer muesste die App
+    /// die Breite des Textes in einer Schrift kennen, die sie nicht hat.
+    func testRechtsbuendigGibtEsNicht() {
+        XCTAssertEqual(AwtrixNG.waagrechteAusrichtungen, [.links, .mittig])
     }
 }

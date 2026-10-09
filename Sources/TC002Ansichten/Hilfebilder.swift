@@ -13,8 +13,6 @@ public enum Hilfebild: String, CaseIterable, Sendable, Identifiable {
     case stehtOderLaeuft
     /// Die drei Zustände eines Platzblocks: frei, bekannt, belegt ohne Inhalt.
     case slotzustaende
-    /// 52 × 16 gegen 32 × 8, im selben Maßstab nebeneinander.
-    case geraetegroessen
     /// Was die waagrechte und die senkrechte Ausrichtung tun.
     case ausrichtung
     /// Das Eingabefeld mit Löschzeichen und Sendeknopf.
@@ -32,7 +30,6 @@ struct HilfebildView: View {
             switch bild {
             case .stehtOderLaeuft: stehtOderLaeuft
             case .slotzustaende: slotzustaende
-            case .geraetegroessen: geraetegroessen
             case .ausrichtung: ausrichtung
             case .sendezeile: sendezeile
             }
@@ -40,14 +37,14 @@ struct HilfebildView: View {
         .padding(.vertical, 4)
     }
 
-    // MARK: - Die vier Abbildungen
+    // MARK: - Die Abbildungen
 
     private var stehtOderLaeuft: some View {
         VStack(alignment: .leading, spacing: 12) {
             beschriftet(lok("Passt in die Breite: der Text steht.")) {
                 anzeige(Self.kurz)
             }
-            beschriftet(lok("Passt nicht: die App baut den Lauf selbst und schickt ihn als GIF.")) {
+            beschriftet(lok("Passt nicht: der Text läuft durch.")) {
                 LaufabbildungView(optionen: Self.lang)
             }
         }
@@ -58,17 +55,6 @@ struct HilfebildView: View {
             block(1, .frei, lok("frei"))
             block(2, .bekannt(Meldungsbau.feld(Self.kurz, mitIcon: false).punkteRoh), lok("belegt, Inhalt bekannt"))
             block(3, .unbekannt, lok("belegt, Inhalt unbekannt"))
-        }
-    }
-
-    private var geraetegroessen: some View {
-        HStack(alignment: .top, spacing: 18) {
-            beschriftet(lok("Ulanzi TC002 — 52 × 16")) {
-                anzeige(Self.kurz, mass: .tc002, typ: .tc002)
-            }
-            beschriftet(lok("TC001 unter AWTRIX NG — 32 × 8")) {
-                anzeige(Self.kurz.naeherung(fuer: .awtrixNG), mass: Self.ngMass, typ: .awtrixNG)
-            }
         }
     }
 
@@ -109,10 +95,9 @@ struct HilfebildView: View {
     // MARK: - Bausteine
 
     /// Die Vorschau, wie sie über dem Eingabefeld steht — nur kleiner.
-    private func anzeige(_ o: Meldungsoptionen, mass: Anzeigemass = .tc002,
-                         typ: Geraetetyp = .tc002) -> some View {
-        VorschauView(feld: Meldungsbau.feld(o, mitIcon: false, mass: mass),
-                     kantenlaenge: Self.punktgroesse, typ: typ)
+    private func anzeige(_ o: Meldungsoptionen) -> some View {
+        VorschauView(feld: Meldungsbau.feld(o, mitIcon: false),
+                     kantenlaenge: Self.punktgroesse)
     }
 
     private func block(_ platz: Int, _ zustand: Slotzustand, _ text: String) -> some View {
@@ -139,11 +124,6 @@ struct HilfebildView: View {
     /// genug, dass zwei Anzeigen nebeneinander in die Detailspalte passen.
     private static let punktgroesse = 3.0
 
-    /// Die Vorgabebreite einer NG, nicht die einer bestimmten Uhr: Die
-    /// Abbildung erklärt die Gattung, nicht das eingerichtete Gerät.
-    private static let ngMass = Anzeigemass(breite: Geraetetyp.ngVorgabebreite,
-                                            hoehe: Geraetetyp.ngHoehe)
-
     private static let kurz = Meldungsoptionen(text: "Hallo")
     private static let lang = Meldungsoptionen(text: "Ein längerer Text läuft durch")
 }
@@ -158,9 +138,9 @@ private struct LaufabbildungView: View {
     @State private var bilder: [Bildraster.Einzelbild] = []
 
     var body: some View {
-        VorschauView(feld: Pixelfeld(breite: Anzeigemass.tc002.breite,
-                                     hoehe: Anzeigemass.tc002.hoehe),
-                     kantenlaenge: 3.0, typ: .tc002,
+        VorschauView(feld: Pixelfeld(breite: Anzeigemass.vorgabe.breite,
+                                     hoehe: Anzeigemass.vorgabe.hoehe),
+                     kantenlaenge: 3.0,
                      laufschriftBilder: bilder.isEmpty ? nil : bilder)
             .task {
                 let o = optionen

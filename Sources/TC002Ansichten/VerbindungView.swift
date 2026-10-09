@@ -64,7 +64,7 @@ public struct VerbindungView: View {
             }
             .id(thema)
         }
-        // Beim Aufschlagen fragen, nicht erst auf Druck: Praefix, Gattung
+        // Beim Aufschlagen fragen, nicht erst auf Druck: Praefix
         // und Verbindungsstand sind genau das, was man hier wissen will. Die
         // Abrufe laufen nebeneinander, eine stumme Uhr haelt die uebrigen
         // nicht auf.

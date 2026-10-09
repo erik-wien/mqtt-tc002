@@ -4,21 +4,16 @@ import TC002Core
 /// Die Frontansicht eines Geraets als Daten — Flaechen, Schriftzuege,
 /// Displayfeld und Pixelstil in einem eigenen Zeichenraum.
 ///
-/// Gezeichnet wird das in `GeraeteRahmen`, und zwar fuer jede Geraeteart mit
-/// demselben Code: Was sich unterscheidet, sind die Zahlen hier, nicht der Weg
-/// dorthin. Eine dritte Geraeteart waere ein dritter Eintrag in `fuer(_:)` und
-/// sonst nichts.
+/// Gezeichnet wird das in `GeraeteRahmen`.
 ///
 /// Warum gezeichnet und nicht als Bild eingesetzt: Eine SVG aus dem
-/// Bildkatalog taugt fuer eine Art. Eine zweite braeuchte eine zweite Datei,
-/// und die Feldmasse blieben von Hand an der Zeichnung abgelesene Zahlen im
-/// Quelltext — zwei Wahrheiten, die auseinanderlaufen koennen, ohne dass es
+/// Bildkatalog taugt fuer ein Aussehen, aber die Feldmasse blieben von Hand
+/// an der Zeichnung abgelesene Zahlen im Quelltext — zwei Wahrheiten, die auseinanderlaufen koennen, ohne dass es
 /// auffaellt. Hier sind Zeichnung und Masse dieselbe Angabe: `feld` wird
 /// gezeichnet und gerechnet.
 ///
 /// Kein Kernwissen, sondern Bildschirmgeometrie — deshalb liegt der Typ in
-/// `TC002Ansichten` und nicht in `TC002Core`, und deshalb haengt an
-/// `Geraetetyp` selbst keine einzige Masszahl.
+/// `TC002Ansichten` und nicht in `TC002Core`.
 public struct Geraetezeichnung: Equatable, Sendable {
 
     /// Ein Rechteck im Zeichenraum. Eigener Typ statt `CGRect`, damit die
@@ -58,9 +53,8 @@ public struct Geraetezeichnung: Equatable, Sendable {
         /// und der Unterschied ist keine Geschmacksfrage:
         ///
         /// - `.punkte` ist eine Haarlinie fester Breite, unabhaengig von
-        ///   der Zellenkante. Das ist, was die Werksfirmware-Vorschau immer
-        ///   gezeichnet hat (`kantenlaenge - 1`), und was sie weiter zeichnen
-        ///   soll: Am Mac laeuft die Kante von 4 bis 14 (`SendenView`), und
+        ///   der Zellenkante. Das ist, was die Vorschau immer gezeichnet
+        ///   hat (`kantenlaenge - 1`), und was sie weiter zeichnen soll: Am Mac laeuft die Kante von 4 bis 14 (`SendenView`), und
         ///   ein Anteil kann dort nicht beides — bei Kante 14 frisst er den
         ///   Punkt an (0,125 · 14 = 1,75 statt 1 Punkt, die Anzeige wirkt
         ///   duenner und schwaecher), bei Kante 4 verschwindet die Trennlinie.
@@ -146,19 +140,6 @@ public struct Geraetezeichnung: Equatable, Sendable {
         self.pixelstil = pixelstil
     }
 
-    /// Welche Zeichnung fuer welche Geraeteart. `nil` heisst `.tc002` —
-    /// dieselbe Lesart wie bei `Uhr.typ`.
-    ///
-    /// Das `switch` ist die eigentliche Zusicherung: Ein dritter `Geraetetyp`
-    /// laesst den Uebersetzer hier stehenbleiben, statt still die TC002-Front
-    /// um ein fremdes Geraet zu legen.
-    public static func fuer(_ typ: Geraetetyp?) -> Geraetezeichnung {
-        switch typ ?? .tc002 {
-        case .tc002: return .tc002
-        case .awtrixNG: return .awtrixNG
-        }
-    }
-
     // MARK: - Masse
 
     /// Was `GeraeteRahmen` ausrechnen muss, bevor es zeichnet.
@@ -206,14 +187,8 @@ public struct Geraetezeichnung: Equatable, Sendable {
     /// oben und links buendig — wie auf dem Geraet selbst, das eine Anzeige
     /// immer bei Spalte 0 beginnt.
     ///
-    /// Nicht zentriert: Zentriert hatte einen Fehler verdeckt, bei dem die
-    /// Vorschau auf jedem Geraet 52×16 rasterte, waehrend die AWTRIX-Zeichnung
-    /// auf ihre echten 32×8 gerechnet ist (siehe `awtrixNG`) — das legte einen
-    /// unbeabsichtigten schwarzen Rand vor jedes Icon und jeden Text, links
-    /// wie rechts je zur Haelfte.
-    ///
-    /// Die Vorschau rastert inzwischen auf dem Mass der Uhr (`Anzeigemass`),
-    /// der Inhalt fuellt das Feld also wieder aus. Buendig bleibt es trotzdem:
+    /// Die Vorschau rastert auf dem Mass der Uhr (`Anzeigemass`), der Inhalt
+    /// fuellt das Feld also aus. Buendig bleibt es trotzdem:
     /// Ein Geraet beginnt eine Anzeige bei Spalte 0, und wo doch einmal etwas
     /// uebrigbleibt — eine NG mit gemeldeter Panelbreite ueber 32 —, gehoert
     /// der Rest nach rechts und nicht je zur Haelfte auf beide Seiten.
@@ -222,7 +197,7 @@ public struct Geraetezeichnung: Equatable, Sendable {
         return (m.feldX, m.feldY)
     }
 
-    // MARK: - Die Ulanzi TC002 mit Werksfirmware
+    // MARK: - Die Ulanzi TC002
 
     /// Die Front der TC002, Zeichnung fuer Zeichnung aus der bisherigen SVG
     /// uebernommen (`viewBox 680×356`, Displayfeld `48,93 584×177`) — bis auf
@@ -292,50 +267,5 @@ public struct Geraetezeichnung: Equatable, Sendable {
             // Quadrat mit genau einem Punkt Luft, bei jeder Kantenlaenge.
             // Siehe `Luecke` — ein Anteil taete es hier nicht.
             pixelstil: Pixelstil(luecke: .punkte(1), eckenAnteil: 0))
-    }()
-
-    // MARK: - Die Ulanzi TC001 mit AWTRIX NG
-
-    /// Die Front der TC001 unter AWTRIX NG: gerade Ansicht, heller Koerper,
-    /// runde Ecken, keine Tasten oben.
-    ///
-    /// Das Geraet ist im Wesentlichen ein schmaler weisser Rand um ein
-    /// schwarzes Feld — von vorn und ohne Knopf ist da wenig zu zeichnen.
-    /// Damit man trotzdem erkennt, welches Geraet gemeint ist, steht unten
-    /// links der Aufdruck; die Blende unter dem Display ist dafuer tiefer als
-    /// der Rand ringsum (16 gegen 40). Das ist eine bewusste Freiheit
-    /// gegenueber dem echten Geraet, keine Messung.
-    ///
-    /// Das Feld ist 4:1 — AWTRIX NG zeigt 32×8 (`docs/awtrix-ng-protokoll.md`,
-    /// §1), nicht 52×16 wie die Werksfirmware. Auf derselben Flaeche sind das
-    /// deutlich weniger und deshalb groessere Punkte; `pixelstil` traegt dem
-    /// Rechnung.
-    public static let awtrixNG: Geraetezeichnung = {
-        let gehaeuse = Rechteck(x: 8, y: 8, breite: 616, hoehe: 202)
-        let feld = Rechteck(x: 24, y: 24, breite: 584, hoehe: 146)
-        return Geraetezeichnung(
-            breite: 632, hoehe: 218,
-            feld: feld,
-            gehaeuse: gehaeuse, gehaeuseRadius: 28,
-            teile: [
-                // Aussenkante und Fusskante in einem Stueck: derselbe
-                // Koerper, eine Spur groesser und nach unten versetzt. Ein
-                // waagrechter Balken taete es nicht — seine Enden stuenden bei
-                // einem Radius von 28 ueber die runden Ecken hinaus, und genau
-                // das war im ersten Entwurf als heller Streifen unter dem
-                // Geraet zu sehen.
-                .flaeche(Rechteck(x: 6, y: 8, breite: 620, hoehe: 206), radius: 29, farbe: "#BFBFC9"),
-                .flaeche(gehaeuse, radius: 28, farbe: "#F7F7F9"),
-                // Dunkle Fuge zwischen Koerper und Scheibe
-                .flaeche(Rechteck(x: 20, y: 20, breite: 592, hoehe: 154), radius: 12, farbe: "#1E1E24"),
-                .flaeche(feld, radius: 9, farbe: "#0A0A0B"),
-                .flaeche(Rechteck(x: 24, y: 24, breite: 584, hoehe: 4), radius: 2, farbe: "#131318"),
-                .schrift("Ulanzi TC001", x: 28, grundlinie: 196, groesse: 14,
-                         farbe: "#85858D", rechtsbuendig: false),
-            ],
-            // 32×8 auf derselben Scheibe: jede Zelle ist rund anderthalbmal so
-            // gross wie bei der Werksfirmware. Eine mitwachsende Fuge und
-            // harte Ecken — so sieht ein grobes Panel aus der Naehe aus.
-            pixelstil: Pixelstil(luecke: .anteil(0.05), eckenAnteil: 0))
     }()
 }

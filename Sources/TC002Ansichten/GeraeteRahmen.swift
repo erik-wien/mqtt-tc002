@@ -8,10 +8,8 @@ import TC002Core
 /// Geteilt zwischen allen Oberflaechen (Mac, iPhone, kuenftig iPad) — deshalb
 /// keine plattformeigenen Typen hier, nur SwiftUI.
 ///
-/// Eine Komponente, zwei Geraetearten: Welche Front erscheint, entscheidet
-/// allein `typ`; der Weg zum Bild ist fuer beide derselbe `Canvas`. Was sich
-/// unterscheidet, sind die Zahlen in `Geraetezeichnung` — eine dritte Art
-/// braucht hier keine Zeile.
+/// Der Weg zum Bild ist ein `Canvas`; was sich pro Geraet unterscheidet, sind
+/// die Zahlen in `Geraetezeichnung`.
 ///
 /// Die Zeichnung wird so gross gezeichnet, dass ihr Displayfeld genau `hoehe`
 /// hoch ist; `inhalt` passt damit in der Hoehe exakt hinein und wird oben und
@@ -24,11 +22,10 @@ public struct GeraeteRahmen<Inhalt: View>: View {
     let zeichnung: Geraetezeichnung
     @ViewBuilder let inhalt: Inhalt
 
-    /// `typ` ist `Optional`, weil `Uhr.typ` es ist: `nil` heisst `.tc002`.
-    public init(hoehe: Double, typ: Geraetetyp? = nil,
+    public init(hoehe: Double,
                 @ViewBuilder inhalt: () -> Inhalt) {
         self.hoehe = hoehe
-        self.zeichnung = .fuer(typ)
+        self.zeichnung = .tc002
         self.inhalt = inhalt()
     }
 

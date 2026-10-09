@@ -8,7 +8,8 @@ a new firmware is released**, and a basis for reporting these to the vendor.
 **Tested against:** `mcuVer V1.0.17`, `appVer 1.1.1`, read via `GET /getBase`
 (device reference §5.1). Measurements from 2026-09-11 to 2026-09-13.
 
-The evidence for each point is in [`tc002-protocol.md`](tc002-protocol.md). This
+The evidence for each point was in `tc002-protocol.md`, which was removed from
+the repo together with the factory firmware (version control). This
 file only says what is wrong with it and how to check in two minutes whether it
 still is.
 

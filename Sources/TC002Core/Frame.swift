@@ -42,65 +42,39 @@ public struct Bild: Equatable, Sendable {
     }
 }
 
-public struct Textblock: Equatable, Sendable {
-    public var inhalt: String
-    public var schrifthoehe: Int = 10
-    public var x: Int = 0, y: Int = 3
-    public var farbe: String = "#FFFFFF"
-    public var ausrichtung: String = "left"
-    public var vertikal: String = "top"
-    public var flaeche: [Int] = [0, 0, 52, 16]
-    public var zeichenabstand: Int = 1
-    public init(inhalt: String) { self.inhalt = inhalt }
-}
-
 /// Woraus ein Rahmen entstanden ist.
 ///
-/// Gehoert nicht zur Nutzlast und kommt in `alsJSON()` nicht vor. Die
-/// Werksfirmware bekommt fertige Pixel und braucht nichts weiter; eine AWTRIX
-/// NG setzt den Text dagegen selbst, und ihr nuetzen gerade die Pixel nichts —
-/// sie braucht den Text und die Regler, aus denen er entstand
+/// AWTRIX NG setzt den Text selbst; ihr nuetzen gerade die Pixel nichts, sie
+/// braucht den Text und die Regler, aus denen er entstand
 /// (`NGNutzlast.anzeige`).
 ///
 /// Deshalb reist die Herkunft mit dem Rahmen mit, statt an vier Stellen
 /// getrennt weitergereicht zu werden: Jeder Absender — App, Kommandozeilen-
-/// werkzeug, Kurzbefehl — baut seinen Rahmen ueber `Meldungsbau.rahmen`, und
-/// damit kann jeder von ihnen an beide Gattungen senden, ohne es eigens zu
-/// wissen. Wo es keine Regler gibt (ein gemaltes Bild, ein Bild aus der
-/// Sammlung), bleibt sie `nil` — und genau dann sagt `Anzeigen`, dass diese
-/// Sendung an eine AWTRIX nicht geht, statt sie ins Leere zu schicken.
+/// werkzeug, Kurzbefehl — baut seinen Rahmen ueber `Meldungsbau.rahmen`. Wo es
+/// keine Regler gibt (ein gemaltes Bild, ein Bild aus der Sammlung), bleibt sie
+/// `nil` — und genau dann sagt `Anzeigen`, dass diese Sendung nicht geht,
+/// statt sie ins Leere zu schicken.
 public struct Meldungsherkunft: Equatable, Sendable {
     public var optionen: Meldungsoptionen
-    /// Das Icon als vollstaendige Daten-URI — so, wie es die Werksfirmware
-    /// bekommt. NG schneidet den Vorsatz selbst ab (`NGNutzlast.icon`).
+    /// Das Icon als vollstaendige Daten-URI. NG schneidet den Vorsatz selbst
+    /// ab (`NGNutzlast.icon`).
     public var iconDatenURI: String?
-    /// Die Kantenlaenge des Icons. Der Werksfirmware ist sie einerlei — sie
-    /// bekommt das fertige Bild an der richtigen Stelle. Eine AWTRIX NG hat
-    /// acht Zeilen, und ein 16×16-Icon spielt dort gar nicht; ohne diese
-    /// Angabe liesse sich das erst am dunklen Geraet feststellen.
-    public var iconKante: Int
 
-    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil, iconKante: Int = 8) {
+    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil) {
         self.optionen = optionen
         self.iconDatenURI = iconDatenURI
-        self.iconKante = iconKante
     }
 }
 
-/// Was die Uhr als Nutzlast erwartet. Leere Bestandteile fallen weg — das Geraet
-/// stolpert sonst ueber leere Felder, und die Nachrichten werden unnoetig gross.
+/// Ein Rahmen: gerasterte Rechtecke oder Bilder als Daten, die Standzeit und
+/// seine Herkunft. Gesendet wird heute allein, was `herkunft` traegt.
 public struct Frame: Equatable, Sendable {
     public var draw: [DrawBefehl] = []
     public var bilder: [Bild] = []
-    public var texte: [Textblock] = []
     public var dauer: Int?
 
-    /// Was hier hinausgeht, in einem Satz — fuer das Protokoll.
-    ///
-    /// Drei Angaben: der Weg (gerasterte Rechtecke, ein Bild, ein
-    /// Textblock, den die Uhr selbst setzt), die Groesse der Nutzlast und,
-    /// beim Textweg, der Text selbst. Ein „als Text", das die Uhr abschneidet,
-    /// sieht sonst aus wie jede andere gelungene Sendung.
+    /// Was hier hinausgeht, in einem Satz — fuer das Protokoll: Rechtecke,
+    /// Bilder, der Text samt Regler und die Standzeit.
     ///
     /// Ohne `lok`: Die Teile sind uebersetzt, zusammengesetzt wird mit
     /// Trennzeichen.
@@ -108,9 +82,7 @@ public struct Frame: Equatable, Sendable {
         var teile: [String] = []
         if !draw.isEmpty { teile.append(lokf("%d Rechtecke", draw.count)) }
         if !bilder.isEmpty { teile.append(lokf("%d Bilder", bilder.count)) }
-        for block in texte { teile.append(lokf("Text „%@“", block.inhalt)) }
-        let bytes = alsJSON().utf8.count
-        teile.append(bytes < 1024 ? lokf("%d Bytes", bytes) : lokf("rund %d KB", bytes / 1024))
+        if let herkunft { teile.append(lokf("Text „%@“", herkunft.optionen.text)) }
         if let dauer { teile.append(lokf("%d s", dauer)) }
         return teile.joined(separator: " · ")
     }
@@ -118,31 +90,8 @@ public struct Frame: Equatable, Sendable {
     public var herkunft: Meldungsherkunft?
 
     public init(draw: [DrawBefehl] = [], bilder: [Bild] = [],
-                texte: [Textblock] = [], dauer: Int? = nil,
-                herkunft: Meldungsherkunft? = nil) {
-        self.draw = draw; self.bilder = bilder; self.texte = texte; self.dauer = dauer
+                dauer: Int? = nil, herkunft: Meldungsherkunft? = nil) {
+        self.draw = draw; self.bilder = bilder; self.dauer = dauer
         self.herkunft = herkunft
-    }
-
-    public func alsJSON() -> String {
-        var teile: [String] = []
-        if !draw.isEmpty {
-            let b = draw.map { #"{"df":[\#($0.x),\#($0.y),\#($0.breite),\#($0.hoehe),"\#(jsonEscape($0.farbe))"]}"# }
-            teile.append(#""draw":[\#(b.joined(separator: ","))]"#)
-        }
-        if !bilder.isEmpty {
-            let b = bilder.map { #"{"data":"\#(jsonEscape($0.datenURI))","position":[\#($0.x),\#($0.y)]}"# }
-            teile.append(#""image":[\#(b.joined(separator: ","))]"#)
-        }
-        if !texte.isEmpty {
-            let b = texte.map { t in
-                #"{"content":"\#(jsonEscape(t.inhalt))","fontHeight":\#(t.schrifthoehe),"x":\#(t.x),"y":\#(t.y),"# +
-                #""color":"\#(jsonEscape(t.farbe))","align":"\#(jsonEscape(t.ausrichtung))","valign":"\#(jsonEscape(t.vertikal))","# +
-                #""rect":[\#(t.flaeche.map(String.init).joined(separator: ","))],"charSpacing":\#(t.zeichenabstand)}"#
-            }
-            teile.append(#""text":[\#(b.joined(separator: ","))]"#)
-        }
-        if let dauer { teile.append(#""duration":\#(dauer)"#) }
-        return "{" + teile.joined(separator: ",") + "}"
     }
 }

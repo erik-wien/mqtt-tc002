@@ -2,95 +2,14 @@ import Foundation
 import XCTest
 @testable import TC002Core
 
-/// Nagelt den Rahmenbau fest. Diese Tests sind nicht dazu da, eine Absicht zu
-/// beschreiben — sie halten fest, was die App heute erzeugt, damit das
-/// Verschieben in den Kern nichts verändert. Weicht ein Schnappschuss ab, ist
-/// das ein Fehler der Verschiebung und keine Verbesserung.
+/// Die Rechnung hinter dem Rahmenbau: Breite, Versatz und Platz des Icons.
 final class MeldungsbauTests: XCTestCase {
 
-    /// Ein leerer Iconordner: Die Schnappschüsse sollen die Rechnung festhalten,
-    /// nicht den Inhalt eines Icons.
+    /// Ein leerer Iconordner: Es zaehlt die Rechnung, nicht der Inhalt eines
+    /// Icons.
     private func leereSammlung() -> Iconsammlung {
         Iconsammlung(schreibordner: URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString))
-    }
-
-    private var ordner: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .appendingPathComponent("Schnappschuesse")
-    }
-
-    /// Vergleicht gegen die abgelegte Fassung. Fehlt sie, wird sie geschrieben
-    /// und der Test schlägt einmal fehl — damit niemand versehentlich einen
-    /// Schnappschuss einführt, ohne ihn angesehen zu haben.
-    private func vergleiche(_ json: String, mit name: String,
-                            datei: StaticString = #filePath, zeile: UInt = #line) throws {
-        let pfad = ordner.appendingPathComponent("\(name).json")
-        guard let erwartet = try? String(contentsOf: pfad, encoding: .utf8) else {
-            try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
-            try json.write(to: pfad, atomically: true, encoding: .utf8)
-            XCTFail("Schnappschuss \(name) neu angelegt — bitte ansehen und einchecken.",
-                    file: datei, line: zeile)
-            return
-        }
-        XCTAssertEqual(json, erwartet, "Schnappschuss \(name) weicht ab", file: datei, line: zeile)
-    }
-
-    private func json(_ o: Meldungsoptionen) throws -> String {
-        try Meldungsbau.rahmen(o, icon: nil, sammlung: leereSammlung()).alsJSON()
-    }
-
-    func testWaagrechteAusrichtung() throws {
-        for (name, wert) in [("links", SendenHAusrichtung.links),
-                             ("mittig", .mittig), ("rechts", .rechts)] {
-            var o = Meldungsoptionen(text: "Hallo")
-            o.waagrecht = wert
-            try vergleiche(json(o), mit: "waagrecht-\(name)")
-        }
-    }
-
-    func testSenkrechteAusrichtungUndRand() throws {
-        for (name, wert) in [("oben", SendenVAusrichtung.oben),
-                             ("mittig", .mittig), ("unten", .unten)] {
-            for rand in [0, 1, 3] {
-                var o = Meldungsoptionen(text: "Hallo")
-                o.senkrecht = wert
-                o.rand = rand
-                try vergleiche(json(o), mit: "senkrecht-\(name)-rand\(rand)")
-            }
-        }
-    }
-
-    func testAbstand() throws {
-        for abstand in [0, 1, 3] {
-            var o = Meldungsoptionen(text: "Hallo")
-            o.abstand = abstand
-            try vergleiche(json(o), mit: "abstand-\(abstand)")
-        }
-    }
-
-    func testDauerUndGrossbuchstaben() throws {
-        var o = Meldungsoptionen(text: "Grüße")
-        o.dauer = 12
-        o.grossbuchstaben = true
-        try vergleiche(json(o), mit: "dauer-gross")
-    }
-
-    func testGeraeteschrift() throws {
-        for (name, wert) in [("links", SendenHAusrichtung.links),
-                             ("mittig", .mittig), ("rechts", .rechts)] {
-            var o = Meldungsoptionen(text: "Hallo")
-            o.weg = .text
-            o.waagrecht = wert
-            o.senkrecht = .unten
-            try vergleiche(json(o), mit: "geraeteschrift-\(name)")
-        }
-    }
-
-    func testLaufschrift() throws {
-        var o = Meldungsoptionen(text: "Dieser Text ist viel zu lang für zweiundfünfzig Pixel")
-        o.tempo = .mittel
-        try vergleiche(json(o), mit: "laufschrift-mittel")
     }
 
     /// Die Entscheidung „passt oder läuft" hängt an der Breite des stehenden
@@ -103,10 +22,8 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertEqual(Meldungsbau.passt(o, mitIcon: true), ohne)
     }
 
-    /// Mit Icon beginnt die Textflaeche bei Spalte 10 und ist 42 breit. Diese
-    /// Zahlen stehen in keinem Schnappschuss, weil die dort alle ohne Icon
-    /// gebaut werden — und das Icon sitzt senkrecht mittig auf `y: 4`, was
-    /// ebenso von Hand gesetzt wurde.
+    /// Mit Icon beginnt die Textflaeche bei Spalte 10 und ist 42 breit; das
+    /// Icon sitzt senkrecht mittig auf `y: 4`.
     func testIconVersatz() {
         var o = Meldungsoptionen(text: "Hallo")
         XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true), 10)
@@ -117,8 +34,6 @@ final class MeldungsbauTests: XCTestCase {
         XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 10)
         o.waagrecht = .mittig
         XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 22)
-        XCTAssertEqual(Meldungsbau.textblock(o, mitIcon: true).flaeche, [10, 0, 42, 16])
-        XCTAssertEqual(Meldungsbau.textblock(o, mitIcon: false).flaeche, [0, 0, 52, 16])
     }
 
     /// Mehr Rand verlangen, als Platz ist, darf nicht abschneiden: `r` wird auf
@@ -194,7 +109,6 @@ final class MeldungsbauTests: XCTestCase {
         var o = Meldungsoptionen(text: "Hallo")
         o.waagrecht = .links
         XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true, iconKante: 16), 18)
-        XCTAssertEqual(Meldungsbau.textblock(o, mitIcon: true, iconKante: 16).flaeche, [18, 0, 34, 16])
     }
 
     /// Ohne ausdrueckliche Kante rechnet alles wie vorher — jede Stelle, die
@@ -204,31 +118,6 @@ final class MeldungsbauTests: XCTestCase {
         o.waagrecht = .links
         XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true), Meldungsbau.flaecheX(mitIcon: true, iconKante: 8))
         XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 10)
-    }
-
-    /// Der fertige Rahmen nimmt die Groesse vom Icon selbst: ein 16×16 landet
-    /// auf `position` [0,0], ein 8×8 weiterhin auf [0,4].
-    func testRahmenSetztDasIconNachSeinerGroesse() throws {
-        let (achter, iconA) = try sammlungMitIcon(kante: 8)
-        let (sechzehner, iconS) = try sammlungMitIcon(kante: 16)
-        XCTAssertEqual(iconA.kante, 8)
-        XCTAssertEqual(iconS.kante, 16)
-
-        let o = Meldungsoptionen(text: "Hi")
-        let mitAchter = try Meldungsbau.rahmen(o, icon: iconA, sammlung: achter).alsJSON()
-        let mitSechzehner = try Meldungsbau.rahmen(o, icon: iconS, sammlung: sechzehner).alsJSON()
-        XCTAssertTrue(mitAchter.contains(#""position":[0,4]"#), mitAchter)
-        XCTAssertTrue(mitSechzehner.contains(#""position":[0,0]"#), mitSechzehner)
-    }
-
-    /// Der Text beginnt hinter dem Icon — bei einem 16×16 also ab Spalte 18.
-    func testTextBeginntHinterDemSechzehnerIcon() throws {
-        let (sechzehner, icon) = try sammlungMitIcon(kante: 16)
-        var o = Meldungsoptionen(text: "Hi")
-        o.waagrecht = .links
-        let rahmen = try Meldungsbau.rahmen(o, icon: icon, sammlung: sechzehner)
-        let ersteSpalte = rahmen.draw.map(\.x).min()
-        XCTAssertEqual(ersteSpalte, 18, "der Text darf nicht unter dem Icon anfangen")
     }
 
     /// Das Lauf-GIF backt ein 16×16 ueber die volle Hoehe ein — die oberste

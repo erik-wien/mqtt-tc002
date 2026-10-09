@@ -82,7 +82,6 @@ struct SendeniOS: View {
 
     @State private var gewaehltesIcon: Icon?
     @State private var laufschriftFrames: [Bildraster.Einzelbild] = []
-    @State private var laufschriftURI = ""
     @State private var laeuft = false
     /// Eine Sekunde nach einer gelungenen Sendung — am Telefon an der Stelle
     /// des Fortschrittsdrehers, weil dort die Eingabetaste schickt und es
@@ -129,16 +128,12 @@ struct SendeniOS: View {
     /// `Slotgedaechtnis.gemeinsam`).
     private var gedaechtnis: Slotgedaechtnis { .gemeinsam }
 
-    /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
-    /// das belegbar ist: Pixel muessen mitgelesen worden sein, und ihre
-    /// Pruefsumme muss zu den gemerkten Reglern passen. Dieselbe Regel wie am
-    /// Mac (`SendenView.slotWaehlen`).
+    /// Waehlt den Platz und uebernimmt die gemerkten Regler, solange sie noch
+    /// gelten koennen. Dieselbe Regel wie am Mac (`SendenView.slotWaehlen`).
     private func slotWaehlen(_ i: Int) {
         platz = i
         guard let uhr = zustand.referenzUhr,
-              let bild = zustand.slotInhalt[uhr.id]?[i],
-              let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
-              Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
+              let stand = zustand.wiederherstellbarerStand(platz: i, fuer: uhr, gedaechtnis: gedaechtnis)
         else { return }
         reglerUebernehmen(stand)
     }
@@ -195,27 +190,24 @@ struct SendeniOS: View {
 
     /// Auf wie vielen Punkten die Vorschau rechnet — den Maßen der angesehenen
     /// Uhr. Dieselbe Überlegung wie in `SendenView` am Schreibtisch.
-    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
+    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .vorgabe }
 
-    /// Womit die Vorschau rastert: Auf einer NG-Uhr mit fester
-    /// Näherungsschrift, weil das Gerät den Text selbst setzt. Gesendet werden
-    /// unverändert `optionen`.
-    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
+    /// Womit die Vorschau rastert: mit fester Näherungsschrift, weil das Gerät
+    /// den Text selbst setzt. Gesendet werden unverändert `optionen`.
+    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung }
 
-    /// Die Vorschau einer bestimmten Uhr — jede hat ihr eigenes Maß und ihre
-    /// eigene Gattung. Die Laufschrift bekommt nur die angesehene: Ihre
+    /// Die Vorschau einer bestimmten Uhr — jede hat ihr eigenes Maß. Die Laufschrift bekommt nur die angesehene: Ihre
     /// Einzelbilder sind auf deren Maß gerechnet und wären auf einem anderen
     /// das falsche Bild.
     @ViewBuilder
     private func vorschau(fuer uhr: Uhr, angesehen: Bool) -> some View {
         let uhrmass = Anzeigemass.fuer(uhr)
-        let o = optionen.naeherung(fuer: uhr.typ ?? .tc002)
+        let o = optionen.naeherung
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
         VStack(spacing: 4) {
             VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
                         icon: sitzt ? gewaehltesIcon?.datei : nil,
-                        laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames,
-                        typ: uhr.typ)
+                        laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
             // Der Name unter der Uhr, die er benennt — wie am Schreibtisch.
             // Im Titel stand er als Menue: eine zweite Geraetewahl neben dem
             // Antennenknopf, der die Empfaenger traegt, und beim Blaettern
@@ -261,14 +253,14 @@ struct SendeniOS: View {
     /// `.help`; VoiceOver bekommt denselben Wortlaut wie die Mac-Hilfe
     /// (`SendenView.fettHilfe`) als accessibilityHint mit.
     private var fettHinweis: String {
-        if let grund = gattung.begruendung(.fett) { return grund }
+        if let grund = AwtrixNG.begruendung(.fett) { return grund }
         if !fettWirkt { return lokf("„%@“ hat bei dieser Größe keinen fetten Schnitt — der Knopf bliebe ohne Wirkung.", schrift) }
         return lok("Fett")
     }
 
     /// Wie `fettHinweis`, fuer Grossbuchstaben (`SendenView.grossHilfe`, Mac).
     private var grossHinweis: String {
-        if let grund = gattung.begruendung(.grossbuchstaben) { return grund }
+        if let grund = AwtrixNG.begruendung(.grossbuchstaben) { return grund }
         if kleinbuchstabenMoeglich {
             return lok("Großbuchstaben — wirkt auf beiden Wegen, das Eingabefeld selbst bleibt unverändert.")
         }
@@ -279,19 +271,15 @@ struct SendeniOS: View {
     /// dieselben zwei Saetze wie `.help(...)` an der Schriftart-Auswahl der
     /// Mac-Fassung (SendenView.swift).
     private var schriftartHinweis: String {
-        if let grund = gattung.begruendung(.schriftart) { return grund }
+        if let grund = AwtrixNG.begruendung(.schriftart) { return grund }
         return lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten.")
     }
 
-    /// Die Gattung der angesehenen Uhr. `nil` heisst `.tc002`, wie bei
-    /// `Uhr.typ` — ohne eingerichtete Uhr gilt die Werksfirmware.
-    private var gattung: Geraetetyp { zustand.referenzUhr?.typ ?? .tc002 }
-
-    /// Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
-    /// Wechsel sichtbar zurueckgestellt — sonst zeigte das Menue
+    /// Eine Ausrichtung, die AWTRIX NG nicht kennt, wird beim Start sichtbar
+    /// zurueckgestellt — sonst zeigte das Menue
     /// „rechtsbuendig" und die Uhr setzte linksbuendig.
     private func ausrichtungPruefen() {
-        guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
+        guard !AwtrixNG.waagrechteAusrichtungen.contains(horizontal) else { return }
         horizontal = .links
     }
 
@@ -386,7 +374,7 @@ struct SendeniOS: View {
         // auch der erste Aufbau abgedeckt ist, bei dem noch nichts gewechselt
         // hat — eine seit je gewaehlte Ausrichtung „rechts" traefe sonst auf
         // eine AWTRIX, die sie nicht kennt.
-        .task(id: zustand.referenzUhr?.typ) { ausrichtungPruefen() }
+        .task { ausrichtungPruefen() }
         // Wie am Mac (`SendenView`): Nach dem Schriftwechsel gilt die Liste der
         // neuen Schrift; steht die eingestellte Groesse nicht darauf, faellt sie
         // auf die naechstgelegene, nicht auf die kleinste.
@@ -467,7 +455,7 @@ struct SendeniOS: View {
             // Oberflaeche sagt, sagt die andere auch.
             HStack(spacing: 8) {
                 Uhrenpunkte(zustand: zustand)
-                if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                Hilfezeichen(AwtrixNG.vorschauhinweis)
             }
         }
         // Der waagrechte Rollbereich des Blaetterers nimmt sich senkrecht
@@ -680,7 +668,7 @@ struct SendeniOS: View {
                     Label { menuewert(Text(schrift).font(.caption)) } icon: { Image(systemName: "textformat") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!gattung.wirkt(.schriftart))
+                .disabled(!AwtrixNG.wirkt(.schriftart))
                 .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                 .accessibilityHint(Text(schriftartHinweis))
                 Menu {
@@ -695,9 +683,9 @@ struct SendeniOS: View {
                     Label { menuewert(Text(String(Int(groesse)))) } icon: { Image(systemName: "textformat.size") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!gattung.wirkt(.groesse))
+                .disabled(!AwtrixNG.wirkt(.groesse))
                 .accessibilityLabel(Text(lokf("Größe %d", Int(groesse))))
-                .accessibilityHint(Text(gattung.begruendung(.groesse) ?? lok("Schriftgröße")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.groesse) ?? lok("Schriftgröße")))
                 // `Toggle` im Knopfstil statt eines `Button`, der seinen
                 // Zustand selbst faerbt: Der getoente Hintergrund im
                 // Zustand „an" und das Merkmal `.isSelected` fuer die
@@ -719,7 +707,7 @@ struct SendeniOS: View {
                 .toggleStyle(.button)
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!fettWirkt)
-                .disabled(!gattung.wirkt(.fett))
+                .disabled(!AwtrixNG.wirkt(.fett))
                 .accessibilityLabel("Fett")
                 .accessibilityHint(Text(fettHinweis))
                 Toggle(isOn: $grossbuchstaben) {
@@ -748,7 +736,7 @@ struct SendeniOS: View {
                             .tag(SendenHAusrichtung.links)
                         Label("Zentriert", systemImage: "text.aligncenter")
                             .tag(SendenHAusrichtung.mittig)
-                        if gattung.waagrechteAusrichtungen.contains(.rechts) {
+                        if AwtrixNG.waagrechteAusrichtungen.contains(.rechts) {
                             Label("Rechtsbündig", systemImage: "text.alignright")
                                 .tag(SendenHAusrichtung.rechts)
                         }
@@ -781,9 +769,9 @@ struct SendeniOS: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
-                .disabled(!gattung.wirkt(.senkrecht))
+                .disabled(!AwtrixNG.wirkt(.senkrecht))
                 .accessibilityLabel(Text(lok("Ausrichtung")) + Text(" ") + Text(vertikalWort))
-                .accessibilityHint(Text(gattung.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.senkrecht) ?? lok("Senkrecht ausrichten")))
                 Menu {
                     Picker("Rand", selection: $rand) {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
@@ -796,9 +784,9 @@ struct SendeniOS: View {
                 // Rand nicht, deshalb gesperrt statt nur bedienbar ohne
                 // Wirkung.
                 .disabled(vertikal == .mittig)
-                .disabled(!gattung.wirkt(.rand))
+                .disabled(!AwtrixNG.wirkt(.rand))
                 .accessibilityLabel(Text(lokf("Rand %d", rand)))
-                .accessibilityHint(Text(gattung.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
+                .accessibilityHint(Text(AwtrixNG.begruendung(.rand) ?? lok("Zeilen, die bei „oben“ und „unten“ frei bleiben — 0 setzt die Schrift bündig an den Rand. Bündig sieht je nach Schrift verschieden aus, weil manche über der Großbuchstabenhöhe Platz mitbringen und andere nicht; ein eigener Rand macht den Eindruck davon unabhängig. Bei „mittig“ wirkt er nicht.")))
                 Menu {
                     Picker("Abstand", selection: $luecke) {
                         ForEach(0...3, id: \.self) { n in Text(String(n)).tag(n) }
@@ -807,7 +795,7 @@ struct SendeniOS: View {
                     Label { menuewert(Text(String(luecke))) } icon: { Image(systemName: "arrow.left.and.right") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!gattung.wirkt(.abstand))
+                .disabled(!AwtrixNG.wirkt(.abstand))
                 .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
                 Button { zeigeFormat = true } label: {
                     Image(systemName: "paintbrush")
@@ -916,43 +904,31 @@ struct SendeniOS: View {
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
     /// ganz billige) Berechnung nur bei einer tatsächlichen Änderung neu läuft.
     private var laufschriftSchluessel: String {
-        "\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
+        "\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
     }
 
-    /// Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64 darüber —
-    /// bei jedem Tastendruck. Das gehört nicht auf den Hauptthread, sonst
-    /// stockt das Eingabefeld.
+    /// Mehrere hundert Einzelbilder rastern — bei jedem Tastendruck. Das gehört
+    /// nicht auf den Hauptthread, sonst stockt das Eingabefeld.
     private func laufschriftRechnen() async {
         guard !passt else {
-            laufschriftFrames = []; laufschriftURI = ""; return
+            laufschriftFrames = []; return
         }
         let (o, mass) = (vorschauOptionen, mass)
         let iconBilder = gewaehltesIcon.flatMap { i -> [[String?]]? in
             try? Bildraster.lesenMitZeiten(i.datei, breite: 8, hoehe: 8).map(\.pixel)
         } ?? []
-        let (frames, uri) = await Task.detached(priority: .userInitiated) {
-            let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder, mass: mass)
-            let uri = (try? Bildraster.alsDatenURI(
-                frames.map(\.pixel), breite: mass.breite,
-                hoehe: mass.hoehe, verzoegerung: o.tempo.bilddauer)) ?? ""
-            return (frames, uri)
+        let frames = await Task.detached(priority: .userInitiated) {
+            Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder, mass: mass)
         }.value
         guard !Task.isCancelled else { return }
         laufschriftFrames = frames
-        laufschriftURI = uri
     }
 
     private func senden() async {
         laeuft = true
         defer { laeuft = false }
         do {
-            // Das vorberechnete GIF nur, wenn es die Größe hat, in der
-            // gesendet wird: Die Vorschau rastert auf dem Maß der angesehenen
-            // Uhr; „An alle Uhren senden" schickt aber an jede eingerichtete,
-            // und eine TC002 bekäme das 32×8-GIF einer NG als Nutzlast.
-            // `Meldungsbau.rahmen` rastert dann eben selbst.
-            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
-                                                vorberechnet: mass == .tc002 ? laufschriftURI : nil)
+            let rahmen = try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung)
             // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
             // am Mac (SendenView.senden()).
             let slotOptionen = optionen

@@ -8,11 +8,9 @@ import XCTest
 /// das RAM der Uhr ausgelastet ist. Aber iCloud und App ist das komplett
 /// egal."*
 ///
-/// Genau dieser Prozentsatz ist nicht zu haben, wo er zählte: Die
-/// Werksfirmware gibt über sich selbst weder freien Speicher noch eine Grenze
-/// heraus (`docs/tc002-protokoll.md`, §5.1 bis §5.4); eine AWTRIX NG meldet
-/// zwar `freeHeapBytes` (`docs/awtrix-ng-protokoll.md`, §7.1), nimmt aber kein
-/// gemaltes 52×16-Bild an. Übrig bleibt die Zahl der Einzelbilder — eine
+/// Genau dieser Prozentsatz ist nicht zu haben, wo er zählte: Eine
+/// AWTRIX NG meldet zwar `freeHeapBytes` (`docs/awtrix-ng-protokoll.md`, §7.1),
+/// nennt aber keine Grenze. Übrig bleibt die Zahl der Einzelbilder — eine
 /// Aussage über die Meldung, nicht über die Leitung.
 ///
 /// Geprüft wird am Quelltext, wie in `PlattformwegeTests`: Eine

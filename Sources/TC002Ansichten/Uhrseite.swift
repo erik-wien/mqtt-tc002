@@ -3,7 +3,7 @@ import TC002Core
 import TC002Modell
 
 /// Alles, was zu **einer** Uhr gehört, auf einer Seite: Name, Adresse,
-/// Gattung, Betriebsart, ihre Geräteeinstellungen, Abfragen, Konfigurieren
+/// Betriebsart, Abfragen, Konfigurieren
 /// und das Entfernen.
 ///
 /// Warum eine eigene Seite und nicht eine Karte in der Liste: Vier Uhren
@@ -63,16 +63,6 @@ private struct Uhrblatt: View {
                         .ohneAutokorrektur()
                         .onChange(of: uhr.host) { _, _ in zustand.adresseGeaendert(uhr.id) }
                 }
-                // Als Wahl und nicht mehr nur im Kontextmenue: Ein Ausweg, den
-                // man nur ueber einen Langdruck findet, ist auf dem Telefon
-                // keiner. Gebraucht wird er, wo „Abfragen" die Gattung nicht
-                // feststellen kann — etwa bei einer AWTRIX NG hinter einer
-                // Anmeldung.
-                Picker("Geräteart", selection: geraeteart) {
-                    ForEach([Geraetetyp.tc002, .awtrixNG], id: \.self) { art in
-                        Text(art.beschriftung).tag(art)
-                    }
-                }
                 Adresswarnung(host: uhr.host)
             }
 
@@ -86,12 +76,8 @@ private struct Uhrblatt: View {
                 Text("HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken.")
                     .font(kanon.fussnote).foregroundStyle(.secondary)
             } header: {
-                Abschnittskopf("Betriebsart", hilfe: lok("Das Präfix ermittelt die App selbst und stellt dabei auch fest, was für ein Gerät antwortet. Bei einer Ulanzi ist es das eingestellte plus die letzten vier Stellen der MAC-Adresse, bei einer AWTRIX NG genau das eingestellte. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen."))
+                Abschnittskopf("Betriebsart", hilfe: lok("Das Präfix ermittelt die App selbst: Es ist genau das in der Uhr eingestellte, und ist keines eingestellt, die Kennung der Uhr. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen."))
             }
-
-            // Nur bei der Ulanzi-Werksfirmware: `Uhreinstellungen` prueft die
-            // Gattung selbst und zeigt bei einer AWTRIX NG gar nichts.
-            Uhreinstellungen(zustand: zustand, uhr: uhr, kanon: kanon)
 
             Section {
                 LabeledContent {
@@ -134,20 +120,8 @@ private struct Uhrblatt: View {
         }
     }
 
-    /// Die Geraeteart als nicht-wahlfreie Wahl fuer den Picker: `Uhr.typ` ist
-    /// ein `Optional`, weil es ein Dateiformat ist; die Oberflaeche sieht zwei
-    /// Faelle. Wer waehlt, schreibt den Wert ausdruecklich — danach steht in
-    /// der Datei eine Entscheidung und keine Auslassung mehr.
-    private var geraeteart: Binding<Geraetetyp> {
-        Binding(get: { uhr.gattung },
-                set: { neu in
-                    guard neu != uhr.gattung else { return }
-                    uhr.typ = neu
-                    zustand.geraeteartGeaendert(uhr.id)
-                })
-    }
-
-    /// Dieselbe Bauart und aus demselben Grund wie `geraeteart` darueber.
+    /// `Uhr.betriebsart` ist ein `Optional`, weil es ein Dateiformat ist; die
+    /// Oberflaeche sieht zwei Faelle.
     private var betriebsart: Binding<Betriebsart> {
         Binding(get: { uhr.wirksameBetriebsart },
                 set: { neu in

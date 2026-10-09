@@ -1,47 +1,5 @@
 import Foundation
 
-/// Welche Art Geraet hinter einer `Uhr` steckt.
-///
-/// Alte Einstellungen bleiben lesbar, weil sie den Schluessel gar nicht erst
-/// enthalten — `Uhr.typ` ist `Optional`, und `nil` heisst `.tc002`.
-///
-/// Der umgekehrte Weg traegt nicht. Eine Datei, in der `awtrixNG` steht,
-/// wirft in einer Fassung vor dieser beim Decode, und weil beide Leser mit
-/// `try?` lesen, waere die Folge eine leere Uhrenliste statt einer Meldung.
-/// Wer also je eine dritte Art eintraegt, aendert damit nichts an heutigen
-/// Installationen, wohl aber an der Rueckwaertsrichtung; das ist der Preis
-/// eines `RawRepresentable`-Enums in einem Dateiformat und hier bewusst
-/// bezahlt, weil eine unbekannte Geraeteart nicht sinnvoll zu raten waere.
-public enum Geraetetyp: String, Codable, CaseIterable, Sendable {
-    /// Die Ulanzi-Werksfirmware (TC002). Der Bestand.
-    case tc002
-    /// AWTRIX NG auf einer TC001/TC002 — eigene Themen, eigene Nutzlast,
-    /// eigene Geraetezeichnung.
-    case awtrixNG
-}
-
-/// Auf welchem Weg eine Uhr beschickt wird. Je Uhr eine Wahl, kein
-/// Programmschalter: In einem Haus kann die eine Uhr unmittelbar erreichbar
-/// sein und die naechste nur ueber den Broker.
-///
-/// Es ist ein Tausch, kein Gewinn — beide Wege koennen etwas, das der
-/// andere nicht kann (die Messungen stehen in `docs/tc002-protokoll.md`, §3
-/// und §5):
-///
-/// - `.http` antwortet. Anlegen, Loeschen und Umschalten quittiert die Uhr mit
-///   `{"code":200}`, ein unbekannter Anzeigenname mit `404` — eine gescheiterte
-///   Sendung ist damit als solche zu erkennen. Ein Broker wird nicht gebraucht,
-///   ein Praefix auch nicht.
-/// - `.mqtt` schweigt. MQTT 3.1.1 hat keinen Rueckkanal fuer eine abgelehnte
-///   Veroeffentlichung; dafuer liest die App am Broker mit, was *andere*
-///   an dieselbe Uhr schicken, und kann daraus die fuenf Bloecke fuellen.
-///
-/// Ein Mitlesen ueber HTTP gibt es nicht, und zwar nicht aus Bequemlichkeit:
-/// Am 13.09.2026 wurde 45 Sekunden lang auf `<praefix>/custom/#`,
-/// `<praefix>/customList` und `<praefix>/status` gehorcht, mit einer
-/// HTTP-Loeschung mittendrin — es kam eine einzige Nachricht, `status online`.
-/// Die Uhr reicht HTTP-Vorgaenge nicht ueber MQTT weiter. Ein zusaetzlich
-/// eingetragener Broker taugt deshalb nicht als Ohr fuer den HTTP-Betrieb.
 public extension Array where Element == Uhr {
     /// Nach Adresse geordnet — ziffernbewusst: `localizedStandardCompare`
     /// vergleicht Zifferngruppen als Zahlen, sonst stünde `10.0.0.9` hinter
@@ -71,6 +29,22 @@ public extension Array where Element == Uhr {
     }
 }
 
+/// Auf welchem Weg eine Uhr beschickt wird. Je Uhr eine Wahl, kein
+/// Programmschalter: In einem Haus kann die eine Uhr unmittelbar erreichbar
+/// sein und die naechste nur ueber den Broker.
+///
+/// Es ist ein Tausch, kein Gewinn (`docs/awtrix-ng-protokoll.md` §3, §4):
+///
+/// - `.http` antwortet mit einem Status und, bei einer Abweisung, einem
+///   Fehlerrumpf — eine gescheiterte Sendung ist als solche zu erkennen. Ein
+///   Broker wird nicht gebraucht, ein Praefix auch nicht.
+/// - `.mqtt` kennt keinen Rueckkanal fuer eine abgelehnte Veroeffentlichung
+///   (QoS 0); die Uhr antwortet auf `<Thema>/result`, und die App liest am
+///   Broker mit, was *andere* an dieselbe Uhr schicken.
+///
+/// Ein Mitlesen ueber HTTP gibt es nicht: Die Uhr reicht HTTP-Vorgaenge nicht
+/// ueber MQTT weiter. Ein zusaetzlich eingetragener Broker taugt deshalb nicht
+/// als Ohr fuer den HTTP-Betrieb.
 public enum Betriebsart: String, Codable, Sendable, CaseIterable {
     case http
     case mqtt
@@ -108,30 +82,6 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     }
     public var praefix: String = ""
     public var mac: String = ""
-    /// Optional, und das ist der ganze Grund, warum es heute schon da ist.
-    ///
-    /// Ein nachtraeglich hinzugefuegtes Pflichtfeld macht bestehende
-    /// Einstellungen unlesbar: Swift setzt beim synthetisierten Decode keine
-    /// Vorgabewerte fuer fehlende Schluessel ein — auch ein Feld *mit*
-    /// Vorgabewert wirft `keyNotFound`. Gelesen wird die Liste an beiden
-    /// Stellen mit `try?` (`Einstellungen.gelesen`, `AppZustand.init`), es
-    /// gaebe also keinen Fehler und keine Meldung, sondern eine leere
-    /// Uhrenliste — in der App und im Werkzeug, beim ersten Start nach dem
-    /// Update. Nur ein `Optional` bekommt `decodeIfPresent`.
-    /// `EinstellungenTests` misst beide Richtungen nach.
-    ///
-    /// `nil` heisst „TC002", nicht „unbekannt": Jede bestehende Einrichtung
-    /// ist eine. Beim Schreiben faellt das Feld wieder weg, solange es `nil`
-    /// ist — eine aeltere Fassung liest die Datei damit weiterhin.
-    ///
-    /// Gelesen wird das Feld nirgends unmittelbar, sondern ueber `gattung` —
-    /// dieselbe Bauart wie `betriebsart`/`wirksameBetriebsart`, damit die
-    /// Lesart „`nil` heisst TC002" an genau einer Stelle steht.
-    public var typ: Geraetetyp?
-
-    /// Welche Geraeteart fuer diese Uhr gilt. Der einzige Leser von `typ`.
-    public var gattung: Geraetetyp { typ ?? .tc002 }
-
     /// Woran zwei Geräte dieselbe Uhr erkennen.
     ///
     /// Die `id` allein taugt dafür nicht: Die UUID entsteht beim Anlegen auf
@@ -155,7 +105,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// immer: Wer eine Uhr entfernt und spaeter wieder eintraegt, saehe sie
     /// beim naechsten Abgleich verschwinden.
     ///
-    /// `Optional` aus demselben Grund wie `typ` — ein nachtraegliches
+    /// `Optional` — ein nachtraegliches
     /// Pflichtfeld wirft beim Decode und liesse die Uhrenliste leer statt
     /// fehlerhaft. `nil` heisst „von frueher"; ein Grabstein gewinnt dann.
     public var angelegt: Date?
@@ -169,41 +119,30 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         return merkmale
     }
 
-    /// Wie breit die Anzeige dieser Uhr in Pixeln ist — vom Geraet geholt,
-    /// nicht angenommen.
+    /// Breite der Anzeige in Pixeln, wie die Uhr sie meldet
+    /// (`GET /api/v1/capabilities` → `display.width`, §1).
     ///
-    /// Betrifft allein AWTRIX NG: Dort ergibt sich die Breite aus
-    /// `panelWidth × panels` und muss zwischen 32 und 128 liegen
-    /// (`docs/awtrix-ng-protokoll.md` §1). Die Werksfirmware ist fest 52×16.
-    ///
-    /// `Optional` aus demselben Grund wie `typ` und `betriebsart`: Ein
-    /// nachtraeglich hinzugefuegtes Pflichtfeld wirft beim Decode
-    /// `keyNotFound`, und weil beide Leser mit `try?` lesen, waere die Folge
-    /// eine leere Uhrenliste statt einer Meldung.
-    ///
-    /// Gelesen wird es nirgends unmittelbar, sondern ueber `anzeigemass`.
+    /// `Optional`: Ein nachtraeglich hinzugefuegtes Pflichtfeld wirft beim
+    /// Decode `keyNotFound`, und weil die Leser mit `try?` lesen, waere die
+    /// Folge eine leere Uhrenliste statt einer Meldung. Gelesen wird es
+    /// nirgends unmittelbar, sondern ueber `anzeigemass`.
     public var panelbreite: Int?
 
-    /// Die Masse der Anzeige dieser Uhr, in Pixeln.
-    ///
-    /// Zwei Geraete, zwei Seitenverhaeltnisse: 52×16 ist 3,25:1, 32×8 ist
-    /// 4:1. Wer mit den Konstanten aus `Pixelfeld` rechnet, rechnet fuer die
-    /// Werksfirmware — fuer eine NG-Uhr gehoert diese Angabe hierher gefragt.
-    ///
-    /// Die Hoehe ist bei NG fest 8 und nicht einstellbar; nur die Breite
-    /// ist eine Frage ans Geraet. Solange sie nicht gestellt wurde, gilt die
-    /// dokumentierte Vorgabe `32 × 1` — als Vorgabe benannt, nicht als
-    /// Tatsache ueber diese Uhr: Sobald „Abfragen" gelaufen ist, steht die
-    /// gemessene Breite da.
+    /// Hoehe der Anzeige, wie `panelbreite` gemeldet (`display.height`).
+    public var panelhoehe: Int?
+
+    /// Die Masse der Anzeige dieser Uhr, in Pixeln. Solange die Uhr nicht
+    /// gefragt wurde, gilt die Vorgabe 52 × 16 — als Vorgabe benannt, nicht
+    /// als Tatsache ueber diese Uhr: Sobald „Abfragen" gelaufen ist, steht die
+    /// gemeldete Groesse da.
     public var anzeigemass: (breite: Int, hoehe: Int) {
-        switch gattung {
-        case .tc002: return (Pixelfeld.breiteStandard, Pixelfeld.hoeheStandard)
-        case .awtrixNG: return (panelbreite ?? Geraetetyp.ngVorgabebreite, Geraetetyp.ngHoehe)
-        }
+        if let b = panelbreite, let h = panelhoehe,
+           let mass = AwtrixNG.plausiblesMass(breite: b, hoehe: h) { return mass }
+        return (AwtrixNG.vorgabebreite, AwtrixNG.vorgabehoehe)
     }
 
     /// Der Weg, auf dem diese Uhr beschickt wird — optional aus demselben
-    /// Grund wie `typ`: Ein nachtraegliches Pflichtfeld wirft beim Decode
+    /// Grund: Ein nachtraegliches Pflichtfeld wirft beim Decode
     /// `keyNotFound`, und weil beide Leser (`Einstellungen.gelesen`,
     /// `AppZustand.init`) mit `try?` lesen, waere die Folge keine Meldung,
     /// sondern eine leere Uhrenliste in App und Werkzeug.
@@ -244,18 +183,69 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     }
 
     public init(id: UUID = UUID(), name: String, host: String,
-                praefix: String = "", mac: String = "", typ: Geraetetyp? = nil,
+                praefix: String = "", mac: String = "",
                 betriebsart: Betriebsart? = nil, panelbreite: Int? = nil,
-                angelegt: Date? = nil) {
+                panelhoehe: Int? = nil, angelegt: Date? = nil) {
         self.id = id
         self.name = name
         self.host = host
         self.praefix = praefix
         self.mac = mac
-        self.typ = typ
         self.angelegt = angelegt
         self.betriebsart = betriebsart
         self.panelbreite = panelbreite
+        self.panelhoehe = panelhoehe
+    }
+
+    /// Der Stand der Einrichtung, wie er in der Datei steht. Eine Uhr ohne
+    /// diesen Schluessel wurde angelegt, als es noch zwei Geraetearten gab
+    /// (`typ` fehlend, `"tc002"` oder `"awtrixNG"`).
+    static let einrichtungsstand = 2
+
+    private enum Schluessel: String, CodingKey {
+        case id, name, host, praefix, mac, angelegt, betriebsart, panelbreite, panelhoehe
+        case einrichtung
+    }
+
+    /// Eine Einrichtung aelteren Stands bleibt lesbar, traegt aber zwei Angaben,
+    /// die fuer AWTRIX NG nicht stimmen, und beide werden verworfen:
+    ///
+    /// - Das Themen-Praefix. Die Werksfirmware bildete es aus ihrem
+    ///   eingestellten Praefix, `_` und den letzten vier Stellen der MAC;
+    ///   bei NG steht dort `mqttPrefix` unveraendert, leer die Geraete-uid
+    ///   (§2). Ein Praefix, das nicht stimmt, liesse die App auf ein Thema
+    ///   senden, das niemand abonniert, und NG antwortet darauf gar nicht.
+    ///   Ohne Praefix ist eine MQTT-Uhr nicht beschickbar (`beschickbar`);
+    ///   `AppZustand.abfragen` holt es von der Uhr neu.
+    /// - Die Anzeigemasse (32 × 8 einer TC001).
+    ///
+    /// Unbekannte Schluessel (das fruehere `typ`) uebergeht der Decoder.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Schluessel.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        host = try c.decode(String.self, forKey: .host)
+        mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? ""
+        angelegt = try c.decodeIfPresent(Date.self, forKey: .angelegt)
+        betriebsart = try c.decodeIfPresent(Betriebsart.self, forKey: .betriebsart)
+        let aktuell = (try c.decodeIfPresent(Int.self, forKey: .einrichtung) ?? 0) >= Self.einrichtungsstand
+        praefix = aktuell ? try c.decodeIfPresent(String.self, forKey: .praefix) ?? "" : ""
+        panelbreite = aktuell ? try c.decodeIfPresent(Int.self, forKey: .panelbreite) : nil
+        panelhoehe = aktuell ? try c.decodeIfPresent(Int.self, forKey: .panelhoehe) : nil
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Schluessel.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(host, forKey: .host)
+        try c.encode(praefix, forKey: .praefix)
+        try c.encode(mac, forKey: .mac)
+        try c.encodeIfPresent(angelegt, forKey: .angelegt)
+        try c.encodeIfPresent(betriebsart, forKey: .betriebsart)
+        try c.encodeIfPresent(panelbreite, forKey: .panelbreite)
+        try c.encodeIfPresent(panelhoehe, forKey: .panelhoehe)
+        try c.encode(Self.einrichtungsstand, forKey: .einrichtung)
     }
 }
 

@@ -8,7 +8,7 @@ import TC002Core
 /// Menüs, Inspektor, Finder und den Editor.
 ///
 /// Was das Gerät kann, steht in der Gerätereferenz (Hilfe -> Gerätereferenz,
-/// aus docs/tc002-protokoll.md, siehe GeraeteReferenzView.swift); hier steht
+/// aus docs/awtrix-ng-protokoll.md, siehe GeraeteReferenzView.swift); hier steht
 /// nur, was man in der App klickt.
 public struct HilfeView: View {
     @State private var abschnitt: Abschnitt? = .ueberblick
@@ -60,7 +60,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
                         "**Einstellungen** — Uhren, Broker, Aufzeichnung, iCloud und Erweitert.",
                     ]),
-                    .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht je ein Dokument für beide Gattungen, die Wahl darüber sitzt über dem Inhaltsverzeichnis. Diese Hilfe beschreibt nur, was man in der App klickt."),
+                    .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht das Dokument zur Uhr. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
         case .verbindung:
             return HilfeInhalt.themen
@@ -77,7 +77,6 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand; die Zeile der Uhr zeigt dann wieder „noch nicht abgefragt“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
                 ]
                 + HilfeInhalt.uhrEntfernen
-                + HilfeInhalt.aufDerUhr
                 + HilfeInhalt.brokerEintragen
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
@@ -105,9 +104,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.wegeRegel
                 + [
                     .absatz("Läuft der Text, wird im Zeit-Reiter des Inspektors der Abschnitt „Laufschrift“ benutzbar: „Tempo“ — langsam, mittel oder schnell. Sonst steht er gesperrt da."),
-                    .absatz("Wie viele Einzelbilder das ergibt, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man. Eine Größenangabe steht dort nicht: Wo die Grenze der Uhr liegt, sagt sie selbst nicht (Gerätereferenz, §4.2a führt das als offene Frage), und eine Zahl ohne Bezugsgröße beunruhigt, ohne zu helfen."),
-                    .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
-                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung findet sich unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, unter „Auf der Uhr“."),
+                    .absatz("Wie viele Einzelbilder das ergibt, steht als Einblendtext am ⏎ im Eingabefeld — es ist die Antwort auf „was passiert, wenn ich drücke“, und dort drückt man."),
+                    .ueberschrift("Blockierende Anzeigen"),
                 ]
                 + HilfeInhalt.blockierendeAnzeige
                 + [
@@ -211,7 +209,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Senden"),
                     .absatz("Die Sendezeile unter der Leinwand gilt für jede Größe: Auch bei einem Icon will man sehen, wie es auf dem Gerät aussieht — es geht dann als Bild in die linke obere Ecke. Als Zubehör einer Meldung wählt man es weiterhin unter „Senden“. Die fünf Slot-Blöcke stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App ein gemaltes Bild nicht, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war."),
                     .absatz("Das ⊗ an einem belegten Block löscht die Anzeige auf der Uhr — nicht die Leinwand. Die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist. Nimmt keine der Zieluhren ein gemaltes Bild an — eine AWTRIX hat acht Zeilen statt sechzehn —, steht der Grund sichtbar neben dem gesperrten Knopf. Eine eigene Dauer bekommt ein von hier geschicktes Bild nicht; wie lange es steht, entscheidet der Seitenwechsel der Uhr."),
-                    .absatz("Der Hinweis unter der Leinwand zeigt, wie viele Rechtecke die Uhr am Ende bekommt: waagrechte Läufe gleicher Farbe werden vor dem Senden zu einem Rechteck zusammengefasst. Ein einzelnes Bild geht so hinaus — klein und exakt. Mehrere gehen als ein animiertes GIF, denn Rechtecke kennen keine Zeit; darunter steht dann, aus wie vielen Einzelbildern es besteht."),
+                    .absatz("Der Hinweis unter der Leinwand zeigt, aus wie vielen Rechtecken das Bild besteht. Ein Bild lässt sich zurzeit nicht an die Uhr schicken; Zeichnen, Sichern und die Sammlung bleiben."),
                 ]
         case .anzeigen:
             return [
@@ -220,12 +218,9 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.protokollListe
                 + [
-                    .absatz("Dazu jede Änderung des Seitenwechsels."),
                 ]
                 + HilfeInhalt.protokollLeeren
                 + [
-                    .ueberschrift("Seitenwechsel"),
-                    .absatz("Die Einstellung „Seitenwechsel“ — wie lange eine Anzeige stehen bleibt, bevor die Uhr zur nächsten blättert — findet sich nicht hier, sondern unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, für die sie gilt."),
                 ]
         case .fehlersuche:
             return HilfeInhalt.fehlerStille
@@ -236,8 +231,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fehlerReihe
                 + [
                     .ueberschrift("Weitere Symptome"),
-                    .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind: „Seitenwechsel“ unter „Einstellungen“ steht vermutlich auf „kein Wechsel“."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es auf einer Ulanzi-Werksfirmware nicht geben: Die App rastert dorthin jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht. Auf einer TC001 unter AWTRIX NG setzt die Uhr selbst — dort hängt es an ihrer Schrift."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, gibt es auf AWTRIX NG nicht: Ihre Schrift kennt sie; ein unbekanntes Zeichen wird zum Fragezeichen."),
                 ]
         }
     }

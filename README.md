@@ -2,7 +2,7 @@
 
 *[English version](README.en.md)*
 
-Meldungen an die Ulanzi TC002 (Pixbar, 52×16) schicken — per MQTT.
+Meldungen an die Ulanzi TC002 (Pixbar, 52×16, Firmware AWTRIX NG) schicken — per MQTT oder HTTP.
 
 ## Was die App tut
 
@@ -11,9 +11,9 @@ Stores; das Repo, die Bündelkennung `cloud.eriks.mqtt-tc002`, der Datenordner
 und der Befehl `mqtttc002` behalten ihren Namen — daran hängen Identität,
 Freigaben und vorhandene Bestände) ist eine App für macOS, iPhone und iPad,
 die Text, Bilder und selbst gemalte Icons an eine oder mehrere
-Ulanzi-TC002-Pixeluhren schickt. Der Weg dorthin führt über
-einen MQTT-Broker, nicht direkt zur Uhr — die Uhr hört auf ihn, nicht auf die
-App.
+Ulanzi-TC002-Pixeluhren mit der Firmware AWTRIX NG schickt. Die Uhr setzt den
+Text mit ihrer eigenen Schrift. Der Weg dorthin führt entweder direkt über HTTP
+oder über einen MQTT-Broker, auf den die Uhr hört.
 
 ## Bauen
 
@@ -24,32 +24,28 @@ vorausgesetzt wird macOS 14 aufwärts.
 ## Die fünf Bereiche
 
 - **Verbindung** — Uhren eintragen und abfragen, Broker-Zugang verwalten.
-  „Abfragen“ ermittelt Themen-Präfix und MAC direkt von der Uhr; von Hand
+  „Abfragen“ ermittelt Themen-Präfix, MAC und Displaygröße direkt von der Uhr; von Hand
   eingetragen wird hier nichts.
 - **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
   zusammensetzen und verschicken. Fünf Blöcke zeigen dabei die festen Plätze
   der Uhr, samt Inhalt, wo die App ihn kennt. Die Vorschau entsteht aus
-  demselben Raster wie die gesendete Nachricht. Zwei Wege stehen zur Wahl:
-  **als Pixel**, von der App selbst gerastert, mit Umlauten und freier
-  Schrift — passt der Text nicht, läuft er von selbst als Laufschrift durch;
-  oder **als Text**, vom Gerät gesetzt, das dafür mit seiner eigenen Schrift
-  scrollt, aber keine Umlaute kennt.
+  demselben Raster wie die gesendete Nachricht, ist aber nur eine Näherung:
+  Die Uhr setzt den Text selbst. Schriftart, Größe, Fett, Rand und Abstand
+  sind deshalb gesperrt.
 - **Editor** — Pixel malen; die Größe der Leinwand entscheidet, was dabei
   herauskommt: ein 8×8 ist das LaMetric-Icon mit Nummer, ein 16×16 eines
-  ohne, ein 16×52 die ganze Anzeige, die sich von dort aus senden lässt (und
-  aus der beim Senden Rechtecke statt einzelner Pixel werden). Mehrere
+  ohne, ein 52×16 die ganze Anzeige. Eine ganze Anzeige lässt sich zurzeit nicht
+  an die Uhr schicken. Mehrere
   Einzelbilder ergeben ein animiertes GIF. Icons lassen sich außerdem über
   eine LaMetric-Nummer nachladen.
 - **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
-  umschalten oder löschen, dazu der Seitenwechsel der Uhr. Diese Liste führt
+  umschalten oder löschen. Diese Liste führt
   die App je Uhr getrennt: gelöscht wird immer nur bei der aktiven, und was
   über „an alle“ auf andere Uhren ging, bleibt dort stehen, bis es dort
   gelöscht wird.
 
 Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
 (⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
-[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md). Was ein Gerät mit der
-Firmware AWTRIX NG kann und wie dessen Protokoll aussieht, steht daneben in
 [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
 
 ## Schriften und Abstand
@@ -180,16 +176,16 @@ sagt nichts darüber, ob Schriften, Icons, App-Symbol, Übersetzungen und die
 ## Ohne Uhr ausprobieren
 
 In den Einstellungen steht ein Schalter **„Virtuelle Uhr"**. Er startet einen
-kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle einer Ulanzi
-mit Werksfirmware spricht; „Als Uhr eintragen" legt sie in der Uhrenliste an,
+kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle von AWTRIX NG
+spricht; „Als Uhr eintragen" legt sie in der Uhrenliste an,
 „Ansehen" öffnet ein Fenster mit Geräterahmen, den fünf Plätzen und dem
 Blättern.
 
-Ab da ist alles echt: Abfragen, Geräteart erkennen, Senden, Löschen,
+Ab da ist alles echt: Abfragen, Senden, Löschen,
 Umschalten, der Verlauf. Kein Sonderweg im Code — die App merkt nicht, dass am
 anderen Ende kein Gerät hängt. Sie hört nur auf dem eigenen Rechner zu und
 spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann nicht
-mitkommen. AWTRIX NG spricht sie nicht.
+mitkommen.
 
 ## Tests
 
@@ -214,18 +210,9 @@ wäre der App Store ein Lizenzverstoß, auch bei offenem Quelltext.
 
 Quelltext von [PixDeck](https://github.com/cailurus/PixDeck) ist **nicht**
 enthalten: Es war eine Referenz über das Verhalten des Geräts, und Tatsachen
-über ein Gerät sind nicht urheberrechtlich geschützt — siehe „Quellen“ unten.
+über ein Gerät sind nicht urheberrechtlich geschützt.
 
 ## Quellen
 
-- **Offizielles Repository des Herstellers:**
-  https://github.com/UlanziTechnology/Ulanzi-U-Clock-TC002
-  Bestaetigt die Praefixbildung `<eingestellt>_<letzte vier MAC-Stellen>` (Vorgabe
-  `ulanzi`), nennt `text`, `image`, `draw` und `duration`, und fuehrt neben `df`
-  (Rechteck) auch `dfc` (gefuellter Kreis: `{"dfc":[x,y,radius,"#RRGGBB"]}`) auf.
-  Animierte GIFs sind laut dieser Quelle in `image` unterstuetzt.
-- **Nicht** dokumentiert sind dort: das Steuerthema `<praefix>/switchDiyApp` und das
-  Loeschen einer Anzeige durch eine leere Nutzlast. Beides haben wir am 11.09.2026 am
-  Geraet ermittelt — `switchDiyApp` aus den SUBSCRIBE-Zeilen des Brokers.
-- **PixDeck** (https://github.com/cailurus/PixDeck, GPL-3.0): Quelle der Erkenntnis, dass
-  dasselbe JSON auch per HTTP an `/api/custom?name=<n>` geht.
+- **AWTRIX NG:** das Protokoll, so wie es sich am Gerät zeigt, steht in
+  [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).

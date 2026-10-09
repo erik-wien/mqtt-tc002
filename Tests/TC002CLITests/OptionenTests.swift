@@ -125,40 +125,19 @@ final class OptionenTests: XCTestCase {
             .appendingPathComponent(UUID().uuidString))
     }
 
-    /// Kurzer Text steht still: `draw`-Befehle, kein Bild.
-    func testKurzerTextWirdGerastert() throws {
-        let o = try Optionen.zerlegt(["senden", "Hi"])
+    /// Der Rahmen traegt Text und Regler als Herkunft: Die Uhr setzt den Text
+    /// selbst, es gehen keine Pixel hinaus.
+    func testDerRahmenTraegtDieOptionenAlsHerkunft() throws {
+        let o = try Optionen.zerlegt(["senden", "Hi", "--rechts", "--unten"])
         var m = o.meldung
         m.text = "Hi"
         let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-        XCTAssertFalse(rahmen.draw.isEmpty, "gesetzte Pixel als draw-Befehle")
+        XCTAssertTrue(rahmen.draw.isEmpty)
         XCTAssertTrue(rahmen.bilder.isEmpty)
-        XCTAssertTrue(rahmen.texte.isEmpty)
-    }
-
-    /// Langer Text laeuft durch: ein animiertes GIF statt draw-Befehlen.
-    func testLangerTextWirdZurLaufschrift() throws {
-        let text = "Dieser Text ist viel zu lang für zweiundfünfzig Pixel"
-        let o = try Optionen.zerlegt(["senden", text])
-        var m = o.meldung
-        m.text = text
-        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-        XCTAssertTrue(rahmen.draw.isEmpty)
-        XCTAssertEqual(rahmen.bilder.count, 1)
-        XCTAssertTrue(rahmen.bilder[0].datenURI.hasPrefix("data:image/gif;base64,"))
-    }
-
-    /// Mit `--geraeteschrift` setzt die Uhr selbst — ein Textblock, kein Raster.
-    func testGeraeteschriftErgibtTextblock() throws {
-        let o = try Optionen.zerlegt(["senden", "Hallo", "--geraeteschrift", "--rechts", "--unten"])
-        var m = o.meldung
-        m.text = "Hallo"
-        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-        XCTAssertTrue(rahmen.draw.isEmpty)
-        XCTAssertEqual(rahmen.texte.count, 1)
-        XCTAssertEqual(rahmen.texte[0].inhalt, "Hallo")
-        XCTAssertEqual(rahmen.texte[0].ausrichtung, "right")
-        XCTAssertEqual(rahmen.texte[0].vertikal, "bottom")
+        let herkunft = try XCTUnwrap(rahmen.herkunft)
+        XCTAssertEqual(herkunft.optionen.text, "Hi")
+        XCTAssertEqual(herkunft.optionen.waagrecht, .rechts)
+        XCTAssertEqual(herkunft.optionen.senkrecht, .unten)
     }
 
     func testDauerLandetImRahmen() throws {
@@ -166,25 +145,7 @@ final class OptionenTests: XCTestCase {
         var m = o.meldung
         m.text = "Hi"
         let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-        XCTAssertTrue(rahmen.alsJSON().contains("\"duration\":12"))
-    }
-
-    /// Die senkrechte Ausrichtung geht ueber die tatsaechliche Tinte, nicht ueber
-    /// die Schriftgroesse — sonst saesse „oben" nicht oben.
-    func testSenkrechteAusrichtungVerschiebtDenText() throws {
-        func hoechsteZeile(_ argumente: [String]) throws -> Int {
-            let o = try Optionen.zerlegt(argumente)
-            var m = o.meldung
-            m.text = "Hg"
-            let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: sammlung())
-            return rahmen.draw.map(\.y).min() ?? -1
-        }
-        let oben = try hoechsteZeile(["senden", "Hg", "--oben", "--rand", "0"])
-        let mitte = try hoechsteZeile(["senden", "Hg", "--mitte"])
-        let unten = try hoechsteZeile(["senden", "Hg", "--unten", "--rand", "0"])
-        XCTAssertEqual(oben, 0, "ohne Rand sitzt die Tinte an der obersten Zeile")
-        XCTAssertLessThan(oben, mitte)
-        XCTAssertLessThan(mitte, unten)
+        XCTAssertEqual(rahmen.dauer, 12)
     }
 }
 

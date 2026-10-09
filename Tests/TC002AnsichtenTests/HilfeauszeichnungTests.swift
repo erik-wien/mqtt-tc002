@@ -97,7 +97,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.wasEsTut, HilfeInhalt.betriebsart, HilfeInhalt.geraeteart,
         HilfeInhalt.brokerNurFuerMqtt, HilfeInhalt.themen,
         HilfeInhalt.startOhneEinrichtung, HilfeInhalt.uhrHinzufuegen,
-        HilfeInhalt.uhrEntfernen, HilfeInhalt.aufDerUhr, HilfeInhalt.brokerSichern,
+        HilfeInhalt.uhrEntfernen, HilfeInhalt.brokerSichern,
         HilfeInhalt.uhrAbfragen, HilfeInhalt.brokerFelderLeer,
         HilfeInhalt.brokerKennwort, HilfeInhalt.brokerPruefen,
         HilfeInhalt.virtuelleUhr, HilfeInhalt.wolkenabgleich,

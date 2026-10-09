@@ -118,14 +118,6 @@ struct IconsblattiOS: View {
         vorhandene.gefiltert(filter, bewegt: { bewegte.contains($0.datei.path) })
     }
 
-    /// Warum ein Stueck dieser Groesse an keine der Zieluhren gehen kann —
-    /// `nil`, wenn es ankommt. Beantwortet wird die Frage von den Zieluhren
-    /// (`AppZustand.grafikSperre`), das Blatt stellt sie nur. Dieselbe Naht
-    /// wie am Schreibtisch (`IconAuswahlView`).
-    private func sperre(_ eintrag: Editoreintrag) -> String? {
-        zustand.grafikSperre(hoehe: eintrag.groesse.hoehe)
-    }
-
     var body: some View {
         NavigationStack(path: $pfad) {
             // Die Sammlung zuerst, das Hinzufuegen darunter: Wer das Blatt
@@ -309,10 +301,6 @@ struct IconsblattiOS: View {
         // vierzigmal dasselbe Icon. Derselbe Fallstrick wie im Editor bei
         // „Sichern"/„Neu" und in der Blockreihe.
         .buttonStyle(.plain)
-        // Gesperrt, nicht verschwunden — dieselbe Entscheidung wie am
-        // Schreibtisch: Wer sein 16×16 sucht, soll sehen, dass es noch da ist.
-        .disabled(sperre(eintrag) != nil)
-        .opacity(sperre(eintrag) == nil ? 1 : 0.35)
         .accessibilityLabel(Text(bewegte.contains(eintrag.datei.path)
                                  ? lokf("%@, bewegt", eintrag.name) : eintrag.name))
         .accessibilityAddTraits(gewaehlt?.datei == eintrag.datei ? [.isSelected] : [])
@@ -354,7 +342,6 @@ struct IconsblattiOS: View {
                          // nicht und laesst sich weder umbenennen noch
                          // loeschen.
                          darfAendern: darfAendern(eintrag),
-                         sperrgrund: sperre(eintrag),
                          uebernehmen: { gewaehlt = icon(aus: $0); schliessen() },
                          umbenennen: { umbenennen($0, auf: $1) },
                          loeschen: { loeschen($0) })
@@ -502,11 +489,6 @@ struct IconsblattiOS: View {
 /// wird zudem nur montiert, wenn es tatsächlich mehr als ein Einzelbild gibt.
 private struct IconseiteiOS: View {
     let darfAendern: Bool
-    /// Warum dieses Icon an keine der Zieluhren gehen kann — `nil`, wenn es
-    /// geht. Steht als Satz unter der grossen Ansicht, und „Uebernehmen" ist
-    /// dann gesperrt: Von hier aus waere es sonst der zweite Weg an der
-    /// Sperre vorbei, den die Kachel schon zumacht.
-    let sperrgrund: String?
     let uebernehmen: (Editoreintrag) -> Void
     let umbenennen: (Editoreintrag, String) -> Editoreintrag?
     let loeschen: (Editoreintrag) -> Void
@@ -523,13 +505,12 @@ private struct IconseiteiOS: View {
     /// Kantenlaenge der grossen Ansicht in Punkten — nicht je Bildpunkt.
     private static let kante = 220.0
 
-    init(eintrag: Editoreintrag, darfAendern: Bool, sperrgrund: String? = nil,
+    init(eintrag: Editoreintrag, darfAendern: Bool,
          uebernehmen: @escaping (Editoreintrag) -> Void,
          umbenennen: @escaping (Editoreintrag, String) -> Editoreintrag?,
          loeschen: @escaping (Editoreintrag) -> Void) {
         _eintrag = State(initialValue: eintrag)
         self.darfAendern = darfAendern
-        self.sperrgrund = sperrgrund
         self.uebernehmen = uebernehmen
         self.umbenennen = umbenennen
         self.loeschen = loeschen
@@ -550,14 +531,8 @@ private struct IconseiteiOS: View {
                     .frame(width: Self.kante, height: Self.kante)
             }
             Spacer()
-            if let sperrgrund {
-                Label(sperrgrund, systemImage: "exclamationmark.triangle")
-                    .font(.footnote).foregroundStyle(.orange)
-                    .padding(.bottom, 8)
-            }
             Button("Übernehmen") { uebernehmen(eintrag) }
                 .knopfHaupthandlung()
-                .disabled(sperrgrund != nil)
         }
         .padding()
         .navigationTitle(eintrag.name)
@@ -649,13 +624,9 @@ private struct AnzeigeseiteiOS: View {
         _platz = State(initialValue: platz)
     }
 
-    /// Warum eine ganze 52 × 16-Anzeige an keine der Zieluhren gehen kann.
-    ///
-    /// Ohne diese Sperre schickte der Knopf trotzdem, und auf einer AWTRIX NG
-    /// kam nichts an — die Fussnote unten sagt zwar „Eine AWTRIX NG nimmt sie
-    /// nicht", aber ein Satz, der eine Sperre beschreibt, ohne dass eine da
-    /// ist, ist schlimmer als keiner.
-    private var sperre: String? { zustand.grafikSperre(hoehe: Pixelfeld.hoeheStandard) }
+    /// Eine ganze Anzeige laesst sich noch nicht an die Uhr schicken
+    /// (`NGFehler.keinPixelweg`): Der Knopf ist gesperrt und sagt warum.
+    private var sperre: String? { NGFehler.keinPixelweg.errorDescription }
 
     /// Welche Plaetze der angesehenen Uhr belegt sind — dieselbe Quelle wie
     /// im Sendebildschirm.
@@ -678,7 +649,7 @@ private struct AnzeigeseiteiOS: View {
                        kante: 6)
                 .background(Color.black)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
-            Text("Eine 52 × 16-Anzeige füllt das Display und ersetzt Text und Icon. Eine AWTRIX NG nimmt sie nicht — ihre Anzeige ist 32 × 8.")
+            Text("Eine 52 × 16-Anzeige füllt das Display und ersetzt Text und Icon.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             // Dieselben Bloecke wie im Sendebildschirm, aus derselben
@@ -693,7 +664,7 @@ private struct AnzeigeseiteiOS: View {
                             Slotblock(platz: i,
                                       zustand: zustand.slotzustand(i, belegt: belegte.contains(i)),
                                       gewaehlt: platz == i,
-                                      mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002)
+                                      mass: zustand.referenzUhr.map(Anzeigemass.fuer) ?? .vorgabe)
                         }
                         .buttonStyle(.plain)
                         .slotmenue(belegt: belegte.contains(i),

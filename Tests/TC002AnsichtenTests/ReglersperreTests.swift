@@ -1,7 +1,7 @@
 import XCTest
 @testable import TC002Core
 
-/// `Geraetetyp.wirkt` sagt je Regler, ob die Geräteart ihn überhaupt hergibt,
+/// `AwtrixNG.wirkt` sagt je Regler, ob die Firmware ihn überhaupt hergibt,
 /// und `begruendung` liefert den einen Satz dazu. Beides steht im Kern, damit
 /// Mac- und iPhone-Fassung dieselbe Antwort bekommen. Ein Regler, der in der
 /// Tabelle steht, aber in keiner der beiden Sendeansichten abgefragt wird,
@@ -13,7 +13,7 @@ import XCTest
 /// `EinblendtextGegenstueckTests`, `PlattformwegeTests` und
 /// `EditorbereichTests`. Kommentare fallen weg; ein Regler, der nur in einem
 /// Kommentar vorkommt, zählt nicht als verdrahtet.
-final class GattungssperreTests: XCTestCase {
+final class ReglersperreTests: XCTestCase {
     private static let wurzel = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
@@ -30,19 +30,17 @@ final class GattungssperreTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    /// Die Regler, die mindestens eine Gattung nicht kennt. Wächst die
-    /// Tabelle im Kern, wächst diese Menge von selbst mit — genau darum wird
-    /// sie berechnet und nicht abgeschrieben.
+    /// Die Regler, die AWTRIX NG nicht kennt. Wächst die Tabelle im Kern,
+    /// wächst diese Menge von selbst mit — genau darum wird sie berechnet und
+    /// nicht abgeschrieben.
     private var gesperrte: [Regler] {
-        Regler.allCases.filter { regler in
-            Geraetetyp.allCases.contains { !$0.wirkt(regler) }
-        }
+        Regler.allCases.filter { !AwtrixNG.wirkt($0) }
     }
 
     func testJederGesperrteReglerIstAmMacVerdrahtet() throws {
         let quelle = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         for regler in gesperrte {
-            XCTAssertTrue(quelle.contains("gattungssperre(.\(regler.rawValue)"),
+            XCTAssertTrue(quelle.contains("reglersperre(.\(regler.rawValue)"),
                           "„\(regler.rawValue)“ steht in der Tabelle, wird aber in SendenView nicht abgefragt — der Regler bliebe bedienbar")
         }
     }
@@ -61,7 +59,7 @@ final class GattungssperreTests: XCTestCase {
     /// trotzdem anbietet, zeigte etwas anderes an, als auf der Uhr steht.
     /// Beide Ansichten müssen den Eintrag darum an `waagrechteAusrichtungen`
     /// hängen, statt ihn fest hinzuschreiben.
-    func testRechtsbuendigHaengtInBeidenAnsichtenAnDerGattung() throws {
+    func testRechtsbuendigHaengtInBeidenAnsichtenAnDerFirmware() throws {
         for pfad in ["Sources/TC002Ansichten/SendenView.swift",
                      "Sources/TC002iOS/SendeniOS.swift"] {
             let quelle = try quelltext(pfad)
@@ -70,10 +68,9 @@ final class GattungssperreTests: XCTestCase {
         }
     }
 
-    /// Und dass die Gattung überhaupt eine Meinung dazu hat — sonst prüfte der
+    /// Und dass die Firmware überhaupt eine Meinung dazu hat — sonst prüfte der
     /// Test oben eine Bedingung, die immer wahr ist.
     func testNGKenntKeinRechtsbuendig() {
-        XCTAssertFalse(Geraetetyp.awtrixNG.waagrechteAusrichtungen.contains(.rechts))
-        XCTAssertTrue(Geraetetyp.tc002.waagrechteAusrichtungen.contains(.rechts))
+        XCTAssertFalse(AwtrixNG.waagrechteAusrichtungen.contains(.rechts))
     }
 }

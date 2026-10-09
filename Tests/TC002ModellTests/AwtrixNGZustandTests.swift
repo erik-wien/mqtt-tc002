@@ -6,7 +6,7 @@ import TC002Core
 /// Was der Zustand der App anders macht, sobald eine Uhr eine AWTRIX NG ist.
 ///
 /// Kein Broker, kein Geraet: `gemeldet` wird von Hand aufgerufen — dieselbe
-/// Naht, die `AppZustandTests` fuer den Rueckkanal der Werksfirmware benutzt —
+/// Naht, die `AppZustandTests` fuer den Rueckkanal benutzen —
 /// und `themen(fuer:)` ist ausdruecklich `static`, damit sich die Abonnements
 /// nachrechnen lassen, ohne eines aufzubauen.
 ///
@@ -57,7 +57,7 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     private func ngUhr(praefix: String = "wohnzimmer/uhr") -> Uhr {
         Uhr(name: "Wohnzimmer", host: "10.0.0.9", praefix: praefix,
-            typ: .awtrixNG, betriebsart: .mqtt)
+            betriebsart: .mqtt)
     }
 
     private func mitUhren(_ uhren: [Uhr]) throws -> AppZustand {
@@ -67,56 +67,11 @@ final class AwtrixNGZustandTests: XCTestCase {
         return AppZustand(schluesselbund: schluesselbund)
     }
 
-    private func werksUhr() -> Uhr {
-        Uhr(name: "Kueche", host: "werk.example", praefix: "kueche/uhr",
-            typ: .tc002, betriebsart: .mqtt)
-    }
-
-    // MARK: - Was zu hoch fuer die Zieluhren ist
-
-    /// Gefragt wird die Zielmenge, nicht die angesehene Uhr — gesendet
-    /// wird ja an sie. Und gesperrt wird nur, wenn keine davon es nimmt:
-    /// Dieselbe Entscheidung, die der Editor fuer ein gemaltes Bild schon
-    /// trifft — sonst verbaete eine einzelne NG unter fuenf Uhren allen
-    /// anderen das 16er Icon.
-    func testEineNGAlleinSperrtDasSechzehnerIcon() throws {
-        let zustand = try mitUhr(ngUhr())
-        XCTAssertNotNil(zustand.grafikSperre(hoehe: 16))
-        XCTAssertNil(zustand.grafikSperre(hoehe: 8))
-    }
-
-    func testDieWerksfirmwareSperrtNichts() throws {
-        let zustand = try mitUhr(werksUhr())
-        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
-        XCTAssertNil(zustand.grafikSperre(hoehe: 8))
-    }
-
-    /// Eine NG neben einer Werksfirmware sperrt nichts: Die Sendung geht
-    /// an die uebrige, und die eine meldet sich selbst.
-    func testEineNGNebenEinerWerksfirmwareSperrtNichts() throws {
-        let zustand = try mitUhren([werksUhr(), ngUhr()])
-        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
-    }
-
-    /// Ohne Ziel gibt es nichts zu sperren — was gesperrt waere, weiss man
-    /// erst, wenn feststeht, wohin es geht.
-    func testOhneZielWirdNichtsGesperrt() throws {
-        d.removeObject(forKey: "uhren")
-        d.removeObject(forKey: "aktiveID")
-        d.removeObject(forKey: "zielIDs")
-        let zustand = AppZustand(schluesselbund: schluesselbund)
-        XCTAssertNil(zustand.grafikSperre(hoehe: 16))
-    }
-
     // MARK: - Worauf gehorcht wird
 
-    /// Die Werksfirmware veroeffentlicht ihre Anzeigenliste, NG nicht:
-    /// „Eine Liste aller Anzeigen gibt es ueber MQTT nicht" — sie kommt dort
-    /// allein ueber HTTP. Ein Abonnement auf `customList` liefe bei NG ins
-    /// Leere, und `custom/#` ebenso.
-    func testDieAbonnierteThemenHaengenAnDerGattung() {
-        XCTAssertEqual(AppZustand.themen(fuer: Uhr(name: "a", host: "h", praefix: "awtrix_a86b")),
-                       ["awtrix_a86b/customList", "awtrix_a86b/status", "awtrix_a86b/custom/#"])
+    /// NG hoert auf `availability` und auf alles unter `cmd/apps/pushed`. Die
+    /// Anzeigenliste kommt allein ueber HTTP.
+    func testDieAbonnierteThemen() {
         XCTAssertEqual(AppZustand.themen(fuer: ngUhr()),
                        ["wohnzimmer/uhr/availability", "wohnzimmer/uhr/cmd/apps/pushed/#"])
     }
@@ -167,8 +122,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertNil(zustand.fehler)
     }
 
-    /// Genau null Bytes loeschen die Anzeige — bei NG wie bei der
-    /// Werksfirmware, gleich von wem geschickt. Der Platz zaehlt danach wieder
+    /// Genau null Bytes loeschen die Anzeige, gleich von wem geschickt. Der Platz zaehlt danach wieder
     /// als frei.
     func testEineLeereNutzlastRaeumtDenPlatz() throws {
         let uhr = ngUhr()
@@ -198,10 +152,9 @@ final class AwtrixNGZustandTests: XCTestCase {
 
     // MARK: - Was ein Block zeigen darf
 
-    /// Ein NG-Block zeigt ein Bild, weil `Anzeigemass` auf die 32×8 der Uhr
+    /// Ein Block zeigt ein Bild, weil `Anzeigemass` auf die 52×16 der Uhr
     /// rastert und `Meldungsoptionen.naeherung` dieselbe Naeherungsschrift
-    /// setzt, die die Vorschau ohnehin zeigt — dasselbe Bild mit derselben
-    /// Einschraenkung wie bei der Werksfirmware. Nichts zu zeigen waere die
+    /// setzt, die die Vorschau ohnehin zeigt. Nichts zu zeigen waere die
     /// staerkere Behauptung: „wir wissen es nicht", obwohl wir es selbst
     /// geschickt haben.
     func testEinNGBlockZeigtDasBildAufIhremEigenenMass() throws {
@@ -213,66 +166,137 @@ final class AwtrixNGZustandTests: XCTestCase {
         guard case let .bekannt(pixel) = zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
             return XCTFail("Der Block zeigt nichts, obwohl der Stand gemerkt ist.")
         }
-        XCTAssertEqual(pixel.count, 32 * 8,
-                       "Auf einer NG gehoert das Bild auf ihre 32×8, nicht auf die 52×16 der Werksfirmware.")
+        XCTAssertEqual(pixel.count, 52 * 16)
         XCTAssertTrue(pixel.contains { $0 != nil }, "Vom Text ist nichts uebriggeblieben.")
     }
 
-    /// Und die Gegenprobe zur Gegenprobe: Derselbe gemerkte Stand ergibt auf
-    /// den beiden Gattungen verschieden viele Punkte. Ohne diese Zusicherung
-    /// ginge der Test oben auch dann durch, wenn das Mass gar nicht ankaeme.
-    func testDerselbeStandErgibtAufBeidenGattungenVerschiedeneBilder() throws {
-        let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let ng = ngUhr()
-        let ngZustand = try mitUhr(ng)
-        gedaechtnis.merken(Meldungsoptionen(text: "Bus"), icon: nil, iconKante: 8, fuer: ng.id, platz: 2)
-        guard case let .bekannt(ngPixel) = ngZustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
-            return XCTFail("NG zeigt nichts")
-        }
 
-        let werk = Uhr(name: "Küche", host: "werk.example", praefix: "awtrix_a86b")
-        let werkZustand = try mitUhr(werk)
-        gedaechtnis.merken(Meldungsoptionen(text: "Bus"), icon: nil, iconKante: 8, fuer: werk.id, platz: 2)
-        guard case let .bekannt(werkPixel) = werkZustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
-            return XCTFail("Werksfirmware zeigt nichts")
-        }
+    // MARK: - Das Praefix einer migrierten Uhr
 
-        XCTAssertEqual(ngPixel.count, 32 * 8)
-        XCTAssertEqual(werkPixel.count, 52 * 16)
+    /// Eine Uhr aus der Zeit der Werksfirmware traegt deren Praefix, und das
+    /// stimmt fuer AWTRIX NG nicht. Beim Lesen faellt es weg; ohne Praefix ist
+    /// die MQTT-Uhr nicht beschickbar, und beim Start holt die App das richtige
+    /// von der Uhr. Die Uhr ist hier die virtuelle auf 127.0.0.1.
+    func testEineMigrierteUhrHoltIhrPraefixVonDerUhr() throws {
+        var nutzstand = NGUhrzustand()
+        nutzstand.mqttPrefix = "wohnzimmer/uhr"
+        let (server, port) = try serverStarten(zustand: nutzstand)
+        defer { server.beenden() }
+
+        let alt = """
+        [{"id":"0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40","name":"Küche",\
+        "host":"127.0.0.1:\(port)","praefix":"awtrix_a86b","mac":"AA:BB",\
+        "typ":"tc002","betriebsart":"mqtt"}]
+        """
+        d.set(Data(alt.utf8), forKey: "uhren")
+        d.set("0E5E2F1A-6B4C-4E9B-9F3E-6A0C1D2E3F40", forKey: "aktiveID")
+        d.removeObject(forKey: "brokerHost")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+
+        XCTAssertEqual(zustand.uhren.count, 1)
+        XCTAssertEqual(zustand.uhren[0].praefix, "", "das Praefix der Werksfirmware gilt nicht weiter")
+        XCTAssertFalse(zustand.uhren[0].beschickbar, "auf das alte Thema darf nichts gehen")
+
+        zustand.horchenStarten()
+        warteBis { !zustand.uhren[0].praefix.isEmpty }
+
+        XCTAssertEqual(zustand.uhren[0].praefix, "wohnzimmer/uhr")
+        XCTAssertEqual(zustand.uhren[0].mac, "000000000000")
+        XCTAssertTrue(zustand.uhren[0].anzeigemass == (52, 16))
+        XCTAssertTrue(zustand.uhren[0].beschickbar)
     }
 
-    /// Die Gegenprobe mit demselben Gedaechtnisstand: Auf der
-    /// Werksfirmware ist genau dieses Bild richtig, und der Riegel darf es
-    /// nicht mitnehmen.
-    func testDerselbeStandZeigtAufDerWerksfirmwareSehrWohlEinBild() throws {
-        let uhr = Uhr(name: "Küche", host: "10.0.0.1", praefix: "awtrix_a86b")
-        let zustand = try mitUhr(uhr)
-        let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
+    /// Ohne eingestelltes Praefix gilt die uid der Uhr (§2).
+    func testOhneEingestelltesPraefixHoltDieMigrierteUhrDieUid() throws {
+        let (server, port) = try serverStarten(zustand: NGUhrzustand())
+        defer { server.beenden() }
+        let uhr = Uhr(name: "Küche", host: "127.0.0.1:\(port)", betriebsart: .mqtt)
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.removeObject(forKey: "brokerHost")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
-        XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(optionen, mitIcon: false).punkteRoh))
+        zustand.horchenStarten()
+        warteBis { !zustand.uhren[0].praefix.isEmpty }
+
+        XCTAssertEqual(zustand.uhren[0].praefix, "000000000000")
     }
 
-    // MARK: - Die Geraeteart von Hand
+    /// Eine Uhr, die nicht antwortet, bleibt ohne Praefix und nicht
+    /// beschickbar — es geht nichts auf ein erratenes Thema.
+    func testEineStummeMigrierteUhrBleibtOhnePraefix() throws {
+        let (server, port) = try serverStarten(zustand: NGUhrzustand())
+        server.beenden()
+        let uhr = Uhr(name: "Küche", host: "127.0.0.1:\(port)", betriebsart: .mqtt)
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.removeObject(forKey: "brokerHost")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
 
-    /// Praefix und MAC gehoeren nach einem Wechsel der anderen Firmware: Die
-    /// Werksfirmware haengt die letzten vier MAC-Stellen an, NG nicht. Blieben
-    /// sie stehen, ginge die naechste Sendung auf ein Thema, auf dem kein
-    /// Geraet hoert — und beide Gattungen schweigen dazu.
-    func testEinWechselDerGeraeteartWirftDasPraefixWeg() throws {
-        var uhr = Uhr(name: "Küche", host: "10.0.0.1", praefix: "awtrix_a86b",
-                      mac: "aabbccdda86b", betriebsart: .mqtt)
-        let zustand = try mitUhr(uhr)
-        zustand.verbunden[uhr.id] = true
-
-        uhr.typ = .awtrixNG
-        zustand.uhren[0].typ = .awtrixNG
-        zustand.geraeteartGeaendert(uhr.id, sitzung: Belegungsdoppelgaenger.sitzung())
+        zustand.horchenStarten()
+        warteBis({ zustand.erreichbar[uhr.id] == false }, frist: 3)
 
         XCTAssertEqual(zustand.uhren[0].praefix, "")
-        XCTAssertEqual(zustand.uhren[0].mac, "")
-        XCTAssertNil(zustand.verbunden[uhr.id] ?? nil)
+        XCTAssertFalse(zustand.uhren[0].beschickbar)
+    }
+
+    // MARK: - Gemerkte Regler eines Platzes
+
+    /// Die Regler eines Platzes gelten, solange die App nicht gesehen hat, dass
+    /// jemand anderes ihn beschrieben hat. Eine fremde Nutzlast hebt sie auf.
+    func testEineFremdeNutzlastMachtDieGemerktenReglerUngueltig() throws {
+        let uhr = ngUhr()
+        let zustand = try mitUhr(uhr)
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis))
+
+        zustand.gemeldet(thema: "wohnzimmer/uhr/cmd/apps/pushed/meldung1",
+                         nutzlast: Data(#"{"text":"von wem anders"}"#.utf8),
+                         fuer: uhr.id, gedaechtnis: gedaechtnis)
+
+        XCTAssertNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis))
+        XCTAssertNotNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1), "gemerkt bleibt es, nur nicht gueltig")
+    }
+
+    /// Das Echo der eigenen Sendung ist keine fremde Nutzlast.
+    func testDasEchoDerEigenenSendungMachtNichtsUngueltig() async throws {
+        let uhr = Uhr(name: "Küche", host: "uhr.example", praefix: "wohnzimmer/uhr", betriebsart: .http)
+        d.set(try JSONEncoder().encode([uhr]), forKey: "uhren")
+        d.set(uhr.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([uhr.id])), forKey: "zielIDs")
+        let zustand = AppZustand(schluesselbund: schluesselbund)
+        zustand.netzsitzung = Belegungsdoppelgaenger.sitzung()
+        defer { _ = Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: 4) }
+        let optionen = Meldungsoptionen(text: "eigen")
+        let rahmen = Frame(herkunft: Meldungsherkunft(optionen: optionen))
+
+        await zustand.senden(rahmen, als: "meldung4", slotOptionen: optionen, slotPlatz: 4)
+        zustand.gemeldet(thema: "wohnzimmer/uhr/cmd/apps/pushed/meldung4",
+                         nutzlast: Data(try Anzeigen.nutzlast(rahmen).utf8), fuer: uhr.id)
+
+        XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 4, fuer: uhr))
+    }
+
+    private func serverStarten(zustand: NGUhrzustand) throws -> (Uhrenserver, UInt16) {
+        for _ in 0..<20 {
+            let port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port, zustand: zustand)
+            do {
+                try s.starten()
+                Thread.sleep(forTimeInterval: 0.05)
+                return (s, port)
+            } catch { continue }
+        }
+        throw XCTSkip("kein freier Port")
+    }
+
+    /// Laesst den Hauptthread laufen, bis die losgeloeste Abfrage
+    /// zurueckgemeldet hat.
+    private func warteBis(_ bedingung: () -> Bool, frist: TimeInterval = 5) {
+        let ende = Date().addingTimeInterval(frist)
+        while !bedingung(), Date() < ende {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
+        }
     }
 }

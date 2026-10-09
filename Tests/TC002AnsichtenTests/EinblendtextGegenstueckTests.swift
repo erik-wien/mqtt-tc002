@@ -102,8 +102,8 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// - am Zustand: Schrift, Größe, gewählter Weg oder eine laufende
     ///   Laufschrift geben den Regler gerade nicht her — `.help(...)` mit
     ///   einem Ternär.
-    /// - an der Geräteart: die Gattung kennt den Regler überhaupt nicht —
-    ///   `.gattungssperre(...)`, die `Geraetetyp.begruendung` holt und daraus
+    /// - an der Firmware: AWTRIX NG kennt den Regler überhaupt nicht —
+    ///   `.reglersperre(...)`, die `AwtrixNG.begruendung` holt und daraus
     ///   selbst ein `.help(...)` macht.
     ///
     /// Der zweite Weg ist der Grund, warum hier nicht nur `.help(` gezählt
@@ -113,7 +113,7 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     func testSendenViewInspektorReglerHabenZustandsabhaengigenEinblendtext() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         let inspektor = ausschnitt(text, von: "private var inspektor: some View", bis: "private var slotZeile")
-        XCTAssertEqual(anzahl(inspektor, ".help(") + anzahl(inspektor, ".gattungssperre("), 9,
+        XCTAssertEqual(anzahl(inspektor, ".help(") + anzahl(inspektor, ".reglersperre("), 9,
                        "der Inspektor hat nicht mehr neun Regler, die ihre Sperre begründen — "
                        + "dieser Test prüft die falsche Stelle")
         XCTAssertEqual(anzahl(inspektor, ".namensichtbarAmIPad()"), 0,
@@ -150,7 +150,7 @@ final class EinblendtextGegenstueckTests: XCTestCase {
     /// oben bekannte Stelle nicht still durchrutscht.
     func testSendenViewHatKeineUnbeobachteteEinblendtextstelle() throws {
         let text = try quelltext("Sources/TC002Ansichten/SendenView.swift")
-        XCTAssertEqual(anzahl(text, ".help(") + anzahl(text, ".gattungssperre("), 11,
+        XCTAssertEqual(anzahl(text, ".help(") + anzahl(text, ".reglersperre("), 11,
                        "SendenView.swift hat jetzt eine andere Anzahl Einblendtextstellen als die neun "
                        + "Regler im Inspektor plus die zwei Symbolknöpfe für sich allein — eine neue "
                        + "Stelle ist keinem der Tests oben bekannt")

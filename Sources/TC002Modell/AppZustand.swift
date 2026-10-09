@@ -33,14 +33,10 @@ public final class AppZustand {
     /// bleiben Meldungen: Da hat jemand etwas zu berichtigen.
     public var erreichbar: [UUID: Bool] = [:]
     /// Warum eine Uhr nicht am Broker haengt, wenn sie es selbst sagt.
-    /// Nur AWTRIX NG tut das (`badCredentials` und dergleichen); bei der
-    /// Werksfirmware bleibt es leer.
+    /// (`badCredentials` und dergleichen.)
     public var brokergrund: [UUID: String] = [:]
-    /// Was die Uhr selbst als ihre Anzeigen nennt — auf zwei Wegen, die
-    /// dieselbe Auskunft geben: mitgelesen von `<praefix>/customList` (§3.5)
-    /// und erfragt ueber `GET /api/customList` (§5.7). Beides ist die Uhr
-    /// selbst, also dieselbe Quelle `.geraet`; der Unterschied ist nur, wer
-    /// anfaengt zu reden.
+    /// Was die Uhr selbst als ihre Anzeigen nennt, erfragt ueber
+    /// `GET /api/v1/apps` (§4): Ueber MQTT gibt es keine Liste (§3.5).
     ///
     /// Kein Eintrag heisst: keine Auskunft — dann gilt `bekannteAnzeigen`, und
     /// die Ansicht sagt, dass sie nur die eigene Buchfuehrung zeigt.
@@ -51,10 +47,9 @@ public final class AppZustand {
     ///
     /// Die gemeldete Liste ist die bessere Auskunft und ueberstimmt deshalb die
     /// eigene Buchfuehrung (`anzeigenAufUhr`). Nur kommt sie zu spaet: Nach dem
-    /// Senden antwortet eine AWTRIX NG auf `/api/v1/apps` noch eine Weile ohne
-    /// den frischen Eintrag, und die Werksfirmware veroeffentlicht ihre
-    /// `customList` erst nach einem Augenblick — der eben gefuellte Block fiele
-    /// sonst auf „frei" zurueck.
+    /// Senden antwortet die Uhr auf `/api/v1/apps` noch eine Weile ohne den
+    /// frischen Eintrag — der eben gefuellte Block fiele sonst auf „frei"
+    /// zurueck.
     ///
     /// Geduldet wird genau eine Meldung, nicht eine Zeitspanne: Eine Uhr kann
     /// schnell oder langsam antworten, eine Frist waere geraten. Die erste
@@ -63,17 +58,38 @@ public final class AppZustand {
     /// Widerspricht jemand ausdruecklich (Loeschen, leere Nutzlast), ist er
     /// sofort weg.
     private var frischBestaetigt: [UUID: Set<String>] = [:]
-    /// Was die Uhr ueber sich selbst meldet (`<praefix>/status`, §3.4).
+    /// Was die Uhr ueber sich selbst meldet (`<praefix>/availability`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
-    /// Was zuletzt auf einem Slot zu sehen war — mitgelesen von `<praefix>/custom/#`,
-    /// nicht von der Uhr erfragt (sie verraet den Inhalt selbst nicht). Live-Strom,
-    /// kein Gedaechtnis: nur, was waehrend dieser Verbindung gesendet wurde.
+    /// Was zuletzt auf einem Slot zu sehen war, als Pixel: von dieser App
+    /// gemalt und gesendet. Die Uhr verraet den Inhalt nicht; was fremde
+    /// Absender schicken, ist Text und Regler und ergibt kein Bild. Kein
+    /// Gedaechtnis: nur, was waehrend dieser Verbindung gesendet wurde.
     public var slotInhalt: [UUID: [Int: Slotbild]] = [:]
 
+    /// Was diese App zuletzt auf einen Platz geschickt hat, als Nutzlast. Der
+    /// Vergleich mit dem, was am Broker vorbeikommt, zeigt, ob jemand anderes
+    /// den Platz seither beschrieben hat (`fremdBeschrieben`).
+    @ObservationIgnored private var eigeneNutzlast: [UUID: [Int: String]] = [:]
+
+    /// Plaetze, auf die nach der letzten eigenen Sendung eine fremde Nutzlast
+    /// folgte — nur dort bekannt, wo die App mitliest (MQTT). Ihre gemerkten
+    /// Regler gelten nicht mehr.
+    public var fremdBeschrieben: [UUID: Set<Int>] = [:]
+
+    /// Die gemerkten Regler eines Platzes, wenn sie noch gelten koennen: Es gibt
+    /// einen gemerkten Stand, und die App hat nicht gesehen, dass jemand
+    /// anderes den Platz seither beschrieben hat. Ob die Uhr dort wirklich noch
+    /// diese Anzeige traegt, ist ueber HTTP nicht festzustellen; die Uhr
+    /// nennt nur Namen.
+    public func wiederherstellbarerStand(platz: Int, fuer uhr: Uhr,
+                                         gedaechtnis: Slotgedaechtnis = .gemeinsam) -> Slotstand? {
+        guard fremdBeschrieben[uhr.id]?.contains(platz) != true else { return nil }
+        return gedaechtnis.gemerkt(fuer: uhr.id, platz: platz)
+    }
+
     /// Warum eine Sendung nur teilweise ankam — `nil`, wenn alles oder nichts
-    /// ankam. Steht neben dem Sendezeichen, nicht in einem Dialog: Wer eine
-    /// 16 Zeilen hohe Grafik an eine gemischte Gruppe schickt, hat nichts
-    /// falsch gemacht, und die TC002 hat sie ja bekommen.
+    /// ankam. Steht neben dem Sendezeichen, nicht in einem Dialog: Eine Uhr,
+    /// die gerade nicht antwortet, ist kein Fehler dessen, der sendet.
     public var teilfehler: String?
 
     public var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
@@ -439,7 +455,7 @@ public final class AppZustand {
     /// ruft wie bisher `belegungAbfragen(id)`.
     public func belegungAbfragen(_ id: UUID, sitzung: URLSession = .shared) {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return }
-        let host = uhr.host, name = uhr.name, gattung = uhr.gattung
+        let host = uhr.host, name = uhr.name
         // Blockiert bis zur Antwort der Uhr — und eine Uhr, die nicht
         // antwortet, blockiert zehn Sekunden. Genau dafuer gibt es
         // `Hintergrund`: Im kooperativen Pool haetten fuenf eingetragene Uhren,
@@ -447,7 +463,7 @@ public final class AppZustand {
         Task { [weak self] in
             do {
                 let namen = try await Hintergrund.lauf {
-                    try Geraet(host: host, sitzung: sitzung, typ: gattung).anzeigennamen()
+                    try Geraet(host: host, sitzung: sitzung).anzeigennamen()
                 }
                 self?.belegungGemeldet(namen, fuer: id)
             } catch {
@@ -485,30 +501,19 @@ public final class AppZustand {
 
     /// Was nach einer bestaetigten Sendung an Belegung zu buchen ist.
     ///
-    /// Ueber MQTT genuegte bisher die eigene Buchfuehrung: Die Uhr
-    /// veroeffentlicht ihre `customList` nach einer Aenderung von selbst
-    /// (§3.5), die Auskunft kommt also gleich nach. Ueber HTTP reicht sie
-    /// nichts nach — gemessen am 13.09.2026: 45 Sekunden gehorcht, mit einer
-    /// HTTP-Loeschung mittendrin, und es kam allein `status online`. Ohne
-    /// diese Buchung zeigte ein eben ueber HTTP gefuellter Platz „frei",
-    /// solange `gemeldeteAnzeigen` steht und den Namen nicht kennt.
+    /// AWTRIX NG nennt ihre Anzeigen ueber MQTT nicht (§3.5) und reicht
+    /// HTTP-Vorgaenge nicht nach: Die Auskunft ist ein HTTP-Abruf von vorhin.
+    /// Ohne diese Buchung zeigte ein eben gefuellter Platz „frei", solange
+    /// `gemeldeteAnzeigen` steht und den Namen nicht kennt.
     ///
-    /// Es ist dabei keine blosse Vermutung: Die Uhr hat die Sendung mit
-    /// `{"code":200}` quittiert, sonst waere `anZiele` gar nicht hier.
+    /// Es ist dabei keine blosse Vermutung: Die Uhr hat die Sendung
+    /// quittiert (HTTP) oder der Broker angenommen (MQTT).
     /// Ergaenzt wird nur eine vorhandene Auskunft — wo keine steht, gilt
     /// ohnehin die eigene Buchfuehrung, und die schreibt `anzeigeGemerkt`.
     func anzeigeBestaetigt(_ name: String, fuer uhr: Uhr) {
         anzeigeGemerkt(name, fuer: uhr.id)
         frischBestaetigt[uhr.id, default: []].insert(name)
-        // Wann die gemeldete Liste von selbst nachkommt und wann nicht:
-        // Allein die Werksfirmware ueber MQTT veroeffentlicht ihre `customList`
-        // nach einer Aenderung; im HTTP-Betrieb reicht sie nichts nach
-        // (gemessen), und eine AWTRIX NG hat ueber MQTT gar keine Liste (§3.5),
-        // ihre Belegung ist ein HTTP-Abruf von vorhin. In beiden Faellen zeigte
-        // ein eben gefuellter Platz sonst weiter „frei".
-        let kommtNach = uhr.wirksameBetriebsart == .mqtt && uhr.gattung == .tc002
-        guard !kommtNach,
-              var gemeldet = gemeldeteAnzeigen[uhr.id], !gemeldet.contains(name) else { return }
+        guard var gemeldet = gemeldeteAnzeigen[uhr.id], !gemeldet.contains(name) else { return }
         gemeldet.append(name)
         gemeldeteAnzeigen[uhr.id] = gemeldet
     }
@@ -517,9 +522,9 @@ public final class AppZustand {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
         // Wer loescht, hat das letzte Wort — auch gegen die eigene Karenz.
         frischBestaetigt[id]?.remove(name)
-        // Auch aus der gemeldeten Liste: ob die Uhr ihre `customList` nach dem
-        // Loeschen von sich aus erneut veroeffentlicht, ist nicht belegt — bliebe
-        // der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht mehr gibt.
+        // Auch aus der gemeldeten Liste: Sie ist ein HTTP-Abruf von vorhin —
+        // bliebe der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht
+        // mehr gibt.
         gemeldeteAnzeigen[id]?.removeAll { $0 == name }
     }
 
@@ -690,9 +695,8 @@ public final class AppZustand {
         guard belegt else { return .frei }
         guard let uhr = referenzUhr else { return .unbekannt }
         if let bild = slotInhalt[uhr.id]?[platz] { return .bekannt(bild.pixel) }
-        // Fuer eine AWTRIX NG rechnet `gerastert` auf ihren 32×8 und mit
-        // derselben Naeherungsschrift, die die Vorschau ohnehin zeigt —
-        // dasselbe Bild, dieselbe Einschraenkung wie bei der Werksfirmware.
+        // `gerastert` rechnet auf dem Mass der Uhr und mit derselben
+        // Naeherungsschrift, die die Vorschau ohnehin zeigt.
         //
         // Dass es eine Naeherung ist, sagt die Hilfe fuer alle Bloecke: Sie
         // zeigen, was auf dem Platz liegt, nicht, wie es auf der Uhr aussieht.
@@ -740,23 +744,19 @@ public final class AppZustand {
     /// Die Pixel zu einem gemerkten Stand — gerechnet, wenn noetig, sonst aus
     /// dem Zwischenspeicher darueber.
     ///
-    /// Der Zwischenspeicher haengt an Stand und Uhr: Derselbe gemerkte Stand
-    /// ergibt auf einer Werksfirmware ein 52×16-Bild in der gewaehlten Schrift
-    /// und auf einer NG ein 32×8 in der Naeherungsschrift; ein Schluessel
-    /// allein aus dem Stand vertauschte die beiden.
+    /// Der Zwischenspeicher haengt an Stand und Anzeigemass: Dieselben Regler
+    /// ergeben auf verschieden grossen Anzeigen verschiedene Bilder.
     private struct Rasterschluessel: Hashable {
         let stand: Slotstand
         let breite: Int
         let hoehe: Int
-        let setztSelbst: Bool
     }
 
     private func gerastert(_ stand: Slotstand, _ optionen: Meldungsoptionen, uhr: Uhr) -> [String?] {
         let mass = Anzeigemass.fuer(uhr)
-        let schluessel = Rasterschluessel(stand: stand, breite: mass.breite, hoehe: mass.hoehe,
-                                          setztSelbst: uhr.gattung.setztSelbst)
+        let schluessel = Rasterschluessel(stand: stand, breite: mass.breite, hoehe: mass.hoehe)
         if let fertig = gerastertePixel[schluessel] { return fertig }
-        let pixel = Meldungsbau.feld(optionen.naeherung(fuer: uhr.gattung),
+        let pixel = Meldungsbau.feld(optionen.naeherung,
                                      mitIcon: stand.icon != nil,
                                      iconKante: stand.iconKanteOderAcht, mass: mass).punkteRoh
         // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt
@@ -865,34 +865,6 @@ public final class AppZustand {
         belegungAbfragen(id, sitzung: sitzung)
     }
 
-    /// Die Geraeteart wurde von Hand umgestellt.
-    ///
-    /// Von Hand, weil `abfragen` sie sonst selbst feststellt. Noetig ist der
-    /// Griff dort, wo die Feststellung nicht gelingt: Eine AWTRIX NG kann ihre
-    /// ganze Schnittstelle hinter eine Anmeldung stellen, und ihr Webport ist
-    /// einstellbar.
-    ///
-    /// Praefix und MAC gehoeren danach der anderen Firmware. Sie stehen zu
-    /// lassen waere schlimmer als sie zu leeren: Die Werksfirmware haengt die
-    /// letzten vier MAC-Stellen an, NG nicht — auf dem stehengebliebenen Thema
-    /// hoert kein Geraet, und beide Gattungen schweigen dazu. Derselbe Grund
-    /// wie bei `adresseGeaendert`.
-    public func geraeteartGeaendert(_ id: UUID, sitzung: URLSession = .shared) {
-        guard let i = uhren.firstIndex(where: { $0.id == id }) else { return }
-        uhren[i].praefix = ""
-        uhren[i].mac = ""
-        // Und die Anzeigenbreite: Sie war die der anderen Firmware. Bliebe
-        // sie stehen, rechnete die Vorschau mit einem Mass, das dieses Geraet
-        // nie hatte.
-        uhren[i].panelbreite = nil
-        verbunden[id] = nil
-        // Mitgelesene Pixel sind Pixel der Werksfirmware. Nach einem Wechsel
-        // auf NG zeigten sie einen Stand, den es dort nie gegeben hat.
-        slotInhalt[id] = nil
-        horchenAbgleichen()
-        belegungAbfragen(id, sitzung: sitzung)
-    }
-
     /// Eine geaenderte Adresse zeigt womoeglich auf eine andere Uhr. Praefix und MAC
     /// gehoeren dann noch zur alten — blieben sie stehen, wuerde weiter auf das alte
     /// Thema gesendet, an die alte Uhr oder ins Leere, ohne jeden Hinweis.
@@ -911,7 +883,7 @@ public final class AppZustand {
     /// die Oberflaeche ruft `abfragen(id)`.
     ///
     /// Alle Uhren auf einmal — fuer das Oeffnen der Einstellungen: Praefix,
-    /// Gattung und Verbindungsstand sind genau das, was man dort wissen will.
+    /// Verbindungsstand und Anzeigengroesse sind genau das, was man dort wissen will.
     /// Die Abrufe laufen nebeneinander und blockieren nichts; eine Uhr, die
     /// nicht antwortet, haelt die uebrigen nicht auf (`Hintergrund`).
     public func alleAbfragen(sitzung: URLSession = .shared) {
@@ -928,59 +900,44 @@ public final class AppZustand {
         // dort, wo es hingehoert.
         Task { [weak self] in
             do {
-                let geholt = try await Hintergrund.lauf { () throws -> (Geraetetyp, String, Basisdaten, Int?, Bool?, String?, [String]?) in
-                // Zuerst: was antwortet da ueberhaupt? Praefix, Belegung
-                // und Verbindungsstand stehen bei den beiden Firmwares an
-                // verschiedenen Pfaden, und die der einen gibt es bei der
-                // anderen nicht. Geraten wuerde hier nichts: `erkannteArt`
-                // meldet lieber, dass sie nichts feststellen kann, als eine
-                // AWTRIX zur Ulanzi zu erklaeren.
-                let gattung = try Geraet(host: host, sitzung: sitzung).erkannteArt()
-                let geraet = Geraet(host: host, sitzung: sitzung, typ: gattung)
-                // In einem Zug: getrennt geholt kaeme /getBase zweimal dran.
-                //
-                // Im HTTP-Betrieb ist ein fehlendes Praefix kein Fehler:
-                // Dort wird kein Thema gebildet, und „Die Uhr hat kein
-                // MQTT-Präfix eingestellt" schickte den Leser hinter etwas
-                // her, das seine Uhr gar nicht braucht. Dieser eine Zweig
-                // holt /getBase ein zweites Mal — er ist die Ausnahme.
-                let ergebnis: (praefix: String, basis: Basisdaten, breite: Int?)
-                do {
-                    ergebnis = try geraet.praefixUndBasis()
-                } catch GeraetFehler.keinPraefix where art == .http {
-                    ergebnis = ("", try geraet.basis(), nil)
+                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [String]?) in
+                    let geraet = Geraet(host: host, sitzung: sitzung)
+                    // In einem Zug: Praefix, MAC und Anzeigemass.
+                    //
+                    // Im HTTP-Betrieb ist ein fehlendes Praefix kein Fehler:
+                    // Dort wird kein Thema gebildet, und „Die Uhr nennt weder
+                    // ein MQTT-Praefix noch eine Kennung" schickte den Leser
+                    // hinter etwas her, das seine Uhr gar nicht braucht.
+                    let ergebnis: (praefix: String, mac: String, mass: (breite: Int, hoehe: Int)?)
+                    do {
+                        ergebnis = try geraet.praefixUndBasis()
+                    } catch GeraetFehler.keinPraefix where art == .http {
+                        ergebnis = ("", "", (try? geraet.anzeigemass()) ?? nil)
+                    }
+                    // Ob die Uhr am Broker haengt, ist nur im MQTT-Betrieb eine
+                    // Auskunft ueber etwas, das diese App benutzt.
+                    let stand = art == .mqtt ? try geraet.brokerstand() : nil
+                    // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
+                    // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
+                    // Praefix und Verbindungsstand noch lange nicht gescheitert.
+                    let namen = try? geraet.anzeigennamen()
+                    return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen)
                 }
-                let praefix = ergebnis.praefix, basis = ergebnis.basis, breite = ergebnis.breite
-                // Ob die Uhr am Broker haengt, ist nur im MQTT-Betrieb eine
-                // Auskunft ueber etwas, das diese App benutzt.
-                let stand = art == .mqtt ? try geraet.brokerstand() : nil
-                let steht = stand?.steht
-                // Im selben Zug, aber nicht auf demselben Bein: Antwortet die
-                // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
-                // Praefix und Verbindungsstand noch lange nicht gescheitert.
-                let namen = try? geraet.anzeigennamen()
-                    return (gattung, praefix, basis, breite, steht, stand?.grund, namen)
-                }
-                let (gattung, praefix, basis, breite, steht, grund, namen) = geholt
+                let (praefix, mac, mass, steht, grund, namen) = geholt
                 do {
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
-                    let gattungGewechselt = self.uhren[i].gattung != gattung
-                    // Ausdruecklich eingetragen, auch `.tc002`: Danach steht in
-                    // der Datei eine Feststellung und keine Auslassung mehr.
-                    self.uhren[i].typ = gattung
                     self.uhren[i].praefix = praefix
-                    self.uhren[i].mac = basis.mac
-                    // Nur ueberschreiben, wenn wirklich etwas gemessen
-                    // wurde: Eine Antwort ohne brauchbares `panelWidth`
-                    // heisst „nicht beantwortet" und darf eine schon bekannte
-                    // Breite nicht gegen die Vorgabe eintauschen.
-                    if let breite { self.uhren[i].panelbreite = breite }
-                    if gattungGewechselt {
-                        self.log(lokf("%@ ist eine %@", self.uhren[i].name, gattung.beschriftung))
+                    if !mac.isEmpty { self.uhren[i].mac = mac }
+                    // Nur ueberschreiben, wenn wirklich etwas gemessen wurde:
+                    // Eine Antwort ohne brauchbares Mass heisst „nicht
+                    // beantwortet" und darf ein bekanntes nicht gegen die
+                    // Vorgabe eintauschen.
+                    if let mass {
+                        self.uhren[i].panelbreite = mass.breite
+                        self.uhren[i].panelhoehe = mass.hoehe
                     }
                     self.verbunden[id] = steht
-                    // Der Grund steht nur da, wenn es einen gibt — die
-                    // Werksfirmware nennt keinen.
+                    // Der Grund steht nur da, wenn es einen gibt.
                     self.erreichbar[id] = true
                     self.brokergrund[id] = grund
                     if let steht {
@@ -1277,6 +1234,8 @@ public final class AppZustand {
             // wie jede andere gelungene Sendung.
             log(lokf("an %@ gesendet: %@ · %@", uhr.name, name, frame.beschreibung))
             guard let slotPlatz else { return }
+            eigeneNutzlast[uhr.id, default: [:]][slotPlatz] = try? Anzeigen.nutzlast(frame)
+            fremdBeschrieben[uhr.id]?.remove(slotPlatz)
             // Was wir selbst geschickt haben, wissen wir — auch ohne Regler.
             // Beim Mitlesen kommt es als GIF zurueck und liesse sich nicht
             // mehr zerlegen; ohne diese Zeile stuende dort „unbekannt".
@@ -1309,8 +1268,8 @@ public final class AppZustand {
         verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,
                          platz: slotPlatz, erreicht: erreicht)
         // Ist etwas angekommen, ist der Rest kein Fall fuer einen Dialog: Ein
-        // Dialog gehoert dem, was jemand richtigstellen kann, und „die AWTRIX
-        // nimmt keine sechzehn Zeilen" ist eine Tatsache ueber das Geraet.
+        // Dialog gehoert dem, was jemand richtigstellen kann, und „eine Uhr
+        // antwortet nicht" ist eine Tatsache ueber das Geraet.
         // Der Satz steht stattdessen neben dem Sendezeichen, das dabei gelb
         // wird statt gruen.
         if !erreicht.isEmpty, let offen = fehler {
@@ -1404,29 +1363,6 @@ public final class AppZustand {
         return uhren.filter { zielIDs.contains($0.id) && $0.beschickbar }
     }
 
-    /// Warum eine Grafik dieser Hoehe an keine der Zieluhren gehen kann —
-    /// `nil`, wenn wenigstens eine sie nimmt.
-    ///
-    /// Die Frage gilt der Zielmenge, nicht der angesehenen Uhr: Gesendet
-    /// wird an `ziele()`. Und gesperrt wird nur, wenn keine davon es nimmt
-    /// — dieselbe Entscheidung, die der Editor fuer ein gemaltes Bild schon
-    /// trifft (`EditorBereichView.keineNimmtGemaltes`). Andernfalls verboete
-    /// eine einzelne NG unter fuenf Uhren allen anderen das 16er Icon, obwohl
-    /// die Sendung sie erreicht und allein die eine sich meldet.
-    ///
-    /// Ohne Ziel wird nichts gesperrt: Wohin nichts geht, kann auch nichts zu
-    /// hoch sein.
-    ///
-    /// Die Begruendung selbst steht im Kern (`Geraetetyp.grafikSperre`), damit
-    /// Mac, iPad und Telefon denselben Satz zeigen.
-    public func grafikSperre(hoehe: Int) -> String? {
-        let ziele = ziele()
-        guard !ziele.isEmpty else { return nil }
-        let gruende = ziele.map { $0.gattung.grafikSperre(hoehe: hoehe) }
-        guard gruende.allSatisfy({ $0 != nil }) else { return nil }
-        return gruende.compactMap { $0 }.first
-    }
-
     // MARK: - Zuhören
 
     /// Ein laufendes Abonnement je Uhr, samt der Angaben, unter denen es aufgebaut
@@ -1435,10 +1371,6 @@ public final class AppZustand {
         let abonnent: MQTTAbonnent
         let praefix: String
         let brokerkennung: String
-        /// Die Gattung gehoert dazu: Die beiden Firmwares veroeffentlichen auf
-        /// verschiedenen Themen, ein Abonnement der einen ist fuer die andere
-        /// wertlos.
-        let gattung: Geraetetyp
     }
 
     /// Ob diese Uhr ueberhaupt einen Zuhoerer bekommt. Nur MQTT-Uhren: Im
@@ -1466,11 +1398,28 @@ public final class AppZustand {
     public func horchenStarten(sitzung: URLSession = .shared) {
         horchenErlaubt = true
         horchenAbgleichen()
+        fehlendePraefixeHolen(sitzung: sitzung)
         // Und die Uhren gleich selbst fragen, was auf ihnen steht: Mitlesen
         // bringt erst dann etwas, wenn die Uhr von sich aus etwas sagt, und das
         // kann ausbleiben. Die Auskunft ueber HTTP ist sofort da und braucht
         // keinen Broker.
         belegungAbfragen(sitzung: sitzung)
+    }
+
+    /// Fragt jede MQTT-Uhr ohne Praefix selbst danach.
+    ///
+    /// Eine Einrichtung aus der Zeit der Werksfirmware traegt deren Praefix
+    /// nicht mehr (`Uhr.init(from:)`): Es stimmt fuer AWTRIX NG nicht, und die
+    /// App sendete sonst auf ein Thema, das niemand abonniert. Ohne Praefix
+    /// ist die Uhr nicht beschickbar; „Abfragen“ holt das richtige. Hier
+    /// geschieht das ungefragt, damit niemand erst einen Fehler sehen muss.
+    /// Eine Uhr, die nicht antwortet, bleibt ohne Praefix und wird beim
+    /// naechsten Start oder Zurueckkommen erneut gefragt.
+    private func fehlendePraefixeHolen(sitzung: URLSession) {
+        for uhr in uhren where uhr.wirksameBetriebsart == .mqtt
+            && uhr.praefix.isEmpty && !uhr.host.isEmpty {
+            abfragen(uhr.id, sitzung: sitzung)
+        }
     }
 
     /// Bricht ein einzelnes Abonnement ab und leert seine Buchführung. Gemeinsamer
@@ -1506,7 +1455,6 @@ public final class AppZustand {
             // mitgelesene Pixel, die mit dem Kanal nichts mehr zu tun haben.
             guard uhr == nil || !gehoertZumHorchen(uhr!)
                     || uhr?.praefix != vorhanden.praefix
-                    || uhr?.gattung != vorhanden.gattung
                     || vorhanden.brokerkennung != kennung else { continue }
             abonnementBeenden(id, vorhanden)
         }
@@ -1518,8 +1466,8 @@ public final class AppZustand {
             // ja weiter, während hier zugehört wird.
             eigener.clientID = "tc002-app-horch-" + uhr.id.uuidString.prefix(8).lowercased()
             let id = uhr.id
-            // `custom/#` macht die App zum Mitleser: was auf ein Thema
-            // veroeffentlicht wird, bekommen alle Abonnenten — gleich ob die
+            // Das Muster `cmd/apps/pushed/#` macht die App zum Mitleser: was auf
+            // ein Thema veroeffentlicht wird, bekommen alle Abonnenten — gleich ob die
             // Sendung von dieser App, dem Kommandozeilenwerkzeug, einem
             // Kurzbefehl oder einem fremden Werkzeug kam.
             let abonnent = MQTTAbonnent(zugang: eigener, themen: Self.themen(fuer: uhr))
@@ -1535,32 +1483,22 @@ public final class AppZustand {
             }
             abonnent.starten()
             horcher[id] = Horcher(abonnent: abonnent, praefix: uhr.praefix,
-                                  brokerkennung: kennung, gattung: uhr.gattung)
+                                  brokerkennung: kennung)
         }
     }
 
-    /// Worauf bei dieser Uhr gehorcht wird — je Gattung etwas anderes, und der
-    /// Unterschied ist mehr als eine Schreibweise.
+    /// Worauf bei dieser Uhr gehorcht wird.
     ///
-    /// Die Werksfirmware veroeffentlicht ihre Anzeigenliste von selbst
-    /// (`customList`); bei AWTRIX NG gibt es die ueber MQTT ausdruecklich
-    /// nicht (§3.5), sie kommt dort allein ueber HTTP
-    /// (`belegungAbfragen`). Dafuer gibt NG etwas, das die Werksfirmware nie
-    /// angeboten hat: eine Antwort auf jedes Kommando
-    /// (`<Thema>/result`, §3.4) — und die faellt unter dasselbe Muster wie das
-    /// Mitlesen, wird also mitabonniert und beim Lesen am Suffix
-    /// auseinandergehalten.
+    /// Die Liste der Anzeigen gibt es bei AWTRIX NG ueber MQTT ausdruecklich
+    /// nicht (§3.5), sie kommt allein ueber HTTP (`belegungAbfragen`). Dafuer
+    /// antwortet NG auf jedes Kommando (`<Thema>/result`, §3.4) — und die
+    /// faellt unter dasselbe Muster wie das Mitlesen, wird also mitabonniert und
+    /// beim Lesen am Suffix auseinandergehalten.
     ///
     /// `static`, damit der Test die Themen ohne Broker nachrechnen kann.
     static func themen(fuer uhr: Uhr) -> [String] {
-        switch uhr.gattung {
-        case .tc002:
-            return ["\(uhr.praefix)/customList", "\(uhr.praefix)/status",
-                    "\(uhr.praefix)/custom/#"]
-        case .awtrixNG:
-            return [NGThema.erreichbarkeit(praefix: uhr.praefix),
-                    NGThema.anzeigenMuster(praefix: uhr.praefix)]
-        }
+        [NGThema.erreichbarkeit(praefix: uhr.praefix),
+         NGThema.anzeigenMuster(praefix: uhr.praefix)]
     }
 
     /// Was von der Uhr hereinkommt. Das Thema entscheidet, nicht die Reihenfolge:
@@ -1573,78 +1511,17 @@ public final class AppZustand {
     func gemeldet(thema: String, nutzlast: Data, fuer id: UUID,
                   gedaechtnis: Slotgedaechtnis = .gemeinsam) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
-        guard uhr.gattung == .tc002 else {
-            return ngGemeldet(thema: thema, nutzlast: nutzlast, uhr: uhr, gedaechtnis: gedaechtnis)
-        }
-        switch thema {
-        case "\(uhr.praefix)/customList":
-            // nil heißt unlesbar — dann lieber den letzten Stand behalten, als ihn
-            // durch eine leere Liste zu ersetzen, die etwas anderes behauptet.
-            // Deshalb hier abgefangen und nicht an `belegungGemeldet`
-            // weitergereicht: Dort heißt nil „die Uhr hat nicht geantwortet".
-            guard let namen = Anzeigen.namenAusCustomList(nutzlast) else { return }
-            belegungGemeldet(namen, fuer: id)
-        case "\(uhr.praefix)/status":
-            let text = String(data: nutzlast, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            let online = text == "online"
-            guard geraetOnline[id] != online else { return }
-            geraetOnline[id] = online
-            log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
-        default:
-            // `custom/#` liefert jede Anzeige auf dieser Uhr, gleich von wem —
-            // auch unter Namen, die diese App nie vergibt (ein fremder Absender,
-            // `mqtttc002 senden --name wetter`). Nur unsere fuenf Slotnamen
-            // (`meldung1`…`meldung5`) betreffen `slotInhalt`; „Bilder" schickt
-            // ebenfalls an genau die (`BilderBereichView.senden`).
-            let vorsilbe = "\(uhr.praefix)/custom/"
-            guard thema.hasPrefix(vorsilbe) else { return }
-            let name = String(thema.dropFirst(vorsilbe.count))
-            guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
-            // Mitgelesenes gehoert ins Protokoll: Es ist die einzige
-            // Auskunft darueber, dass jemand anderes auf die Uhr geschrieben
-            // hat — und die Frage „warum steht da etwas, das ich nicht
-            // geschickt habe" laesst sich sonst gar nicht beantworten.
-            log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, name, nutzlast.count))
-            if let pixel = Anzeigen.pixelAusCustomNutzlast(nutzlast) {
-                slotInhalt[id, default: [:]][platz] = Slotbild(pixel: pixel)
-            } else if nutzlast.isEmpty {
-                // Die verlaesslichste Auskunft, die es hier ueberhaupt gibt: Genau
-                // null Bytes auf dem Thema loeschen die Anzeige auf der Uhr
-                // (`Anzeigen.loeschen`, §3.2) — gleich, wer sie geschickt hat,
-                // diese App, das Werkzeug, ein Kurzbefehl oder ein fremdes
-                // Werkzeug. Der Platz ist damit wieder leer, und das ist mehr als
-                // „Inhalt unbekannt": Der Name gehoert aus der Belegung heraus und
-                // die Erinnerung weggeworfen, sonst zeigte der Block eine
-                // Erinnerung an einen leeren Platz. Ob die Uhr ihre `customList`
-                // danach von selbst erneut veroeffentlicht, ist nicht belegt
-                // (siehe `anzeigeVergessen`) — also nicht darauf warten.
-                slotInhalt[id]?[platz] = nil
-                anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
-            } else {
-                // Nicht zerlegbar (Lauf-GIF oder Geraeteschrift, siehe
-                // `pixelAusCustomNutzlast`) sagt zweierlei: Dort liegt etwas
-                // Neues, und wir kennen es nicht. Den alten Eintrag
-                // stehenzulassen hiesse, einen Stand zu behaupten, den der Block
-                // nachweislich nicht mehr hat. Die Belegung bleibt dagegen
-                // stehen — auf dem Platz liegt ja etwas. Geloescht greift von
-                // selbst die naechste Stufe von `slotzustand`: fuer eigene
-                // Sendungen das Gedaechtnis, fuer fremde „unbekannt".
-                slotInhalt[id]?[platz] = nil
-            }
-        }
+        ngGemeldet(thema: thema, nutzlast: nutzlast, uhr: uhr, gedaechtnis: gedaechtnis)
     }
 
     /// Was von einer AWTRIX NG hereinkommt.
     ///
     /// Drei Sorten Nachricht statt dreier Themen (`themen(fuer:)`):
     ///
-    /// - `<P>/availability` sagt online oder offline — dasselbe wie
-    ///   `<praefix>/status` der Werksfirmware, nur mit einem zweiten Wort und
-    ///   als brokerseitiges Last Will, also auch dann, wenn die Uhr den Stecker
-    ///   verliert.
+    /// - `<P>/availability` sagt online oder offline, als brokerseitiges Last
+    ///   Will auch dann, wenn die Uhr den Stecker verliert.
     /// - `<P>/cmd/apps/pushed/<name>/result` ist die Antwort auf ein Kommando —
-    ///   das, was die Werksfirmware nie hatte. Erfolg bleibt still; eine
+    ///   Erfolg bleibt still; eine
     ///   Abweisung wird eine sichtbare Zeile, sonst stuende sie nirgends.
     /// - `<P>/cmd/apps/pushed/<name>` ist die Sendung selbst, mitgelesen, gleich
     ///   von wem.
@@ -1685,14 +1562,19 @@ public final class AppZustand {
         }
 
         guard let platz = Meldungsplatz.platz(fuerName: rest) else { return }
-        // Genau null Bytes loeschen bei NG dieselbe Anzeige wie bei der
-        // Werksfirmware (§3.2) — die verlaesslichste Auskunft, die es hier gibt.
+        // Genau null Bytes loeschen die Anzeige (§3.2) — die verlaesslichste
+        // Auskunft, die es hier gibt.
         guard !nutzlast.isEmpty else {
             slotInhalt[id]?[platz] = nil
+            eigeneNutzlast[id]?[platz] = nil
+            fremdBeschrieben[id]?.remove(platz)
             anzeigeGeloescht(rest, fuer: uhr, gedaechtnis: gedaechtnis)
             return
         }
         slotInhalt[id]?[platz] = nil
+        if String(data: nutzlast, encoding: .utf8) != eigeneNutzlast[id]?[platz] {
+            fremdBeschrieben[id, default: []].insert(platz)
+        }
         log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, rest, nutzlast.count))
         anzeigeBestaetigt(rest, fuer: uhr)
     }
@@ -1773,6 +1655,7 @@ public final class AppZustand {
     /// jemand anderes auf die Uhr geschrieben haben.
     public func ausDemHintergrund(sitzung: URLSession = .shared) {
         horchenAbgleichen()
+        fehlendePraefixeHolen(sitzung: sitzung)
         belegungAbfragen(sitzung: sitzung)
     }
 

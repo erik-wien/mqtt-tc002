@@ -1,13 +1,5 @@
 import Foundation
 
-public struct Basisdaten: Equatable, Sendable {
-    public var mac: String, seriennummer: String, mcuVersion: String, appVersion: String
-}
-
-public struct MqttEinstellungen: Equatable, Sendable {
-    public var aktiv: Bool, ip: String, port: String, benutzer: String, praefix: String
-}
-
 public enum GeraetFehler: Error, LocalizedError {
     case nichtErreichbar(String)
     case unerwarteteAntwort(String)
@@ -16,12 +8,6 @@ public enum GeraetFehler: Error, LocalizedError {
     /// Die eingetragene Adresse ergibt keine gueltige URL — ein Leerzeichen
     /// genuegt dafuer schon.
     case ungueltigeAdresse(String)
-    case abgelehnt(name: String, code: Int, meldung: String)
-    /// Die Schnittstelle verlangt eine Anmeldung (`authEnabled`, AWTRIX NG
-    /// § 4.1). Dann ist nicht einmal die Geräteart festzustellen — deshalb ein
-    /// eigener Fall und nicht bloß ein Status: Der Ausweg ist die Wahl von
-    /// Hand, und das gehört gesagt.
-    case anmeldungNoetig
     /// Die AWTRIX NG hat mit ihrem Fehlerrumpf geantwortet. `code` ist
     /// maschinenlesbar und stabil; auf `message` ist nicht zu prüfen.
     case ngAbgewiesen(status: Int, code: String, feld: String?)
@@ -35,12 +21,8 @@ public enum GeraetFehler: Error, LocalizedError {
         case .nichtErreichbar(let g): return lokf("Die Uhr ist nicht erreichbar: %@", g)
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
-        case .keinPraefix: return lok("Die Uhr hat kein MQTT-Präfix eingestellt. In Ulanzi Studio unter MQTT eines eintragen und dann erneut abfragen.")
+        case .keinPraefix: return lok("Die Uhr nennt weder ein MQTT-Präfix noch eine Kennung. Erneut abfragen.")
         case .ungueltigeAdresse(let a): return lokf("„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt.", a)
-        case .abgelehnt(let name, let code, let meldung):
-            return lokf("Die Uhr hat „%@“ abgelehnt: %@ (Code %d)", name, meldung, code)
-        case .anmeldungNoetig:
-            return lok("Die Uhr verlangt eine Anmeldung. Die App kann so nicht einmal feststellen, was für ein Gerät antwortet — die Geräteart unter „Einstellungen“ von Hand wählen.")
         case .ngAbgewiesen(let status, let code, let feld):
             guard let feld else {
                 return lokf("Die AWTRIX NG hat abgewiesen: %@ (Status %d)", code, status)
@@ -50,119 +32,35 @@ public enum GeraetFehler: Error, LocalizedError {
     }
 }
 
-/// Die HTTP-Schnittstelle der Uhr.
-///
-/// Zwei Firmwares, eine Schnittstelle nach aussen. Die der Werksfirmware
-/// ist nirgends dokumentiert; ihre Endpunkte stammen aus deren eigener
-/// Weboberflaeche (`docs/tc002-protokoll.md` §5). Die der AWTRIX NG ist
-/// dokumentiert und voellig anders geschnitten — andere Pfade, andere
-/// Methoden, andere Fehlerform (`docs/awtrix-ng-protokoll.md` §4).
-///
-/// Welche antwortet, entscheidet `typ`. Wer ihn falsch setzt, bekommt keine
-/// falsche Antwort, sondern gar keine: Die Pfade der einen gibt es bei der
-/// anderen nicht. Ermittelt wird er deshalb einmal ueber `erkannteArt()` und
-/// danach in der Uhr gefuehrt, statt bei jedem Aufruf geraten zu werden.
+/// Die HTTP-Schnittstelle der Uhr (AWTRIX NG, `docs/awtrix-ng-protokoll.md`
+/// §4): `PUT` und `DELETE` mit echten Statuscodes und dem Fehlerrumpf
+/// `{"error":{"code","message","field"}}`.
 public struct Geraet {
     private let host: String
     private let sitzung: URLSession
-    /// Welche Firmware hier antwortet. Vorgabe `.tc002` — jeder Aufrufer, der
-    /// nichts davon weiss, meint die Werksfirmware, und das war bis heute
-    /// jeder.
-    public let typ: Geraetetyp
 
-    public init(host: String, sitzung: URLSession = .shared, typ: Geraetetyp = .tc002) {
-        self.host = host; self.sitzung = sitzung; self.typ = typ
+    public init(host: String, sitzung: URLSession = .shared) {
+        self.host = host; self.sitzung = sitzung
     }
 
-    /// Was fuer ein Geraet unter dieser Adresse antwortet.
-    ///
-    /// `GET /api/v1/device` gibt es nur bei AWTRIX NG, und nur dort steht
-    /// `boardType` darin. Alles andere — ein 404, die Weboberflaeche,
-    /// irgendein JSON ohne dieses Feld — ist keine NG-Antwort und damit die
-    /// Werksfirmware: Jede Antwort ist eine Feststellung, jedes Ausbleiben
-    /// ein Fehler.
-    ///
-    /// Drei Ausnahmen werfen, statt zu raten:
-    ///
-    /// - nicht erreichbar — gar keine Antwort, also kein Befund;
-    /// - 401 — NG kann die ganze Schnittstelle hinter eine Anmeldung
-    ///   stellen (§4.1); „also eine TC002" waere die falsche Antwort auf eine
-    ///   Frage, die nicht beantwortet wurde;
-    /// - ungueltige Adresse — daran ist nichts festzustellen, und sie
-    ///   stillschweigend zur Werksfirmware zu erklaeren verdeckte den
-    ///   eigentlichen Fehler.
-    public func erkannteArt() throws -> Geraetetyp {
-        do {
-            return try hole("/api/v1/device")["boardType"] is String ? .awtrixNG : .tc002
-        } catch GeraetFehler.nichtErreichbar(let grund) {
-            throw GeraetFehler.nichtErreichbar(grund)
-        } catch GeraetFehler.httpFehler(_, let code) where code == 401 {
-            throw GeraetFehler.anmeldungNoetig
-        } catch GeraetFehler.ungueltigeAdresse(let adresse) {
-            throw GeraetFehler.ungueltigeAdresse(adresse)
-        } catch {
-            return .tc002
-        }
-    }
-
-    public func basis() throws -> Basisdaten {
-        let d = try hole("/getBase")
-        return Basisdaten(mac: d["mac"] as? String ?? "",
-                          seriennummer: d["devSn"] as? String ?? "",
-                          mcuVersion: d["mcuVer"] as? String ?? "",
-                          appVersion: d["appVer"] as? String ?? "")
-    }
-
-    public func mqttEinstellungen() throws -> MqttEinstellungen {
-        let d = try hole("/getMqttConfig")
-        return MqttEinstellungen(aktiv: d["isMqtt"] as? Bool ?? false,
-                                 ip: d["ip"] as? String ?? "",
-                                 port: d["port"] as? String ?? "1883",
-                                 benutzer: d["mqtt_name"] as? String ?? "",
-                                 praefix: d["mqtt_prefix"] as? String ?? "")
-    }
-
-    /// Das tatsaechliche Themen-Praefix. Die Firmware haengt an das eingestellte
-    /// Praefix einen Unterstrich und die letzten vier Stellen der MAC-Adresse.
+    /// Das Themen-Praefix, unter dem die Uhr zuhoert.
     public func themenPraefix() throws -> String {
         try praefixUndBasis().praefix
     }
 
-    /// Praefix und Basisdaten in einem Zug. Getrennt geholt wuerde `/getBase`
-    /// zweimal abgefragt — einmal fuer das Praefix, einmal fuer die MAC.
-    /// `breite` ist die Anzeigenbreite in Pixeln und nur bei AWTRIX NG eine
-    /// Frage — die Werksfirmware ist fest 52×16. Sie faellt hier mit an, weil
-    /// sie in derselben Antwort steht: getrennt geholt waere `/api/v1/system`
-    /// ein zweites Mal abgefragt, genau der Fehler, den dieser Aufruf fuer
-    /// `/getBase` vermeidet.
-    public func praefixUndBasis() throws -> (praefix: String, basis: Basisdaten, breite: Int?) {
-        guard typ == .tc002 else { return try ngPraefixUndBasis() }
-        let eingestellt = try mqttEinstellungen().praefix
-        let b = try basis()
-        // Ohne eingestelltes Praefix kaeme hier "_a86b" heraus — ein Thema, auf das
-        // die Uhr nie hoert. Lieber sagen, was fehlt, als stumm ins Leere senden.
-        guard !eingestellt.isEmpty else { throw GeraetFehler.keinPraefix }
-        return (eingestellt + "_" + String(b.mac.suffix(4)), b, nil)
-    }
-
-    /// Dasselbe fuer AWTRIX NG — und hier wird nichts angehaengt.
+    /// Praefix, MAC und Anzeigemass in einem Zug: Die Antworten von
+    /// `/api/v1/device`, `/api/v1/system` und `/api/v1/capabilities` werden je
+    /// einmal geholt.
     ///
-    /// Das ist der gefaehrlichste Unterschied der beiden Firmwares. Die
-    /// Werksfirmware haengt `_` und die letzten vier Stellen der MAC an ihr
-    /// eingestelltes Praefix; NG nimmt `mqttPrefix` genau so, wie es dasteht
-    /// (`docs/awtrix-ng-protokoll.md` §2). Liefe die Formel der Werksfirmware
-    /// auch hier, schriebe die App auf ein Thema, das kein Geraet abonniert —
-    /// und NG antwortet auf ein Thema ohne Route gar nicht: kein Fehler,
-    /// keine Bestaetigung, ein gruener Bau und eine dunkle Uhr.
+    /// Das Praefix ist `mqttPrefix` genau so, wie es dasteht, und nichts wird
+    /// angehaengt (`docs/awtrix-ng-protokoll.md` §2). Ist es leer, tritt die
+    /// uid an seine Stelle — die zwoelfstellige MAC. Es gibt also keinen Fall
+    /// „kein Praefix eingestellt": Eines gibt es immer. Ein falsches waere
+    /// dagegen unsichtbar, denn NG antwortet auf ein Thema ohne Route gar
+    /// nicht.
     ///
-    /// Ist `mqttPrefix` leer, tritt die uid an seine Stelle — die zwoelfstellige
-    /// MAC. Es gibt also, anders als bei der Werksfirmware, keinen Fall „kein
-    /// Praefix eingestellt": Eines gibt es immer.
-    ///
-    /// `Basisdaten` ist die Form der Werksfirmware und passt nicht Feld fuer
-    /// Feld. Gelesen wird davon ohnehin nur `mac`; die uebrigen drei tragen,
-    /// was bei NG an derselben Stelle steht, damit sie nicht leer bleiben.
-    private func ngPraefixUndBasis() throws -> (praefix: String, basis: Basisdaten, breite: Int?) {
+    /// Die `mac` ist die uid der Geraeteauskunft, zwoelf Hexziffern.
+    public func praefixUndBasis() throws -> (praefix: String, mac: String, mass: (breite: Int, hoehe: Int)?) {
         let geraet = try hole("/api/v1/device")
         let uid = geraet["uid"] as? String ?? ""
         let system = try hole("/api/v1/system")
@@ -171,27 +69,17 @@ public struct Geraet {
         // Weder ein Praefix noch eine uid: Dann ist das keine AWTRIX, die man
         // ansprechen koennte — und ein leeres Thema waere `/cmd/apps/pushed/x`.
         guard !praefix.isEmpty else { throw GeraetFehler.keinPraefix }
-        return (praefix,
-                Basisdaten(mac: uid,
-                           seriennummer: geraet["hostname"] as? String ?? "",
-                           mcuVersion: geraet["soc"] as? String ?? "",
-                           appVersion: geraet["version"] as? String ?? ""),
-                Self.ngBreite(aus: system))
+        let mass = try? anzeigemass()
+        return (praefix, uid, mass ?? nil)
     }
 
-    /// Wie breit die Anzeige dieser AWTRIX ist: `panelWidth × panels`.
-    ///
-    /// Geholt und nicht angenommen. Die Hoehe ist fest 8, die Breite muss
-    /// zwischen 32 und 128 liegen (§1) — eine 64er oder 128er Kette ist
-    /// vorgesehen, und eine App, die 32 einprogrammiert, zeigte dort das
-    /// falsche Bild. Was ausserhalb des Bereichs steht, gilt als nicht
-    /// beantwortet (`nil`): Das Geraet weist solche Werte selbst ab, ein
-    /// gelesener Ausreisser ist also keine Breite, sondern ein Missverstaendnis.
-    public static func ngBreite(aus system: [String: Any]) -> Int? {
-        guard let panelWidth = system["panelWidth"] as? Int else { return nil }
-        let panels = system["panels"] as? Int ?? 1
-        let breite = panelWidth * panels
-        return Geraetetyp.ngBreitenbereich.contains(breite) ? breite : nil
+    /// Wie gross die Anzeige ist: `display.width` und `display.height` aus
+    /// `GET /api/v1/capabilities` (§1, §7.4). `nil`, wo die Antwort keine
+    /// brauchbare Zahl nennt — dann gilt weiter die Vorgabe.
+    public func anzeigemass() throws -> (breite: Int, hoehe: Int)? {
+        let anzeige = try hole("/api/v1/capabilities")["display"] as? [String: Any]
+        guard let b = anzeige?["width"] as? Int, let h = anzeige?["height"] as? Int else { return nil }
+        return AwtrixNG.plausiblesMass(breite: b, hoehe: h, maxPixel: anzeige?["maxPixels"] as? Int)
     }
 
     public func verbunden() throws -> Bool { try brokerstand().steht }
@@ -201,104 +89,52 @@ public struct Geraet {
     /// Der Grund ist die eigentliche Auskunft: Ein Warndreieck allein sagt
     /// nichts ueber die Ursache, etwa `badCredentials` nach mehreren
     /// Verbindungsversuchen.
-    ///
-    /// Die Werksfirmware nennt keinen Grund (`/getMqttStatus` hat nur
-    /// `connected`); dort bleibt er `nil`.
     public func brokerstand() throws -> (steht: Bool, grund: String?) {
-        guard typ == .tc002 else {
-            // §7.1: Ob das Geraet am Broker haengt und warum nicht, steht unter
-            // `mqtt` in der Geraeteauskunft. Ein eigener Endpunkt dafuer wie
-            // `/getMqttStatus` existiert bei NG nicht.
-            let mqtt = try hole("/api/v1/device")["mqtt"] as? [String: Any]
-            let steht = mqtt?["state"] as? String == "connected"
-            // `error` ist der laufende, `lastError` der letzte — nach einem
-            // Fehlschlag steht in beiden dasselbe, vor dem ersten Versuch in
-            // keinem.
-            let grund = (mqtt?["error"] as? String) ?? (mqtt?["lastError"] as? String)
-            return (steht, steht ? nil : grund)
-        }
-        let d = try hole("/getMqttStatus")
-        let daten = d["data"] as? [String: Any]
-        return (daten?["connected"] as? Bool ?? false, nil)
+        // §7.1: Ob das Geraet am Broker haengt und warum nicht, steht unter
+        // `mqtt` in der Geraeteauskunft.
+        let mqtt = try hole("/api/v1/device")["mqtt"] as? [String: Any]
+        let steht = mqtt?["state"] as? String == "connected"
+        // `error` ist der laufende, `lastError` der letzte — nach einem
+        // Fehlschlag steht in beiden dasselbe, vor dem ersten Versuch in
+        // keinem.
+        let grund = (mqtt?["error"] as? String) ?? (mqtt?["lastError"] as? String)
+        return (steht, steht ? nil : grund)
     }
 
-    public func konfiguration() throws -> [String: Any] { try hole("/getConfig") }
-
-    /// Welche benannten Anzeigen gerade auf der Uhr stehen (§5.7):
-    /// `{"apps":["meldung2","meldung5","meldung3"],"count":3}`.
-    ///
-    /// Der Pfad ist `/api/customList`, nicht `/customList` — letzterer
-    /// liefert nichts, und das hat uns lange wie ein Mangel der Firmware
-    /// ausgesehen.
-    ///
-    /// Es sind nur Namen. Was auf einem Platz steht, verraet die Uhr auch
-    /// hierueber nicht; belegt oder frei ist damit Tatsache, der Inhalt bleibt
-    /// geraten.
-    public func anzeigennamen() throws -> [String] {
-        guard typ == .tc002 else { return try ngAnzeigennamen() }
-        let d = try hole("/api/customList")
-        guard let namen = Anzeigen.namenAusAppsFeld(d["apps"]) else {
-            throw GeraetFehler.unerwarteteAntwort("/api/customList")
-        }
-        return namen
-    }
-
-    /// Dasselbe fuer AWTRIX NG — und genauer als bei der Werksfirmware.
+    /// Welche benannten Anzeigen gerade auf der Uhr stehen.
     ///
     /// `GET /api/v1/apps` nennt das ganze Inventar, je App mit `origin`
     /// (`builtin`, `pushed`, `script`, `module`). Auf `pushed` gefiltert sind
-    /// das genau die Anzeigen, die jemand von aussen abgelegt hat — die
-    /// Werksfirmware kann eigene und eingebaute Anzeigen gar nicht
-    /// auseinanderhalten.
+    /// das genau die Anzeigen, die jemand von aussen abgelegt hat.
     ///
     /// Ueber MQTT gibt es das nicht: „Eine Liste aller Anzeigen gibt es ueber
     /// MQTT nicht" (§3.5). Dieser Weg ist der einzige.
-    private func ngAnzeigennamen() throws -> [String] {
+    public func anzeigennamen() throws -> [String] {
         guard let namen = Anzeigen.namenAusNGInventar(try holeFeld("/api/v1/apps")) else {
             throw GeraetFehler.unerwarteteAntwort("/api/v1/apps")
         }
         return namen
     }
 
-    /// Setzt eine benannte Anzeige — dieselbe Nutzlast wie ueber MQTT (§3.1),
-    /// nur ueber `POST /api/custom?name=<name>` (§5.6). Die Uhr zeigt sie
-    /// sofort und quittiert mit `{"code":200,"message":"ok"}`.
+    /// Setzt eine benannte Anzeige — dieselbe Nutzlast wie ueber MQTT, nur ueber
+    /// `PUT /api/v1/apps/pushed/{name}` (§4.2). Der Name kommt aus dem Pfad,
+    /// nie aus dem Rumpf, und wird geprueft, bevor die Nutzlast gelesen wird.
     public func anzeigeSetzen(_ json: String, name: String) throws {
-        guard typ == .tc002 else {
-            // §5: Der Name kommt aus dem Pfad, nie aus dem Rumpf, und wird
-            // geprueft, bevor die Nutzlast gelesen wird.
-            try ngAnfrage("PUT", "/api/v1/apps/pushed/" + ngName(name), koerper: Data(json.utf8))
-            return
-        }
-        try _ = anAnzeige("/api/custom", name: name, koerper: Data(json.utf8))
+        try ngAnfrage("PUT", "/api/v1/apps/pushed/" + ngName(name), koerper: Data(json.utf8))
     }
 
-    /// Entfernt eine benannte Anzeige — mit dem Rumpf `{}`, nicht mit einem
-    /// leeren (§5.6). Ueber MQTT ist es genau umgekehrt: Dort loescht die
-    /// leere Nutzlast, und `{}` richtet nichts aus.
+    /// Entfernt eine benannte Anzeige mit `DELETE /api/v1/apps/{name}`. `{}`
+    /// auf `PUT` loescht nicht, sondern antwortet `422` und verweist auf diese
+    /// Route; ueber MQTT loescht dagegen die leere Nutzlast.
     public func anzeigeLoeschen(name: String) throws {
-        guard typ == .tc002 else {
-            // Bei NG ist es wieder umgekehrt: `{}` auf `PUT` loescht dort
-            // gerade nicht, sondern antwortet `422` und verweist auf diese
-            // Route hier. Ueber MQTT loescht bei NG dagegen genau das, was auch
-            // bei der Werksfirmware loescht — die leere Nutzlast.
-            try ngAnfrage("DELETE", "/api/v1/apps/" + ngName(name), koerper: nil)
-            return
-        }
-        try _ = anAnzeige("/api/custom", name: name, koerper: Data("{}".utf8))
+        try ngAnfrage("DELETE", "/api/v1/apps/" + ngName(name), koerper: nil)
     }
 
-    /// Schaltet auf eine benannte Anzeige um (§5.8). Anders als das
-    /// MQTT-Gegenstueck (§3.3) antwortet dieser Weg — und weist einen Namen,
-    /// den es nicht gibt, mit `{"code":404,"message":"custom app not found"}`
-    /// ab.
+    /// Schaltet auf eine benannte Anzeige um (`PUT /api/v1/apps/active`). Einen
+    /// Namen, den es nicht gibt, weist die Uhr mit `404` ab.
     public func umschalten(auf name: String) throws {
-        guard typ == .tc002 else {
-            try ngAnfrage("PUT", "/api/v1/apps/active",
-                          koerper: Data(NGNutzlast.umschalten(auf: name).utf8))
-            return
-        }
-        try _ = anAnzeige("/api/switchDiyApp", name: name, koerper: nil)
+        try ngAnfrage("PUT", "/api/v1/apps/active",
+                      koerper: Data(NGNutzlast.umschalten(auf: name).utf8))
     }
 
     /// Ein Anzeigenname im Pfad. `[A-Za-z0-9_-]{1,32}` ist alles, was NG
@@ -308,64 +144,9 @@ public struct Geraet {
         name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
     }
 
-    /// Der gemeinsame Rumpf der drei: POST auf einen `/api`-Pfad mit dem
-    /// Anzeigenamen in der Abfrage.
-    ///
-    /// Zwei Fehlerquellen, nicht eine. Der HTTP-Status faengt `fuehreAus`
-    /// ab; die Uhr meldet aber auch im Rumpf einen eigenen `code` — die
-    /// gemessene 404 fuer einen unbekannten Namen steht genau dort (§5.8).
-    /// Wer nur auf den Status sieht, haelt eine Ablehnung fuer einen Erfolg.
-    @discardableResult
-    private func anAnzeige(_ pfad: String, name: String, koerper: Data?) throws -> [String: Any] {
-        // Ueber `url(_:)`, nicht ueber `teile.host`. Wer die Adresse in
-        // `URLComponents.host` legt, verliert jede mit Portangabe: `host`
-        // haelt genau einen Rechnernamen, ein Doppelpunkt darin ergibt keine
-        // URL, und der Aufruf endet in `unerwarteteAntwort` — als haette die
-        // Uhr Unsinn geantwortet, obwohl nie eine Anfrage hinausging.
-        guard var teile = URLComponents(url: try url(pfad), resolvingAgainstBaseURL: false) else {
-            throw GeraetFehler.ungueltigeAdresse(host)
-        }
-        // Nicht von Hand zusammengesetzt: Ein Anzeigename darf alles
-        // enthalten, was ein Mensch eintippt, und `URLComponents` kodiert es.
-        teile.queryItems = [URLQueryItem(name: "name", value: name)]
-        guard let url = teile.url else { throw GeraetFehler.unerwarteteAntwort(pfad) }
-        var anfrage = URLRequest(url: url)
-        anfrage.httpMethod = "POST"
-        if let koerper {
-            anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            anfrage.httpBody = koerper
-        }
-        let daten = try fuehreAus(anfrage)
-        guard let objekt = try? JSONSerialization.jsonObject(with: daten),
-              let woerterbuch = objekt as? [String: Any] else {
-            throw GeraetFehler.unerwarteteAntwort(pfad)
-        }
-        if let code = woerterbuch["code"] as? Int, code != 200 {
-            let meldung = woerterbuch["message"] as? String ?? lok("ohne Begründung")
-            throw GeraetFehler.abgelehnt(name: name, code: code, meldung: meldung)
-        }
-        return woerterbuch
-    }
-
-    /// Liest die vollstaendige Konfiguration, aendert ein Feld und schickt alles
-    /// zurueck — die Uhr erwartet das ganze Objekt, nicht nur die Aenderung.
-    public func konfigurationSetzen(_ feld: String, _ wert: Any) throws {
-        var k = try konfiguration()
-        k[feld] = wert
-        let koerper = try JSONSerialization.data(withJSONObject: k)
-        var anfrage = URLRequest(url: try url("/setConfig"))
-        anfrage.httpMethod = "POST"
-        anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        anfrage.httpBody = koerper
-        _ = try fuehreAus(anfrage)
-    }
-
     /// Eine Anfrage an die Schnittstelle von AWTRIX NG.
     ///
-    /// Andere Methoden und eine andere Fehlerform. Wo die Werksfirmware
-    /// alles mit `POST` erledigt und ihre Ablehnung im Rumpf einer `200`
-    /// versteckt, benutzt NG `PUT` und `DELETE` und antwortet mit einem echten
-    /// Status und einem einheitlichen Rumpf
+    /// Echte Statuscodes und ein einheitlicher Fehlerrumpf
     /// `{"error":{"code","message","field"}}` (§4.1). Gelesen wird daraus
     /// `code` — `message` ist englische Prosa fuer Menschen.
     ///
@@ -394,7 +175,7 @@ public struct Geraet {
     /// Die Oberfläche kann damit beim Eintragen sagen, dass etwas nicht
     /// stimmt, statt es beim Senden als Fenster vorzuwerfen. Ein leerer Host
     /// ist dabei der Fall, den `URL(string:)` nicht fängt:
-    /// `http:///getBase` ist eine gültige URL, die nirgendwohin zeigt.
+    /// `http:///api/v1/apps` ist eine gültige URL, die nirgendwohin zeigt.
     public static func adresseTaugt(_ host: String) -> Bool {
         guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let url = URL(string: "http://\(host)/") else { return false }
@@ -493,6 +274,8 @@ public struct Geraet {
         }
         if let fehler { throw GeraetFehler.nichtErreichbar(fehler.localizedDescription) }
         guard let ergebnis else { throw GeraetFehler.nichtErreichbar("leere Antwort") }
+        // Die Antworten, die diese App liest, sind wenige KiB gross.
+        guard ergebnis.count <= 1 << 20 else { throw GeraetFehler.nichtErreichbar("Antwort zu gross") }
         return (ergebnis, (antwort as? HTTPURLResponse)?.statusCode ?? 200)
     }
 }

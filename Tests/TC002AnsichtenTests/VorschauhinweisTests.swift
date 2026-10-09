@@ -49,9 +49,9 @@ final class VorschauhinweisTests: XCTestCase {
                 stellen.append(pfad)
             }
         }
-        XCTAssertEqual(stellen, ["Sources/TC002Core/Geraetetyp.swift"],
+        XCTAssertEqual(stellen, ["Sources/TC002Core/AwtrixNG.swift"],
                        "Der Näherungssatz steht nicht mehr genau einmal im Kern "
-                       + "(`Geraetetyp.vorschauhinweis`), sondern in: \(stellen)")
+                       + "(`AwtrixNG.vorschauhinweis`), sondern in: \(stellen)")
     }
 
     /// Beide Oberflaechen zeigen ihn, und beide ueber dasselbe Zeichen.
@@ -59,9 +59,9 @@ final class VorschauhinweisTests: XCTestCase {
         for datei in ["Sources/TC002Ansichten/SendenView.swift",
                       "Sources/TC002iOS/SendeniOS.swift"] {
             let text = try quelltext(datei)
-            XCTAssertTrue(text.contains("gattung.vorschauhinweis"),
+            XCTAssertTrue(text.contains("AwtrixNG.vorschauhinweis"),
                           "\(datei) fragt nicht mehr, ob es etwas über die Vorschau zu sagen gibt")
-            XCTAssertTrue(text.contains("Hilfezeichen(hinweis)"),
+            XCTAssertTrue(text.contains("Hilfezeichen(AwtrixNG.vorschauhinweis)"),
                           "\(datei) zeigt den Hinweis nicht mehr über `Hilfezeichen` — dann ist er "
                           + "am Finger entweder unsichtbar oder wieder ein Satz unter dem Bild")
         }

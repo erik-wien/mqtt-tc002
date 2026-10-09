@@ -2,13 +2,14 @@
 
 *[Deutsche Fassung](README.md)*
 
-Send messages to the Ulanzi TC002 (Pixbar, 52×16) — over MQTT.
+Send messages to the Ulanzi TC002 (Pixbar, 52×16, AWTRIX NG firmware) — over MQTT or HTTP.
 
 ## What the app does
 
 MQTT-TC002 is a macOS app that sends text, images and hand-drawn icons to one
-or more Ulanzi TC002 pixel clocks. The route there goes through an MQTT broker,
-not straight to the clock — the clock listens to the broker, not to the app.
+or more Ulanzi TC002 pixel clocks running the AWTRIX NG firmware. The clock sets
+the text in its own font. The route there is either straight over HTTP or
+through an MQTT broker the clock listens to.
 
 ## Building
 
@@ -19,29 +20,24 @@ dependencies; macOS 14 or newer is required.
 ## The five areas
 
 - **Connection** — enter clocks and query them, manage broker access.
-  "Query" determines the topic prefix and the MAC directly from the clock;
+  "Query" determines the topic prefix, the MAC and the display size directly from the clock;
   nothing is entered by hand here.
 - **Send** — assemble text and optionally an icon into a named display and
   send it off. Five blocks show the clock's fixed slots, with their content
   where the app knows it. The preview comes from the same raster as the
-  message that is sent. There are two ways to choose from: **as pixels**,
-  rasterized by the app itself, with umlauts and any font — if the text does
-  not fit, it runs through by itself as scrolling text; or **as text**, set
-  by the device, which scrolls with its own font for that, but does not know
-  umlauts.
+  message that is sent, but is only an approximation: the clock sets the text
+  itself. Font, size, bold, margin and spacing are therefore locked.
 - **Draw** — a free 52×16 canvas, which turns into rectangles instead of
   single pixels when sent.
 - **Icons** — draw your own 8×8 images or fetch them via a LaMetric number.
 - **Displays** — switch or delete what the app has already created on the
-  active clock, plus the clock's page cycling. The app keeps this list
+  active clock. The app keeps this list
   separately per clock: deleting always happens only on the active one, and
   whatever went to other clocks via "to all" stays there until it is deleted
   there.
 
 How these areas are operated in detail is in the help inside the program
 (⌘?); what the clock itself can do and what its protocol looks like is in
-[`docs/tc002-protokoll.md`](docs/tc002-protokoll.md). What a device running the
-AWTRIX NG firmware can do and what its protocol looks like is alongside it in
 [`docs/en/awtrix-ng-protocol.md`](docs/en/awtrix-ng-protocol.md).
 
 ## Fonts and spacing
@@ -189,21 +185,9 @@ licence violation, even with the source published.
 
 No source code from [PixDeck](https://github.com/cailurus/PixDeck) is included:
 it was a reference for how the device behaves, and facts about a device are not
-copyrightable. See
-"Sources" below.
+copyrightable.
 
 ## Sources
 
-- **Official repository of the manufacturer:**
-  https://github.com/UlanziTechnology/Ulanzi-U-Clock-TC002
-  Confirms that the prefix is formed as `<eingestellt>_<letzte vier MAC-Stellen>`
-  (default `ulanzi`), names `text`, `image`, `draw` and `duration`, and lists,
-  besides `df` (rectangle), also `dfc` (filled circle:
-  `{"dfc":[x,y,radius,"#RRGGBB"]}`). According to this source, animated GIFs
-  are supported in `image`.
-- **Not** documented there: the control topic `<praefix>/switchDiyApp` and
-  deleting a display by way of an empty payload. We determined both on the
-  device on 11 September 2026 — `switchDiyApp` from the SUBSCRIBE lines of the
-  broker.
-- **PixDeck** (https://github.com/cailurus/PixDeck, GPL-3.0): source of the
-  insight that the same JSON also goes over HTTP to `/api/custom?name=<n>`.
+- **AWTRIX NG:** the protocol, as it shows on the device, is in
+  [`docs/en/awtrix-ng-protocol.md`](docs/en/awtrix-ng-protocol.md).

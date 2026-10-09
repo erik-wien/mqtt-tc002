@@ -17,13 +17,6 @@ struct IconAuswahlView: View {
     /// wie das Icon aussieht, nicht in welchem Ordner es liegt. Woher es
     /// stammt, weiss es selbst (`Icon.kante`), und das Loeschen fragt danach.
     let sammlungen: [Iconsammlung]
-    /// Warum ein Icon dieser Kantenlaenge nicht ankaeme — `nil`, wenn es
-    /// ankommt. Gereicht wird die Frage, nicht die Antwort: Wer sie
-    /// beantwortet, sind die Zieluhren (`AppZustand.grafikSperre`), und das
-    /// weiss die Auswahl nicht. So bleibt sie eine Auswahl und wird nicht
-    /// zur zweiten Stelle, an der Geraetewissen steht.
-    var sperre: (Int) -> String? = { _ in nil }
-
     @State private var zeigeBlatt = false
     @State private var suche = ""
     /// Das Icon, fuer das gerade die Loesch-Rueckfrage steht — `nil` heisst
@@ -108,14 +101,6 @@ struct IconAuswahlView: View {
                 .help(lok("Icon entfernen"))
                 .accessibilityLabel(Text("Icon entfernen"))
             }
-            // Ein schon gewaehltes Icon wird nicht von selbst abgewaehlt, wenn
-            // man auf eine Uhr umschaltet, die es nicht nimmt: Eine stille
-            // Aenderung der Wahl waere schlimmer als eine sichtbare Warnung.
-            // Das Dreieck sagt, warum nichts ankaeme; weggenommen wird die
-            // Wahl nur von Hand.
-            if let icon = gewaehltesIcon, let grund = sperre(icon.kante) {
-                Hilfezeichen(grund, gewicht: .sperre)
-            }
         }
         .sheet(isPresented: $zeigeBlatt) { blatt.onAppear { bewegungLesen() } }
     }
@@ -175,13 +160,7 @@ struct IconAuswahlView: View {
                                 }
                             }
                             .buttonStyle(.plain)
-                            // Gesperrt, nicht verschwunden: Wer sein 16×16
-                            // sucht, soll sehen, dass es noch da ist — und
-                            // warum es gerade nicht geht. Verschwundenes wirkt
-                            // verloren.
-                            .disabled(sperre(icon.kante) != nil)
-                            .opacity(sperre(icon.kante) == nil ? 1 : 0.35)
-                            .help(sperre(icon.kante) ?? icon.name)
+                            .help(icon.name)
                             .padding(4)
                             .background(gewaehltesIcon?.kennung == icon.kennung ? Color.accentColor.opacity(0.25) : .clear)
                             .clipShape(RoundedRectangle(cornerRadius: 4))

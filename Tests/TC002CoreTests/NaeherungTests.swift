@@ -5,26 +5,18 @@ import XCTest
 /// immer dieselbe ist.
 ///
 /// AWTRIX NG setzt den Text mit ihrer eigenen Schrift; unsere Schriftwahl ist
-/// dort gesperrt (`Geraetetyp.wirkt(.schriftart)`). Der gespeicherte Wert
-/// bleibt davon unberührt und kann „Tiny5, 16 px" sein — auf acht Zeilen
-/// gerastert wäre das abgeschnitten, und die Vorschau zeigte einen Fehler, den
-/// das Gerät gar nicht hat.
+/// dort gesperrt (`AwtrixNG.wirkt(.schriftart)`). Der gespeicherte Wert
+/// bleibt davon unberührt und kann „Tiny5, 16 px" sein — in der
+/// Vorschau zu sehen, ohne dass das Gerät diese Schrift hat.
 ///
 /// Im Kern und nicht in den Ansichten: Mac und iPhone rufen dasselbe und
 /// können nicht auseinanderlaufen.
 final class NaeherungTests: XCTestCase {
-    func testAufDerWerksfirmwareAendertSichNichts() {
+    func testEsStehtImmerDieselbeSchriftDa() {
         var o = Meldungsoptionen(text: "Hallo")
         o.schrift = "Tiny5"
         o.groesse = 16
-        XCTAssertEqual(o.naeherung(fuer: .tc002), o)
-    }
-
-    func testAufNGStehtImmerDieselbeSchriftDa() {
-        var o = Meldungsoptionen(text: "Hallo")
-        o.schrift = "Tiny5"
-        o.groesse = 16
-        let genaehert = o.naeherung(fuer: .awtrixNG)
+        let genaehert = o.naeherung
         XCTAssertEqual(genaehert.schrift, "Silkscreen")
         XCTAssertEqual(genaehert.groesse, 8)
     }
@@ -37,7 +29,7 @@ final class NaeherungTests: XCTestCase {
         o.waagrecht = .mittig
         o.iconLaeuftMit = true
         o.abstand = 3
-        let genaehert = o.naeherung(fuer: .awtrixNG)
+        let genaehert = o.naeherung
         XCTAssertEqual(genaehert.text, "Hallo")
         XCTAssertEqual(genaehert.farbe, "#FF0000")
         XCTAssertEqual(genaehert.waagrecht, .mittig)
@@ -49,7 +41,7 @@ final class NaeherungTests: XCTestCase {
     /// stehen — sonst rastert die Vorschau in einer Größe, die niemand
     /// durchgesehen hat.
     func testDieGenaeherteGroesseIstAbgesegnet() {
-        let genaehert = Meldungsoptionen(text: "x").naeherung(fuer: .awtrixNG)
+        let genaehert = Meldungsoptionen(text: "x").naeherung
         let erlaubt = Pixelgroessen.abgesegnet[genaehert.schrift] ?? []
         XCTAssertTrue(erlaubt.contains(genaehert.groesse),
                       "\(genaehert.groesse) steht nicht auf der Liste von \(genaehert.schrift).")

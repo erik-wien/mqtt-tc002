@@ -9,8 +9,8 @@ Hersteller melden möchte.
 **Geprüfter Stand:** `mcuVer V1.0.17`, `appVer 1.1.1`, abgelesen über
 `GET /getBase` (Gerätereferenz §5.1). Messungen vom 11. bis 13.09.2026.
 
-Die Belege stehen jeweils in [`tc002-protokoll.md`](tc002-protokoll.md); hier
-steht nur, was daran ein Mangel ist und wie man in zwei Minuten prüft, ob er
+Die Belege standen in `tc002-protokoll.md`, das mit der Werksfirmware aus dem
+Repo genommen wurde (Versionsverwaltung); hier steht nur, was daran ein Mangel ist und wie man in zwei Minuten prüft, ob er
 noch besteht.
 
 ---

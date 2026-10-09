@@ -55,20 +55,13 @@ targets:
       # Es muss in der **Wurzel** des Buendels liegen, nicht in einem Ordner.
       - path: Resources/PrivacyInfo.xcprivacy
         buildPhase: resources
-      # Die Geraetereferenz, beide Sprachen. `GeraeteReferenzView` liegt seit
-      # dem Umzug in `TC002Ansichten` und wird damit auch fuers iPhone
-      # uebersetzt; sie sucht das Dokument in der Buendelwurzel und zeigt sonst
-      # einen Fehlerschirm, der aufs Bauen mit ./build.sh verweist — am iPhone
-      # eine Begruendung in die falsche Richtung. Einzelne Dateien, kein
+      # Die Geraetereferenz, beide Sprachen. `GeraeteReferenzView` liegt in
+      # `TC002Ansichten` und wird damit auch fuers iPhone uebersetzt; sie
+      # sucht das Dokument in der Buendelwurzel und zeigt sonst einen
+      # Fehlerschirm, der aufs Bauen mit ./build.sh verweist — am iPhone eine
+      # Begruendung in die falsche Richtung. Einzelne Dateien, kein
       # `type: folder`: Sie sollen in der Wurzel liegen, nicht in `docs/`. Am
       # Mac kopiert `build.sh` dieselben zwei.
-      - path: docs/tc002-protokoll.md
-        buildPhase: resources
-      - path: docs/en/tc002-protocol.md
-        buildPhase: resources
-      # Dieselben zwei fuer AWTRIX NG: Die Referenzansicht laesst zwischen den
-      # Gattungen waehlen, und eine Wahl, hinter der keine Datei liegt, zeigte
-      # den Fehlerschirm.
       - path: docs/awtrix-ng-protokoll.md
         buildPhase: resources
       - path: docs/en/awtrix-ng-protocol.md

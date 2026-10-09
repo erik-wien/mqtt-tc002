@@ -52,10 +52,10 @@ public enum Bildsendung {
             }
             gebaut = Frame(draw: feld.alsDrawBefehle(), dauer: dauer)
         }
-        // Ein quadratisches Stueck ist ein Icon, und ein Icon nimmt auch eine
-        // AWTRIX NG — als GIF, nicht als Pixelfeld (`NGNutzlast.icon`). Ohne
-        // diese Herkunft haette `Anzeigen.nutzlast` dorthin nichts zu schicken
-        // und wiese es als „gemaltes Bild" ab, obwohl es keines ist.
+        // Ein quadratisches Stueck ist ein Icon, und ein Icon nimmt AWTRIX NG
+        // als GIF, nicht als Pixelfeld (`NGNutzlast.icon`). Ohne diese
+        // Herkunft haette `Anzeigen.nutzlast` nichts zu schicken und wiese es
+        // als „gemaltes Bild" ab, obwohl es keines ist.
         //
         // Nur die Kante entscheidet, nicht der Bereich, aus dem es kommt: Was
         // 8 x 8 oder 16 x 16 ist, ist ein Icon, alles andere eine Anzeige.
@@ -63,7 +63,7 @@ public enum Bildsendung {
             let uri = try Bildraster.alsDatenURI(bilder, breite: breite, hoehe: hoehe,
                                                  verzoegerung: verzoegerung)
             gebaut.herkunft = Meldungsherkunft(optionen: Meldungsoptionen(text: ""),
-                                               iconDatenURI: uri, iconKante: breite)
+                                               iconDatenURI: uri)
         }
         return gebaut
     }

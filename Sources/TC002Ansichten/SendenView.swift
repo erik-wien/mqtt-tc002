@@ -61,8 +61,7 @@ public struct SendenView: View {
     @State private var laufschriftFrames: [Bildraster.Einzelbild] = []
     /// Das fertig kodierte GIF zu diesen Einzelbildern — einmal gebaut, zweimal
     /// gebraucht: fuer die Groessenangabe unter der Vorschau und fuers Senden.
-    @State private var laufschriftURI = ""
-    /// Steuert den Inspektor (`.inspector`), der alle Formatierungsregler
+        /// Steuert den Inspektor (`.inspector`), der alle Formatierungsregler
     /// traegt. Offen als Vorgabe: Schrift, Groesse, Ausrichtung und Farbe sind
     /// keine Kuer, sondern werden staendig gebraucht — versteckt haetten sie
     /// beim ersten Start ausgesehen, als waeren sie weg.
@@ -108,18 +107,13 @@ public struct SendenView: View {
     private var gedaechtnis: Slotgedaechtnis { .gemeinsam }
 
     /// Waehlt den Platz und uebernimmt die gemerkten Regler — aber nur, wenn
-    /// das belegbar ist: Pixel muessen mitgelesen worden sein (sonst gibt es
-    /// nichts, wogegen zu pruefen waere), und ihre Pruefsumme muss zu den
-    /// gemerkten Reglern passen (sonst hat ein fremder Absender geschrieben).
-    /// In jedem anderen Fall bleiben die Regler unangeruehrt — auch dann, wenn
-    /// `AppZustand.slotzustand` trotzdem Pixel zeigt (neu gerechnet aus dem
-    /// Gedaechtnis): dass dieses Gedaechtnis noch stimmt, ist dort unbelegt.
+    /// sie noch gelten koennen: Hat die App gesehen, dass ein fremder Absender
+    /// den Platz beschrieben hat, bleiben die Regler unangeruehrt
+    /// (`AppZustand.wiederherstellbarerStand`).
     private func slotWaehlen(_ i: Int) {
         platz = i
         guard let uhr = zustand.referenzUhr,
-              let bild = zustand.slotInhalt[uhr.id]?[i],
-              let stand = gedaechtnis.gemerkt(fuer: uhr.id, platz: i),
-              Slotgedaechtnis.pruefsumme(pixel: bild.pixel) == stand.pruefsumme
+              let stand = zustand.wiederherstellbarerStand(platz: i, fuer: uhr, gedaechtnis: gedaechtnis)
         else { return }
         reglerUebernehmen(stand)
     }
@@ -229,12 +223,6 @@ public struct SendenView: View {
     /// Acht ohne Icon — der Wert zaehlt dann ohnehin nicht.
     private var iconKante: Int { gewaehltesIcon?.kante ?? 8 }
 
-    /// Welche Geraetefront die Vorschau zeigt — die der Uhr, auf die sich die
-    /// Vorschau bezieht (`referenzUhr`, dieselbe, aus der auch die Bloecke
-    /// lesen). `nil` heisst `.tc002`, wie bei `Uhr.typ`: Ohne eingerichtete Uhr
-    /// zeigt die Vorschau die Werksfirmware, nicht gar nichts.
-    private var geraeteart: Geraetetyp? { zustand.referenzUhr?.typ }
-
     /// Das Seitenverhaeltnis des Vorschaubereichs — das **schmalste** aller
     /// eingetragenen Uhren, nicht das der angesehenen.
     ///
@@ -245,34 +233,29 @@ public struct SendenView: View {
     private var vorschauverhaeltnis: Double {
         let alle = zustand.uhren.map { uhr -> Double in
             let mass = Anzeigemass.fuer(uhr)
-            return Geraetezeichnung.fuer(uhr.typ).masse(inhaltHoehe: Double(mass.hoehe)).seitenverhaeltnis
+            return Geraetezeichnung.tc002.masse(inhaltHoehe: Double(mass.hoehe)).seitenverhaeltnis
         }
         return alle.min()
-            ?? Geraetezeichnung.fuer(geraeteart).masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis
+            ?? Geraetezeichnung.tc002.masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis
     }
-
-    /// Dieselbe Auskunft, nur ohne `Optional` — die Reglertabelle im Kern
-    /// fragt nach einer Gattung, nicht nach „vielleicht keiner".
-    private var gattung: Geraetetyp { geraeteart ?? .tc002 }
 
     /// Siehe `.task(id:)` oben.
     private func ausrichtungPruefen() {
-        guard !gattung.waagrechteAusrichtungen.contains(horizontal) else { return }
+        guard !AwtrixNG.waagrechteAusrichtungen.contains(horizontal) else { return }
         horizontal = .links
     }
     /// Auf wie vielen Punkten die Vorschau rechnet: den Maßen der Uhr, auf
-    /// die sie sich bezieht. Ohne eingerichtete Uhr die Werksfirmware — wie bei
-    /// `geraeteart` zeigt die Vorschau dann 52×16 und nicht gar nichts.
-    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .tc002 }
+    /// die sie sich bezieht. Ohne eingerichtete Uhr 52×16 statt gar nichts.
+    private var mass: Anzeigemass { zustand.referenzUhr.map(Anzeigemass.fuer) ?? .vorgabe }
 
-    /// Die Optionen, mit denen die Vorschau rastert — auf einer NG-Uhr mit
-    /// fester Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
+    /// Die Optionen, mit denen die Vorschau rastert — mit fester
+    /// Näherungsschrift, weil das Gerät den Text ohnehin selbst setzt
     /// (`Meldungsoptionen.naeherung`). Was gesendet wird, sind unverändert
     /// `optionen`: `gebauterRahmen` fragt hier nicht.
-    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung(fuer: gattung) }
+    private var vorschauOptionen: Meldungsoptionen { optionen.naeherung }
 
-    /// Die Vorschau einer bestimmten Uhr. Jede hat ihr eigenes Maß und ihre
-    /// eigene Gattung; beim Blättern müssen die Nachbarn deshalb selbst
+    /// Die Vorschau einer bestimmten Uhr. Jede hat ihr eigenes Maß;
+    /// beim Blättern müssen die Nachbarn deshalb selbst
     /// gerastert werden und nicht mit den Zahlen der angesehenen.
     ///
     /// Die Laufschrift bekommt nur die angesehene: Ihre Einzelbilder sind auf
@@ -288,16 +271,14 @@ public struct SendenView: View {
     /// eigenen Zeichnung. Der Name steht nicht mehr hier, sondern einmal
     /// unter dem Blaetterer.
     private func vorschau(fuer uhr: Uhr, angesehen: Bool, platz: CGSize) -> some View {
-        let art = uhr.typ
         let uhrmass = Anzeigemass.fuer(uhr)
-        let o = optionen.naeherung(fuer: art ?? .tc002)
+        let o = optionen.naeherung
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
-        let einheit = Geraetezeichnung.fuer(art).masse(inhaltHoehe: Double(uhrmass.hoehe))
+        let einheit = Geraetezeichnung.tc002.masse(inhaltHoehe: Double(uhrmass.hoehe))
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
         return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
                             kantenlaenge: kante,
-                            typ: art,
                             icon: sitzt ? gewaehltesIcon?.datei : nil,
                             iconKante: iconKante,
                             laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
@@ -317,16 +298,8 @@ public struct SendenView: View {
     /// ganz aussen durchs Fenster und fragt `horizontal` gar nicht erst ab.
     private var waagrechtWirktNicht: Bool { !passt }
 
-    /// Das vorberechnete GIF geht nur mit, wenn es die Größe hat, in der
-    /// gesendet wird. Die Vorschau rastert auf dem Maß der angesehenen Uhr;
-    /// gesendet wird an `zustand.ziele()`, und das dürfen mehrere sein
-    /// (`ZielauswahlView`). Steht die Vorschau auf einer NG-Uhr, ist ihr GIF
-    /// 32×8 — einer gleichzeitig gewählten TC002 hätte das als Nutzlast ein
-    /// Viertel ihrer Anzeige gefüllt. In dem Fall rastert `Meldungsbau.rahmen`
-    /// eben noch einmal selbst, in der Größe, die gesendet wird.
     private func gebauterRahmen() throws -> Frame {
-        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung,
-                               vorberechnet: mass == .tc002 ? laufschriftURI : nil)
+        try Meldungsbau.rahmen(optionen, icon: gewaehltesIcon, sammlung: sammlung)
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. an die Uhr geschickt wird —
@@ -428,8 +401,8 @@ public struct SendenView: View {
                 //
                 // Die Faktoren kommen aus der Zeichnung, nicht von Hand: Fest
                 // abgeschriebene Zahlen (680/584, 356/177, die Masse der
-                // TC002-Front) waeren fuer eine zweite Geraeteart falsch, und
-                // der Rahmen wuerde still beschnitten — keine Meldung, nur ein
+                // TC002-Front) wichen bei jeder Aenderung der Zeichnung still
+                // ab, und der Rahmen wuerde beschnitten — keine Meldung, nur ein
                 // Bild, das nicht ganz passt.
                 // Jede Seite vermisst **ihre eigene** Uhr. Vorher wurde die
                 // Kantenlaenge einmal fuer die angesehene gerechnet und an
@@ -460,7 +433,7 @@ public struct SendenView: View {
                 }
                 HStack(spacing: 8) {
                     Uhrenpunkte(zustand: zustand)
-                    if let hinweis = gattung.vorschauhinweis { Hilfezeichen(hinweis) }
+                    Hilfezeichen(AwtrixNG.vorschauhinweis)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -551,13 +524,13 @@ public struct SendenView: View {
             }
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
-        // Eine Ausrichtung, die es auf dieser Gattung nicht gibt, wird beim
-        // Wechsel sichtbar zurueckgestellt. Sie stehen zu lassen hiesse,
+        // Eine Ausrichtung, die AWTRIX NG nicht kennt, wird beim Start
+        // sichtbar zurueckgestellt. Sie stehen zu lassen hiesse,
         // im Waehler „rechts" zu zeigen und linksbuendig zu senden — und
         // gerade weil das niemandem auffiele, geschieht es hier oben und
         // nicht erst im Sendeweg. `.task` deckt den ersten Aufbau ab, bei dem
         // `onChange` noch nicht gefeuert hat.
-        .task(id: geraeteart) { ausrichtungPruefen() }
+        .task { ausrichtungPruefen() }
         .onChange(of: gewaehltesIcon) { _, neu in
             iconNummer = neu?.nummer ?? ""
             iconKanteGemerkt = neu?.kante ?? 8
@@ -580,28 +553,20 @@ public struct SendenView: View {
         }
         .task(id: laufschriftSchluessel) {
             guard !passt else {
-                laufschriftFrames = []; laufschriftURI = ""
+                laufschriftFrames = []
                 return
             }
-            // Mehrere hundert Einzelbilder rastern, als GIF kodieren, Base64
-            // darueber — bei jedem Tastendruck. Das gehoert nicht auf den
+            // Mehrere hundert Einzelbilder rastern — bei jedem Tastendruck. Das gehoert nicht auf den
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
             let (o, iconBilder, iconKante, mass) = (vorschauOptionen, iconRaster, iconKante, mass)
-            let (frames, uri) = await Task.detached(priority: .userInitiated) {
-                let frames = Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder,
-                                                           iconKante: iconKante, mass: mass)
-                // Aus denselben Einzelbildern, die die Vorschau zeigt — nicht noch
-                // einmal gerastert, sonst liefe die Rechnung zweimal.
-                let uri = (try? Bildraster.alsDatenURI(
-                    frames.map(\.pixel), breite: mass.breite,
-                    hoehe: mass.hoehe, verzoegerung: o.tempo.bilddauer)) ?? ""
-                return (frames, uri)
+            let frames = await Task.detached(priority: .userInitiated) {
+                Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder,
+                                              iconKante: iconKante, mass: mass)
             }.value
             guard !Task.isCancelled else { return }
             laufschriftFrames = frames
-            laufschriftURI = uri
         }
     }
 
@@ -610,7 +575,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(gattung)|\(mass.breite)×\(mass.hoehe)"
+        "\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -710,8 +675,7 @@ public struct SendenView: View {
             // springen. Gesperrt mit Begruendung ist die Bauart der uebrigen
             // Regler hier.
             Section("Icon") {
-                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen,
-                                sperre: { zustand.grafikSperre(hoehe: $0) })
+                IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen)
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
                 // beim Laufen tut.
                 Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
@@ -755,8 +719,7 @@ public struct SendenView: View {
                         // Nimmt, was uebrig ist — der Name ist das Lange von
                         // beiden.
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .gattungssperre(.schriftart, gattung,
-                            sonst: lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
+                        .reglersperre(.schriftart, sonst: lok("Schriftart — bei 16 Pixeln Höhe eignen sich schmale, dicktengleiche Schriften am besten."))
 
                         // Eine Liste, kein Schieber: Die durchgesehenen Groessen haben
                         // Luecken — Tiny5 etwa 7, 8, 9, 12, 15, 16 —, und eine Luecke
@@ -768,8 +731,7 @@ public struct SendenView: View {
                         }
                         .labelsHidden()
                         .fixedSize()
-                        .gattungssperre(.groesse, gattung,
-                            sonst: eigenesRaster
+                        .reglersperre(.groesse, sonst: eigenesRaster
                               ? lokf("Schriftgröße — %@ ist aufs Pixelraster gezeichnet, dazwischen gibt es keine saubere Größe.", schrift)
                               : lok("Schriftgröße"))
                 }
@@ -783,12 +745,12 @@ public struct SendenView: View {
                         Toggle(isOn: $fett) { Image(systemName: "bold") }
                             .toggleStyle(.button)
                             .disabled(!fettWirkt)
-                            .gattungssperre(.fett, gattung, sonst: fettHilfe)
+                            .reglersperre(.fett, sonst: fettHilfe)
                             .accessibilityLabel(Text("Fett"))
                         Toggle(isOn: $grossbuchstaben) { Image(systemName: "capslock") }
                             .toggleStyle(.button)
                             .disabled(!kleinbuchstabenMoeglich)
-                            .gattungssperre(.grossbuchstaben, gattung, sonst: grossHilfe)
+                            .reglersperre(.grossbuchstaben, sonst: grossHilfe)
                             .accessibilityLabel(Text("Großbuchstaben"))
                         // Kein blankes Systemfeld: Bei weisser Schrift
                         // stuende dort ein weisser Fleck auf hellem Grund —
@@ -812,12 +774,12 @@ public struct SendenView: View {
                     Schrittwahl("Rand", wert: $rand, bereich: 0...3)
                 }
                 .disabled(vertikal == .mittig)
-                .gattungssperre(.rand, gattung)
+                .reglersperre(.rand)
 
                 LabeledContent("Abstand") {
                     Schrittwahl("Abstand", wert: $luecke, bereich: 0...3)
                 }
-                .gattungssperre(.abstand, gattung)
+                .reglersperre(.abstand)
 
                 // Segmentschalter statt dreier loser Knoepfe — dieselbe Form wie
                 // die Ausrichtung bei Pages.
@@ -835,7 +797,7 @@ public struct SendenView: View {
                 Picker("Waagrecht", selection: $horizontal) {
                     Image(systemName: "text.alignleft").tag(SendenHAusrichtung.links)
                     Image(systemName: "text.aligncenter").tag(SendenHAusrichtung.mittig)
-                    if gattung.waagrechteAusrichtungen.contains(.rechts) {
+                    if AwtrixNG.waagrechteAusrichtungen.contains(.rechts) {
                         Image(systemName: "text.alignright").tag(SendenHAusrichtung.rechts)
                     }
                 }
@@ -850,7 +812,7 @@ public struct SendenView: View {
                     Image(systemName: "align.vertical.bottom").tag(SendenVAusrichtung.unten)
                 }
                 .pickerStyle(.segmented)
-                .gattungssperre(.senkrecht, gattung)
+                .reglersperre(.senkrecht)
             }
         }
         .formStyle(.grouped)
@@ -950,7 +912,6 @@ public struct SendenView: View {
     /// Er stand als zweite Zeile unter der Vorschau; dort war er
     /// Kleingedrucktes. Er ist aber die Antwort auf „was passiert, wenn ich
     /// drücke", und gehört dorthin, wo man drückt. Bei stehendem Text auf der
-    /// Werksfirmware gibt es nichts Besonderes zu sagen — dann bleibt es beim
     /// Wort „Senden".
     ///
 

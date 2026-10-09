@@ -31,7 +31,7 @@ public struct Slotblock: View {
     /// und der Block bleibt leer.
     public let mass: Anzeigemass
 
-    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .tc002) {
+    public init(platz: Int, zustand: Slotzustand, gewaehlt: Bool, mass: Anzeigemass = .vorgabe) {
         self.platz = platz
         self.zustand = zustand
         self.gewaehlt = gewaehlt

@@ -11,8 +11,6 @@ import TC002Core
 /// Leiste — und was diese Fassung nicht hat. Eine wortgleiche Fassung der
 /// Mac-Hilfe wäre streckenweise schlicht falsch: Weder Malbereich noch
 /// Icon-Editor, weder Inspektor noch Finder gibt es auf dem Telefon.
-/// Seitenwechsel und Scrolltempo stehen auch hier — unter „Einstellungen“,
-/// bei der Uhr, fuer die sie gelten.
 struct HilfeiOS: View {
     @Environment(\.dismiss) private var schliessen
 
@@ -59,7 +57,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.wasEsTut
                 + [
                     .absatz("Die Sendeansicht ist die ganze App: oben die Vorschau, darunter die fünf Plätze und die Liste mit dem, was auf der Uhr liegt und zuletzt geschickt wurde, unten die Formatpille und das Eingabefeld. Links oben stehen die Empfänger, rechts oben die Einstellungen — und das Protokoll, solange es eingeschaltet ist."),
-                    .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres Protokolls — je ein Dokument für die Werksfirmware und für AWTRIX NG. Sie liegt der Fassung für Mac und iPad bei; in dieser Fassung ist sie nicht eingebaut."),
+                    .absatz("Verweise auf die „Gerätereferenz“ meinen die Beschreibung der Uhr und ihres Protokolls — das Dokument zur Uhr. Sie liegt der Fassung für Mac und iPad bei; in dieser Fassung ist sie nicht eingebaut."),
                 ]
         case .verbindung:
             return HilfeInhalt.themen
@@ -72,7 +70,6 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
                 + HilfeInhalt.uhrEntfernen
-                + HilfeInhalt.aufDerUhr
                 + HilfeInhalt.brokerEintragen
                 + HilfeInhalt.brokerNurFuerMqtt
                 + HilfeInhalt.brokerFelderLeer
@@ -96,15 +93,14 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell."),
 
-                    .ueberschrift("Seitenwechsel und blockierende Anzeigen"),
-                    .absatz("Damit das Blättern überhaupt etwas bringt, muss der Seitenwechsel der Uhr über null stehen — sonst bleibt der erste belegte Platz einfach stehen, und die anderen sieht man nie. Diese Einstellung steht unter „Einstellungen“ → „Uhren“ auf der Seite der Uhr, unter „Auf der Uhr“."),
+                    .ueberschrift("Blockierende Anzeigen"),
                 ]
                 + HilfeInhalt.blockierendeAnzeige
                 + [.ueberschrift("Löschen und Dauer")]
                 + HilfeInhalt.blockLoeschen
                 + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
-                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift. Den Seitenwechsel stellt dagegen die Seite der Uhr unter „Einstellungen“.")]
+                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift.")]
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),
@@ -114,7 +110,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconOderAnzeige
                 + [
                     .absatz("Der Icon-Knopf in der Formatpille öffnet das Blatt „Icons“, und dort steht unter „52 × 16“ der Bestand der ganzen Anzeigen — jener Bilder, die im Editor am Mac und am iPad entstehen und über iCloud hier ankommen. Eine antippen führt auf ihre Seite: die Vorschau, darunter die fünf Plätze und „An Platz N senden“. Den Platz wählst du dort, auf der Seite des Bildes."),
-                    .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Schicken ist etwas anderes als malen. Eine AWTRIX NG nimmt so ein Bild nicht: Gemalt wird auf 52 × 16, ihre Anzeige ist 32 × 8; sie lehnt mit Begründung ab."),
+                    .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche. Ein gemaltes Bild lässt sich zurzeit ohnehin nicht an die Uhr schicken."),
 
                     .ueberschrift("Formatpille"),
                     .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon). Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
@@ -184,8 +180,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fehlerReihe
                 + [
                     .ueberschrift("Weitere Symptome"),
-                    .absatz("Blättert die Uhr nicht zur neuen Anzeige, obwohl mehrere angelegt sind, steht ihr Seitenwechsel vermutlich auf „kein Wechsel“ — nachzusehen unter „Einstellungen“ auf der Seite dieser Uhr."),
-                    .absatz("Fehlende Zeichen, insbesondere Umlaute, kann es auf einer Ulanzi-Werksfirmware nicht geben: Die App rastert dorthin jeden Text selbst, stehend wie laufend, und benutzt die umlautlose Schrift der Uhr überhaupt nicht. Auf einer TC001 unter AWTRIX NG setzt die Uhr selbst — dort hängt es an ihrer Schrift."),
+                    .absatz("Fehlende Zeichen, insbesondere Umlaute, gibt es auf AWTRIX NG nicht: Ihre Schrift kennt sie; ein unbekanntes Zeichen wird zum Fragezeichen."),
                 ]
         }
     }

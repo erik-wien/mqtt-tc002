@@ -51,10 +51,14 @@ Icon größer als 26×8 ist.
 🔬 `enlargeApps` steht am gemessenen Gerät auf `true` (Einstellungen und
 `capabilities`).
 
-❓ Ob die Koordinaten von `draw`, `progress` und den Diagrammen bei vergrößerten
-Apps auf dem 26×8-Raster gelten (also verdoppelt erscheinen), geht aus der Doku
-nur indirekt hervor („`y = 1` richtet sich nach den Zeilen des App-Textes“).
-Am Gerät nachzumessen, am besten über `GET /api/v1/display/screen`.
+🔬 **Die Koordinaten von `draw` gelten bei vergrößerten Apps auf dem
+26×8-Raster** (gemessen am 09.10.2026 über `GET /api/v1/display/screen`, mit
+`enlargeApps: true`): Jeder Befehl belegt Quadrate 2×2. `["pixel",0,0]` belegt
+die Spalten 0…1 und die Zeilen 0…1, `["pixel",51,15]` liegt außerhalb und fällt
+weg. In einem `layout` rechnet `draw` dagegen auf dem vollen 52×16, relativ zur
+`box` der Region. Ohne `enlargeApps` rechnet auch die Anzeige auf 52×16.
+
+❓ Ob dasselbe für `progress` und die Diagramme gilt, ist nicht gemessen.
 
 ### 1.2 Der Icon-Bereich
 
@@ -1313,8 +1317,8 @@ am Gerät geprüft):
 - ❓ **Alles zu MQTT am Gerät:** Themen, `/result`-Antworten, `event/error`,
   `state/*`, Last Will und Aufbewahrung sind nur aus der Doku bekannt, nicht
   gemessen — der Client verband sich bei der Messung wegen des Platzhalters im Präfix nicht.
-- ❓ **Das Raster der Zeichenbefehle, Diagramme und des Fortschrittsbalkens bei
-  vergrößerten Apps** (26×8 oder 52×16, §1.1) und die Höhe des Balkens.
+- ❓ **Das Raster der Diagramme und des Fortschrittsbalkens bei vergrößerten
+  Apps** (26×8 oder 52×16; für `draw` gemessen, §1.1) und die Höhe des Balkens.
 - ❓ **Die Einheit von `iconGap`** bei vergrößerten Apps (Spalten des 26×8-Rasters
   oder des Displays).
 - ❓ **Ob `POST /api/v1/device/sleep` über HTTP existiert:** Der MQTT-Teil führt

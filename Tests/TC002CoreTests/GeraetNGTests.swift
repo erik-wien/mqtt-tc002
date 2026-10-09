@@ -1,8 +1,8 @@
 import XCTest
 @testable import TC002Core
 
-/// Die HTTP-Seite einer AWTRIX NG — gegen denselben `URLProtocol`-Doppelgaenger
-/// wie `GeraetTests`. Kein Netz, kein Geraet.
+/// Die HTTP-Seite einer AWTRIX NG — gegen den `URLProtocol`-Doppelgaenger aus
+/// `GeraetTests`. Kein Netz, kein Geraet.
 ///
 /// Die Antworten stammen aus `docs/awtrix-ng-protokoll.md` §7, dort mit 🔬
 /// gekennzeichnet: am Geraet des Auftraggebers gelesen. Kennungen, Adressen und
@@ -15,17 +15,16 @@ final class GeraetNGTests: XCTestCase {
         return URLSession(configuration: k)
     }
 
-    private func geraet(_ typ: Geraetetyp = .awtrixNG) -> Geraet {
-        Geraet(host: "10.0.0.9", sitzung: sitzung(), typ: typ)
+    private func geraet() -> Geraet {
+        Geraet(host: "10.0.0.9", sitzung: sitzung())
     }
 
     override func setUp() {
         Doppelgaenger.antworten = [
             "/api/v1/device": #"{"version":"1.1.0","uid":"a4cf12ab34cd","boardType":"awtrixng","soc":"esp32","hostname":"pixeluhr","mqtt":{"enabled":true,"state":"connected","host":"broker"}}"#,
-            "/api/v1/system": #"{"mqttPrefix":"wohnzimmer/uhr","panelWidth":32,"panels":1,"webPort":80}"#,
+            "/api/v1/system": #"{"mqttPrefix":"wohnzimmer/uhr","webPort":80}"#,
             "/api/v1/apps": #"[{"name":"Time","enabled":true,"inLoop":true,"slot":0,"present":true,"origin":"builtin"},{"name":"meldung2","enabled":true,"inLoop":true,"slot":1,"present":true,"origin":"pushed"},{"name":"tempo","enabled":true,"inLoop":false,"slot":null,"present":true,"origin":"script"}]"#,
-            // Die Werksfirmware, damit die Erkennung eine Gegenprobe hat.
-            "/getBase": #"{"devSn":"TC002-TESTGERAET01","mac":"aabbccdda86b","mcuVer":"V1.0.17","appVer":"1.1.1"}"#,
+            "/api/v1/capabilities": #"{"display":{"width":52,"height":16}}"#,
         ]
         Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
@@ -35,45 +34,10 @@ final class GeraetNGTests: XCTestCase {
         Doppelgaenger.pfade = []
     }
 
-    // MARK: - Welche Firmware antwortet da
-
-    /// `GET /api/v1/device` gibt es nur bei NG, und nur dort steht `boardType`
-    /// darin.
-    func testEineNGAntwortWirdErkannt() throws {
-        XCTAssertEqual(try geraet(.tc002).erkannteArt(), .awtrixNG)
-    }
-
-    /// Die Werksfirmware kennt den Pfad nicht — was immer sie darauf antwortet,
-    /// es ist kein JSON mit `boardType`.
-    func testEinVierhundertvierIstDieWerksfirmware() throws {
-        Doppelgaenger.statusCodes["/api/v1/device"] = 404
-        XCTAssertEqual(try geraet(.tc002).erkannteArt(), .tc002)
-    }
-
-    /// Dasselbe fuer die Weboberflaeche statt eines JSON.
-    func testEineAntwortOhneBoardTypeIstDieWerksfirmware() throws {
-        Doppelgaenger.antworten["/api/v1/device"] = "<html><body>Ulanzi</body></html>"
-        XCTAssertEqual(try geraet(.tc002).erkannteArt(), .tc002)
-    }
-
-    /// Ein `401` wird nicht geraten: NG kann seine ganze Schnittstelle hinter
-    /// eine Anmeldung stellen; dann ist der Typ nicht festzustellen, und
-    /// „also eine TC002" waere die falsche Antwort auf eine Frage, die gar
-    /// nicht beantwortet wurde.
-    func testEineAnmeldepflichtWirdGemeldetUndNichtGeraten() {
-        Doppelgaenger.statusCodes["/api/v1/device"] = 401
-        XCTAssertThrowsError(try geraet(.tc002).erkannteArt()) { fehler in
-            guard case GeraetFehler.anmeldungNoetig = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-        }
-    }
-
     // MARK: - Das Praefix
 
-    /// Die Werksfirmware haengt `_` und die letzten vier MAC-Stellen an; NG
-    /// nimmt `mqttPrefix` genau so, wie es dasteht. Bliebe die Formel stehen,
-    /// schriebe die App auf ein Thema, das kein Geraet abonniert — und NG
+    /// NG nimmt `mqttPrefix` genau so, wie es dasteht. Haengte die App etwas
+    /// an, schriebe sie auf ein Thema, das kein Geraet abonniert — und NG
     /// antwortet darauf gar nicht.
     func testDasNGPraefixBekommtKeinenMacAnhang() throws {
         let ergebnis = try geraet().praefixUndBasis()
@@ -89,18 +53,16 @@ final class GeraetNGTests: XCTestCase {
     }
 
     /// Ist `mqttPrefix` leer, tritt die uid an seine Stelle — die
-    /// zwoelfstellige MAC. Anders als bei der Werksfirmware gibt es also
-    /// keinen Fall „kein Praefix eingestellt".
+    /// zwoelfstellige MAC. Es gibt also keinen Fall „kein Praefix
+    /// eingestellt".
     func testOhneEingestelltesPraefixGiltDieUid() throws {
         Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":""}"#
         XCTAssertEqual(try geraet().themenPraefix(), "a4cf12ab34cd")
     }
 
-    /// Die MAC kommt aus `uid` und nicht aus `/getBase` — den Pfad gibt es hier
-    /// nicht.
+    /// Die MAC kommt aus `uid`.
     func testDieMacIstDieUid() throws {
-        XCTAssertEqual(try geraet().praefixUndBasis().basis.mac, "a4cf12ab34cd")
-        XCTAssertFalse(Doppelgaenger.pfade.contains("/getBase"))
+        XCTAssertEqual(try geraet().praefixUndBasis().mac, "a4cf12ab34cd")
     }
 
     /// Ob NG am Broker haengt, steht in der Geraeteauskunft — einen eigenen
@@ -113,45 +75,60 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Die Masse der Anzeige
 
-    /// Die Breite wird geholt, nicht angenommen: Die Hoehe ist fest 8, die
-    /// Breite ist `panelWidth × panels` — eine 64er Kette ist vorgesehen, und
-    /// eine App, die 32 einprogrammiert, zeigte dort das falsche Bild.
-    func testDieAnzeigenbreiteKommtVomGeraet() throws {
-        XCTAssertEqual(try geraet().praefixUndBasis().breite, 32)
+    /// Das Mass wird geholt, nicht angenommen: `display.width` und
+    /// `display.height` aus `/api/v1/capabilities`. Eine App, die 52 × 16
+    /// einprogrammiert, zeigte auf einer anderen Anzeige das falsche Bild.
+    func testDasMassKommtAusDenCapabilities() throws {
+        XCTAssertTrue(try geraet().praefixUndBasis().mass! == (52, 16))
 
-        Doppelgaenger.antworten["/api/v1/system"] =
-            #"{"mqttPrefix":"p","panelWidth":32,"panels":2}"#
-        XCTAssertEqual(try geraet().praefixUndBasis().breite, 64, "panelWidth × panels")
+        Doppelgaenger.antworten["/api/v1/capabilities"] = #"{"display":{"width":64,"height":8}}"#
+        XCTAssertTrue(try geraet().anzeigemass()! == (64, 8))
     }
 
-    /// Was ausserhalb von 32…128 steht, ist keine Breite, sondern ein
-    /// Missverstaendnis: Das Geraet weist solche Werte selbst mit `422` ab. Als
-    /// „nicht beantwortet" gelesen bleibt die zuletzt bekannte Breite stehen,
-    /// statt gegen einen Ausreisser getauscht zu werden.
-    func testEineUnmoeglicheBreiteGiltAlsNichtBeantwortet() throws {
-        Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":"p","panelWidth":8,"panels":1}"#
-        XCTAssertNil(try geraet().praefixUndBasis().breite)
-
-        Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":"p","panelWidth":256,"panels":1}"#
-        XCTAssertNil(try geraet().praefixUndBasis().breite)
-
-        Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":"p"}"#
-        XCTAssertNil(try geraet().praefixUndBasis().breite)
+    /// Was keine brauchbare Zahl ist, gilt als nicht beantwortet: Es bleibt
+    /// die Vorgabe, statt gegen einen Ausreisser getauscht zu werden.
+    func testEinUnbrauchbaresMassGiltAlsNichtBeantwortet() throws {
+        for antwort in [#"{"display":{"width":0,"height":16}}"#,
+                        #"{"display":{"width":52}}"#,
+                        #"{}"#] {
+            Doppelgaenger.antworten["/api/v1/capabilities"] = antwort
+            XCTAssertNil(try geraet().anzeigemass(), antwort)
+        }
     }
 
-    /// Die Werksfirmware wird danach gar nicht erst gefragt — sie ist fest
-    /// 52×16, und `/api/v1/system` gibt es dort nicht.
-    func testDieWerksfirmwareWirdNichtNachIhrerBreiteGefragt() throws {
-        Doppelgaenger.antworten["/getMqttConfig"] = #"{"isMqtt":true,"mqtt_prefix":"awtrix"}"#
-        XCTAssertNil(try Geraet(host: "10.0.0.1", sitzung: sitzung(), typ: .tc002)
-            .praefixUndBasis().breite)
-        XCTAssertFalse(Doppelgaenger.pfade.contains("/api/v1/system"))
+    /// Zahlen aus der Geraeteantwort bestimmen Pixelfelder: Ausserhalb dessen,
+    /// was NG-Geraete haben, gilt die Antwort als nicht gegeben.
+    func testExtremeMasseWerdenVerworfen() throws {
+        let faelle = [
+            #"{"display":{"width":2000000000,"height":16}}"#,
+            #"{"display":{"width":52,"height":1000}}"#,
+            #"{"display":{"width":-52,"height":16}}"#,
+            #"{"display":{"width":52,"height":-1}}"#,
+            #"{"display":{"width":0,"height":0}}"#,
+            #"{"display":{"width":52.5,"height":16}}"#,
+            #"{"display":{"width":"52","height":16}}"#,
+            #"{"display":{"width":128,"height":16,"maxPixels":832}}"#,
+            #"{"display":{"width":9223372036854775807,"height":9223372036854775807}}"#,
+        ]
+        for antwort in faelle {
+            Doppelgaenger.antworten["/api/v1/capabilities"] = antwort
+            XCTAssertNil(try geraet().anzeigemass(), antwort)
+        }
+        Doppelgaenger.antworten["/api/v1/capabilities"] = #"{"display":{"width":128,"height":16,"maxPixels":2000000000}}"#
+        XCTAssertTrue(try geraet().anzeigemass()! == (128, 16))
+    }
+
+    /// Eine alte oder beschaedigte Einstellungsdatei darf die Vorgabe nicht
+    /// aushebeln.
+    func testEinUnplausiblesGespeichertesMassFaelltAufDieVorgabe() {
+        let uhr = Uhr(name: "x", host: "h", panelbreite: 2_000_000_000, panelhoehe: 16)
+        XCTAssertTrue(uhr.anzeigemass == (52, 16))
     }
 
     // MARK: - Die Belegung
 
     /// `origin` trennt unsere Anzeigen von den eingebauten und von
-    /// Berry-Skripten — genauer als `customList` der Werksfirmware; die
+    /// Berry-Skripten; die
     /// eingebauten mitzuzaehlen hiesse, Bloecke als belegt zu zeigen, weil das
     /// Geraet eine Uhrzeit anzeigt.
     func testNurDieSelbstAbgelegtenAnzeigenZaehlen() throws {
@@ -188,9 +165,8 @@ final class GeraetNGTests: XCTestCase {
                        #"{"text":"hallo"}"#)
     }
 
-    /// Ueber HTTP loescht bei der Werksfirmware der Rumpf `{}`; bei NG
-    /// antwortet genau das `422` und verweist auf eine eigene Route —
-    /// `DELETE /api/v1/apps/{name}`, ohne Rumpf.
+    /// `{}` auf `PUT` loescht nicht, sondern antwortet `422` und verweist auf
+    /// eine eigene Route — `DELETE /api/v1/apps/{name}`, ohne Rumpf.
     func testLoeschenGehtPerDeleteUndOhneRumpf() throws {
         try geraet().anzeigeLoeschen(name: "meldung1")
         XCTAssertEqual(Doppelgaenger.pfade, ["/api/v1/apps/meldung1"])
@@ -228,21 +204,6 @@ final class GeraetNGTests: XCTestCase {
     /// Die Gegenprobe, damit die Pruefung oben nicht alles abweist.
     func testEineAngenommeneAnfrageWirftNicht() {
         XCTAssertNoThrow(try geraet().anzeigeSetzen(#"{"text":"x"}"#, name: "meldung1"))
-    }
-
-    /// Eine ungueltige Adresse ist kein Befund. Sie stillschweigend zur
-    /// Werksfirmware zu erklaeren verdeckte den eigentlichen Fehler — und der
-    /// Anwender saehe „ist eine Ulanzi TC002" statt „da steht ein Leerzeichen
-    /// in der Adresse".
-    func testEineUngueltigeAdresseWirdNichtZurWerksfirmware() {
-        let k = URLSessionConfiguration.ephemeral
-        k.protocolClasses = [Doppelgaenger.self]
-        let krumm = Geraet(host: "a b", sitzung: URLSession(configuration: k))
-        XCTAssertThrowsError(try krumm.erkannteArt()) { fehler in
-            guard case GeraetFehler.ungueltigeAdresse = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-        }
     }
 
 }

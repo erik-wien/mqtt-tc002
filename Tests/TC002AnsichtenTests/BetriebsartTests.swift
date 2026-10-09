@@ -67,11 +67,9 @@ final class BetriebsartTests: XCTestCase {
 
         XCTAssertFalse(text.contains("Es tut das nicht direkt: alle Nachrichten laufen über den MQTT-Broker"),
                        "die Hilfe behauptet noch, jede Sendung gehe über den Broker")
-        XCTAssertTrue(text.contains("Ein MQTT-Broker kann die HTTP-Sendungen nicht nebenbei mithören"),
-                      "die Hilfe sagt nicht, dass ein Broker HTTP-Sendungen nicht mithört")
-        XCTAssertTrue(text.contains("kein halbes Mitlesen, sondern gar keines"),
-                      "die Hilfe zieht den Schluss daraus nicht — ein zusätzlicher Broker bringt im HTTP-Betrieb nichts")
-        XCTAssertTrue(text.contains("Steht die Uhr auf HTTP, gibt es kein Mitlesen"),
+        XCTAssertTrue(text.contains("Im HTTP-Betrieb liest die App am Broker nicht mit; ein zusätzlich eingetragener Broker bleibt dort ungenutzt"),
+                      "die Hilfe sagt nicht, dass ein Broker im HTTP-Betrieb nichts bringt")
+        XCTAssertTrue(text.contains("Im HTTP-Betrieb liest sie nicht mit"),
                       "die Hilfe sagt nicht, dass die Blöcke im HTTP-Betrieb nichts mitlesen")
     }
 

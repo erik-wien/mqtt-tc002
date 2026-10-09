@@ -6,9 +6,8 @@ import TC002Core
 /// Warum es das gibt: Der Inspektor erklärt seine Regler seit jeher über
 /// `.help(…)`: ein Einblendtext beim Verweilen mit der Maus. Am Mac genügt
 /// das. Am iPad gibt es ohne Zeiger kein Verweilen, und damit war jede
-/// Erklärung dort unerreichbar — `Gattungssperre.swift` hält denselben Mangel
-/// für die Sperrgründe fest, und das Rückstandsdokument führte ihn als offene
-/// Entscheidung über die Oberfläche. Dies ist die Antwort darauf: derselbe
+/// Erklärung dort unerreichbar — `Reglersperre.swift` hält denselben Mangel
+/// für die Sperrgründe fest. Dies ist die Antwort darauf: derselbe
 /// Text, aber zusätzlich hinter einem Zeichen, das man sieht und trifft.
 ///
 /// Der Text steht deshalb zweimal dran — als `.help` fürs Verweilen und im

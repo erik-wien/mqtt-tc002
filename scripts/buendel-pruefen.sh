@@ -43,7 +43,7 @@ if [ -d "$APP/Contents" ]; then
     # mit ihm diese Pruefung.
     RESSOURCEN="$APP/Contents/Resources"
     mac_fehlt=0
-    for pflicht in en.lproj/Localizable.strings tc002-protokoll.md tc002-protocol.md \
+    for pflicht in en.lproj/Localizable.strings \
                    awtrix-ng-protokoll.md awtrix-ng-protocol.md LICENSE \
                    LIZENZ-AUSNAHME.md; do
         if [ ! -s "$RESSOURCEN/$pflicht" ]; then
@@ -118,7 +118,7 @@ fi
 # Buendelwurzel; fehlt sie, steht statt des Dokuments ein Fehlerschirm, der
 # aufs Bauen mit ./build.sh verweist und damit am iPhone in die falsche
 # Richtung zeigt. Ein gruener Bau sagt darueber nichts.
-for dok in tc002-protokoll.md tc002-protocol.md awtrix-ng-protokoll.md awtrix-ng-protocol.md; do
+for dok in awtrix-ng-protokoll.md awtrix-ng-protocol.md; do
     if [ ! -s "$APP/$dok" ]; then
         echo "fehlt   $dok"
         fehlt=1

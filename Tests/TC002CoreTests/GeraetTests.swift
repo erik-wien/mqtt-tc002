@@ -45,199 +45,20 @@ final class Doppelgaenger: URLProtocol {
 }
 
 final class GeraetTests: XCTestCase {
-    private func geraet() -> Geraet {
+    private func geraet(host: String) -> Geraet {
         let k = URLSessionConfiguration.ephemeral
         k.protocolClasses = [Doppelgaenger.self]
-        return Geraet(host: "10.0.0.1", sitzung: URLSession(configuration: k))
-    }
-
-    /// Dasselbe mit einer Adresse, die keine ist.
-    private func geraet(host: String, typ: Geraetetyp = .tc002) -> Geraet {
-        let k = URLSessionConfiguration.ephemeral
-        k.protocolClasses = [Doppelgaenger.self]
-        return Geraet(host: host, sitzung: URLSession(configuration: k), typ: typ)
+        return Geraet(host: host, sitzung: URLSession(configuration: k))
     }
 
     override func setUp() {
-        Doppelgaenger.antworten = [
-            "/getBase": #"{"devSn":"TC002-TESTGERAET01","ssid":"heimnetz","ip":"192.168.1.20","mac":"aabbccdda86b","mcuVer":"V1.0.17","appVer":"1.1.1"}"#,
-            "/getMqttConfig": #"{"isMqtt":true,"ip":"192.168.1.10","port":"1883","mqtt_name":"awtrix","mqtt_pwd":"x","mqtt_prefix":"awtrix","isHADiscoveryEnabled":false}"#,
-            "/getMqttStatus": #"{"code":200,"data":{"enabled":true,"connected":true}}"#,
-            "/getConfig": #"{"brightness":{"level":"high"},"volume":4,"carouselSpeed":0,"scrollSpeed":7}"#,
-            "/setConfig": #"{"code":200,"message":"Settings saved successfully"}"#,
-            // Genau die Antwort, die am 13.09.2026 am Geraet gemessen wurde.
-            "/api/customList": #"{"apps":["meldung2","meldung5","meldung3"],"count":3}"#,
-        ]
+        Doppelgaenger.antworten = [:]
         Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
         Doppelgaenger.abfragen = [:]
         Doppelgaenger.methoden = [:]
         Doppelgaenger.inhaltstypen = [:]
         Doppelgaenger.pfade = []
-    }
-
-    /// Das tatsaechliche Praefix ist das eingestellte plus die letzten vier
-    /// Stellen der MAC.
-    func testThemenPraefixWirdAusPraefixUndMacGebildet() throws {
-        XCTAssertEqual(try geraet().themenPraefix(), "awtrix_a86b")
-    }
-
-    /// Ohne eingestelltes Praefix ergaebe die Formel "_a86b" — ein Thema, auf das
-    /// die Uhr nie hoert. Das darf nicht als gueltiges Praefix durchgehen.
-    func testLeeresPraefixErgibtFehlerStattUnsinn() {
-        Doppelgaenger.antworten["/getMqttConfig"] = #"{"isMqtt":true,"mqtt_prefix":""}"#
-        XCTAssertThrowsError(try geraet().themenPraefix()) { fehler in
-            guard case GeraetFehler.keinPraefix = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-        }
-    }
-
-    /// Praefix und Basisdaten kommen zusammen — sonst wird /getBase zweimal geholt.
-    func testPraefixUndBasisLiefertBeides() throws {
-        let ergebnis = try geraet().praefixUndBasis()
-        XCTAssertEqual(ergebnis.praefix, "awtrix_a86b")
-        XCTAssertEqual(ergebnis.basis.mac, "aabbccdda86b")
-    }
-
-    func testBasisdaten() throws {
-        let b = try geraet().basis()
-        XCTAssertEqual(b.mac, "aabbccdda86b")
-        XCTAssertEqual(b.mcuVersion, "V1.0.17")
-        XCTAssertEqual(b.appVersion, "1.1.1")
-    }
-
-    func testVerbindungsstand() throws {
-        XCTAssertTrue(try geraet().verbunden())
-    }
-
-    /// setConfig erwartet die vollstaendige Konfiguration, nicht nur das geaenderte Feld.
-    func testEinstellungSetzenSchicktAllesZurueck() throws {
-        try geraet().konfigurationSetzen("carouselSpeed", 10)
-        let gesendet = try XCTUnwrap(Doppelgaenger.gesendeteRuempfe["/setConfig"])
-        XCTAssertTrue(gesendet.contains("\"carouselSpeed\":10"))
-        XCTAssertTrue(gesendet.contains("\"volume\""), "die übrigen Felder müssen mit")
-        XCTAssertTrue(gesendet.contains("\"scrollSpeed\""))
-    }
-
-    /// Welche Anzeigen auf der Uhr stehen, sagt sie ueber HTTP — und zwar unter
-    /// `/api/customList`. `/customList` ohne `/api` liefert nichts, ist aber
-    /// kein Mangel der Firmware, sondern der falsche Pfad.
-    func testAnzeigennamenKommenVomApiPfad() throws {
-        XCTAssertEqual(try geraet().anzeigennamen(), ["meldung2", "meldung5", "meldung3"])
-    }
-
-    /// Eine leere Liste ist eine Auskunft — auf der Uhr steht nichts —, kein
-    /// Fehler. Ohne den Unterschied waere „frei" nicht von „nicht gefragt" zu
-    /// trennen.
-    func testLeereAnzeigenlisteIstKeinFehler() throws {
-        Doppelgaenger.antworten["/api/customList"] = #"{"apps":[],"count":0}"#
-        XCTAssertEqual(try geraet().anzeigennamen(), [])
-    }
-
-    /// Eine Antwort ohne `apps` ist keine leere Liste, sondern keine Liste. Sie
-    /// darf nicht als „auf der Uhr steht nichts" durchgehen — das raeumte in
-    /// `AppZustand` die Belegung ab.
-    func testAntwortOhneAppsFeldIstEinFehler() {
-        Doppelgaenger.antworten["/api/customList"] = #"{"code":200}"#
-        XCTAssertThrowsError(try geraet().anzeigennamen()) { fehler in
-            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
-        }
-    }
-
-    // MARK: - Der HTTP-Weg fuer Anzeigen (§5.6 und §5.8)
-
-    /// Anlegen geht auf `/api/custom`, der Name steht in der Abfrage, und der
-    /// Rumpf ist der Rahmen selbst — dieselben Bytes, die ueber MQTT auf
-    /// `<praefix>/custom/<name>` gingen.
-    func testAnzeigeSetzenSchicktDenRahmenAnDenApiPfad() throws {
-        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
-        try geraet().anzeigeSetzen(#"{"draw":[]}"#, name: "meldung2")
-
-        XCTAssertEqual(Doppelgaenger.pfade, ["/api/custom"])
-        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=meldung2")
-        XCTAssertEqual(Doppelgaenger.methoden["/api/custom"], "POST")
-        XCTAssertEqual(Doppelgaenger.gesendeteRuempfe["/api/custom"], #"{"draw":[]}"#)
-    }
-
-    /// Ein Anzeigenname mit einem Zeichen, das in einer Abfrage etwas anderes
-    /// bedeutet, darf die Adresse nicht zerlegen.
-    func testAnzeigennameWirdKodiert() throws {
-        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
-        try geraet().anzeigeSetzen("{}", name: "a b&c")
-        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=a%20b%26c")
-    }
-
-    /// Ueber HTTP loescht der Rumpf `{}` — ein leerer Rumpf antwortet zwar
-    /// dasselbe `ok`, laesst die Anzeige aber stehen (§5.6). Ueber MQTT ist es
-    /// genau umgekehrt.
-    func testAnzeigeLoeschenSchicktGeschweifteKlammernUndNichtsLeeres() throws {
-        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
-        try geraet().anzeigeLoeschen(name: "meldung2")
-
-        XCTAssertEqual(Doppelgaenger.gesendeteRuempfe["/api/custom"], "{}",
-                       "ein leerer Rumpf loescht ueber HTTP nicht")
-        XCTAssertEqual(Doppelgaenger.abfragen["/api/custom"], "name=meldung2")
-    }
-
-    func testUmschaltenGehtAufDenApiPfad() throws {
-        Doppelgaenger.antworten["/api/switchDiyApp"] =
-            #"{"code":200,"message":"app switch requested","data":{"name":"meldung2","index":111}}"#
-        try geraet().umschalten(auf: "meldung2")
-
-        XCTAssertEqual(Doppelgaenger.pfade, ["/api/switchDiyApp"])
-        XCTAssertEqual(Doppelgaenger.abfragen["/api/switchDiyApp"], "name=meldung2")
-        XCTAssertEqual(Doppelgaenger.methoden["/api/switchDiyApp"], "POST")
-    }
-
-    /// Die gemessene Ablehnung steht im Rumpf, nicht im HTTP-Status:
-    /// `{"code":404,"message":"custom app not found"}` kommt mit Status 200
-    /// daher. Wer nur auf den Status sieht, meldet eine Ablehnung als Erfolg —
-    /// und waere damit genauso stumm wie MQTT.
-    func testAblehnungImRumpfWirdErkanntObwohlDerStatusStimmt() {
-        Doppelgaenger.antworten["/api/switchDiyApp"] = #"{"code":404,"message":"custom app not found"}"#
-        Doppelgaenger.statusCodes["/api/switchDiyApp"] = 200
-
-        XCTAssertThrowsError(try geraet().umschalten(auf: "gibtsnicht")) { fehler in
-            guard case GeraetFehler.abgelehnt(let name, let code, let meldung) = fehler else {
-                return XCTFail("war stattdessen \(fehler)")
-            }
-            XCTAssertEqual(name, "gibtsnicht")
-            XCTAssertEqual(code, 404)
-            XCTAssertEqual(meldung, "custom app not found")
-        }
-    }
-
-    /// Die Gegenprobe, damit die Pruefung oben nicht alles abweist: Ein
-    /// quittiertes `code: 200` ist ein Erfolg und wirft nicht.
-    func testQuittierteAnnahmeWirftNicht() throws {
-        Doppelgaenger.antworten["/api/custom"] = #"{"code":200,"message":"ok"}"#
-        XCTAssertNoThrow(try geraet().anzeigeSetzen("{}", name: "meldung1"))
-    }
-
-    /// Kein gueltiges JSON darf nicht als roher Systemfehler nach aussen dringen.
-    func testUngueltigesJsonErgibtGeraetFehler() {
-        Doppelgaenger.antworten["/getBase"] = "das ist kein JSON"
-        XCTAssertThrowsError(try geraet().basis()) { fehler in
-            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
-        }
-    }
-
-    /// Eine leere Antwort ist ebenfalls kein gueltiges JSON und muss genauso behandelt werden.
-    func testLeereAntwortErgibtGeraetFehler() {
-        Doppelgaenger.antworten["/getBase"] = ""
-        XCTAssertThrowsError(try geraet().basis()) { fehler in
-            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
-        }
-    }
-
-    /// Ein HTTP-Fehlerstatus muss erkannt werden, bevor irgendwelche (dann leeren)
-    /// Werte zurueckgegeben werden — sonst zeigt die Oberflaeche Unsinn als Wahrheit an.
-    func testHttpFehlerstatusErgibtGeraetFehlerVorLeerenWerten() {
-        Doppelgaenger.statusCodes["/getBase"] = 500
-        XCTAssertThrowsError(try geraet().basis()) { fehler in
-            XCTAssertTrue(fehler is GeraetFehler, "war stattdessen \(type(of: fehler))")
-        }
     }
 
     // MARK: - Eine Adresse, die keine ist
@@ -249,7 +70,7 @@ final class GeraetTests: XCTestCase {
     /// Adresse kommt aus den Einstellungen und ist von Hand eingetippt und
     /// muss eine Meldung ergeben koennen, keinen Absturz.
     func testEineAdresseMitLeerzeichenWirftStattAbzustuerzen() {
-        XCTAssertThrowsError(try geraet(host: "awtrix a86b").basis()) { fehler in
+        XCTAssertThrowsError(try geraet(host: "awtrix a86b").praefixUndBasis()) { fehler in
             guard case GeraetFehler.ungueltigeAdresse(let genannt) = fehler else {
                 return XCTFail("falscher Fehler: \(fehler)")
             }
@@ -257,23 +78,22 @@ final class GeraetTests: XCTestCase {
         }
     }
 
-    /// Derselbe Weg bei einer AWTRIX — dort lief der Absturz ueber
-    /// `holeFeld` (`GET /api/v1/apps`), einen anderen Aufrufer derselben
-    /// Zeile.
+    /// Derselbe Weg ueber `holeFeld` (`GET /api/v1/apps`), einen anderen
+    /// Aufrufer derselben Zeile.
     func testAuchDerNGWegWirft() {
-        XCTAssertThrowsError(try geraet(host: "awtrix a86b", typ: .awtrixNG).anzeigennamen())
+        XCTAssertThrowsError(try geraet(host: "awtrix a86b").anzeigennamen())
     }
 
     /// Und der schreibende Weg (`PUT`), der seine URL frueher selbst baute.
     func testAuchDerSchreibendeWegWirft() {
-        XCTAssertThrowsError(try geraet(host: "a b", typ: .awtrixNG)
+        XCTAssertThrowsError(try geraet(host: "a b")
             .anzeigeSetzen("{}", name: "meldung1"))
     }
 
     /// Die Gegenprobe: Ein leerer Host stuerzt nicht ab und wirft auch nicht
-    /// hier — `http:///getBase` ist eine gueltige URL.
+    /// hier — `http:///api/v1/device` ist eine gueltige URL.
     func testEinLeererHostErgibtEineGueltigeURL() {
-        XCTAssertNotNil(URL(string: "http:///getBase"))
+        XCTAssertNotNil(URL(string: "http:///api/v1/device"))
     }
 
 }

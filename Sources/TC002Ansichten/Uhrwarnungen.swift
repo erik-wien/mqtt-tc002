@@ -21,8 +21,7 @@ public struct Adresswarnung: View {
 }
 
 /// Zeigt, warum eine Uhr nicht am Broker hängt — wenn die Geräteauskunft
-/// selbst einen Grund nennt (z. B. `badCredentials`). Nur AWTRIX NG liefert
-/// dieses Feld; die Werksfirmware kennt es nicht.
+/// selbst einen Grund nennt (z. B. `badCredentials`).
 public struct Brokergrund: View {
     let grund: String?
 

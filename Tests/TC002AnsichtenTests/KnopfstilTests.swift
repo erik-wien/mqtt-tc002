@@ -249,15 +249,12 @@ final class KnopfstilTests: XCTestCase {
 
     /// Die Schrittwahl ist ein Element mit Trennstrich, nicht zwei Knöpfe,
     /// und ihr Wert steht in einem eigenen Kästchen. Beides steckt in
-    /// `Schrittwahl`; hier steht, dass die drei Stellen sie auch benutzen und
+    /// `Schrittwahl`; hier steht, dass die Stellen sie auch benutzen und
     /// nicht wieder je einen nackten `Stepper` hinschreiben.
-    func testDieDreiSchrittwahlenGehenUeberDasGemeinsameElement() throws {
-        // „Scrolltempo" gehoert in die Einstellungen (`Uhreinstellungen`),
-        // weil es das Geraet einstellt und nicht die Meldung. Im Zeit-Reiter
-        // (`Zeitabschnitte`) bleiben Dauer und Lauftempo, beide ohne
-        // Schrittwahl.
-        for (datei, anzahl) in [("Sources/TC002Ansichten/SendenView.swift", 2),
-                                ("Sources/TC002Ansichten/Uhreinstellungen.swift", 1)] {
+    func testDieSchrittwahlenGehenUeberDasGemeinsameElement() throws {
+        // Im Zeit-Reiter (`Zeitabschnitte`) bleiben Dauer und Lauftempo, beide
+        // ohne Schrittwahl.
+        for (datei, anzahl) in [("Sources/TC002Ansichten/SendenView.swift", 2)] {
             let text = try zeilen(datei).map(\.text).joined(separator: "\n")
             let treffer = text.components(separatedBy: "Schrittwahl(").count - 1
             XCTAssertEqual(treffer, anzahl,

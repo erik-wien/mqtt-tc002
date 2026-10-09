@@ -12,9 +12,6 @@ import TC002Core
 struct VorschauView: View {
     let feld: Pixelfeld
     var kantenlaenge: Double = 8
-    /// Welche Geraetefront darum liegt und wie die Punkte darin aussehen.
-    /// `Optional` wie `Uhr.typ`: `nil` heisst `.tc002`.
-    var typ: Geraetetyp? = nil
     /// Wird an derselben Stelle und in derselben Groesse gezeigt, an der die Uhr es
     /// spaeter zeichnet — sonst zeigt die Vorschau etwas anderes als das Geraet.
     var icon: URL? = nil
@@ -22,9 +19,7 @@ struct VorschauView: View {
     /// Kantenlaenge des Icons — 8 oder 16. `iconY` folgt ihr, damit die
     /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
     var iconKante: Int = 8
-    /// Senkrecht mittig im gezeigten Feld, nicht in festen sechzehn Zeilen:
-    /// Auf den acht Zeilen einer NG-Uhr saesse ein 8×8 sonst auf Zeile 4 und
-    /// waere zur Haelfte abgeschnitten.
+    /// Senkrecht mittig im gezeigten Feld.
     var iconY: Int { Meldungsbau.iconY(kante: iconKante, mass: mass) }
     private var mass: Anzeigemass { Anzeigemass(breite: feld.breite, hoehe: feld.hoehe) }
     /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
@@ -40,12 +35,12 @@ struct VorschauView: View {
 
     /// Wie ein einzelner Punkt gezeichnet wird — kommt aus derselben Quelle
     /// wie der Rahmen, damit grobes Panel und grober Punkt zusammenpassen.
-    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.tc002.pixelstil }
 
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge, typ: typ) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge) {
             Group {
                 if let laufschriftBilder, !laufschriftBilder.isEmpty {
                     if laufschriftBilder.count > 1 {

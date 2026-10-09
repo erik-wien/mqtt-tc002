@@ -26,11 +26,8 @@ public enum HilfeInhalt {
     /// Wort, das Vorwissen verlangt, und die Einstellungen sind ein Formular
     /// fuer etwas, das man nicht kennt.
     ///
-    /// Beide Bauarten schon im ersten Satz (`Geraetetyp`): Wer die Einleitung
-    /// liest, hat die Uhr vor sich, die er einrichten will, und eine
-    /// Einleitung, die nur eine Bauart nennt, schliesst die andere aus.
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("Pixel Clock Messenger schickt Text, Farbe und kleine Bilder an eine Pixeluhr: an eine Ulanzi TC002 mit ihrer Werksfirmware — der Software, die ab Werk darauf läuft — oder an eine TC001 mit der freien Firmware AWTRIX NG. Du tippst den Text unten ein, die Vorschau darüber zeigt, wie er auf der Uhr aussehen wird, und die Eingabetaste schickt ihn hin."),
+        .absatz("Pixel Clock Messenger schickt Text, Farbe und kleine Bilder an eine Pixeluhr: an eine Ulanzi TC002 mit der freien Firmware AWTRIX NG. Du tippst den Text unten ein, die Vorschau darüber zeigt, wie er auf der Uhr aussehen wird, und die Eingabetaste schickt ihn hin."),
         .ueberschrift("Zwei Wege zur Uhr"),
         .absatz("Wie die Anzeige zur Uhr kommt, legst du je Uhr unter „Einstellungen“ fest. Es gibt zwei Wege, und sie unterscheiden sich vor allem darin, was du hinterher weißt."),
         .untertitel("Direkt über HTTP"),
@@ -39,8 +36,8 @@ public enum HilfeInhalt {
         .absatz("Die App legt die Anzeige bei einem Vermittler im eigenen Netz ab, und die Uhr holt sie dort. Eine Rückmeldung bekommst du auf diesem Weg nie — auch dann nicht, wenn die Uhr ausgeschaltet ist. Dafür liest die App mit: Schickt ein anderes Programm etwas an dieselbe Uhr, sieht sie es und zeigt es dir an."),
         .ueberschrift("Was ist MQTT?"),
         .absatz("MQTT ist die Sprache, in der Geräte im Haus einander Nachrichten hinterlassen. In der Mitte steht ein Programm, das die Nachrichten annimmt und weiterreicht: der **MQTT-Broker**, meist ein kleiner Server im eigenen Netz. Wer etwas zu sagen hat, legt es dort unter einem Namen ab — dem Thema —, und wer es haben will, meldet sich für dieses Thema an und bekommt jede neue Nachricht zugestellt. Die Uhren hängen selbst an einem solchen Broker; diese App legt ihre Anzeigen dort für sie ab."),
-        .ueberschrift("Zwei Bauarten von Uhr"),
-        .absatz("Welche Bauart eine Uhr ist, steht ebenfalls unter „Einstellungen“, und sie entscheidet, was die Regler bewirken. Auf einer Ulanzi mit Werksfirmware setzt **diese App** den Text in Pixel um; Schriftart, Größe, Fett, Rand und Abstand gelten also. Eine AWTRIX NG setzt ihn mit ihrer eigenen Schrift — dort stehen dieselben Regler gesperrt da und sagen beim Antippen, warum."),
+        .ueberschrift("Wer den Text setzt"),
+        .absatz("Die Uhr setzt den Text mit ihrer eigenen Schrift. Schriftart, Größe, Fett, Rand und Abstand steuern deshalb nur die Vorschau; sie sind gesperrt und sagen beim Antippen, warum."),
         .absatz("Ein paar Dinge macht die App immer selbst über HTTP, gleich welcher Weg für eine Uhr eingestellt ist: die Uhr abfragen, holen, welche Anzeigen gerade auf ihr stehen, und die Einstellungen des Geräts schreiben."),
     ]
 
@@ -57,30 +54,24 @@ public enum HilfeInhalt {
         .untertitel("HTTP"),
         .absatz("Die Uhr antwortet. Sie bestätigt jede Anzeige, jede Löschung und jedes Umschalten, und eine abgewiesene Sendung erkennst du als solche. Du brauchst dafür weder einen MQTT-Broker noch ein Themen-Präfix — nur die Adresse der Uhr."),
         .untertitel("MQTT"),
-        .absatz("Die Uhr antwortet nie; was das für die Fehlersuche heißt, steht unter „Wenn nichts erscheint“. Dafür liest die App am MQTT-Broker mit, was andere Programme an dieselbe Uhr schicken — nur so kann einer der fünf Blöcke eine fremde Sendung zeigen."),
-        .absatz("Beides zugleich gibt es nicht. Ein MQTT-Broker kann die HTTP-Sendungen nicht nebenbei mithören: Die Uhr reicht sie nicht an ihn weiter. Nachgemessen am 13.09.2026 — 45 Sekunden auf allen drei Themen einer Uhr gehorcht, mit einer Löschung über HTTP mittendrin, und es kam eine einzige Nachricht, die nur sagte, dass die Uhr online ist. Ein zusätzlich eingetragener Broker bringt im HTTP-Betrieb deshalb kein halbes Mitlesen, sondern gar keines."),
+        .absatz("Die Uhr antwortet nicht unmittelbar. Eine abgewiesene Sendung meldet sie auf einem eigenen Thema (`…/result`), das die App mitliest und als Meldung zeigt; was darüber hinaus schiefgeht, steht unter „Wenn nichts erscheint“. Außerdem liest die App am MQTT-Broker mit, was andere Programme an dieselbe Uhr schicken: Ein Block zeigt den Platz dann als belegt."),
+        .absatz("Beides zugleich gibt es nicht. Im HTTP-Betrieb liest die App am Broker nicht mit; ein zusätzlich eingetragener Broker bleibt dort ungenutzt."),
         .absatz("Eine neu eingetragene Uhr steht auf HTTP. Eine Uhr, die du vor dieser Fassung eingerichtet hast, bleibt auf MQTT — ein stiller Wechsel nähme ihr das Mitlesen. Umstellen kannst du jederzeit, der Wechsel wirkt sofort."),
     ]
 
-    /// Die zweite Achse neben der Betriebsart: was fuer ein Geraet
-    /// antwortet. Gilt fuer beide Oberflaechen — es ist eine Aussage ueber die
-    /// Uhr, nicht ueber ein Fenster.
-    ///
-    /// Vier Absaetze und keiner mehr: was gewaehlt wird und wer es feststellt,
-    /// was auf einer AWTRIX besser ist, was dort wegfaellt, und was gar nicht
-    /// geht. Alles Weitere steht in der Geraetereferenz.
+    /// Was AWTRIX NG auf der TC002 kann und was nicht. Gilt fuer beide
+    /// Oberflaechen — es ist eine Aussage ueber die Uhr, nicht ueber ein
+    /// Fenster. Alles Weitere steht in der Geraetereferenz.
     public static let geraeteart: [Hilfebaustein] = [
-        .ueberschrift("Geräteart: Ulanzi TC002 oder AWTRIX NG"),
-        .absatz("Neben der Betriebsart hat jede Uhr eine zweite Wahl: welche Firmware auf ihr läuft. „Abfragen“ stellt das selbst fest und trägt es ein. Von Hand zu wählen ist es nur dort, wo das nicht gelingt — eine AWTRIX kann ihre Schnittstelle hinter eine Anmeldung stellen, und dann antwortet sie auf keine Frage."),
-        .absatz("Der Unterschied ist einer im Grundsatz: Die Werksfirmware bekommt von dieser App **fertige Pixel**, eine AWTRIX NG bekommt den **Text** und setzt ihn mit ihrer eigenen Schrift. Alles Weitere folgt daraus."),
-        .abbildung(.geraetegroessen),
-        .untertitel("Was auf einer AWTRIX NG besser ist"),
-        .absatz("Ihre Schrift kann Umlaute, Akzente, das Eurozeichen und Kyrillisch von Haus aus, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst, ohne Größengrenze. Und sie antwortet auf jede Sendung — eine abgewiesene meldet sie als abgewiesen, was über MQTT sonst nie vorkommt."),
+        .ueberschrift("Die Uhr: AWTRIX NG"),
+        .absatz("Die App spricht AWTRIX NG: Sie schickt der Uhr den **Text** samt Reglern, und die Uhr setzt ihn mit ihrer eigenen Schrift. Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
+        .untertitel("Was die Uhr besser kann"),
+        .absatz("Ihre Schrift kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch von Haus aus, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen statt spurlos zu verschwinden. Langer Text läuft von selbst. Und sie antwortet auf jede Sendung über HTTP — eine abgewiesene meldet sie als abgewiesen."),
         .untertitel("Was dort wegfällt"),
-        .absatz("Schriftart, Größe, Fett, Rand und Zeichenabstand steuern, wie **diese App** den Text in Pixel umsetzt. Setzt die Uhr ihn selbst, gibt es daran nichts zu drehen. Senkrecht ausrichten geht ebenfalls nicht, ihre Grundlinie liegt fest, und rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen beim Antippen, warum."),
-        .untertitel("Was dort nicht geht"),
-        .absatz("Ein gemaltes Bild und ein Bild aus der Sammlung: Gemalt wird auf 52 × 16 Pixel, die AWTRIX hat 32 × 8. Ebenso ein 16 × 16-Icon — auf acht Zeilen hat es keinen Platz. Beides lehnt sie ab, statt es stillschweigend zu verschlucken."),
-        .absatz("Die fünf Blöcke unter der Vorschau zeigen bei einer AWTRIX dasselbe wie die Vorschau: eine Näherung auf ihren 32 × 8, in einer Ersatzschrift. Die Uhr setzt den Text mit ihrer eigenen Schrift, und die kennt diese App nicht — der Block sagt dir also, was auf dem Platz liegt, nicht, wie es dort aussieht. Ob ein Platz belegt ist, weiß er dafür genauer als bei der Werksfirmware: Die AWTRIX nennt zu jeder Anzeige, wer sie abgelegt hat."),
+        .absatz("Schriftart, Größe, Fett, Rand und Zeichenabstand steuern, wie diese App den Text in Pixel umsetzt. Setzt die Uhr ihn selbst, gibt es daran nichts zu drehen. Senkrecht ausrichten geht ebenfalls nicht, ihre Grundlinie liegt fest, und rechtsbündig kennt sie nicht. Die Regler stehen deshalb gesperrt da und sagen beim Antippen, warum."),
+        .untertitel("Was zurzeit nicht geht"),
+        .absatz("Ein gemaltes Bild und ein Bild aus der Sammlung lassen sich im Augenblick nicht an die Uhr schicken; Icons gehen als Bild neben dem Text hinaus. Die Dateien bleiben erhalten."),
+        .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau: eine Näherung in einer Ersatzschrift. Die Uhr setzt den Text mit ihrer eigenen Schrift, und die kennt diese App nicht — der Block sagt dir also, was auf dem Platz liegt, nicht, wie es dort aussieht. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
     /// Die Ueberschrift des Brokerabschnitts und was darunter steht. Beide
@@ -115,8 +106,8 @@ public enum HilfeInhalt {
             "**Erweitert** — die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",
         ]),
         .ueberschrift("Konfigurieren der Pixel Uhr"),
-        .absatz("Tippst du unter „Uhren“ eine Zeile an, öffnet sich die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Geräteart, Betriebsart, „Auf der Uhr“ (nur bei einer Ulanzi mit Werksfirmware), „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser einen Uhr, nicht der gerade angesehenen."),
-        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse, Themen-Präfix und Geräteart, und rechts das Zeichen, ob sie beim MQTT-Broker angemeldet ist."),
+        .absatz("Tippst du unter „Uhren“ eine Zeile an, öffnet sich die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Betriebsart, „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser einen Uhr, nicht der gerade angesehenen."),
+        .absatz("In der Liste selbst steht je Uhr nur ihr Name, darunter Adresse und Themen-Präfix, und rechts das Zeichen, ob sie beim MQTT-Broker angemeldet ist."),
     ]
 
     /// Womit die App beginnt, solange nichts eingerichtet ist
@@ -132,7 +123,7 @@ public enum HilfeInhalt {
     /// dieselbe Zeile am Fuss der Liste und dasselbe Blatt dahinter.
     public static let uhrHinzufuegen: [Hilfebaustein] = [
         .ueberschrift("Uhr hinzufügen"),
-        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name. Den Namen kannst du weglassen — dann heißt die Uhr „Uhr 1“, „Uhr 2“ und so fort, und du kannst sie später umbenennen. Alles Übrige — Themen-Präfix und Geräteart — stellt die App selbst fest."),
+        .absatz("Unter „Einstellungen“ → „Uhren“ steht am Fuß der Liste die Zeile „Uhr hinzufügen …“. Sie öffnet ein Blatt mit Adresse und Name. Den Namen kannst du weglassen — dann heißt die Uhr „Uhr 1“, „Uhr 2“ und so fort, und du kannst sie später umbenennen. Alles Übrige — das Themen-Präfix — stellt die App selbst fest."),
     ]
 
     /// Die zwei Wege, eine Uhr loszuwerden, und dass beide nachfragen
@@ -142,32 +133,23 @@ public enum HilfeInhalt {
         .absatz("Eine Uhr wird auf zwei Wegen entfernt: mit der roten Zeile „Entfernen“ am Fuß ihrer Seite oder mit einem Wischen nach links in der Liste. Beide fragen dasselbe nach. Auf der Uhr selbst ändert das nichts — eine dort stehende Anzeige bleibt stehen, also besser vorher unter „Verlauf“ löschen."),
     ]
 
-    /// Die beiden Werte, die nicht der Meldung, sondern dem Geraet gehoeren
-    /// (`Uhreinstellungen`). Sie stehen auf der Seite der Uhr, fuer die sie
-    /// gelten — auf beiden Oberflaechen, seit sich beide dieselben Bausteine
-    /// teilen.
-    public static let aufDerUhr: [Hilfebaustein] = [
-        .ueberschrift("Auf der Uhr"),
-        .absatz("„Auf der Uhr“ — Seitenwechsel und Scrolltempo — steht auf der Seite der Uhr, für die beides gilt: Beides sind Einstellungen des Geräts, sie überdauern jede Meldung und werden beim Verstellen sofort geschrieben. Bei einer AWTRIX NG fehlt der Abschnitt: Ihre Firmware kennt `/getConfig` nicht, sie führt beides selbst. Der Seitenwechsel ist der Takt, in dem die Uhr durch alles blättert, was auf ihr steht; das Scrolltempo gilt nur ihren eigenen Anzeigen (Gerätereferenz, §4.3). Wie lange eine einzelne Meldung steht und wie schnell sie läuft, entscheidet dagegen das Format unter „Senden“."),
-    ]
-
     /// Das Themen-Praefix und woher es kommt. Beide Oberflaechen haben denselben
     /// Knopf, dieselben zwei Symbole und dieselbe Regel: Das Praefix wird
     /// ermittelt, nie eingetippt (`AppZustand.abfragen`).
     public static let uhrAbfragen: [Hilfebaustein] = [
         .ueberschrift("Abfragen"),
-        .absatz("„Abfragen“ fragt die Uhr selbst nach zwei Angaben: ihrem **Themen-Präfix** und ihrer MAC-Adresse. Das Themen-Präfix ist der Name, unter dem die Uhr am MQTT-Broker auf Nachrichten hört; steht er falsch, schickt die App ins Leere. Danach steht er in der Zeile, in einer Schreibmaschinenschrift — so lassen sich ähnliche Zeichen auseinanderhalten."),
+        .absatz("„Abfragen“ fragt die Uhr selbst nach ihrem **Themen-Präfix**, ihrer MAC-Adresse und der Größe ihres Displays. Das Themen-Präfix ist der Name, unter dem die Uhr am MQTT-Broker auf Nachrichten hört; steht er falsch, schickt die App ins Leere. Danach steht er in der Zeile, in einer Schreibmaschinenschrift — so lassen sich ähnliche Zeichen auseinanderhalten."),
         .absatz("Daneben sagt ein Häkchen oder ein Warndreieck, ob die Uhr gerade beim MQTT-Broker angemeldet ist. Das ist aber nur die Anmeldung und keine Aussage darüber, ob die App auf das richtige Thema schreiben darf — mehr dazu unter „Wenn nichts erscheint“."),
         .absatz("Beides gehört zum MQTT-Betrieb. Steht die Uhr auf HTTP, braucht es kein Präfix, das Zeichen bleibt weg, und „Abfragen“ sagt dort nur eines: dass die Uhr antwortet. Geholt wird in beiden Fällen auch, welche Anzeigen gerade auf ihr stehen."),
-        .absatz("Von Hand eintragen lässt sich das Präfix absichtlich nicht. Es ist nämlich nicht dasselbe wie das in Ulanzi Studio eingestellte: Die Firmware hängt die letzten vier Stellen der MAC-Adresse an. „Abfragen“ ermittelt deshalb selbst, welches Präfix wirklich gilt. Hat die Uhr gar keines eingestellt, sagt „Abfragen“ das — statt ein Thema zu bilden, auf das sie nie hört."),
-        .absatz("Bei einer AWTRIX NG ist das Präfix dagegen genau das, was auf ihr eingestellt ist, ohne jeden Anhang. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das du liest."),
-        .absatz("Zwei Uhren dürfen dasselbe Präfix führen, und das ist brauchbar: Über MQTT **ist** das Präfix die Adresse, ein gemeinsames macht aus mehreren Uhren eine Gruppe. Was an sie geht, zeigen alle — ohne dass die App etwas mehrfach schicken müsste. Der Preis ist, dass sie von da an nicht mehr auseinanderhält, welche der beiden gerade etwas meldet: Belegte Plätze, mitgelesene Inhalte und das Anmeldezeichen gelten dann für die Gruppe, nicht für ein Gerät. Wer sie einzeln ansprechen will, gibt jeder ein eigenes Präfix — die Firmware kennt nur eines je Gerät, kein Gruppen- und Gerätepräfix nebeneinander wie WLED."),
-        .absatz("Das Zeichen neben dem Präfix sagt, ob die Uhr gerade beim Broker angemeldet ist. Ein Warndreieck heißt: ist sie nicht. Eine AWTRIX NG nennt dann auch den Grund — „badCredentials“ etwa heißt, dass Benutzer und Kennwort, die **in der Uhr** eingetragen sind, der Broker nicht annimmt; die Angaben dieser App sind davon unberührt."),
+        .absatz("Von Hand eintragen lässt sich das Präfix absichtlich nicht: „Abfragen“ liest es aus der Uhr. Das Präfix ist genau das, was auf ihr eingestellt ist, ohne jeden Anhang; hat sie keines eingestellt, gilt ihre Kennung. Ein Leerzeichen am Rand zeigt die Zeile als ␣ an: Es gehört zum Thema, ist sonst aber nicht zu sehen — und die Uhr hört dann auf ein anderes Thema als das, das du liest."),
+        .absatz("Eine Uhr, die ihr Präfix noch nicht kennt, bekommt von der App nichts über MQTT geschickt, bis „Abfragen“ es ermittelt hat; das geschieht beim Start von selbst. Ein früher gespeichertes Präfix gilt nicht weiter."),
+        .absatz("Zwei Uhren dürfen dasselbe Präfix führen, und das ist brauchbar: Über MQTT **ist** das Präfix die Adresse, ein gemeinsames macht aus mehreren Uhren eine Gruppe. Was an sie geht, zeigen alle — ohne dass die App etwas mehrfach schicken müsste. Der Preis ist, dass sie von da an nicht mehr auseinanderhält, welche der beiden gerade etwas meldet: Belegte Plätze, mitgelesene Inhalte und das Anmeldezeichen gelten dann für die Gruppe, nicht für ein Gerät. Wer sie einzeln ansprechen will, gibt jeder ein eigenes Präfix — die Firmware kennt nur eines je Gerät."),
+        .absatz("Das Zeichen neben dem Präfix sagt, ob die Uhr gerade beim Broker angemeldet ist. Ein Warndreieck heißt: ist sie nicht. Die Uhr nennt dann auch den Grund — „badCredentials“ etwa heißt, dass Benutzer und Kennwort, die **in der Uhr** eingetragen sind, der Broker nicht annimmt; die Angaben dieser App sind davon unberührt."),
 
         .absatz("Antwortet eine Uhr auf die letzte Abfrage gar nicht, steht ein rotes Zeichen neben ihrem Namen — in der Uhrenliste und in der Uhrenwahl. Ein Fenster kommt dafür nicht: Eine stumme Uhr ist kein Fehler, den jemand wegklicken müsste. Sie ist aus, sie steht woanders, das WLAN schläft."),
 
         .ueberschrift("Die Web-Oberfläche der Uhr"),
-        .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen — und bei einer AWTRIX NG der MQTT-Broker samt Präfix."),
+        .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen, der MQTT-Broker samt Präfix."),
     ]
 
     /// Womit die vier Brokerfelder beginnen: mit nichts. Gilt fuer beide
@@ -207,8 +189,8 @@ public enum HilfeInhalt {
     /// gibt und was er tut ueberall dasselbe ist.
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
-        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine Ulanzi mit Werksfirmware und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
-        .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist: Die **Nutzlast** — so heißt hier und im Folgenden das Datenpaket, das die App an die Uhr schickt — wird dafür zurück in Pixel zerlegt, auf demselben Weg wie beim Mitlesen über MQTT."),
+        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine AWTRIX NG und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
+        .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist: Die **Nutzlast** — so heißt hier und im Folgenden das Datenpaket, das die App an die Uhr schickt — wird dafür wie auf der Uhr gezeichnet."),
         .absatz("Sie spricht HTTP, kein MQTT: Ein MQTT-Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
 
@@ -234,7 +216,7 @@ public enum HilfeInhalt {
         .absatz("Jeder Block zeigt einen von drei Zuständen, an der Form erkennbar, nicht nur an der Farbe:"),
         .punkte([
             "**Frei** — ein gestrichelter, leerer Rahmen. Auf diesem Platz liegt nichts.",
-            "**Belegt, Inhalt bekannt** — die Pixel, verkleinert. Sie stammen aus einer mitgelesenen Sendung oder aus dem, was sich diese App für den Platz gemerkt hat; im zweiten Fall ist es eine Erinnerung und kann überholt sein.",
+            "**Belegt, Inhalt bekannt** — die Pixel, verkleinert. Sie sind aus dem gerechnet, was sich diese App für den Platz gemerkt hat, mit der Näherungsschrift der Vorschau; es ist eine Erinnerung und kann überholt sein.",
             "**Belegt, Inhalt unbekannt** — ein grauer Block mit einem Fragezeichen, ohne Pixel.",
         ]),
         .absatz("Ein Fragezeichen auf einem Block heißt: Dort liegt etwas, das nicht von hier kam. Die Uhr nennt ihre Anzeigen beim Namen, verrät aber nicht, was darin steht — der Platz ist belegt, der Inhalt bleibt unbekannt."),
@@ -249,8 +231,8 @@ public enum HilfeInhalt {
     public static let blockwissenAnfang: [Hilfebaustein] = [
         .ueberschrift("Woher die Blöcke wissen, was belegt ist"),
         .abbildung(.slotzustaende),
-        .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes (Gerätereferenz, §3.5) — belegt oder frei ist damit gesichert, der Inhalt nicht. Den gewinnt die App stattdessen daraus, dass sie beim MQTT-Broker jede Sendung an die Uhr mitliest, gleich von wem sie kommt: von dieser App, vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm."),
-        .absatz("**Das gilt nur im MQTT-Betrieb.** Steht die Uhr auf HTTP, gibt es kein Mitlesen — dann zeigt ein Block allein, was diese Installation selbst auf den Platz geschickt und sich dazu gemerkt hat. Jede fremde Sendung bleibt dort „belegt, Inhalt unbekannt“, und zwar dauerhaft und nicht bloß bis zur nächsten Nachricht. Die Belegung selbst ist davon unberührt: Welche Plätze belegt sind, sagt die Uhr auf Nachfrage, und im HTTP-Betrieb obendrein nach jeder eigenen Sendung — sie quittiert sie."),
+        .absatz("Die Uhr selbst verrät über ihre Anzeigenliste nur Namen, nie den Inhalt eines Platzes — belegt oder frei ist damit gesichert, der Inhalt nicht. Den Inhalt kennt die App nur von ihren eigenen Sendungen: Sie merkt sich je Platz die Regler und rechnet das Bild daraus neu."),
+        .absatz("Fremde Sendungen — vom Kommandozeilenwerkzeug, von einem Kurzbefehl oder von einem zweiten Programm — bleiben „belegt, Inhalt unbekannt“: Die Uhr setzt Text und Regler selbst, daraus lässt sich kein Bild zurückrechnen. Im MQTT-Betrieb sieht die App sie am Broker vorbeikommen und merkt sich, dass der Platz seither fremd beschrieben wurde; im HTTP-Betrieb liest sie nicht mit. Welche Plätze belegt sind, sagt die Uhr auf Nachfrage, und nach jeder eigenen Sendung obendrein — sie quittiert sie."),
         .absatz("Mitlesen heißt aber: nur, was gesendet wird, solange die App verbunden ist. Ohne aufbewahrte (RETAIN-)Nachrichten liefert MQTT einem frisch verbundenen Abonnenten keinen Rückstand — das ist kein Fehler dieser App, sondern die normale Stille von MQTT 3.1.1 (siehe auch „Wenn nichts erscheint“). Was diese Installation selbst geschickt hat, zeigt der Block nach einem Neustart trotzdem: Bei einer Meldung merkt sie sich je Platz die Regler und rechnet das Bild daraus neu; bei einem gemalten Bild oder einer Anzeige aus der Sammlung, die keine Regler haben, hebt sie die Pixel auf."),
     ]
 
@@ -259,24 +241,17 @@ public enum HilfeInhalt {
     /// Haelften ein geraetespezifischer Absatz (am Mac der ueber Gemaltes),
     /// deshalb zwei Konstanten statt einer.
     public static let blockwissenSchluss: [Hilfebaustein] = [
-        .absatz("Ohne Inhalt bleiben deshalb die Plätze, auf die diese Installation nichts geschickt hat — sie zeigen „belegt“, bis dort das nächste Mal etwas mitgelesen oder etwas selbst gesendet wird."),
-        .absatz("„Belegt, Inhalt unbekannt“ ist einer von drei gewöhnlichen, harmlosen Fällen: Die Anzeige stammt von einem anderen Gerät oder einer anderen Installation dieser App — dann wurde sie hier weder mitgelesen noch gemerkt. Oder sie ist eine Laufschrift oder ein von der Uhr selbst gesetzter Text eines fremden Absenders: Aus so einer Nutzlast lässt sich kein Standbild zurückrechnen. Oder sie wurde über die HTTP-Schnittstelle der Uhr angelegt und ist am Broker vorbeigegangen (Gerätereferenz, §3.5) — steht die Uhr selbst auf HTTP, ist das kein Sonderfall mehr, sondern gilt für alles Fremde."),
-        .absatz("Für die eigenen Sendungen gilt das nicht: Dort nimmt die App das gemerkte Bild oder rechnet es aus den gemerkten Reglern, nicht aus der Nutzlast. Eine selbst geschickte Laufschrift zeigt der Block deshalb stehend, mit ihren ersten 52 Pixeln. Der Block sagt in diesem Fall, was auf dem Platz liegt — nicht, wie es auf der Uhr aussieht."),
-        .absatz("Auch ein Block mit bekanntem Inhalt stellt beim Antippen nicht immer die Regler wieder her: Das gelingt nur, wenn diese Installation die Sendung selbst mitgelesen hat und der Platz seither nicht von anderer Stelle überschrieben wurde — sonst wählt das Antippen nur den Platz, ohne die Regler zu verändern."),
+        .absatz("Ohne Inhalt bleiben deshalb die Plätze, auf die diese Installation nichts geschickt hat — sie zeigen „belegt“, bis dort etwas selbst gesendet wird."),
+        .absatz("„Belegt, Inhalt unbekannt“ ist ein gewöhnlicher, harmloser Fall: Die Anzeige stammt von einem anderen Gerät oder einer anderen Installation dieser App, oder jemand hat sie über die HTTP-Schnittstelle der Uhr angelegt."),
+        .absatz("Für die eigenen Sendungen gilt das nicht: Dort nimmt die App das gemerkte Bild oder rechnet es aus den gemerkten Reglern, nicht aus der Nutzlast. Der Block sagt in diesem Fall, was auf dem Platz liegt — nicht, wie es auf der Uhr aussieht."),
+        .absatz("Auch ein Block mit bekanntem Inhalt stellt beim Antippen nicht immer die Regler wieder her: Das gelingt nur, solange die App nicht gesehen hat, dass der Platz seit der eigenen Sendung von anderer Stelle überschrieben wurde — sonst wählt das Antippen nur den Platz, ohne die Regler zu verändern."),
     ]
 
-    /// Wann ein Text steht und wann er laeuft — `Meldungsbau.passt` entscheidet
-    /// das auf beiden Geraeten gleich, ohne dass jemand danach gefragt wird.
-    ///
-    /// Die Wahl „Senden als: als Pixel / als Text" im Inspektor und im
-    /// Formatblatt ist ersatzlos weg; dieser Abschnitt sagt, was die App statt
-    /// dessen tut. Warum, steht bei `SendeWeg` im Kern.
+    /// Wann ein Text steht und wann er laeuft: Die Uhr entscheidet das.
     public static let wegeRegel: [Hilfebaustein] = [
-        .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die App selbst — es gibt dafür keinen Schalter."),
+        .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die Uhr: Passt er in die verfügbare Breite, bleibt er stehen, sonst läuft er durch. Die App schickt dazu immer den Text samt Reglern, nie Pixel."),
         .abbildung(.stehtOderLaeuft),
-        .absatz("Sie rechnet die Breite des gesetzten Textes ohnehin aus, und daran hängt die Regel: Passt er in die verfügbare Breite (52 Pixel, mit Icon 42), geht er als starres Pixelbild an die Uhr und bleibt stehen — klein, schnell, exakt. Passt er nicht, rastert die App den Lauf selbst und schickt ihn als animiertes GIF, das die Uhr abspielt (Gerätereferenz, §4.2a): Der Text läuft durch, mit Umlauten und in der gewählten Schriftart."),
-        .absatz("Gerastert wird dabei immer von dieser App, auch bei langem Text. Die Uhr kann Text zwar auch selbst setzen, und bis zum 18.09.2026 gab es dafür die Wahl „als Text“ — sie kostete Schriftart, Größe und Fett, verlor Umlaute und ließ langen Text nicht einmal durchlaufen, sondern schnitt ihn ab (ein Mangel der Werksfirmware, am 11.09.2026 mit drei Fassungen geprüft). Übrig blieb eine kleinere Nutzlast, und die ist den Preis nicht wert."),
-        .absatz("Bei einer TC001 unter AWTRIX NG stellt sich die Frage ohnehin nicht: Dorthin gehen nie Pixel, sondern immer der Text samt Reglern — die Uhr setzt ihn selbst. Die Vorschau ist dann nur eine Näherung, und das (?) neben der Punktreihe unter ihr sagt, warum."),
+        .absatz("Die Vorschau ist nur eine Näherung, weil die Uhr den Text mit ihrer eigenen Schrift setzt; das (?) neben der Punktreihe unter ihr sagt, warum."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -299,16 +274,13 @@ public enum HilfeInhalt {
     /// im Rahmen).
     public static let dauer: [Hilfebaustein] = [
         .absatz("Der Unterschied zwischen „Dauer“ und „Seitenwechsel“ ist die Reichweite. Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, die fünf Meldungen. Wie schnell sie das tut, sagt der Seitenwechsel, und er gilt für alle. Die Dauer reist dagegen mit einer einzelnen Meldung mit und gibt ihr eine eigene Standzeit; leer oder 0 heißt keine Angabe, dann bleibt es beim Seitenwechsel."),
-        .absatz("Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht (Gerätereferenz, §4.4)."),
+        .absatz("Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht."),
     ]
 
-    /// Umlaute und Sonderzeichen. Dass die Geraeteschrift sie nicht kennt, ist
-    /// eine Eigenschaft der Uhr; ob die App davor warnt, ist es nicht — der
-    /// Warnsatz bleibt deshalb bei der Oberflaeche, die wirklich warnt.
+    /// Umlaute und Sonderzeichen: eine Eigenschaft der Uhr.
     public static let zeichen: [Hilfebaustein] = [
         .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
-        .absatz("An die Ulanzi-Werksfirmware wird der Text nicht als Zeichenkette verschickt, sondern von der App selbst in Pixel gerastert — deshalb gehen dort auch „ä“, „ö“, „ü“ und „ß“, und die Vorschau zeigt genau das, was gesendet wird: stehend, wenn der Text steht, laufend, wenn er läuft."),
-        .absatz("Setzt die Uhr selbst — bei AWTRIX NG immer, bei der Werksfirmware nur, wenn das Kommandozeilenwerkzeug mit `--geraeteschrift` schickt —, gilt ihre eingebaute Schrift, und die kennt weder Umlaute noch die meisten Satzzeichen (Gerätereferenz, §1)."),
+        .absatz("Die Uhr setzt den Text selbst, mit ihrer eingebauten Schrift. Sie kennt Umlaute, „ß“, Akzente, das Eurozeichen und Kyrillisch; ein Zeichen, das sie nicht hat, wird zum Fragezeichen (Gerätereferenz, §1)."),
     ]
 
     /// Die Schriftauswahl und die drei mitgelieferten Pixelschriften. Beide
@@ -317,8 +289,8 @@ public enum HilfeInhalt {
     /// nicht am Geraet in der Hand.
     public static let schriftart: [Hilfebaustein] = [
         .ueberschrift("Schriftart"),
-        .absatz("Bei „Schriftart“ stehen nicht alle installierten Schriften zur Wahl, sondern eine kurze, geprüfte Auswahl — bei 16 Pixeln Displayhöhe fällt kaum eine Schrift sauber aufs Raster, die meisten proportionalen Schriften wirken bei dieser Größe eher wie ein Brei aus Pixeln."),
-        .absatz("Vorgabe ist „Silkscreen“, eine mitgelieferte, eigens fürs 8-Pixel-Raster gezeichnete Schrift — anders als die eingebaute Gerätschrift kann sie Umlaute und „ß“; dasselbe gilt für „Micro 5“ und „Tiny5“, zwei weitere mitgelieferte Pixelschriften. Die drei unterscheiden sich in der Wirkung:"),
+        .absatz("Die Schriftart wirkt in der Vorschau. Bei „Schriftart“ stehen nicht alle installierten Schriften zur Wahl, sondern eine kurze, geprüfte Auswahl — bei 16 Pixeln Displayhöhe fällt kaum eine Schrift sauber aufs Raster, die meisten proportionalen Schriften wirken bei dieser Größe eher wie ein Brei aus Pixeln."),
+        .absatz("Vorgabe ist „Silkscreen“, eine mitgelieferte, eigens fürs 8-Pixel-Raster gezeichnete Schrift — sie kann Umlaute und „ß“; dasselbe gilt für „Micro 5“ und „Tiny5“, zwei weitere mitgelieferte Pixelschriften. Die drei unterscheiden sich in der Wirkung:"),
         .punkte([
             "„Micro 5“ ist die schmalste und bringt am meisten Text stehend aufs Display, ohne zu laufen.",
             "„Silkscreen“ ist die klassische Pixeloptik, gut lesbar.",
@@ -353,7 +325,7 @@ public enum HilfeInhalt {
         .ueberschrift("Fett und Großbuchstaben"),
         .absatz("„Fett“ kann ausgegraut sein, und zwar je nach Schrift: Die App rastert beim Wechsel einmal mit und einmal ohne fetten Schnitt und vergleicht — ändert sich nichts, hat die Schrift bei dieser Größe keinen, und ein Knopf ohne Wirkung ist schlimmer als keiner. Von den angebotenen Schriften trifft das auf die meisten zu; nur Menlo und PT Mono haben einen echten fetten Schnitt."),
         .absatz("Nach demselben Verfahren ist „Großbuchstaben“ bei Silkscreen gesperrt: Sie kennt überhaupt nur Versalien, der Schalter bliebe folgenlos."),
-        .absatz("„Großbuchstaben“ lässt das Eingabefeld selbst unangetastet — umgewandelt wird erst beim Senden bzw. für die Vorschau. Aus „ß“ wird dabei „SS“; „Ä“, „Ö“ und „Ü“ bleiben Umlaute. Setzt die Uhr den Text selbst, ist der Schalter mit Vorsicht zu genießen: Belegt ist bisher nur, dass die Gerätschrift Kleinbuchstaben und Ziffern kennt — ob sie auch Versalien zeigt, hat noch niemand nachgesehen (Gerätereferenz, §1)."),
+        .absatz("„Großbuchstaben“ lässt das Eingabefeld selbst unangetastet — umgewandelt wird erst beim Senden bzw. für die Vorschau. Aus „ß“ wird dabei „SS“; „Ä“, „Ö“ und „Ü“ bleiben Umlaute."),
     ]
 
     /// Rand und Abstand. Beide gibt es auf beiden Geraeten mit demselben
@@ -363,10 +335,10 @@ public enum HilfeInhalt {
         .absatz("„Rand“, 0 bis 3, Vorgabe 1: die Zahl Zeilen, die bei „oben“ und „unten“ frei bleiben — bei „mittig“ ist er gesperrt, dort hat er keinen Sinn."),
         .absatz("Ihn braucht es, weil bündig je nach Schrift verschieden aussieht: Manche bringen über der Großbuchstabenhöhe Platz mit, andere nicht, und dieselbe Ausrichtung wirkt dann bei der einen luftig und bei der anderen gequetscht. Der Rand macht den Eindruck davon unabhängig und ist auf den vorhandenen Platz gedeckelt — ein Text, der schon fast die volle Höhe füllt, wird nicht beschnitten."),
         .ueberschrift("Abstand"),
-        .absatz("Ganz rechts liegt „Abstand“, 0 bis 3, Vorgabe 1 — wirksam dort, wo die App selbst rastert."),
+        .absatz("Ganz rechts liegt „Abstand“, 0 bis 3, Vorgabe 1 — wirksam in der Vorschau."),
         .absatz("„Abstand“ ist wörtlich die Zahl leerer Spalten zwischen zwei Zeichen — 0 heißt Tinte an Tinte, 1 die Vorgabe, 2 und 3 sind luftiger —, und weil sie sich aus der Tinte ergibt statt aus der Schrift, wird derselbe Text bei gleicher Schrift und Größe meist schmaler als früher, es passt also mehr aufs Display."),
         .absatz("Hier rastert die App nämlich jedes Zeichen einzeln und setzt es nach seiner Tinte ans vorige, statt nach der Vorschubbreite der Schrift: Die ist für gedruckte Größen gemacht und fällt auf sechzehn Pixeln mal zu eng, mal zu weit aus, ein fester Zuschlag verschiebt das Problem nur."),
-        .absatz("Setzt die Uhr den Text selbst, bleibt „Abstand“ ohne Wirkung: Sie bringt ihren eigenen, festen Zeichenabstand als `charSpacing` mit (Gerätereferenz, §4.3), unabhängig von dieser Einstellung."),
+        .absatz("Auf der Uhr bleibt „Abstand“ ohne Wirkung: Sie bringt ihren eigenen, festen Zeichenabstand mit."),
     ]
 
     /// Die verfuegbare Breite und was die Ausrichtung darin tut.
@@ -390,8 +362,8 @@ public enum HilfeInhalt {
     /// Beide Vorschauen spielen animierte Icons ab (`VorschauView`,
     /// `VorschauiOS`), und das Mitscrollen gibt es auf beiden.
     public static let iconImLauf: [Hilfebaustein] = [
-        .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz, §4.2)."),
-        .absatz("Läuft der Text beim Weg „als Pixel“, wird das Icon in die Laufschrift hineingerechnet, statt als zweites Bild danebenzustehen — ob die Uhr zwei Bilder in einer Sendung nebeneinander zeichnet, hat niemand geprüft, und so stellt sich die Frage nicht. Es steht dann fest links, der Text läuft rechts daneben durch, und seine Spalten bleiben schwarz, damit der Text nicht hinter ihm durchblitzt."),
+        .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz)."),
+        .absatz("Läuft der Text, steht das Icon fest links und der Text läuft rechts daneben durch."),
         .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Setzt die Uhr den Text selbst, gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell sie den Text daneben laufen lässt."),
     ]
 
@@ -409,12 +381,12 @@ public enum HilfeInhalt {
     /// Quelle; der Inhalt eines Platzes gehoert ausdruecklich nicht dazu.
     public static let verlaufEntstehung: [Hilfebaustein] = [
         .ueberschrift("Wie die Liste entsteht"),
-        .absatz("Die App fragt die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/customList`, Gerätereferenz §5.7) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Das gilt in beiden Betriebsarten: Dafür braucht es keinen MQTT-Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),
-        .absatz("Im MQTT-Betrieb kommt ein zweiter Weg dazu, und er führt zur selben Quelle: Die Uhr veröffentlicht ihre Anzeigenliste von sich aus über das Thema `<präfix>/customList`, und die App hört dort dauerhaft mit, sobald die Uhr ein Präfix hat (Gerätereferenz, §3.5). Im HTTP-Betrieb gibt es das nicht — die Uhr reicht ihre HTTP-Vorgänge nicht über MQTT weiter."),
+        .absatz("Die App fragt die Uhr unmittelbar über HTTP, welche Anzeigen auf ihr stehen (`GET /api/v1/apps`) — beim Start, beim Zurückkommen aus dem Hintergrund und bei jedem „Abfragen“ unter „Einstellungen“. Das gilt in beiden Betriebsarten: Dafür braucht es keinen MQTT-Broker, und die Auskunft ist sofort da, statt auf eine Meldung zu warten, die vielleicht nie kommt."),
+        .absatz("Im MQTT-Betrieb kommt ein zweiter Weg dazu: Die App hört am Broker mit, sobald die Uhr ein Präfix hat, und sieht, was andere Programme an die Uhr schicken. Im HTTP-Betrieb liest sie nicht mit."),
         .absatz("Dafür gibt es dort ein Drittes, und es ist die verlässlichste Auskunft von allen: Jede eigene Sendung und jede eigene Löschung quittiert die Uhr. Ein so gebuchter Name ist keine Vermutung, sondern von der Uhr bestätigt."),
         .absatz("Gefragt wird dabei immer nur, **welche** Anzeigen es gibt. Was auf einem Platz steht, verrät die Uhr auf keinem dieser Wege; belegt oder frei ist damit Tatsache, der Inhalt bleibt geraten."),
         .absatz("Steht über der Liste „von dieser App angelegt“, hat keiner der Wege etwas ergeben: die Uhr aus oder nicht erreichbar, und nichts mitgehört. Dann zeigt die Liste die eigene Buchführung und sagt es — was die Uhr selbst gesagt hat, wird nicht mit dem Alter zur Tatsache."),
-        .absatz("Ob die Uhr gerade am Broker hängt, meldet sie über `<präfix>/status` (Gerätereferenz, §3.4). Das lässt sich nicht abfragen — es kommt, wenn die Uhr es schickt, und nur im MQTT-Betrieb."),
+        .absatz("Ob die Uhr gerade am Broker hängt, meldet sie über `<präfix>/availability`. Das lässt sich nicht abfragen — es kommt, wenn die Uhr es schickt, und nur im MQTT-Betrieb."),
     ]
 
     /// Was ein Loeschen erreicht und was nicht — dieselbe leere Nutzlast, dieselbe
@@ -449,7 +421,7 @@ public enum HilfeInhalt {
         .ueberschrift("Was die App meldet — und was nicht"),
         .absatz("**Das hängt an der Betriebsart der Uhr, und der Unterschied ist groß.**"),
         .absatz("Im HTTP-Betrieb antwortet die Uhr auf jede Sendung, jede Löschung und jedes Umschalten. Bleibt die Meldung aus, hat sie angenommen; weist sie etwas ab — etwa ein Umschalten auf eine Anzeige, die es nicht gibt —, steht der Grund in der Meldung, mit dem Namen der Uhr davor. Und antwortet sie gar nicht, steht auch das da, statt dass die Sendung stumm verschwindet."),
-        .absatz("Im MQTT-Betrieb gibt es das nicht: MQTT in der hier verwendeten Version 3.1.1 meldet eine abgelehnte Veröffentlichung nicht zurück. Egal ob das Konto keine Schreibrechte auf das Thema hat oder niemand darauf lauscht — die App bekommt kein Fehlersignal, keine Warnung, nichts unterscheidet das von einer erfolgreichen Sendung. Erscheint nichts auf der Uhr, ist das also kein Rätsel dieser App, sondern die normale Stille von MQTT 3.1.1."),
+        .absatz("Im MQTT-Betrieb ist die Antwort schwächer: Weist die Uhr eine Sendung ab, meldet sie das auf `…/result`, und die App zeigt es. Eine vom Broker abgelehnte Veröffentlichung meldet MQTT in der hier verwendeten Version 3.1.1 dagegen nicht zurück. Egal ob das Konto keine Schreibrechte auf das Thema hat oder niemand darauf lauscht — die App bekommt kein Fehlersignal, nichts unterscheidet das von einer erfolgreichen Sendung. Erscheint nichts auf der Uhr, ist das also kein Rätsel dieser App, sondern die normale Stille von MQTT 3.1.1."),
         .absatz("Alles bis zur Anmeldung am MQTT-Broker meldet die App dagegen sehr wohl: falsches Kennwort, unerreichbarer Broker, Zeitüberschreitung, fehlende Zugangsdaten."),
     ]
 
@@ -465,7 +437,7 @@ public enum HilfeInhalt {
         .ueberschrift("Der Reihe nach prüfen"),
         .absatz("Die ersten drei Punkte betreffen den MQTT-Betrieb. Im HTTP-Betrieb erübrigen sie sich: Dort gibt es kein Präfix, keine Anmeldung und keine Schreibrechte auf ein Thema — was schiefgeht, sagt die Meldung selbst. Bleibt der vierte."),
         .punkte([
-            "Erstens das Präfix — unter „Einstellungen“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen; es ist nicht das in Ulanzi Studio eingetragene.",
+            "Erstens das Präfix — unter „Einstellungen“ „Abfragen“ noch einmal ausführen und mit dem tatsächlichen Präfix vergleichen, und es ist das in der Uhr eingestellte.",
             "Zweitens, ob die Uhr überhaupt beim MQTT-Broker angemeldet ist — das Häkchen- oder Warndreieck-Symbol in derselben Zeile.",
             "Drittens, ob das Broker-Konto auf dieses Thema schreiben darf. Das steht in der Rechtedatei des Brokers, nicht in dieser App, und lässt sich nur am Broker-Protokoll ablesen.",
             "Viertens, ob unter „Verlauf“ noch eine alte, stehende Anzeige blockiert — die zuerst löschen oder unter demselben Namen ersetzen.",

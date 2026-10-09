@@ -24,9 +24,6 @@ struct VorschauiOS: View {
     /// Sichtfeld laufen. Sichtbar blieb dann nur das schwarze Feld ohne
     /// Gehaeuse.
     var kante: Double? = nil
-    /// Welche Geraetefront darum liegt und wie die Punkte darin aussehen.
-    /// `Optional` wie `Uhr.typ`: `nil` heisst `.tc002`.
-    var typ: Geraetetyp? = nil
 
     /// Einzelbilder des gewaehlten Icons mit ihren Standzeiten — einmal je
     /// Iconwechsel geladen. Ein unbewegtes Icon hat genau eines.
@@ -34,19 +31,18 @@ struct VorschauiOS: View {
 
     /// Wie ein einzelner Punkt gezeichnet wird — dieselbe Quelle wie der
     /// Rahmen, damit Mac und Telefon dasselbe Raster zeigen.
-    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(typ).pixelstil }
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.tc002.pixelstil }
 
     /// Die Kantenlaenge, bei der der ganze Rahmen die Breite ausfuellt.
     ///
-    /// Nicht fuer alle Gattungen dieselbe: Eine TC002 ist 52 Pixel breit, eine
-    /// AWTRIX NG 32 — bei gleicher Kantenlaenge bliebe die schmalere halb so
-    /// gross und saesse verloren in der Spalte. Gezeigt wird das Geraet, nicht
-    /// das Pixel.
+    /// Nicht fuer jede Anzeigebreite dieselbe — bei gleicher Kantenlaenge
+    /// bliebe eine schmalere Anzeige klein und saesse verloren in der Spalte.
+    /// Gezeigt wird das Geraet, nicht das Pixel.
     ///
     /// Nach oben begrenzt, damit ein einzelnes Pixel nicht zur Kachel wird.
     private func passendeKante(fuer breite: Double) -> Double {
         guard breite > 0 else { return 6 }
-        return min(12, breite / (Double(feld.breite) * Geraetezeichnung.fuer(typ).breitenFaktor))
+        return min(12, breite / (Double(feld.breite) * Geraetezeichnung.tc002.breitenFaktor))
     }
 
     /// Breite zu Hoehe des **ganzen Rahmens**, nicht des Displayfeldes. Daran
@@ -55,7 +51,7 @@ struct VorschauiOS: View {
     /// gerechnete Hoehe liess oben und unten Weissraum stehen, sobald die
     /// Breite eine kleinere erzwang.
     private var seitenverhaeltnis: Double {
-        let z = Geraetezeichnung.fuer(typ)
+        let z = Geraetezeichnung.tc002
         return (Double(feld.breite) * z.breitenFaktor) / (Double(feld.hoehe) * z.hoehenFaktor)
     }
 
@@ -77,7 +73,7 @@ struct VorschauiOS: View {
     private func rahmen(kante: Double) -> some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(feld.hoehe) * kante, typ: typ) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kante) {
             Group {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {

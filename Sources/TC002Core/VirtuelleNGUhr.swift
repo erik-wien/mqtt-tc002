@@ -92,6 +92,8 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var indikatoren = [NGIndikator](repeating: NGIndikator(), count: 3)
     /// Die erste ist die, die gerade zu sehen wäre.
     public var benachrichtigungen: [NGBenachrichtigung] = []
+    /// `mqttPrefix` der Systemkonfiguration (§11); leer heisst: die uid.
+    public var mqttPrefix = ""
 
     public init() {
         einstellungen = VirtuelleNGUhr.vorgabeEinstellungen
@@ -197,7 +199,7 @@ public enum VirtuelleNGUhr {
     // MARK: - Routen
 
     private enum Route {
-        case geraet, version, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
+        case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
         case meldungSenden, meldungAktivLoeschen, meldungLoeschen(String)
@@ -205,7 +207,7 @@ public enum VirtuelleNGUhr {
 
         var methoden: [String] {
             switch self {
-            case .geraet, .version, .bildschirm, .apps, .faehigkeiten, .ton: return ["GET"]
+            case .geraet, .version, .system, .bildschirm, .apps, .faehigkeiten, .ton: return ["GET"]
             case .einstellungen, .anzeige: return ["GET", "PATCH"]
             case .appSenden, .appAktiv, .appFreigabe: return ["PUT"]
             case .appLoeschen, .meldungAktivLoeschen, .meldungLoeschen: return ["DELETE"]
@@ -222,6 +224,7 @@ public enum VirtuelleNGUhr {
         switch (r.count, r[0]) {
         case (1, "device"): return .geraet
         case (1, "version"): return .version
+        case (1, "system"): return .system
         case (1, "settings"): return .einstellungen
         case (1, "display"): return .anzeige
         case (1, "apps"): return .apps
@@ -265,6 +268,10 @@ public enum VirtuelleNGUhr {
         switch route {
         case .geraet: return json(geraet(z))
         case .version: return json(.objekt(["version": .text("1.2.2")]))
+        case .system:
+            return json(.objekt(["mqttEnabled": .bool(false), "mqttHost": .text(""),
+                                 "mqttPort": .zahl(1883), "mqttPrefix": .text(z.mqttPrefix),
+                                 "hostname": .text("virtuelle-uhr"), "webPort": .zahl(80)]))
         case .einstellungen:
             return anfrage.methode == "GET" ? json(.objekt(z.einstellungen)) : einstellungenAendern(anfrage, &z)
         case .anzeige:
@@ -359,7 +366,10 @@ public enum VirtuelleNGUhr {
                 guard case .objekt(let r) = region, case .liste(let kasten)? = r["box"],
                       case .liste(let befehle)? = r["draw"] else { continue }
                 let k = kasten.compactMap(\.ganzzahl)
-                guard k.count == 4, k[2] > 0, k[3] > 0 else { continue }
+                // Box und Ursprung kommen vom Absender; ein Feld in dieser
+                // Groesse gaebe es nie, und es wuerde Speicher kosten.
+                guard k.count == 4, k[2] > 0, k[3] > 0, k[2] <= 1024, k[3] <= 1024,
+                      k[2] * k[3] <= 65536, abs(k[0]) <= 1024, abs(k[1]) <= 1024 else { continue }
                 var farbe = vorgabe
                 if let w = r["color"], let f = farbwert(w) { farbe = f }
                 var brett = Brett(breite: k[2], hoehe: k[3])
