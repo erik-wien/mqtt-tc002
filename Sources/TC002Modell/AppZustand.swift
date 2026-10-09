@@ -58,6 +58,8 @@ public final class AppZustand {
     /// Widerspricht jemand ausdruecklich (Loeschen, leere Nutzlast), ist er
     /// sofort weg.
     private var frischBestaetigt: [UUID: Set<String>] = [:]
+    /// Wer von `frischBestaetigt` schon eine Meldung ohne sich ueberlebt hat.
+    private var karenzVerbraucht: [UUID: Set<String>] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/availability`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
     /// Was zuletzt auf einem Slot zu sehen war, als Pixel: von dieser App
@@ -420,14 +422,38 @@ public final class AppZustand {
     ///
     /// Es sind nur Namen: belegt oder frei ist damit Tatsache, was auf
     /// einem Platz steht, bleibt geraten (`slotzustand`).
-    func belegungGemeldet(_ namen: [String]?, fuer id: UUID) {
+    func belegungGemeldet(_ namen: [String]?, fuer id: UUID,
+                          gedaechtnis: Slotgedaechtnis = .gemeinsam) {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         // Was die Uhr meldet, ist bestaetigt — es braucht keine Karenz mehr.
         // Was sie nicht meldet, obwohl wir es gerade geschickt haben,
-        // ueberlebt diese eine Meldung und verbraucht dabei seine Karenz.
+        // ueberlebt diese eine Meldung und verbraucht dabei seine Karenz; bei
+        // der naechsten ohne den Namen ist er weg. Ohne das Verbrauchen bliebe
+        // eine Anzeige, die auf der Uhr ablief (`lifetimeMs`, `remove`) oder
+        // dort geloescht wurde, fuer immer „belegt“.
+        var abgelaufen: Set<String> = []
         if let namen {
-            frischBestaetigt[id] = frischBestaetigt[id]?.subtracting(namen)
-            if frischBestaetigt[id]?.isEmpty == true { frischBestaetigt[id] = nil }
+            var frisch = frischBestaetigt[id] ?? []
+            frisch.subtract(namen)
+            let verbraucht = karenzVerbraucht[id] ?? []
+            abgelaufen = frisch.intersection(verbraucht)
+            frisch.subtract(abgelaufen)
+            frischBestaetigt[id] = frisch.isEmpty ? nil : frisch
+            karenzVerbraucht[id] = frisch.isEmpty ? nil : frisch
+        }
+        let bisher = gemeldeteAnzeigen[id] ?? []
+        if let namen {
+            // Was die Uhr vorhin noch nannte und jetzt nicht mehr, ist weg. Die
+            // Regler dieses Platzes gehoeren dann nicht mehr zu etwas, das dort
+            // steht; blieben sie liegen, zeigte der Block sie, sobald ein
+            // fremder Absender den Platz wieder belegt. Dieselbe Regel wie nach
+            // einer Loeschung (`anzeigeGeloescht`). Ein Name, den wir eben erst
+            // geschickt haben, steht noch in `frischBestaetigt` und bleibt
+            // unberuehrt.
+            for name in Set(bisher).union(abgelaufen)
+            where !namen.contains(name) && frischBestaetigt[id]?.contains(name) != true {
+                anzeigeGeloescht(name, fuer: uhr, gedaechtnis: gedaechtnis)
+            }
         }
         guard gemeldeteAnzeigen[id] != namen else { return }
         gemeldeteAnzeigen[id] = namen
@@ -513,6 +539,7 @@ public final class AppZustand {
     func anzeigeBestaetigt(_ name: String, fuer uhr: Uhr) {
         anzeigeGemerkt(name, fuer: uhr.id)
         frischBestaetigt[uhr.id, default: []].insert(name)
+        karenzVerbraucht[uhr.id]?.remove(name)
         guard var gemeldet = gemeldeteAnzeigen[uhr.id], !gemeldet.contains(name) else { return }
         gemeldet.append(name)
         gemeldeteAnzeigen[uhr.id] = gemeldet
@@ -522,6 +549,7 @@ public final class AppZustand {
         bekannteAnzeigen[id]?.removeAll { $0 == name }
         // Wer loescht, hat das letzte Wort — auch gegen die eigene Karenz.
         frischBestaetigt[id]?.remove(name)
+        karenzVerbraucht[id]?.remove(name)
         // Auch aus der gemeldeten Liste: Sie ist ein HTTP-Abruf von vorhin —
         // bliebe der Name stehen, zeigte die Ansicht eine Anzeige, die es nicht
         // mehr gibt.
@@ -1391,6 +1419,66 @@ public final class AppZustand {
         }
     }
 
+    /// Reiht eine Benachrichtigung bei den gewaehlten Uhren ein
+    /// (`Anzeigen.benachrichtigen`): ein Rahmen je Uhr in deren Anzeigemass, wie
+    /// bei `senden`. Sie ist keine Anzeige und nimmt keinen Platz ein — darum
+    /// kein Slotgedaechtnis, kein Verlauf und keine Belegung.
+    @discardableResult
+    public func benachrichtigen(rahmenFuer bau: @escaping @Sendable (Anzeigemass) throws -> Frame,
+                                _ optionen: Benachrichtigungsoptionen = .init()) async -> Sendebilanz {
+        var erreicht: [String] = []
+        let ziele = await anZiele({ anzeigen, uhr in
+            try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen)
+        }, was: lok("Benachrichtigung")) { uhr, weg in
+            erreicht.append(uhr.name)
+            if weg == .mqtt { antwortErwarten(lok("Benachrichtigung"), uhr: uhr) }
+            log(lokf("Benachrichtigung an %@ gesendet", uhr.name))
+        }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Nimmt die sichtbare Benachrichtigung weg, mit `name` die benannte (auch
+    /// eine wartende), bei allen gewaehlten Uhren.
+    @discardableResult
+    public func benachrichtigungZurueckziehen(name: String? = nil) async -> Sendebilanz {
+        var erreicht: [String] = []
+        let ziele = await anZiele({ anzeigen, _ in
+            try anzeigen.benachrichtigungZurueckziehen(name: name)
+        }, was: lok("Benachrichtigung zurückziehen")) { uhr, _ in
+            erreicht.append(uhr.name)
+            log(lokf("Benachrichtigung bei %@ zurückgezogen", uhr.name))
+        }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Schaltet eine Anzeige bei den gewaehlten Uhren ein oder aus. Sie behaelt
+    /// ihren Platz in der Schleife und bleibt in der Belegung; `gemeldeteAnzeigen`
+    /// aendert sich darum nicht.
+    @discardableResult
+    public func anzeigeSchalten(_ name: String, an: Bool) async -> Sendebilanz {
+        var erreicht: [String] = []
+        let ziele = await anZiele({ anzeigen, _ in
+            try anzeigen.schalten(name, an: an)
+        }, was: lokf("Schalten von „%@“", name)) { uhr, _ in
+            erreicht.append(uhr.name)
+            log(an ? lokf("%@ auf %@ eingeschaltet", name, uhr.name)
+                   : lokf("%@ auf %@ ausgeschaltet", name, uhr.name))
+        }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Eine Anzeige vor oder zurueck, bei den gewaehlten Uhren.
+    @discardableResult
+    public func anzeigeBlaettern(vor: Bool) async -> Sendebilanz {
+        var erreicht: [String] = []
+        let ziele = await anZiele({ anzeigen, _ in
+            try anzeigen.blaettern(vor: vor)
+        }, was: vor ? lok("Weiterblättern") : lok("Zurückblättern")) { uhr, _ in
+            erreicht.append(uhr.name)
+        }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
     /// Die Uhren, an die gesendet wird: die gewaehlten, sofern sie ueberhaupt
     /// beschickbar sind. Ist nichts gewaehlt, ist es die aktive Uhr — sonst
     /// liefe ein Sendeversuch stillschweigend ins Leere.
@@ -1587,14 +1675,17 @@ public final class AppZustand {
     ///
     /// Die Liste der Anzeigen gibt es bei AWTRIX NG ueber MQTT ausdruecklich
     /// nicht (§3.5), sie kommt allein ueber HTTP (`belegungAbfragen`). Dafuer
-    /// antwortet NG auf jedes Kommando (`<Thema>/result`, §3.4) — und die
-    /// faellt unter dasselbe Muster wie das Mitlesen, wird also mitabonniert und
-    /// beim Lesen am Suffix auseinandergehalten.
+    /// antwortet NG auf jedes Kommando (`<Thema>/result`, §3.4). Bei Anzeigen
+    /// faellt die Antwort unter dasselbe Muster wie das Mitlesen und wird beim
+    /// Lesen am Suffix auseinandergehalten; Benachrichtigungen und das
+    /// Ein-/Ausschalten haben ein eigenes Muster, weil ihre Themen woanders liegen.
     ///
     /// `static`, damit der Test die Themen ohne Broker nachrechnen kann.
     static func themen(fuer uhr: Uhr) -> [String] {
         [NGThema.erreichbarkeit(praefix: uhr.praefix),
-         NGThema.anzeigenMuster(praefix: uhr.praefix)]
+         NGThema.anzeigenMuster(praefix: uhr.praefix),
+         NGThema.benachrichtigungenMuster(praefix: uhr.praefix),
+         NGThema.freigabeErgebnisse(praefix: uhr.praefix)]
     }
 
     /// Was von der Uhr hereinkommt. Das Thema entscheidet, nicht die Reihenfolge:
@@ -1638,12 +1729,7 @@ public final class AppZustand {
             log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
             return
         }
-        let vorsilbe = NGThema.anzeige(praefix: uhr.praefix, name: "")
-        guard thema.hasPrefix(vorsilbe) else { return }
-        let rest = String(thema.dropFirst(vorsilbe.count))
-
-        if rest.hasSuffix("/result") {
-            let name = String(rest.dropLast("/result".count))
+        if let name = NGThema.ergebnisBezeichnung(thema: thema, praefix: uhr.praefix) {
             // Eine Antwort ist da, gleich welche.
             let schluessel = antwortSchluessel(name, id)
             ausstehendeAntworten[schluessel]?.cancel()
@@ -1661,6 +1747,9 @@ public final class AppZustand {
             }
             return
         }
+        let vorsilbe = NGThema.anzeige(praefix: uhr.praefix, name: "")
+        guard thema.hasPrefix(vorsilbe) else { return }
+        let rest = String(thema.dropFirst(vorsilbe.count))
 
         guard let platz = Meldungsplatz.platz(fuerName: rest) else { return }
         // Genau null Bytes loeschen die Anzeige (§3.2) — die verlaesslichste
