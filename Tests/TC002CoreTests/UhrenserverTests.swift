@@ -117,4 +117,65 @@ final class UhrenserverGrenzenTests: XCTestCase {
         XCTAssertEqual(Uhrenserver.vorabpruefung(Data("PUT /x HTTP/1.1\r\nContent-Length: \(VirtuelleNGUhr.maxRumpf + 1)\r\n\r\n".utf8))?.status, 413)
         XCTAssertNil(Uhrenserver.vorabpruefung(Data("GET /x HTTP/1.1\r\n".utf8)))
     }
+
+    // MARK: Eindeutigkeit des Kopfes
+
+    private func anfrage(_ kopfzeilen: String) -> String {
+        let port = (try? gestartet()) ?? 0
+        return roh(port, Data(("PUT /api/v1/apps/pushed/x HTTP/1.1\r\n" + kopfzeilen + "\r\n\r\n").utf8))
+    }
+
+    private func pruefeAbgewiesen(_ kopfzeilen: String, _ status: Int = 400,
+                                  datei: StaticString = #filePath, zeile: UInt = #line) {
+        server?.beenden()
+        let antwort = anfrage(kopfzeilen)
+        XCTAssertTrue(antwort.hasPrefix("HTTP/1.1 \(status)"), "\(kopfzeilen) -> \(antwort)", file: datei, line: zeile)
+        XCTAssertTrue(antwort.contains("\"error\""), antwort, file: datei, line: zeile)
+    }
+
+    func testMehrereContentLengthSindAbgewiesen() {
+        pruefeAbgewiesen("Content-Length: 5\r\nContent-Length: 6")
+        pruefeAbgewiesen("Content-Length: 5\r\ncontent-length: 5")
+        pruefeAbgewiesen("Content-Length: 5, 5")
+    }
+
+    func testTransferEncodingIstAbgewiesen() {
+        pruefeAbgewiesen("Transfer-Encoding: chunked")
+        pruefeAbgewiesen("Content-Length: 0\r\nTransfer-Encoding: chunked")
+    }
+
+    func testUnzulaessigeKopfnamenSindAbgewiesen() {
+        pruefeAbgewiesen("Content-Length : 5")
+        pruefeAbgewiesen("Con tent: 5")
+        pruefeAbgewiesen("Cöntent: 5")
+        pruefeAbgewiesen("Kein-Doppelpunkt")
+        pruefeAbgewiesen(": leer")
+        pruefeAbgewiesen("X-A: 1\r\n folge: 2")
+    }
+
+    func testContentLengthNurZiffern() {
+        pruefeAbgewiesen("Content-Length: +5")
+        pruefeAbgewiesen("Content-Length: 5 5")
+        pruefeAbgewiesen("Content-Length: 0x10")
+        pruefeAbgewiesen("Content-Length: 5.0")
+        pruefeAbgewiesen("Content-Length: 99999999999999999999")
+        pruefeAbgewiesen("Content-Length: 99999999999", 413)
+    }
+
+    func testEineEindeutigeAnfrageWirdBeantwortet() throws {
+        let port = try gestartet()
+        let rumpf = #"{"draw":[["pixel",0,0,"FF0000"]]}"#
+        let antwort = roh(port, Data(("PUT /api/v1/apps/pushed/x HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: \(rumpf.utf8.count)\r\n\r\n" + rumpf).utf8))
+        XCTAssertTrue(antwort.hasPrefix("HTTP/1.1 200"), antwort)
+        XCTAssertEqual(server?.zustand.apps.map(\.name), ["Time", "Status", "x"])
+    }
+
+    func testGroessenpruefungUndEinlesenSehenDenselbenWert() {
+        let kopf = "PUT /x HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
+        guard case .fertig(let a) = Uhrenserver.einlesen(Data((kopf + "abcdef").utf8)) else {
+            return XCTFail("keine Anfrage")
+        }
+        XCTAssertEqual(String(decoding: a.koerper, as: UTF8.self), "abc")
+        if case .mehr = Uhrenserver.einlesen(Data((kopf + "ab").utf8)) {} else { XCTFail("sollte weiterlesen") }
+    }
 }

@@ -87,13 +87,15 @@ public final class Uhrenserver: @unchecked Sendable {
             if let teil { daten.append(teil) }
             if fehler != nil { verbindung.cancel(); return }
 
-            if let abweisung = Self.vorabpruefung(daten) {
-                self.senden(verbindung, abweisung)
+            switch Self.einlesen(daten) {
+            case .abweisen(let antwort):
+                self.senden(verbindung, antwort)
                 return
-            }
-            if let anfrage = Self.zerlegen(daten) {
+            case .fertig(let anfrage):
                 self.antworten(verbindung, auf: anfrage)
                 return
+            case .mehr:
+                break
             }
             if fertig { verbindung.cancel(); return }
             self.lesen(verbindung, bisher: daten)
@@ -138,64 +140,79 @@ public final class Uhrenserver: @unchecked Sendable {
         }
     }
 
-    // MARK: - Grenzen
+    // MARK: - Bytes zu einer Anfrage
 
     /// Der Kopfbereich (Anfragezeile und Kopfzeilen) ist hoechstens so gross.
     static let maxKopf = 16 * 1024
 
-    /// Weist eine Anfrage ab, bevor sie vollstaendig gelesen ist, wenn sie die
-    /// Grenzen sprengt: Ohne das wuchse der Puffer, solange `Content-Length`
-    /// mehr verspricht, und die Rumpfgrenze griffe erst nach dem Empfang.
+    enum Lesestand {
+        /// Noch nicht vollstaendig, weiterlesen.
+        case mehr
+        /// Die Anfrage sprengt eine Grenze oder ist nicht eindeutig; die
+        /// Antwort geht hinaus, danach wird geschlossen.
+        case abweisen(Virtuelleuhr.Antwort)
+        case fertig(Virtuelleuhr.Anfrage)
+    }
+
+    private static func zeichenDesTokens(_ b: UInt8) -> Bool {
+        (b >= 48 && b <= 57) || (b >= 65 && b <= 90) || (b >= 97 && b <= 122)
+            || "!#$%&'*+-.^_`|~".utf8.contains(b)
+    }
+
+    /// Liest eine Anfrage — Kopf, Grenzen und Rumpf in einem Zug, damit die
+    /// Groessenpruefung und das Einlesen des Rumpfes denselben, einmal
+    /// ermittelten `Content-Length` benutzen.
     ///
-    /// - kein Ende des Kopfes innerhalb von `maxKopf`: `400`;
-    /// - `Content-Length` ungueltig oder negativ: `400`;
-    /// - `Content-Length` ueber `VirtuelleNGUhr.maxRumpf`: `413`, sofort.
-    static func vorabpruefung(_ daten: Data) -> Virtuelleuhr.Antwort? {
+    /// Eindeutigkeit vor Grosszuegigkeit: Zwei verschiedene Leser derselben
+    /// Anfrage duerfen nicht verschiedene Laengen sehen. Abgewiesen mit `400`
+    /// wird deshalb
+    ///
+    /// - ein Kopf ohne Ende ueber `maxKopf`, ein Kopf nicht aus UTF-8;
+    /// - eine Zeile ohne Doppelpunkt, ein Kopfname mit Zeichen ausserhalb des
+    ///   HTTP-Token-Zeichensatzes (auch Leerraum vor dem Doppelpunkt);
+    /// - mehr als ein `Content-Length`, auch mit gleichem Wert;
+    /// - ein `Content-Length`, das nicht nur aus Ziffern besteht;
+    /// - `Transfer-Encoding`: Stueckweise uebertragene Rumpfe kann die
+    ///   virtuelle Uhr nicht lesen.
+    ///
+    /// Ein `Content-Length` ueber `VirtuelleNGUhr.maxRumpf` ist sofort `413`.
+    static func einlesen(_ daten: Data) -> Lesestand {
         let zuGross = VirtuelleNGUhr.fehler(413, "payloadTooLarge", "payload too large")
         let schlecht = VirtuelleNGUhr.fehler(400, "badRequest", "bad request")
         guard let ende = daten.range(of: Data("\r\n\r\n".utf8)) else {
-            return daten.count > maxKopf ? schlecht : nil
+            return daten.count > maxKopf ? .abweisen(schlecht) : .mehr
         }
-        guard ende.lowerBound <= maxKopf else { return schlecht }
-        let kopf = String(decoding: daten[daten.startIndex..<ende.lowerBound], as: UTF8.self)
-        for zeile in kopf.components(separatedBy: "\r\n").dropFirst() {
-            guard let doppelpunkt = zeile.firstIndex(of: ":"),
-                  zeile[..<doppelpunkt].lowercased().trimmingCharacters(in: .whitespaces) == "content-length"
-            else { continue }
-            let wert = zeile[zeile.index(after: doppelpunkt)...].trimmingCharacters(in: .whitespaces)
-            guard let laenge = Int(wert), laenge >= 0 else { return schlecht }
-            return laenge > VirtuelleNGUhr.maxRumpf ? zuGross : nil
-        }
-        return nil
-    }
+        let kopfLaenge = daten.distance(from: daten.startIndex, to: ende.lowerBound)
+        guard kopfLaenge <= maxKopf,
+              let kopfteil = String(data: daten[daten.startIndex..<ende.lowerBound], encoding: .utf8)
+        else { return .abweisen(schlecht) }
 
-    // MARK: - Bytes zu einer Anfrage
-
-    /// `nil` heisst: noch nicht vollstaendig, weiterlesen.
-    ///
-    /// Gelesen wird genau so viel, wie diese App verschickt: Anfragezeile,
-    /// Kopfzeilen, und ein Rumpf, dessen Laenge in `Content-Length` steht.
-    /// Stueckweise uebertragene Rumpfe (`chunked`) gibt es hier nicht —
-    /// `URLSession` schickt `Content-Length`.
-    static func zerlegen(_ daten: Data) -> Virtuelleuhr.Anfrage? {
-        let trenner = Data("\r\n\r\n".utf8)
-        guard let ende = daten.range(of: trenner) else { return nil }
-        let kopfteil = String(decoding: daten[daten.startIndex..<ende.lowerBound], as: UTF8.self)
         var zeilen = kopfteil.components(separatedBy: "\r\n")
-        guard !zeilen.isEmpty else { return nil }
         let erste = zeilen.removeFirst().components(separatedBy: " ")
-        guard erste.count >= 2 else { return nil }
+        guard erste.count >= 2 else { return .abweisen(schlecht) }
 
-        var laenge = 0
         var kopf: [String: String] = [:]
+        var laengenangaben: [String] = []
         for zeile in zeilen {
-            guard let doppelpunkt = zeile.firstIndex(of: ":") else { continue }
-            let name = zeile[..<doppelpunkt].lowercased().trimmingCharacters(in: .whitespaces)
-            kopf[name] = zeile[zeile.index(after: doppelpunkt)...].trimmingCharacters(in: .whitespaces)
+            guard let doppelpunkt = zeile.firstIndex(of: ":") else { return .abweisen(schlecht) }
+            let rohName = zeile[..<doppelpunkt]
+            guard !rohName.isEmpty, rohName.utf8.allSatisfy(zeichenDesTokens) else { return .abweisen(schlecht) }
+            let name = rohName.lowercased()
+            let wert = zeile[zeile.index(after: doppelpunkt)...].trimmingCharacters(in: .whitespaces)
+            if name == "transfer-encoding" { return .abweisen(schlecht) }
+            if name == "content-length" { laengenangaben.append(wert) }
+            kopf[name] = wert
         }
-        if let wert = kopf["content-length"] { laenge = Int(wert) ?? 0 }
+        if laengenangaben.count > 1 { return .abweisen(schlecht) }
+        var laenge = 0
+        if let angabe = laengenangaben.first {
+            guard !angabe.isEmpty, angabe.count <= 18, angabe.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),
+                  let zahl = Int(angabe) else { return .abweisen(schlecht) }
+            guard zahl <= VirtuelleNGUhr.maxRumpf else { return .abweisen(zuGross) }
+            laenge = zahl
+        }
         let rumpf = daten[ende.upperBound...]
-        guard rumpf.count >= laenge else { return nil }
+        guard rumpf.count >= laenge else { return .mehr }
 
         // Pfad und Abfrage sauber auseinandernehmen — ein Anzeigename darf
         // alles enthalten, was jemand eintippt, und steht darum kodiert da.
@@ -203,8 +220,21 @@ public final class Uhrenserver: @unchecked Sendable {
         let abfrage = (teile?.queryItems ?? []).reduce(into: [String: String]()) { ergebnis, feld in
             ergebnis[feld.name] = feld.value ?? ""
         }
-        return Virtuelleuhr.Anfrage(erste[0], teile?.path ?? erste[1],
-                                    abfrage: abfrage,
-                                    koerper: Data(rumpf.prefix(laenge)), kopf: kopf)
+        return .fertig(Virtuelleuhr.Anfrage(erste[0], teile?.path ?? erste[1],
+                                            abfrage: abfrage,
+                                            koerper: Data(rumpf.prefix(laenge)), kopf: kopf))
+    }
+
+    /// `nil` heisst: noch nicht vollstaendig oder abgewiesen.
+    static func zerlegen(_ daten: Data) -> Virtuelleuhr.Anfrage? {
+        if case .fertig(let anfrage) = einlesen(daten) { return anfrage }
+        return nil
+    }
+
+    /// Die Antwort, mit der eine Anfrage vor dem vollstaendigen Empfang
+    /// abgewiesen wird — `nil`, wenn sie weiterzulesen oder fertig ist.
+    static func vorabpruefung(_ daten: Data) -> Virtuelleuhr.Antwort? {
+        if case .abweisen(let antwort) = einlesen(daten) { return antwort }
+        return nil
     }
 }
