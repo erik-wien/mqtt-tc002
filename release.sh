@@ -65,8 +65,22 @@ echo "== Signieren mit Developer ID =="
 # Mach-O-Datei in Contents/MacOS wird nicht von der Buendelsignatur miterfasst,
 # sondern muss ihre eigene tragen — sonst scheitert die Notarisierung.
 codesign --force --options runtime --timestamp -s "$IDENTITAET" "$APP/Contents/MacOS/mqtttc002"
-codesign --force --options runtime --timestamp -s "$IDENTITAET" "$APP"
+# Das Buendel bekommt die Berechtigungen aus derselben Quelle wie build.sh
+# (TC002_ENTITLEMENTS, sonst die Datei im Baum); das Werkzeug oben bekommt sie
+# ausdruecklich nicht (SIGKILL ohne Profil, siehe build.sh). Ohne --entitlements
+# wuerde --force die iCloud-Berechtigungen aus dem Bau stillschweigend entfernen.
+BERECHTIGUNGEN="${TC002_ENTITLEMENTS-Resources/MQTT-TC002.entitlements}"
+if [ -z "$BERECHTIGUNGEN" ] || [ ! -f "$BERECHTIGUNGEN" ]; then
+    echo "Berechtigungsdatei fehlt: '$BERECHTIGUNGEN' — ein Release ohne iCloud-Berechtigungen wird nicht gebaut." >&2
+    exit 1
+fi
+codesign --force --options runtime --timestamp --entitlements "$BERECHTIGUNGEN" -s "$IDENTITAET" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
+if ! codesign -d --entitlements - --xml "$APP" 2>/dev/null \
+     | grep -aq "com.apple.developer.icloud-container-identifiers"; then
+    echo "Die signierte App traegt keine iCloud-Berechtigungen (com.apple.developer.icloud-container-identifiers fehlt)." >&2
+    exit 1
+fi
 
 echo "== Installationsabbild schnueren =="
 # Erst jetzt, nach dem Signieren: die App im Abbild muss die fertige sein.
