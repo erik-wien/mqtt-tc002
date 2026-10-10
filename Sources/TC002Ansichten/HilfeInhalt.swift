@@ -330,7 +330,7 @@ public enum HilfeInhalt {
         .absatz("Am Zeiger erscheint zusätzlich ein rotes ⊗ in der Ecke des Blocks, solange der Zeiger darüber steht — so wie Safari das Schließzeichen seiner Tabs zeigt. Am Finger gibt es kein Überfahren, und ein Zeichen, das immer dasteht, sähe aus wie der Wackelmodus des Home-Bildschirms."),
     ]
 
-    /// Die eigene Standzeit einer Anzeige. Das Feld heisst am Mac „Dauer (Sek.)“
+    /// Die eigene Standzeit einer Anzeige. Das Feld heisst am Mac „Dauer (s)“
     /// und am iPhone „Dauer … s“ — die Sache dahinter ist dieselbe (`duration`
     /// im Rahmen).
     public static let dauer: [Hilfebaustein] = [
@@ -370,11 +370,11 @@ public enum HilfeInhalt {
     /// Die Kurzbefehle (iPhone und iPad). Der Mac hat keine; dort ersetzt sie
     /// das Kommandozeilenwerkzeug.
     public static let kurzbefehle: [Hilfebaustein] = [
-                .absatz("Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung nehmen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
+                .absatz("Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung löschen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
 
                 .ueberschrift("Meldung schicken"),
-                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
-                .absatz("„Bild schicken“ nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
+                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Platz — und das ganze Format."),
+                .absatz("„Bild schicken“ nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Platz und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
                 .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
 
                 .ueberschrift("Die Formatangaben"),
@@ -385,9 +385,9 @@ public enum HilfeInhalt {
                 .absatz("Angeboten werden nur die Größen, die die App zu dieser Schriftart anbietet. Steht die verlangte nicht darauf, sendet der Kurzbefehl nicht, sondern fragt noch einmal und nennt die möglichen. Stillschweigend die nächstbeste zu nehmen hieße, etwas anderes zu senden, als im Kurzbefehl steht — und niemand sähe es."),
                 .absatz("Wer nur die Schriftart wechselt und keine Größe angibt, bekommt die nächstgelegene ihrer Liste — genau wie beim Umschalten der Schriftart in der App."),
 
-                .ueberschrift("Meldung nehmen"),
+                .ueberschrift("Meldung löschen"),
                 .absatz("Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten."),
-                .absatz("„Meldung schicken“ und „Meldung nehmen“ schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
+                .absatz("„Meldung schicken“ und „Meldung löschen“ schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
                 .absatz("Und alle folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung."),
 
                 .ueberschrift("Nachricht senden und zurückziehen"),

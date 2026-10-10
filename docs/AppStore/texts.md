@@ -32,7 +32,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 > 5. Nachricht: über dem Textfeld auf „Nachricht“ umschalten, senden; sie bleibt stehen, bis „Nachricht zurückziehen“ erscheint und getippt wird. Beim Notensymbol neben dem Segment einen Klang wählen (die virtuelle Uhr meldet, was sie kann).
 > 6. Steuerung: oben auf den Namen der Uhr tippen › „Steuerung …“: Live-Bild, Display aus und an, Helligkeit, Moodlight, Abschnitt „Ton“. Dazu „Einstellungen der Uhr …“.
 > 7. Icons: den Smiley-Knopf neben dem Textfeld tippen, ein Icon wählen oder unter „Hinzufügen“ eine LaMetric-Nummer eingeben (z. B. 2056) und „Nachladen“ tippen; danach senden.
-> 8. Kurzbefehle-App: „Meldung an die Uhr schicken“ suchen, Text eintragen, ausführen — auch per Siri („Schicke eine Meldung mit Pixel Clock Messenger“). Danach „Meldung von der Uhr nehmen“ mit Platz 1.
+> 8. Kurzbefehle-App: „Meldung an die Uhr schicken“ suchen, Text eintragen, ausführen — auch per Siri („Schicke eine Meldung mit Pixel Clock Messenger“). Danach „Meldung von der Uhr löschen“ mit Platz 1.
 > 9. iPad (falls vorhanden): Bereich „Icons“ › „Neu zeichnen“: ein Icon malen, mehrere Einzelbilder als Animation, Rückgängig; speichern und senden. Mit iCloud erscheint es auf dem iPhone.
 > 10. Mit echter Uhr (AWTRIX NG): Einstellungen › Uhren: Adresse der Uhr eintragen (optional MQTT-Broker unter „MQTT-Broker“), „Abfragen“, senden.
 > Rückmeldungen gern per Screenshot in TestFlight.
@@ -198,7 +198,7 @@ Grundlage ist Eriks Entwurf. Änderungen in dieser Fassung (Oktober 2026): nur n
 >
 > • Meldung an die Uhr schicken
 > • Bild an die Uhr schicken
-> • Meldung von der Uhr nehmen
+> • Meldung von der Uhr löschen
 > • Nachricht senden
 > • Nachricht zurückziehen
 >

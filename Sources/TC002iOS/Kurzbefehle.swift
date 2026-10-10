@@ -36,7 +36,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
     var dauer: Int?
 
-    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
+    @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int?
 
@@ -238,7 +238,7 @@ struct MeldungSendenIntent: AppIntent {
         // wenigstens eine dieser Uhren ueber ihn geht — sonst scheiterte ein
         // Kurzbefehl an einer Uhr aus einer Einrichtung, die er nicht benutzt.
         if Einstellungen.brokerNoetig(fuer: gewaehlt), !e.brokerEingerichtet {
-            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
         }
         let ohnePraefix = gewaehlt.filter { $0.wirksameBetriebsart == .mqtt && !$0.beschickbar }
         guard ohnePraefix.isEmpty else {
@@ -257,12 +257,12 @@ struct MeldungSendenIntent: AppIntent {
 /// HTTP mit dem Rumpf `{}` (§5.6). Die beiden meinen mit „leer" genau das
 /// Gegenteil voneinander; `Anzeigen` hält das auseinander.
 struct MeldungLoeschenIntent: AppIntent {
-    static let title: LocalizedStringResource = "Meldung von der Uhr nehmen"
+    static let title: LocalizedStringResource = "Meldung von der Uhr löschen"
     static let description = IntentDescription(
         "Entfernt eine der fünf Meldungen wieder von der Uhr.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
+    @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int
 
@@ -270,7 +270,7 @@ struct MeldungLoeschenIntent: AppIntent {
     var uhr: String?
 
     static var parameterSummary: some ParameterSummary {
-        Summary("Slot \(\.$platz) von der Uhr nehmen") { \.$uhr }
+        Summary("Slot \(\.$platz) von der Uhr löschen") { \.$uhr }
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -292,7 +292,7 @@ struct MeldungLoeschenIntent: AppIntent {
             throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ziele.map(\.name).joined(separator: ", "))))
         }
         if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
-            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
         }
         // Erst nach der Pruefung der Ziele, damit die Rueckfrage nur kommt,
         // wenn auch wirklich geloescht wuerde. Die Variante mit Text gibt es
@@ -318,7 +318,7 @@ struct MeldungLoeschenIntent: AppIntent {
                 Slotgedaechtnis.gemeinsam.vergessen(fuer: ziel.id, platz: platz)
             }
         }.value
-        return .result(dialog: IntentDialog(stringLiteral: lokf("Slot %d entfernt.", platz)))
+        return .result(dialog: IntentDialog(stringLiteral: lokf("Platz %d entfernt.", platz)))
     }
 }
 
@@ -343,7 +343,7 @@ struct BildSendenIntent: AppIntent {
     @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: String?
 
-    @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
+    @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int?
 
@@ -416,7 +416,7 @@ struct BildSendenIntent: AppIntent {
             throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", gewaehlt.map(\.name).joined(separator: ", "))))
         }
         if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
-            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
+            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
         }
         return abgefragt
     }
@@ -447,9 +447,9 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
                     shortTitle: "Nachricht zurückziehen",
                     systemImageName: "bell.slash")
         AppShortcut(intent: MeldungLoeschenIntent(),
-                    phrases: ["Nimm die Meldung von der Uhr mit \(.applicationName)",
+                    phrases: ["Lösche die Meldung von der Uhr mit \(.applicationName)",
                               "Remove from the clock with \(.applicationName)"],
-                    shortTitle: "Meldung nehmen",
+                    shortTitle: "Meldung löschen",
                     systemImageName: "trash")
     }
 }

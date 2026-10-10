@@ -734,9 +734,9 @@ public struct SendenView: View {
                 }
             }
             Picker("Tempo", selection: $tempo) {
-                Text("langsam").tag(Lauftempo.langsam)
-                Text("mittel").tag(Lauftempo.mittel)
-                Text("schnell").tag(Lauftempo.schnell)
+                Text("Langsam").tag(Lauftempo.langsam)
+                Text("Mittel").tag(Lauftempo.mittel)
+                Text("Schnell").tag(Lauftempo.schnell)
             }
             .pickerStyle(.segmented).labelsHidden()
             .disabled(passt)
@@ -1091,7 +1091,7 @@ struct MeldungLoeschenKnopf: View {
     /// Fragt nach und löscht dann (`Slotleiste`).
     let loeschen: () -> Void
 
-    private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
+    private var beschriftung: String { lokf("Platz %d auf der Uhr löschen", platz) }
 
     var body: some View {
         if belegt {

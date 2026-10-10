@@ -320,7 +320,7 @@ nicht mehr steht:
   Pixel liegen stattdessen in der Bilddatei;
 - eine erfolgreiche Löschung. `AppZustand.anzeigeGeloescht` ist der gemeinsame
   Rumpf für `AppZustand.loeschen`, `AnzeigenView` und `AnzeigeniOS`; der
-  Kurzbefehl „Meldung nehmen" (`Kurzbefehle.swift`) kommt ohne `AppZustand`
+  Kurzbefehl „Meldung löschen" (`Kurzbefehle.swift`) kommt ohne `AppZustand`
   aus und ruft deshalb selbst;
 - eine **leere** Nutzlast beim Mitlesen: Genau null Bytes heißen, die Anzeige
   wurde auf der Uhr entfernt — gleich von wem. Der Platz zählt dann wieder als

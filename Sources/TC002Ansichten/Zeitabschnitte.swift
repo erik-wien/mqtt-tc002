@@ -35,7 +35,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // gegen „Alles, was diese Uhr zeigt" sagt es in der Ueberschrift
         // selbst.
         Section {
-            LabeledContent("Dauer (Sek.)") {
+            LabeledContent("Dauer (s)") {
                 TextField("", text: $dauerText)
                     .eingabefeld()
                     .frame(minWidth: 70)
@@ -51,7 +51,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
 
         // Ein eigener Abschnitt, keine Zeile im vorigen: Im schmalen
         // Inspektor faellt die Beschriftung eines Segmentschalters weg — als
-        // Zeile unter „Dauer (Sek.)" waere er ein namenloses „langsam mittel
+        // Zeile unter „Dauer (s)" waere er ein namenloses „langsam mittel
         // schnell" und laese sich als Teil der Dauer.
         //
         // Der Abschnitt bringt seine Ueberschrift selbst mit, und die faellt

@@ -48,15 +48,21 @@ struct Blatt<Inhalt: View>: View {
                 .navigationTitle(titel)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(bestaetigung == nil ? lok("Fertig") : lok("Abbrechen")) {
-                            schliessen()
-                        }
-                    }
-                    if let bestaetigung, let bestaetigen {
+                    // Ohne zweite Handlung ist „Fertig" die Bestätigung und
+                    // steht rechts wie jede Bestätigung; „Abbrechen" links.
+                    if bestaetigung == nil {
                         ToolbarItem(placement: .confirmationAction) {
-                            Button(bestaetigung) { bestaetigen() }
-                                .disabled(!bestaetigenMoeglich)
+                            Button(lok("Fertig")) { schliessen() }
+                        }
+                    } else {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(lok("Abbrechen")) { schliessen() }
+                        }
+                        if let bestaetigung, let bestaetigen {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(bestaetigung) { bestaetigen() }
+                                    .disabled(!bestaetigenMoeglich)
+                            }
                         }
                     }
                 }

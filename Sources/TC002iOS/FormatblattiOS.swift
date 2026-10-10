@@ -70,7 +70,7 @@ struct FormatblattiOS: View {
     private var zeitform: some View {
             Form {
                 Section {
-                    LabeledContent("Dauer (Sek.)") {
+                    LabeledContent("Dauer (s)") {
                         TextField("Uhr entscheidet", text: $dauerText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
@@ -83,9 +83,9 @@ struct FormatblattiOS: View {
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {
-                        Text("langsam").tag(Lauftempo.langsam)
-                        Text("mittel").tag(Lauftempo.mittel)
-                        Text("schnell").tag(Lauftempo.schnell)
+                        Text("Langsam").tag(Lauftempo.langsam)
+                        Text("Mittel").tag(Lauftempo.mittel)
+                        Text("Schnell").tag(Lauftempo.schnell)
                     }
                     .pickerStyle(.segmented)
                     Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)

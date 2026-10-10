@@ -93,7 +93,7 @@ final class SlotmenueTests: XCTestCase {
         XCTAssertTrue(text.contains("Image(systemName: \"questionmark\")"),
                       "der unbekannte Block trägt kein Fragezeichen mehr — dann ist er von einem "
                       + "leeren Block nicht mehr zu unterscheiden")
-        XCTAssertTrue(text.contains("lokf(\"Slot %d, unbekannt\", platz)"),
+        XCTAssertTrue(text.contains("lokf(\"Platz %d, unbekannt\", platz)"),
                       "die Sprachausgabe unterscheidet „belegt“ und „unbekannt“ nicht mehr")
         XCTAssertTrue(text.contains("help(lok(\"belegt — von einer anderen Quelle\"))"),
                       "am Zeiger sagt nichts mehr, was das Fragezeichen bedeutet")

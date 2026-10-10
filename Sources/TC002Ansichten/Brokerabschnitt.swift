@@ -108,7 +108,7 @@ public struct Brokerabschnitt: View {
         case .laeuft:
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)
-                Text("prüfe…").font(kanon.fussnote).foregroundStyle(.secondary)
+                Text("wird geprüft …").font(kanon.fussnote).foregroundStyle(.secondary)
             }
         case .angenommen:
             Text("Der Broker nimmt die Anmeldung an.")

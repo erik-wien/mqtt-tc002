@@ -353,7 +353,7 @@ func lauf() throws {
     // HTTP sendet, soll hier nicht an einer Bedingung scheitern, die seine
     // Einrichtung gar nicht kennt.
     if Einstellungen.brokerNoetig(fuer: gewaehlte), !einstellungen.brokerEingerichtet {
-        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
+        throw Abbruch(lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken."))
     }
 
     // Woran eine Uhr fehlt, haengt an ihrer Betriebsart: Die MQTT-Uhr braucht
@@ -482,7 +482,7 @@ func lauf() throws {
                                                               fuer: uhr.id, platz: platz,
                                                               mass: Anzeigemass.fuer(uhr))
                 if !gemerkt {
-                    fehlerAusgeben(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, platz))
+                    fehlerAusgeben(lokf("%@: Regler für Platz %d nicht gemerkt", uhr.name, platz))
                 }
             }
         }

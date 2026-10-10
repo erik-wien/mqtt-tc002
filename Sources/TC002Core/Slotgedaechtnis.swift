@@ -381,7 +381,7 @@ public struct Slotgedaechtnis: Sendable {
     /// laesst: Ein gemaltes Bild hat keine Regler (`BilderBereichView`, und damit
     /// `AppZustand.senden` mit `slotPlatz`, aber ohne `slotOptionen`), und eine
     /// Loeschung laesst gar nichts mehr zurueck (`AppZustand.anzeigeGeloescht`,
-    /// und der Kurzbefehl „Meldung nehmen").
+    /// und der Kurzbefehl „Meldung löschen").
     ///
     /// Ohne das bliebe der Stand der letzten Textsendung liegen, und
     /// `AppZustand.slotzustand` rechnete beim naechsten Start ohne Broker

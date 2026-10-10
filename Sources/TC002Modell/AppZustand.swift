@@ -659,7 +659,7 @@ public final class AppZustand {
         anzeigeVergessen(name, fuer: uhr.id)
         guard let platz = Meldungsplatz.platz(fuerName: name) else { return }
         if !gedaechtnis.vergessen(fuer: uhr.id, platz: platz) {
-            log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, platz))
+            log(lokf("%@: alte Regler für Platz %d nicht vergessen", uhr.name, platz))
         }
     }
 
@@ -684,8 +684,8 @@ public final class AppZustand {
     /// ausdruecklich nicht gefragt — eine Erreichbarkeitspruefung haelt den
     /// Start genau dann am laengsten auf, wenn niemand antwortet. Dieser Fall
     /// gehoert auf die Sendeansicht, und dort steht er auch schon
-    /// (`brokerMeldung` nennt Adresse und Port und verweist auf „Sichern und
-    /// pruefen").
+    /// (`brokerMeldung` nennt Adresse und Port und verweist auf „Verbindung
+    /// prüfen“).
     ///
     /// Ein Merker „schon einmal gestartet" waere schlechter als gar keiner:
     /// Wer alle Uhren wieder entfernt oder die Brokeradresse leert, steht in
@@ -1140,9 +1140,9 @@ public final class AppZustand {
             return lokf("%@ wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken.", uhr.name)
         }
         if brokerHost.isEmpty {
-            return lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Sichern und prüfen“ drücken.")
+            return lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Verbindung prüfen“ drücken.")
         }
-        return lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken.", brokerPort)
+        return lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Verbindung prüfen“ drücken.", brokerPort)
     }
 
     /// Wessen Schuld war es? Ein Brokerfehler träfe jede Uhr gleichermaßen — ihn
@@ -1181,15 +1181,15 @@ public final class AppZustand {
         let adresse = "\(brokerHost):\(brokerPort)"
         switch error {
         case MQTTFehler.zeitueberschreitung:
-            return "Der Broker \(adresse) antwortet nicht. Läuft er, und stimmen Adresse und Port? Unter „Einstellungen“ beantwortet das „Sichern und prüfen“."
+            return "Der Broker \(adresse) antwortet nicht. Läuft er, und stimmen Adresse und Port? Unter „Einstellungen“ beantwortet das „Verbindung prüfen“."
         case MQTTFehler.nichtVerbunden(let grund):
-            return "Der Broker \(adresse) ist nicht erreichbar (\(grund)) Adresse und Port stehen unter „Einstellungen“; „Sichern und prüfen“ sagt, ob er antwortet."
+            return "Der Broker \(adresse) ist nicht erreichbar (\(grund)) Adresse und Port stehen unter „Einstellungen“; „Verbindung prüfen“ sagt, ob er antwortet."
         case MQTTFehler.abgelehnt(let code):
             let konto = benutzer.isEmpty ? "ohne Benutzer" : "„\(benutzer)“"
             if code == 4 || code == 5 {
-                return "Der Broker \(adresse) nimmt das Konto \(konto) nicht an. Benutzer und Kennwort stehen unter „Einstellungen“ — „Sichern und prüfen“ zeigt, ob sie stimmen."
+                return "Der Broker \(adresse) nimmt das Konto \(konto) nicht an. Benutzer und Kennwort stehen unter „Einstellungen“ — „Verbindung prüfen“ zeigt, ob sie stimmen."
             }
-            return "Der Broker \(adresse) lehnt die Anmeldung ab: \((error as? LocalizedError)?.errorDescription ?? "Code \(code)") Unter „Einstellungen“ mit „Sichern und prüfen“ nachfassen."
+            return "Der Broker \(adresse) lehnt die Anmeldung ab: \((error as? LocalizedError)?.errorDescription ?? "Code \(code)") Unter „Einstellungen“ mit „Verbindung prüfen“ nachfassen."
         default:
             return nil
         }
@@ -1392,10 +1392,10 @@ public final class AppZustand {
                                                               fuer: uhr.id, platz: slotPlatz,
                                                               mass: mass)
                 if !gemerkt {
-                    log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))
+                    log(lokf("%@: Regler für Platz %d nicht gemerkt", uhr.name, slotPlatz))
                 }
             } else if !Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: slotPlatz) {
-                log(lokf("%@: alte Regler für Slot %d nicht vergessen", uhr.name, slotPlatz))
+                log(lokf("%@: alte Regler für Platz %d nicht vergessen", uhr.name, slotPlatz))
             }
             // Erst hier, nach `merken`/`vergessen`: Beide raeumen das gemerkte
             // Bild dieses Platzes weg, damit nie Regler des einen und ein Bild
@@ -1407,7 +1407,7 @@ public final class AppZustand {
             // fuer ein Bild, das diese Installation selbst geschickt hatte.
             if let slotPixel,
                !Slotgedaechtnis.gemeinsam.merken(bild: slotPixel, fuer: uhr.id, platz: slotPlatz) {
-                log(lokf("%@: Bild für Slot %d nicht gemerkt", uhr.name, slotPlatz))
+                log(lokf("%@: Bild für Platz %d nicht gemerkt", uhr.name, slotPlatz))
             }
         }
         verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,

@@ -76,7 +76,7 @@ public struct Filterleiste<Wert: Hashable>: View {
     /// Einblendtext.
     private func kapsel(kurz: Bool) -> some View {
         HStack(spacing: 2) {
-            segment(titel: lok("alle"), gewaehlt: wert == nil) { wert = nil }
+            segment(titel: lok("Alle"), gewaehlt: wert == nil) { wert = nil }
             ForEach(angebot, id: \.wert) { eintrag in
                 segment(titel: lok(kurz ? eintrag.kurz : eintrag.titel),
                         gewaehlt: wert == eintrag.wert) { wert = eintrag.wert }

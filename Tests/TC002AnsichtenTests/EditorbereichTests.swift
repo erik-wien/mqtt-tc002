@@ -711,7 +711,7 @@ final class EditorbereichTests: XCTestCase {
 
         for (handlung, ruf) in [("Öffnen", "anklicken(eintrag)"),
                                 ("Duplizieren", "duplizieren(eintrag)"),
-                                ("Umbenennen…", "umbenennenBeginnen(eintrag)"),
+                                ("Umbenennen …", "umbenennenBeginnen(eintrag)"),
                                 ("Löschen", "zuLoeschen = eintrag")] {
             XCTAssertTrue(kachel.contains(ruf),
                           "„\(handlung)“ führt nicht mehr auf \(ruf)")

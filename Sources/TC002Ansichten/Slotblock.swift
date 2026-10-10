@@ -129,13 +129,13 @@ public struct Slotblock: View {
     private var beschriftung: Text {
         switch zustand {
         case .frei:
-            return Text(lokf("Slot %d, frei", platz))
+            return Text(lokf("Platz %d, frei", platz))
         case .bekannt:
-            return Text(inSchleife ? lokf("Slot %d, belegt", platz)
-                                   : lokf("Slot %d, belegt, nicht in der Schleife", platz))
+            return Text(inSchleife ? lokf("Platz %d, belegt", platz)
+                                   : lokf("Platz %d, belegt, nicht in der Schleife", platz))
         case .unbekannt:
-            return Text(inSchleife ? lokf("Slot %d, unbekannt", platz)
-                                   : lokf("Slot %d, unbekannt, nicht in der Schleife", platz))
+            return Text(inSchleife ? lokf("Platz %d, unbekannt", platz)
+                                   : lokf("Platz %d, unbekannt, nicht in der Schleife", platz))
         }
     }
 }

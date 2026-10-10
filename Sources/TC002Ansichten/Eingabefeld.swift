@@ -210,7 +210,7 @@ private struct Feldzeichen: View {
             if laeuft {
                 ProgressView()
                     .controlSize(.small)
-                    .accessibilityLabel(Text("Sende…"))
+                    .accessibilityLabel(Text("Sendet"))
             } else if let senden, !text.isEmpty {
                 Sendezeichen(senden: senden, auskunft: auskunft, ausgang: ausgang)
             }

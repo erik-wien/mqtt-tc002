@@ -166,9 +166,9 @@ enum TempoAuswahl: String, AppEnum {
         TypeDisplayRepresentation(name: "Tempo")
     }
     static var caseDisplayRepresentations: [TempoAuswahl: DisplayRepresentation] = [
-        .langsam: DisplayRepresentation(title: "langsam"),
-        .mittel: DisplayRepresentation(title: "mittel"),
-        .schnell: DisplayRepresentation(title: "schnell"),
+        .langsam: DisplayRepresentation(title: "Langsam"),
+        .mittel: DisplayRepresentation(title: "Mittel"),
+        .schnell: DisplayRepresentation(title: "Schnell"),
     ]
 
     var kern: Lauftempo {

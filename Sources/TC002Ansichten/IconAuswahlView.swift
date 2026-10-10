@@ -2,7 +2,7 @@ import SwiftUI
 import TC002Core
 
 /// Waehlt ein Icon aus der Sammlung — ohne Auswahl nennt der Knopf die Handlung
-/// „Icon wählen…", mit Auswahl zeigt er Vorschau und Namen des gewaehlten Icons
+/// „Icon wählen …", mit Auswahl zeigt er Vorschau und Namen des gewaehlten Icons
 /// und bleibt anklickbar, um ein anderes zu waehlen; ein Druck oeffnet ein Blatt
 /// mit Suche und Raster. Baugleich mit `ZielauswahlView`: derselbe Blattkopf,
 /// derselbe „Schließen"-Knopf — die Blaetter der App sollen sich gleich anfuehlen.
@@ -76,7 +76,7 @@ struct IconAuswahlView: View {
                             .truncationMode(.tail)
                     } else {
                         Image(systemName: "photo")
-                        Text("Icon wählen…").lineLimit(1)
+                        Text("Icon wählen …").lineLimit(1)
                     }
                 }
             }
@@ -135,7 +135,7 @@ struct IconAuswahlView: View {
                     // nicht: Er oeffnet eine Rueckfrage, und ein Blatt, das
                     // unter seiner eigenen Rueckfrage wegfaellt, nimmt sie
                     // mit.
-                    Button { gewaehltesIcon = nil; zeigeBlatt = false } label: { Text("ohne").font(.caption) }
+                    Button { gewaehltesIcon = nil; zeigeBlatt = false } label: { Text("Ohne").font(.caption) }
                         .knopfBefehl()
                     ForEach(gefilterte, id: \.kennung) { icon in
                         ZStack(alignment: .topTrailing) {

@@ -107,7 +107,7 @@ public struct UeberView: View {
                 // seinem Urheber die zusaetzliche Erlaubnis unten streitig.
                 Text("GPL-3.0. Quelltext von PixDeck ist nicht enthalten — von dort stammt Wissen über das Gerät, und das ist nicht urheberrechtlich geschützt.")
                 Link("www.gnu.org/licenses/gpl-3.0.html", destination: URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!)
-                textknopf(lok("Lizenztext anzeigen…")) { lizenztextSichtbar = true }
+                textknopf(lok("Lizenztext anzeigen")) { lizenztextSichtbar = true }
                 Text("Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen.")
                     .foregroundStyle(.secondary)
             }
@@ -141,15 +141,15 @@ public struct UeberView: View {
                     Text("Drei mitgelieferte, eigens aufs Pixelraster gezeichnete Schriften, die Umlaute und „ß“ können — anders als die eingebaute Gerätschrift. Alle drei SIL Open Font License 1.1.")
                     HStack(spacing: 4) {
                         Link("Micro 5", destination: URL(string: "https://github.com/scfried/soft-type-micro")!)
-                        textknopf(lok("Lizenztext…")) { micro5LizenztextSichtbar = true }
+                        textknopf(lok("Lizenztext")) { micro5LizenztextSichtbar = true }
                     }
                     HStack(spacing: 4) {
                         Link("Silkscreen", destination: URL(string: "https://github.com/googlefonts/silkscreen")!)
-                        textknopf(lok("Lizenztext…")) { silkscreenLizenztextSichtbar = true }
+                        textknopf(lok("Lizenztext")) { silkscreenLizenztextSichtbar = true }
                     }
                     HStack(spacing: 4) {
                         Link("Tiny5", destination: URL(string: "https://github.com/Gissio/font_tiny5")!)
-                        textknopf(lok("Lizenztext…")) { tiny5LizenztextSichtbar = true }
+                        textknopf(lok("Lizenztext")) { tiny5LizenztextSichtbar = true }
                     }
                 }
             }
@@ -176,7 +176,7 @@ public struct UeberView: View {
     /// Ein Knopf, der wie ein Verweis aussieht — den Stil `.link` gibt es nur
     /// unter macOS; am Telefon ist die Vorgabe schon ein blauer Text.
     ///
-    /// Bleibt auch nach dem Knopfdurchgang ein Verweis. „Lizenztext…"
+    /// Bleibt auch nach dem Knopfdurchgang ein Verweis. „Lizenztext"
     /// steht mitten in einer Zeile neben echten Verweisen („Micro 5",
     /// „Silkscreen", „Tiny5"); ein grauer Kasten mitten im Satz risse die
     /// Zeile auf. Ausdruecklich `.automatic` statt gar nichts, damit die

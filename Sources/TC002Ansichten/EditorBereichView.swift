@@ -404,7 +404,7 @@ public struct EditorBereichView: View {
                     .help(lok("Hinzufügen"))
                 }
             } else {
-                // Kein Uhrenmenue im Titel: Die angesehene Uhr steuert hier
+                // Kein Uhrenmenü im Titel: Die angesehene Uhr steuert hier
                 // allein das Aussehen der Slotleiste ganz unten — wohin
                 // gesendet wird, sagt „Empfänger" daneben. Zwei Uhrenbegriffe
                 // in einer Ansicht, einer davon als Titel des Editors, waren
@@ -746,7 +746,7 @@ public struct EditorBereichView: View {
                 // zur Wahl, und welche man nimmt, entscheidet, wie viel Platz
                 // daneben bleibt. Eine Liste, in der sie durcheinanderstehen,
                 // machte das Merkmal zur Suchaufgabe.
-                Menu("Icon wählen…") {
+                Menu("Icon wählen …") {
                     ForEach(groesse.aufnehmbar) { quelle in
                         Section(lok(quelle.beschriftung)) {
                             ForEach(einfuegbare.filter { $0.groesse == quelle }) { eintrag in
@@ -773,7 +773,7 @@ public struct EditorBereichView: View {
                 Text(verbatim: "\(leinwand.bilder.count)").monospacedDigit()
             }
             HStack {
-                Button("Frame anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
+                Button("Einzelbild anhängen") { schritt(); leinwand.anhaengen(); arbeitsstandSichern() }
                     .knopfBefehl()
                 Spacer()
                 if leinwand.bilder.count > 1 { abspielknopf(abspielKlein) }
@@ -1264,7 +1264,7 @@ public struct EditorBereichView: View {
         .contextMenu {
             Button("Öffnen") { anklicken(eintrag) }
             Button("Duplizieren") { duplizieren(eintrag) }
-            Button("Umbenennen…") { umbenennenBeginnen(eintrag) }
+            Button("Umbenennen …") { umbenennenBeginnen(eintrag) }
             Button("Löschen", role: .destructive) { zuLoeschen = eintrag }
         }
     }
@@ -1388,7 +1388,7 @@ public struct EditorBereichView: View {
             ProgressView()
                 .controlSize(.small)
                 .frame(width: 28, height: 28)
-                .accessibilityLabel(Text("Sende…"))
+                .accessibilityLabel(Text("Sendet"))
         } else {
             Sendezeichen(senden: { senden() }, ausgang: ausgang)
                 .disabled(zustand.ziele().isEmpty)

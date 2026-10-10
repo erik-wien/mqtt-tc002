@@ -895,7 +895,7 @@ final class AppZustandTests: XCTestCase {
 
     /// Eine HTTP-Uhr scheitert nie am Broker und nie an einem Praefix. Die
     /// Meldung, die sie im Fehlerfall bekommt, darf den Leser deshalb nicht
-    /// zu „Abfragen" oder „Sichern und prüfen" schicken.
+    /// zu „Abfragen" oder „Verbindung prüfen" schicken.
     func testDieMeldungEinerHttpUhrRedetWederVomBrokerNochVomPraefix() throws {
         d.removeObject(forKey: "uhren")
         let zustand = AppZustand(schluesselbund: schluesselbund)
@@ -965,7 +965,7 @@ final class AppZustandTests: XCTestCase {
     }
 
     /// Die leere Adresse ist seit der leeren Vorgabe der Zustand jeder frischen
-    /// Installation — und damit ein Knopfdruck von „Sichern und pruefen"
+    /// Installation — und damit ein Knopfdruck von „Verbindung prüfen"
     /// entfernt. Ohne eigenen Zweig nennte die Meldung den Port, an dem nichts
     /// falsch ist, und `NWEndpoint.Host("")` waere ein Ziel, das es nicht gibt.
     func testOhneBrokeradresseSagtDiePruefungGenauDas() {
@@ -995,12 +995,12 @@ final class AppZustandTests: XCTestCase {
         let uhr = Uhr(name: "Küche", host: "10.0.0.5", praefix: "awtrix_a86b")
 
         XCTAssertEqual(zustand.zugangsmeldung(uhr),
-                       lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Sichern und prüfen“ drücken."))
+                       lok("Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Verbindung prüfen“ drücken."))
 
         zustand.brokerHost = "10.0.0.2"
         zustand.brokerPort = "keine Zahl"
         XCTAssertEqual(zustand.zugangsmeldung(uhr),
-                       lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Sichern und prüfen“ drücken.", "keine Zahl"),
+                       lokf("Der Broker-Port „%@“ ist keine Zahl über 0. Unter „Einstellungen“ richtigstellen und „Verbindung prüfen“ drücken.", "keine Zahl"),
                        "steht eine Adresse, gilt wieder die Portmeldung")
 
         XCTAssertEqual(zustand.zugangsmeldung(Uhr(name: "Bad", host: "10.0.0.6")),

@@ -61,7 +61,7 @@ enum Kurzbefehlsziele {
         // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
         // wenigstens eine dieser Uhren ueber ihn geht.
         if Einstellungen.brokerNoetig(fuer: gewaehlt), !e.brokerEingerichtet {
-            throw Hinweis(amUhrfeld: false, text: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken."))
+            throw Hinweis(amUhrfeld: false, text: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken."))
         }
         let ohnePraefix = gewaehlt.filter { $0.wirksameBetriebsart == .mqtt && !$0.beschickbar }
         guard ohnePraefix.isEmpty else {
