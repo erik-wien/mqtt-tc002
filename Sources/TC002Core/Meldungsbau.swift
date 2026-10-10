@@ -276,6 +276,7 @@ public enum Meldungsbau {
     /// jedes Layout der Vorschau wiederholt sie. Die Rechnung ist rein; der
     /// Schlüssel enthält alles, wovon sie abhängt.
     public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Pixelfeld {
+        let o = o.angepasst(an: mass)
         let k = Rasterschluessel(text: o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
                                  fett: o.fett, farbe: o.farbe, luecke: o.abstand,
                                  breite: mass.breite, hoehe: mass.hoehe)
@@ -294,7 +295,8 @@ public enum Meldungsbau {
 
     /// Zwischengespeichert aus demselben Grund wie `puffer`; die Breite hängt
     /// nicht vom Anzeigemaß ab.
-    public static func breite(_ o: Meldungsoptionen) -> Int {
+    public static func breite(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Int {
+        let o = o.angepasst(an: mass)
         let k = Rasterschluessel(text: o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
                                  fett: o.fett, farbe: "", luecke: o.abstand, breite: 0, hoehe: 0)
         rasterspeicher.sperre.lock()
@@ -320,13 +322,14 @@ public enum Meldungsbau {
         if o.weg == .text {
             return Geraeteschrift.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
         }
-        return breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        return breite(o, mass: mass) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
     /// Schriftgröße: `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie
     /// sie hinlegt, nicht an den oberen Rand.
     public static func versatzY(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Int {
+        let o = o.angepasst(an: mass)
         guard let tinte = Textraster.tintenZeilen(puffer(o, mass: mass)) else { return 0 }
         let hoehe = tinte.letzte - tinte.erste + 1
         // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
@@ -341,12 +344,13 @@ public enum Meldungsbau {
 
     public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
                                 mass: Anzeigemass = .vorgabe) -> Int {
+        let o = o.angepasst(an: mass)
         let x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
         let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
         switch o.waagrecht {
         case .links:  return x
-        case .mittig: return x + max(0, (b - breite(o)) / 2)
-        case .rechts: return x + max(0, b - breite(o))
+        case .mittig: return x + max(0, (b - breite(o, mass: mass)) / 2)
+        case .rechts: return x + max(0, b - breite(o, mass: mass))
         }
     }
 
@@ -360,6 +364,7 @@ public enum Meldungsbau {
         if o.weg == .text {
             return Geraeteschrift.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
         }
+        let o = o.angepasst(an: mass)
         var f = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
         Textraster.einsetzen(puffer(o, mass: mass),
                              x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
@@ -377,6 +382,7 @@ public enum Meldungsbau {
         // Bei der Schrift der Uhr zeigt die Vorschau den Anfang des Textes
         // (`feld`); die Uhr laeuft selbst.
         if o.weg == .text { return [] }
+        let o = o.angepasst(an: mass)
         let bilder = Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,

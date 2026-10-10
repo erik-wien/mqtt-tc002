@@ -436,6 +436,10 @@ func lauf() throws {
         try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
             // Je Uhr in deren Anzeigemass gerastert; `rahmen` oben dient dem
             // Trockenlauf und der Byte-Angabe.
+            if !optionen.grafikGesetzt,
+               let hinweis = m.verkleinerungshinweis(uhr: uhr.name, mass: Anzeigemass.fuer(uhr)) {
+                fehlerAusgeben(hinweis)
+            }
             try anzeigen.zeigen(try rahmen(mass: Anzeigemass.fuer(uhr)), auf: optionen.anzeigename,
                                 faehigkeiten: faehigkeiten(uhr))
             // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
@@ -453,7 +457,8 @@ func lauf() throws {
                 }
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(m, icon: icon?.nummer,
                                                               iconKante: icon?.kante ?? 8,
-                                                              fuer: uhr.id, platz: platz)
+                                                              fuer: uhr.id, platz: platz,
+                                                              mass: Anzeigemass.fuer(uhr))
                 if !gemerkt {
                     fehlerAusgeben(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, platz))
                 }

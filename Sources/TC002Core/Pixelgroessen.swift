@@ -62,3 +62,85 @@ public enum Pixelgroessen {
         return liste.min(by: { abs($0 - groesse) < abs($1 - groesse) }) ?? groesse
     }
 }
+
+extension Pixelgroessen {
+    /// Tintenhoehe des Bezugswortes je Schrift, Groesse und Schnitt. Rein, daher
+    /// gemerkt: die Vorschau fragt bei jedem Neuaufbau.
+    private final class Hoehenspeicher: @unchecked Sendable {
+        struct Schluessel: Hashable { let schrift: String, groesse: Double, fett: Bool }
+        let sperre = NSLock()
+        var werte: [Schluessel: Int] = [:]
+    }
+    private static let hoehenspeicher = Hoehenspeicher()
+
+    /// Wie viele Zeilen die Schrift in dieser Groesse braucht: die Tinte von
+    /// „ÄH" (Versalie samt Umlautpunkten, ohne Unterlaenge), gerastert wie beim
+    /// Senden, aber auf einem Feld, das hoch genug ist, um nichts abzuschneiden.
+    /// Ein Bezugswort statt des gesendeten Textes, damit die Groesse nicht mit
+    /// jedem getippten Buchstaben springt; Unterlaengen gehen dabei bewusst nicht
+    /// ein (die Pixelschriften sind Versalienschriften).
+    public static func zeilenbedarf(schrift: String, groesse: Double, fett: Bool) -> Int {
+        let k = Hoehenspeicher.Schluessel(schrift: schrift, groesse: groesse, fett: fett)
+        hoehenspeicher.sperre.lock()
+        let bekannt = hoehenspeicher.werte[k]
+        hoehenspeicher.sperre.unlock()
+        if let bekannt { return bekannt }
+        let feld = Textraster.rasterPuffer("ÄH", schrift: schrift, groesse: groesse, fett: fett,
+                                           farbe: "#FFFFFF",
+                                           mass: Anzeigemass(breite: Pixelfeld.breiteStandard, hoehe: 64))
+        let zeilen = Textraster.tintenZeilen(feld).map { $0.letzte - $0.erste + 1 } ?? 0
+        hoehenspeicher.sperre.lock()
+        hoehenspeicher.werte[k] = zeilen
+        hoehenspeicher.sperre.unlock()
+        return zeilen
+    }
+
+    /// Die Groesse, mit der ein Text auf einer Anzeige dieser Hoehe wirklich
+    /// gesetzt wird: die gewaehlte, wenn sie samt Rand hineinpasst, sonst die
+    /// groesste angebotene Groesse derselben Schrift (`angeboten`) darunter, die
+    /// passt. Passt keine, bleibt es bei der kleinsten Stufe unter der
+    /// gewaehlten. Der Rand zaehlt nur bei oben/unten, mittig braucht keinen.
+    public static func wirksam(schrift: String, groesse: Double, fett: Bool,
+                               hoehe: Int, rand: Int, senkrecht: SendenVAusrichtung) -> Double {
+        let verfuegbar = senkrecht == .mittig ? hoehe : hoehe - max(0, rand)
+        func passt(_ g: Double) -> Bool {
+            zeilenbedarf(schrift: schrift, groesse: g, fett: fett) <= verfuegbar
+        }
+        if passt(groesse) { return groesse }
+        let kleinere = angeboten(fuer: schrift).filter { $0 < groesse }.sorted(by: >)
+        return kleinere.first(where: passt) ?? kleinere.last ?? groesse
+    }
+}
+
+extension Meldungsoptionen {
+    /// Die Groesse, mit der diese Optionen auf einer Anzeige dieses Masses
+    /// gesetzt werden (`Pixelgroessen.wirksam`). „Schrift der Uhr" hat keine.
+    public func wirksameGroesse(fuer mass: Anzeigemass) -> Double {
+        guard weg == .pixel else { return groesse }
+        return Pixelgroessen.wirksam(schrift: schrift, groesse: groesse, fett: fett,
+                                     hoehe: mass.hoehe, rand: rand, senkrecht: senkrecht)
+    }
+
+    /// Dieselben Optionen mit der wirksamen Groesse; die gewaehlte bleibt in
+    /// den Reglern und im Slotgedaechtnis.
+    public func angepasst(an mass: Anzeigemass) -> Meldungsoptionen {
+        var o = self
+        o.groesse = wirksameGroesse(fuer: mass)
+        return o
+    }
+
+    /// Die kleinere Groesse, auf die diese Anzeige gesetzt wird — `nil`, wenn
+    /// die gewaehlte bleibt.
+    public func verkleinert(fuer mass: Anzeigemass) -> Double? {
+        let g = wirksameGroesse(fuer: mass)
+        return g < groesse ? g : nil
+    }
+
+    /// Der Satz dazu, fuer Vorschau und Kommandozeile; `nil`, wenn nichts
+    /// verkleinert wird.
+    public func verkleinerungshinweis(uhr: String, mass: Anzeigemass) -> String? {
+        guard let kleiner = verkleinert(fuer: mass) else { return nil }
+        return lokf("Für %@ auf %d px verkleinert — %d px passen nicht in %d Zeilen",
+                    uhr, Int(kleiner), Int(groesse), mass.hoehe)
+    }
+}

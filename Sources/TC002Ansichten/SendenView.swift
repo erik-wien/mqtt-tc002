@@ -468,6 +468,14 @@ public struct SendenView: View {
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
+                // Die Groesse, die diese Uhr wirklich bekommt, wenn die
+                // gewaehlte nicht in ihre Hoehe passt.
+                if let uhr = zustand.referenzUhr,
+                   let hinweis = optionen.verkleinerungshinweis(uhr: uhr.name, mass: Anzeigemass.fuer(uhr)) {
+                    Text(hinweis)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
                 HStack(spacing: 8) {
                     Uhrenpunkte(zustand: zustand)
                     if optionen.weg == .text { Hilfezeichen(AwtrixNG.vorschauhinweis) }

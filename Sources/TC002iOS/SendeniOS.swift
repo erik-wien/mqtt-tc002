@@ -247,6 +247,12 @@ struct SendeniOS: View {
                         icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
                         laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames,
                         iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: 8, mass: uhrmass) : 1)
+            if let hinweis = optionen.verkleinerungshinweis(uhr: uhr.name, mass: uhrmass) {
+                Text(hinweis)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
             // Der Name unter der Uhr, die er benennt — wie am Schreibtisch.
             // Im Titel stand er als Menue: eine zweite Geraetewahl neben dem
             // Antennenknopf, der die Empfaenger traegt, und beim Blaettern

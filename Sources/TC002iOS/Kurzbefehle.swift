@@ -210,7 +210,8 @@ struct MeldungSendenIntent: AppIntent {
                 // haben kein Protokoll, in das eine Zeile koennte.
                 Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
                                                  iconKante: slotIconKante,
-                                                 fuer: ziel.id, platz: slotPlatz)
+                                                 fuer: ziel.id, platz: slotPlatz,
+                                                 mass: Anzeigemass.fuer(ziel))
             }
             return erledigt
         }.value

@@ -1383,7 +1383,8 @@ public final class AppZustand {
             if let slotOptionen {
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
                                                               iconKante: slotIconKante,
-                                                              fuer: uhr.id, platz: slotPlatz)
+                                                              fuer: uhr.id, platz: slotPlatz,
+                                                              mass: mass)
                 if !gemerkt {
                     log(lokf("%@: Regler für Slot %d nicht gemerkt", uhr.name, slotPlatz))
                 }

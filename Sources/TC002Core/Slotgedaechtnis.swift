@@ -268,9 +268,12 @@ public struct Slotgedaechtnis: Sendable {
     /// vergisst, bekaeme stillschweigend die falsche Rechnung zurueck. Ohne
     /// Icon ist der Wert gleichgueltig; uebergib dann, was du hast.
     public func merken(_ optionen: Meldungsoptionen, icon: String?, iconKante: Int,
-                       fuer uhr: UUID, platz: Int) -> Bool {
+                       fuer uhr: UUID, platz: Int, mass: Anzeigemass = .vorgabe) -> Bool {
+        // Gemerkt wird die gewaehlte Groesse; die Pruefsumme deckt dagegen ab,
+        // was auf dieser Uhr wirklich stand (`Meldungsbau.feld` verkleinert
+        // fuer kleine Anzeigen).
         let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil,
-                                     iconKante: iconKante).punkteRoh
+                                     iconKante: iconKante, mass: mass).punkteRoh
         let stand = Slotstand(
             platz: platz,
             text: optionen.text,
