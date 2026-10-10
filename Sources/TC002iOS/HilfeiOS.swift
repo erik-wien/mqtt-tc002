@@ -92,7 +92,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.wegeRegel
                 + [
-                    .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Format“, das der Pinsel in der Formatpille öffnet — langsam, mittel oder schnell."),
+                    .absatz("Läuft der Text, gilt „Tempo“ aus dem Blatt „Zeit“, das die Uhr in der Formatpille öffnet — langsam, mittel oder schnell."),
 
                     .ueberschrift("Blockierende Anzeigen"),
                 ]
@@ -101,10 +101,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.blockLoeschen
                 + [.absatz("Dasselbe tut ein Wischen nach links in der Liste unter den Blöcken.")]
                 + HilfeInhalt.dauer
-                + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift, der Lebensdauer und den Reglern der Nachricht. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet.")]
+                + [.absatz("Die Dauer steht im Blatt „Zeit“ — der Uhr in der Formatpille, zusammen mit der Laufschrift.")]
                 + HilfeInhalt.nachricht
                 + HilfeInhalt.lebensdauer
-                + [.absatz("Die Darstellung steht im Blatt „Format“ hinter dem Reiter „Darstellung“ (oben „Zeit | Darstellung“).")]
+                + [.absatz("Die Darstellung steht im Blatt „Darstellung“ — dem Pinsel in der Formatpille.")]
                 + HilfeInhalt.darstellung
                 + HilfeInhalt.zeichen
                 + [
@@ -118,7 +118,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Gemalt wird am Telefon nicht — ein Raster mit dem Finger wäre keine Arbeitsfläche."),
 
                     .ueberschrift("Formatpille"),
-                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten der Pinsel für das Blatt „Format“ (Dauer, Lauftempo, mitlaufendes Icon). Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
+                    .absatz("In der Pille über dem Eingabefeld steht links, was man am häufigsten ändert: Icon, Schrift, Größe, Fett, Großbuchstaben, Farbe. Dahinter die beiden Ausrichtungen, Rand und Abstand, und ganz hinten die Uhr für das Blatt „Zeit“ (Dauer, Lauftempo, mitlaufendes Icon) und der Pinsel für die Darstellung. Sie passen nicht alle nebeneinander auf ein Telefon: Wo die Pille am rechten Rand ausblendet, geht es weiter — dort schieben."),
                 ]
                 + HilfeInhalt.schriftart
                 + HilfeInhalt.groesse

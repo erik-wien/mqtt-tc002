@@ -71,7 +71,7 @@ final class DarstellungTests: XCTestCase {
 
     func testEineBenachrichtigungTraegtDieselbenFelder() throws {
         let json = try NGNutzlast.benachrichtigung(
-            text(Darstellung(overlay: "rain")), .init(name: "n"), faehigkeiten: uhr)
+            text(Darstellung(overlay: "rain")), .init(name: "n", halten: true), faehigkeiten: uhr)
         XCTAssertTrue(json.contains(##""overlay":"rain""##) && json.contains(##""hold":true"##), json)
     }
 

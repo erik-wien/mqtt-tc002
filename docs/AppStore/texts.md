@@ -29,7 +29,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 > 2. Senden: Text eintippen (z. B. „HALLO“), den Pfeil im Feld tippen. Die Vorschau darüber zeigt, was auf der Uhr stehen wird; langer Text läuft durch.
 > 3. Einstellungen › Erweitert › „Ansehen“: die virtuelle Uhr zeigt die Meldung mit Geräterahmen und Platz.
 > 4. Darstellung: in der Formatpille den Pinsel tippen, Reiter „Darstellung“: einen Effekt oder ein Overlay wählen und senden.
-> 5. Nachricht: über dem Textfeld auf „Nachricht“ umschalten, senden; sie bleibt stehen, bis „Nachricht zurückziehen“ erscheint und getippt wird. Unter „Klang“ eine Wahl treffen (die virtuelle Uhr meldet, was sie kann).
+> 5. Nachricht: über dem Textfeld auf „Nachricht“ umschalten, senden; sie bleibt stehen, bis „Nachricht zurückziehen“ erscheint und getippt wird. Beim Notensymbol neben dem Segment einen Klang wählen (die virtuelle Uhr meldet, was sie kann).
 > 6. Steuerung: oben auf den Namen der Uhr tippen › „Steuerung …“: Live-Bild, Display aus und an, Helligkeit, Moodlight, Abschnitt „Ton“. Dazu „Einstellungen der Uhr …“.
 > 7. Icons: den Smiley-Knopf neben dem Textfeld tippen, ein Icon wählen oder unter „Hinzufügen“ eine LaMetric-Nummer eingeben (z. B. 2056) und „Nachladen“ tippen; danach senden.
 > 8. Kurzbefehle-App: „Meldung an die Uhr schicken“ suchen, Text eintragen, ausführen — auch per Siri („Schicke eine Meldung mit Pixel Clock Messenger“). Danach „Meldung von der Uhr nehmen“ mit Platz 1.

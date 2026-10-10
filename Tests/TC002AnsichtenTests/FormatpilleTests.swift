@@ -48,7 +48,7 @@ final class FormatpilleTests: XCTestCase {
                         "isOn: $fett", "isOn: $grossbuchstaben", "Farbkreis(",
                         "Picker(\"Waagrecht\"", "Picker(\"Senkrecht\"",
                         "Picker(\"Rand\"", "Picker(\"Abstand\"",
-                        "zeigeFormat = true"]
+                        "formatteil = .zeit", "formatteil = .darstellung"]
         var stellen: [Int] = []
         for marke in erwartet {
             guard let r = pille.range(of: marke) else {
@@ -59,7 +59,7 @@ final class FormatpilleTests: XCTestCase {
         XCTAssertEqual(stellen, stellen.sorted(),
                        "Die Formatpille steht nicht mehr in der Reihenfolge Icon, Schrift, Größe, "
                        + "Fett, Großbuchstaben, Farbe, waagrecht, senkrecht, Rand, Abstand, "
-                       + "Format — die drei, die man am ehesten ändert, müssen ohne Schieben "
+                       + "Zeit, Darstellung — die drei, die man am ehesten ändert, müssen ohne Schieben "
                        + "erreichbar bleiben")
     }
 

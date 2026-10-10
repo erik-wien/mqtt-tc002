@@ -59,7 +59,9 @@ public struct Lebensdauerwahl: Equatable, Sendable {
 }
 
 /// Die Regler einer Nachricht (Oberflächenwort für Benachrichtigung). Vorgaben
-/// der App: Halten und Aufwecken an, Ersetzen aus, zwei Durchläufe.
+/// der App: Aufwecken und Ersetzen an, Halten aus, zwei Durchläufe. Halten
+/// ist aus, weil eine gehaltene Nachricht die Warteschlange anhält: Jede
+/// spätere Nachricht wartet hinter ihr, bis sie zurückgezogen wird.
 public struct Nachrichtwahl: Equatable, Sendable {
     public static let hoechstdurchlaeufe = 9
 
@@ -69,7 +71,7 @@ public struct Nachrichtwahl: Equatable, Sendable {
     public var durchlaeufe: Int
     public var klang: Klangwahl
 
-    public init(halten: Bool = true, aufwecken: Bool = true, ersetzen: Bool = false, durchlaeufe: Int = 2,
+    public init(halten: Bool = false, aufwecken: Bool = true, ersetzen: Bool = true, durchlaeufe: Int = 2,
                 klang: Klangwahl = Klangwahl()) {
         self.klang = klang
         self.halten = halten

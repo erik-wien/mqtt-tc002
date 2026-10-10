@@ -67,8 +67,8 @@ final class BenachrichtigungPruefstandTests: XCTestCase {
 
     func testStackTrueReihtEinStackFalseErsetztDieSichtbare() throws {
         let (s, _, uhr) = try gestartet()
-        try uhr.benachrichtigen(text("eins"))
-        try uhr.benachrichtigen(text("zwei"))
+        try uhr.benachrichtigen(text("eins"), .init(einreihen: true))
+        try uhr.benachrichtigen(text("zwei"), .init(einreihen: true))
         XCTAssertEqual(s.zustand.benachrichtigungen.count, 2)
         try uhr.benachrichtigen(text("drei"), .init(einreihen: false))
         let texte = s.zustand.benachrichtigungen.map { $0.nutzlast["text"] }
@@ -77,8 +77,8 @@ final class BenachrichtigungPruefstandTests: XCTestCase {
 
     func testDieSichtbareZurueckziehenUndDieNaechsteRueckt() throws {
         let (s, _, uhr) = try gestartet()
-        try uhr.benachrichtigen(text("eins"))
-        try uhr.benachrichtigen(text("zwei"))
+        try uhr.benachrichtigen(text("eins"), .init(einreihen: true))
+        try uhr.benachrichtigen(text("zwei"), .init(einreihen: true))
         try uhr.benachrichtigungZurueckziehen()
         XCTAssertEqual(s.zustand.benachrichtigungen.map { $0.nutzlast["text"] }, [.text("zwei")])
         try uhr.benachrichtigungZurueckziehen()
@@ -88,8 +88,8 @@ final class BenachrichtigungPruefstandTests: XCTestCase {
 
     func testNachNamenZurueckziehenAuchEineWartende() throws {
         let (s, _, uhr) = try gestartet()
-        try uhr.benachrichtigen(text("eins"), .init(name: "a"))
-        try uhr.benachrichtigen(text("zwei"), .init(name: "b"))
+        try uhr.benachrichtigen(text("eins"), .init(name: "a", einreihen: true))
+        try uhr.benachrichtigen(text("zwei"), .init(name: "b", einreihen: true))
         try uhr.benachrichtigungZurueckziehen(name: "b")
         XCTAssertEqual(s.zustand.benachrichtigungen.map(\.name), ["a"])
     }
@@ -115,8 +115,8 @@ final class BenachrichtigungPruefstandTests: XCTestCase {
 
     func testDieWarteschlangeIstBeiZweiunddreissigVoll() throws {
         let (_, _, uhr) = try gestartet()
-        for i in 0..<32 { try uhr.benachrichtigen(text("n\(i)")) }
-        XCTAssertThrowsError(try uhr.benachrichtigen(text("zu viel"))) { f in
+        for i in 0..<32 { try uhr.benachrichtigen(text("n\(i)"), .init(einreihen: true)) }
+        XCTAssertThrowsError(try uhr.benachrichtigen(text("zu viel"), .init(einreihen: true))) { f in
             guard case GeraetFehler.ngAbgewiesen(let status, _, _) = f else { return XCTFail("war \(f)") }
             XCTAssertEqual(status, 507)
         }

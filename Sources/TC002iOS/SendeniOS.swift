@@ -87,9 +87,9 @@ struct SendeniOS: View {
     /// Dieselben Schlüssel wie am Schreibtisch (`SendenView`): Anzeige oder
     /// Nachricht, Nachrichtregler, Lebensdauer.
     @AppStorage("senden.art") private var art: Sendeart = .anzeige
-    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = true
+    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = false
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
-    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
+    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = true
     @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
     @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
@@ -104,7 +104,8 @@ struct SendeniOS: View {
     /// des Fortschrittsdrehers, weil dort die Eingabetaste schickt und es
     /// keinen Sendeknopf gibt, der gruen werden koennte.
     @State private var ausgang = Sendeschau.offen
-    @State private var zeigeFormat = false
+    @State private var formatteil: Formatteil?
+    @FocusState private var amTextfeld: Bool
     @State private var zeigeIcons = false
     @State private var zeigeVerlauf = false
     // Misst die schiebbare Formatpille, um den rechten Rand nur auszublenden,
@@ -435,19 +436,10 @@ struct SendeniOS: View {
         .sheet(isPresented: $zeigeUhreinstellungen) {
             UhreinstellungeniOS(zustand: zustand)
         }
-        .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(zustand: zustand, darstellung: $darstellung, weg: $weg,
+        .sheet(item: $formatteil) { teil in
+            FormatblattiOS(zustand: zustand, teil: teil, darstellung: $darstellung, weg: $weg,
                            tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
-                           dauerText: $dauerText, art: art,
-                           nachrichtHalten: $nachrichtHalten,
-                           nachrichtAufwecken: $nachrichtAufwecken,
-                           nachrichtErsetzen: $nachrichtErsetzen,
-                           nachrichtDurchlaeufe: $nachrichtDurchlaeufe,
-                           nachrichtKlang: $nachrichtKlang,
-                           lebensdauerBehalten: $lebensdauerBehalten,
-                           lebensdauerZahl: $lebensdauerZahl,
-                           lebensdauerEinheit: $lebensdauerEinheit,
-                           lebensdauerAblauf: $lebensdauerAblauf)
+                           dauerText: $dauerText)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)
@@ -566,6 +558,11 @@ struct SendeniOS: View {
             vorschaukopf
             liste
         }
+        // Ein Antippen neben dem Feld schließt die Tastatur. `onTapGesture`
+        // am Hintergrund lässt Knöpfe und Blöcke darin unberührt: Das Ziel
+        // unter dem Finger gewinnt gegen die Geste des Eltern.
+        .contentShape(Rectangle())
+        .onTapGesture { amTextfeld = false }
     }
 
     @ViewBuilder
@@ -585,6 +582,8 @@ struct SendeniOS: View {
             Verlaufsabschnitt(zustand: zustand) { reglerUebernehmen($0) }
         }
         .listStyle(.plain)
+        // Wischen im Verlauf schließt die Tastatur, wie in Nachrichten.
+        .scrollDismissesKeyboard(.interactively)
         // Vor der Ueberschrift stuende sonst der Abstand eines eigenen
         // Kapitels; hier trennt sie nur Slotleiste und Verlauf, und die
         // gehoeren zusammen auf einen Bildschirm.
@@ -668,8 +667,8 @@ struct SendeniOS: View {
     /// stehen links und sind ohne Schieben erreichbar, dahinter die
     /// Ausrichtungen, Rand und Abstand.
     ///
-    /// Ganz hinten das Formatblatt: Es oeffnet ein Blatt statt eines Menues,
-    /// und Dauer, Lauftempo und mitlaufendes Icon aendert man selten.
+    /// Ganz hinten Uhr und Pinsel: Sie oeffnen je ein Blatt statt eines Menues,
+    /// und Dauer, Lauftempo, mitlaufendes Icon und Darstellung aendert man selten.
     private var formatleiste: some View {
         // Das Zeichen **neben** der Pille, nicht darin: Innen lag es ueber dem
         // letzten Element — auf dem Farbkreis — und sah aus, als gehoerte es
@@ -891,13 +890,22 @@ struct SendeniOS: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(!AwtrixNG.wirkt(.abstand, weg: optionen.weg))
                 .accessibilityLabel(Text(lokf("Abstand %d", luecke)))
-                Button { zeigeFormat = true } label: {
+                // Zwei Türen statt einer: Zeit (Dauer, Laufschrift) und
+                // Darstellung öffnen je ihr Blatt, ohne Reiter dazwischen.
+                Button { formatteil = .zeit } label: {
+                    Image(systemName: "clock")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.automatic)
+                .accessibilityLabel("Zeit")
+                Button { formatteil = .darstellung } label: {
                     Image(systemName: "paintbrush")
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.automatic)
-                .accessibilityLabel("Format")
+                .accessibilityLabel("Darstellung")
             }
             .font(.body)
             .padding(.horizontal, 12)
@@ -972,13 +980,20 @@ struct SendeniOS: View {
         // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
         // gibt es am Finger ohnehin nicht.
         VStack(spacing: 8) {
-            Sendeartwahl(zustand: zustand, art: $art)
+            Sendeartwahl(zustand: zustand, art: $art,
+                         nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
+                                                       ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
+                                                       klang: $nachrichtKlang),
+                         lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                                           einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
+                         kanon: .telefon)
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, gewicht: .teilweise)
                 }
                 TextField("Text", text: $text, axis: .vertical)
                 .lineLimit(1...3)
+                .focused($amTextfeld)
                 .eingabefeld(loeschbar: $text,
                              senden: sendenMoeglich ? { Task { await senden() } } : nil,
                              laeuft: laeuft,

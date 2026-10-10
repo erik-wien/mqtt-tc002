@@ -27,10 +27,12 @@ public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
     }
 
     /// Die Vorgaben dieser App weichen von denen der Uhr ab: Eine Nachricht
-    /// bleibt stehen (`halten`), weckt das Panel (`aufwecken`) und läuft zweimal
-    /// durch (`wiederholungen`); eingereiht wird sie wie bei der Uhr. Darum geht
-    /// `hold:true` und `wakeup:true` ausdrücklich hinaus.
-    public init(name: String? = nil, halten: Bool = true, einreihen: Bool = true,
+    /// bleibt nicht stehen (`halten` aus: gemessen hält `hold:true` die Warteschlange
+    /// an, jede spätere Nachricht wartet hinter ihr, bis sie weggenommen wird),
+    /// ersetzt die sichtbare (`einreihen` aus), weckt das Panel (`aufwecken`) und
+    /// läuft zweimal durch (`wiederholungen`). Darum geht `stack:false` und
+    /// `wakeup:true` ausdrücklich hinaus.
+    public init(name: String? = nil, halten: Bool = false, einreihen: Bool = false,
                 aufwecken: Bool = true, wiederholungen: Int? = 2, klang: [Klang] = []) {
         self.klang = klang
         self.name = name

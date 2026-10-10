@@ -92,7 +92,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: String?
 
-    @Parameter(title: "Halten", description: "Bleibt stehen, bis sie zurückgezogen wird.", default: true)
+    @Parameter(title: "Halten", description: "Bleibt stehen, bis sie zurückgezogen wird.", default: false)
     var halten: Bool
 
     @Parameter(title: "Aufwecken", description: "Erscheint auch bei ausgeschaltetem Panel.", default: true)

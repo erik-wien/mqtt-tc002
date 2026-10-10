@@ -202,23 +202,38 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         XCTAssertEqual(try Optionen.zerlegt(["message", "Door"]).befehl, .nachricht(text: "Door"))
     }
 
-    /// Vorgabe: bleibt stehen, weckt, läuft zweimal durch, wird eingereiht.
+    /// Vorgabe: bleibt nicht stehen (eine gehaltene hält die Warteschlange an),
+    /// ersetzt die sichtbare, weckt, läuft zweimal durch.
     func testDieVorgabenEinerNachricht() throws {
         let o = try Optionen.zerlegt(["nachricht", "x"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
+            name: nil, halten: false, einreihen: false, aufwecken: true, wiederholungen: 2))
+    }
+
+    func testHaltenUndEinreihenSindDieAbweichungen() throws {
+        let o = try Optionen.zerlegt(["nachricht", "x", "--halten", "--einreihen"])
+        XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
             name: nil, halten: true, einreihen: true, aufwecken: true, wiederholungen: 2))
+        let e = try Optionen.zerlegt(["message", "x", "--hold", "--queue"])
+        XCTAssertTrue(e.benachrichtigung.halten && e.benachrichtigung.einreihen)
+    }
+
+    /// Die alten Schreibweisen bleiben gültig und wiederholen nur die Vorgabe.
+    func testDieAltenSchreibweisenSindDieVorgabe() throws {
+        let o = try Optionen.zerlegt(["nachricht", "x", "--nicht-halten", "--ersetzen"])
+        XCTAssertEqual(o.benachrichtigung, try Optionen.zerlegt(["nachricht", "x"]).benachrichtigung)
     }
 
     func testDieOptionenZumAbschaltenUndAendern() throws {
-        let o = try Optionen.zerlegt(["nachricht", "x", "--name", "tuer", "--nicht-halten", "--ersetzen",
+        let o = try Optionen.zerlegt(["nachricht", "x", "--name", "tuer", "--halten", "--einreihen",
                                       "--nicht-wecken", "--wiederholungen", "3", "--dauer", "8"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
-            name: "tuer", halten: false, einreihen: false, aufwecken: false, wiederholungen: 3))
+            name: "tuer", halten: true, einreihen: true, aufwecken: false, wiederholungen: 3))
         XCTAssertEqual(o.meldung.dauer, 8)
 
-        let e = try Optionen.zerlegt(["message", "x", "--no-hold", "--replace", "--no-wakeup", "--repeat", "3"])
+        let e = try Optionen.zerlegt(["message", "x", "--hold", "--queue", "--no-wakeup", "--repeat", "3"])
         XCTAssertEqual(e.benachrichtigung, Benachrichtigungsoptionen(
-            name: nil, halten: false, einreihen: false, aufwecken: false, wiederholungen: 3))
+            name: nil, halten: true, einreihen: true, aufwecken: false, wiederholungen: 3))
     }
 
     /// Ohne `--name` hat sie keinen — die Vorgabe „cli" gilt nur für Anzeigen.

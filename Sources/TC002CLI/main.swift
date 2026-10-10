@@ -152,10 +152,13 @@ DIAGRAMM UND FORTSCHRITT (statt Text; fuer „senden" und „nachricht")
 OPTIONEN FUER „nachricht"
   Text und Format wie bei „senden"; --name ist hier der Name der Nachricht
   (nur darueber laesst sie sich zurueckziehen), --dauer wie lange sie steht.
-  Vorgabe: Die Nachricht bleibt stehen, weckt das Panel und laeuft zweimal durch.
-  --nicht-halten      steht nur --dauer lang, statt bis zum Zurueckziehen
+  Vorgabe: Die Nachricht steht --dauer lang, ersetzt die sichtbare, weckt das Panel
+  und laeuft zweimal durch.
+  --halten            bleibt bis zum Zurueckziehen stehen und haelt die Warteschlange
+                      der Uhr an: jede spaetere Nachricht wartet hinter ihr
+  --einreihen         stellt sich hinten an, statt die sichtbare zu ersetzen
   --nicht-wecken      erscheint nicht bei ausgeschaltetem Panel
-  --ersetzen          ersetzt die sichtbare, statt sich hinten anzustellen
+  --nicht-halten, --ersetzen   die Vorgabe, nur ausgeschrieben (aus aelteren Aufrufen)
   --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft (Vorgabe: 2)
   --klang <Name|Adresse>, --rtttl "<Text>", --sprache "<Text>", --wiederholen   ein Ton, siehe KLANG
 

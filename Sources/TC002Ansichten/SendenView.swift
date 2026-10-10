@@ -13,9 +13,9 @@ public struct SendenView: View {
     /// Anzeige oder Nachricht. Die Nachricht belegt keinen Platz und hat ihre
     /// eigenen Regler (`Nachrichtwahl`); die Lebensdauer gilt nur der Anzeige.
     @AppStorage("senden.art") private var art: Sendeart = .anzeige
-    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = true
+    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = false
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
-    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
+    @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = true
     @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
     @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
@@ -526,7 +526,13 @@ public struct SendenView: View {
             // Sendeknopf gehalten.
             // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
             // in einem Dialog (siehe `AppZustand.teilfehler`).
-            Sendeartwahl(zustand: zustand, art: $art)
+            Sendeartwahl(zustand: zustand, art: $art,
+                         nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
+                                                       ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
+                                                       klang: $nachrichtKlang),
+                         lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                                           einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
+                         kanon: .schreibtisch)
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, gewicht: .teilweise)
@@ -698,16 +704,6 @@ public struct SendenView: View {
                 Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
                     laufschriftAbschnitt
                 }
-                // Beide immer da, der nicht gewählte gesperrt: Der Reiter
-                // soll beim Umschalten von Anzeige auf Nachricht nicht springen.
-                Lebensdauerabschnitt(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
-                                     einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf,
-                                     aktiv: art == .anzeige)
-                Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
-                                   ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                   aktiv: art == .nachricht)
-                Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht,
-                               kanon: .schreibtisch)
             }
             .formStyle(.grouped)
         case .darstellung:

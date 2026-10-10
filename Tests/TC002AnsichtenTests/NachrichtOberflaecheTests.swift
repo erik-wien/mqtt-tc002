@@ -22,24 +22,27 @@ final class NachrichtOberflaecheTests: XCTestCase {
     func testBeideSendeflaechenHabenSegmentUndSperreDerPlaetze() throws {
         for datei in ["Sources/TC002Ansichten/SendenView.swift", "Sources/TC002iOS/SendeniOS.swift"] {
             let text = try quelltext(datei)
-            XCTAssertTrue(text.contains("Sendeartwahl(zustand: zustand, art: $art)"), datei)
+            XCTAssertTrue(text.contains("Sendeartwahl(zustand: zustand, art: $art,"), datei)
             XCTAssertTrue(text.contains("gesperrt: art == .nachricht"), "\(datei): Plätze bei „Nachricht“ nicht gesperrt")
             XCTAssertTrue(text.contains("zustand.benachrichtigen("), "\(datei) sendet keine Nachricht")
             XCTAssertTrue(text.contains("lebensdauer: lebensdauerwahl.lebensdauer"), "\(datei) schickt keine Lebensdauer")
         }
     }
 
-    /// Reiter „Zeit“ (Mac, iPad) und Formatblatt (iPhone) tragen beide Abschnitte,
-    /// gesperrt statt ausgeblendet.
-    func testBeideOrteDerReglerTragenBeideAbschnitte() throws {
+    /// Klang, Nachrichtoptionen und Lebensdauer sitzen am Segment, in genau einem
+    /// Baustein; weder der Inspektor (Mac, iPad) noch das Formatblatt (iPhone)
+    /// trägt sie noch ein zweites Mal.
+    func testDieReglerSitzenAmSegmentUndNurDort() throws {
+        let baustein = try quelltext("Sources/TC002Ansichten/Nachrichtbausteine.swift")
+        XCTAssertTrue(baustein.contains("Lebensdauerabschnitt(behalten: lebensdauer.behalten"))
+        XCTAssertTrue(baustein.contains("Nachrichtabschnitt(halten: nachricht.halten"))
+        let ton = try quelltext("Sources/TC002Ansichten/Nachrichtbausteine.swift")
+        XCTAssertTrue(ton.contains("Klangabschnitt(zustand: zustand, klang: nachricht.klang, aktiv: true"))
         for datei in ["Sources/TC002Ansichten/SendenView.swift", "Sources/TC002iOS/FormatblattiOS.swift"] {
             let text = try quelltext(datei)
-            XCTAssertTrue(text.contains("Lebensdauerabschnitt("), datei)
-            XCTAssertTrue(text.contains("Nachrichtabschnitt("), datei)
-            XCTAssertTrue(text.contains("Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht"),
-                          "\(datei): Klang der Nachricht fehlt")
-            XCTAssertTrue(text.contains("aktiv: art == .anzeige"), datei)
-            XCTAssertTrue(text.contains("aktiv: art == .nachricht"), datei)
+            XCTAssertFalse(text.contains("Lebensdauerabschnitt("), datei)
+            XCTAssertFalse(text.contains("Nachrichtabschnitt("), datei)
+            XCTAssertFalse(text.contains("Klangabschnitt("), datei)
         }
     }
 

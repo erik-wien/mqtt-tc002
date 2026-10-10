@@ -86,8 +86,12 @@ struct Optionen {
     var tempo: Lauftempo = .mittel
     var trocken = false
     /// Nur für Benachrichtigungen.
-    var halten = true
+    var halten = false
+    /// `--ersetzen` wurde angegeben. Für „ton mp3 hochladen“ heißt es „überschreiben“;
+    /// bei einer Nachricht ist es die Vorgabe und ändert nichts (siehe `einreihen`).
     var ersetzen = false
+    /// Nur für Benachrichtigungen: hinten anstellen statt die sichtbare zu ersetzen.
+    var einreihen = false
     var aufwecken = true
     var wiederholungen: Int? = 2
     /// Die erste Option, die nur eine Nachricht kennt — für die Meldung, wenn
@@ -370,8 +374,13 @@ struct Optionen {
             case "--abstand", "--gap":    o.abstand = try zahl()
             case "--dauer", "--duration": o.dauer = try zahl()
             case "--trocken", "--dry-run": o.trocken = true
+            // `--nicht-halten` und `--ersetzen` sind die frühere Schreibweise der heutigen
+            // Vorgabe und bleiben als Wiederholung der Vorgabe gültig; die zuletzt
+            // genannte Angabe gewinnt.
+            case "--halten", "--hold":              o.halten = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--nicht-halten", "--no-hold":     o.halten = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
-            case "--ersetzen", "--replace":         o.ersetzen = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--einreihen", "--queue":          o.einreihen = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--ersetzen", "--replace":         o.ersetzen = true; o.einreihen = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--nicht-wecken", "--no-wakeup":   o.aufwecken = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--wiederholungen", "--repeat":
                 let w = try wert()
@@ -772,7 +781,7 @@ struct Optionen {
     /// Die Felder einer Benachrichtigung (§5.6). Ohne `--name` hat sie keinen.
     var benachrichtigung: Benachrichtigungsoptionen {
         Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
-                                  einreihen: !ersetzen, aufwecken: aufwecken,
+                                  einreihen: einreihen, aufwecken: aufwecken,
                                   wiederholungen: wiederholungen, klang: klang)
     }
 

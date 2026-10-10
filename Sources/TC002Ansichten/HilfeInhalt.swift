@@ -296,9 +296,8 @@ public enum HilfeInhalt {
         .absatz("Wie beides zusammenwirkt, ist nicht geklärt — ob die Dauer den Seitenwechsel für diese Anzeige überschreibt oder der kleinere Wert gewinnt, sagt die Herstellerdokumentation nicht."),
     ]
 
-    /// Wie lange eine neue Anzeige lebt. Die Regler heissen auf beiden
-    /// Oberflaechen gleich; nur der Ort ist verschieden (Reiter „Zeit“ am
-    /// Schreibtisch, Blatt „Format“ am iPhone), und den nennen die Aufrufer.
+    /// Wie lange eine neue Anzeige lebt. Die Regler heissen auf allen
+    /// Oberflaechen gleich und sitzen am Segment „Anzeige | Nachricht“.
     public static let lebensdauer: [Hilfebaustein] = [
         .ueberschrift("Lebensdauer"),
         .absatz("Eine neue Anzeige verschwindet nach 30 Minuten von selbst: „Nach“ und die Einheit (Minuten oder Stunden) stellen die Zeit ein, „Dann“ sagt, was geschieht — „Entfernen“ löscht die Anzeige auf der Uhr, „Rot markieren“ lässt sie stehen und setzt einen dunkelroten Rand. Mit „Behalten“ bleibt sie, bis man sie löscht oder ersetzt; „Nach“ und „Dann“ sind dann gesperrt."),
@@ -307,8 +306,8 @@ public enum HilfeInhalt {
 
     /// Hintergrund, Effekt, Overlay und Palette. Die Regler heissen auf beiden
     /// Oberflaechen gleich; nur der Ort ist verschieden (dritter Reiter des
-    /// Inspektors am Schreibtisch, Reiter „Darstellung“ im Blatt „Format“ am
-    /// iPhone), und den nennen die Aufrufer.
+    /// Inspektors am Schreibtisch, Blatt „Darstellung“ am iPhone), und den
+    /// nennen die Aufrufer.
     public static let darstellung: [Hilfebaustein] = [
         .ueberschrift("Darstellung"),
         .absatz("Hintergrund, Effekt, Overlay und Palette bestimmen, wie die Uhr die Anzeige zeichnet. Die Namen von Effekt, Overlay und Palette liefert die Uhr selbst; bis zur ersten Abfrage zeigt jedes Menü nur „Keiner“ bzw. „Keines“ und „Uhr abfragen …“. Eigene Palette: 1 bis 16 Farben, gleichmäßig verteilt oder mit einer Position von 0 bis 100 je Farbe. „Überblenden“ lässt die Farben ineinanderfließen; aus, entstehen scharfe Streifen. Das Tempo gilt für Effekt und Overlay und ist nur mit einem von beiden frei."),
@@ -317,13 +316,13 @@ public enum HilfeInhalt {
     ]
 
     /// Die Nachricht (im Protokoll eine Benachrichtigung): gleich auf beiden
-    /// Oberflaechen, nur der Ort der Regler unterscheidet sich.
+    /// Oberflaechen: Klang und Optionen sitzen am Segment.
     public static let nachricht: [Hilfebaustein] = [
         .ueberschrift("Anzeige oder Nachricht"),
         .absatz("Das Segment „Anzeige | Nachricht“ über dem Eingabefeld bestimmt, was „Senden“ schickt. Eine Anzeige liegt auf einem der fünf Plätze und läuft in der Schleife der Uhr. Eine Nachricht unterbricht die Schleife einmal und belegt keinen Platz; bei „Nachricht“ sind die fünf Blöcke deshalb ausgegraut."),
-        .absatz("Die Regler der Nachricht: „Halten“ lässt sie stehen, bis sie zurückgezogen wird; „Aufwecken“ zeigt sie auch bei ausgeschaltetem Display; „Ersetzen“ verdrängt die sichtbare Nachricht, statt sich hinter ihr einzureihen; „Durchläufe“ sagt, wie oft ein laufender Text durchzieht. Voreingestellt sind Halten und Aufwecken an, Ersetzen aus, zwei Durchläufe. Die Dauer gilt wie bei einer Anzeige."),
+        .absatz("Solange „Nachricht“ gewählt ist, stehen neben dem Segment zwei Knöpfe: das Notensymbol für den Klang und der Regler daneben für die Optionen. Die Optionen: „Halten“ lässt die Nachricht stehen, bis sie zurückgezogen wird — und hält dabei die Warteschlange der Uhr an, jede spätere Nachricht wartet hinter ihr; „Aufwecken“ zeigt sie auch bei ausgeschaltetem Display; „Ersetzen“ verdrängt die sichtbare Nachricht, statt sich hinter ihr einzureihen; „Durchläufe“ sagt, wie oft ein laufender Text durchzieht. Voreingestellt sind Aufwecken und Ersetzen an, Halten aus, zwei Durchläufe. Die Dauer gilt wie bei einer Anzeige."),
         .absatz("Solange eine gehaltene Nachricht steht, die diese App geschickt hat, erscheint neben dem Segment „Nachricht zurückziehen“. Nachricht und Zurückziehen gelten für alle gewählten Uhren."),
-        .absatz("Der Klang einer Nachricht steht gleich darunter. „Keiner“ ist die Vorgabe. „Von der Uhr“ spielt eine Melodie oder MP3-Datei, die auf der Uhr liegt; die Namen kommen von der Uhr selbst (bis zur ersten Abfrage steht dort „Uhr abfragen …“). Liegt dort noch nichts, legst du Melodien in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch: den Text der Nachricht oder, wenn du ihn ausfüllst, einen eigenen kurzen Text (höchstens 512 Byte). „Wiederholen, bis die Nachricht geht“ spielt den Klang, bis die Nachricht zurückgezogen wird oder abläuft. Meldet die Uhr die Fähigkeit nicht, ist die Wahl gesperrt und die Nachricht geht stumm hinaus. Eine Anzeige hat keinen Klang."),
+        .absatz("Der Klang einer Nachricht steht hinter dem Notensymbol neben dem Segment; ist einer gewählt, zeigt der Knopf seinen Namen. „Keiner“ ist die Vorgabe. „Von der Uhr“ spielt eine Melodie oder MP3-Datei, die auf der Uhr liegt; die Namen kommen von der Uhr selbst (bis zur ersten Abfrage steht dort „Uhr abfragen …“). Liegt dort noch nichts, legst du Melodien in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch: den Text der Nachricht oder, wenn du ihn ausfüllst, einen eigenen kurzen Text (höchstens 512 Byte). „Wiederholen, bis die Nachricht geht“ spielt den Klang, bis die Nachricht zurückgezogen wird oder abläuft. Meldet die Uhr die Fähigkeit nicht, ist die Wahl gesperrt und die Nachricht geht stumm hinaus. Eine Anzeige hat keinen Klang."),
     ]
 
     /// Die Kurzbefehle (iPhone und iPad). Der Mac hat keine; dort ersetzt sie
@@ -350,7 +349,7 @@ public enum HilfeInhalt {
                 .absatz("Und alle folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung."),
 
                 .ueberschrift("Nachricht senden und zurückziehen"),
-                .absatz("„Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare."),
+                .absatz("„Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie ersetzt standardmäßig die sichtbare Nachricht und weckt das Panel, bleibt aber nicht stehen; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Eine gehaltene Nachricht hält die Warteschlange der Uhr an: Jede spätere wartet hinter ihr. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare."),
                 .absatz("Zwei wahlfreie Felder geben der Nachricht einen Klang: „Klang“ nimmt den Namen einer Melodie oder MP3-Datei auf der Uhr, „Vorlesen“ lässt die Uhr den Text auf Englisch sprechen. Beides zugleich geht nicht."),
                 .absatz("„Nachricht zurückziehen“ nimmt die sichtbare Nachricht weg, mit Namen die benannte. Über MQTT wartet jeder Kurzbefehl auf die Antwort der Uhr: Weist sie ab, zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus, steht ein Hinweis im Dialog."),
     ]

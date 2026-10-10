@@ -3,10 +3,9 @@ import UniformTypeIdentifiers
 import TC002Core
 import TC002Modell
 
-/// Der Klang einer Nachricht — im Reiter „Zeit“ (Mac, iPad) und im Formatblatt
-/// (iPhone), gleich unter den Nachrichtenreglern. Gesperrt statt versteckt,
-/// solange „Anzeige“ gewählt ist (eine Anzeige hat keinen Klang), und gesperrt
-/// mit Grund, wenn die angesehene Uhr die Fähigkeit nicht meldet.
+/// Der Klang einer Nachricht — im Popover bzw. Blatt, das der Klangknopf neben
+/// dem Segment „Anzeige | Nachricht“ öffnet (`Sendeartwahl`). Gesperrt mit
+/// Grund, wenn die angesehene Uhr die Fähigkeit nicht meldet.
 ///
 /// Die Namen der Melodien und MP3-Dateien kommen von der Uhr (nur über HTTP) und
 /// stehen erst nach der ersten Abfrage da; davor zeigt das Menü „Uhr abfragen …“,

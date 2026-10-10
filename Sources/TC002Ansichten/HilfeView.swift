@@ -130,7 +130,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.dauer
                 + [
-                    .absatz("Lebensdauer und Nachricht stehen im Reiter „Zeit“ des Inspektors. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet."),
+                    .absatz("Die Lebensdauer steht neben dem Segment „Anzeige | Nachricht“ (Sanduhr, mit der Frist beschriftet), solange „Anzeige“ gewählt ist; Klang und Optionen der Nachricht stehen dort bei „Nachricht“."),
                 ]
                 + HilfeInhalt.nachricht
                 + HilfeInhalt.lebensdauer

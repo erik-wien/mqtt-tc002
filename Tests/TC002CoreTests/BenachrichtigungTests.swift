@@ -42,15 +42,15 @@ final class BenachrichtigungTests: XCTestCase {
     /// `wakeup:false` sind dort ohnehin gültig, und die MQTT-Grenze ist knapp.
     func testEineSchlichteBenachrichtigungTraegtNurDieAnzeige() throws {
         let json = try NGNutzlast.benachrichtigung(
-            textrahmen(), .init(halten: false, aufwecken: false, wiederholungen: nil))
+            textrahmen(), .init(halten: false, einreihen: true, aufwecken: false, wiederholungen: nil))
         XCTAssertEqual(json, try Anzeigen.nutzlast(textrahmen()))
     }
 
-    /// Die Vorgaben der App: bleibt stehen, weckt, läuft zweimal, wird eingereiht.
+    /// Die Vorgaben der App: bleibt nicht stehen, ersetzt die sichtbare, weckt, läuft zweimal.
     func testDieVorgabenEinerNachricht() throws {
         let json = try NGNutzlast.benachrichtigung(textrahmen(), .init())
-        XCTAssertTrue(json.hasSuffix(#","hold":true,"wakeup":true,"repeat":2}"#), json)
-        XCTAssertFalse(json.contains("stack"), "Einreihen ist auch die Vorgabe der Uhr")
+        XCTAssertTrue(json.hasSuffix(#","stack":false,"wakeup":true,"repeat":2}"#), json)
+        XCTAssertFalse(json.contains("hold"), "Nicht halten ist auch die Vorgabe der Uhr")
     }
 
     func testDieFelderDerBenachrichtigungStehenHinterDerAnzeige() throws {

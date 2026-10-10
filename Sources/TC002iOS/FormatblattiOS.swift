@@ -3,12 +3,22 @@ import TC002Ansichten
 import TC002Core
 import TC002Modell
 
+/// Welchen Teil des Formats ein Blatt zeigt. Zwei Knöpfe am Ende der
+/// Formatpille (`SendeniOS`) öffnen je einen: die Uhr für Dauer und
+/// Laufschrift, der Pinsel für die Darstellung.
+enum Formatteil: String, Identifiable {
+    case zeit, darstellung
+    var id: String { rawValue }
+}
+
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
 /// gestapelt verdeckte es die Vorschau. Schriftart, beide Ausrichtungen,
 /// Größe, Fett, Großbuchstaben, Rand und Abstand sitzen inzwischen in der
 /// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Dauer
-/// und Laufschrift.
+/// und Laufschrift (Teil `zeit`) sowie die Darstellung (Teil `darstellung`).
+/// Nachricht, Klang und Lebensdauer stehen nicht hier, sondern am Segment
+/// „Anzeige | Nachricht“ (`Sendeartwahl`).
 ///
 /// Der Schalter „Schrift der Uhr" steht über der Darstellung, weil er
 /// bestimmt, was dort frei ist; die Regler, die er ausgraut, sitzen in der
@@ -20,47 +30,22 @@ import TC002Modell
 /// am Schreibtisch.
 struct FormatblattiOS: View {
     @Bindable var zustand: AppZustand
+    let teil: Formatteil
     @Binding var darstellung: Darstellungswahl
     @Binding var weg: SendeWeg
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
-    /// Anzeige oder Nachricht: Der Abschnitt der nicht gewählten Art ist
-    /// gesperrt, nicht versteckt — wie im Reiter „Zeit“ am Schreibtisch.
-    let art: Sendeart
-    @Binding var nachrichtHalten: Bool
-    @Binding var nachrichtAufwecken: Bool
-    @Binding var nachrichtErsetzen: Bool
-    @Binding var nachrichtDurchlaeufe: Int
-    @Binding var nachrichtKlang: Klangwahl
-    @Binding var lebensdauerBehalten: Bool
-    @Binding var lebensdauerZahl: Int
-    @Binding var lebensdauerEinheit: Lebensdauereinheit
-    @Binding var lebensdauerAblauf: Lebensablauf
     @Environment(\.dismiss) private var schliessen
     /// `.numberPad` hat keine Eingabetaste — ohne „Fertig" bleibt die Tastatur
     /// stehen. Dieselbe Leiste wie am Nummernfeld der Iconauswahl und am Port
     /// in den Einstellungen.
     @FocusState private var amDauerfeld: Bool
 
-    /// Welcher Reiter oben steht. Ein Blatt, zwei Reiter (Variante 1A der
-    /// Freigabe): Die Darstellung bekommt keine eigene Tür.
-    @State private var reiter = Formatreiter.zeit
-
-    private enum Formatreiter: Hashable { case zeit, darstellung }
-
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Picker("Reiter", selection: $reiter) {
-                    Text("Zeit").tag(Formatreiter.zeit)
-                    Text("Darstellung").tag(Formatreiter.darstellung)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                switch reiter {
+            Group {
+                switch teil {
                 case .zeit: zeitform
                 case .darstellung:
                     Form {
@@ -73,7 +58,7 @@ struct FormatblattiOS: View {
                     }
                 }
             }
-            .navigationTitle("Format")
+            .navigationTitle(teil == .zeit ? lok("Zeit") : lok("Darstellung"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) {
                 Button("Fertig") { schliessen() }
@@ -107,14 +92,6 @@ struct FormatblattiOS: View {
                     Text("Gilt nur, wenn der Text nicht ins Display passt.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Lebensdauerabschnitt(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
-                                     einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf,
-                                     aktiv: art == .anzeige)
-                Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
-                                   ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                   aktiv: art == .nachricht)
-                Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht,
-                               kanon: .telefon)
             }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
