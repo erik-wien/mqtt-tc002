@@ -66,7 +66,7 @@ public struct Anzeigen {
     }
 
     /// Veröffentlicht, und wartet dabei — falls gewünscht — auf die Antwort.
-    private func veroeffentlichen(_ daten: Data, an thema: String, sender: NachrichtSendend,
+    func veroeffentlichen(_ daten: Data, an thema: String, sender: NachrichtSendend,
                                   zugang: MQTTZugang) throws {
         guard let quittung else {
             try sender.senden(daten, an: thema, zugang: zugang)

@@ -32,6 +32,8 @@ public enum NGFehler: Error, LocalizedError {
     case abgewiesen(String)
     /// Auf `cmd/screen/get` kam keine Antwort, und es gibt keine Adresse für HTTP.
     case keineBildschirmantwort
+    /// Auf eine aufbewahrte Zustandsnachricht (`state/*`) kam nichts.
+    case keineZustandsantwort
 
     public var errorDescription: String? {
         switch self {
@@ -53,6 +55,8 @@ public enum NGFehler: Error, LocalizedError {
             return lokf("Die Uhr hat abgewiesen: %@", grund)
         case .keineBildschirmantwort:
             return lok("Die Uhr hat ihr Display nicht geliefert, und für HTTP ist keine Adresse eingetragen.")
+        case .keineZustandsantwort:
+            return lok("Die Uhr hat ihren Zustand nicht geliefert. Am Broker liegt nichts Aufbewahrtes; mit einer Adresse für HTTP ginge es direkt.")
         }
     }
 }

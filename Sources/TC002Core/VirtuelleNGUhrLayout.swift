@@ -358,6 +358,15 @@ extension VirtuelleNGUhr {
     ///
     /// Was samt Thema 8192 Byte übersteigt, verwirft die Uhr **ohne Antwort**
     /// (§8). Alles andere ist die HTTP-Logik: dieselbe Nutzlast, dieselben Fehler.
+    /// Was die Uhr beim Verbinden aufbewahrt hinterlegt (§3.5): `state/device`,
+    /// `state/settings`, `state/apps/active`, `availability`.
+    public static func aufbewahrt(praefix: String, _ z: NGUhrzustand) -> [(thema: String, nutzlast: Data)] {
+        [(praefix + "/state/device", geraet(z).daten),
+         (praefix + "/state/settings", JSONWert.objekt(z.einstellungen).daten),
+         (praefix + "/state/apps/active", Data(z.aktiveApp.utf8)),
+         (praefix + "/availability", Data("online".utf8))]
+    }
+
     public static func nachricht(thema: String, nutzlast: Data, praefix: String,
                                  _ z: inout NGUhrzustand) -> [(thema: String, nutzlast: Data)] {
         guard thema.utf8.count + nutzlast.count <= 8192 else { return [] }
@@ -374,6 +383,11 @@ extension VirtuelleNGUhr {
                     return nil
                 } ?? .null
                 inhalt = JSONWert.objekt(["ok": .bool(false), "error": fehler]).daten
+                // ❓ Die Doku nennt für `event/error` nur die Schlüssel `source`,
+                // `request` und `error`, nicht ihre Form; `request` ist hier das Thema.
+                let ereignis = JSONWert.objekt(["source": .text("mqtt"), "request": .text(thema),
+                                                "error": fehler]).daten
+                return [(thema + "/result", inhalt), (praefix + "/event/error", ereignis)]
             }
             return [(thema + "/result", inhalt)]
         }
@@ -385,6 +399,25 @@ extension VirtuelleNGUhr {
             return ergebnis(beantworten(Anfrage("PUT", "/api/v1/apps/active", koerper: nutzlast, kopf: kopf), &z))
         case "notify":
             return ergebnis(beantworten(Anfrage("POST", "/api/v1/notifications", koerper: nutzlast, kopf: kopf), &z))
+        case "display":
+            return ergebnis(beantworten(Anfrage("PATCH", "/api/v1/display", koerper: nutzlast, kopf: kopf), &z))
+        case "settings":
+            return ergebnis(beantworten(Anfrage("PATCH", "/api/v1/settings", koerper: nutzlast, kopf: kopf), &z))
+        case "apps/next", "apps/previous":
+            return ergebnis(beantworten(Anfrage("POST", "/api/v1/" + rest), &z))
+        case "display/moodlight":
+            // Über MQTT schaltet ein leerer Rumpf aus; `{}` ist (wie über HTTP) `422`.
+            let leer = nutzlast.isEmpty
+            return ergebnis(beantworten(leer ? Anfrage("DELETE", "/api/v1/display/moodlight")
+                                             : Anfrage("PUT", "/api/v1/display/moodlight", koerper: nutzlast, kopf: kopf), &z))
+        case _ where rest.hasPrefix("indicators/"):
+            // Die Kennziffer ist ein einzelnes Zeichen; alles andere trifft keine Route.
+            let id = String(rest.dropFirst("indicators/".count))
+            guard id.count == 1, ["1", "2", "3"].contains(id) else { return [] }
+            let leer = nutzlast.isEmpty || String(decoding: nutzlast, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines) == "{}"
+            return ergebnis(beantworten(leer ? Anfrage("DELETE", "/api/v1/indicators/" + id)
+                                             : Anfrage("PUT", "/api/v1/indicators/" + id, koerper: nutzlast, kopf: kopf), &z))
         case _ where rest.hasPrefix("apps/pushed/"):
             let name = String(rest.dropFirst("apps/pushed/".count))
             guard !name.isEmpty else { return [] }

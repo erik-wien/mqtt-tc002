@@ -38,17 +38,17 @@ public enum JSONWert: Equatable, Sendable, Codable {
     }
 
     /// `nil`, wenn `daten` kein JSON ist.
-    static func lesen(_ daten: Data) -> JSONWert? {
+    public static func lesen(_ daten: Data) -> JSONWert? {
         try? JSONDecoder().decode(JSONWert.self, from: daten)
     }
 
-    var daten: Data {
+    public var daten: Data {
         let e = JSONEncoder()
         e.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         return (try? e.encode(self)) ?? Data("null".utf8)
     }
 
-    var ganzzahl: Int? {
+    public var ganzzahl: Int? {
         if case .zahl(let w) = self, w == w.rounded(), abs(w) < 1e15 { return Int(w) }
         return nil
     }
@@ -96,6 +96,14 @@ public struct NGIndikator: Equatable, Sendable {
     public var fadeMs = 0
 }
 
+/// Das laufende Moodlight (`GET /api/v1/display`, §7.5).
+public struct NGMoodlight: Equatable, Sendable {
+    /// `#RRGGBB`.
+    public var farbe = "#FFFFFF"
+    /// Roh, wie die Uhr ihn behält (nicht geprüft: 300 wird zu 44).
+    public var helligkeit = 120
+}
+
 /// Der Zustand einer AWTRIX-NG-1.2.2-Uhr (TC002, 52×16), so weit die HTTP-
 /// Schnittstelle ihn berührt. Vorgabewerte stammen aus einer Messung an einer
 /// echten Uhr, Kennungen sind durch erfundene ersetzt.
@@ -103,6 +111,10 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var einstellungen: [String: JSONWert]
     public var power = true
     public var overlay: String?
+    /// `nil`: aus.
+    public var moodlight: NGMoodlight?
+    /// Eine hochgeladene Broker-CA liegt auf der Uhr (`PUT /api/v1/mqtt/tls/ca`).
+    public var eigeneCA = false
     public var overlaySettings: [String: JSONWert] =
         ["speed": .zahl(1), "palette": .null, "blend": .bool(true)]
     public var apps: [NGApp] = [
@@ -142,8 +154,9 @@ public struct NGUhrzustand: Equatable, Sendable {
 ///   Schlüssel hinaus (Töne, Schriften, Text- und Icon-Felder); geprüft sind
 ///   die Schlüssel aus §5.5 (Hintergrund, Effekt, Overlay, Palette, Diagramme,
 ///   Fortschritt — `pruefeDarstellung`), die Zeichenbefehle und `layout`,
-/// - Wertebereiche der Einstellungen außer `brightness` (0–255); sonst nur
-///   Schlüssel und Typ,
+/// - Wertebereiche von Schlüsseln der Systemkonfiguration; die Einstellungen
+///   (§10) sind geprüft (`VirtuelleNGUhrSteuerung.swift`), ein Schlüssel ohne
+///   Regel nur nach Typ,
 /// - Authentifizierung, `X-HTTP-Method-Override`, Setup-Modus, Anfragen
 ///   mit `HEAD`/`OPTIONS`,
 /// - `Content-Type` bei `PUT /apps/active` und `PUT /apps/{name}/enabled`:
@@ -232,6 +245,7 @@ public enum VirtuelleNGUhr {
 
     private enum Route {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
+        case moodlight, tlsStatus, tlsCA
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
         case meldungSenden, meldungAktivLoeschen, meldungLoeschen(String)
@@ -244,7 +258,8 @@ public enum VirtuelleNGUhr {
             case .appSenden, .appAktiv, .appFreigabe: return ["PUT"]
             case .appLoeschen, .meldungAktivLoeschen, .meldungLoeschen: return ["DELETE"]
             case .appWeiter, .appZurueck, .meldungSenden: return ["POST"]
-            case .indikator: return ["PUT", "DELETE"]
+            case .indikator, .moodlight, .tlsCA: return ["PUT", "DELETE"]
+            case .tlsStatus: return ["GET"]
             }
         }
     }
@@ -264,6 +279,9 @@ public enum VirtuelleNGUhr {
         case (1, "audio"): return .ton
         case (1, "notifications"): return .meldungSenden
         case (2, "display") where r[1] == "screen": return .bildschirm
+        case (2, "display") where r[1] == "moodlight": return .moodlight
+        case (2, "mqtt") where r[1] == "tls": return .tlsStatus
+        case (3, "mqtt") where r[1] == "tls" && r[2] == "ca": return .tlsCA
         case (2, "apps"):
             switch r[1] {
             case "active": return .appAktiv
@@ -330,6 +348,9 @@ public enum VirtuelleNGUhr {
             z.benachrichtigungen.removeAll { $0.name == name }
             return ok
         case .indikator(let id): return indikator(id, anfrage, &z)
+        case .moodlight: return moodlight(anfrage, &z)
+        case .tlsStatus: return json(tlsStand(z))
+        case .tlsCA: return tlsCA(anfrage, &z)
         }
     }
 
@@ -381,8 +402,16 @@ public enum VirtuelleNGUhr {
     /// weg); in einem `layout` rechnet `draw` auf dem vollen 52 × 16 relativ
     /// zur Box der Region. Ohne `enlargeApps` rechnet auch die Anzeige auf
     /// 52 × 16.
+    ///
+    /// Annahmen, die die Doku nicht belegt (❓): Bei ausgeschaltetem Panel ist das
+    /// Bild schwarz, und ein Moodlight füllt es mit seiner Farbe (ohne
+    /// Helligkeit, wie bei den Apps).
     public static func bildschirm(_ z: NGUhrzustand) -> [Int] {
         var bild = Brett(breite: breite, hoehe: hoehe)
+        if !z.power { return bild.punkte }
+        if let licht = z.moodlight {
+            return [Int](repeating: Int(licht.farbe.dropFirst(), radix: 16) ?? 0, count: breite * hoehe)
+        }
         let nutzlast: [String: JSONWert]
         if let meldung = z.benachrichtigungen.first {
             nutzlast = meldung.nutzlast
@@ -605,7 +634,7 @@ public enum VirtuelleNGUhr {
 
     // MARK: - Lesen
 
-    private static func geraet(_ z: NGUhrzustand) -> JSONWert {
+    static func geraet(_ z: NGUhrzustand) -> JSONWert {
         let anzeigeApp = z.aktiveApp
         let indikatoren: [JSONWert] = z.indikatoren.map {
             .objekt(["on": .bool($0.an), "color": .text($0.farbe),
@@ -642,7 +671,9 @@ public enum VirtuelleNGUhr {
     private static func anzeige(_ z: NGUhrzustand) -> JSONWert {
         .objekt(["power": .bool(z.power), "brightness": .zahl(Double(z.helligkeit)),
                  "overlay": z.overlay.map { .text($0) } ?? .null,
-                 "overlaySettings": .objekt(z.overlaySettings), "moodlight": .null])
+                 "overlaySettings": .objekt(z.overlaySettings),
+                 "moodlight": z.moodlight.map { .objekt(["color": .text($0.farbe),
+                                                         "brightness": .zahl(Double($0.helligkeit))]) } ?? .null])
     }
 
     private static func appEintrag(_ a: NGApp) -> JSONWert {
@@ -653,31 +684,6 @@ public enum VirtuelleNGUhr {
     }
 
     // MARK: - Einstellungen und Anzeige
-
-    private static func einstellungenAendern(_ a: Anfrage, _ z: inout NGUhrzustand) -> Antwort {
-        guard let wert = JSONWert.lesen(a.koerper) else { return keinJSON }
-        guard case .objekt(let neu) = wert else { return ungueltig("body required") }
-        // Erst alles prüfen, dann schreiben: Ein falscher Schlüssel ändert nichts.
-        for schluessel in neu.keys.sorted() {
-            guard let alt = z.einstellungen[schluessel], let v = neu[schluessel] else {
-                return ungueltig("unknown field", feld: schluessel)
-            }
-            if schluessel == "brightness" {
-                guard let n = v.ganzzahl else { return ungueltig("must be a number", feld: schluessel) }
-                guard (0...255).contains(n) else { return ungueltig("out of range", feld: schluessel) }
-                continue
-            }
-            switch (alt, v) {
-            case (.null, _), (.bool, .bool), (.zahl, .zahl), (.text, .text),
-                 (.liste, .liste), (.objekt, .objekt):
-                continue
-            default:
-                return ungueltig("wrong type", feld: schluessel)
-            }
-        }
-        for (k, v) in neu { z.einstellungen[k] = v }
-        return json(.objekt(z.einstellungen))
-    }
 
     private static func anzeigeAendern(_ a: Anfrage, _ z: inout NGUhrzustand) -> Antwort {
         guard let wert = JSONWert.lesen(a.koerper) else { return keinJSON }

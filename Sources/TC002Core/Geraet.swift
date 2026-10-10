@@ -198,7 +198,8 @@ public struct Geraet {
     ///
     /// `Content-Type: application/json` ist bei `PUT` Pflicht: Ohne ihn wird
     /// die Anfrage abgewiesen, bevor der Rumpf ueberhaupt gelesen wird.
-    private func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws {
+    @discardableResult
+    func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws -> Data {
         var anfrage = try self.anfrage(url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
@@ -206,7 +207,7 @@ public struct Geraet {
             anfrage.httpBody = koerper
         }
         let (daten, status) = try fuehreAusMitStatus(anfrage)
-        guard status >= 400 else { return }
+        guard status >= 400 else { return daten }
         let rumpf = (try? JSONSerialization.jsonObject(with: daten)) as? [String: Any]
         let fehler = rumpf?["error"] as? [String: Any]
         let feld = fehler?["field"] as? String
@@ -284,7 +285,12 @@ public struct Geraet {
         return feld
     }
 
-    private func hole(_ pfad: String) throws -> [String: Any] {
+    /// Der Rumpf einer `GET`-Antwort, ungelesen.
+    func lesen(_ pfad: String) throws -> Data {
+        try fuehreAus(try anfrage(url(pfad)))
+    }
+
+    func hole(_ pfad: String) throws -> [String: Any] {
         let daten = try fuehreAus(try anfrage(url(pfad)))
         let objekt: Any
         do {

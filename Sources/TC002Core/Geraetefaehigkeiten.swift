@@ -24,10 +24,18 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     public var layoutUnterstuetzt: Bool?
     /// `capabilities.layouts.limits`; ohne Angabe die gemessenen Werte.
     public var layoutGrenzen = Layoutgrenzen()
+    /// `capabilities.clockFaces` (`sheet`, `ring` …) — die Zifferblätter der Uhr-App.
+    public var zifferblaetter: [String] = []
+    /// `capabilities.mqttTls`: ob es `GET /api/v1/mqtt/tls` gibt (sonst `404`, §11.1).
+    /// `nil`, solange nicht gefragt.
+    public var mqttTlsUnterstuetzt: Bool?
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
                 paletten: [String] = [], uebergaenge: [String] = [],
-                layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen()) {
+                layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen(),
+                zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil) {
+        self.zifferblaetter = zifferblaetter
+        self.mqttTlsUnterstuetzt = mqttTlsUnterstuetzt
         self.layoutUnterstuetzt = layoutUnterstuetzt
         self.layoutGrenzen = layoutGrenzen
         self.effekte = effekte
@@ -49,6 +57,8 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         self.init(effekte: alle[0] ?? [], paletteneffekte: alle[1] ?? [], overlays: alle[2] ?? [],
                   paletten: alle[3] ?? [], uebergaenge: alle[4] ?? [])
         layoutUnterstuetzt = antwort["layout"] as? Bool == true
+        zifferblaetter = (antwort["clockFaces"] as? [Any])?.compactMap { $0 as? String } ?? []
+        mqttTlsUnterstuetzt = antwort["mqttTls"] as? Bool == true
         if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {
             layoutGrenzen = Layoutgrenzen(antwort: grenzen)
         }
