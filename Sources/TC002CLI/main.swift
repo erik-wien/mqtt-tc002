@@ -25,6 +25,8 @@ AUFRUF
   mqtttc002 loeschen <Anzeige>     eine benannte Anzeige entfernen
   mqtttc002 umschalten <Anzeige>   zu einer Anzeige wechseln
   mqtttc002 bild <Name>            ein fertiges Bild aus dem Bestand schicken
+  mqtttc002 layout <Datei.json>    ein Layout (Kaesten mit Inhalt) aus einer Datei schicken
+  mqtttc002 bildschirm             das Display der Uhr lesen und als Text ausgeben
   mqtttc002 uhren                  die eingerichteten Uhren auflisten
   mqtttc002 icons                  die vorhandenen Icons auflisten
   mqtttc002 bilder                 die vorhandenen 16x52-Bilder auflisten
@@ -35,6 +37,18 @@ Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
 Text und Icon. Von „senden" gelten dafuer nur --an, --name und --dauer; alles
 Uebrige formatiert Text, den es dort nicht gibt. Ein Einzelbild geht pixelgenau
 als Standbild an die Uhr, mehrere als animiertes GIF.
+
+Ein Layout teilt das volle Display in Kaesten, jeder mit genau einem Inhalt (Text,
+Icon, Diagramm, Fortschritt, Zeichnung); die Datei traegt genau die Schluessel der
+Geraetereferenz, entweder den Block "layout" oder die ganze Nutzlast
+{"layout":{...},"durationMs":10000}. Von „senden" gelten dafuer --an, --name, --dauer,
+--lebensdauer, --behalten, --ablauf und --trocken. Die TC001 kann keine Layouts; das
+Werkzeug fragt die Uhr danach und meldet es vor dem Senden. Mit --name wird das Layout
+unter einem der Plaetze (meldung1 bis meldung5) abgelegt.
+
+„bildschirm" liest das Display ueber HTTP bzw. MQTT (cmd/screen/get -> state/screen)
+und zeichnet es als Text: je Pixel ein Zeichen, "." ist schwarz, "#" die erste
+andere Farbe in Leserichtung, dann A, B, ...; darunter die Farben als #RRGGBB.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
@@ -105,6 +119,8 @@ BEISPIELE
   mqtttc002 nachricht "Tuer offen" --name tuer
   mqtttc002 zurueckziehen tuer
   mqtttc002 loeschen cli
+  mqtttc002 layout drei-felder.json --name meldung2 --trocken
+  mqtttc002 bildschirm --an Kueche
 
 Zu lange Texte laufen von selbst durch; das macht die App genauso.
 """
@@ -278,8 +294,10 @@ func lauf() throws {
     /// die Uhr weist einen falschen selbst ab (`422`).
     func faehigkeiten(_ uhr: Uhr) -> Geraetefaehigkeiten? {
         let d = optionen.darstellung
-        let nennt = (d.effekt?.isEmpty == false) || (d.overlay?.isEmpty == false)
+        var nennt = (d.effekt?.isEmpty == false) || (d.overlay?.isEmpty == false)
             || { if case .name? = d.palette { return true }; return false }()
+        // Ob die Uhr Layouts kann, steht nur in ihrer Auskunft.
+        if case .layout = optionen.befehl { nennt = true }
         guard nennt, !uhr.host.isEmpty else { return nil }
         return (try? Geraet(host: uhr.host).faehigkeiten()) ?? nil
     }
@@ -403,6 +421,51 @@ func lauf() throws {
         try anAlle(lokf("Nachricht gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
             try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo,
                                          faehigkeiten: faehigkeiten(uhr))
+        }
+
+    case .layout(let pfad):
+        let datei = try Layoutdatei.lesen(datei: URL(fileURLWithPath: (pfad as NSString).expandingTildeInPath))
+        let frame = Frame(dauer: optionen.dauer ?? datei.dauer, lebensdauer: optionen.meldung.wirksameLebensdauer,
+                          layout: datei.layout)
+        // Der Trockenlauf fragt niemanden; geprueft wird gegen das Mass jeder Uhr.
+        let json = try Anzeigen.nutzlast(frame, mass: gewaehlte.first.map(Anzeigemass.fuer))
+        if optionen.trocken {
+            for uhr in gewaehlte {
+                _ = try Anzeigen.nutzlast(frame, mass: Anzeigemass.fuer(uhr))
+                switch uhr.wirksameBetriebsart {
+                case .http: print("PUT http://\(uhr.host)/api/v1/apps/pushed/\(optionen.anzeigename)")
+                case .mqtt: print(NGThema.anzeige(praefix: uhr.praefix, name: optionen.anzeigename))
+                }
+            }
+            print(json)
+            print(lokf("%d Byte Nutzlast, nichts gesendet (--trocken).", json.utf8.count))
+            return
+        }
+        try anAlle(lokf("Layout gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
+            try anzeigen.zeigen(frame, auf: optionen.anzeigename, faehigkeiten: faehigkeiten(uhr))
+            // Wie ein gemaltes Bild: ein Layout hat keine Regler, die sich merken liessen.
+            if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
+                _ = Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: platz)
+            }
+        }
+
+    case .bildschirm:
+        var gelesen = 0
+        var fehler: [String] = []
+        for uhr in gewaehlte {
+            guard let anzeigen = Anzeigen.fuer(uhr, brokerzugang: einstellungen.zugang(
+                clientID: "tc002-cli-" + uhr.id.uuidString.prefix(8).lowercased())) else { continue }
+            do {
+                let auszug = try anzeigen.bildschirmLesen()
+                if gewaehlte.count > 1 { print("# \(uhr.name)") }
+                print(auszug.ascii())
+                gelesen += 1
+            } catch {
+                fehler.append("\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+            }
+        }
+        guard fehler.isEmpty, gelesen > 0 else {
+            throw Abbruch(fehler.isEmpty ? lok("Keine Uhr hat geantwortet.") : fehler.joined(separator: "\n"))
         }
 
     case .zurueckziehen(let name):

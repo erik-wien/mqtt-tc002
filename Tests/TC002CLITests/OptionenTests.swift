@@ -404,6 +404,36 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         return false
     }
 
+    // MARK: - Layout und Bildschirm
+
+    func testLayoutNimmtEineDateiUndDieOptionenEinerAnzeige() throws {
+        let o = try Optionen.zerlegt(["layout", "drei.json", "--an", "Küche", "--name", "meldung2",
+                                      "--dauer", "8", "--lebensdauer", "600", "--ablauf", "markieren", "--trocken"])
+        XCTAssertEqual(o.befehl, .layout(datei: "drei.json"))
+        XCTAssertEqual(o.ziele, ["Küche"])
+        XCTAssertEqual(o.anzeigename, "meldung2")
+        XCTAssertTrue(o.trocken)
+        XCTAssertEqual(o.meldung.wirksameLebensdauer, Lebensdauer(sekunden: 600, ablauf: .markieren))
+        XCTAssertEqual(o.dauer, 8)
+    }
+
+    /// Ein Layout verfällt wie jede Anzeige nach 30 Minuten, wenn nichts anderes gilt.
+    func testEinLayoutHatDieVorgabeLebensdauer() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["layout", "x.json"]).meldung.wirksameLebensdauer, Lebensdauer.vorgabe)
+        XCTAssertNil(try Optionen.zerlegt(["layout", "x.json", "--behalten"]).meldung.wirksameLebensdauer)
+    }
+
+    func testLayoutOhneDateiUndMitFremdenOptionen() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["layout"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["layout", "x.json", "--effekt", "Plasma"]), "Darstellung steht im Layout")
+        XCTAssertThrowsError(try Optionen.zerlegt(["layout", "x.json", "--ersetzen"]), "nur für Nachrichten")
+    }
+
+    func testBildschirmUndSeineEnglischeFassung() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["bildschirm"]).befehl, .bildschirm)
+        XCTAssertEqual(try Optionen.zerlegt(["screen", "--to", "Küche"]).befehl, .bildschirm)
+    }
+
     /// Jede Option, die ein Hilfetext nennt, muss der Zerleger kennen — sonst
     /// steht dort eine Zusage, die „Unbekannte Option“ beantwortet. Gelesen wird
     /// der Quelltext des deutschen Textes und die englische Übersetzung.

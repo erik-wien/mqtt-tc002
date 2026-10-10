@@ -23,6 +23,10 @@ struct Optionen {
         case bilder
         /// Effekte, Overlays und Paletten, die die Uhr in `capabilities` nennt.
         case effekte
+        /// Ein Layout aus einer JSON-Datei senden (`docs/awtrix-ng-protokoll.md` §9).
+        case layout(datei: String)
+        /// Das Display der Uhr lesen und als Text ausgeben.
+        case bildschirm
         case hilfe
         case fassung
     }
@@ -75,6 +79,7 @@ struct Optionen {
         case keineFarbe(String)
         case fehlenderText
         case fehlenderBildname
+        case fehlendeLayoutdatei
         /// Eine Option, die der gewählte Befehl nicht kennt — sie würde sonst
         /// still nichts bewirken.
         case optionGiltNurFuer(option: String, befehl: String)
@@ -104,6 +109,8 @@ struct Optionen {
                 return lok("Was soll gesendet werden? Text als letztes Wort angeben.")
             case .fehlenderBildname:
                 return lok("Welches Bild? Den Namen angeben — „mqtttc002 bilder“ zeigt alle.")
+            case .fehlendeLayoutdatei:
+                return lok("Welche Datei? Den Pfad einer Layoutdatei (JSON) angeben.")
             case .optionGiltNurFuer(let o, let b):
                 return lokf("„%@“ gilt nur für „%@“.", o, b)
             case .keinAblauf(let w):
@@ -156,6 +163,10 @@ struct Optionen {
             o.befehl = .bilder
         case "effekte", "effects":
             o.befehl = .effekte
+        case "layout":
+            o.befehl = .layout(datei: "")
+        case "bildschirm", "screen":
+            o.befehl = .bildschirm
         case "hilfe", "help", "--help", "-h":
             return Optionen(befehl: .hilfe)
         case "fassung", "version", "--version":
@@ -324,6 +335,10 @@ struct Optionen {
         case .bild:
             guard !freierText.isEmpty else { throw Fehler.fehlenderBildname }
             o.befehl = .bild(name: freierText)
+        case .layout:
+            guard !freierText.isEmpty else { throw Fehler.fehlendeLayoutdatei }
+            try o.nurFuerNachrichtenPruefen()
+            o.befehl = .layout(datei: freierText)
         default:
             break
         }
@@ -407,7 +422,7 @@ struct Optionen {
         o.tempo = tempo
         o.dauer = dauer
         // Ohne jede Angabe bleibt es `nil`, und das heißt: die Vorgabe (30 Minuten).
-        if case .senden = befehl {
+        if istAnzeige {
             if behalten {
                 o.lebensdauer = .aus
             } else if lebensdauer != nil || ablauf != nil {
@@ -416,6 +431,14 @@ struct Optionen {
             }
         }
         return o
+    }
+
+    /// Eine Anzeige mit Lebensdauer: Text oder Layout.
+    private var istAnzeige: Bool {
+        switch befehl {
+        case .senden, .layout: return true
+        default: return false
+        }
     }
 
     /// Die Felder einer Benachrichtigung (§5.6). Ohne `--name` hat sie keinen.
