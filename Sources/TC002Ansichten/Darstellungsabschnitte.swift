@@ -14,7 +14,7 @@ import TC002Modell
 /// Die Namen von Effekt, Overlay und Palette kommen aus `capabilities` der
 /// angesehenen Uhr (`AppZustand.faehigkeiten`) und stehen erst nach der ersten
 /// Abfrage da; davor zeigt jedes Menü nur seinen Nullwert, einen Hinweis und
-/// „Uhr abfragen …".
+/// „Uhr abfragen".
 public struct Darstellungsabschnitte: View {
     @Bindable var zustand: AppZustand
     @Binding var wahl: Darstellungswahl
@@ -126,7 +126,7 @@ public struct Darstellungsabschnitte: View {
         zustand.abfragen(uhr.id)
     }
 
-    /// Ein Menü mit den Namen der Uhr. Ein `Picker` allein kann „Uhr abfragen …"
+    /// Ein Menü mit den Namen der Uhr. Ein `Picker` allein kann „Uhr abfragen"
     /// nicht tragen; im `Menu` steht der Wähler eingebettet und die Handlung
     /// daneben. Ein gewählter Name, den die Liste nicht (mehr) kennt, bleibt
     /// stehen und wählbar — er stammt von einer anderen Uhr oder aus dem Platz.
@@ -144,7 +144,7 @@ public struct Darstellungsabschnitte: View {
                     Divider()
                     Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
                         .disabled(true)
-                    Button(lok("Uhr abfragen …")) { abfragen() }
+                    Button(lok("Uhr abfragen")) { abfragen() }
                         .disabled(zustand.referenzUhr == nil)
                 }
             } label: {
@@ -199,7 +199,7 @@ public struct Darstellungsabschnitte: View {
                     Divider()
                     Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
                         .disabled(true)
-                    Button(lok("Uhr abfragen …")) { abfragen() }
+                    Button(lok("Uhr abfragen")) { abfragen() }
                         .disabled(zustand.referenzUhr == nil)
                 }
             } label: {

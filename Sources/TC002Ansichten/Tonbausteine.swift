@@ -9,7 +9,7 @@ import TC002Modell
 /// ein Teil kann, bleibt wählbar und geht nur an diese Uhren.
 ///
 /// Die Namen der Melodien und MP3-Dateien kommen von der Uhr (nur über HTTP) und
-/// stehen erst nach der ersten Abfrage da; davor zeigt das Menü „Uhr abfragen …“,
+/// stehen erst nach der ersten Abfrage da; davor zeigt das Menü „Uhr abfragen“,
 /// wie bei den Effektnamen.
 public struct Klangabschnitt: View {
     @Bindable var zustand: AppZustand
@@ -119,7 +119,7 @@ public struct Klangabschnitt: View {
                     Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
                         .disabled(true)
                 }
-                Button(lok("Uhr abfragen …")) {
+                Button(lok("Uhr abfragen")) {
                     guard let uhr else { return }
                     Task { await zustand.tonlistenAbfragen(uhr.id) }
                 }

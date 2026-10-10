@@ -81,7 +81,7 @@ struct MP3Hochladeblatt: View {
                 }
                 if listen == nil {
                     Section {
-                        Label("Uhr abfragen …", systemImage: "arrow.triangle.2.circlepath")
+                        Label("Uhr abfragen", systemImage: "arrow.triangle.2.circlepath")
                             .foregroundStyle(.secondary)
                     }
                 }

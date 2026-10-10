@@ -283,7 +283,7 @@ extension AppZustand {
 
     /// Holt Melodien und MP3-Dateien der Uhr (nur HTTP). Eine Uhr ohne Adresse
     /// oder ohne Antwort lässt die Listen, wie sie waren; die Ansicht zeigt dann
-    /// weiter „Uhr abfragen …“.
+    /// weiter „Uhr abfragen“.
     @discardableResult
     public func tonlistenAbfragen(_ id: UUID) async -> Bool {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
