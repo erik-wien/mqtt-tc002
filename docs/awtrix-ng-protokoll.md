@@ -782,6 +782,15 @@ leeres oder längeres Feld ist abgewiesen. Aus der Palette gemalt werden
 🔬 `GET /api/v1/capabilities` führt am gemessenen Gerät genau diese Listen:
 19 Effekte, 16 Paletteneffekte, 22 Übergänge, 6 Overlays, 8 Paletten.
 
+📄 **Mit einem Bild in Anzeigegröße** (§5.3, der Pixelweg der App) gilt: Das GIF
+ist der Hintergrund und ersetzt `backgroundColor` und `effect`; ein `overlay`
+liegt darüber. Diagramme und Fortschritt gehören darum zu einer Anzeige **ohne**
+gerasterten Inhalt: Die App kennt je Anzeige entweder Text/Bild oder
+Diagramm/Fortschritt, jeweils mit freiwilligem Hintergrund, Effekt, Overlay und
+Palette, und weist `backgroundColor`/`effect` neben einem gerasterten Bild vor
+dem Senden ab. Die Namen von Effekt, Overlay und Palette prüft sie gegen die
+Listen von `capabilities`, die sie je Uhr bei der Abfrage holt.
+
 ### 5.6 Nur für Benachrichtigungen
 
 📄 Diese Schlüssel nimmt **allein** `POST /api/v1/notifications` an; in einer
@@ -1370,6 +1379,13 @@ am Gerät geprüft):
 
 ## 14. Was nicht dasteht
 
+- ❓ **Diagramme und Fortschritt neben einem GIF in Anzeigegröße:** ob sie über
+  dem GIF (als Hintergrund) gezeichnet werden. Ebenso, ob `chartColor` und
+  `progressColor` mit `"palette"` ohne gesetzte `palette` eine Farbe malen, ob ein
+  `lineChart` mit weniger als zwei Werten abgewiesen oder nur nicht gezeichnet
+  wird und ob ein `barChart`/`lineChart`, das kein Feld ist, `422` ergibt.
+- ❓ **Ob Paletten, die nur als Datei `/PALETTES/<name>.txt` vorliegen, in
+  `capabilities.palettes` stehen** (§5.5).
 - ❓ **Ob `+` im `mqttPrefix` wie `#` wirkt** (§2) und ob die Firmware Leerzeichen
   oder weitere Zeichen darin beanstandet.
 - ❓ **Alles zu MQTT am Gerät:** Themen, `/result`-Antworten, `event/error`,

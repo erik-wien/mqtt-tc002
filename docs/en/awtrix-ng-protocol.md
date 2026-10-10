@@ -761,6 +761,15 @@ use the palette. Overlays (6): `rain`, `snow`, `drizzle`, `storm`, `thunder`,
 🔬 `GET /api/v1/capabilities` lists exactly these on the measured device: 19
 effects, 16 palette effects, 22 transitions, 6 overlays, 8 palettes.
 
+📄 **With a full-size image** (§5.3, the app's pixel path): the GIF is the
+background and replaces `backgroundColor` and `effect`; an `overlay` lies over
+it. Charts and progress therefore belong to a display **without** rastered
+content: the app knows, per display, either text/image or chart/progress, each
+with optional background, effect, overlay and palette, and refuses
+`backgroundColor`/`effect` next to a rastered image before sending. It checks
+the names of effect, overlay and palette against the lists in `capabilities`,
+which it fetches per clock when it queries it.
+
 ### 5.6 Notifications only
 
 📄 These keys are accepted **only** by `POST /api/v1/notifications`; in a pushed
@@ -1340,6 +1349,13 @@ checked on a device):
 
 ## 14. What is not stated
 
+- ❓ **Charts and progress next to a full-size GIF:** whether they are drawn over
+  the GIF (as background). Likewise whether `chartColor` and `progressColor` with
+  `"palette"` and no `palette` set paint a color, whether a `lineChart` with fewer
+  than two values is refused or merely not drawn, and whether a
+  `barChart`/`lineChart` that is not an array gives `422`.
+- ❓ **Whether palettes that exist only as a file `/PALETTES/<name>.txt` appear in
+  `capabilities.palettes`** (§5.5).
 - ❓ **Whether `+` in `mqttPrefix` acts like `#`** (§2) and whether the firmware
   objects to spaces or further characters in it.
 - ❓ **Everything about MQTT on the device:** topics, `/result` replies,
