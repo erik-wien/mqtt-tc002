@@ -94,6 +94,7 @@ public struct HilfeabschnittView: View {
         VStack(alignment: .leading, spacing: 14) {
             if zeigtTitel {
                 Text(lok(abschnitt.titel)).font(.title2).fontWeight(.semibold)
+                    .accessibilityAddTraits(.isHeader)
             }
             ForEach(Array(abschnitt.bausteine.enumerated()), id: \.offset) { _, baustein in
                 bausteinView(baustein)
@@ -129,6 +130,7 @@ public struct HilfeabschnittView: View {
             Text(lok(text))
                 .font(.headline)
                 .padding(.top, 10)
+                .accessibilityAddTraits(.isHeader)
         case .untertitel(let text):
             // Kleiner und mit weniger Luft davor als die Überschrift: Die
             // beiden Ebenen müssen sich unterscheiden lassen, sonst ist die
@@ -137,6 +139,7 @@ public struct HilfeabschnittView: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .padding(.top, 4)
+                .accessibilityAddTraits(.isHeader)
         case .absatz(let text):
             Text(Self.ausgezeichnet(text)).lineSpacing(zeilenabstand)
         case .punkte(let eintraege):

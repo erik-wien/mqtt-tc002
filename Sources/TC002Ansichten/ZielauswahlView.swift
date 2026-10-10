@@ -103,7 +103,7 @@ public struct ZielauswahlView: View {
             // bekommen, die zeigt 2/4 uhren sind ausgewählt."*
             .overlay(alignment: .topTrailing) {
                 Text(verbatim: "\(gewaehlteIDs.count)/\(zustand.uhren.count)")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.caption2.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     // Eine graue Pille darunter, kein blanker Text: Frei neben
@@ -166,7 +166,7 @@ public struct ZielauswahlView: View {
                                           ? lok("keine Adresse — kann nichts empfangen")
                                           : lok("kein Präfix — kann erst empfangen, wenn abgefragt"),
                                           systemImage: "exclamationmark.triangle")
-                                        .font(.caption).foregroundStyle(.orange)
+                                        .font(.caption).warntext()
                                 } else if uhr.wirksameBetriebsart == .http {
                                     Text("HTTP")
                                         .font(.system(.caption, design: .monospaced))

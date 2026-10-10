@@ -1631,3 +1631,6 @@
 "Was gesendet wird, steht hier und lässt sich mit einem Klick wieder aufnehmen." = "What is sent appears here and can be picked up again with a click.";
 "Mindestens 0,02 s — kürzere Zeiten werden auf diesen Wert gesetzt." = "At least 0.02 s — shorter times are set to this value.";
 "Das ist keine ganze Zahl — es gilt keine eigene Dauer." = "That is not a whole number — no duration of its own applies.";
+"Einzelbild %d" = "Frame %d";
+"Zeichenfläche, %d mal %d Pixel" = "Drawing canvas, %d by %d pixels";
+"Anzeige der virtuellen Uhr, %d mal %d Pixel" = "Display of the virtual clock, %d by %d pixels";

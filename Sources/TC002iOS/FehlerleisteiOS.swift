@@ -1,4 +1,5 @@
 import SwiftUI
+import TC002Ansichten
 import TC002Modell
 
 /// Zeigt `AppZustand.fehler` als schmale Leiste unter der Titelleiste.
@@ -13,6 +14,8 @@ struct FehlerleisteiOS: View {
         if let fehler = zustand.fehler {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Warnfarbe.symbol)
+                    .accessibilityLabel(Text("Fehler"))
                 Text(fehler).font(.callout).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button {
@@ -21,12 +24,19 @@ struct FehlerleisteiOS: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
+                // Trefferfläche 44 × 44 pt, das Zeichen bleibt klein.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
                 .accessibilityLabel("Schließen")
             }
             .padding(10)
             .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal)
             .transition(.move(edge: .top).combined(with: .opacity))
+            // Die Leiste erscheint ohne Zutun des Anwenders; ohne Ansage
+            // erfährt die Sprachausgabe nicht, dass etwas schiefging.
+            .onAppear { AccessibilityNotification.Announcement(fehler).post() }
+            .onChange(of: fehler) { _, neu in AccessibilityNotification.Announcement(neu).post() }
         }
     }
 }

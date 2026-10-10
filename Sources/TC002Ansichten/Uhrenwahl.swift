@@ -33,6 +33,12 @@ public struct Uhrenpunkte: View {
                             .frame(width: 8, height: 8)
                     }
                     .buttonStyle(.plain)
+                    // Der Punkt bleibt 8 pt groß; die Trefferfläche ist 44 pt
+                    // breit und hoch, ohne die Zeile höher zu machen (der
+                    // Überstand nach oben und unten ist reine Trefferfläche).
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .padding(.vertical, -18)
                     .help(uhr.name)
                     .accessibilityLabel(Text(uhr.name))
                     .accessibilityAddTraits(uhr.id == zustand.aktiveID ? [.isSelected] : [])

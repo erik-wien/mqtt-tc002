@@ -144,6 +144,12 @@ struct Malflaeche: View {
         .background(Color.black)
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
+        // Ein Raster aus Punkten ist kein Bedienelement für die
+        // Sprachausgabe; `allowsDirectInteraction` lässt VoiceOver-Nutzer
+        // die Ziehgeste unmittelbar ausführen.
+        .accessibilityElement()
+        .accessibilityLabel(Text(lokf("Zeichenfläche, %d mal %d Pixel", leinwand.breite, leinwand.hoehe)))
+        .accessibilityAddTraits(.allowsDirectInteraction)
         .gesture(DragGesture(minimumDistance: 0)
             .onChanged { wert in
                 let beginnt = !imStrich

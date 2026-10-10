@@ -1034,6 +1034,10 @@ public struct EditorBereichView: View {
             // Ein Bild zu waehlen aendert nichts an der Zeichnung und ist
             // deshalb kein Schritt fuer „Rueckgaengig".
             .onTapGesture { stoppeAbspielen(); leinwand.waehlen(i) }
+            .accessibilityElement()
+            .accessibilityLabel(Text(lokf("Einzelbild %d", i + 1)))
+            .accessibilityAddTraits(leinwand.aktuell == i ? [.isButton, .isSelected] : [.isButton])
+            .accessibilityAction { stoppeAbspielen(); leinwand.waehlen(i) }
     }
 
     /// Eine Zeile der Liste der Vorhandenen — mit der Groesse als Merkmal, weil
@@ -1244,7 +1248,7 @@ public struct EditorBereichView: View {
                     // Bei 8×8 verdeckte es sonst ein Viertel des Motivs.
                     if bewegte.contains(eintrag.datei.path) {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 8))
+                            .font(.caption2)
                             .padding(2)
                             .background(.black.opacity(0.6), in: Circle())
                             .foregroundStyle(.white)
@@ -1460,10 +1464,10 @@ public struct EditorBereichView: View {
                 if let vorhanden = importBelegt {
                     Label(lokf("„%@“ liegt dort schon und wird ersetzt.", vorhanden.name),
                           systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .warntext()
                 }
                 if let importMeldung {
-                    Text(importMeldung).foregroundStyle(.orange)
+                    Text(importMeldung).warntext()
                 }
             }
             // Der Knopf des Rahmens sagt, was geschieht: „Ersetzen", wo etwas
@@ -1542,10 +1546,10 @@ public struct EditorBereichView: View {
                 if let vorhanden = benennBelegt(eintrag) {
                     Label(lokf("„%@“ liegt dort schon und wird ersetzt.", vorhanden.name),
                           systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .warntext()
                 }
                 if let benennMeldung {
-                    Text(benennMeldung).foregroundStyle(.orange)
+                    Text(benennMeldung).warntext()
                 }
             }
             .formStyle(.grouped)
@@ -1769,7 +1773,7 @@ public struct EditorBereichView: View {
             if let vorhanden = Editorbestand.belegt(in: vorhandene, groesse: groesse,
                                                     nummer: nummer, name: name) {
                 Label(lokf("Ersetzt „%@“.", vorhanden.name), systemImage: "exclamationmark.triangle")
-                    .font(.footnote).foregroundStyle(.orange)
+                    .font(.footnote).warntext()
             }
             }
             .frame(minWidth: 320)

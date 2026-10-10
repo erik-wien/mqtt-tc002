@@ -58,7 +58,7 @@ public struct Uhrenliste: View {
                 if keineAntwortet {
                     Label(lok("Keine der Uhren antwortet. Kam gerade die Frage nach dem Zugriff aufs lokale Netzwerk, bitte erlauben und danach erneut abfragen."),
                           systemImage: "exclamationmark.triangle")
-                        .font(kanon.fussnote).foregroundStyle(.orange)
+                        .font(kanon.fussnote).warntext()
                 }
                 Text("Antippen öffnet die Uhr: Name, Adresse, Betriebsart und was auf ihr eingestellt ist.")
                     .font(kanon.fussnote)

@@ -33,7 +33,7 @@ public struct Hilfezeichen: View {
     public enum Gewicht: Equatable, Sendable {
         /// Ein (?) — hier steht eine Erklaerung.
         case erklaerung
-        /// Ein gelbes Dreieck — etwas ist gelungen, etwas nicht.
+        /// Ein bernsteinfarbenes Dreieck — etwas ist gelungen, etwas nicht.
         case teilweise
         /// Ein rotes Dreieck — so geht es gar nicht.
         case sperre
@@ -45,7 +45,7 @@ public struct Hilfezeichen: View {
         var farbe: AnyShapeStyle {
             switch self {
             case .erklaerung: return AnyShapeStyle(.secondary)
-            case .teilweise: return AnyShapeStyle(.yellow)
+            case .teilweise: return AnyShapeStyle(Warnfarbe.symbol)
             case .sperre: return AnyShapeStyle(.red)
             }
         }
@@ -75,6 +75,7 @@ public struct Hilfezeichen: View {
                 .font(.caption)
         }
         .buttonStyle(.borderless)
+        .fingerflaeche()
         .foregroundStyle(gewicht.farbe)
         .help(text)
         // `lok` in beiden Zweigen: Ein Ternär mit zwei Zeichenketten zwingt
@@ -117,6 +118,7 @@ public struct Abschnittskopf: View {
     public var body: some View {
         HStack(spacing: 6) {
             Text(titel)
+                .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
             Hilfezeichen(hilfe)
         }

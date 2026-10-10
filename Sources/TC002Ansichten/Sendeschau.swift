@@ -24,9 +24,9 @@ public enum Sendeschau: Equatable, Sendable {
     var farbe: AnyShapeStyle {
         switch self {
         case .offen: return AnyShapeStyle(.tint)
-        case .ganz: return AnyShapeStyle(.green)
-        // Gelb und nicht rot: Es ist etwas angekommen, nur nicht ueberall.
-        case .teilweise: return AnyShapeStyle(.yellow)
+        case .ganz: return AnyShapeStyle(Warnfarbe.erfolg)
+        // Bernstein und nicht rot: Es ist etwas angekommen, nur nicht ueberall.
+        case .teilweise: return AnyShapeStyle(Warnfarbe.symbol)
         }
     }
 

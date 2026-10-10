@@ -28,6 +28,11 @@ extension View {
         let grund = AwtrixNG.begruendung(regler, weg: weg)
         if let hinweis = grund ?? gewohnt {
             self.disabled(grund != nil).help(hinweis)
+                // `.help` zeigt am iPad nichts; die Sprachausgabe bekommt den
+                // Grund als Hinweis. Sichtbar für sehende Anwender am Finger
+                // ist er damit nicht — das bleibt die offene Entscheidung
+                // oben.
+                .accessibilityHint(Text(hinweis))
         } else {
             // Kein Grund und kein gewohnter Text: unverändert durchreichen.
             self

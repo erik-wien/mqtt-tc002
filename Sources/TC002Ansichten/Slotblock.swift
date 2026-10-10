@@ -55,6 +55,8 @@ public struct Slotblock: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(beschriftung)
+        // Die Wahl hängt sonst allein am Rahmen in der Akzentfarbe.
+        .accessibilityAddTraits(gewaehlt ? [.isSelected] : [])
     }
 
     /// Die Slotnummer, sichtbar und nicht nur für die Sprachausgabe: Fünf

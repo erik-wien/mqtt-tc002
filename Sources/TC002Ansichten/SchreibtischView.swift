@@ -13,6 +13,8 @@ import TC002Modell
 /// hinter `#if !os(macOS)`.
 public struct SchreibtischView: View {
     @Bindable var zustand: AppZustand
+    /// Eine Zeile der Fußliste; wächst mit der Textgröße (iPad), sonst schnitte sie ab.
+    @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var bereich: Bereich?
     #if !os(macOS)
     @State private var nebenfenster: Nebenfenster?
@@ -124,7 +126,7 @@ public struct SchreibtischView: View {
             // 44 je Zeile haelt denselben Abstand.
             .scrollDisabled(true)
             .scrollIndicators(.hidden)
-            .frame(height: zustand.protokollAn ? 132 : 88)
+            .frame(height: zeilenhoehe * (zustand.protokollAn ? 3 : 2))
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.

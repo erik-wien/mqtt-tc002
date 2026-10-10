@@ -27,6 +27,9 @@ public struct VirtuelleUhrView: View {
         VStack(spacing: 16) {
             GeraeteRahmen(hoehe: Double(VirtuelleNGUhr.hoehe) * Self.kante) {
                 anzeige
+                    .accessibilityElement()
+                    .accessibilityLabel(Text(lokf("Anzeige der virtuellen Uhr, %d mal %d Pixel",
+                                                  VirtuelleNGUhr.breite, VirtuelleNGUhr.hoehe)))
             }
             zeile
         }

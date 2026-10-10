@@ -32,7 +32,7 @@ public struct Brokerzeichen: View {
                 Text(text)
             } icon: {
                 Image(systemName: steht ? "checkmark.circle" : "exclamationmark.triangle")
-                    .foregroundStyle(steht ? Color.green : Color.orange)
+                    .foregroundStyle(steht ? Warnfarbe.erfolg : Warnfarbe.symbol)
             }
             .namensichtbarAmIPad()
             .help(text)

@@ -747,6 +747,8 @@ public struct SendenView: View {
             .disabled(passt)
             .help(passt ? lok("Gilt nur, wenn der Text nicht ins Display passt.")
                         : lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft."))
+            .accessibilityHint(Text(passt ? lok("Gilt nur, wenn der Text nicht ins Display passt.")
+                                          : lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")))
             // Sagt, was die Ueberschrift nicht mehr sagt: fuer wie viele
             // Anzeigen das gilt, und wann ueberhaupt.
             Text("Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft.")
@@ -895,6 +897,9 @@ public struct SendenView: View {
                 .help(waagrechtWirktNicht
                     ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
                     : lok("Waagrecht"))
+                .accessibilityHint(Text(waagrechtWirktNicht
+                    ? lok("Läuft der Text als Laufschrift, füllt er das Fenster ohnehin von einem Rand zum anderen — die Ausrichtung bliebe ohne Wirkung.")
+                    : ""))
                 Picker("Senkrecht", selection: $vertikal) {
                     Image(systemName: "align.vertical.top").tag(SendenVAusrichtung.oben)
                     Image(systemName: "align.vertical.center").tag(SendenVAusrichtung.mittig)

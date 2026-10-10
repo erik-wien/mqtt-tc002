@@ -710,7 +710,7 @@ struct SendeniOS: View {
         HStack(spacing: 2) {
             wert
             Image(systemName: "chevron.up.chevron.down")
-                .font(.system(size: 8, weight: .semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
     }

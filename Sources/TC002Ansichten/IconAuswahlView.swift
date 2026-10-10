@@ -163,6 +163,7 @@ struct IconAuswahlView: View {
                             }
                             .buttonStyle(.plain)
                             .help(icon.name)
+                            .accessibilityAddTraits(gewaehltesIcon?.kennung == icon.kennung ? [.isSelected] : [])
                             .padding(4)
                             .background(gewaehltesIcon?.kennung == icon.kennung ? Color.accentColor.opacity(0.25) : .clear)
                             .clipShape(RoundedRectangle(cornerRadius: 4))

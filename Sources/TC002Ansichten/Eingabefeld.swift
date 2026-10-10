@@ -203,6 +203,7 @@ private struct Feldzeichen: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
+                .fingerflaeche()
                 .foregroundStyle(.secondary)
                 .help(lok("Leeren"))
                 .accessibilityLabel(Text("Leeren"))
@@ -257,6 +258,7 @@ struct Sendezeichen: View {
                 .background(Circle().fill(ausgang.farbe))
         }
         .buttonStyle(.plain)
+        .fingerflaeche()
         .disabled(ausgang != .offen)
         .animation(.easeInOut(duration: 0.15), value: ausgang)
         .help(ausgang.wort ?? auskunft ?? lok("Senden"))
