@@ -150,9 +150,18 @@ final class UhrenserverGrenzenTests: XCTestCase {
 
     // MARK: Eindeutigkeit des Kopfes
 
+    /// Eine leere Antwort heißt hier „Verbindung verweigert“: Der Dienst bekommt
+    /// einen zufälligen Port, und im vollen Testlauf kommt es vor, dass genau
+    /// dieser Port nicht annimmt. Dann mit einem neuen Dienst noch einmal; eine
+    /// Abweisung des Servers ist nie leer und wird nicht wiederholt.
     private func anfrage(_ kopfzeilen: String) -> String {
-        guard let port = try? gestartet() else { XCTFail("kein Dienst"); return "" }
-        return roh(port, Data(("PUT /api/v1/apps/pushed/x HTTP/1.1\r\n" + kopfzeilen + "\r\n\r\n").utf8))
+        for _ in 0..<3 {
+            server?.beenden()
+            guard let port = try? gestartet() else { XCTFail("kein Dienst"); return "" }
+            let antwort = roh(port, Data(("PUT /api/v1/apps/pushed/x HTTP/1.1\r\n" + kopfzeilen + "\r\n\r\n").utf8))
+            if !antwort.isEmpty { return antwort }
+        }
+        return ""
     }
 
     private func pruefeAbgewiesen(_ kopfzeilen: String, _ status: Int = 400,
