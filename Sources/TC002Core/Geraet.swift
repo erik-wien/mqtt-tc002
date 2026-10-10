@@ -219,6 +219,13 @@ public struct Geraet {
     @discardableResult
     func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?,
                    abbruchGilt: Bool = false) throws -> Data {
+        try ngAntwort(methode, pfad, koerper: koerper, abbruchGilt: abbruchGilt).daten
+    }
+
+    /// Wie `ngAnfrage`, mit dem Statuscode der Antwort (`201` und `200` unterscheiden
+    /// bei Melodien neu und ersetzt).
+    func ngAntwort(_ methode: String, _ pfad: String, koerper: Data?,
+                   abbruchGilt: Bool = false) throws -> (daten: Data, status: Int) {
         var anfrage = try self.anfrage(url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
@@ -226,7 +233,7 @@ public struct Geraet {
             anfrage.httpBody = koerper
         }
         let (daten, status) = try fuehreAusMitStatus(anfrage, abbruchGilt: abbruchGilt)
-        guard status >= 400 else { return daten }
+        guard status >= 400 else { return (daten, status) }
         let rumpf = (try? JSONSerialization.jsonObject(with: daten)) as? [String: Any]
         let fehler = rumpf?["error"] as? [String: Any]
         let feld = fehler?["field"] as? String

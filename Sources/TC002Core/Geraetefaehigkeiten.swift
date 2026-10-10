@@ -29,11 +29,16 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     /// `capabilities.mqttTls`: ob es `GET /api/v1/mqtt/tls` gibt (sonst `404`, §11.1).
     /// `nil`, solange nicht gefragt.
     public var mqttTlsUnterstuetzt: Bool?
+    /// `capabilities.audio`: welche Klangquellen die Uhr kann (§7.4). `nil`,
+    /// solange nicht gefragt; eine Antwort ohne `audio` ergibt lauter `false`.
+    public var ton: Tonfaehigkeiten?
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
                 paletten: [String] = [], uebergaenge: [String] = [],
                 layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen(),
-                zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil) {
+                zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil,
+                ton: Tonfaehigkeiten? = nil) {
+        self.ton = ton
         self.zifferblaetter = zifferblaetter
         self.mqttTlsUnterstuetzt = mqttTlsUnterstuetzt
         self.layoutUnterstuetzt = layoutUnterstuetzt
@@ -59,6 +64,7 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         layoutUnterstuetzt = antwort["layout"] as? Bool == true
         zifferblaetter = (antwort["clockFaces"] as? [Any])?.compactMap { $0 as? String } ?? []
         mqttTlsUnterstuetzt = antwort["mqttTls"] as? Bool == true
+        ton = Tonfaehigkeiten(antwort: antwort["audio"] as? [String: Any] ?? [:])
         if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {
             layoutGrenzen = Layoutgrenzen(antwort: grenzen)
         }

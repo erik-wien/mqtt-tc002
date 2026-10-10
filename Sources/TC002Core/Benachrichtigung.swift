@@ -5,7 +5,8 @@ import Foundation
 /// statt in sie einzutreten. Text, Icon und Standzeit kommen aus demselben
 /// Rahmen wie bei der Anzeige.
 ///
-/// Ohne `sound`: Der Klang gehört zum Thema „Ton".
+/// `sound` (§5.6) steht in `klang`; es gehört nicht zum gespeicherten Format
+/// (`CodingKeys`): Ein Ton wird je Sendung gewählt, nicht gemerkt.
 public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
     /// Nur darüber lässt sie sich zurückziehen; ohne Namen nur die sichtbare.
     public var name: String?
@@ -17,13 +18,21 @@ public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
     public var aufwecken: Bool
     /// Wie oft laufender Text über das Bild zieht (`repeat`).
     public var wiederholungen: Int?
+    /// Der Ton beim Erscheinen (1–4 Klänge, die Uhr spielt den ersten
+    /// spielbaren); leer heißt stumm.
+    public var klang: [Klang] = []
+
+    private enum CodingKeys: String, CodingKey {
+        case name, halten, einreihen, aufwecken, wiederholungen
+    }
 
     /// Die Vorgaben dieser App weichen von denen der Uhr ab: Eine Nachricht
     /// bleibt stehen (`halten`), weckt das Panel (`aufwecken`) und läuft zweimal
     /// durch (`wiederholungen`); eingereiht wird sie wie bei der Uhr. Darum geht
     /// `hold:true` und `wakeup:true` ausdrücklich hinaus.
     public init(name: String? = nil, halten: Bool = true, einreihen: Bool = true,
-                aufwecken: Bool = true, wiederholungen: Int? = 2) {
+                aufwecken: Bool = true, wiederholungen: Int? = 2, klang: [Klang] = []) {
+        self.klang = klang
         self.name = name
         self.halten = halten
         self.einreihen = einreihen
@@ -40,7 +49,7 @@ public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
     /// Die Felder, die über die Anzeige hinausgehen. Nur, was von der Vorgabe
     /// der Uhr abweicht: Die MQTT-Grenze liegt bei 8192 Byte, und `stack:true`,
     /// `hold:false`, `wakeup:false` sind dort ohnehin die Vorgabe.
-    func felder() throws -> [String] {
+    func felder(faehigkeiten: Geraetefaehigkeiten? = nil) throws -> [String] {
         var felder: [String] = []
         if let name {
             guard Self.nameGueltig(name) else { throw NGFehler.ungueltigerName(name) }
@@ -50,6 +59,9 @@ public struct Benachrichtigungsoptionen: Equatable, Sendable, Codable {
         if !einreihen { felder.append(#""stack":false"#) }
         if aufwecken { felder.append(#""wakeup":true"#) }
         if let wiederholungen { felder.append(#""repeat":\#(wiederholungen)"#) }
+        if !klang.isEmpty {
+            felder.append(#""sound":\#(try Klangbau.benachrichtigungston(klang, faehigkeiten: faehigkeiten))"#)
+        }
         return felder
     }
 }
@@ -69,6 +81,6 @@ extension NGNutzlast {
     public static func benachrichtigung(_ rahmen: Frame, _ o: Benachrichtigungsoptionen,
                                         faehigkeiten: Geraetefaehigkeiten? = nil,
                                         mass: Anzeigemass? = nil) throws -> String {
-        ergaenzt(try Anzeigen.grundnutzlast(rahmen, faehigkeiten: faehigkeiten, mass: mass), um: try o.felder())
+        ergaenzt(try Anzeigen.grundnutzlast(rahmen, faehigkeiten: faehigkeiten, mass: mass), um: try o.felder(faehigkeiten: faehigkeiten))
     }
 }
