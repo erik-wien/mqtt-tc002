@@ -866,14 +866,11 @@ public struct Iconsammlung {
     /// zaehlen hier allesamt als "nicht gefunden" — LaMetric antwortet auf unbekannte
     /// Nummern nicht einheitlich.
     private func fuehreAus(_ anfrage: URLRequest, sitzung: URLSession, nummer: String) throws -> Data {
-        var ergebnis: Data?
-        var antwort: URLResponse?
-        var netzwerkFehler: Error?
-        let fertig = DispatchSemaphore(value: 0)
-        sitzung.dataTask(with: anfrage) { d, r, f in
-            ergebnis = d; antwort = r; netzwerkFehler = f; fertig.signal()
-        }.resume()
-        guard fertig.wait(timeout: .now() + 10) == .success else {
+        let fach = Rueckruffach<(Data?, URLResponse?, Error?)>()
+        let aufgabe = sitzung.dataTask(with: anfrage) { d, r, f in fach.abgeben((d, r, f)) }
+        aufgabe.resume()
+        guard let (ergebnis, antwort, netzwerkFehler) = fach.abwarten(frist: 10) else {
+            aufgabe.cancel()
             throw IconFehler.nichtGefunden(nummer)
         }
         if netzwerkFehler != nil {

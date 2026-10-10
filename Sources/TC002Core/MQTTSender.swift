@@ -115,23 +115,18 @@ public struct MQTTSender {
     }
 
     private func sendeRoh(_ v: NWConnection, _ daten: Data) throws {
-        let fertig = DispatchSemaphore(value: 0)
-        var fehler: NWError?
-        v.send(content: daten, completion: .contentProcessed { fehler = $0; fertig.signal() })
-        guard fertig.wait(timeout: .now() + frist) == .success else { throw MQTTFehler.zeitueberschreitung }
+        let fach = Rueckruffach<NWError?>()
+        v.send(content: daten, completion: .contentProcessed { fach.abgeben($0) })
+        guard let fehler = fach.abwarten(frist: frist) else { throw MQTTFehler.zeitueberschreitung }
         if let fehler { throw MQTTFehler.nichtVerbunden(fehler.localizedDescription) }
     }
 
     private func lies(_ v: NWConnection, mindestens: Int) throws -> Data {
-        let fertig = DispatchSemaphore(value: 0)
-        var ergebnis = Data()
-        var fehler: NWError?
+        let fach = Rueckruffach<(Data, NWError?)>()
         v.receive(minimumIncompleteLength: mindestens, maximumLength: 64) { d, _, _, f in
-            if let d { ergebnis = d }
-            fehler = f
-            fertig.signal()
+            fach.abgeben((d ?? Data(), f))
         }
-        guard fertig.wait(timeout: .now() + frist) == .success else { throw MQTTFehler.zeitueberschreitung }
+        guard let (ergebnis, fehler) = fach.abwarten(frist: frist) else { throw MQTTFehler.zeitueberschreitung }
         if let fehler { throw MQTTFehler.nichtVerbunden(fehler.localizedDescription) }
         return ergebnis
     }

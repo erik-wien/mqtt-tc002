@@ -64,9 +64,46 @@ final class WolkenabgleichTests: XCTestCase {
         super.tearDown()
     }
 
-    private func zustand(_ wolke: Wolkendoppelgaenger, gewaehlt: Bool = true) -> AppZustand {
+    /// Ohne Frist: Die Prüfungen unten lesen die Ablage gleich nach der Änderung.
+    /// Die Entprellung selbst steht in `testAenderungenGehenGebuendeltInDieWolke`.
+    private func zustand(_ wolke: Wolkendoppelgaenger, gewaehlt: Bool = true,
+                         frist: TimeInterval = 0) -> AppZustand {
         AppZustand(schluesselbund: Schluesselbunddoppelgaenger(),
-                   wolke: wolke, wolkeGewaehlt: gewaehlt)
+                   wolke: wolke, wolkeGewaehlt: gewaehlt, wolkeFrist: frist)
+    }
+
+    private func warten(_ sekunden: TimeInterval) {
+        let ende = Date().addingTimeInterval(sekunden)
+        while Date() < ende { RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01)) }
+    }
+
+    /// Mehrere Änderungen in Folge ergeben einen Schreibvorgang mit dem
+    /// letzten Stand, erst nach der Frist; `einrichtungAbschliessen` zieht ihn
+    /// vor, ein zweiter Aufruf schreibt nichts mehr.
+    func testAenderungenGehenGebuendeltInDieWolke() throws {
+        let wolke = Wolkendoppelgaenger()
+        let z = zustand(wolke, frist: 0.2)
+        for zeichen in ["1", "10", "10.", "10.0"] { z.brokerHost = zeichen }
+        z.benutzer = "pixdeck"
+        XCTAssertTrue(wolke.geschrieben.isEmpty, "vor Ablauf der Frist nichts")
+
+        warten(0.6)
+        XCTAssertEqual(wolke.geschrieben.count, 1, "ein Schreibvorgang für alle Änderungen")
+        let stand = try XCTUnwrap(wolke.letzterStand)
+        XCTAssertEqual(stand.brokerHost, "10.0")
+        XCTAssertEqual(stand.benutzer, "pixdeck")
+    }
+
+    func testAbschliessenSchreibtOhneDieFristAbzuwarten() throws {
+        let wolke = Wolkendoppelgaenger()
+        let z = zustand(wolke, frist: 30)
+        z.brokerHost = "10.0.0.7"
+        XCTAssertTrue(wolke.geschrieben.isEmpty)
+
+        z.einrichtungAbschliessen()
+        XCTAssertEqual(try XCTUnwrap(wolke.letzterStand).brokerHost, "10.0.0.7")
+        z.einrichtungAbschliessen()
+        XCTAssertEqual(wolke.geschrieben.count, 1, "nichts ausstehend, nichts zu schreiben")
     }
 
     // MARK: Hinaus

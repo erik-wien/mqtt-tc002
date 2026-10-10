@@ -49,7 +49,7 @@ struct TC002iOSApp: App {
                 // greift also nicht, wenn die App aus den Einstellungen heraus
                 // in den Hintergrund geht. Folgenlos, wenn nichts zu sichern
                 // ist.
-                if neu != .active { zustand.kennwortSichern() }
+                if neu != .active { zustand.kennwortSichern(); zustand.einrichtungAbschliessen() }
                 // Eine offene MQTT-Verbindung ueberlebt den Hintergrund nicht.
                 switch neu {
                 case .background: zustand.inDenHintergrund()

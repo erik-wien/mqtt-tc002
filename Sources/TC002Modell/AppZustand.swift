@@ -133,6 +133,10 @@ public final class AppZustand {
     /// den Platz seither beschrieben hat (`fremdBeschrieben`).
     @ObservationIgnored private var eigeneNutzlast: [UUID: [Int: String]] = [:]
 
+    /// Laufende Nummer der jüngsten `abfragen` je Uhr; ältere Ergebnisse
+    /// werden verworfen.
+    @ObservationIgnored private var abfrageLauf: [UUID: Int] = [:]
+
     /// Plaetze, auf die nach der letzten eigenen Sendung eine fremde Nutzlast
     /// folgte — nur dort bekannt, wo die App mitliest (MQTT). Ihre gemerkten
     /// Regler gelten nicht mehr.
@@ -389,6 +393,9 @@ public final class AppZustand {
     /// Einstellungen schreiben, aber nicht in die Wolke zurueck.
     private var uebernimmtGerade = false
     private var wolkenBeobachter: NSObjectProtocol?
+    /// Wartezeit, bis eine Änderung in die Wolke geht; `0` schreibt sofort.
+    @ObservationIgnored private let wolkeFrist: TimeInterval
+    @ObservationIgnored private var wolkeAusstehend: Task<Void, Never>?
 
     /// `wolkeGewaehlt` kommt als Vorgabeargument herein wie `schluesselbund`
     /// und `wolke`: Die App liest die echte Wahl, die Tests setzen sie, ohne
@@ -396,9 +403,11 @@ public final class AppZustand {
     public init(schluesselbund: Schluesselbundzugriff = EchterSchluesselbund(),
                 wolke: Wolkenablage = EchteWolkenablage(),
                 wolkeGewaehlt: Bool = Ablageort.gewaehlt(),
-                wolkeBereit: Bool? = nil) {
+                wolkeBereit: Bool? = nil,
+                wolkeFrist: TimeInterval = 0.5) {
         self.schluesselbund = schluesselbund
         self.wolke = wolke
+        self.wolkeFrist = wolkeFrist
         self.wolkeGewaehlt = wolkeGewaehlt
         self.wolkeBereit = wolkeBereit
         let d = UserDefaults.standard
@@ -1002,6 +1011,10 @@ public final class AppZustand {
         guard let uhr = uhren.first(where: { $0.id == id }) else { return }
         let host = uhr.host
         let art = uhr.wirksameBetriebsart
+        // Eine Abfrage, die nach einer neueren zurückkommt (Frist bis zehn
+        // Sekunden), darf deren Stand nicht überschreiben: Gilt nur die jüngste.
+        let lauf = (abfrageLauf[id] ?? 0) + 1
+        abfrageLauf[id] = lauf
         // Der blockierende Teil laeuft auf `Hintergrund`, nicht im kooperativen
         // Pool: Eine Uhr, die nicht antwortet, haelt hier zehn Sekunden. Der
         // `Task` selbst erbt den Hauptakteur, alles danach steht also schon
@@ -1034,17 +1047,22 @@ public final class AppZustand {
                 }
                 let (praefix, mac, mass, steht, grund, namen, listen) = geholt
                 do {
-                    guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
-                    self.uhren[i].praefix = praefix
-                    if !mac.isEmpty { self.uhren[i].mac = mac }
+                    guard let self, self.abfrageLauf[id] == lauf else { return }
+                    guard let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
+                    // Die Uhr als Ganzes zurückschreiben: Jede Einzelzuweisung
+                    // löste `uhrenSichern` aus (vier Kodierungen statt einer).
+                    var aktualisiert = self.uhren[i]
+                    aktualisiert.praefix = praefix
+                    if !mac.isEmpty { aktualisiert.mac = mac }
                     // Nur ueberschreiben, wenn wirklich etwas gemessen wurde:
                     // Eine Antwort ohne brauchbares Mass heisst „nicht
                     // beantwortet" und darf ein bekanntes nicht gegen die
                     // Vorgabe eintauschen.
                     if let mass {
-                        self.uhren[i].panelbreite = mass.breite
-                        self.uhren[i].panelhoehe = mass.hoehe
+                        aktualisiert.panelbreite = mass.breite
+                        aktualisiert.panelhoehe = mass.hoehe
                     }
+                    if aktualisiert != self.uhren[i] { self.uhren[i] = aktualisiert }
                     self.verbunden[id] = steht
                     // Eine Antwort ohne Listen lässt die bekannten stehen.
                     if let listen { self.faehigkeiten[id] = listen }
@@ -1067,6 +1085,7 @@ public final class AppZustand {
                     if let namen { self.belegungGemeldet(namen, fuer: id) }
                 }
             } catch {
+                guard self?.abfrageLauf[id] == lauf else { return }
                 self?.verbunden[id] = nil
                 if case GeraetFehler.nichtErreichbar = error {
                     self?.erreichbar[id] = false
@@ -1273,7 +1292,9 @@ public final class AppZustand {
                         return await .gescheitert(selbst.zugangsfehler(uhr))
                     }
                     do {
-                        return .erfolg(uhr, try tat(anzeigen, uhr))
+                        // `tat` blockiert bis zur Frist (MQTTSender, HTTP): auf
+                        // `Hintergrund`, nicht im kooperativen Pool.
+                        return .erfolg(uhr, try await Hintergrund.lauf { try tat(anzeigen, uhr) })
                     } catch {
                         return await .gescheitert(selbst.einordnen(error, uhr: uhr))
                     }
@@ -1487,9 +1508,10 @@ public final class AppZustand {
             fehler = zugangsmeldung(uhr)
             return
         }
+        // `Hintergrund`: `umschalten` wartet blockierend auf die Uhr.
         Task.detached {
             do {
-                try anzeigen.umschalten(auf: name)
+                try await Hintergrund.lauf { try anzeigen.umschalten(auf: name) }
                 await MainActor.run { self.log(lokf("umgeschaltet auf %@", name)) }
             } catch {
                 await MainActor.run { self.melde(error, uhr: uhr) }
@@ -2053,7 +2075,35 @@ public final class AppZustand {
 
     /// Legt die eigene Einrichtung in die Wolke — wenn sie gewaehlt ist, wenn
     /// sich etwas geaendert hat und wenn sie hineinpasst.
+    ///
+    /// Entprellt (`wolkeFrist`): Jede Änderung von `uhren`, Broker-Adresse oder
+    /// Benutzer käme sonst einzeln dorthin, samt Kodieren des ganzen Stands
+    /// und Abgleich — beim Tippen der Adresse je Zeichen. `UserDefaults`
+    /// bleibt davon unberührt und wird sofort geschrieben (das Werkzeug liest es).
     private func wolkeSchreiben() {
+        guard wolkeGewaehlt, !uebernimmtGerade, initialisiert else { return }
+        guard wolkeFrist > 0 else { wolkeAusschreiben(); return }
+        wolkeAusstehend?.cancel()
+        let frist = wolkeFrist
+        wolkeAusstehend = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(frist))
+            guard !Task.isCancelled else { return }
+            self?.wolkeAusschreiben()
+        }
+    }
+
+    /// Schreibt einen noch ausstehenden Stand in die Wolke, ohne die Frist
+    /// abzuwarten. Die Apps rufen es, sobald sie nicht mehr aktiv sind: Danach
+    /// könnte der Prozess enden, bevor die Frist abläuft.
+    public func einrichtungAbschliessen() {
+        guard wolkeAusstehend != nil else { return }
+        wolkeAusstehend?.cancel()
+        wolkeAusschreiben()
+    }
+
+    private func wolkeAusschreiben() {
+        wolkeAusstehend?.cancel()
+        wolkeAusstehend = nil
         guard wolkeGewaehlt, !uebernimmtGerade, initialisiert else { return }
         guard let daten = eigenerStand.alsDaten else { return }
         guard daten != zuletztGeschrieben else { return }
@@ -2076,7 +2126,7 @@ public final class AppZustand {
         // Was beim Zusammenfuehren dazugekommen ist, gehoert zurueck in die
         // Wolke — sonst kennte das andere Geraet die hier eingetragene Uhr nie.
         zuletztGeschrieben = daten
-        wolkeSchreiben()
+        wolkeAusschreiben()
     }
 
     private func wolkeHorchen() {

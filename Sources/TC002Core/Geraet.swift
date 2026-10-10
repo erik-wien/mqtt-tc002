@@ -360,14 +360,11 @@ public struct Geraet {
     /// erst verbindet, ist es weiterhin.
     private func fuehreAusMitStatus(_ anfrage: URLRequest, frist: TimeInterval = 10,
                                     abbruchGilt: Bool = false) throws -> (Data, Int) {
-        var ergebnis: Data?
-        var antwort: URLResponse?
-        var fehler: Error?
-        let fertig = DispatchSemaphore(value: 0)
-        sitzung.dataTask(with: anfrage) { d, r, f in
-            ergebnis = d; antwort = r; fehler = f; fertig.signal()
-        }.resume()
-        guard fertig.wait(timeout: .now() + frist) == .success else {
+        let fach = Rueckruffach<(Data?, URLResponse?, Error?)>()
+        let aufgabe = sitzung.dataTask(with: anfrage) { d, r, f in fach.abgeben((d, r, f)) }
+        aufgabe.resume()
+        guard let (ergebnis, antwort, fehler) = fach.abwarten(frist: frist) else {
+            aufgabe.cancel()
             if abbruchGilt { return (Data(), 200) }
             throw GeraetFehler.nichtErreichbar(lok("keine Antwort"))
         }

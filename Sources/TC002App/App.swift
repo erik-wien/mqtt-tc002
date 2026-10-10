@@ -120,7 +120,7 @@ struct TC002App: App {
             // Enger geht es nicht — jeder Tastendruck wuerde den Schluesselbund-
             // Eintrag loeschen und neu anlegen (siehe `AppZustand.kennwort`).
             .onChange(of: phase) { _, neu in
-                if neu != .active { zustand.kennwortSichern() }
+                if neu != .active { zustand.kennwortSichern(); zustand.einrichtungAbschliessen() }
             }
             .onAppear {
                 // Nur am Mac: Unter iOS braeuchte ein Bonjour-Browser

@@ -1842,7 +1842,7 @@ public struct EditorBereichView: View {
             // Hauptthread, sonst steht das Fenster so lange.
             let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
             do {
-                let icon = try sammlung.holen(nummer: n)
+                let icon = try await Hintergrund.lauf { try sammlung.holen(nummer: n) }
                 await MainActor.run {
                     vorhandene = bestand.alle()
         bewegungLesen()

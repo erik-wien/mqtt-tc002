@@ -417,7 +417,7 @@ struct IconsblattiOS: View {
         meldung = nil
         Task.detached {
             do {
-                let icon = try quelle.holen(nummer: nummer)
+                let icon = try await Hintergrund.lauf { try quelle.holen(nummer: nummer) }
                 await MainActor.run {
                     neuLesen()
                     gewaehlt = icon
