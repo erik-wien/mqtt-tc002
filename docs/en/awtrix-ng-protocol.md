@@ -1185,6 +1185,34 @@ replacement the device briefly needs room for the old and the new layout.
   {"id":"value","box":[0,8,52,8],"text":"22.4°C","font":"matrix-chunky8x6","color":"#00AAFF"}]}}
 ```
 
+### 9.6 How this app sends layouts
+
+📄 The app models a layout (`Kastenlayout` in `TC002Core`) with exactly the keys
+above and sends it as a display under a slot name or as a notification — over the
+same path as any other payload (MQTT with `/result` evaluation; above 8192 bytes
+including the topic over HTTP to the same clock, §8). Beforehand it checks regions
+(16), scrolling texts (8), icons (4), chart values (128), total text (8192 bytes),
+ids (unique, 1–64 bytes), boxes within the clock's display size, and whether fields
+fit the content. The limits come from `capabilities.layouts.limits`; **whether** the
+clock can do layouts is decided by `capabilities.layout` alone (if it is missing, as
+on the TC001, the app refuses the layout). Without that information (clock never
+queried, MQTT without an address) it sends, and the clock rejects.
+
+📄 `mqtttc002 screen` reads the display (HTTP: `GET /api/v1/display/screen`; MQTT:
+`cmd/screen/get`, answer on `state/screen`, subscribed beforehand because the topic
+is not retained) and prints it as text. The layout file of `mqtttc002 layout` is the
+`layout` block or the payload `{"layout":…,"durationMs":…}`; the example in the
+German reference applies unchanged.
+
+❓ Assumptions of the app, not measured on the clock:
+
+- A region with `scroll: {"mode":"static"}` does not count as scrolling (§9.3: “scrolls unless it sets `static`”); one without `scroll` does.
+- A data-URL icon may be up to 7508 Base64 characters in the app, the largest measured as accepted (§5.3); nothing is measured between that and 8796.
+- A chart needs at least one value; `min` and `max` only go together (§9.3).
+- The app never sends a layout without regions or without `version` (the first because it shows nothing); whether the clock rejects either is open.
+- `textCenter` beside `layout` counts like any drawing key as “not allowed with layout”.
+- The virtual clock draws text with the app's pixel font (the clock has its own), scrolling text at its start anchor on the left, charts and circles by its own method; it does not show effects or overlays. Its field names in errors follow the one measurement (`layout.regions[0].icon`); the rest is derived.
+
 ---
 
 ## 10. The settings

@@ -134,6 +134,38 @@ final class SendewegTests: XCTestCase {
         }
     }
 
+    // MARK: - Layouts
+
+    private let layout = Kastenlayout(regionen: [
+        Layoutregion(kennung: "balken", kasten: Kasten(x: 0, y: 8, breite: 26, hoehe: 4), inhalt: .fortschritt(50))])
+
+    /// Ein Layout geht an die Uhr, die es kann; die Uhr, die es nicht meldet
+    /// (TC001/ESP32), bekommt es nicht, und die Meldung nennt sie.
+    func testEinLayoutGehtNurAnUhrenMitLayouts() async throws {
+        let sender = MQTTDoppelgaenger()
+        let z = try zustand([tc002, tc001], sender: sender)
+        z.faehigkeiten[tc002.id] = Geraetefaehigkeiten(layoutUnterstuetzt: true)
+        z.faehigkeiten[tc001.id] = Geraetefaehigkeiten(layoutUnterstuetzt: false)
+
+        let bilanz = await z.senden(Frame(dauer: 5, layout: layout), als: "meldung3")
+
+        XCTAssertTrue(bilanz.teilweise)
+        XCTAssertEqual(sender.gesendet.map(\.thema), ["wz/uhr/cmd/apps/pushed/meldung3"])
+        XCTAssertEqual(String(decoding: sender.gesendet[0].nutzlast, as: UTF8.self),
+                       #"{"layout":{"version":1,"regions":[{"id":"balken","box":[0,8,26,4],"progress":50}]},"durationMs":5000}"#)
+        let meldung = try XCTUnwrap(z.teilfehler)
+        XCTAssertTrue(meldung.contains("Küche") && meldung.contains(lok("Diese Uhr kann keine Layouts. Sie meldet keine Layouts unter ihren Fähigkeiten (die TC001 hat keine).")), meldung)
+    }
+
+    func testEinLayoutAlsBenachrichtigung() async throws {
+        let sender = MQTTDoppelgaenger()
+        let z = try zustand([tc002], sender: sender)
+        let bilanz = await z.benachrichtigen(rahmenFuer: { _ in Frame(layout: self.layout) })
+        XCTAssertTrue(bilanz.ganz, z.fehler ?? "")
+        XCTAssertEqual(sender.gesendet.map(\.thema), ["wz/uhr/cmd/notify"])
+        XCTAssertTrue(String(decoding: sender.gesendet[0].nutzlast, as: UTF8.self).hasPrefix(#"{"layout":"#))
+    }
+
     // MARK: - Die Antwort auf /result
 
     private func ergebnisThema(_ uhr: Uhr, _ name: String = "meldung1") -> String {

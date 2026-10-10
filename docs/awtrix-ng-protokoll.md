@@ -1214,6 +1214,40 @@ Layout.
   {"id":"value","box":[0,8,52,8],"text":"22.4°C","font":"matrix-chunky8x6","color":"#00AAFF"}]}}
 ```
 
+### 9.6 Wie diese App Layouts sendet
+
+📄 Die App kennt ein Layout als `Kastenlayout` (`TC002Core`) mit genau den Schlüsseln
+oben und sendet es als Anzeige unter einem Platznamen oder als Benachrichtigung —
+über denselben Weg wie jede andere Nutzlast (MQTT mit Auswertung von `/result`,
+über 8192 Byte samt Thema über HTTP an dieselbe Uhr, §8). Vorher prüft sie Regionen
+(16), laufende Texte (8), Icons (4), Diagrammwerte (128), Text gesamt (8192 Byte),
+Kennungen (einmalig, 1–64 Byte), Kästen im Anzeigemaß der Uhr und das Zusammenpassen
+von Feldern und Inhalt. Die Grenzen kommen aus `capabilities.layouts.limits`; **ob** die
+Uhr Layouts kann, entscheidet allein `capabilities.layout` (fehlt es, wie bei der
+TC001, weist die App das Layout ab). Ohne Auskunft (Uhr nie abgefragt, MQTT ohne
+Adresse) sendet sie, und die Uhr weist ab.
+
+📄 Das Display liest `mqtttc002 bildschirm` (HTTP: `GET /api/v1/display/screen`; MQTT:
+`cmd/screen/get`, Antwort auf `state/screen`, vorher abonniert, weil das Thema nicht
+aufbewahrt ist) und gibt es als Text aus. Die Layoutdatei von `mqtttc002 layout` ist
+der Block `layout` oder die Nutzlast `{"layout":…,"durationMs":…}`:
+
+```json
+{"durationMs":10000,"layout":{"version":1,"regions":[
+  {"id":"titel","box":[0,0,52,8],"text":"HALLO","color":"#00AAFF","scroll":{"mode":"static"}},
+  {"id":"balken","box":[0,8,26,4],"progress":50,"color":"#00FF00","trackColor":"#202020"},
+  {"id":"marke","box":[30,8,22,8],"draw":[["rectFill",0,0,22,8,"#FF0000"],["pixel",0,0,"#0000FF"]]}]}}
+```
+
+❓ Annahmen der App, nicht an der Uhr gemessen:
+
+- Eine Region mit `scroll: {"mode":"static"}` zählt nicht zu den laufenden Texten (§9.3: „läuft, solange sie nicht `static` setzt“); eine ohne `scroll` zählt.
+- Ein Icon als Data-URL darf in der App bis 7508 Zeichen Base64 haben, das größte gemessene, angenommene (§5.3); dazwischen und darüber bis 8796 ist nichts gemessen.
+- Ein Diagramm braucht mindestens einen Wert; `min` und `max` stehen nur zusammen (§9.3).
+- Ein Layout ohne Regionen und ein fehlendes `version` sendet die App nie (das erste, weil es nichts zeigt); ob die Uhr beides abweist, ist offen.
+- `textCenter` neben `layout` zählt wie jeder Zeichenschlüssel als „not allowed with layout“.
+- Die virtuelle Uhr zeichnet Text mit der Pixelschrift der App (die Uhr hat eine eigene), laufenden Text an seinem Startanker links, Diagramme und Kreise nach einem eigenen Verfahren; Effekt und Overlay stellt sie nicht dar. Ihre Feldnamen bei Fehlern folgen der einen Messung (`layout.regions[0].icon`), der Rest ist abgeleitet.
+
 ---
 
 ## 10. Die Einstellungen
