@@ -1370,7 +1370,7 @@ am Gerät geprüft):
 | `audio/play` | Schlüssel `sound`, `mp3`, `melody`, `track`, `rtttl`, `station`, `index`, `url` | `file`, `rtttl`, `song`, `speech`, `station`, `loop`; Liste bis 4 |
 | `audio/stop` | `{"scope":"sounds"\|"stream"\|"all"}` | `{"group":"alert"\|"app"\|"radio"}` |
 | Icon | Kennung oder Base64 im Text ab 65 Zeichen | Kennung, Data-URL mit Vorsatz oder Webadresse; blankes Base64 ist `422` |
-| Text | `textCenter` | `textAlign` (`start`/`center`/`end`) |
+| Text | `textCenter` | `textAlign` (`start`/`center`/`end`); `textCenter` wird weiter angenommen (🔬 10.10.2026) |
 | Schriften | `small`, `large` | dazu zehn Matrixschriften |
 | Fehlermeldung bei falscher Methode | `allowed method(s): …` | `allowed: …` (🔬) |
 | Neu | — | Layouts, `iconGap`, `icons[]`, `cmd/voice/start`, `event/knob`, `event/error`, `cmd/apps/<name>/enabled`, `mqttTls`, `state/buttons/knob` |
