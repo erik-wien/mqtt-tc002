@@ -1,6 +1,6 @@
 # Freigabe: Darstellung — Hintergrund, Effekt, Overlay, Palette, Grafik, Fortschritt (10.10.2026)
 
-Mockup: `2026-10-10-darstellung.html` (Sprint 4). Grundlage: `docs/awtrix-ng-protokoll.md` §5.5. Status: **zur Freigabe** (noch keine Antwort).
+Mockup: `2026-10-10-darstellung.html` (Sprint 4). Grundlage: `docs/awtrix-ng-protokoll.md` §5.5. Status: **freigegeben** (Erik, 10.10.2026), mit den Änderungen unter „Entscheidung“.
 
 **Kernregel, die die Oberfläche sichtbar machen muss:** Text geht normal als GIF im `icon` („Text als Bild“). Das deckt Hintergrundfarbe und Effekt zu; Overlay und Palette gehen. Dazu kommen Text in Gerätschrift (alles geht, plus Palette für den Text) und Grafik (Diagramm/Fortschritt, kein Text). Die Tabelle im Mockup (Abschnitt 0) ordnet jeden Regler den drei Zuständen zu.
 
@@ -32,4 +32,13 @@ Mockup: `2026-10-10-darstellung.html` (Sprint 4). Grundlage: `docs/awtrix-ng-pro
 
 ## Entscheidung
 
-(offen)
+Erik, 10.10.2026:
+
+- **Grafik (Diagramm und Fortschritt) gibt es nur für Home Assistant und das Werkzeug**, nicht in der Oberfläche: Diagramme von Hand zu erstellen braucht niemand. Damit entfallen das Segment „Text | Grafik“ (Frage 3), die Diagrammwerte (Frage 5) und alle Fortschrittsfragen (8, 9).
+1. Darstellung als **dritter Reiter** neben Format und Zeit (Mac/iPad).
+2. iPhone: **1A**, Formatblatt mit „Zeit | Darstellung“.
+4. Bei Text als Bild: Hintergrund und Effekt **ausgegraut mit Fußnote** (X).
+6. Palette: **Schalter „Überblenden“** (ein = Farben fließen ineinander, aus = scharfe Streifen) statt Segment „Weich | Hart“.
+7. Text aus Palette, Spanne, Lauf: bei Text als Bild **ausgegraut sichtbar**.
+10. Der Platz **merkt** die Darstellung als Regler (wie die Lebensdauer).
+11. Eigene Palette **gleich im Mockup-Umfang** (bis 16 Stützen mit Position).
