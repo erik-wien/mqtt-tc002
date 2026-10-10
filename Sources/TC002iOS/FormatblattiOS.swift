@@ -1,6 +1,7 @@
 import SwiftUI
 import TC002Ansichten
 import TC002Core
+import TC002Modell
 
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
@@ -17,6 +18,9 @@ import TC002Core
 /// Beide reisen mit dieser einen Meldung mit, genau so wie der Zeit-Reiter
 /// am Schreibtisch.
 struct FormatblattiOS: View {
+    @Bindable var zustand: AppZustand
+    @Binding var darstellung: Darstellungswahl
+    let weg: SendeWeg
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
@@ -37,8 +41,39 @@ struct FormatblattiOS: View {
     /// in den Einstellungen.
     @FocusState private var amDauerfeld: Bool
 
+    /// Welcher Reiter oben steht. Ein Blatt, zwei Reiter (Variante 1A der
+    /// Freigabe): Die Darstellung bekommt keine eigene Tür.
+    @State private var reiter = Formatreiter.zeit
+
+    private enum Formatreiter: Hashable { case zeit, darstellung }
+
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+                Picker("Reiter", selection: $reiter) {
+                    Text("Zeit").tag(Formatreiter.zeit)
+                    Text("Darstellung").tag(Formatreiter.darstellung)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                switch reiter {
+                case .zeit: zeitform
+                case .darstellung:
+                    Form { Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: weg) }
+                }
+            }
+            .navigationTitle("Format")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) {
+                Button("Fertig") { schliessen() }
+            } }
+        }
+        .presentationDragIndicator(.visible)
+    }
+
+    private var zeitform: some View {
             Form {
                 Section {
                     LabeledContent("Dauer (Sek.)") {
@@ -76,12 +111,5 @@ struct FormatblattiOS: View {
                     Button("Fertig") { amDauerfeld = false }
                 }
             }
-            .navigationTitle("Format")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) {
-                Button("Fertig") { schliessen() }
-            } }
-        }
-        .presentationDragIndicator(.visible)
     }
 }

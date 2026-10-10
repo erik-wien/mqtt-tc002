@@ -64,6 +64,7 @@ struct SendeniOS: View {
 
     // Dieselben Schlüssel wie auf dem Mac. Wer sie ändert, verliert die
     // Einstellungen einer laufenden Installation.
+    @AppStorage("senden.darstellung") private var darstellung = Darstellungswahl()
     @AppStorage("senden.text") private var text = "Hallo"
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
     @AppStorage("senden.schriftart") private var schrift = "Silkscreen"
@@ -177,6 +178,7 @@ struct SendeniOS: View {
         tempo = o.tempo
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
+        darstellung = o.darstellung ?? Darstellungswahl()
         let l = Lebensdauerwahl(o.lebensdauer)
         lebensdauerBehalten = l.behalten
         lebensdauerZahl = l.zahl
@@ -199,7 +201,8 @@ struct SendeniOS: View {
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
-                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer)
+                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer,
+                         darstellung: darstellung == Darstellungswahl() ? nil : darstellung)
     }
 
     private var lebensdauerwahl: Lebensdauerwahl {
@@ -378,7 +381,8 @@ struct SendeniOS: View {
     var body: some View {
         rumpf
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
+            FormatblattiOS(zustand: zustand, darstellung: $darstellung, weg: optionen.weg,
+                           tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
                            dauerText: $dauerText, art: art,
                            nachrichtHalten: $nachrichtHalten,
                            nachrichtAufwecken: $nachrichtAufwecken,

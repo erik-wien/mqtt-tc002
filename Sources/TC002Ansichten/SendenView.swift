@@ -21,6 +21,9 @@ public struct SendenView: View {
     @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
     @AppStorage("senden.lebensdauer.einheit") private var lebensdauerEinheit: Lebensdauereinheit = .minuten
     @AppStorage("senden.lebensdauer.ablauf") private var lebensdauerAblauf: Lebensablauf = .entfernen
+    /// Hintergrund, Effekt, Overlay, Palette — eine Wahl, als JSON abgelegt
+    /// (`Darstellungswahl`).
+    @AppStorage("senden.darstellung") private var darstellung = Darstellungswahl()
     @AppStorage("senden.text") private var text = "Hallo"
     /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
@@ -84,7 +87,7 @@ public struct SendenView: View {
     @State private var inspektorreiter = Inspektorreiter.format
 
     enum Inspektorreiter: String, CaseIterable, Identifiable {
-        case format, zeit
+        case format, zeit, darstellung
         var id: String { rawValue }
     }
 
@@ -161,6 +164,7 @@ public struct SendenView: View {
         tempo = o.tempo
         iconLaeuftMit = o.iconLaeuftMit
         dauerText = o.dauer.map(String.init) ?? ""
+        darstellung = o.darstellung ?? Darstellungswahl()
         let l = Lebensdauerwahl(o.lebensdauer)
         lebensdauerBehalten = l.behalten
         lebensdauerZahl = l.zahl
@@ -232,7 +236,8 @@ public struct SendenView: View {
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
-                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer)
+                         dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer,
+                         darstellung: darstellung == Darstellungswahl() ? nil : darstellung)
     }
 
     private var lebensdauerwahl: Lebensdauerwahl {
@@ -624,6 +629,8 @@ public struct SendenView: View {
                     .accessibilityLabel(Text("Format"))
                 Image(systemName: "clock").tag(Inspektorreiter.zeit)
                     .accessibilityLabel(Text("Zeit"))
+                Image(systemName: "paintpalette").tag(Inspektorreiter.darstellung)
+                    .accessibilityLabel(Text("Darstellung"))
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -660,6 +667,11 @@ public struct SendenView: View {
                 Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
                                    ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
                                    aktiv: art == .nachricht)
+            }
+            .formStyle(.grouped)
+        case .darstellung:
+            Form {
+                Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: optionen.weg)
             }
             .formStyle(.grouped)
         case .format:

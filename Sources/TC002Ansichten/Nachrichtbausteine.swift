@@ -131,7 +131,7 @@ public struct Lebensdauerabschnitt: View {
     }
 }
 
-private extension View {
+extension View {
     /// Ein gesperrter `Stepper` zeigt sich unter iPadOS 26 nicht abgeblendet,
     /// obwohl `.disabled` gilt (Simulator, 09.10.2026), anders als Schalter und
     /// Menüs daneben. Darum zusätzlich die Blässe des Systems nachgezeichnet und
