@@ -767,6 +767,12 @@ use the palette. Overlays (6): `rain`, `snow`, `drizzle`, `storm`, `thunder`,
 🔬 `GET /api/v1/capabilities` lists exactly these on the measured device: 19
 effects, 16 palette effects, 22 transitions, 6 overlays, 8 palettes.
 
+🔬 **The palette colors the overlay**, also over a display-sized GIF (TC002,
+NG 1.2.2, 10.10.2026, via `display/screen`): `overlay: "rain"` alone draws drops
+in `#001133`/`#0033AA`, with `palette: "lava"` in `#880000`/`#FFD27F` — with text
+as an image as well. On the pixel path a palette is therefore only visible
+together with an overlay.
+
 📄 **With a full-size image** (§5.3, the app's pixel path): the GIF is the
 background and replaces `backgroundColor` and `effect`; an `overlay` lies over
 it. Charts and progress therefore belong to a display **without** rastered

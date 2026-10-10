@@ -788,6 +788,12 @@ leeres oder längeres Feld ist abgewiesen. Aus der Palette gemalt werden
 🔬 `GET /api/v1/capabilities` führt am gemessenen Gerät genau diese Listen:
 19 Effekte, 16 Paletteneffekte, 22 Übergänge, 6 Overlays, 8 Paletten.
 
+🔬 **Die Palette färbt das Overlay**, auch über einem GIF in Anzeigegröße
+(TC002, NG 1.2.2, 10.10.2026, über `display/screen`): `overlay: "rain"` allein
+zeichnet Tropfen in `#001133`/`#0033AA`, mit `palette: "lava"` in
+`#880000`/`#FFD27F` — mit Text als Bild ebenso. Im Pixelweg ist eine Palette
+also nur zusammen mit einem Overlay sichtbar.
+
 📄 **Mit einem Bild in Anzeigegröße** (§5.3, der Pixelweg der App) gilt: Das GIF
 ist der Hintergrund und ersetzt `backgroundColor` und `effect`; ein `overlay`
 liegt darüber. Diagramme und Fortschritt gehören darum zu einer Anzeige **ohne**
