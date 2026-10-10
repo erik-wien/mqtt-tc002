@@ -2,7 +2,7 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Die fünf Themen der Einstellungen — auf allen Oberflächen dieselben, in
+/// Die sechs Themen der Einstellungen — auf allen Oberflächen dieselben, in
 /// derselben Reihenfolge.
 ///
 /// Vorher lag alles in einer rollenden Form, und die Reihenfolge war
@@ -14,13 +14,14 @@ import TC002Modell
 /// Variable nachgeschlagener Text ist für `scripts/texte-sammeln.py`
 /// unsichtbar und müsste dort von Hand geführt werden.
 public enum Einstellungsthema: String, CaseIterable, Identifiable, Sendable {
-    case uhren, broker, aufzeichnung, wolke, erweitert
+    case uhren, klaenge, broker, aufzeichnung, wolke, erweitert
 
     public var id: String { rawValue }
 
     public var titel: String {
         switch self {
         case .uhren: return lok("Uhren")
+        case .klaenge: return lok("Klänge")
         case .broker: return lok("MQTT-Broker")
         case .aufzeichnung: return lok("Aufzeichnung")
         case .wolke: return lok("iCloud")
@@ -31,6 +32,7 @@ public enum Einstellungsthema: String, CaseIterable, Identifiable, Sendable {
     public var symbol: String {
         switch self {
         case .uhren: return "clock"
+        case .klaenge: return "music.note.list"
         case .broker: return "antenna.radiowaves.left.and.right"
         case .aufzeichnung: return "list.bullet.rectangle"
         case .wolke: return "icloud"
@@ -64,6 +66,8 @@ public struct Einstellungsinhalt: View {
         switch thema {
         case .uhren:
             Uhrenliste(zustand: zustand, kanon: kanon)
+        case .klaenge:
+            Klangsammlungsansicht(zustand: zustand, kanon: kanon)
         case .broker:
             Form { Brokerabschnitt(zustand: zustand, kanon: kanon) }
                 .formStyle(.grouped)

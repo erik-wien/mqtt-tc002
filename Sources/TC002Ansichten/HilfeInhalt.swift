@@ -96,9 +96,10 @@ public enum HilfeInhalt {
     /// Anzahl statt der Sache. Die Namen stehen in der Aufzaehlung, und der
     /// Abschnitt heisst ohnehin „Einstellungen".
     public static let themen: [Hilfebaustein] = [
-        .absatz("Die Einstellungen sind in fünf Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite."),
+        .absatz("Die Einstellungen sind in sechs Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite."),
         .punkte([
             "**Uhren** — deine eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt.",
+            "**Klänge** — die Klangsammlung der App: Melodien und MP3-Dateien, nach denen du die Uhren abgleichst.",
             "**MQTT-Broker** — Adresse, Port, Benutzer und Kennwort des Brokers, dazu die Prüfung der Verbindung.",
             "**Aufzeichnung** — Verlauf und Protokoll.",
             "**iCloud** — Synchronisation deiner Geräte.",
@@ -211,6 +212,13 @@ public enum HilfeInhalt {
         .ueberschrift("Einstellungen der Uhr"),
         .absatz("Was auf der Uhr gespeichert ist und selten geändert wird, steht auf der Seite der Uhr unter „Auf der Uhr“: Helligkeit & Farbe, Text & Laufschrift, Schleife, Uhr, Zeit & Datum (mit der Wochentagsleiste) und Klang. Jede Änderung geht sofort an die Uhr, danach liest die App den Stand zurück."),
         .absatz("Die Gruppe „MQTT-Verschlüsselung“ gibt es nur bei Uhren, die MQTT über TLS können. Sie zeigt, wem die Uhr als Broker vertraut, lädt eine eigene CA (eine PEM-Datei) auf die Uhr und entfernt sie nach Rückfrage wieder; das geht nur mit der Adresse der Uhr. TLS selbst ein- oder auszuschalten bleibt der Web-Oberfläche der Uhr („Konfigurieren“), ebenso WLAN, MQTT-Zugang, Anmeldung, Firmware und Zeitzone."),
+    ]
+
+    public static let klangsammlung: [Hilfebaustein] = [
+        .ueberschrift("Klänge"),
+        .absatz("Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist."),
+        .absatz("**Hinzufügen** geht auf drei Wegen: die Melodien einer Uhr übernehmen, eine Melodie tippen oder einfügen — mit „Probehören“ auf der angesehenen Uhr, bevor sie gesichert wird — oder eine oder mehrere Dateien (`.mp3`, `.txt`, `.rtttl`) wählen. Der Name gilt so, wie ihn die Uhr nimmt: Buchstaben, Ziffern, _ und -, bei Melodien bis 24 Zeichen, bei MP3-Dateien bis 32. Eine Melodie und eine MP3 teilen sich keinen Namen. MP3-Dateien lassen sich nicht von der Uhr holen."),
+        .absatz("**Mit Uhren abgleichen** legt Fehlendes auf den gewählten Uhren an und ersetzt Abweichendes — bei einer Melodie einen anderen Text, bei einer MP3 eine andere Größe. Was nur auf der Uhr liegt, bleibt dort; gelöscht wird dort nur einzeln. Übersprungen wird, was die Uhr nicht spielt (die TC001 nimmt keine MP3) oder was nicht mehr hineinpasst. Das Ergebnis steht je Uhr darunter. Am Kommandozeilenwerkzeug gibt es dasselbe als „ton abgleichen“."),
     ]
 
     public static let wolkenabgleich: [Hilfebaustein] = [

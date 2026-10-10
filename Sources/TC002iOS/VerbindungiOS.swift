@@ -3,12 +3,12 @@ import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-/// Die Einstellungen am Telefon: eine Liste der fünf Themen, jedes Thema eine
+/// Die Einstellungen am Telefon: eine Liste der sechs Themen, jedes Thema eine
 /// eigene Seite.
 ///
 /// **Der eine Unterschied zum Schreibtisch, und sein Grund.** Dort wählt eine
 /// Segmentwahl über dem Inhalt das Thema. Auf dem Telefon ist dafür kein Platz
-/// — fünf Wörter nebeneinander schrumpfen auf Kürzel —, und eine Reiterleiste
+/// — sechs Wörter nebeneinander schrumpfen auf Kürzel —, und eine Reiterleiste
 /// in einem Blatt ist dort nicht üblich: Reiter gehören der App, nicht einem
 /// Blatt. Der Einstieg ist deshalb eine Liste mit `NavigationLink`, die Bauart
 /// der Einstellungen-App. Die Inhalte der Seiten sind **dieselben Bausteine**

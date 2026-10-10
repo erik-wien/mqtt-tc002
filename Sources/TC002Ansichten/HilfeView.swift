@@ -71,7 +71,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         "**Icons** — Icons und ganze Anzeigen malen.",
                         "**Uhr** — die Fernbedienung: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger.",
                         "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
-                        "**Einstellungen** — Uhren, Broker, Aufzeichnung, iCloud und Erweitert.",
+                        "**Einstellungen** — Uhren, Klänge, Broker, Aufzeichnung, iCloud und Erweitert.",
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht das Dokument zur Uhr. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
@@ -97,6 +97,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
+                + HilfeInhalt.klangsammlung
                 + HilfeInhalt.wolkenabgleich
         case .senden:
             return [

@@ -78,6 +78,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
+                + HilfeInhalt.klangsammlung
                 + HilfeInhalt.wolkenabgleich
         case .senden:
             return [.ueberschrift("Meldung und Platz")]

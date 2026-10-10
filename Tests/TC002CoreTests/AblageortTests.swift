@@ -79,13 +79,13 @@ final class AblageortTests: XCTestCase {
     /// stillschweigend durchrutscht: Wer einen anlegt, ohne ihn dem Abgleich
     /// und dem Umzug bekanntzumachen, merkt es sonst erst, wenn jemandem auf
     /// dem zweiten Geraet etwas fehlt.
-    func testAngelegtLegtAlleFuenfAn() throws {
+    func testAngelegtLegtAlleSechsAn() throws {
         let oertlich = temp()
         defer { try? FileManager.default.removeItem(at: oertlich) }
         let ort = Ablageort(oertlicheWurzel: oertlich, ferneWurzel: nil, gewuenscht: false).angelegt()
         XCTAssertEqual(ort.wurzel, oertlich)
         let inhalt = try FileManager.default.contentsOfDirectory(atPath: oertlich.path).sorted()
-        XCTAssertEqual(inhalt, ["Bilder", "Icons", "Icons16", "Slots", "Verlauf"])
+        XCTAssertEqual(inhalt, ["Bilder", "Icons", "Icons16", "Klaenge", "Slots", "Verlauf"])
     }
 
     // MARK: Die Wahl — und warum sie dort liegt, wo sie liegt
