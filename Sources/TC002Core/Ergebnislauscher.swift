@@ -31,32 +31,7 @@ public struct MQTTErgebnislauscher: ErgebnisLauschend {
 
     public func erwarten(thema: String, zugang: MQTTZugang, frist: TimeInterval,
                          waehrend tat: () throws -> Void) throws -> Data? {
-        let ergebnisThema = NGThema.ergebnis(zu: thema)
-        var eigener = zugang
-        eigener.clientID += "-antwort"
-        let abonnent = MQTTAbonnent(zugang: eigener, themen: [ergebnisThema],
-                                    anmeldefrist: abonnierfrist)
-        let abonniert = DispatchSemaphore(value: 0)
-        let angekommen = DispatchSemaphore(value: 0)
-        let fach = Antwortfach()
-        abonnent.beiAbonniert = { abonniert.signal() }
-        abonnent.beiNachricht = { eintreffend, nutzlast in
-            guard eintreffend == ergebnisThema else { return }
-            fach.merken(nutzlast)
-            angekommen.signal()
-        }
-        abonnent.starten()
-        defer { abonnent.beenden() }
-        _ = abonniert.wait(timeout: .now() + abonnierfrist)
-        try tat()
-        guard angekommen.wait(timeout: .now() + frist) == .success else { return nil }
-        return fach.wert
+        try MQTTThemenlauscher(abonnierfrist: abonnierfrist, kennungszusatz: "-antwort")
+            .erwarten(thema: NGThema.ergebnis(zu: thema), zugang: zugang, frist: frist, waehrend: tat)
     }
-}
-
-private final class Antwortfach: @unchecked Sendable {
-    private let sperre = NSLock()
-    private var _wert: Data?
-    func merken(_ neu: Data) { sperre.lock(); if _wert == nil { _wert = neu }; sperre.unlock() }
-    var wert: Data? { sperre.lock(); defer { sperre.unlock() }; return _wert }
 }

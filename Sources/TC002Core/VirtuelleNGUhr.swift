@@ -129,15 +129,19 @@ public struct NGUhrzustand: Equatable, Sendable {
 ///
 /// Gehalten wird der Zustand, damit sich die Wirkung eines Aufrufs prüfen
 /// lässt. Gezeichnet werden von der aktiven Anzeige nur die Zeichenbefehle
-/// `pixel`, `pixels`, `line`, `rect`, `rectFill` und `bitmap` (`bildschirm`)
-/// sowie das erste Bild eines GIFs in `icon` einer Layout-Region; Text, Kreise
-/// und Effekte bleiben schwarz.
+/// `pixel`, `pixels`, `line`, `rect`, `rectFill`, `circle`, `circleFill` und
+/// `bitmap` (`bildschirm`) sowie das erste Bild eines GIFs in `icon`; Text und
+/// Effekte einer Anzeige bleiben schwarz. Ein `layout` wird geprüft und
+/// gezeichnet (`VirtuelleNGUhrLayout.swift`).
+///
+/// Oberste Schlüssel, die §5 nicht kennt, sind `422` mit dem Schlüssel als
+/// `field`, wie bei der Uhr.
 ///
 /// Bewusst nicht geprüft:
-/// - Inhalt einer App- oder Benachrichtigungsnutzlast über „gültiges JSON-
-///   Objekt“ hinaus (unbekannte oberste Schlüssel, Töne, Schriften, Text- und
-///   Icon-Felder); geprüft sind nur die Schlüssel aus §5.5 (Hintergrund, Effekt,
-///   Overlay, Palette, Diagramme, Fortschritt — `pruefeDarstellung`),
+/// - Inhalt einer App- oder Benachrichtigungsnutzlast über die obersten
+///   Schlüssel hinaus (Töne, Schriften, Text- und Icon-Felder); geprüft sind
+///   die Schlüssel aus §5.5 (Hintergrund, Effekt, Overlay, Palette, Diagramme,
+///   Fortschritt — `pruefeDarstellung`), die Zeichenbefehle und `layout`,
 /// - Wertebereiche der Einstellungen außer `brightness` (0–255); sonst nur
 ///   Schlüssel und Typ,
 /// - Authentifizierung, `X-HTTP-Method-Override`, Setup-Modus, Anfragen
@@ -305,8 +309,7 @@ public enum VirtuelleNGUhr {
         case .anzeige:
             return anfrage.methode == "GET" ? json(anzeige(z)) : anzeigeAendern(anfrage, &z)
         case .bildschirm:
-            let punkte = bildschirm(z).map(String.init).joined(separator: ",")
-            return Antwort(koerper: Data(#"{"width":\#(breite),"height":\#(hoehe),"pixels":[\#(punkte)]}"#.utf8))
+            return Antwort(koerper: bildschirmantwort(z))
         case .apps: return json(.liste(z.apps.map(appEintrag)))
         case .faehigkeiten: return json(capabilities)
         case .ton: return json(audio)
@@ -343,7 +346,7 @@ public enum VirtuelleNGUhr {
     public static let hoehe = 16
 
     /// Ein Zeichenbrett mit Ursprung oben links; was außerhalb liegt, fällt weg.
-    private struct Brett {
+    struct Brett {
         let breite: Int, hoehe: Int
         var punkte: [Int]
         /// Welche Punkte ein Befehl berührt hat — Schwarz ist eine Farbe und
@@ -359,6 +362,13 @@ public enum VirtuelleNGUhr {
             punkte[y * breite + x] = farbe
             belegt[y * breite + x] = true
         }
+    }
+
+    /// Der Rumpf von `GET /api/v1/display/screen` und die Nutzlast von
+    /// `<P>/state/screen` (§7.3).
+    public static func bildschirmantwort(_ z: NGUhrzustand) -> Data {
+        let punkte = bildschirm(z).map(String.init).joined(separator: ",")
+        return Data(#"{"width":\#(breite),"height":\#(hoehe),"pixels":[\#(punkte)]}"#.utf8)
     }
 
     /// Was die Uhr gerade zeigt: `breite × hoehe` gepackte RGB-Werte,
@@ -386,45 +396,7 @@ public enum VirtuelleNGUhr {
         if let w = nutzlast["textColor"], let f = farbwert(w) { vorgabe = f }
 
         if case .objekt(let layout)? = nutzlast["layout"] {
-            if let w = layout["backgroundColor"], let f = farbwert(w) {
-                bild = Brett(breite: breite, hoehe: hoehe, fuellung: f)
-            }
-            guard case .liste(let regionen)? = layout["regions"] else { return bild.punkte }
-            for region in regionen {
-                guard case .objekt(let r) = region, case .liste(let kasten)? = r["box"] else { continue }
-                let befehle: [JSONWert]
-                let gif: GIFBild?
-                if case .liste(let b)? = r["draw"] {
-                    befehle = b; gif = nil
-                } else if case .text(let uri)? = r["icon"], let g = gifBild(uri) {
-                    befehle = []; gif = g
-                } else { continue }
-                let k = kasten.compactMap(\.ganzzahl)
-                // Box und Ursprung kommen vom Absender; ein Feld in dieser
-                // Groesse gaebe es nie, und es wuerde Speicher kosten.
-                guard k.count == 4, k[2] > 0, k[3] > 0, k[2] <= 1024, k[3] <= 1024,
-                      k[2] * k[3] <= 65536, abs(k[0]) <= 1024, abs(k[1]) <= 1024 else { continue }
-                var farbe = vorgabe
-                if let w = r["color"], let f = farbwert(w) { farbe = f }
-                var brett = Brett(breite: k[2], hoehe: k[3])
-                for befehl in befehle { zeichne(befehl, auf: &brett, farbe: farbe) }
-                if let gif {
-                    // Mittig im Kasten (`align`/`valign` Vorgabe `center`, §9.2);
-                    // was nicht passt, wird abgeschnitten (`setze`). Dunkel in
-                    // einem Bild ist schwarz, im ersten Bild sind durchsichtige
-                    // Pixel schwarz (§5.3).
-                    let ox = (k[2] - gif.breite) / 2, oy = (k[3] - gif.hoehe) / 2
-                    for y in 0..<gif.hoehe {
-                        for x in 0..<gif.breite { brett.setze(ox + x, oy + y, gif.punkte[y * gif.breite + x]) }
-                    }
-                }
-                for y in 0..<k[3] {
-                    for x in 0..<k[2] where brett.belegt[y * k[2] + x] {
-                        bild.setze(k[0] + x, k[1] + y, brett.punkte[y * k[2] + x])
-                    }
-                }
-            }
-            return bild.punkte
+            return layoutBild(layout, vorgabe: vorgabe, einstellungen: z.einstellungen).punkte
         }
 
         let faktor = z.einstellungen["enlargeApps"] == .bool(false) ? 1 : 2
@@ -470,7 +442,7 @@ public enum VirtuelleNGUhr {
     private static let hoechsteGIFLaenge = 2 * 1024 * 1024
     private static let hoechsteGIFKante = 256
 
-    private static func gifBild(_ uri: String) -> GIFBild? {
+    static func gifBild(_ uri: String) -> GIFBild? {
         let kopf = "data:image/gif;base64,"
         guard uri.hasPrefix(kopf), uri.utf8.count <= hoechsteGIFLaenge,
               let daten = Data(base64Encoded: String(uri.dropFirst(kopf.count))),
@@ -493,13 +465,13 @@ public enum VirtuelleNGUhr {
         return GIFBild(breite: b, hoehe: h, punkte: punkte)
     }
 
-    private static func farbwert(_ w: JSONWert) -> Int? {
+    static func farbwert(_ w: JSONWert) -> Int? {
         guard let hex = farbe(w) else { return nil }
         return Int(hex.dropFirst(), radix: 16)
     }
 
     /// Ein Zeichenbefehl. Unbekannte und kaputte Befehle zeichnen nichts.
-    private static func zeichne(_ befehl: JSONWert, auf brett: inout Brett, farbe vorgabe: Int) {
+    static func zeichne(_ befehl: JSONWert, auf brett: inout Brett, farbe vorgabe: Int) {
         guard case .liste(let teile) = befehl, case .text(let name)? = teile.first else { return }
         let a = Array(teile.dropFirst())
         func zahl(_ i: Int) -> Int? { a.indices.contains(i) ? a[i].ganzzahl : nil }
@@ -532,6 +504,26 @@ public enum VirtuelleNGUhr {
                 where name == "rectFill" || i == x || i == x + w - 1 || j == y || j == y + h - 1 {
                     brett.setze(i, j, f)
                 }
+            }
+        case "circle", "circleFill":
+            guard let cx = zahl(0), let cy = zahl(1), let r = zahl(2), r >= 0, r <= 4096 else { return }
+            let f = farbeAn(3)
+            // Mittelpunktverfahren; gefuellt als waagrechte Linien je Zeile.
+            // ❓ Die Firmware nennt ihr Verfahren nicht; Kanten koennen um ein
+            // Pixel abweichen.
+            var x = r, y = 0, fehler = 1 - r
+            while x >= y {
+                if name == "circleFill" {
+                    for (dy, dx) in [(y, x), (-y, x), (x, y), (-x, y)] {
+                        for i in bereich(cx - dx, cx + dx, bis: brett.breite - 1) { brett.setze(i, cy + dy, f) }
+                    }
+                } else {
+                    for (dx, dy) in [(x, y), (y, x), (-x, y), (-y, x), (x, -y), (y, -x), (-x, -y), (-y, -x)] {
+                        brett.setze(cx + dx, cy + dy, f)
+                    }
+                }
+                y += 1
+                if fehler < 0 { fehler += 2 * y + 1 } else { x -= 1; fehler += 2 * (y - x) + 1 }
             }
         case "bitmap":
             guard a.count == 5, let x = zahl(0), let y = zahl(1), let w = zahl(2), let h = zahl(3),
@@ -577,7 +569,7 @@ public enum VirtuelleNGUhr {
     /// Bresenham mit beiden Endpunkten. Liegt ein Endpunkt ausserhalb, wird die
     /// Strecke vorher auf das Brett beschnitten (Liang-Barsky) — sonst liefe
     /// die Schleife ueber die ganze Laenge der Strecke.
-    private static func linie(_ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int, _ f: Int, auf brett: inout Brett) {
+    static func linie(_ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int, _ f: Int, auf brett: inout Brett) {
         var (ax, ay, bx, by) = (x1, y1, x2, y2)
         let (breite, hoehe) = (brett.breite, brett.hoehe)
         let innen = { (x: Int, y: Int) in x >= 0 && y >= 0 && x < breite && y < hoehe }
@@ -732,7 +724,7 @@ public enum VirtuelleNGUhr {
 
     // MARK: - Apps
 
-    private static func gueltigerName(_ name: String) -> Bool {
+    static func gueltigerName(_ name: String) -> Bool {
         (1...32).contains(name.utf8.count)
             && name.utf8.allSatisfy { ($0 >= 48 && $0 <= 57) || ($0 >= 65 && $0 <= 90)
                 || ($0 >= 97 && $0 <= 122) || $0 == 95 || $0 == 45 }
@@ -796,8 +788,18 @@ public enum VirtuelleNGUhr {
         if let falsch = nurFuerBenachrichtigungen.first(where: { o[$0] != nil }) {
             return ungueltig("not allowed in an app", feld: falsch)
         }
+        return pruefeNutzlast(o)
+    }
+
+    /// Was für Anzeige und Benachrichtigung gleich gilt: oberste Schlüssel,
+    /// Zeichenbefehle, `layout`, Ablauf und Darstellung.
+    static func pruefeNutzlast(_ o: [String: JSONWert]) -> Antwort? {
+        if let falsch = pruefeSchluessel(o) { return falsch }
         if let falsch = pruefeAblauf(o) { return falsch }
-        return pruefeDarstellung(o)
+        if let falsch = pruefeDarstellung(o) { return falsch }
+        if let w = o["draw"], let falsch = pruefeZeichenbefehle(w, feld: "draw") { return falsch }
+        if let l = o["layout"], let falsch = pruefeLayout(l, daneben: o) { return falsch }
+        return nil
     }
 
     /// Die Schlüssel aus §5.5, so wie NG sie prüft (§5, §5.8):
@@ -832,31 +834,38 @@ public enum VirtuelleNGUhr {
                 guard case .liste = w else { return ungueltig("must be an array", feld: feld) }
             }
         }
-        switch o["palette"] {
-        case nil, .null?: break
+        if let falsch = pruefePalette(o["palette"], feld: "palette") { return falsch }
+        return nil
+    }
+
+    /// Name aus der Liste der Uhr, 1–16 Farben oder Stützstellen `{color, pos}` —
+    /// nicht gemischt (§5.5).
+    static func pruefePalette(_ w: JSONWert?, feld: String) -> Antwort? {
+        switch w {
+        case nil, .null?: return nil
         case .text(let name)?:
-            if !name.isEmpty, !listeEnthaelt("palettes", name) { return ungueltig("unknown palette", feld: "palette") }
+            if !name.isEmpty, !listeEnthaelt("palettes", name) { return ungueltig("unknown palette", feld: feld) }
         case .liste(let stellen)?:
-            guard (1...16).contains(stellen.count) else { return ungueltig("invalid palette", feld: "palette") }
+            guard (1...16).contains(stellen.count) else { return ungueltig("invalid palette", feld: feld) }
             let mitLage = stellen.map { st -> Bool? in
                 if case .objekt = st { return true }
                 return farbe(st) != nil ? false : nil
             }
             guard !mitLage.contains(where: { $0 == nil }), Set(mitLage.compactMap { $0 }).count == 1 else {
-                return ungueltig("invalid palette", feld: "palette")
+                return ungueltig("invalid palette", feld: feld)
             }
             for st in stellen {
                 guard case .objekt(let obj) = st else { continue }
                 guard let f = obj["color"], farbe(f) != nil, let pos = obj["pos"]?.ganzzahl,
-                      (0...100).contains(pos) else { return ungueltig("invalid palette", feld: "palette") }
+                      (0...100).contains(pos) else { return ungueltig("invalid palette", feld: feld) }
             }
         default:
-            return ungueltig("invalid palette", feld: "palette")
+            return ungueltig("invalid palette", feld: feld)
         }
         return nil
     }
 
-    private static func listeEnthaelt(_ liste: String, _ name: String) -> Bool {
+    static func listeEnthaelt(_ liste: String, _ name: String) -> Bool {
         guard case .objekt(let c) = capabilities, case .liste(let l)? = c[liste] else { return false }
         return l.contains { if case .text(let t) = $0 { return t.caseInsensitiveCompare(name) == .orderedSame }; return false }
     }
@@ -962,8 +971,7 @@ public enum VirtuelleNGUhr {
             guard gueltigerName(s), s != "active" else { return ungueltigerName }
             name = s
         }
-        if let falsch = pruefeAblauf(o) { return falsch }
-        if let falsch = pruefeDarstellung(o) { return falsch }
+        if let falsch = pruefeNutzlast(o) { return falsch }
         var stapeln = true
         if let st = o["stack"] {
             guard case .bool(let b) = st else { return ungueltig("must be a boolean", feld: "stack") }

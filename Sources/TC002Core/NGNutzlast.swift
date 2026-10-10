@@ -30,6 +30,8 @@ public enum NGFehler: Error, LocalizedError {
     case ungueltigerName(String)
     /// `<Thema>/result` meldete `ok:false`; der Text nennt Code und Feld.
     case abgewiesen(String)
+    /// Auf `cmd/screen/get` kam keine Antwort, und es gibt keine Adresse für HTTP.
+    case keineBildschirmantwort
 
     public var errorDescription: String? {
         switch self {
@@ -49,6 +51,8 @@ public enum NGFehler: Error, LocalizedError {
             return lokf("„%@“ ist kein Name, den die Uhr annimmt: erlaubt sind 1 bis 32 Zeichen aus Buchstaben, Ziffern, „_“ und „-“, und „active“ ist vergeben.", name)
         case .abgewiesen(let grund):
             return lokf("Die Uhr hat abgewiesen: %@", grund)
+        case .keineBildschirmantwort:
+            return lok("Die Uhr hat ihr Display nicht geliefert, und für HTTP ist keine Adresse eingetragen.")
         }
     }
 }
@@ -155,6 +159,12 @@ public enum NGThema {
             return nil
         }
     }
+
+    /// Das Display einmal veröffentlichen lassen; die Nutzlast wird ignoriert (§3.2).
+    public static func bildschirmAnfordern(praefix: String) -> String { "\(praefix)/cmd/screen/get" }
+
+    /// Die Antwort darauf: `{"width","height","pixels"}`, nicht aufbewahrt (§3.5).
+    public static func bildschirm(praefix: String) -> String { "\(praefix)/state/screen" }
 
     /// `online` bzw. — als Last Will — `offline`, aufbewahrt (§3.5).
     public static func erreichbarkeit(praefix: String) -> String { "\(praefix)/availability" }

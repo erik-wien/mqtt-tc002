@@ -88,6 +88,16 @@ public struct Geraet {
         Geraetefaehigkeiten(antwort: try hole("/api/v1/capabilities"))
     }
 
+    /// Was das Display gerade zeigt (`GET /api/v1/display/screen`, §7.3).
+    public func bildschirm() throws -> Bildschirmauszug {
+        let pfad = "/api/v1/display/screen"
+        do {
+            return try Bildschirmauszug(daten: try fuehreAus(try anfrage(url(pfad))))
+        } catch is Bildschirmauszug.Fehler {
+            throw GeraetFehler.unerwarteteAntwort(pfad)
+        }
+    }
+
     public func verbunden() throws -> Bool { try brokerstand().steht }
 
     /// Ob die Uhr am Broker haengt — und warum nicht.
