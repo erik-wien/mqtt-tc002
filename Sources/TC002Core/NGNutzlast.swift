@@ -218,7 +218,11 @@ public enum NGNutzlast {
 
     /// Die Anzeige als JSON. Die Reihenfolge der Schluessel ist festgelegt,
     /// damit die Schnappschusstests Bytes vergleichen koennen und nicht Mengen.
-    public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil) throws -> String {
+    ///
+    /// `textfarbeAusPalette`: `textColor` ist dann `"palette"` statt der Farbe
+    /// der Regler (§5.1).
+    public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil,
+                               textfarbeAusPalette: Bool = false) throws -> String {
         var teile: [String] = []
         // Nicht `gesendeterText`. Unser `uppercased()` macht aus „ß" ein
         // „SS"; NG versalisiert selbst und erhaelt dabei die Zeichen. Der
@@ -229,7 +233,8 @@ public enum NGNutzlast {
         // globale Einstellung `uppercase` auf `true`. Ohne `asTyped` kaeme also
         // auch bei ausgeschaltetem Schalter Versalschrift heraus.
         teile.append(#""textCase":"\#(o.grossbuchstaben ? "upper" : "asTyped")""#)
-        teile.append(#""textColor":"\#(jsonEscape(o.farbe))""#)
+        teile.append(textfarbeAusPalette ? #""textColor":"palette""#
+                                         : #""textColor":"\#(jsonEscape(o.farbe))""#)
         // Ebenfalls ausdruecklich: NGs Vorgabe ist `true`, unsere ist
         // linksbuendig. Rechtsbuendig kennt NG nicht — die Ansicht bietet es
         // dort gar nicht erst an (`AwtrixNG.waagrechteAusrichtungen`), und

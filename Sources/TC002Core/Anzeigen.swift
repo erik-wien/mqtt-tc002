@@ -90,32 +90,54 @@ public struct Anzeigen {
     /// wird nicht geschickt: MQTT 3.1.1 kennt keinen Rueckkanal fuer eine
     /// abgelehnte Veroeffentlichung, und stillschweigend nichts zu tun ist das
     /// Gegenteil einer Loesung.
-    public static func nutzlast(_ frame: Frame) throws -> String {
-        let grund = try grundnutzlast(frame)
+    public static func nutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
+        let grund = try grundnutzlast(frame, faehigkeiten: faehigkeiten)
         guard let lebensdauer = frame.lebensdauer else { return grund }
         return NGNutzlast.ergaenzt(grund, um: NGNutzlast.lebensdauerfelder(lebensdauer))
     }
 
     /// Die Nutzlast ohne `lifetimeMs`/`lifetimeExpiry`: Eine Benachrichtigung
     /// nimmt beide an und ignoriert sie, sie gehören nur in eine Anzeige.
-    static func grundnutzlast(_ frame: Frame) throws -> String {
-        if let pixel = frame.pixel { return try Pixelweg.nutzlast(pixel, dauer: frame.dauer) }
-        guard let herkunft = frame.herkunft else { throw NGFehler.leer }
-        return try NGNutzlast.anzeige(herkunft.optionen,
-                                      iconDatenURI: herkunft.iconDatenURI)
+    ///
+    /// Die Darstellung wird geprüft und angehängt; `faehigkeiten` sind die
+    /// Namenslisten der Ziel-Uhr (ohne sie bleiben Namen ungeprüft).
+    static func grundnutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
+        let darstellung = frame.darstellung ?? Darstellung()
+        try darstellung.pruefen(gegen: faehigkeiten)
+        let json: String
+        if let grafik = frame.grafik {
+            guard frame.pixel == nil, frame.herkunft == nil else { throw DarstellungsFehler.grafikMitInhalt }
+            if darstellung.textfarbeAusPalette { throw DarstellungsFehler.ohneText }
+            try grafik.pruefen(palette: darstellung.palette)
+            var teile = grafik.felder()
+            if let dauer = frame.dauer { teile.append(#""durationMs":\#(dauer * 1000)"#) }
+            json = "{" + teile.joined(separator: ",") + "}"
+        } else if let pixel = frame.pixel {
+            // Das GIF in Anzeigegröße ist der Hintergrund (§5.3).
+            if darstellung.hintergrundfarbe != nil { throw DarstellungsFehler.vomBildVerdeckt(feld: "backgroundColor") }
+            if let e = darstellung.effekt, !e.isEmpty { throw DarstellungsFehler.vomBildVerdeckt(feld: "effect") }
+            if darstellung.textfarbeAusPalette { throw DarstellungsFehler.ohneText }
+            json = try Pixelweg.nutzlast(pixel, dauer: frame.dauer)
+        } else {
+            guard let herkunft = frame.herkunft else { throw NGFehler.leer }
+            json = try NGNutzlast.anzeige(herkunft.optionen, iconDatenURI: herkunft.iconDatenURI,
+                                          textfarbeAusPalette: darstellung.textfarbeAusPalette)
+        }
+        return NGNutzlast.ergaenzt(json, um: darstellung.felder(gegen: faehigkeiten))
     }
 
     /// Schickt die Anzeige. Passt sie ueber MQTT samt Thema nicht in 8192 Byte,
     /// geht sie ueber HTTP an dieselbe Uhr: NG verwirft Groesseres ohne
     /// Antwort, und eine stumm verlorene Sendung waere das Schlimmste.
     @discardableResult
-    public func zeigen(_ frame: Frame, auf name: String) throws -> Zustellweg {
+    public func zeigen(_ frame: Frame, auf name: String,
+                       faehigkeiten: Geraetefaehigkeiten? = nil) throws -> Zustellweg {
         if let mass = anzeigemass, let pixel = frame.pixel,
            pixel.breite != mass.breite || pixel.hoehe != mass.hoehe {
             throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
                                           anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
         }
-        let json = try Self.nutzlast(frame)
+        let json = try Self.nutzlast(frame, faehigkeiten: faehigkeiten)
         let daten = Data(json.utf8)
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, let ausweich):
@@ -163,13 +185,14 @@ public struct Anzeigen {
     /// Dieselbe Rasterung, dieselbe Größenweiche MQTT ↔ HTTP wie `zeigen` — nur
     /// ohne Lebensdauer und mit den Feldern aus §5.6.
     @discardableResult
-    public func benachrichtigen(_ frame: Frame, _ optionen: Benachrichtigungsoptionen = .init()) throws -> Zustellweg {
+    public func benachrichtigen(_ frame: Frame, _ optionen: Benachrichtigungsoptionen = .init(),
+                                faehigkeiten: Geraetefaehigkeiten? = nil) throws -> Zustellweg {
         if let mass = anzeigemass, let pixel = frame.pixel,
            pixel.breite != mass.breite || pixel.hoehe != mass.hoehe {
             throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
                                           anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
         }
-        let json = try NGNutzlast.benachrichtigung(frame, optionen)
+        let json = try NGNutzlast.benachrichtigung(frame, optionen, faehigkeiten: faehigkeiten)
         let daten = Data(json.utf8)
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, let ausweich):

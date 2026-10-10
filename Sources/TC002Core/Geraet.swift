@@ -82,6 +82,12 @@ public struct Geraet {
         return AwtrixNG.plausiblesMass(breite: b, hoehe: h, maxPixel: anzeige?["maxPixels"] as? Int)
     }
 
+    /// Die Namenslisten dieser Uhr (Effekte, Overlays, Paletten, Übergänge) aus
+    /// `GET /api/v1/capabilities`. `nil`, wenn die Antwort keine davon trägt.
+    public func faehigkeiten() throws -> Geraetefaehigkeiten? {
+        Geraetefaehigkeiten(antwort: try hole("/api/v1/capabilities"))
+    }
+
     public func verbunden() throws -> Bool { try brokerstand().steht }
 
     /// Ob die Uhr am Broker haengt — und warum nicht.

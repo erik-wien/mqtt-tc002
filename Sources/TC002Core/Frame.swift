@@ -44,7 +44,11 @@ public struct Meldungsherkunft: Equatable, Sendable {
 
 /// Ein Rahmen: entweder Pixel, die die App gerastert hat (`pixel`, der
 /// Pixelweg), oder Text samt Reglern (`herkunft`, den die Uhr in ihrer Schrift
-/// setzt), dazu die Standzeit. `pixel` geht vor.
+/// setzt), oder eine Grafik (`grafik`: Diagramm, Fortschritt), dazu die Standzeit.
+/// `pixel` geht vor; eine Grafik verträgt weder Pixel noch Text
+/// (`DarstellungsFehler.grafikMitInhalt`). Zu jeder der drei Arten kann eine
+/// `darstellung` (Hintergrund, Effekt, Overlay, Palette) gehören — was davon bei
+/// gerasterten Pixeln wirkt, steht bei `Darstellung`.
 public struct Frame: Equatable, Sendable {
     public var pixel: Pixelinhalt?
     public var dauer: Int?
@@ -52,24 +56,32 @@ public struct Frame: Equatable, Sendable {
     public var herkunft: Meldungsherkunft?
     /// Nur für Anzeigen (`Anzeigen.zeigen`); eine Benachrichtigung ignoriert sie.
     public var lebensdauer: Lebensdauer?
+    public var darstellung: Darstellung?
+    public var grafik: Grafikinhalt?
 
     /// Was hier hinausgeht, in einem Satz — fuer das Protokoll.
     public var beschreibung: String {
         var teile: [String] = []
-        if let pixel {
+        if grafik != nil {
+            teile.append(lok("Grafik"))
+        } else if let pixel {
             teile.append(pixel.istBewegt ? lokf("%d Bilder", pixel.bilder.count) : lok("Pixelbild"))
         } else if let herkunft {
             teile.append(lokf("Text „%@“", herkunft.optionen.text))
         }
+        if let darstellung, !darstellung.istLeer { teile.append(darstellung.beschreibung) }
         if let dauer { teile.append(lokf("%d s", dauer)) }
         if let lebensdauer { teile.append(lokf("Lebensdauer %d s", lebensdauer.sekunden)) }
         return teile.joined(separator: " · ")
     }
 
     public init(pixel: Pixelinhalt? = nil, dauer: Int? = nil, herkunft: Meldungsherkunft? = nil,
-                lebensdauer: Lebensdauer? = nil) {
+                lebensdauer: Lebensdauer? = nil, darstellung: Darstellung? = nil,
+                grafik: Grafikinhalt? = nil) {
         self.pixel = pixel; self.dauer = dauer
         self.herkunft = herkunft
         self.lebensdauer = lebensdauer
+        self.darstellung = darstellung
+        self.grafik = grafik
     }
 }

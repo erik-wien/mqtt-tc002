@@ -66,7 +66,8 @@ public enum Anzeigenname {
 extension NGNutzlast {
     /// Die Benachrichtigung als JSON: dieselbe Nutzlast wie die Anzeige, ohne
     /// `lifetimeMs` (eine Benachrichtigung ignoriert es), dazu die Felder aus §5.6.
-    public static func benachrichtigung(_ rahmen: Frame, _ o: Benachrichtigungsoptionen) throws -> String {
-        ergaenzt(try Anzeigen.grundnutzlast(rahmen), um: try o.felder())
+    public static func benachrichtigung(_ rahmen: Frame, _ o: Benachrichtigungsoptionen,
+                                        faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
+        ergaenzt(try Anzeigen.grundnutzlast(rahmen, faehigkeiten: faehigkeiten), um: try o.felder())
     }
 }

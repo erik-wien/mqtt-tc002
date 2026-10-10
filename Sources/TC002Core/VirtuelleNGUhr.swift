@@ -135,7 +135,9 @@ public struct NGUhrzustand: Equatable, Sendable {
 ///
 /// Bewusst nicht geprüft:
 /// - Inhalt einer App- oder Benachrichtigungsnutzlast über „gültiges JSON-
-///   Objekt“ hinaus (Schlüssel, Farben, Töne, Schriften),
+///   Objekt“ hinaus (unbekannte oberste Schlüssel, Töne, Schriften, Text- und
+///   Icon-Felder); geprüft sind nur die Schlüssel aus §5.5 (Hintergrund, Effekt,
+///   Overlay, Palette, Diagramme, Fortschritt — `pruefeDarstellung`),
 /// - Wertebereiche der Einstellungen außer `brightness` (0–255); sonst nur
 ///   Schlüssel und Typ,
 /// - Authentifizierung, `X-HTTP-Method-Override`, Setup-Modus, Anfragen
@@ -794,7 +796,69 @@ public enum VirtuelleNGUhr {
         if let falsch = nurFuerBenachrichtigungen.first(where: { o[$0] != nil }) {
             return ungueltig("not allowed in an app", feld: falsch)
         }
-        return pruefeAblauf(o)
+        if let falsch = pruefeAblauf(o) { return falsch }
+        return pruefeDarstellung(o)
+    }
+
+    /// Die Schlüssel aus §5.5, so wie NG sie prüft (§5, §5.8):
+    ///
+    /// - Falsche Typen bei `effect`, `overlay`, Zahlen und bool sind **kein**
+    ///   Fehler, der Wert wird übergangen; `effectSpeed` und `paletteSpeed`
+    ///   klemmt die Uhr, ohne abzuweisen.
+    /// - Ein unbekannter `effect`-, `overlay`- oder `palette`-Name, eine
+    ///   unlesbare Farbe und eine falsch gebaute Palette sind `422` mit dem
+    ///   Schlüssel als `field`.
+    ///
+    /// Annahmen, wo die Doku schweigt (❓): Ein `barChart`/`lineChart`, das kein
+    /// Feld ist, ist `422`; ein `lineChart` mit weniger als zwei Werten wird
+    /// angenommen (und nicht gezeichnet). Gerendert wird nichts davon.
+    private static func pruefeDarstellung(_ o: [String: JSONWert]) -> Antwort? {
+        func farbig(_ w: JSONWert?) -> Bool { w == nil || w == .null || farbe(w!) != nil }
+        for feld in ["backgroundColor", "progressTrackColor"] where !farbig(o[feld]) {
+            return ungueltig("invalid color", feld: feld)
+        }
+        for feld in ["chartColor", "progressColor"] {
+            if o[feld] == .text("palette") { continue }
+            if !farbig(o[feld]) { return ungueltig("invalid color", feld: feld) }
+        }
+        for (feld, liste) in [("effect", "effects"), ("overlay", "overlays")] {
+            if case .text(let name)? = o[feld], !name.isEmpty,
+               !listeEnthaelt(liste, name) {
+                return ungueltig("unknown \(feld)", feld: feld)
+            }
+        }
+        for feld in ["barChart", "lineChart"] {
+            if let w = o[feld], w != .null {
+                guard case .liste = w else { return ungueltig("must be an array", feld: feld) }
+            }
+        }
+        switch o["palette"] {
+        case nil, .null?: break
+        case .text(let name)?:
+            if !name.isEmpty, !listeEnthaelt("palettes", name) { return ungueltig("unknown palette", feld: "palette") }
+        case .liste(let stellen)?:
+            guard (1...16).contains(stellen.count) else { return ungueltig("invalid palette", feld: "palette") }
+            let mitLage = stellen.map { st -> Bool? in
+                if case .objekt = st { return true }
+                return farbe(st) != nil ? false : nil
+            }
+            guard !mitLage.contains(where: { $0 == nil }), Set(mitLage.compactMap { $0 }).count == 1 else {
+                return ungueltig("invalid palette", feld: "palette")
+            }
+            for st in stellen {
+                guard case .objekt(let obj) = st else { continue }
+                guard let f = obj["color"], farbe(f) != nil, let pos = obj["pos"]?.ganzzahl,
+                      (0...100).contains(pos) else { return ungueltig("invalid palette", feld: "palette") }
+            }
+        default:
+            return ungueltig("invalid palette", feld: "palette")
+        }
+        return nil
+    }
+
+    private static func listeEnthaelt(_ liste: String, _ name: String) -> Bool {
+        guard case .objekt(let c) = capabilities, case .liste(let l)? = c[liste] else { return false }
+        return l.contains { if case .text(let t) = $0 { return t.caseInsensitiveCompare(name) == .orderedSame }; return false }
     }
 
     private static func pruefeAblauf(_ o: [String: JSONWert]) -> Antwort? {
@@ -899,6 +963,7 @@ public enum VirtuelleNGUhr {
             name = s
         }
         if let falsch = pruefeAblauf(o) { return falsch }
+        if let falsch = pruefeDarstellung(o) { return falsch }
         var stapeln = true
         if let st = o["stack"] {
             guard case .bool(let b) = st else { return ungueltig("must be a boolean", feld: "stack") }
