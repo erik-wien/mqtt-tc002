@@ -333,7 +333,7 @@ public struct Grafikinhalt: Equatable, Sendable {
     }
 
     /// `palette` ist die Palette der Darstellung, falls eine Farbe daraus malen soll.
-    func pruefen(palette: Palette?) throws {
+    public func pruefen(palette: Palette?) throws {
         guard diagramm != nil || fortschritt != nil else { throw DarstellungsFehler.grafikLeer }
         if let d = diagramm {
             guard d.werte.count <= Self.hoechstzahlWerte else {

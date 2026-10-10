@@ -21,6 +21,8 @@ struct Optionen {
         case bild(name: String)
         /// Den Bilderbestand auflisten, wie `icons` die Icons.
         case bilder
+        /// Effekte, Overlays und Paletten, die die Uhr in `capabilities` nennt.
+        case effekte
         case hilfe
         case fassung
     }
@@ -57,6 +59,14 @@ struct Optionen {
     var ablauf: Lebensablauf?
     /// `--behalten`: die Anzeige verfällt nicht, sie bleibt bis zum Löschen.
     var behalten = false
+    /// Hintergrund, Effekt, Overlay und Palette (§5.5) — für „senden“ und „nachricht“.
+    var darstellung = Darstellung()
+    /// Diagramm und Fortschritt; nur gültig, wenn eine der Optionen dazu stand.
+    var grafik = Grafikinhalt()
+    var grafikGesetzt = false
+    /// Die erste Option, die nur „senden“ und „nachricht“ kennen — für die
+    /// Meldung, wenn sie bei einem anderen Befehl steht.
+    var darstellungsoption: String?
 
     enum Fehler: Error, LocalizedError {
         case unbekannteOption(String)
@@ -71,6 +81,14 @@ struct Optionen {
         case keinAblauf(String)
         case behaltenMitLebensdauer
         case nichtPositiv(option: String, wert: String)
+        /// Werte, die als Liste ganzer Zahlen gemeint waren („1,2,3“).
+        case keineListe(option: String, wert: String)
+        /// Eine Palette aus Farben und Stützstellen gemischt.
+        case paletteGemischt(String)
+        /// Eine Farbe, die „palette“ oder #RRGGBB sein sollte.
+        case keineGrafikfarbe(option: String, wert: String)
+        /// Text und Grafik zugleich.
+        case grafikMitText
 
         var errorDescription: String? {
             switch self {
@@ -94,6 +112,14 @@ struct Optionen {
                 return lok("„--behalten“ lässt die Anzeige stehen und verträgt sich nicht mit „--lebensdauer“ oder „--ablauf“.")
             case .nichtPositiv(let o, let w):
                 return lokf("„%@“ erwartet eine Zahl größer als 0, bekam aber „%@“.", o, w)
+            case .keineListe(let o, let w):
+                return lokf("„%@“ erwartet ganze Zahlen mit Komma dazwischen (1,2,3), bekam aber „%@“.", o, w)
+            case .paletteGemischt(let w):
+                return lokf("Die Palette „%@“ mischt Farben mit und ohne Lage. Entweder alle „#RRGGBB“ oder alle „#RRGGBB@Lage“.", w)
+            case .keineGrafikfarbe(let o, let w):
+                return lokf("„%@“ erwartet #RRGGBB oder „palette“, bekam aber „%@“.", o, w)
+            case .grafikMitText:
+                return lok("Ein Diagramm oder Fortschritt hat keinen Text. Entweder Text angeben oder --balken, --linie, --fortschritt.")
             }
         }
     }
@@ -128,6 +154,8 @@ struct Optionen {
             o.befehl = .bild(name: "")
         case "bilder", "images":
             o.befehl = .bilder
+        case "effekte", "effects":
+            o.befehl = .effekte
         case "hilfe", "help", "--help", "-h":
             return Optionen(befehl: .hilfe)
         case "fassung", "version", "--version":
@@ -156,7 +184,56 @@ struct Optionen {
                 return z
             }
 
+            func kommazahl() throws -> Double {
+                let w = try wert()
+                guard let z = Double(w.replacingOccurrences(of: ",", with: ".")) else {
+                    throw Fehler.keineZahl(option: arg, wert: w)
+                }
+                return z
+            }
+            func farbe() throws -> String {
+                let w = try wert()
+                guard Self.istFarbe(w) else { throw Fehler.keineFarbe(w) }
+                return w
+            }
+            func werte() throws -> [Int] {
+                let w = try wert()
+                let teile = w.split(separator: ",", omittingEmptySubsequences: false)
+                let zahlen = teile.compactMap { Int($0) }
+                guard zahlen.count == teile.count, !zahlen.isEmpty else {
+                    throw Fehler.keineListe(option: arg, wert: w)
+                }
+                return zahlen
+            }
+            func grafikfarbe() throws -> Grafikfarbe {
+                let w = try wert()
+                if w == "palette" { return .palette }
+                guard Self.istFarbe(w) else { throw Fehler.keineGrafikfarbe(option: arg, wert: w) }
+                return .farbe(w)
+            }
+            /// Merkt die erste Option, die nur „senden“ und „nachricht“ kennen.
+            func darstellungsoptionMerken() { o.darstellungsoption = o.darstellungsoption ?? arg }
+            func grafikMerken() { o.grafikGesetzt = true; darstellungsoptionMerken() }
+
             switch arg {
+            case "--hintergrund", "--background": o.darstellung.hintergrundfarbe = try farbe(); darstellungsoptionMerken()
+            case "--effekt", "--effect":          o.darstellung.effekt = try wert(); darstellungsoptionMerken()
+            case "--effekt-tempo", "--effect-speed": o.darstellung.effektTempo = try kommazahl(); darstellungsoptionMerken()
+            case "--overlay":                     o.darstellung.overlay = try wert(); darstellungsoptionMerken()
+            case "--palette":
+                o.darstellung.palette = try Self.palette(try wert())
+                darstellungsoptionMerken()
+            case "--palette-hart", "--palette-stepped": o.darstellung.paletteUeberblenden = false; darstellungsoptionMerken()
+            case "--palette-spanne", "--palette-span": o.darstellung.paletteSpanne = try zahl(); darstellungsoptionMerken()
+            case "--palette-tempo", "--palette-speed": o.darstellung.paletteTempo = try kommazahl(); darstellungsoptionMerken()
+            case "--text-palette":                o.darstellung.textfarbeAusPalette = true; darstellungsoptionMerken()
+            case "--balken", "--bars":            o.grafik.diagramm = .balken(try werte()); grafikMerken()
+            case "--linie", "--line":             o.grafik.diagramm = .linie(try werte()); grafikMerken()
+            case "--feste-skala", "--fixed-scale": o.grafik.diagrammSkalieren = false; grafikMerken()
+            case "--diagrammfarbe", "--chart-color": o.grafik.diagrammfarbe = try grafikfarbe(); grafikMerken()
+            case "--fortschritt", "--progress":   o.grafik.fortschritt = try zahl(); grafikMerken()
+            case "--fortschrittsfarbe", "--progress-color": o.grafik.fortschrittsfarbe = try grafikfarbe(); grafikMerken()
+            case "--fortschrittsgrund", "--progress-track": o.grafik.fortschrittsgrund = try farbe(); grafikMerken()
             case "--an", "--to":          o.ziele.append(try wert())
             case "--name":                o.anzeigename = try wert(); o.nameAngegeben = true
             case "--farbe", "--color":
@@ -212,14 +289,24 @@ struct Optionen {
         }
 
         let freierText = freie.joined(separator: " ")
+        switch o.befehl {
+        case .senden, .nachricht:
+            if o.grafikGesetzt {
+                guard freierText.isEmpty else { throw Fehler.grafikMitText }
+                try o.grafik.pruefen(palette: o.darstellung.palette)
+            }
+            try o.darstellung.pruefen()
+        default:
+            if let option = o.darstellungsoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
+        }
         if o.behalten, o.lebensdauer != nil || o.ablauf != nil { throw Fehler.behaltenMitLebensdauer }
         switch o.befehl {
         case .senden:
-            guard !freierText.isEmpty else { throw Fehler.fehlenderText }
+            guard !freierText.isEmpty || o.grafikGesetzt else { throw Fehler.fehlenderText }
             try o.nurFuerNachrichtenPruefen()
             o.befehl = .senden(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
         case .nachricht:
-            guard !freierText.isEmpty else { throw Fehler.fehlenderText }
+            guard !freierText.isEmpty || o.grafikGesetzt else { throw Fehler.fehlenderText }
             // Eine Benachrichtigung ignoriert die Lebensdauer (§5.4); sie
             // wegzulassen, ohne es zu sagen, wäre eine stille Zusage.
             if let option = o.lebensdaueroption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
@@ -280,6 +367,27 @@ struct Optionen {
         if let option = nachrichtenoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "nachricht") }
     }
 
+    /// Eine Palette: ein Name, oder Farben mit Komma dazwischen
+    /// (`#FF0000,#0000FF`), oder Farben mit Lage 0–100 (`#FF0000@0,#0000FF@100`).
+    static func palette(_ wort: String) throws -> Palette {
+        guard wort.hasPrefix("#") else { return .name(wort) }
+        let teile = wort.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+        let mitLage = teile.map { $0.contains("@") }
+        guard Set(mitLage).count == 1 else { throw Fehler.paletteGemischt(wort) }
+        func farbe(_ s: String) throws -> String {
+            guard istFarbe(s) else { throw Fehler.keineFarbe(s) }
+            return s
+        }
+        if mitLage[0] {
+            return .stellen(try teile.map { t in
+                let paar = t.split(separator: "@", omittingEmptySubsequences: false).map(String.init)
+                guard paar.count == 2, let pos = Int(paar[1]) else { throw Fehler.keineFarbe(t) }
+                return .init(farbe: try farbe(paar[0]), pos: pos)
+            })
+        }
+        return .farben(try teile.map(farbe))
+    }
+
     private static func istFarbe(_ s: String) -> Bool {
         guard s.hasPrefix("#"), s.count == 7 else { return false }
         return UInt32(s.dropFirst(), radix: 16) != nil
@@ -315,5 +423,21 @@ struct Optionen {
         Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
                                   einreihen: !ersetzen, aufwecken: aufwecken,
                                   wiederholungen: wiederholungen)
+    }
+
+    /// Den Rahmen um das ergänzen, was die Kommandozeile zur Darstellung sagt. Ein
+    /// Diagramm oder Fortschritt ersetzt den Rahmen ganz (kein Text, kein Bild).
+    func mitDarstellung(_ rahmen: Frame) -> Frame {
+        var f = rahmen
+        if grafikGesetzt {
+            f = Frame(dauer: rahmen.dauer, lebensdauer: rahmen.lebensdauer, grafik: grafik)
+        }
+        f.darstellung = darstellung.istLeer ? nil : darstellung
+        return f
+    }
+
+    /// Ein Rahmen aus der Grafik allein, wo kein Text zu rastern ist.
+    var grafikrahmen: Frame {
+        mitDarstellung(Frame(dauer: dauer, lebensdauer: meldung.wirksameLebensdauer))
     }
 }

@@ -331,6 +331,67 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
 
     // MARK: - Hilfetext und Zerleger
 
+    // MARK: - Darstellung, Diagramm, Fortschritt
+
+    func testDieDarstellungWirdZerlegt() throws {
+        let o = try Optionen.zerlegt(["senden", "Regen", "--effekt", "Plasma", "--effekt-tempo", "2,5",
+                                      "--overlay", "rain", "--palette", "#FF0000,#0000FF",
+                                      "--palette-hart", "--palette-spanne", "6", "--palette-tempo", "0.5",
+                                      "--text-palette"])
+        XCTAssertEqual(o.darstellung, Darstellung(
+            effekt: "Plasma", effektTempo: 2.5, overlay: "rain", palette: .farben(["#FF0000", "#0000FF"]),
+            paletteUeberblenden: false, paletteSpanne: 6, paletteTempo: 0.5, textfarbeAusPalette: true))
+        XCTAssertFalse(o.grafikGesetzt)
+        XCTAssertEqual(try Optionen.palette("Lava"), .name("Lava"))
+        XCTAssertEqual(try Optionen.palette("#FF0000@0,#0000FF@100"),
+                       .stellen([.init(farbe: "#FF0000", pos: 0), .init(farbe: "#0000FF", pos: 100)]))
+        XCTAssertThrowsError(try Optionen.palette("#FF0000,#0000FF@100"))
+    }
+
+    func testDieDarstellungWirdBeimZerlegenGeprueft() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--effekt-tempo", "99"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--hintergrund", "#000000", "--effekt", "Plasma"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--palette-tempo", "1"]), "ohne Palette")
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--hintergrund", "rot"]))
+    }
+
+    func testEineGrafikBrauchtKeinenTextUndKeinenText() throws {
+        let o = try Optionen.zerlegt(["senden", "--linie", "3,5,-2", "--diagrammfarbe", "palette",
+                                      "--palette", "Ocean", "--fortschritt", "40",
+                                      "--fortschrittsfarbe", "#00FF00", "--fortschrittsgrund", "#222222",
+                                      "--feste-skala"])
+        XCTAssertTrue(o.grafikGesetzt)
+        XCTAssertEqual(o.grafik, Grafikinhalt(diagramm: .linie([3, 5, -2]), diagrammSkalieren: false,
+                                              diagrammfarbe: .palette, fortschritt: 40,
+                                              fortschrittsfarbe: .farbe("#00FF00"), fortschrittsgrund: "#222222"))
+        XCTAssertNotNil(try? Optionen.zerlegt(["nachricht", "--balken", "1,2"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "Text", "--balken", "1,2"]), "Text und Grafik")
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "--balken", "1,x"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "--linie", "1"]), "eine Linie braucht zwei")
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "--fortschritt", "101"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "--fortschritt", "5", "--fortschrittsfarbe", "palette"]),
+                             "ohne Palette")
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden"]), "weder Text noch Grafik")
+    }
+
+    func testDieDarstellungGiltNurFuerSendenUndNachricht() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["loeschen", "cli", "--overlay", "rain"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["bild", "Herz", "--fortschritt", "5"]))
+        XCTAssertNoThrow(try Optionen.zerlegt(["effekte"]))
+    }
+
+    func testDerRahmenTraegtDieDarstellung() throws {
+        let o = try Optionen.zerlegt(["senden", "Regen", "--overlay", "rain"])
+        let text = Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: "Regen", weg: .text)))
+        XCTAssertEqual(o.mitDarstellung(text).darstellung, Darstellung(overlay: "rain"))
+        let g = try Optionen.zerlegt(["senden", "--fortschritt", "5", "--dauer", "9", "--overlay", "snow"])
+        let rahmen = g.grafikrahmen
+        XCTAssertEqual(rahmen.grafik, Grafikinhalt(fortschritt: 5))
+        XCTAssertEqual(rahmen.dauer, 9)
+        XCTAssertNil(rahmen.herkunft)
+        XCTAssertEqual(try Anzeigen.nutzlast(rahmen).hasPrefix(##"{"progress":5,"durationMs":9000"##), true)
+    }
+
     /// Ob `option` irgendwo erkannt wird. Eine andere Beanstandung (fehlender
     /// Wert, falscher Befehl) heißt: Die Option ist bekannt.
     private func zerleggerKennt(_ option: String) -> Bool {

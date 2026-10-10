@@ -28,6 +28,7 @@ AUFRUF
   mqtttc002 uhren                  die eingerichteten Uhren auflisten
   mqtttc002 icons                  die vorhandenen Icons auflisten
   mqtttc002 bilder                 die vorhandenen 16x52-Bilder auflisten
+  mqtttc002 effekte                Effekte, Overlays und Paletten der Uhr auflisten
   mqtttc002 hilfe                  diesen Text
 
 Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
@@ -59,6 +60,27 @@ OPTIONEN FUER „senden"
   --tempo langsam|mittel|schnell   nur fuer durchlaufenden Text
   --trocken           nur zeigen, was gesendet wuerde
 
+DARSTELLUNG (fuer „senden" und „nachricht")
+  Namen fragt das Werkzeug bei der Uhr ab ("mqtttc002 effekte" zeigt sie) und
+  prueft sie, bevor etwas gesendet wird. Ein Text, den die App selbst rastert
+  (Vorgabe), deckt den Hintergrund ganz zu: --hintergrund und --effekt gehen
+  dann nicht, ein --overlay schon.
+  --hintergrund #RRGGBB   einfarbiger Hintergrund (nicht mit --effekt)
+  --effekt <Name>     bewegter Hintergrund; --effekt-tempo <0.1-10>
+  --overlay <Name>    Wetter ueber allem: rain, snow, drizzle, storm, thunder, frost
+  --palette <Name>|#RRGGBB,#RRGGBB|#RRGGBB@0,#RRGGBB@100
+                      Name aus der Uhr, 1-16 Farben oder Farben mit Lage 0-100
+  --palette-hart      harte Baender statt Uebergang
+  --palette-spanne <Pixel>, --palette-tempo <0-10>   nur fuer Text aus der Palette
+  --text-palette      Text von der Uhr aus der Palette malen
+
+DIAGRAMM UND FORTSCHRITT (statt Text; fuer „senden" und „nachricht")
+  --balken 1,2,3 | --linie 1,2,3   bis 16 ganze Zahlen; eine Linie braucht zwei
+  --feste-skala       Skala fest 0-8 statt selbst angepasst
+  --diagrammfarbe #RRGGBB|palette
+  --fortschritt <0-100>   Balken in der untersten Zeile
+  --fortschrittsfarbe #RRGGBB|palette, --fortschrittsgrund #RRGGBB
+
 OPTIONEN FUER „nachricht"
   Text und Format wie bei „senden"; --name ist hier der Name der Nachricht
   (nur darueber laesst sie sich zurueckziehen), --dauer wie lange sie steht.
@@ -78,6 +100,8 @@ BEISPIELE
   mqtttc002 senden Achtung --an Kueche --dauer 10 --zentriert
   mqtttc002 senden Wetter --lebensdauer 600 --ablauf markieren
   mqtttc002 senden Dauerhaft --behalten
+  mqtttc002 senden Regen --text-palette --palette Ocean --overlay rain
+  mqtttc002 senden --linie 3,5,2,8 --diagrammfarbe "#00FF66" --fortschritt 40
   mqtttc002 nachricht "Tuer offen" --name tuer
   mqtttc002 zurueckziehen tuer
   mqtttc002 loeschen cli
@@ -196,6 +220,36 @@ func lauf() throws {
         throw Abbruch(lok("Keine Uhr eingerichtet. In der App unter „Einstellungen“ eine anlegen."))
     }
 
+    if case .effekte = optionen.befehl {
+        // Allein ueber HTTP, auch fuer MQTT-Uhren: `capabilities` gibt es nur dort.
+        var gelesen = 0
+        for uhr in gewaehlte {
+            guard !uhr.host.isEmpty else {
+                fehlerAusgeben(lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name))
+                continue
+            }
+            do {
+                guard let f = try Geraet(host: uhr.host).faehigkeiten() else {
+                    fehlerAusgeben(lokf("%@ nennt keine Effekte.", uhr.name)); continue
+                }
+                if gewaehlte.count > 1 { print("# \(uhr.name)") }
+                // Spalte 1 ist die Art, Spalte 2 der Name, so wie ihn `--effekt`,
+                // `--overlay` und `--palette` annehmen; Spalte 3 nur bei Effekten:
+                // ob sie die Palette nutzen.
+                for e in f.effekte {
+                    print("effekt\t\(e)\t\(f.nutztPalette(effekt: e) ? "palette" : "")")
+                }
+                for o in f.overlays { print("overlay\t\(o)") }
+                for p in f.paletten { print("palette\t\(p)") }
+                gelesen += 1
+            } catch {
+                fehlerAusgeben("\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+            }
+        }
+        if gelesen == 0 { throw Abbruch(lok("Keine Uhr hat geantwortet.")) }
+        return
+    }
+
     // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
     // wenigstens eine dieser Uhren ueber ihn geht. Wer ausschliesslich ueber
     // HTTP sendet, soll hier nicht an einer Bedingung scheitern, die seine
@@ -217,6 +271,18 @@ func lauf() throws {
 
     let sammlung = Iconsammlung(schreibordner: Iconordner.eigene)
     let icon = try iconSuchen(optionen.iconNummer, in: Iconbestaende.alle())
+
+    /// Die Namenslisten der Uhr, nur wenn die Darstellung Namen benutzt und die
+    /// Uhr eine Adresse hat: Eine Sendung ohne Namen soll keine zusaetzliche
+    /// Anfrage kosten. Antwortet die Uhr nicht, bleiben die Namen ungeprueft —
+    /// die Uhr weist einen falschen selbst ab (`422`).
+    func faehigkeiten(_ uhr: Uhr) -> Geraetefaehigkeiten? {
+        let d = optionen.darstellung
+        let nennt = (d.effekt?.isEmpty == false) || (d.overlay?.isEmpty == false)
+            || { if case .name? = d.palette { return true }; return false }()
+        guard nennt, !uhr.host.isEmpty else { return nil }
+        return (try? Geraet(host: uhr.host).faehigkeiten()) ?? nil
+    }
 
     /// Fuehrt eine Sendung an jede gewaehlte Uhr aus und zaehlt, was schiefging.
     func anAlle(_ was: String, _ tun: (Anzeigen, Uhr) throws -> Void) throws {
@@ -248,8 +314,13 @@ func lauf() throws {
     case .senden(let text):
         var m = optionen.meldung
         m.text = text
-        let rahmen = try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung)
-        let json = try Anzeigen.nutzlast(rahmen)
+        /// Je Uhr: deren Mass fuer den Text, deren Namenslisten fuer die Darstellung.
+        func rahmen(mass: Anzeigemass? = nil) throws -> Frame {
+            if optionen.grafikGesetzt { return optionen.grafikrahmen }
+            return optionen.mitDarstellung(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
+                                                                  mass: mass ?? .vorgabe))
+        }
+        let json = try Anzeigen.nutzlast(try rahmen())
         if optionen.trocken {
             // Der Trockenlauf ist auch die Auskunft darueber, womit gesendet
             // wuerde: Ein fehlendes Kennwort faellt sonst nirgends auf — MQTT
@@ -277,9 +348,8 @@ func lauf() throws {
         try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
             // Je Uhr in deren Anzeigemass gerastert; `rahmen` oben dient dem
             // Trockenlauf und der Byte-Angabe.
-            try anzeigen.zeigen(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
-                                                       mass: Anzeigemass.fuer(uhr)),
-                                auf: optionen.anzeigename)
+            try anzeigen.zeigen(try rahmen(mass: Anzeigemass.fuer(uhr)), auf: optionen.anzeigename,
+                                faehigkeiten: faehigkeiten(uhr))
             // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
             // entspricht, gibt es einen Platz, den sich das Slotgedaechtnis
             // merken koennte — bei einem frei gewaehlten Namen (Vorgabe
@@ -288,6 +358,11 @@ func lauf() throws {
             // haelt es trotzdem fest — das Werkzeug hat kein Protokoll wie
             // die App, aber stderr verunreinigt die eigentliche Ausgabe nicht.
             if let platz = Meldungsplatz.platz(fuerName: optionen.anzeigename) {
+                // Eine Grafik hat keine Regler, die sich merken liessen.
+                if optionen.grafikGesetzt {
+                    _ = Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: platz)
+                    return
+                }
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(m, icon: icon?.nummer,
                                                               iconKante: icon?.kante ?? 8,
                                                               fuer: uhr.id, platz: platz)
@@ -301,8 +376,12 @@ func lauf() throws {
         var m = optionen.meldung
         m.text = text
         let bo = optionen.benachrichtigung
-        let rahmen = try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung)
-        let json = try NGNutzlast.benachrichtigung(rahmen, bo)
+        func rahmen(mass: Anzeigemass? = nil) throws -> Frame {
+            if optionen.grafikGesetzt { return optionen.grafikrahmen }
+            return optionen.mitDarstellung(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
+                                                                  mass: mass ?? .vorgabe))
+        }
+        let json = try NGNutzlast.benachrichtigung(try rahmen(), bo)
         if optionen.trocken {
             if Einstellungen.brokerNoetig(fuer: gewaehlte) {
                 print(lokf("Broker %@:%d, Konto %@, Kennwort %@", einstellungen.brokerHost, Int(einstellungen.brokerPort),
@@ -322,8 +401,8 @@ func lauf() throws {
         // Eine Benachrichtigung ist keine Anzeige: kein Platz, also auch nichts
         // fuers Slotgedaechtnis.
         try anAlle(lokf("Nachricht gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
-            try anzeigen.benachrichtigen(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
-                                                                mass: Anzeigemass.fuer(uhr)), bo)
+            try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo,
+                                         faehigkeiten: faehigkeiten(uhr))
         }
 
     case .zurueckziehen(let name):
@@ -387,7 +466,7 @@ func lauf() throws {
             try anzeigen.umschalten(auf: name)
         }
 
-    case .uhren, .icons, .bilder, .hilfe, .fassung:
+    case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt
     }
 }
