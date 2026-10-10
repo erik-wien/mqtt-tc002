@@ -310,14 +310,17 @@ public struct SendenView: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.fuerVorschau
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
+        // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
+        let textDerUhr = o.weg == .text
         let einheit = Geraetezeichnung.tc002.masse(inhaltHoehe: Double(uhrmass.hoehe))
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
         return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
                             kantenlaenge: kante,
-                            icon: sitzt ? gewaehltesIcon?.datei : nil,
+                            icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
                             iconKante: iconKante,
-                            laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+                            iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass) : 1,
+                            laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames)
             .frame(width: platz.width, height: platz.height)
     }
 

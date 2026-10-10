@@ -101,9 +101,9 @@ final class DarstellungswahlTests: XCTestCase {
         var w = Darstellungswahl()
         w.palette = .eigene
         w.eigenePalette = Eigenepalette(stellen: [.init(farbe: "#FF0000", pos: 0), .init(farbe: "#0000FF", pos: 40)])
-        XCTAssertEqual(w.darstellung(weg: .pixel)?.palette, .farben(["#FF0000", "#0000FF"]))
+        XCTAssertEqual(w.darstellung(weg: .text)?.palette, .farben(["#FF0000", "#0000FF"]))
         w.eigenePalette.mitPosition = true
-        XCTAssertEqual(w.darstellung(weg: .pixel)?.palette,
+        XCTAssertEqual(w.darstellung(weg: .text)?.palette,
                        .stellen([.init(farbe: "#FF0000", pos: 0), .init(farbe: "#0000FF", pos: 40)]))
     }
 

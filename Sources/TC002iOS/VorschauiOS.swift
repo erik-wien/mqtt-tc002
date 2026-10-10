@@ -24,6 +24,9 @@ struct VorschauiOS: View {
     /// Sichtfeld laufen. Sichtbar blieb dann nur das schwarze Feld ohne
     /// Gehaeuse.
     var kante: Double? = nil
+    /// Punkte je Pixel des Icons: 2, wenn die Uhr die Anzeige vergroessert
+    /// zeichnet (`Geraeteschrift.masstab`).
+    var iconMasstab: Int = 1
 
     /// Einzelbilder des gewaehlten Icons mit ihren Standzeiten — einmal je
     /// Iconwechsel geladen. Ein unbewegtes Icon hat genau eines.
@@ -126,10 +129,11 @@ struct VorschauiOS: View {
     private func mitIcon(_ iconBild: Bildraster.Einzelbild?) -> [String?] {
         var punkte = feld.punkteRoh
         guard let iconBild else { return punkte }
-        let y0 = Anzeigemass(breite: feld.breite, hoehe: feld.hoehe).iconY(kante: 8)
-        for y in 0..<8 where (0..<feld.hoehe).contains(y0 + y) {
-            for x in 0..<8 where x < feld.breite {
-                guard let p = iconBild.pixel[y * 8 + x] else { continue }
+        let m = iconMasstab
+        let y0 = Anzeigemass(breite: feld.breite, hoehe: feld.hoehe).iconY(kante: 8 * m)
+        for y in 0..<(8 * m) where (0..<feld.hoehe).contains(y0 + y) {
+            for x in 0..<(8 * m) where x < feld.breite {
+                guard let p = iconBild.pixel[(y / m) * 8 + x / m] else { continue }
                 punkte[(y0 + y) * feld.breite + x] = p
             }
         }

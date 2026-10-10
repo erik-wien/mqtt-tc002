@@ -238,10 +238,13 @@ struct SendeniOS: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.fuerVorschau
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
+        // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
+        let textDerUhr = o.weg == .text
         VStack(spacing: 4) {
             VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
-                        icon: sitzt ? gewaehltesIcon?.datei : nil,
-                        laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+                        icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
+                        laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames,
+                        iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: 8, mass: uhrmass) : 1)
             // Der Name unter der Uhr, die er benennt — wie am Schreibtisch.
             // Im Titel stand er als Menue: eine zweite Geraetewahl neben dem
             // Antennenknopf, der die Empfaenger traegt, und beim Blaettern
@@ -560,7 +563,7 @@ struct SendeniOS: View {
     private var liste: some View {
         List {
             VStack(spacing: 8) {
-                if !passt {
+                if !passt, !laufschriftFrames.isEmpty {
                     Text(lokf("Läuft durch: %d Einzelbilder", laufschriftFrames.count))
                         .font(.caption).foregroundStyle(.secondary)
                 }

@@ -75,13 +75,16 @@ public struct Darstellungsabschnitte: View {
 
         Section {
             palettenzeile
+                .disabled(regeln.paletteGesperrt)
             Toggle("Überblenden", isOn: $wahl.ueberblenden)
-                .disabled(wahl.palette == .keine)
+                .disabled(wahl.palette == .keine || regeln.paletteGesperrt)
         } header: {
             Text("Palette")
         } footer: {
-            if wahl.palette != .keine, !regeln.paletteWirkt(faehigkeiten: faehigkeiten) {
-                Text("Die Palette färbt nichts, solange kein Overlay und kein Effekt sie nutzt.")
+            if regeln.paletteGesperrt {
+                Text("Als Bild färbt die Palette nur ein Overlay — wähle eins oder schalte „Schrift der Uhr“ ein.")
+            } else if wahl.palette != .keine, !regeln.paletteWirkt(faehigkeiten: faehigkeiten) {
+                Text("Die Palette färbt nichts, solange weder Effekt noch Overlay noch „Text aus Palette“ sie nutzt.")
             }
         }
 

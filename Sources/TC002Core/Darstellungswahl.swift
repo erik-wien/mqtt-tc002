@@ -154,10 +154,12 @@ public struct Darstellungswahl: Hashable, Sendable, Codable {
             d.effektTempo = (tempo * 10).rounded() / 10
         }
         if let overlay, !overlay.isEmpty { d.overlay = overlay }
-        switch palette {
-        case .keine: break
-        case .name(let n): if !n.isEmpty { d.palette = .name(n) }
-        case .eigene: d.palette = eigenePalette.palette
+        if !regeln.paletteGesperrt {
+            switch palette {
+            case .keine: break
+            case .name(let n): if !n.isEmpty { d.palette = .name(n) }
+            case .eigene: d.palette = eigenePalette.palette
+            }
         }
         if d.palette != nil { d.paletteUeberblenden = ueberblenden }
         if !regeln.textMalenGesperrt, textAusPalette {
@@ -186,7 +188,7 @@ extension Darstellungswahl: RawRepresentable {
 
 /// Was die Oberfläche je Weg sperrt (`Darstellung`, §5.3, §5.5): Ein Bild in
 /// Anzeigegröße — jeder gerasterte Text — deckt Hintergrundfarbe und Effekt zu,
-/// Overlay und Palette gehen. Text malen aus der Palette gibt es nur, wo die Uhr
+/// das Overlay geht, die Palette nur mit Overlay. Text malen aus der Palette gibt es nur, wo die Uhr
 /// den Text selbst setzt. Dieselben Fälle weist `Anzeigen.grundnutzlast` mit
 /// `DarstellungsFehler.vomBildVerdeckt` und `ohneText` ab; die Oberfläche sperrt sie,
 /// bevor es dazu kommt.
@@ -213,6 +215,15 @@ public struct Darstellungsregeln: Equatable, Sendable {
         return !(effektWirkt || overlayWirkt)
     }
     public var textMalenGesperrt: Bool { textAlsBild }
+
+    public var overlayGewaehlt: Bool { wahl.overlay?.isEmpty == false }
+    /// Palette, eigene Palette und Überblenden sind gesperrt, solange nichts
+    /// sie nutzen kann. Genutzt wird sie von Effekt, Overlay und „Text aus
+    /// Palette“ (§5.5). Im Bildweg sind Effekt und Text malen gesperrt, übrig
+    /// bleibt das Overlay: Ohne eines ist die Palette dort gesperrt. Mit der
+    /// Schrift der Uhr ist sie frei; ob sie dann wirkt, sagt `paletteWirkt`.
+    /// Eine gesperrte Palette geht nicht hinaus (`Darstellungswahl.darstellung`).
+    public var paletteGesperrt: Bool { textAlsBild && !overlayGewaehlt }
     /// Spanne und Lauf gehören zum Malen aus der Palette.
     public var spanneLaufGesperrt: Bool { textMalenGesperrt || !wahl.textAusPalette }
 

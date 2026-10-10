@@ -43,7 +43,7 @@ struct MeldungSendenIntent: AppIntent {
     // Ab hier das Format. Alles wahlfrei: Ein Kurzbefehl, der keine dieser
     // Angaben setzt, sendet genau wie bisher.
 
-    @Parameter(title: "Weg", description: "„als Pixel“ rastert die App selbst und kann Umlaute. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt weder Umlaute noch eine Auswahl.")
+    @Parameter(title: "Weg", description: "„als Pixel“ rastert die App selbst, mit einer ihrer Pixelschriften. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt Umlaute und Akzente, aber keine Auswahl.")
     var weg: WegAuswahl?
 
     @Parameter(title: "Schriftart", description: "Gilt nur auf dem Weg „als Pixel“.")

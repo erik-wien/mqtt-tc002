@@ -317,7 +317,10 @@ public enum Meldungsbau {
     /// und ihn wieder umwerfen.
     public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
                              mass: Anzeigemass = .vorgabe) -> Bool {
-        breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        if o.weg == .text {
+            return Geraeteschrift.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        }
+        return breite(o) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
@@ -352,13 +355,16 @@ public enum Meldungsbau {
     /// dieselbe Schrift stehend anders aus als laufend.
     public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
                             mass: Anzeigemass = .vorgabe) -> Pixelfeld {
+        // Die Uhr setzt den Text selbst: die Vorschau ist die Näherung
+        // `Geraeteschrift`, nicht unsere Rasterung.
+        if o.weg == .text {
+            return Geraeteschrift.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        }
         var f = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
         Textraster.einsetzen(puffer(o, mass: mass),
                              x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
                              y: versatzY(o, mass: mass), in: &f)
-        // „Als Text" zeichnet NG vergroessert auf 26 × 8 (§1.1); die Vorschau
-        // deutet das mit 2 × 2 grossen Punkten an.
-        return o.weg == .text ? f.inDoppelpixeln() : f
+        return f
     }
 
     /// Die Einzelbilder der Laufschrift. Getrennt von `rahmen`, weil die
@@ -368,6 +374,9 @@ public enum Meldungsbau {
                                   iconBilder: [[String?]],
                                   iconKante: Int = 8,
                                   mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
+        // Bei der Schrift der Uhr zeigt die Vorschau den Anfang des Textes
+        // (`feld`); die Uhr laeuft selbst.
+        if o.weg == .text { return [] }
         let bilder = Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
@@ -375,13 +384,7 @@ public enum Meldungsbau {
             iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand, mass: mass)
         // Die Zeit, die das GIF tatsaechlich traegt (ganze Hundertstel):
         // Vorschau und Sendung laufen gleich schnell.
-        return bilder.map { b in
-            let pixel = o.weg == .text
-                ? Pixelfeld(breite: mass.breite, hoehe: mass.hoehe, punkte: b.pixel)?
-                    .inDoppelpixeln().punkteRoh ?? b.pixel
-                : b.pixel
-            return Bildraster.Einzelbild(pixel: pixel, dauer: Bildraster.gifZeit(b.dauer))
-        }
+        return bilder.map { Bildraster.Einzelbild(pixel: $0.pixel, dauer: Bildraster.gifZeit($0.dauer)) }
     }
 
     /// Der Rahmen zu einer Meldung.

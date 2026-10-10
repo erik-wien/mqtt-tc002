@@ -20,7 +20,10 @@ struct VorschauView: View {
     /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
     var iconKante: Int = 8
     /// Senkrecht mittig im gezeigten Feld.
-    var iconY: Int { Meldungsbau.iconY(kante: iconKante, mass: mass) }
+    var iconY: Int { Meldungsbau.iconY(kante: iconKante * iconMasstab, mass: mass) }
+    /// Punkte je Pixel des Icons: 2, wenn die Uhr die Anzeige vergroessert
+    /// zeichnet (`Geraeteschrift.masstab`).
+    var iconMasstab: Int = 1
     private var mass: Anzeigemass { Anzeigemass(breite: feld.breite, hoehe: feld.hoehe) }
     /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
     /// ueberlagern — fuer die Laufschrift, die selbst schon das ganze Display
@@ -81,9 +84,11 @@ struct VorschauView: View {
             for y in 0..<iconKante {
                 for x in 0..<iconKante {
                     guard let hex = iconBild.pixel[y * iconKante + x], let farbe = Color(hex: hex) else { continue }
-                    let px = iconX + x, py = iconY + y
-                    guard px >= 0, py >= 0, px < feld.breite, py < feld.hoehe else { continue }
-                    kontext.fill(stil.pfad(spalte: px, zeile: py, zelle: kantenlaenge), with: .color(farbe))
+                    for dy in 0..<iconMasstab { for dx in 0..<iconMasstab {
+                        let px = iconX + x * iconMasstab + dx, py = iconY + y * iconMasstab + dy
+                        guard px >= 0, py >= 0, px < feld.breite, py < feld.hoehe else { continue }
+                        kontext.fill(stil.pfad(spalte: px, zeile: py, zelle: kantenlaenge), with: .color(farbe))
+                    } }
                 }
             }
         }
