@@ -103,6 +103,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [.absatz("Die Dauer steht im Blatt „Format“ — dem Pinsel in der Formatpille, zusammen mit der Laufschrift, der Lebensdauer und den Reglern der Nachricht. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet.")]
                 + HilfeInhalt.nachricht
                 + HilfeInhalt.lebensdauer
+                + [.absatz("Die Darstellung steht im Blatt „Format“ hinter dem Reiter „Darstellung“ (oben „Zeit | Darstellung“).")]
+                + HilfeInhalt.darstellung
                 + HilfeInhalt.zeichen
                 + [
                     .absatz("Enthält der Text etwas anderes, lässt die Uhr es wortlos weg — diese Fassung warnt vorher nicht davor."),

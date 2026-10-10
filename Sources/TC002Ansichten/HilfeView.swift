@@ -121,6 +121,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.nachricht
                 + HilfeInhalt.lebensdauer
+                + [.absatz("Die Darstellung steht im dritten Reiter des Inspektors, dem mit der Farbpalette.")]
+                + HilfeInhalt.darstellung
                 + HilfeInhalt.zeichen
                 + [
                     .ueberschrift("Formatierung"),

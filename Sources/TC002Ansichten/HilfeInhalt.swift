@@ -284,6 +284,17 @@ public enum HilfeInhalt {
         .absatz("Der Platz merkt sich die Werte wie die übrigen Regler, bis er gelöscht oder mit anderen Werten neu belegt wird. Eine Nachricht hat keine Lebensdauer."),
     ]
 
+    /// Hintergrund, Effekt, Overlay und Palette. Die Regler heissen auf beiden
+    /// Oberflaechen gleich; nur der Ort ist verschieden (dritter Reiter des
+    /// Inspektors am Schreibtisch, Reiter „Darstellung“ im Blatt „Format“ am
+    /// iPhone), und den nennen die Aufrufer.
+    public static let darstellung: [Hilfebaustein] = [
+        .ueberschrift("Darstellung"),
+        .absatz("Hintergrund, Effekt, Overlay und Palette bestimmen, wie die Uhr die Anzeige zeichnet. Die Namen von Effekt, Overlay und Palette liefert die Uhr selbst; bis zur ersten Abfrage zeigt jedes Menü nur „Keiner“ bzw. „Keines“ und „Uhr abfragen …“. Eigene Palette: 1 bis 16 Farben, gleichmäßig verteilt oder mit einer Position von 0 bis 100 je Farbe. „Überblenden“ lässt die Farben ineinanderfließen; aus, entstehen scharfe Streifen. Das Tempo gilt für Effekt und Overlay und ist nur mit einem von beiden frei."),
+        .absatz("Geht der Text als Bild an die Uhr — so schickt ihn die App —, deckt das Bild Hintergrundfarbe und Effekt zu; beide sind dann gesperrt, Overlay und Palette gehen. Setzt die Uhr den Text in ihrer Gerätschrift (Kurzbefehl, Werkzeug), gilt alles, und „Text malen“ füllt den Text aus der Palette: „Spanne“ sind die Pixel je Durchlauf (0 dehnt die Palette über den Text), „Lauf“ die Durchläufe je Sekunde. Ein Effekt ersetzt die Hintergrundfarbe."),
+        .absatz("Der Platz merkt sich die Darstellung wie die übrigen Regler, bis er gelöscht oder neu belegt wird. Diagramme und Fortschrittsbalken gibt es nur für Home Assistant und das Kommandozeilenwerkzeug."),
+    ]
+
     /// Die Nachricht (im Protokoll eine Benachrichtigung): gleich auf beiden
     /// Oberflaechen, nur der Ort der Regler unterscheidet sich.
     public static let nachricht: [Hilfebaustein] = [
