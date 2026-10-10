@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import TC002Core
 import TC002Modell
 
@@ -136,6 +137,9 @@ struct Tonabschnitt: View {
     let kanon: Formkanon
 
     @State private var sender: String?
+    @State private var waehltMP3 = false
+    @State private var mp3Auswahl: MP3Auswahl?
+    @State private var loeschtMP3: String?
 
     private var id: UUID { uhr.id }
     private var faehigkeiten: Geraetefaehigkeiten? { zustand.faehigkeiten[id] }
@@ -151,6 +155,7 @@ struct Tonabschnitt: View {
         faehigkeiten.map { ($0.ton ?? Tonfaehigkeiten()).radio } ?? true
     }
     private var senderNamen: [String] { (ton?.sender ?? []).map(\.name) }
+    private var ablage: Tonablage? { zustand.mp3Ablage[id] }
 
     var body: some View {
         Section {
@@ -164,6 +169,7 @@ struct Tonabschnitt: View {
                        anzeige: { "\($0) %" },
                        setzen: { p in Task { await zustand.einstellungSetzen("volume", wert: "\(p)", fuer: id) } })
             radiozeilen
+            klaengezeilen
             if ohneAdresse {
                 Label("Ohne Adresse der Uhr nicht lesbar", systemImage: "info.circle")
                     .font(kanon.fussnote).foregroundStyle(.secondary)
@@ -178,6 +184,44 @@ struct Tonabschnitt: View {
         .opacity(gesperrt ? 0.55 : 1)
         .onAppear { senderWaehlen() }
         .onChange(of: senderNamen) { _, _ in senderWaehlen() }
+        .task(id: id) {
+            if !gesperrt, zustand.mp3Ablage[id] == nil { await zustand.tonlistenAbfragen(id) }
+        }
+        .fileImporter(isPresented: $waehltMP3, allowedContentTypes: [.mp3]) { ergebnis in
+            if case .success(let url) = ergebnis { mp3Auswahl = MP3Auswahl(url: url) }
+        }
+        .sheet(item: $mp3Auswahl) { auswahl in
+            MP3Hochladeblatt(zustand: zustand, uhr: uhr, datei: auswahl.url, kanon: kanon)
+        }
+        .confirmationDialog(lokf("„%@“ von der Uhr löschen?", loeschtMP3 ?? ""),
+                            isPresented: Binding(get: { loeschtMP3 != nil }, set: { if !$0 { loeschtMP3 = nil } }),
+                            titleVisibility: .visible) {
+            Button("Löschen", role: .destructive) {
+                if let name = loeschtMP3 { Task { await zustand.mp3Loeschen(name: name, fuer: id) } }
+            }
+        }
+    }
+
+    /// Die MP3-Dateien der Uhr: Zahl und Belegung, die Liste, der Knopf zum Hochladen.
+    @ViewBuilder
+    private var klaengezeilen: some View {
+        LabeledContent("Klänge auf der Uhr") {
+            Text(verbatim: belegung).multilineTextAlignment(.trailing)
+        }
+        ForEach(ablage?.namen ?? [], id: \.self) { name in
+            MP3Zeile(name: name, groesse: ablage?.groessen[name]) { loeschtMP3 = name }
+        }
+        Button("MP3 hochladen …") { waehltMP3 = true }
+            .knopfBefehl()
+    }
+
+    private var belegung: String {
+        guard let ablage else { return "—" }
+        func menge(_ b: Int) -> String { ByteCountFormatter.string(fromByteCount: Int64(b), countStyle: .file) }
+        guard let belegt = ablage.belegteBytes, let gesamt = ablage.gesamteBytes else {
+            return lokf("%d MP3", ablage.namen.count)
+        }
+        return lokf("%d MP3 · %@ von %@", ablage.namen.count, menge(belegt), menge(gesamt))
     }
 
     @ViewBuilder

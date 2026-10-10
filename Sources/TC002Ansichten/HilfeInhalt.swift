@@ -202,6 +202,7 @@ public enum HilfeInhalt {
         .absatz("Tasten und Drehknopf sieht die App nur im MQTT-Betrieb, weil nur das Mitlesen sie mitbekommt; im HTTP-Betrieb stehen sie grau da."),
         .absatz("„Uhr neu starten …“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist."),
         .absatz("Der Abschnitt „Ton“ zeigt, was die Uhr gerade spielt: das Radio mit Sender und Titel, sonst einen Alarm oder eine App mit ihrem Namen, sonst „Still“. „Stopp“ hält allen Klang an, „Radio aus“ nur das Radio. Die Lautstärke ist die der Uhr in Prozent. Aus der Senderliste der Uhr wählst du einen Sender und spielst ihn mit „Abspielen“. Sender legst du nicht in dieser App an, sondern in der Web-Oberfläche der Uhr unter „Konfigurieren“. Gelesen wird über die Adresse der Uhr, im Takt der übrigen Fernbedienung; ohne Adresse ist der Abschnitt grau. Meldet die Uhr kein Radio, fehlt dieser Teil."),
+        .absatz("MP3-Dateien lädst du im Abschnitt „Ton“ mit „MP3 hochladen …“ auf die Uhr; die Liste darüber zeigt, was dort liegt, mit Größe und Belegung. Die Uhr nimmt nur Namen aus 1 bis 32 Zeichen: Buchstaben ohne Akzent, Ziffern, „_“ und „-“. Die App schlägt aus dem Dateinamen einen solchen Namen vor („Grüße aus Wien.mp3“ wird „Gruesse-aus-Wien“) und prüft deine Änderungen beim Tippen. Gibt es den Namen schon, wählst du, ob die vorhandene Datei ersetzt wird oder ein freier Name gilt; trägt eine Melodie den Namen, geht nur ein anderer. Nach dem Hochladen steht der Name unter Klang › „Von der Uhr“. Das geht nur über die Adresse der Uhr. Löschen kannst du eine Datei durch Wischen, im Kontextmenü oder am Zeiger über den Papierkorb."),
     ]
 
     /// Die gespeicherten Einstellungen der Uhr. Wo man sie findet, steht in
@@ -365,6 +366,7 @@ public enum HilfeInhalt {
             "**Bildschirm:** `bildschirm` liest das Display der Uhr und gibt es als Text aus, ein Zeichen je Pixel.",
             "**Steuerung:** `display`, `helligkeit`, `moodlight`, `indikator`, `weiter`, `zurueck`, `neustart`, `zustand`, `einstellungen` (lesen und mit `setzen` ändern) und `tls` (Stand lesen, CA laden oder entfernen; TLS selbst schaltet es nie ein).",
             "**Ton:** `ton spielen` (Datei, Melodie, Lied, Sprache oder Radiosender), `ton stopp`, `ton zustand`, `ton melodien`, `ton melodie`, `ton sender`; an `nachricht` hängt `--klang` einen Ton.",
+            "**MP3 auf der Uhr:** `ton mp3` listet die Dateien, `ton mp3 hochladen <Datei>` lädt eine hoch (ohne `--name` gilt der Vorschlag und wird ausgegeben; eine vorhandene Datei ersetzt nur `--ersetzen`), `ton mp3 loeschen <Name>` löscht sie.",
             "**Auflisten:** `uhren`, `icons`, `bilder`, `effekte`.",
         ]),
         .absatz("Über MQTT wartet das Werkzeug auf die Antwort der Uhr: Weist sie ab, stehen Code und Feld auf der Fehlerausgabe, und der Aufruf endet mit 1. `--trocken` zeigt nur, was gesendet würde. Melodien, Senderliste, Tonzustand, TLS und Zustandsabfragen laufen über HTTP und brauchen die Adresse der Uhr."),
