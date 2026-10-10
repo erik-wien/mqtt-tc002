@@ -417,12 +417,12 @@
 "„%@“ wird in %d Pixeln nicht angeboten. Möglich sind: %@." = "“%@” is not offered at %d pixels. Available sizes: %@.";
 
 /* TC002iOS/Kurzbefehle.swift */
-"Meldung an die Uhr schicken" = "Send a message to the clock";
-"Meldung von der Uhr nehmen" = "Remove a message from the clock";
+"Meldung an die Uhr schicken" = "Show on clock";
+"Meldung von der Uhr nehmen" = "Remove from clock";
 "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen." = "Sends text to a configured Ulanzi TC002. Font and alignment come from the settings last chosen in the app.";
-"Entfernt eine der fünf Meldungen wieder von der Uhr." = "Removes one of the five messages from the clock.";
-"Meldung schicken" = "Send message";
-"Meldung nehmen" = "Remove message";
+"Entfernt eine der fünf Meldungen wieder von der Uhr." = "Removes one of the five displays from the clock.";
+"Meldung schicken" = "Show on clock";
+"Meldung nehmen" = "Remove from clock";
 "Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen." = "No icon with the number or name %@. Check under “Icon” in the app.";
 "An %@ geschickt." = "Sent to %@.";
 "Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“." = "No clock set up yet. That's done in the app under “Settings”.";
@@ -435,8 +435,8 @@
 "Nummer eines vorhandenen Icons." = "Number of an existing icon.";
 "Dauer in Sekunden" = "Duration in seconds";
 "Platz 1 bis 5 auf der Uhr." = "Slot 1 to 5 on the clock.";
-"${text} an die Uhr schicken" = "Send ${text} to the clock";
-"Slot ${platz} von der Uhr nehmen" = "Remove slot ${platz} from the clock";
+"${text} an die Uhr schicken" = "Show ${text} on clock";
+"Slot ${platz} von der Uhr nehmen" = "Remove slot ${platz} from clock";
 "„als Pixel“ rastert die App selbst, mit einer ihrer Pixelschriften. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt Umlaute und Akzente, aber keine Auswahl." = "“As pixels” means the app rasterizes the text itself, with one of its pixel fonts. “As text” leaves the typesetting to the clock, whose font knows umlauts and accents but offers no choice of typeface.";
 "Gilt nur auf dem Weg „als Pixel“." = "Only applies with the method “as pixels”.";
 "Größe in Pixeln" = "Size in pixels";
@@ -510,7 +510,7 @@
 /* HilfeiOS.swift — Abschnitt „Kurzbefehle“ (nur die iPhone-Fassung) */
 "Und alle folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung." = "And all of them follow the method that is set for the clock — there is no separate entry for it in the shortcut. A tool that sends differently from the app would be a trap: the same slot, the same clock, a different channel, and nobody would see it. The same holds for the command line tool of the Mac version.";
 "Kurzbefehle" = "Shortcuts";
-"Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung nehmen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls." = "The app comes with five shortcuts: “Send message”, “Send image”, “Send notification”, “Dismiss notification” and “Remove message”. They appear in the Shortcuts app by themselves and can be placed into a shortcut of your own, into an automation or onto a button; Siri knows them as well.";
+"Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung nehmen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls." = "The app comes with five shortcuts: “Show on clock”, “Send image”, “Send message”, “Dismiss message” and “Remove from clock”. They appear in the Shortcuts app by themselves and can be placed into a shortcut of your own, into an automation or onto a button; Siri knows them as well.";
 "Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format." = "Only the text is required. Everything else is optional and sits under the expandable details in the Shortcuts app: clock, icon number, duration, slot — and the whole format.";
 "Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine." = "Whatever is not given comes from what was last set under Send. So a shortcut without any format details sends exactly what the app would have sent; one with a single detail changes exactly that one.";
 "Die Formatangaben" = "The format details";
@@ -520,7 +520,7 @@
 "Angeboten werden nur die Größen, die die App zu dieser Schriftart anbietet. Steht die verlangte nicht darauf, sendet der Kurzbefehl nicht, sondern fragt noch einmal und nennt die möglichen. Stillschweigend die nächstbeste zu nehmen hieße, etwas anderes zu senden, als im Kurzbefehl steht — und niemand sähe es." = "Only the sizes the app offers for that typeface are available. If the requested one is not among them, the shortcut does not send but asks again and names the ones that are. Silently taking the closest would mean sending something other than what the shortcut says — and nobody would see it.";
 "Wer nur die Schriftart wechselt und keine Größe angibt, bekommt die nächstgelegene ihrer Liste — genau wie beim Umschalten der Schriftart in der App." = "If you only change the typeface and give no size, you get the closest one on its list — exactly as when switching the typeface in the app.";
 "Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten." = "Removes one of the five slots from the clock again, optionally from a particular one.";
-"„Meldung schicken“ und „Meldung nehmen“ schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück." = "“Send message” and “Remove message” write the same memory as the app: what a shortcut has sent to one of the five slots is shown by its block under Send even after a restart, and tapping it brings the controls back.";
+"„Meldung schicken“ und „Meldung nehmen“ schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück." = "“Show on clock” and “Remove from clock” write the same memory as the app: what a shortcut has sent to one of the five slots is shown by its block under Send even after a restart, and tapping it brings the controls back.";
 
 /* UeberView.swift */
 "Die Lizenzdatei liegt nicht im App-Paket. Am Mac passiert das, wenn die App nicht über ./build.sh gebaut wurde." = "The license file is not in the app bundle. On the Mac that happens when the app was not built with ./build.sh.";
@@ -674,7 +674,7 @@
 "Noch keine Bilder. Sie entstehen im Editor am Mac und am iPad." = "No images yet. They are made in the editor on the Mac and the iPad.";
 "Kein Bild namens %@. Vorhanden: %@" = "No image named %@. Available: %@";
 "%@ geschickt." = "%@ sent.";
-"Bild an die Uhr schicken" = "Send an image to the clock";
+"Bild an die Uhr schicken" = "Send image";
 "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon." = "Sends a finished 52 × 16 display from the stock to a configured Ulanzi TC002. It fills the screen and replaces text and icon.";
 "Bild schicken" = "Send image";
 "Bild ${bild} an die Uhr schicken" = "Send image ${bild} to the clock";
@@ -1019,7 +1019,7 @@
 "${text} als Nachricht an die Uhr senden" = "Send ${text} to the clock as a message";
 "Nachricht ${name} zurückziehen" = "Dismiss message ${name}";
 "Nachricht senden und zurückziehen" = "Sending and dismissing a message";
-"„Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare." = "\"Send notification\" shows a text once over the clock's loop without taking up a slot. By default it stays and wakes the panel; the \"Hold\" and \"Wake up\" switches change that. With a name it can later be dismissed specifically, without a name only the visible one.";
+"„Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare." = "\"Send message\" shows a text once over the clock's loop without taking up a slot. By default it stays and wakes the panel; the \"Hold\" and \"Wake up\" switches change that. With a name it can later be dismissed specifically, without a name only the visible one.";
 "„Nachricht zurückziehen“ nimmt die sichtbare Nachricht weg, mit Namen die benannte. Über MQTT wartet jeder Kurzbefehl auf die Antwort der Uhr: Weist sie ab, zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus, steht ein Hinweis im Dialog." = "\"Dismiss message\" takes away the visible message, or the named one. Over MQTT each shortcut waits for the clock's answer: if the clock rejects, the Shortcuts app shows the reason; if no answer comes, a note appears in the dialog.";
 "Lebensdauer in Minuten" = "Lifetime in minutes";
 "Nach dieser Zeit verschwindet die Anzeige von selbst. Ohne Angabe: 30 Minuten." = "After this time the display disappears by itself. Without a value: 30 minutes.";
@@ -1033,7 +1033,7 @@
 "Anzeige oder Nachricht" = "Display or message";
 "Das Segment „Anzeige | Nachricht“ über dem Eingabefeld bestimmt, was „Senden“ schickt. Eine Anzeige liegt auf einem der fünf Plätze und läuft in der Schleife der Uhr. Eine Nachricht unterbricht die Schleife einmal und belegt keinen Platz; bei „Nachricht“ sind die fünf Blöcke deshalb ausgegraut." = "The “Display | Message” segment above the input field decides what “Send” sends. A display sits on one of the five slots and runs in the clock's loop. A message interrupts the loop once and occupies no slot; with “Message” the five blocks are therefore greyed out.";
 "Die Regler der Nachricht: „Halten“ lässt sie stehen, bis sie zurückgezogen wird; „Aufwecken“ zeigt sie auch bei ausgeschaltetem Display; „Ersetzen“ verdrängt die sichtbare Nachricht, statt sich hinter ihr einzureihen; „Durchläufe“ sagt, wie oft ein laufender Text durchzieht. Voreingestellt sind Halten und Aufwecken an, Ersetzen aus, zwei Durchläufe. Die Dauer gilt wie bei einer Anzeige." = "The message controls: “Hold” keeps it until it is withdrawn; “Wake” shows it even when the display is off; “Replace” displaces the visible message instead of queueing behind it; “Passes” says how often scrolling text runs through. By default Hold and Wake are on, Replace is off, two passes. The duration applies as for a display.";
-"Solange eine gehaltene Nachricht steht, die diese App geschickt hat, erscheint neben dem Segment „Nachricht zurückziehen“. Nachricht und Zurückziehen gelten für alle gewählten Uhren." = "While a held message that this app sent is showing, “Withdraw message” appears next to the segment. Message and withdrawing apply to all selected clocks.";
+"Solange eine gehaltene Nachricht steht, die diese App geschickt hat, erscheint neben dem Segment „Nachricht zurückziehen“. Nachricht und Zurückziehen gelten für alle gewählten Uhren." = "While a held message that this app sent is showing, “Dismiss message” appears next to the segment. Message and withdrawing apply to all selected clocks.";
 "Lebensdauer und Nachricht stehen im Reiter „Zeit“ des Inspektors. Der Abschnitt der nicht gewählten Art ist gesperrt, nicht ausgeblendet." = "Lifetime and message are in the inspector's “Time” tab. The section of the kind that is not selected is disabled, not hidden.";
 "Art" = "Kind";
 "Anzeige" = "Display";

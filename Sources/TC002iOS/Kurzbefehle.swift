@@ -417,7 +417,7 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: MeldungSendenIntent(),
                     phrases: ["Schicke eine Meldung mit \(.applicationName)",
-                              "Send a message with \(.applicationName)"],
+                              "Show on the clock with \(.applicationName)"],
                     shortTitle: "Meldung schicken",
                     systemImageName: "paperplane")
         AppShortcut(intent: BildSendenIntent(),
@@ -437,7 +437,7 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
                     systemImageName: "bell.slash")
         AppShortcut(intent: MeldungLoeschenIntent(),
                     phrases: ["Nimm die Meldung von der Uhr mit \(.applicationName)",
-                              "Clear a message with \(.applicationName)"],
+                              "Remove from the clock with \(.applicationName)"],
                     shortTitle: "Meldung nehmen",
                     systemImageName: "trash")
     }

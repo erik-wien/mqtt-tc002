@@ -49,7 +49,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 > 5. Message: switch to “Message” above the text field and send; it stays until “Dismiss message” appears and you tap it. Choose something under “Sound” (the virtual clock reports what it can do).
 > 6. Control: tap the clock's name at the top › “Control …”: live picture, display off and on, brightness, moodlight, the “Sound” section. Also “Clock settings …”.
 > 7. Icons: tap the smiley button next to the text field, pick an icon, or under “Add” enter a LaMetric number (e.g. 2056) and tap “Fetch”; then send.
-> 8. Shortcuts app: search for “Send a message to the clock”, enter a text, run it — also by Siri (“Send a message with Pixel Clock Messenger”). Then “Remove a message from the clock” with slot 1.
+> 8. Shortcuts app: search for “Show on clock”, enter a text, run it — also by Siri (“Show on the clock with Pixel Clock Messenger”). Then “Remove from clock” with slot 1.
 > 9. iPad (if available): area “Icons” › “Draw new”: draw an icon, several frames as an animation, Undo; save and send. With iCloud it appears on iPhone.
 > 10. With a real clock (AWTRIX NG): Settings › Clocks: enter the clock's address (optionally an MQTT broker under “MQTT-Broker”), “Query”, send.
 > Feedback welcome as screenshots in TestFlight.
@@ -68,7 +68,7 @@ support@eriks.cloud
 > 6. Back on “Send”, switch the control above the field from “Display” to “Message” and send again. A message interrupts the loop once and uses no slot; “Dismiss message” appears next to the control and withdraws it. The “Sound” choice below the message controls is greyed out if the clock reports no sound capability.
 > 7. Tap the clock's name at the top of the Send screen and choose “Control …”: live picture of the display, display on/off, brightness, moodlight, indicators, and a “Sound” section. “Clock settings …” in the same menu shows the settings stored on the clock, in groups.
 > 8. In the format pill tap the brush and then the tab “Appearance” to choose background, effect, overlay and palette (the names come from the clock).
-> Shortcuts: the Shortcuts app and Siri offer five actions without setup: “Send a message to the clock”, “Send an image to the clock”, “Remove a message from the clock”, “Send message” and “Dismiss message” (the last two are for notifications). They use the same clock list as the app.
+> Shortcuts: the Shortcuts app and Siri offer five actions without setup: “Show on clock”, “Send image”, “Remove from clock”, “Send message” and “Dismiss message” (the last two are for messages that interrupt the loop). They use the same clock list as the app.
 > On iPad the app additionally contains a pixel editor (area “Icons” › “Draw new”). On iPhone icons are chosen, not drawn.
 > VIDEO: <Link folgt>
 > Network access: the app talks only to (a) the user's own clock via HTTP on the local network, (b) the user's own MQTT broker, if configured, and (c) developer.lametric.com, only when the user types a LaMetric icon number and taps “Fetch” in the icon sheet; only that number is sent. Radio stations and speech are played by the clock itself; the app only sends commands. Nothing is sent to the developer; there is no analytics, no advertising and no account. The broker password is kept in the iOS keychain.
@@ -236,9 +236,9 @@ Grundlage ist Eriks Entwurf. Änderungen in dieser Fassung (Oktober 2026): nur n
 >
 > Five shortcuts are ready in Siri and the Shortcuts app with no setup:
 >
-> • Send a message to the clock
-> • Send an image to the clock
-> • Remove a message from the clock
+> • Show on clock
+> • Send image
+> • Remove from clock
 > • Send message
 > • Dismiss message
 >

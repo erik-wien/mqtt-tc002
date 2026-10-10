@@ -33,9 +33,9 @@ collections hang on them.
   an animated GIF.
 - **Appearance:** background color, effects, overlays (weather) and palettes, as
   the clock itself offers them.
-- **Displays and notifications:** A display sits in a slot and runs in the
+- **Displays and messages:** A display sits in a slot and runs in the
   clock's loop, with duration and lifetime (expires by itself or stays). A
-  notification interrupts the loop once, can be held and dismissed, and can bring
+  message interrupts the loop once, can be held and dismissed, and can bring
   a sound (melody, MP3, speech).
 - **Several clocks:** target selectable per send, method per clock (HTTP or MQTT).
 - **Clock control:** remote control with a live picture of the display, state,
@@ -82,7 +82,7 @@ ln -sf /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 ~/.local/bin/mqtttc
 mqtttc002 "Coffee is ready"
 mqtttc002 senden "Mail" --icon post --farbe "#FFAA00" --dauer 10
 mqtttc002 senden Attention --an Kitchen --zentriert --unten
-mqtttc002 nachricht "Door open" --name door   # one-off notification over the loop
+mqtttc002 nachricht "Door open" --name door   # one-off message over the loop
 mqtttc002 zurueckziehen door
 mqtttc002 layout boxes.json                   # boxes with one content each
 mqtttc002 bildschirm                          # the clock's display as text
