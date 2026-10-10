@@ -7,13 +7,19 @@ import UIKit
 
 public extension Color {
     /// Wandelt "#RRGGBB" in eine Farbe. Ungültige Angaben ergeben nil.
+    ///
+    /// Gemerkt je Angabe: Die Vorschau zeichnet bis zu 830 Punkte je Bild mit
+    /// einer Handvoll verschiedener Farben, und das Zerlegen der Zeichenkette
+    /// machte den Großteil der Arbeit je Bild aus.
     init?(hex: String) {
+        if let bekannt = Farbspeicher.suchen(hex) { self = bekannt; return }
         var s = hex.trimmingCharacters(in: .whitespaces)
         if s.hasPrefix("#") { s.removeFirst() }
         guard s.count == 6, let wert = UInt32(s, radix: 16) else { return nil }
         self.init(red: Double((wert >> 16) & 0xFF) / 255,
                   green: Double((wert >> 8) & 0xFF) / 255,
                   blue: Double(wert & 0xFF) / 255)
+        Farbspeicher.merken(self, fuer: hex)
     }
 
     /// "#RRGGBB" aus der Farbe. Über sRGB, damit derselbe Farbwert herauskommt,
@@ -47,5 +53,24 @@ public extension Color {
         func stufe(_ wert: CGFloat) -> Int { Int(min(max(wert, 0), 1) * 255) }
         return String(format: "#%02X%02X%02X",
                       stufe(teile[0]), stufe(teile[1]), stufe(teile[2]))
+    }
+}
+
+/// Die Farben, die `Color(hex:)` schon zerlegt hat. Die Obergrenze hält eine
+/// lange Sitzung mit vielen verschiedenen Farben klein.
+private enum Farbspeicher {
+    private static let sperre = NSLock()
+    nonisolated(unsafe) private static var farben: [String: Color] = [:]
+    private static let grenze = 1024
+
+    static func suchen(_ hex: String) -> Color? {
+        sperre.lock(); defer { sperre.unlock() }
+        return farben[hex]
+    }
+
+    static func merken(_ farbe: Color, fuer hex: String) {
+        sperre.lock(); defer { sperre.unlock() }
+        if farben.count >= grenze { farben.removeAll() }
+        farben[hex] = farbe
     }
 }

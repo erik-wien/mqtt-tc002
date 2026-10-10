@@ -33,10 +33,16 @@ struct IconAuswahlView: View {
     @State private var nurBewegte = false
     /// Einmal gelesen — die Begründung steht bei `bewegteKennungen()`.
     @State private var bewegte: Set<String> = []
+    /// Der Bestand, einmal von der Platte gelesen (`bewegungLesen`). Vor dem
+    /// ersten Lesen — das Blatt ist gerade aufgegangen — wird einmal direkt
+    /// gelesen, damit das erste Bild nicht leer steht. Ohne den Zwischenspeicher
+    /// läse jede Auswertung des Blatts, also jeder Buchstabe in der Suche, alle
+    /// Ordner neu.
+    @State private var bestand: [Icon]?
 
     private var gefilterte: [Icon] {
         _ = aktualisierung
-        return sammlungen.flatMap { $0.alle() }
+        return (bestand ?? sammlungen.flatMap { $0.alle() })
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             .gefiltert(Iconfilter(suche: suche, kante: filterkante, nurBewegte: nurBewegte),
                        bewegt: { bewegte.contains($0.kennung) })
@@ -45,7 +51,9 @@ struct IconAuswahlView: View {
     /// Den Bestand einmal nach Bewegung fragen — beim Öffnen des Blattes und
     /// nach jeder Änderung am Bestand.
     private func bewegungLesen() {
-        bewegte = sammlungen.flatMap { $0.alle() }.bewegteKennungen()
+        let alle = sammlungen.flatMap { $0.alle() }
+        bestand = alle
+        bewegte = alle.bewegteKennungen()
     }
 
     /// Das Mindestmass einer Kachel. `@ScaledMetric` laesst es mit der

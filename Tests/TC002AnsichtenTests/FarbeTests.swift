@@ -50,4 +50,14 @@ final class FarbeTests: XCTestCase {
         XCTAssertNil(Color(hex: "#GGGGGG"))
         XCTAssertNil(Color(hex: ""))
     }
+
+    /// Das Gemerkte ändert nichts am Ergebnis: Zweiter Aufruf, andere Schreibweise
+    /// mit Leerraum und ungültige Angaben verhalten sich wie beim ersten Mal.
+    func testGemerkteFarbeLiefertDasselbeUndUngueltigesBleibtNil() throws {
+        for _ in 0..<3 { XCTAssertEqual(Color(hex: "#7F7F7F")?.hexWert, "#7F7F7F") }
+        XCTAssertEqual(Color(hex: " #7F7F7F ")?.hexWert, "#7F7F7F")
+        XCTAssertNil(Color(hex: "#12AB3"))
+        XCTAssertNil(Color(hex: "#12AB3G"))
+        XCTAssertNil(Color(hex: "#12AB3G"), "auch beim zweiten Mal")
+    }
 }
