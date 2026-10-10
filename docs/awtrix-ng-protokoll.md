@@ -552,6 +552,12 @@ Dateinamen einen gültigen vor (`Klangname`) und zeigt ihn vor dem Hochladen.
 ❓ Eine Größengrenze für das Hochladen ist nicht gemessen; die App nimmt 4 MB an
 (wie bei MP3 von einer Adresse, §5).
 
+🔬 TC001, gemessen am 10. Oktober 2026 (NG 1.2.2, 512 KB Speicher): Melodien
+spielt sie über ihren Summer (`{"rtttl":…}` und gespeicherte Melodien, 21 Stück
+belegen 16 KiB). Eine MP3 nimmt sie beim Hochladen an und listet sie, spielt
+sie aber nicht: `{"file":"star_trek"}` ist `404 notFound`,
+`{"file":"MP3/star_trek"}` ist `unavailable` (keine Audioausgabe für MP3).
+
 **Fähigkeiten, System, Dateien**
 
 | Route | Wozu |

@@ -538,6 +538,12 @@ suggests a valid name for any file name (`Klangname`) and shows it before
 uploading. ❓ No size limit for uploads has been measured; the app assumes 4 MB
 (as for an MP3 from an address, §5).
 
+🔬 TC001, measured on 10 October 2026 (NG 1.2.2, 512 KB storage): it plays
+melodies on its buzzer (`{"rtttl":…}` and stored melodies; 21 of them take
+16 KiB). It accepts and lists an uploaded MP3 but does not play it:
+`{"file":"star_trek"}` is `404 notFound`, `{"file":"MP3/star_trek"}` is
+`unavailable` (no audio output for MP3).
+
 **Capabilities, system, files**
 
 | Route | Purpose |
