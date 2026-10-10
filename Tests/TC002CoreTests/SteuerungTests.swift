@@ -291,6 +291,21 @@ final class SteuerungTests: XCTestCase {
         XCTAssertNil(Uhrenereignis.lesen(thema: "andere/state/apps/active", nutzlast: Data("x".utf8), praefix: p))
     }
 
+    func testUngeheureZahlenInEreignissenUndEinstellungenStuerzenNichtAb() throws {
+        let p = "wz/uhr"
+        for roh in ["1e308", "1e400", "-1e308", "9223372036854775807", "NaN", "Infinity", "1001"] {
+            XCTAssertNil(Uhrenereignis.lesen(thema: p + "/event/knob", nutzlast: Data("{\"turn\":\(roh)}".utf8), praefix: p), roh)
+        }
+        let e = try Geraeteeinstellungen(daten: Data(#"{"gamma":1e308,"volume":1e308,"brightness":9223372036854775807,"scroll":{"speed":1e30}}"#.utf8))
+        _ = e.zeilen(in: .helligkeitFarbe); _ = e.zeilen(in: .klang)
+        XCTAssertNil(e.ganzzahl(.volume)); XCTAssertNil(e.lauftext)
+        let z = try Geraetezustand(daten: Data(#"{"wifiRssi":1e308,"brightness":1e30,"indicators":[{"blinkMs":1e308}]}"#.utf8))
+        XCTAssertNil(z.helligkeit)
+        let a = try Anzeigestand(daten: Data(#"{"power":true,"brightness":1,"moodlight":{"color":1e30,"brightness":2}}"#.utf8))
+        XCTAssertNil(a.moodlight)
+        XCTAssertEqual(Einstellungsart.kurz(.zahl(1e308)), String(1e308))
+    }
+
     func testDieZustandsthemenSindEinzelnGenannt() {
         XCTAssertEqual(NGThema.zustandsthemen(praefix: "wz/uhr"),
                        ["wz/uhr/state/device", "wz/uhr/state/settings", "wz/uhr/state/apps/active",

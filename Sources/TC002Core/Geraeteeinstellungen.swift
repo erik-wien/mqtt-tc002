@@ -135,7 +135,7 @@ public indirect enum Einstellungsart: Equatable, Sendable {
         switch wert {
         case .null: return "null"
         case .bool(let b): return b ? "true" : "false"
-        case .zahl(let d): return d == d.rounded() ? String(Int(d)) : String(d)
+        case .zahl(let d): return d == d.rounded() && abs(d) < 1e15 ? String(Int(d)) : String(d)
         case .text(let t): return t
         case .liste, .objekt: return String(decoding: wert.daten, as: UTF8.self)
         }

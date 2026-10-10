@@ -97,8 +97,13 @@ extension AppZustand {
             tasten[id, default: [:]][taste] = gedrueckt
         case .drehknopf(let rasten):
             let alt = drehknopf[id]
-            drehknopf[id] = Drehknopfstand(letzteRasten: rasten, summe: (alt?.summe ?? 0) + rasten,
-                                           zaehler: (alt?.zaehler ?? 0) + 1)
+            // Sättigend: ein Zähler darf nie zum Absturz führen.
+            func plus(_ a: Int, _ b: Int) -> Int {
+                let (r, ueberlauf) = a.addingReportingOverflow(b)
+                return ueberlauf ? (b > 0 ? Int.max : Int.min) : r
+            }
+            drehknopf[id] = Drehknopfstand(letzteRasten: rasten, summe: plus(alt?.summe ?? 0, rasten),
+                                           zaehler: plus(alt?.zaehler ?? 0, 1))
         case .fehler(let f):
             uhrenfehler[id] = f
             log(lokf("%@ meldet eine Abweisung: %@ (%@)", uhr.name, f.fehler, f.anfrage))

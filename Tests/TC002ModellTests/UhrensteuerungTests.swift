@@ -227,6 +227,26 @@ final class UhrensteuerungTests: XCTestCase {
         XCTAssertNil(z.fehler, "ein Ereignis ist kein Fenster; die Ansicht entscheidet")
     }
 
+    func testHugeKnobPayloadsDoNotCrash() throws {
+        let (z, uhr) = try mqttUhr()
+        for roh in ["9223372036854775807", "-9223372036854775808", "1e308", "1001", "-1001", "1e400"] {
+            gemeldet(z, uhr, "event/knob", "{\"turn\":\(roh)}")
+        }
+        XCTAssertNil(z.drehknopf[uhr.id], "alles ausserhalb von ±1000 wird verworfen")
+        gemeldet(z, uhr, "event/knob", #"{"turn":1000}"#)
+        gemeldet(z, uhr, "event/knob", #"{"turn":-1000}"#)
+        XCTAssertEqual(z.drehknopf[uhr.id], Drehknopfstand(letzteRasten: -1000, summe: 0, zaehler: 2))
+        z.drehknopf[uhr.id] = Drehknopfstand(letzteRasten: 0, summe: Int.max - 5, zaehler: Int.max)
+        gemeldet(z, uhr, "event/knob", #"{"turn":1000}"#)
+        XCTAssertEqual(z.drehknopf[uhr.id]?.summe, Int.max)
+        XCTAssertEqual(z.drehknopf[uhr.id]?.zaehler, Int.max)
+        z.drehknopf[uhr.id] = Drehknopfstand(letzteRasten: 0, summe: Int.min + 5, zaehler: 0)
+        gemeldet(z, uhr, "event/knob", #"{"turn":-1000}"#)
+        XCTAssertEqual(z.drehknopf[uhr.id]?.summe, Int.min)
+        for _ in 0..<5000 { gemeldet(z, uhr, "event/knob", #"{"turn":7}"#) }
+        XCTAssertNotNil(z.drehknopf[uhr.id])
+    }
+
     func testDerAbrissDesMitlesensLeertDieTasten() throws {
         let (z, uhr) = try mqttUhr()
         gemeldet(z, uhr, "state/buttons/right", "1")

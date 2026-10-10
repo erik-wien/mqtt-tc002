@@ -151,6 +151,13 @@ public struct TLSStatus: Equatable, Sendable {
     public var oeffentlich: Bool { ca == "public" }
 }
 
+/// Die Doku nennt für `event/knob` keine Obergrenze (schnelles Drehen bündelt
+/// Rasten); was darüber liegt, kommt von keinem Knopf und ist ein ungültiges
+/// Ereignis.
+public enum Drehknopf {
+    public static let rastenbereich = -1000...1000
+}
+
 /// Eine der Tasten oder der Knopf des Drehknopfs (`state/buttons/*`, §3.5).
 public enum Taste: String, Equatable, Sendable, CaseIterable {
     case links = "left", mitte = "select", rechts = "right", knopf = "knob"
@@ -190,7 +197,8 @@ public enum Uhrenereignis: Equatable, Sendable {
             // Eine blanke Zeichenkette, kein JSON.
             return text.isEmpty ? nil : .aktiveAnzeige(text)
         case NGThema.ereignisDrehknopf(praefix: praefix):
-            guard case .objekt(let o)? = JSONWert.lesen(nutzlast), let n = o["turn"]?.ganzzahl else { return nil }
+            guard case .objekt(let o)? = JSONWert.lesen(nutzlast), let n = o["turn"]?.ganzzahl,
+                  Drehknopf.rastenbereich.contains(n) else { return nil }
             return .drehknopf(n)
         case NGThema.ereignisFehler(praefix: praefix):
             guard case .objekt(let o)? = JSONWert.lesen(nutzlast) else { return nil }
