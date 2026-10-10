@@ -43,6 +43,13 @@ AUFRUF
   mqtttc002 tls                    der TLS-Stand fuer MQTT (nur lesen)
   mqtttc002 tls ca <Datei.pem>     die CA des Brokers auf die Uhr laden
   mqtttc002 tls ca entfernen       die hochgeladene CA entfernen
+  mqtttc002 ton spielen ...        einen Klang spielen (--datei, --rtttl, --lied, --sprache, --sender)
+  mqtttc002 ton stopp [<Gruppe>]   Klang anhalten: alarm, app oder radio, ohne Angabe alles
+  mqtttc002 ton zustand            was spielt, und die Zahl der Sender
+  mqtttc002 ton melodien           die gespeicherten Melodien auflisten
+  mqtttc002 ton melodie <Name> --rtttl "..."   eine Melodie anlegen oder ersetzen
+  mqtttc002 ton melodie <Name> --loeschen      eine Melodie loeschen
+  mqtttc002 ton sender             die Senderliste der Uhr
   mqtttc002 hilfe                  diesen Text
 
 Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
@@ -74,6 +81,20 @@ STEUERUNG DER UHR
                       alles aus der Systemkonfiguration (WLAN, Broker, Firmware) stellt
                       das Werkzeug nicht ein.
   tls, tls ca: nur ueber HTTP, die Uhr braucht eine Adresse.
+
+KLANG
+  ton spielen nimmt genau eine Quelle:
+  --datei <Name|Adresse>   gespeicherter Name (MP3, sonst Melodie) ohne Endung, oder http(s)-Adresse
+  --rtttl "<Text>"    eine Melodie als RTTTL (Name:Einstellungen:Noten, hoechstens 512 Zeichen)
+  --lied "<Text>"     ein Lied fuer den Synthesizer (hoechstens 16384 Byte)
+  --sprache "<Text>"  gesprochener Text (1-512 Byte, nur mit Stimme)
+  --sender <Name|Nr|Adresse>   Internetradio; eine Zahl ist die Listenposition ab 0
+  --wiederholen       bis zum Stopp wiederholen (nicht mit --sender)
+  Die Uhr meldet, was sie kann ("capabilities"); was sie nicht kann, weist das Werkzeug
+  vor dem Senden ab. Melodien, Listen und "ton zustand" gehen nur ueber HTTP, die Uhr
+  braucht dafuer eine Adresse. Melodienamen: 1-24 Zeichen aus Buchstaben, Ziffern, _ und -.
+  An "nachricht" haengt --klang <Name|Adresse>, --rtttl "<Text>" oder --sprache "<Text>"
+  (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; Lied und Sender gehen dort nicht.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
@@ -128,6 +149,7 @@ OPTIONEN FUER „nachricht"
   --nicht-wecken      erscheint nicht bei ausgeschaltetem Panel
   --ersetzen          ersetzt die sichtbare, statt sich hinten anzustellen
   --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft (Vorgabe: 2)
+  --klang <Name|Adresse>, --rtttl "<Text>", --sprache "<Text>", --wiederholen   ein Ton, siehe KLANG
 
 Ueber MQTT wartet das Werkzeug auf die Antwort der Uhr (<Thema>/result): Weist die
 Uhr ab, steht Code und Feld auf der Fehlerausgabe und der Aufruf endet mit 1.
@@ -150,6 +172,10 @@ BEISPIELE
   mqtttc002 moodlight --kelvin 2700 --helligkeit 80
   mqtttc002 indikator 1 --farbe "#FF0000" --blinken 500
   mqtttc002 einstellungen setzen volume 40
+  mqtttc002 ton spielen --rtttl "ping:d=4,o=5,b=120:c,e,g"
+  mqtttc002 ton spielen --sender 0
+  mqtttc002 ton stopp radio
+  mqtttc002 nachricht "Post da" --klang ding
 
 Zu lange Texte laufen von selbst durch; das macht die App genauso.
 """
@@ -282,10 +308,10 @@ func lauf() throws {
                 // `--overlay` und `--palette` annehmen; Spalte 3 nur bei Effekten:
                 // ob sie die Palette nutzen.
                 for e in f.effekte {
-                    print("effekt\t\(e)\t\(f.nutztPalette(effekt: e) ? "palette" : "")")
+                    print("effekt\t\(Terminaltext.sicher(e))\t\(f.nutztPalette(effekt: e) ? "palette" : "")")
                 }
-                for o in f.overlays { print("overlay\t\(o)") }
-                for p in f.paletten { print("palette\t\(p)") }
+                for o in f.overlays { print("overlay\t\(Terminaltext.sicher(o))") }
+                for p in f.paletten { print("palette\t\(Terminaltext.sicher(p))") }
                 gelesen += 1
             } catch {
                 fehlerAusgeben("\(uhr.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
