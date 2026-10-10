@@ -1503,7 +1503,6 @@
 "%@: MP3 „%@“ gelöscht" = "%@: MP3 “%@” deleted";
 "MP3-Dateien lädst du im Abschnitt „Ton“ mit „MP3 hochladen …“ auf die Uhr; die Liste darüber zeigt, was dort liegt, mit Größe und Belegung. Die Uhr nimmt nur Namen aus 1 bis 32 Zeichen: Buchstaben ohne Akzent, Ziffern, „_“ und „-“. Die App schlägt aus dem Dateinamen einen solchen Namen vor („Grüße aus Wien.mp3“ wird „Gruesse-aus-Wien“) und prüft deine Änderungen beim Tippen. Gibt es den Namen schon, wählst du, ob die vorhandene Datei ersetzt wird oder ein freier Name gilt; trägt eine Melodie den Namen, geht nur ein anderer. Nach dem Hochladen steht der Name unter Klang › „Von der Uhr“. Das geht nur über die Adresse der Uhr. Löschen kannst du eine Datei durch Wischen, im Kontextmenü oder am Zeiger über den Papierkorb." = "You upload MP3 files to the clock in the “Sound” section with “Upload MP3 …”; the list above it shows what is there, with size and usage. The clock only takes names of 1 to 32 characters: letters without accents, digits, “_” and “-”. The app proposes such a name from the file name (“Grüße aus Wien.mp3” becomes “Gruesse-aus-Wien”) and checks your changes as you type. If the name already exists, you choose whether the existing file is replaced or a free name is used; if a melody has the name, only another one works. After uploading, the name appears under Sound › “From the clock”. This only works over the clock’s address. You delete a file by swiping, in the context menu, or at the pointer with the trash icon.";
 "**MP3 auf der Uhr:** `ton mp3` listet die Dateien, `ton mp3 hochladen <Datei>` lädt eine hoch (ohne `--name` gilt der Vorschlag und wird ausgegeben; eine vorhandene Datei ersetzt nur `--ersetzen`), `ton mp3 loeschen <Name>` löscht sie." = "**MP3 on the clock:** `ton mp3` lists the files, `ton mp3 hochladen <file>` uploads one (without `--name` the suggestion applies and is printed; an existing file is only replaced with `--ersetzen`), `ton mp3 loeschen <name>` deletes it.";
-"MP3 hochladen" = "Upload MP3";
 "Hochladen" = "Upload";
 "Datei" = "File";
 "Name auf der Uhr" = "Name on the clock";
@@ -1521,3 +1520,4 @@
 "MP3 hochladen …" = "Upload MP3 …";
 "%d MP3" = "%d MP3";
 "%d MP3 · %@ von %@" = "%d MP3 · %@ of %@";
+"MP3-Datei" = "MP3 file";

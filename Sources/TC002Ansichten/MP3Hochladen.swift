@@ -48,7 +48,7 @@ struct MP3Hochladeblatt: View {
     }
 
     var body: some View {
-        Blatt(titel: lok("MP3 hochladen"),
+        Blatt(titel: lok("MP3-Datei"),
               bestaetigung: lok("Hochladen"),
               bestaetigenMoeglich: darfHochladen,
               schliessen: { schliessen() },
