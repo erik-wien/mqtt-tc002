@@ -450,8 +450,9 @@ Stattdessen an Ort und Stelle ersetzen, das erhaelt die Identitaet:
 nicht mehr gibt, bleibt liegen, und `codesign --verify --deep --strict` meldet
 „a sealed resource is missing or invalid“ (09.10.2026: die entfernten
 `tc002-protokoll.md`/`tc002-protocol.md` und ein altes `Contents/CodeResources`).
-Nach dem `ditto` deshalb die Dateilisten vergleichen und Überzähliges einzeln
-entfernen, dann die Signatur prüfen.
+`release.sh` vergleicht danach die Dateilisten, entfernt Überzähliges einzeln und
+prüft die Signatur. Von Hand gilt derselbe Weg: nach dem `ditto` Dateilisten
+vergleichen, Überzähliges einzeln entfernen, dann die Signatur prüfen.
 
 Und die App moeglichst nur von **einem** Ort aus starten. Zwei Kopien mit
 derselben Buendelkennung — etwa `/Applications` und `erzeugt/mac/` — verwirren die

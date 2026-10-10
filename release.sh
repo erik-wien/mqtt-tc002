@@ -105,6 +105,24 @@ hdiutil attach "$DMG" -noautoopen -readonly >/dev/null
 spctl -a -vvv -t install "/Volumes/MQTT-TC002/MQTT-TC002.app"
 hdiutil detach "/Volumes/MQTT-TC002" >/dev/null
 
+# ditto fuehrt nur zusammen: Was das neue Buendel nicht mehr enthaelt, bleibt im
+# installierten liegen und bricht dessen Siegel. Entfernt wird einzeln, tiefste
+# Pfade zuerst; das Buendel selbst bleibt stehen (Identitaet, siehe CLAUDE.md).
+ueberzaehliges_entfernen() {
+    local neu="$1" alt="$2" pfad
+    comm -13 <(cd "$neu" && find . | LC_ALL=C sort) <(cd "$alt" && find . | LC_ALL=C sort) \
+        | LC_ALL=C sort -r \
+        | while IFS= read -r pfad; do
+            [ "$pfad" = "." ] && continue
+            if [ -d "$alt/$pfad" ] && [ ! -L "$alt/$pfad" ]; then
+                rmdir "$alt/$pfad"
+            else
+                rm -f "$alt/$pfad"
+            fi
+            echo "entfernt (nicht mehr im Buendel): $pfad"
+        done
+}
+
 echo "== Verteilen =="
 # Die App selbst bekommt das Ticket auch (Apple hat sie im Abbild mitgeprueft), dann:
 # auf diesem Mac installieren und in den geteilten iCloud-Ordner legen.
@@ -116,6 +134,11 @@ if [ "${TC002_VERTEILEN:-1}" = "1" ]; then
     sleep 1
     # An Ort und Stelle ersetzen, nie rm -rf (Freigabe „Lokales Netzwerk“, siehe CLAUDE.md).
     ditto "$APP" /Applications/MQTT-TC002.app
+    ueberzaehliges_entfernen "$APP" /Applications/MQTT-TC002.app
+    if ! codesign --verify --deep --strict /Applications/MQTT-TC002.app; then
+        echo "FEHLER: Signatur des installierten Buendels ungueltig" >&2
+        exit 1
+    fi
     xcrun stapler validate /Applications/MQTT-TC002.app >/dev/null
     echo "installiert: /Applications/MQTT-TC002.app"
     if [ -d "$ZIEL_ICLOUD" ]; then
