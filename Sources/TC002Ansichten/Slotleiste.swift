@@ -22,8 +22,8 @@ public struct Slotleiste: View {
     @Bindable var zustand: AppZustand
     let gewaehlt: Int
     let waehlen: (Int) -> Void
-    /// Bei „Nachricht“ sind die Plätze kein Ziel: ausgegraut und gesperrt, aber
-    /// sichtbar, damit die Reihe nicht springt.
+    /// Bei „Nachricht“ sind die Plätze kein Ziel: ausgegraut und nicht wählbar,
+    /// aber sichtbar, damit die Reihe nicht springt; ihr Menü bleibt.
     let gesperrt: Bool
 
     /// Über welchem Block der Zeiger steht — daran hängt allein das ⊗. Am
@@ -48,7 +48,10 @@ public struct Slotleiste: View {
     public var body: some View {
         HStack(spacing: 6) {
             ForEach(1...Meldungsplatz.anzahl, id: \.self) { i in
-                Button { waehlen(i) } label: {
+                // Gesperrt wird nur die Wahl, nicht der Knopf: `.disabled`
+                // sperrt auch das Kontextmenü, und Zeigen und Löschen gelten
+                // bei „Nachricht“ weiter.
+                Button { if !gesperrt { waehlen(i) } } label: {
                     Slotblock(platz: i,
                               zustand: zustand.slotzustand(i, belegt: belegte.contains(i)),
                               gewaehlt: gewaehlt == i && !gesperrt,
@@ -84,7 +87,6 @@ public struct Slotleiste: View {
                 }
             }
         }
-        .disabled(gesperrt)
         .opacity(gesperrt ? 0.4 : 1)
     }
 
