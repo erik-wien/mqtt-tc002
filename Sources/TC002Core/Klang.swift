@@ -346,6 +346,11 @@ public struct Tonzustand: Equatable, Sendable {
         public var sender = ""
         public var titel = ""
         public var fehler = ""
+        /// Nur beim laufenden Radio genannt; fehlt eines, bleibt es `nil`.
+        public var underruns: Int?
+        public var decodeUs: Int?
+        public var starvedMs: Int?
+        public var bufferBytes: Int?
     }
     /// Die Gruppen `app` und `alert`.
     public struct Wiedergabe: Equatable, Sendable {
@@ -365,7 +370,9 @@ public struct Tonzustand: Equatable, Sendable {
         guard ["radio", "app", "alert", "stations"].contains(where: { antwort[$0] != nil }) else { return nil }
         if let r = antwort["radio"] as? [String: Any] {
             radio = Radio(spielt: r["playing"] as? Bool ?? false, sender: r["station"] as? String ?? "",
-                          titel: r["title"] as? String ?? "", fehler: r["error"] as? String ?? "")
+                          titel: r["title"] as? String ?? "", fehler: r["error"] as? String ?? "",
+                          underruns: r["underruns"] as? Int, decodeUs: r["decodeUs"] as? Int,
+                          starvedMs: r["starvedMs"] as? Int, bufferBytes: r["bufferBytes"] as? Int)
         }
         func wiedergabe(_ k: String) -> Wiedergabe {
             guard let w = antwort[k] as? [String: Any] else { return Wiedergabe() }

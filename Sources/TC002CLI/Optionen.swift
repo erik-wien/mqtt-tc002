@@ -45,6 +45,15 @@ struct Optionen {
         /// Die Einstellungen der Uhr ausgeben.
         case einstellungen
         case einstellungenSetzen(schluessel: String, wert: String)
+        // Klang (docs/awtrix-ng-protokoll.md §3.2.1).
+        case tonSpielen(Klang)
+        /// Eine Gruppe anhalten, ohne Angabe alles.
+        case tonStopp(Tongruppe?)
+        case tonZustand
+        case tonMelodien
+        case tonMelodie(name: String, rtttl: String)
+        case tonMelodieLoeschen(name: String)
+        case tonSender
         /// Der TLS-Stand für MQTT und die CA der Uhr (nie TLS selbst).
         case tls
         case tlsCA(datei: String)
@@ -103,6 +112,14 @@ struct Optionen {
     /// bei einem anderen Befehl steht.
     var moodlightoption: String?
     var indikatoroption: String?
+    /// `ton` stand als Befehlswort da; das Unterwort steht unter den freien Wörtern.
+    var tonwort = false
+    /// Die Klangquellen aus `--datei`, `--rtttl`, `--lied`, `--sprache`, `--sender`.
+    var klangquellen: [Klang.Quelle] = []
+    var wiederholen = false
+    var melodieLoeschen = false
+    /// Die erste Option, die nur ein Klang kennt — für die Meldung bei einem anderen Befehl.
+    var klangoption: String?
 
     enum Fehler: Error, LocalizedError {
         case unbekannteOption(String)
@@ -227,6 +244,9 @@ struct Optionen {
             o.befehl = .einstellungen
         case "tls":
             o.befehl = .tls
+        case "ton", "sound":
+            o.befehl = .tonZustand
+            o.tonwort = true
         case "hilfe", "help", "--help", "-h":
             return Optionen(befehl: .hilfe)
         case "fassung", "version", "--version":
@@ -309,6 +329,22 @@ struct Optionen {
             case "--helligkeit", "--brightness": o.steuerhelligkeit = try zahl(); o.moodlightoption = o.moodlightoption ?? arg
             case "--blinken", "--blink":  o.blinken = try zahl(); o.indikatoroption = o.indikatoroption ?? arg
             case "--blenden", "--fade":   o.blenden = try zahl(); o.indikatoroption = o.indikatoroption ?? arg
+            case "--datei", "--file", "--klang", "--sound":
+                o.klangquellen.append(.datei(try wert())); o.klangoption = o.klangoption ?? arg
+            case "--rtttl":               o.klangquellen.append(.rtttl(try wert())); o.klangoption = o.klangoption ?? arg
+            case "--lied", "--song":      o.klangquellen.append(.lied(try wert())); o.klangoption = o.klangoption ?? arg
+            case "--sprache", "--speech": o.klangquellen.append(.sprache(try wert())); o.klangoption = o.klangoption ?? arg
+            case "--sender", "--station":
+                // Nur Ziffern sind eine Listenposition (ab 0), alles andere ein Name oder eine Adresse.
+                let w = try wert()
+                if !w.isEmpty, w.allSatisfy(\.isASCII), w.allSatisfy(\.isNumber), let n = Int(w) {
+                    o.klangquellen.append(.senderPosition(n))
+                } else {
+                    o.klangquellen.append(.sender(w))
+                }
+                o.klangoption = o.klangoption ?? arg
+            case "--wiederholen", "--loop": o.wiederholen = true; o.klangoption = o.klangoption ?? arg
+            case "--loeschen", "--delete":  o.melodieLoeschen = true; o.klangoption = o.klangoption ?? arg
             case "--an", "--to":          o.ziele.append(try wert())
             case "--name":                o.anzeigename = try wert(); o.nameAngegeben = true
             case "--farbe", "--color":
@@ -377,6 +413,7 @@ struct Optionen {
         }
         if o.behalten, o.lebensdauer != nil || o.ablauf != nil { throw Fehler.behaltenMitLebensdauer }
         try o.steuerbefehlPruefen(freie)
+        try o.tonbefehlPruefen(freie)
         switch o.befehl {
         case .senden:
             guard !freierText.isEmpty || o.grafikGesetzt else { throw Fehler.fehlenderText }
@@ -409,6 +446,85 @@ struct Optionen {
             break
         }
         return o
+    }
+
+    /// Der Klang einer `nachricht` bzw. von `ton spielen`: genau eine Quelle, geprüft vom Kern.
+    var klang: [Klang] {
+        klangquellen.first.map { [Klang($0, wiederholen: wiederholen)] } ?? []
+    }
+
+    /// `ton …` und die Klangoptionen an `nachricht`; die Grenzen prüft der Kern
+    /// (`Klang`, `Klangbau`), damit dieselben gelten wie in der App.
+    private mutating func tonbefehlPruefen(_ freie: [String]) throws {
+        func quelle() throws -> Klang {
+            guard !klangquellen.isEmpty else { throw KlangFehler.keineQuelle }
+            guard klangquellen.count == 1 else { throw KlangFehler.mehrereQuellen }
+            return Klang(klangquellen[0], wiederholen: wiederholen)
+        }
+        guard tonwort else {
+            if case .nachricht = befehl {
+                if wiederholen, klangquellen.isEmpty {
+                    throw Fehler.unvollstaendig(befehl: "--wiederholen", erwartet: "--klang / --rtttl / --sprache")
+                }
+                if melodieLoeschen { throw Fehler.optionGiltNurFuer(option: "--loeschen", befehl: "ton melodie") }
+                if !klangquellen.isEmpty { try quelle().pruefen(inBenachrichtigung: true) }
+            } else if let option = klangoption {
+                throw Fehler.optionGiltNurFuer(option: option, befehl: "nachricht")
+            }
+            return
+        }
+        guard let wort = freie.first?.lowercased() else {
+            throw Fehler.unvollstaendig(befehl: "ton", erwartet: "spielen / stopp / zustand / melodien / melodie / sender")
+        }
+        let rest = Array(freie.dropFirst())
+        func hoechstens(_ n: Int, _ name: String) throws {
+            if rest.count > n { throw Fehler.ueberzaehligesWort(befehl: name, wort: rest[n]) }
+        }
+        func ohneOptionen(_ name: String) throws {
+            if let option = klangoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton spielen") }
+            try hoechstens(0, name)
+        }
+        switch wort {
+        case "spielen", "play":
+            try hoechstens(0, "ton spielen")
+            if melodieLoeschen { throw Fehler.optionGiltNurFuer(option: "--loeschen", befehl: "ton melodie") }
+            let k = try quelle()
+            try k.pruefen()
+            befehl = .tonSpielen(k)
+        case "stopp", "stop":
+            if let option = klangoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton spielen") }
+            try hoechstens(1, "ton stopp")
+            var gruppe: Tongruppe?
+            if let w = rest.first {
+                guard let g = Tongruppe(wort: w) else { throw KlangFehler.ungueltigeGruppe(w) }
+                gruppe = g
+            }
+            befehl = .tonStopp(gruppe)
+        case "zustand", "state": try ohneOptionen("ton zustand"); befehl = .tonZustand
+        case "melodien", "melodies": try ohneOptionen("ton melodien"); befehl = .tonMelodien
+        case "sender", "stations": try ohneOptionen("ton sender"); befehl = .tonSender
+        case "melodie", "melody":
+            guard let name = rest.first else {
+                throw Fehler.unvollstaendig(befehl: "ton melodie", erwartet: "<Name> --rtttl \"…\" / --loeschen")
+            }
+            try hoechstens(1, "ton melodie")
+            if wiederholen { throw Fehler.optionGiltNurFuer(option: "--wiederholen", befehl: "ton spielen") }
+            if melodieLoeschen {
+                guard klangquellen.isEmpty else {
+                    throw Fehler.ueberzaehligesWort(befehl: "ton melodie --loeschen", wort: klangoption ?? "--rtttl")
+                }
+                try Klangbau.melodienameInOrdnung(name)
+                befehl = .tonMelodieLoeschen(name: name)
+            } else {
+                guard klangquellen.count == 1, case .rtttl(let text) = klangquellen[0] else {
+                    throw Fehler.unvollstaendig(befehl: "ton melodie", erwartet: "--rtttl \"…\" / --loeschen")
+                }
+                _ = try Klangbau.melodie(name: name, rtttl: text)
+                befehl = .tonMelodie(name: name, rtttl: text)
+            }
+        default:
+            throw Fehler.ueberzaehligesWort(befehl: "ton", wort: wort)
+        }
     }
 
     /// Die Befehle der Fernsteuerung: ihre Wörter und Optionen prüfen und die
@@ -621,7 +737,7 @@ struct Optionen {
     var benachrichtigung: Benachrichtigungsoptionen {
         Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
                                   einreihen: !ersetzen, aufwecken: aufwecken,
-                                  wiederholungen: wiederholungen)
+                                  wiederholungen: wiederholungen, klang: klang)
     }
 
     /// Den Rahmen um das ergänzen, was die Kommandozeile zur Darstellung sagt. Ein

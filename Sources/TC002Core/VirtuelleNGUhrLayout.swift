@@ -409,6 +409,13 @@ extension VirtuelleNGUhr {
             return []
         case "apps/next", "apps/previous":
             return ergebnis(beantworten(Anfrage("POST", "/api/v1/" + rest), &z))
+        case "audio/play":
+            return ergebnis(beantworten(Anfrage("POST", "/api/v1/audio/play", koerper: nutzlast, kopf: kopf), &z))
+        case "audio/stop":
+            // Leer heißt alles anhalten (§3.2).
+            return ergebnis(beantworten(Anfrage("POST", "/api/v1/audio/stop", koerper: nutzlast, kopf: kopf), &z))
+        case "audio/stations":
+            return ergebnis(beantworten(Anfrage("PUT", "/api/v1/audio/stations", koerper: nutzlast, kopf: kopf), &z))
         case "display/moodlight":
             // Über MQTT schaltet ein leerer Rumpf aus; `{}` ist (wie über HTTP) `422`.
             let leer = nutzlast.isEmpty

@@ -203,6 +203,41 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
             trocken(http: "POST /api/v1/device/reboot", thema: { NGThema.neustart(praefix: $0) }, json: ""); return true
         }
         try anAlle(lok("Neustart ausgelöst")) { a, _ in try a.neustarten() }
+    case .tonSpielen(let klang):
+        if optionen.trocken {
+            trocken(http: "POST /api/v1/audio/play", thema: { NGThema.tonSpielen(praefix: $0) },
+                    json: try Klangbau.spielen([klang])); return true
+        }
+        try anAlle(lok("Klang gesendet")) { anzeigen, uhr in
+            try anzeigen.tonSpielen([klang], faehigkeiten: faehigkeiten(uhr))
+        }
+    case .tonStopp(let gruppe):
+        if optionen.trocken {
+            trocken(http: "POST /api/v1/audio/stop", thema: { NGThema.tonStoppen(praefix: $0) },
+                    json: Klangbau.stoppen(gruppe)); return true
+        }
+        try anAlle(lok("Klang angehalten")) { anzeigen, _ in try anzeigen.tonStoppen(gruppe) }
+    case .tonMelodie(let name, let rtttl):
+        if optionen.trocken {
+            trocken(http: "PUT /api/v1/audio/melodies/\(name)", thema: { _ in lok("(nur über HTTP)") },
+                    json: try Klangbau.melodie(name: name, rtttl: rtttl)); return true
+        }
+        try anAlle(lokf("Melodie „%@“ gesetzt", name)) { anzeigen, uhr in
+            try anzeigen.melodieSetzen(name: name, rtttl: rtttl, faehigkeiten: faehigkeiten(uhr))
+        }
+    case .tonMelodieLoeschen(let name):
+        if optionen.trocken {
+            try Klangbau.melodienameInOrdnung(name)
+            trocken(http: "DELETE /api/v1/audio/melodies/\(name)", thema: { _ in lok("(nur über HTTP)") },
+                    json: ""); return true
+        }
+        try anAlle(lokf("Melodie „%@“ gelöscht", name)) { anzeigen, _ in try anzeigen.melodieLoeschen(name: name) }
+    case .tonZustand:
+        try lesen { tonzustandAusgeben(try $0.tonzustandLesen()) }
+    case .tonMelodien:
+        try lesen { melodienAusgeben(try $0.melodienLesen()) }
+    case .tonSender:
+        try lesen { senderAusgeben(try $0.senderLesen()) }
     case .zustand:
         try lesen { anzeigen in
             zustandAusgeben(try anzeigen.geraetezustandLesen())

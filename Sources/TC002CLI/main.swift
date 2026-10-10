@@ -330,6 +330,8 @@ func lauf() throws {
             || { if case .name? = d.palette { return true }; return false }()
         // Ob die Uhr Layouts kann, steht nur in ihrer Auskunft.
         if case .layout = optionen.befehl { nennt = true }
+        // Ob die Uhr den Ton kann, steht ebenfalls nur in ihrer Auskunft.
+        if !optionen.klang.isEmpty { nennt = true }
         guard nennt, !uhr.host.isEmpty else { return nil }
         return (try? Geraet(host: uhr.host).faehigkeiten()) ?? nil
     }
@@ -564,7 +566,8 @@ func lauf() throws {
         }
 
     case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
-         .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen:
+         .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
+         .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender:
         break                                    // oben schon abgehandelt
     case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt

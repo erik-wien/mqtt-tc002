@@ -273,7 +273,12 @@ final class KlangTests: XCTestCase {
             "stations": [["name": "Eins", "url": "http://example.com/a"]],
         ]
         let z = try XCTUnwrap(Tonzustand(antwort: antwort))
-        XCTAssertEqual(z.radio, Tonzustand.Radio(spielt: true, sender: "Eins", titel: "Lied", fehler: ""))
+        XCTAssertEqual(z.radio, Tonzustand.Radio(spielt: true, sender: "Eins", titel: "Lied", fehler: ""),
+                       "die Messfelder des Radios sind optional")
+        let laufend = try XCTUnwrap(Tonzustand(antwort: ["radio": ["playing": true, "underruns": 2, "decodeUs": 5,
+                                                                   "starvedMs": 0, "bufferBytes": 4096]]))
+        XCTAssertEqual(laufend.radio.underruns, 2)
+        XCTAssertEqual(laufend.radio.bufferBytes, 4096)
         XCTAssertEqual(z.app.fehler, "x")
         XCTAssertEqual(z.alarm, Tonzustand.Wiedergabe(spielt: true, name: "ding", fehler: ""))
         XCTAssertEqual(z.sender, [Radiosender(name: "Eins", url: "http://example.com/a")])

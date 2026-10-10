@@ -130,6 +130,8 @@ public struct NGUhrzustand: Equatable, Sendable {
     /// Wie oft `POST /api/v1/device/reboot` angekommen ist. Der Rest des Zustands
     /// bleibt: Was ein Neustart zurücksetzt, nennt die Doku nicht.
     public var neustarts = 0
+    /// Klang: Melodien, Sender und was gespielt wurde (`VirtuelleNGUhrTon.swift`).
+    public var ton = NGTon()
 
     public init() {
         einstellungen = VirtuelleNGUhr.vorgabeEinstellungen
@@ -209,10 +211,6 @@ public enum VirtuelleNGUhr {
     {"effects":["BrickBreaker","Checkerboard","ColorWaves","Fade","Fireworks","LookingEyes","Matrix","MovingLine","Pacifica","PingPong","Plasma","PlasmaCloud","Radar","Ripple","Snake","SwirlIn","SwirlOut","TheaterChase","TwinklingStars"],"paletteEffects":["BrickBreaker","Checkerboard","ColorWaves","Fade","Fireworks","MovingLine","Pacifica","Plasma","PlasmaCloud","Radar","Ripple","Snake","SwirlIn","SwirlOut","TheaterChase","TwinklingStars"],"transitions":["Random","Slide","Dim","Zoom","Rotate","Pixelate","Curtain","Ripple","Blink","Reload","Fade","Cover","Uncover","Split","Blinds","Blocks","Flash","Diamond","Wave","Rain","Melt","Interlace"],"overlays":["drizzle","frost","rain","snow","storm","thunder"],"palettes":["Cloud","Lava","Ocean","Forest","Stripe","Party","Heat","Rainbow"],"audio":{"mp3":true,"rtttl":true,"song":true,"speech":true,"track":false,"radio":true,"url":true,"effect":true,"clip":true},"microphone":true,"scriptUpdates":true,"gpio":null,"platform":{"id":"tc002"},"sensors":{"light":false},"display":{"width":52,"height":16,"configurable":false,"requestedWidth":52,"requestedHeight":16,"restartRequired":false,"ready":true,"minWidth":52,"maxWidth":52,"minHeight":16,"maxHeight":16,"maxPixels":832},"fonts":[{"name":"small","ascent":6,"descent":1,"lineHeight":7},{"name":"large","ascent":6,"descent":2,"lineHeight":9},{"name":"matrix-chunky6","ascent":6,"descent":0,"lineHeight":6},{"name":"matrix-chunky6x","ascent":6,"descent":0,"lineHeight":6},{"name":"matrix-light6","ascent":6,"descent":0,"lineHeight":6},{"name":"matrix-light6x","ascent":6,"descent":0,"lineHeight":6},{"name":"matrix-chunky8","ascent":8,"descent":0,"lineHeight":8},{"name":"matrix-chunky8x","ascent":8,"descent":0,"lineHeight":8},{"name":"matrix-chunky8x6","ascent":8,"descent":0,"lineHeight":8},{"name":"matrix-light8","ascent":8,"descent":0,"lineHeight":8},{"name":"matrix-light8x","ascent":8,"descent":0,"lineHeight":8},{"name":"matrix-light8x6","ascent":8,"descent":0,"lineHeight":8}],"ble":true,"gamepad":true,"oauth":true,"crypto":true,"tcp":true,"layout":true,"layouts":{"version":1,"limits":{"regions":16,"scrollers":8,"assets":4,"chartPoints":128,"textBytes":8192,"preparedBytes":262144,"scriptHandles":8,"scriptHandlesPerScript":4}},"gamepadRemote":true,"voice":true,"clockFaces":["sheet","ring","flap","month","big"],"mqttTls":true,"bootSound":true,"enlargeApps":true}
     """#)
 
-    static let audio: JSONWert = lesenWert(#"""
-    {"radio":{"playing":false,"station":"","title":"","error":"","underruns":0,"decodeUs":0,"starvedMs":0,"bufferBytes":0},"app":{"playing":false,"name":"","error":""},"alert":{"playing":false,"name":"","error":""},"stations":[{"name":"Fm4","url":"http://orf-live.ors-shoutcast.at/fm4-q2a"}]}
-    """#)
-
     private static func lesenWert(_ text: String) -> JSONWert {
         JSONWert.lesen(Data(text.utf8)) ?? .null
     }
@@ -248,6 +246,7 @@ public enum VirtuelleNGUhr {
 
     private enum Route {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
+        case tonSpielen, tonStoppen, tonSender, tonMelodien, tonMP3, tonMelodie(String)
         case moodlight, tlsStatus, tlsCA, neustart
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
@@ -256,7 +255,10 @@ public enum VirtuelleNGUhr {
 
         var methoden: [String] {
             switch self {
-            case .geraet, .version, .system, .bildschirm, .apps, .faehigkeiten, .ton: return ["GET"]
+            case .geraet, .version, .system, .bildschirm, .apps, .faehigkeiten, .ton, .tonMelodien, .tonMP3: return ["GET"]
+            case .tonSpielen, .tonStoppen: return ["POST"]
+            case .tonSender: return ["GET", "PUT"]
+            case .tonMelodie: return ["PUT", "DELETE"]
             case .einstellungen, .anzeige: return ["GET", "PATCH"]
             case .appSenden, .appAktiv, .appFreigabe: return ["PUT"]
             case .appLoeschen, .meldungAktivLoeschen, .meldungLoeschen: return ["DELETE"]
@@ -282,6 +284,12 @@ public enum VirtuelleNGUhr {
         case (1, "capabilities"): return .faehigkeiten
         case (1, "audio"): return .ton
         case (1, "notifications"): return .meldungSenden
+        case (2, "audio") where r[1] == "play": return .tonSpielen
+        case (2, "audio") where r[1] == "stop": return .tonStoppen
+        case (2, "audio") where r[1] == "stations": return .tonSender
+        case (2, "audio") where r[1] == "melodies": return .tonMelodien
+        case (2, "audio") where r[1] == "mp3": return .tonMP3
+        case (3, "audio") where r[1] == "melodies": return .tonMelodie(r[2])
         case (2, "display") where r[1] == "screen": return .bildschirm
         case (2, "display") where r[1] == "moodlight": return .moodlight
         case (2, "mqtt") where r[1] == "tls": return .tlsStatus
@@ -335,7 +343,13 @@ public enum VirtuelleNGUhr {
             return Antwort(koerper: bildschirmantwort(z))
         case .apps: return json(.liste(z.apps.map(appEintrag)))
         case .faehigkeiten: return json(capabilities)
-        case .ton: return json(audio)
+        case .ton: return json(tonzustand(z))
+        case .tonSpielen: return tonSpielen(anfrage, &z)
+        case .tonStoppen: return tonStoppen(anfrage, &z)
+        case .tonSender: return tonSender(anfrage, &z)
+        case .tonMelodien: return melodienliste(z)
+        case .tonMP3: return mp3liste(z)
+        case .tonMelodie(let name): return melodie(name, anfrage, &z)
         case .appSenden(let name): return appSenden(name, anfrage, &z)
         case .appLoeschen(let name): return appLoeschen(name, &z)
         case .appAktiv: return appAktivieren(anfrage, &z)
@@ -983,6 +997,7 @@ public enum VirtuelleNGUhr {
             name = s
         }
         if let falsch = pruefeNutzlast(o) { return falsch }
+        if let t = o["sound"], let falsch = meldungstonPruefen(t) { return falsch }
         var stapeln = true
         if let st = o["stack"] {
             guard case .bool(let b) = st else { return ungueltig("must be a boolean", feld: "stack") }
