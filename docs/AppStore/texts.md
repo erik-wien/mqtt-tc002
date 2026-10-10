@@ -107,6 +107,34 @@ Vorname, Nachname, Telefon, E-Mail — deine Daten.
 
 Kategorie: Die App ist ein Werkzeug, das ein Gerät im Haus bedient; „Dienstprogramme“ passt am besten, „Lifestyle“ als zweite, weil die Uhr Wohnraum-Dekoration und Alltag ist (Vorschlag, frei änderbar).
 
+### Neuigkeiten in dieser Version (4000) — Fassung 2.0
+
+**DE:**
+
+Pixel Clock Messenger spricht jetzt AWTRIX NG — auf der Ulanzi TC002 (52 × 16) und der TC001 (32 × 8).
+
+- Darstellung: Hintergrundfarbe, bewegte Effekte, Wetter-Overlays und Farbpaletten. Mit „Schrift der Uhr“ setzt die Uhr den Text selbst.
+- Nachrichten mit Klang: eine Melodie oder MP3 von der Uhr, oder die Uhr liest vor (Englisch).
+- Fernbedienung: Live-Bild der Uhr, Display, Helligkeit, Moodlight, Anzeiger, Ton und Radio, Neustart.
+- Klänge verwalten: MP3 auf die Uhr laden — die App schlägt einen gültigen Namen vor.
+- Einstellungen der Uhr in übersichtlichen Gruppen, dazu das Zertifikat für MQTT über TLS.
+- Mehrere Geräte lesen gleichzeitig mit, ohne sich gegenseitig vom Broker zu werfen.
+
+Wichtig: Die Werksfirmware der TC002 wird nicht mehr unterstützt. Bitte die Uhr vorher auf AWTRIX NG umstellen.
+
+**EN:**
+
+Pixel Clock Messenger now speaks AWTRIX NG — on the Ulanzi TC002 (52 × 16) and the TC001 (32 × 8).
+
+- Appearance: background colour, animated effects, weather overlays and colour palettes. With “Clock font” the clock sets the text itself.
+- Messages with sound: a melody or MP3 from the clock, or the clock reads the text aloud (English).
+- Remote control: live image of the clock, display, brightness, mood light, indicators, sound and radio, restart.
+- Manage sounds: upload MP3s to the clock — the app suggests a valid name.
+- Clock settings in clear groups, plus the certificate for MQTT over TLS.
+- Several devices can listen at the same time without pushing each other off the broker.
+
+Important: the TC002 factory firmware is no longer supported. Please switch the clock to AWTRIX NG first.
+
 ### Werbetext (170)
 
 - **DE:** Text, Icons und Bilder an deine Ulanzi-Pixeluhr, dazu Fernbedienung, Klang und Kurzbefehle — mit Vorschau und virtueller Uhr zum Ausprobieren. Kein Konto, kein Server.
