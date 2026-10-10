@@ -285,18 +285,18 @@ public final class AppZustand {
     /// entfernte Uhr kommt vom anderen zurueck.
     public private(set) var grabsteine: [String: Date] = [:] { didSet { grabsteineSichern() } }
 
-    /// Der zuletzt gesicherte Wert — Grundlage dafuer, dass mehrfache Aufrufe
+    /// Der Fingerabdruck des zuletzt gesicherten Werts (nicht der Wert selbst) — Grundlage dafuer, dass mehrfache Aufrufe
     /// (Fokuswechsel, .onDisappear, Beenden) gefahrlos sind: ein unveraenderter
     /// Wert loest keinen zweiten Schluesselbund-Schreibvorgang aus.
     private var kennwortGesichert: String?
 
     public func kennwortSichern() {
-        guard kennwort != kennwortGesichert else { return }
+        guard Fingerabdruck.von([kennwort]) != kennwortGesichert else { return }
         guard schluesselbund.setzen(kennwort, fuer: "broker") else {
             fehler = lok("Das Kennwort ließ sich nicht im Schlüsselbund sichern.")
             return
         }
-        kennwortGesichert = kennwort
+        kennwortGesichert = Fingerabdruck.von([kennwort])
         // Ein leerer Wert loescht den Eintrag (`Schluesselbund.setzen`) —
         // danach ist keines mehr hinterlegt.
         kennwortVorhanden = !kennwort.isEmpty
@@ -440,7 +440,7 @@ public final class AppZustand {
         }
         grabsteine = (try? JSONDecoder().decode([String: Date].self,
                                                 from: d.data(forKey: "grabsteine") ?? Data())) ?? [:]
-        kennwortGesichert = kennwort
+        kennwortGesichert = Fingerabdruck.von([kennwort])
         initialisiert = true
         // Nur wenn der Abgleich gewaehlt ist, wird der Behaelter ueberhaupt
         // gesucht — und dann losgeloest, weil die Suche blockiert.
@@ -1672,8 +1672,10 @@ public final class AppZustand {
     var horchtGerade: [UUID: Bool] = [:]
     private var horchenErlaubt = false
 
-    /// Alles, dessen Änderung ein bestehendes Abonnement ungültig macht.
-    private var brokerkennung: String { "\(brokerHost)|\(brokerPort)|\(benutzer)|\(kennwort)" }
+    /// Alles, dessen Änderung ein bestehendes Abonnement ungültig macht, als
+    /// Fingerabdruck: Das Kennwort steht nicht im Klartext in einem
+    /// Vergleichsfeld.
+    var brokerkennung: String { Fingerabdruck.von([brokerHost, brokerPort, benutzer, kennwort]) }
 
     /// Beginnt zuzuhören. Ausdrücklich und nicht aus `init` heraus: ein AppZustand
     /// allein — etwa im Test — darf keine Verbindung aufbauen.
