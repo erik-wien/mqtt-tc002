@@ -20,9 +20,12 @@ public enum BildersammlungFehler: Error, LocalizedError {
     case leererName
     case nichtLesbar
     case nichtSchreibbar
+    /// Unter dem neuen Namen liegt schon ein Bild.
+    case zielBelegt(String)
 
     public var errorDescription: String? {
         switch self {
+        case .zielBelegt(let n): return lokf("Unter „%@“ liegt schon ein Bild. Es wird nicht ersetzt.", n)
         case .leererName: return lok("Ein Name wird gebraucht.")
         case .nichtLesbar: return lok("Das Bild lässt sich nicht lesen.")
         case .nichtSchreibbar: return lok("Das Bild lässt sich nicht speichern.")
@@ -170,11 +173,12 @@ public struct Bildersammlung {
     /// verlangt hat. Die Nummer benennt dabei nichts: Sie steht in
     /// `names.json`, und wer nur sie aendert, ruehrt die Datei nicht an.
     ///
-    /// Liegt unter dem neuen Namen schon etwas, wird es ersetzt — wie
-    /// beim Sichern. Die Oberflaeche sagt das vorher.
+    /// Liegt unter dem neuen Namen schon etwas, wirft das `zielBelegt` und
+    /// ruehrt nichts an; nur mit `ueberschreiben: true` (die Oberflaeche hat
+    /// vorher gefragt) wird es atomar ersetzt.
     @discardableResult
     public func umbenennen(_ gemaltes: Gemaltes, name: String,
-                           nummer: String?) throws -> Gemaltes {
+                           nummer: String?, ueberschreiben: Bool = false) throws -> Gemaltes {
         let bereinigt = name.trimmingCharacters(in: .whitespaces)
         guard !bereinigt.isEmpty else { throw BildersammlungFehler.leererName }
         let alter = gemaltes.datei.deletingPathExtension().lastPathComponent
@@ -182,8 +186,8 @@ public struct Bildersammlung {
         var ziel = gemaltes.datei
         if schluessel != alter {
             ziel = ordner.appendingPathComponent("\(schluessel).\(gemaltes.datei.pathExtension)")
-            try? FileManager.default.removeItem(at: ziel)
-            try FileManager.default.moveItem(at: gemaltes.datei, to: ziel)
+            try Dateiumzug.verschieben(gemaltes.datei, nach: ziel, ueberschreiben: ueberschreiben,
+                                       belegt: BildersammlungFehler.zielBelegt(bereinigt))
             namenEntfernen(schluessel: alter)
         }
         let werk = Self.werknummer(nummer)
@@ -234,7 +238,7 @@ public struct Bildersammlung {
         if let nummer, !nummer.isEmpty { eintrag["nummer"] = nummer }
         liste.append(eintrag)
         if let daten = try? JSONSerialization.data(withJSONObject: liste, options: [.prettyPrinted]) {
-            try? daten.write(to: namenDatei())
+            try? daten.write(to: namenDatei(), options: .atomic)
         }
     }
 
@@ -244,7 +248,7 @@ public struct Bildersammlung {
         else { return }
         let liste = vorhanden.filter { $0["datei"] != schluessel }
         if let neu = try? JSONSerialization.data(withJSONObject: liste, options: [.prettyPrinted]) {
-            try? neu.write(to: namenDatei())
+            try? neu.write(to: namenDatei(), options: .atomic)
         }
     }
 }

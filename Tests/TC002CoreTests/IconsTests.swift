@@ -53,6 +53,7 @@ final class IconsTests: XCTestCase {
 
     override func setUp() {
         Doppelgaenger.antworten = [:]
+        Doppelgaenger.antwortDaten = [:]
         Doppelgaenger.statusCodes = [:]
         Doppelgaenger.gesendeteRuempfe = [:]
     }
@@ -95,8 +96,8 @@ final class IconsTests: XCTestCase {
         let ordner = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        Doppelgaenger.antwortDaten = ["/content/apps/icon_thumbs/4242": HaertungTests.kleinesGIF()]
         Doppelgaenger.antworten = [
-            "/content/apps/icon_thumbs/4242": "GIF89a-vollstaendig-genug-an-inhalt",
             "/api/v1/dev/preloadicons": #"{"name":"Testwolke","category_name":"Wetter"}"#,
         ]
 
@@ -148,7 +149,7 @@ final class IconsTests: XCTestCase {
         let ordner = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
-        Doppelgaenger.antworten = ["/content/apps/icon_thumbs/5555": "GIF89a-vollstaendig-genug-an-inhalt"]
+        Doppelgaenger.antwortDaten = ["/content/apps/icon_thumbs/5555": HaertungTests.kleinesGIF()]
         Doppelgaenger.statusCodes = ["/api/v1/dev/preloadicons": 500]
 
         let sammlung = Iconsammlung(ordner: ordner)

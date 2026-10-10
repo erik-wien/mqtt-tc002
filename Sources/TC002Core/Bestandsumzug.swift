@@ -167,10 +167,18 @@ public enum Bestandsumzug {
                     bilanz.uebersprungen += 1
                     continue
                 case .ueberschreiben:
-                    guard (try? fm.removeItem(at: amZiel)) != nil else {
+                    // Erst kopieren, dann ersetzen: Scheitert das Kopieren (etwa
+                    // eine Datei im Behaelter, die noch nicht heruntergeladen
+                    // ist), bleibt die vorhandene Datei, wie sie war.
+                    let zwischen = ziel.appendingPathComponent(".umzug-\(UUID().uuidString)")
+                    if (try? fm.copyItem(at: datei, to: zwischen)) != nil,
+                       (try? fm.replaceItemAt(amZiel, withItemAt: zwischen)) != nil {
+                        bilanz.kopiert += 1
+                    } else {
+                        try? fm.removeItem(at: zwischen)
                         bilanz.fehlgeschlagen += 1
-                        continue
                     }
+                    continue
                 }
             }
             if (try? fm.copyItem(at: datei, to: amZiel)) != nil {

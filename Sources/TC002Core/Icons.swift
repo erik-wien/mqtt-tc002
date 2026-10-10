@@ -50,6 +50,25 @@ public extension Array where Element == Icon {
 /// Macht aus einem frei gewaehlten Namen einen Dateinamen. Gebraucht ueberall
 /// dort, wo der Name zugleich der Dateiname ist — bei den 16×16-Icons und in
 /// der Bildersammlung.
+/// Verschieben ohne stilles Loeschen.
+enum Dateiumzug {
+    /// Verschiebt `quelle` nach `ziel`. Existiert das Ziel (anderer Name oder
+    /// gleiche Datei mit anderer Schreibung ist kein Fall), wirft es `belegt`,
+    /// solange nicht `ueberschreiben` gilt; dann ersetzt `replaceItemAt` das
+    /// Ziel atomar, statt es vorher zu loeschen.
+    static func verschieben(_ quelle: URL, nach ziel: URL, ueberschreiben: Bool,
+                            belegt: @autoclosure () -> Error) throws {
+        let fm = FileManager.default
+        let nurSchreibweise = quelle.path.caseInsensitiveCompare(ziel.path) == .orderedSame
+        if fm.fileExists(atPath: ziel.path), !nurSchreibweise {
+            guard ueberschreiben else { throw belegt() }
+            _ = try fm.replaceItemAt(ziel, withItemAt: quelle)
+        } else {
+            try fm.moveItem(at: quelle, to: ziel)
+        }
+    }
+}
+
 public enum Dateiname {
     public static func aus(_ name: String) -> String {
         var ergebnis = name.trimmingCharacters(in: .whitespaces)
@@ -58,13 +77,49 @@ public enum Dateiname {
     }
 }
 
+/// Pruefungen fuer Icon-Nummern, bevor sie in einem Dateipfad oder einer
+/// Adresse landen.
+public enum Iconnummer {
+    /// Was eine LaMetric-Nummer sein darf (`1234`, `a1021`): Buchstaben, Ziffern,
+    /// Bindestrich und Unterstrich, 1 bis 64 Zeichen. Auch in einer Adresse ohne
+    /// weitere Kodierung unbedenklich.
+    public static func lametric(_ roh: String) throws -> String {
+        let n = roh.trimmingCharacters(in: .whitespaces)
+        guard (1...64).contains(n.utf8.count),
+              n.utf8.allSatisfy({ ($0 >= 48 && $0 <= 57) || ($0 >= 65 && $0 <= 90)
+                                   || ($0 >= 97 && $0 <= 122) || $0 == 45 || $0 == 95 })
+        else { throw IconFehler.ungueltigeNummer(roh) }
+        return n
+    }
+
+    /// Was als Dateiname unter einem Schreibordner taugt: nicht leer, hoechstens
+    /// 64 Zeichen, kein Pfadtrenner, kein Doppelpunkt, kein Steuerzeichen, nicht
+    /// mit Punkt am Anfang (`.`, `..`, versteckte Dateien). Leerzeichen und
+    /// Umlaute bleiben erlaubt; so heissen vorhandene Dateien.
+    public static func dateiname(_ roh: String) throws -> String {
+        let n = roh.trimmingCharacters(in: .whitespaces)
+        guard (1...64).contains(n.count), !n.hasPrefix("."),
+              !n.unicodeScalars.contains(where: { $0 == "/" || $0 == "\\" || $0 == ":"
+                                                   || $0.properties.generalCategory == .control })
+        else { throw IconFehler.ungueltigeNummer(roh) }
+        return n
+    }
+}
+
 public enum IconFehler: Error, LocalizedError {
     case nichtLesbar(String)
     case nichtGefunden(String)
     case nichtSchreibbar(String)
+    /// Die Nummer taugt nicht als Dateiname oder als Teil einer Adresse.
+    case ungueltigeNummer(String)
+    /// Unter dem neuen Schluessel liegt schon ein Icon; ohne ausdrueckliches
+    /// Einverstaendnis wird nichts ersetzt.
+    case zielBelegt(String)
 
     public var errorDescription: String? {
         switch self {
+        case .ungueltigeNummer(let n): return lokf("„%@“ ist keine gültige Nummer. Erlaubt sind Buchstaben, Ziffern, Bindestrich und Unterstrich.", n)
+        case .zielBelegt(let n): return lokf("Unter „%@“ liegt schon ein Icon. Es wird nicht ersetzt.", n)
         case .nichtLesbar(let n): return lokf("Das Icon %@ lässt sich nicht lesen.", n)
         case .nichtGefunden(let n): return lokf("Für die Nummer %@ gibt es bei LaMetric kein Icon.", n)
         case .nichtSchreibbar(let n): return lokf("Das Icon %@ lässt sich nicht speichern.", n)
@@ -123,7 +178,37 @@ public enum Bildraster {
         return try lesen(quelle: quelle, breite: breite, hoehe: hoehe)
     }
 
+    /// Mehr Pixel je Seite und mehr Einzelbilder nimmt die App nicht zum
+    /// Dekodieren an: Ein Einzelbild kostet `breite × hoehe × 4` Byte, und ein
+    /// 30 000 × 30 000-PNG verlangt ohne diese Grenze 3,6 GB.
+    public static let hoechsteKante = 2048
+    public static let hoechsteBilderzahl = 256
+
+    /// Prueft Maße und Bilderzahl aus den Kopfdaten, ohne ein Pixel zu
+    /// dekodieren.
+    private static func grenzenPruefen(_ quelle: CGImageSource) throws {
+        let anzahl = CGImageSourceGetCount(quelle)
+        guard anzahl <= hoechsteBilderzahl else { throw BildrasterFehler.zuGross }
+        for i in 0..<anzahl {
+            guard let e = CGImageSourceCopyPropertiesAtIndex(quelle, i, nil) as? [CFString: Any],
+                  let b = e[kCGImagePropertyPixelWidth] as? Int,
+                  let h = e[kCGImagePropertyPixelHeight] as? Int else { throw BildrasterFehler.nichtLesbar }
+            guard b <= hoechsteKante, h <= hoechsteKante else { throw BildrasterFehler.zuGross }
+        }
+    }
+
+    /// Ob `daten` ein lesbares Bild innerhalb der Grenzen ist und hoechstens
+    /// `hoechstens` Byte hat. Fuer Antworten aus dem Netz, bevor sie
+    /// gespeichert werden.
+    public static func bildPruefen(_ daten: Data, hoechstens: Int) throws {
+        guard daten.count <= hoechstens else { throw BildrasterFehler.zuGross }
+        guard let quelle = CGImageSourceCreateWithData(daten as CFData, nil),
+              CGImageSourceGetCount(quelle) > 0 else { throw BildrasterFehler.nichtLesbar }
+        try grenzenPruefen(quelle)
+    }
+
     private static func lesen(quelle: CGImageSource, breite: Int, hoehe: Int) throws -> [[String?]] {
+        try grenzenPruefen(quelle)
         let anzahl = CGImageSourceGetCount(quelle)
         guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
         return try (0..<anzahl).map { i in
@@ -165,6 +250,7 @@ public enum Bildraster {
     }
 
     private static func lesenMitZeiten(quelle: CGImageSource, breite: Int, hoehe: Int) throws -> [Einzelbild] {
+        try grenzenPruefen(quelle)
         let anzahl = CGImageSourceGetCount(quelle)
         guard anzahl > 0 else { throw BildrasterFehler.nichtLesbar }
         return try (0..<anzahl).map { i in
@@ -414,9 +500,15 @@ public enum Bildraster {
 
 public enum BildrasterFehler: Error, LocalizedError {
     case nichtLesbar
+    /// Mehr Pixel je Seite oder mehr Einzelbilder als `Bildraster` annimmt, oder
+    /// mehr Byte als erlaubt.
+    case zuGross
 
     public var errorDescription: String? {
-        lok("Diese Datei lässt sich nicht als Bild lesen.")
+        switch self {
+        case .nichtLesbar: return lok("Diese Datei lässt sich nicht als Bild lesen.")
+        case .zuGross: return lok("Dieses Bild ist zu groß (höchstens 2048 Pixel je Seite und 256 Einzelbilder).")
+        }
     }
 }
 
@@ -546,19 +638,29 @@ public struct Iconsammlung {
     /// Holt ein Icon ueber seine LaMetric-Nummer: erst das Bild, dann Name und
     /// Kategorie. Beides ohne Anmeldung erreichbar. Schlaegt nur die Namensabfrage
     /// fehl, bleibt das Icon trotzdem bestehen, dann eben mit der Nummer als Namen.
+    /// Mehr Byte als das nimmt `holen` nicht als Icon an.
+    static let hoechsteAntwort = 1024 * 1024
+
     public func holen(nummer: String, sitzung: URLSession = .shared) throws -> Icon {
-        let bildURL = URL(string: "https://developer.lametric.com/content/apps/icon_thumbs/\(nummer)")!
+        let nummer = try Iconnummer.lametric(nummer)
+        guard let bildURL = URL(string: "https://developer.lametric.com/content/apps/icon_thumbs/\(nummer)") else {
+            throw IconFehler.ungueltigeNummer(nummer)
+        }
         let bild = try fuehreAus(URLRequest(url: bildURL), sitzung: sitzung, nummer: nummer)
         guard bild.count > 16 else {
             throw IconFehler.nichtGefunden(nummer)
         }
+        // Ein Icon-Vorschaubild ist ein paar KB gross; die Antwort wird nicht
+        // gespeichert, bevor sie sich als Bild in den Grenzen ausweist.
+        do { try Bildraster.bildPruefen(bild, hoechstens: Self.hoechsteAntwort) }
+        catch { throw IconFehler.nichtGefunden(nummer) }
         try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
         let ziel = schreibordner.appendingPathComponent("\(nummer).gif")
         try bild.write(to: ziel, options: .atomic)
 
         var name = nummer, kategorie = ""
-        let infoURL = URL(string: "https://developer.lametric.com/api/v1/dev/preloadicons?icon_id=\(nummer)")!
-        if let info = try? fuehreAus(URLRequest(url: infoURL), sitzung: sitzung, nummer: nummer),
+        let infoURL = URL(string: "https://developer.lametric.com/api/v1/dev/preloadicons?icon_id=\(nummer)")
+        if let infoURL, let info = try? fuehreAus(URLRequest(url: infoURL), sitzung: sitzung, nummer: nummer),
            let objekt = try? JSONSerialization.jsonObject(with: info) as? [String: Any] {
             name = objekt["name"] as? String ?? nummer
             kategorie = objekt["category_name"] as? String ?? ""
@@ -585,6 +687,7 @@ public struct Iconsammlung {
         guard !bilder.isEmpty, bilder.allSatisfy({ $0.count == kante * kante }) else {
             throw IconFehler.nichtSchreibbar(nummer)
         }
+        let nummer = try Iconnummer.dateiname(nummer)
         try? FileManager.default.createDirectory(at: schreibordner, withIntermediateDirectories: true)
         let ziel = schreibordner.appendingPathComponent("\(nummer).gif")
         guard let senke = CGImageDestinationCreateWithURL(ziel as CFURL,
@@ -617,13 +720,18 @@ public struct Iconsammlung {
     /// die niemand verlangt hat. Verschieben laesst die Bytes, wie sie sind,
     /// und behaelt die Endung: Der Bestand enthaelt auch PNG und JPEG.
     ///
-    /// Liegt unter der neuen Nummer schon etwas, wird es ersetzt — wie
-    /// beim Sichern und beim Einlesen. Die Oberflaeche sagt das vorher.
+    /// Liegt unter der neuen Nummer schon etwas, wirft das `zielBelegt` und
+    /// ruehrt nichts an. Nur mit `ueberschreiben: true` (die Oberflaeche hat
+    /// vorher gefragt) wird es ersetzt, und zwar atomar, ohne das Ziel vorher
+    /// zu loeschen.
     @discardableResult
-    public func umbenennen(_ icon: Icon, nummer: String, name: String) throws -> Icon {
+    public func umbenennen(_ icon: Icon, nummer: String, name: String,
+                           ueberschreiben: Bool = false) throws -> Icon {
         guard istEigen(icon) else { throw IconFehler.nichtSchreibbar(icon.nummer) }
-        let schluessel = nummer.trimmingCharacters(in: .whitespaces)
-        guard !schluessel.isEmpty else { throw IconFehler.nichtSchreibbar(icon.nummer) }
+        guard !nummer.trimmingCharacters(in: .whitespaces).isEmpty else {
+            throw IconFehler.nichtSchreibbar(icon.nummer)
+        }
+        let schluessel = try Iconnummer.dateiname(nummer)
         let sauber = name.trimmingCharacters(in: .whitespaces)
         // Die Kategorie steht in `names.json` und nicht unbedingt im
         // uebergebenen Icon — der Editor kennt sie gar nicht. Sie hier
@@ -634,8 +742,8 @@ public struct Iconsammlung {
         var ziel = icon.datei
         if schluessel != icon.nummer {
             ziel = schreibordner.appendingPathComponent("\(schluessel).\(icon.datei.pathExtension)")
-            try? FileManager.default.removeItem(at: ziel)
-            try FileManager.default.moveItem(at: icon.datei, to: ziel)
+            try Dateiumzug.verschieben(icon.datei, nach: ziel, ueberschreiben: ueberschreiben,
+                                       belegt: IconFehler.zielBelegt(schluessel))
             namenEntfernen(nummer: icon.nummer)
         }
         namenErgaenzen(nummer: schluessel, name: sauber.isEmpty ? schluessel : sauber,

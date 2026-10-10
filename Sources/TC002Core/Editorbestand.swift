@@ -236,12 +236,12 @@ public struct Editorbestand {
     /// Eine Umbenennung benennt eine Datei um, und deshalb gelten dieselben
     /// Regeln wie beim Sichern: Wohin es gehoert, entscheidet die Groesse;
     /// unter welchem Schluessel es liegt, `schluessel(groesse:nummer:name:)`;
-    /// und was dort schon liegt, wird ersetzt statt abgewiesen (die Oberflaeche
-    /// sagt es vorher). Bei 52×16 aendert eine neue Werknummer nichts am
+    /// und was dort schon liegt, wird abgewiesen (`zielBelegt`), solange nicht
+    /// `ueberschreiben` gilt (die Oberflaeche fragt vorher). Bei 52×16 aendert eine neue Werknummer nichts am
     /// Dateinamen — sie heisst weiter nach ihrem Namen.
     @discardableResult
     public func umbenennen(_ eintrag: Editoreintrag, name: String,
-                           nummer: String) throws -> Editoreintrag {
+                           nummer: String, ueberschreiben: Bool = false) throws -> Editoreintrag {
         switch eintrag.groesse {
         case .icon8, .icon16:
             let sammlung = eintrag.groesse == .icon8 ? icons8 : icons16
@@ -251,13 +251,14 @@ public struct Editorbestand {
             // nicht bekannt, und eine erfundene stuende hinterher in der Datei.
             let alt = Icon(nummer: eintrag.schluessel, name: eintrag.name, kategorie: "",
                            datei: eintrag.datei, kante: eintrag.groesse.breite)
-            let icon = try sammlung.umbenennen(alt, nummer: schluessel, name: name)
+            let icon = try sammlung.umbenennen(alt, nummer: schluessel, name: name,
+                                                 ueberschreiben: ueberschreiben)
             return Editoreintrag(groesse: eintrag.groesse, name: icon.name,
                                  nummer: eintrag.groesse.mitNummer ? icon.nummer : nil,
                                  datei: icon.datei)
         case .anzeige:
             let alt = Gemaltes(name: eintrag.name, nummer: eintrag.nummer, datei: eintrag.datei)
-            let neu = try bilder.umbenennen(alt, name: name, nummer: nummer)
+            let neu = try bilder.umbenennen(alt, name: name, nummer: nummer, ueberschreiben: ueberschreiben)
             return Editoreintrag(groesse: eintrag.groesse, name: neu.name, nummer: neu.nummer,
                                  datei: neu.datei)
         }

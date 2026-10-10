@@ -15,13 +15,25 @@ public enum Schluesselbund {
     /// faellt ein gescheitertes Schreiben erst beim naechsten Start auf — dann ist
     /// das Kennwort weg und niemand weiss, warum.
     /// Ein leerer Wert loescht nur: SecItemAdd nimmt keine leere Nutzlast an.
+    ///
+    /// Vorhandenes wird mit `SecItemUpdate` ueberschrieben und nie vorher
+    /// geloescht; legt `SecItemAdd` danach nichts an, bleibt das alte Kennwort.
+    /// Angelegt wird nur bei `errSecItemNotFound`. Neue Eintraege tragen
+    /// `kSecAttrAccessibleAfterFirstUnlock`, damit ein Kurzbefehl auf dem
+    /// gesperrten iPhone das Kennwort lesen kann; bestehende behalten ihre
+    /// Klasse (sie bleiben lesbar, die Abfrage filtert nicht danach).
     @discardableResult
     public static func setzen(_ wert: String, fuer konto: String,
                               dienst: String = Einstellungen.kennung) -> Bool {
-        loeschen(konto, dienst: dienst)
-        guard !wert.isEmpty else { return true }
+        guard !wert.isEmpty else { loeschen(konto, dienst: dienst); return true }
+        let daten = Data(wert.utf8)
+        let stand = SecItemUpdate(basis(konto, dienst: dienst) as CFDictionary,
+                                  [kSecValueData as String: daten] as CFDictionary)
+        if stand == errSecSuccess { return true }
+        guard stand == errSecItemNotFound else { return false }
         var eintrag = basis(konto, dienst: dienst)
-        eintrag[kSecValueData as String] = Data(wert.utf8)
+        eintrag[kSecValueData as String] = daten
+        eintrag[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         return SecItemAdd(eintrag as CFDictionary, nil) == errSecSuccess
     }
 

@@ -90,6 +90,20 @@ final class BestandsumzugTests: XCTestCase {
         XCTAssertEqual(inhalt(o.oertlicherOrdner(.bilder), "nacht.gif"), "seither bearbeitet")
     }
 
+    /// Scheitert das Kopieren beim Rueckweg, bleibt die oertliche Datei, wie sie war.
+    func testRueckwegBehaeltDieOertlicheDateiWennDasKopierenScheitert() throws {
+        let o = ort()
+        schreiben("lokal", o.oertlicherOrdner(.bilder), "nacht.gif")
+        schreiben("Wolke", o.fernerOrdner(.bilder)!, "nacht.gif")
+        let quelle = o.fernerOrdner(.bilder)!.appendingPathComponent("nacht.gif")
+        try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: quelle.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: quelle.path) }
+        try XCTSkipIf(FileManager.default.isReadableFile(atPath: quelle.path), "Rechte, die Lesesperren ignorieren")
+        let bilanz = Bestandsumzug.rueckweg(o)
+        XCTAssertEqual(bilanz.fehlgeschlagen, 1)
+        XCTAssertEqual(inhalt(o.oertlicherOrdner(.bilder), "nacht.gif"), "lokal")
+    }
+
     /// Abschalten nimmt nie etwas weg. Was nur oertlich liegt, bleibt liegen.
     func testRueckwegNimmtNichtsWeg() {
         let o = ort()

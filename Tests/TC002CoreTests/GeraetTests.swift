@@ -4,6 +4,8 @@ import XCTest
 /// Faengt alle Anfragen ab und antwortet aus einer Tabelle. Kein Netz, kein Geraet.
 final class Doppelgaenger: URLProtocol {
     nonisolated(unsafe) static var antworten: [String: String] = [:]
+    /// Binaere Antworten (Bilder), die den Text aus `antworten` ersetzen.
+    nonisolated(unsafe) static var antwortDaten: [String: Data] = [:]
     nonisolated(unsafe) static var statusCodes: [String: Int] = [:]
     nonisolated(unsafe) static var gesendeteRuempfe: [String: String] = [:]
     /// Die Abfrage hinter dem Pfad (`?name=…`) — bei den `/api`-Endpunkten
@@ -41,7 +43,7 @@ final class Doppelgaenger: URLProtocol {
         let antwort = HTTPURLResponse(url: request.url!, statusCode: status,
                                       httpVersion: nil, headerFields: nil)!
         client?.urlProtocol(self, didReceive: antwort, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Data(text.utf8))
+        client?.urlProtocol(self, didLoad: Self.antwortDaten[pfad] ?? Data(text.utf8))
         client?.urlProtocolDidFinishLoading(self)
     }
     override func stopLoading() {}

@@ -22,7 +22,7 @@ final class UhrenserverZerlegenTests: XCTestCase {
     func testEinHalberRumpfIstNochKeineAnfrage() {
         let ohneRumpf = bytes("PUT /api/v1/apps/pushed/a HTTP/1.1\r\nContent-Length: 20\r\n\r\n{\"te")
         XCTAssertNil(Uhrenserver.zerlegen(ohneRumpf))
-        let ohneKopfende = bytes("GET /api/v1/device HTTP/1.1\r\nHost: x\r\n")
+        let ohneKopfende = bytes("GET /api/v1/device HTTP/1.1\r\nHost: 127.0.0.1\r\n")
         XCTAssertNil(Uhrenserver.zerlegen(ohneKopfende))
     }
 
@@ -35,7 +35,7 @@ final class UhrenserverZerlegenTests: XCTestCase {
 
     /// Ohne Rumpf und ohne `Content-Length` — so kommt jedes `GET`.
     func testEinGetOhneRumpf() throws {
-        let a = try XCTUnwrap(Uhrenserver.zerlegen(bytes("GET /api/v1/device HTTP/1.1\r\nHost: x\r\n\r\n")))
+        let a = try XCTUnwrap(Uhrenserver.zerlegen(bytes("GET /api/v1/device HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n")))
         XCTAssertEqual(a.methode, "GET")
         XCTAssertEqual(a.pfad, "/api/v1/device")
         XCTAssertTrue(a.koerper.isEmpty)

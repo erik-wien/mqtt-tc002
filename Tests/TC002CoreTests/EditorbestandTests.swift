@@ -233,19 +233,18 @@ final class EditorbestandTests: XCTestCase {
         XCTAssertEqual(bestand.alle().count, 1)
     }
 
-    /// Wie beim Sichern und beim Einlesen: Ein belegter Schluessel wird
-    /// ersetzt, nicht abgewiesen — sichtbar angekuendigt tut das die
-    /// Oberflaeche.
-    ///
-    /// Mutation: das `try? FileManager.default.removeItem(at: ziel)` vor dem
-    /// Verschieben streichen — dann wirft `moveItem`, und das Umbenennen
-    /// schlaegt mit einer Dateisystemmeldung fehl, statt zu ersetzen.
+    /// Ein belegter Schluessel wird nur mit `ueberschreiben` ersetzt; sonst
+    /// wirft das Umbenennen und beide Eintraege bleiben.
     func testEinBelegterSchluesselWirdErsetzt() throws {
         try bestand.sichern(gemalt(.icon16, "#FF0000"), name: "Alt", nummer: "")
         try bestand.sichern(gemalt(.icon16, "#00FF00"), name: "Neu", nummer: "")
         let alt = try XCTUnwrap(bestand.alle().first { $0.name == "Alt" })
 
-        _ = try bestand.umbenennen(alt, name: "Neu", nummer: "")
+        XCTAssertThrowsError(try bestand.umbenennen(alt, name: "Neu", nummer: ""),
+                             "ohne Einverstaendnis wird nichts ersetzt")
+        XCTAssertEqual(bestand.alle().count, 2)
+
+        _ = try bestand.umbenennen(alt, name: "Neu", nummer: "", ueberschreiben: true)
         let alle = bestand.alle()
         XCTAssertEqual(alle.count, 1, "„Neu“ steht zweimal da, oder gar nicht mehr")
         XCTAssertEqual(alle.first?.name, "Neu")
