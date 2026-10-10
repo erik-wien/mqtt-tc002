@@ -190,9 +190,12 @@ public struct Geraet {
     /// Ein Anzeigenname im Pfad. `[A-Za-z0-9_-]{1,32}` ist alles, was NG
     /// annimmt (§8) — was daneben liegt, wird trotzdem kodiert statt von Hand
     /// eingesetzt, sonst zerlegte ein Schraegstrich im Namen die Route.
-    private func ngName(_ name: String) -> String {
-        name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+    /// `/` bleibt in `.urlPathAllowed` stehen und wird deshalb ausgenommen.
+    static func ngName(_ name: String) -> String {
+        name.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlPathAllowed.subtracting(["/"])) ?? name
     }
+
+    private func ngName(_ name: String) -> String { Self.ngName(name) }
 
     /// Eine Anfrage an die Schnittstelle von AWTRIX NG.
     ///
@@ -229,6 +232,7 @@ public struct Geraet {
     /// `http:///api/v1/apps` ist eine gültige URL, die nirgendwohin zeigt.
     public static func adresseTaugt(_ host: String) -> Bool {
         guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !host.contains(where: { "@/?#\\".contains($0) }),
               let url = URL(string: "http://\(host)/") else { return false }
         return !(url.host ?? "").isEmpty
     }
@@ -272,7 +276,10 @@ public struct Geraet {
     /// Eine Adresse kommt aus den Einstellungen, ist also von Hand eingetippt.
     /// Auf solche Eingaben gehoert kein `!`.
     private func url(_ pfad: String) throws -> URL {
-        guard let url = URL(string: "http://\(host)\(pfad)") else {
+        // Ein `@`, `/`, `?` oder `#` im Host machte aus „x@fremd/“ eine Anfrage
+        // an einen anderen Rechner als den eingetragenen.
+        guard !host.contains(where: { "@/?#\\".contains($0) }),
+              let url = URL(string: "http://\(host)\(pfad)") else {
             throw GeraetFehler.ungueltigeAdresse(host)
         }
         return url

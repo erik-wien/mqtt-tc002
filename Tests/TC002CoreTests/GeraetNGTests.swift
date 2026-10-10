@@ -50,6 +50,26 @@ final class GeraetNGTests: XCTestCase {
         XCTAssertNotNil(Doppelgaenger.cacheRichtlinien["/api/v1/device"])
     }
 
+    // MARK: - Adresse und Name im Pfad
+
+    func testEinHostMitUmleitendenZeichenGehtNirgendwohin() {
+        for schlecht in ["x@fremd.example/", "fremd.example/pfad", "a?b", "a#b"] {
+            Doppelgaenger.pfade = []
+            let g = Geraet(host: schlecht, sitzung: sitzung())
+            XCTAssertThrowsError(try g.praefixUndBasis(), schlecht) { fehler in
+                guard case GeraetFehler.ungueltigeAdresse = fehler else { return XCTFail("\(fehler)") }
+            }
+            XCTAssertTrue(Doppelgaenger.pfade.isEmpty, schlecht)
+            XCTAssertFalse(Geraet.adresseTaugt(schlecht), schlecht)
+        }
+        XCTAssertTrue(Geraet.adresseTaugt("10.0.0.9:80"))
+    }
+
+    func testEinSchraegstrichImAnzeigennamenWirdKodiert() {
+        XCTAssertEqual(Geraet.ngName("a/b"), "a%2Fb")
+        XCTAssertEqual(Geraet.ngName("meldung1"), "meldung1")
+    }
+
     // MARK: - Das Praefix
 
     func testEinPraefixMitPlatzhalternLaengeOderSteuerzeichenWirdAbgewiesen() {
