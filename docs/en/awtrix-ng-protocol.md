@@ -260,6 +260,27 @@ melody, `404` for a missing file, `503 unavailable` without matching hardware.
 via `audio/play`, boot sound, voice answer), `app` the script sounds, `radio`
 the radio; any other value is refused.
 
+🔬 **Measured** (TC002, NG 1.2.2, 10.10.2026, over HTTP):
+
+| Request | Response |
+|---|---|
+| `{"rtttl":…}`, `{"speech":"hello"}`, `{"station":"<name>"}`, `{"station":0}`, list of two `rtttl` | `200 {"ok":true}` |
+| `rtttl` and `speech` together | `422`, `"one sound key only"`, `field` = the first key |
+| `{"file":"gibtsnicht"}` | `404 notFound`, `nothing called "gibtsnicht"` |
+| `{"file":"x.mp3"}` | `422`, `"invalid name"`, `field` `file` |
+| `station` with `loop` | `422`, `"not with station"`, `field` `loop` |
+| `[]` | `422`, `"must have 1 to 4 entries"` (no `field`) |
+| `{"song":"x"}` | `422`, `"unknown statement 'x' (line 1, column 1)"`, `field` `song` |
+| `speech` of 513 bytes | `422`, `"must be 1..512 bytes"`, `field` `speech` |
+| `audio/stop` with `{}` or `{"group":"radio"}` | `200`; `{"group":"x"}` → `422`, `"must be alert, app or radio"` |
+
+`GET /api/v1/audio` reports speech 0.3 s after the start as
+`alert.playing: true, name: "speech"`; a short melody (three sixteenths) is
+already over after 0.3 s (`playing: false`, `name: "rtttl"` remains). A playing
+radio reports, besides `playing`, `station` and `title`, also `underruns`,
+`decodeUs`, `starvedMs` and `bufferBytes`; after `stop {"group":"radio"}`
+`playing` is `false` at once.
+
 ### 3.3 Three traps that snap shut silently
 
 📄 **A message over 8192 bytes, topic included, is dropped — no error, no

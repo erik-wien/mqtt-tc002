@@ -266,6 +266,27 @@ Melodie, `404` für fehlende Datei, `503 unavailable` ohne passende Hardware.
 Wiedergabe über `audio/play`, Startklang, Voice-Antwort), `app` die Skriptklänge,
 `radio` das Radio; jeder andere Wert ist abgewiesen.
 
+🔬 **Gemessen** (TC002, NG 1.2.2, 10.10.2026, über HTTP):
+
+| Anfrage | Antwort |
+|---|---|
+| `{"rtttl":…}`, `{"speech":"hello"}`, `{"station":"<Name>"}`, `{"station":0}`, Liste aus zwei `rtttl` | `200 {"ok":true}` |
+| `rtttl` und `speech` zugleich | `422`, `"one sound key only"`, `field` = der erste Schlüssel |
+| `{"file":"gibtsnicht"}` | `404 notFound`, `nothing called "gibtsnicht"` |
+| `{"file":"x.mp3"}` | `422`, `"invalid name"`, `field` `file` |
+| `station` mit `loop` | `422`, `"not with station"`, `field` `loop` |
+| `[]` | `422`, `"must have 1 to 4 entries"` (ohne `field`) |
+| `{"song":"x"}` | `422`, `"unknown statement 'x' (line 1, column 1)"`, `field` `song` |
+| `speech` mit 513 Byte | `422`, `"must be 1..512 bytes"`, `field` `speech` |
+| `audio/stop` mit `{}` bzw. `{"group":"radio"}` | `200`; `{"group":"x"}` → `422`, `"must be alert, app or radio"` |
+
+`GET /api/v1/audio` meldet die Sprachausgabe 0,3 s nach dem Start als
+`alert.playing: true, name: "speech"`; eine kurze Melodie (drei Sechzehntel) ist
+nach 0,3 s schon vorbei (`playing: false`, `name: "rtttl"` bleibt stehen). Das
+laufende Radio liefert in `radio` neben `playing`, `station` und `title` noch
+`underruns`, `decodeUs`, `starvedMs` und `bufferBytes`; nach
+`stop {"group":"radio"}` ist `playing` sofort `false`.
+
 ### 3.3 Drei Fallen, die still zuschnappen
 
 📄 **Eine Nachricht über 8192 Byte, Thema eingerechnet, wird verworfen — kein
