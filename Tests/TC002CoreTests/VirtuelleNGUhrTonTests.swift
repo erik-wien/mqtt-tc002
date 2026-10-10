@@ -62,6 +62,12 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         XCTAssertEqual(z.ton.gespielt.count, 2)
     }
 
+    func testDateiImSkriptordnerNenntDenPfad() {
+        var z = zustand()
+        abgewiesen(senden("POST", "/audio/play", #"{"file":"Skript/name"}"#, &z), 404, "notFound",
+                   meldung: #"no file "Skript/name""#)
+    }
+
     func testFehlendeDateiIst404() {
         var z = zustand()
         abgewiesen(senden("POST", "/audio/play", #"{"file":"gibtsnicht"}"#, &z), 404, "notFound",
@@ -83,7 +89,12 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         abgewiesen(senden("POST", "/audio/play", #"{"file":"ding.mp3"}"#, &z), 422, "validationFailed", feld: "file",
                    meldung: "invalid name")
         abgewiesen(senden("POST", "/audio/play", #"{"file":"ping.txt"}"#, &z), 422, "validationFailed", feld: "file")
-        abgewiesen(senden("POST", "/audio/play", #"{"rtttl":"kaputt"}"#, &z), 422, "validationFailed", feld: "rtttl")
+        abgewiesen(senden("POST", "/audio/play", #"{"rtttl":"kaputt"}"#, &z), 422, "validationFailed", feld: "rtttl",
+                   meldung: "missing ':' (at offset 6)")
+        abgewiesen(senden("POST", "/audio/play", #"{"rtttl":"a:d=4:"}"#, &z), 422, "validationFailed", feld: "rtttl",
+                   meldung: "empty note (at offset 6)")
+        XCTAssertEqual(senden("POST", "/audio/play", #"{"rtttl":":d=4,o=5,b=100:c"}"#, &z).status, 200,
+                       "ein Namensteil darf fehlen")
         XCTAssertEqual(senden("POST", "/audio/play", #"{"file":"http://example.com/x.mp3"}"#, &z).status, 200,
                        "eine Adresse darf die Endung haben")
     }
@@ -191,11 +202,15 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         var z = NGUhrzustand()
         XCTAssertEqual(senden("PUT", "/audio/melodies/neu", #"{"rtttl":"a:d=4:c"}"#, &z).status, 201)
         XCTAssertEqual(senden("PUT", "/audio/melodies/neu", #"{"rtttl":"a:d=4:d"}"#, &z).status, 200)
-        XCTAssertEqual(z.ton.melodien["neu"], "a:d=4:d")
+        XCTAssertEqual(z.ton.melodien["neu"], "neu:d=4:d")
         let liste = senden("GET", "/audio/melodies", &z)
-        XCTAssertEqual(liste.objekt["melodies"], .liste([.objekt(["name": .text("neu"), "size": .zahl(7)])]))
+        XCTAssertEqual(z.ton.melodien["neu"], "neu:d=4:d", "der Namensteil wird auf den Melodienamen umgeschrieben")
+        XCTAssertEqual(liste.objekt["melodies"], .liste([.objekt([
+            "name": .text("neu"), "rtttl": .text("neu:d=4:d"), "bytes": .zahl(9), "notes": .zahl(1),
+            "durationMs": .zahl(0), "valid": .bool(true)])]))
         XCTAssertEqual(senden("DELETE", "/audio/melodies/neu", &z).wert, ok)
         abgewiesen(senden("DELETE", "/audio/melodies/neu", &z), 404, "notFound")
+        abgewiesen(senden("DELETE", "/audio/melodies/neu", &z), 404, "notFound", meldung: "melody not found")
     }
 
     func testMelodiegrenzen() {
@@ -203,7 +218,16 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         let name24 = String(repeating: "a", count: 24)
         XCTAssertEqual(senden("PUT", "/audio/melodies/\(name24)", #"{"rtttl":"a:d=4:c"}"#, &z).status, 201)
         abgewiesen(senden("PUT", "/audio/melodies/\(name24)b", #"{"rtttl":"a:d=4:c"}"#, &z), 422, "validationFailed", feld: "name")
-        abgewiesen(senden("PUT", "/audio/melodies/x", #"{"rtttl":"kaputt"}"#, &z), 422, "validationFailed", feld: "rtttl")
+        abgewiesen(senden("PUT", "/audio/melodies/x", #"{"rtttl":"kaputt"}"#, &z), 422, "validationFailed", feld: "rtttl",
+                   meldung: "expected name:defaults:notes")
+        // Gemessen: 24 Zeichen gehen, `a-b_C9` geht; Punkt, Leerzeichen, Umlaut nicht.
+        XCTAssertEqual(senden("PUT", "/audio/melodies/a-b_C9", #"{"rtttl":"a:d=4:c"}"#, &z).status, 201)
+        for name in ["pro.be", "pro%20be", "%C3%A4b"] {
+            abgewiesen(senden("PUT", "/audio/melodies/\(name)", #"{"rtttl":"a:d=4:c"}"#, &z), 422, "validationFailed",
+                       feld: "name", meldung: "invalid name")
+        }
+        XCTAssertEqual(senden("PUT", "/audio/melodies/p", #"{"rtttl":":d=4,o=5,b=100:c"}"#, &z).status, 201,
+                       "ohne Namensteil")
         abgewiesen(senden("PUT", "/audio/melodies/x", "{}", &z), 422, "validationFailed", feld: "rtttl")
         let lang = "a:d=4:" + String(repeating: "c", count: 507)
         abgewiesen(senden("PUT", "/audio/melodies/x", #"{"rtttl":"\#(lang)"}"#, &z), 422, "validationFailed", feld: "rtttl")
@@ -216,8 +240,10 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
 
     func testMelodienUndMP3Listen() {
         var z = zustand()
-        XCTAssertEqual(senden("GET", "/audio/melodies", &z).objekt["melodies"],
-                       .liste([.objekt(["name": .text("ping"), "size": .zahl(20)])]))
+        let melodien = senden("GET", "/audio/melodies", &z).objekt["melodies"]
+        guard case .liste(let eintraege)? = melodien, case .objekt(let m)? = eintraege.first else { return XCTFail() }
+        XCTAssertEqual(m["name"], .text("ping"))
+        XCTAssertEqual(m["bytes"], .zahl(20))
         XCTAssertEqual(senden("GET", "/audio/mp3", &z).objekt["files"], .liste([.objekt(["name": .text("ding")])]))
     }
 
@@ -244,9 +270,9 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         let genau = "[" + Array(repeating: gut, count: 32).joined(separator: ",") + "]"
         XCTAssertEqual(senden("PUT", "/audio/stations", #"{"stations":\#(genau)}"#, &z).status, 200)
         abgewiesen(senden("PUT", "/audio/stations", #"{"stations":[\#(gut),{"name":"","url":"http://example.com/s"}]}"#, &z),
-                   422, "validationFailed", feld: "stations[1].name")
+                   422, "validationFailed", feld: "stations[1].name", meldung: "must not be empty")
         abgewiesen(senden("PUT", "/audio/stations", #"{"stations":[{"name":"N","url":"ftp://example.com/s"}]}"#, &z),
-                   422, "validationFailed", feld: "stations[0].url")
+                   422, "validationFailed", feld: "stations[0].url", meldung: "must be an http(s) URL")
         XCTAssertEqual(z.ton.sender.count, 32, "abgewiesen heißt: nichts geändert")
     }
 
@@ -268,15 +294,18 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
     func testFalscherBenachrichtigungstonIst422MitStelle() {
         var z = zustand()
         abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":{"station":"Fm4"}}"#, &z),
-                   422, "validationFailed", feld: "sound.station")
-        abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":{"song":"x"}}"#, &z),
-                   422, "validationFailed", feld: "sound.song")
+                   422, "validationFailed", feld: "sound.station", meldung: "not here")
+        // Gemessen: `song` ist erlaubt (die Uhr prüft nur die Syntax).
+        XCTAssertEqual(senden("POST", "/notifications", #"{"text":"x","sound":{"song":"x"}}"#, &z).status, 200)
+        z.benachrichtigungen = []
         abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":{"file":"a","rtttl":"a:b:c"}}"#, &z),
                    422, "validationFailed", feld: "sound.file")
         abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":[{"file":"a"},{"file":"b.mp3"}]}"#, &z),
                    422, "validationFailed", feld: "sound[2].file")
-        abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":[]}"#, &z), 422, "validationFailed", feld: "sound")
-        abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":5}"#, &z), 422, "validationFailed", feld: "sound")
+        abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":[]}"#, &z), 422, "validationFailed",
+                   feld: "sound", meldung: "must have 1 to 4 entries")
+        abgewiesen(senden("POST", "/notifications", #"{"text":"x","sound":5}"#, &z), 422, "validationFailed",
+                   feld: "sound", meldung: "must be a string, object or list")
         XCTAssertTrue(z.benachrichtigungen.isEmpty, "nichts eingereiht")
     }
 

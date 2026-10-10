@@ -281,6 +281,17 @@ radio reports, besides `playing`, `station` and `title`, also `underruns`,
 `decodeUs`, `starvedMs` and `bufferBytes`; after `stop {"group":"radio"}`
 `playing` is `false` at once.
 
+🔬 **Melodies, list, stations, notification sound** (TC002, NG 1.2.2, 10 Oct 2026, over HTTP):
+
+- `PUT /api/v1/audio/melodies/<name>` with `{"rtttl":…}`: `201 {"ok":true}` new, `200 {"ok":true}` replaced. The clock rewrites the name part of the RTTTL to the melody name. `GET …/melodies` returns per melody `{"name","rtttl","bytes","notes","durationMs","valid"}` (`rtttl` with the rewritten name, `bytes` the length of that text) and `usedBytes`/`totalBytes`.
+- Melody name `[A-Za-z0-9_-]{1,24}`: 24 characters work, 25 do not; `a-b_C9` works, `pro.be`, `pro be` and `äb` do not (`422`, `"invalid name"`, `field` `name`).
+- RTTTL on `PUT`: `kaputt` → `422`, `"expected name:defaults:notes"`, `field` `rtttl`. An RTTTL without a name part (`:d=4,o=5,b=100:c`) is accepted (`201`). On playing, the texts differ: `{"rtttl":"kaputt"}` → `"missing ':' (at offset 6)"`, `{"rtttl":"a:d=4:"}` → `"empty note (at offset 6)"`, each with `field` `rtttl`.
+- `DELETE` of an unknown melody: `404`, `"melody not found"`; of an existing one: `200 {"ok":true}`.
+- `{"file":"Skript/name"}` without that script: `404`, `no file "Skript/name"`.
+- A list `[{"file":"gibtsnicht"},{"file":"a-b_C9"}]` whose second entry exists: `200`, the second one plays and `alert.name` is then `a-b_C9` — the list is a fallback list, not a sequence. `audio/stop` with an empty body: `200 {"ok":true}`.
+- `PUT /api/v1/audio/stations` (failure cases only, the list stayed): empty name → `422`, `"must not be empty"`, `field` `stations[0].name` (zero-based); `ftp://` address → `422`, `"must be an http(s) URL"`, `field` `stations[0].url`.
+- Notification `sound`: `{"song":"x"}` → `422`, `"unknown statement 'x' (line 1, column 1)"`, `field` `sound.song` — `song` is **allowed** there, the clock only checks the syntax. `5` → `"must be a string, object or list"`, `field` `sound`. `[]` → `"must have 1 to 4 entries"`, `field` `sound` (with `audio/play` the field is missing). `{"station":"Fm4"}` → `"not here"`, `field` `sound.station`.
+
 ### 3.3 Three traps that snap shut silently
 
 📄 **A message over 8192 bytes, topic included, is dropped — no error, no
@@ -817,7 +828,7 @@ app they are `422 validationFailed`:
 | `sound` | string \| object \| array | — | sound when it appears, at alert volume |
 
 📄 `sound`: `"ding"` (`/MP3/ding.mp3`, else melody `/MELODIES/ding.txt`),
-`{"file":"Folder/name"}`, `{"rtttl":"…"}`, `{"speech":"…"}` or a list of 1–4 of
+`{"file":"Folder/name"}`, `{"rtttl":"…"}`, `{"song":"…"}`, `{"speech":"…"}` or a list of 1–4 of
 those (the first playable). `""` and `null` are no sound; `"loop":true` in the
 object repeats until the notification leaves. `station` is not allowed. A
 malformed sound is `422` (`field` = `sound`, `sound.<key>`, `sound[1].file`), a

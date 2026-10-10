@@ -110,10 +110,10 @@ final class KlangPruefstandTests: XCTestCase {
         XCTAssertEqual(try uhr.melodienLesen().namen, [])
         XCTAssertTrue(try uhr.melodieSetzen(name: "ping", rtttl: melodie), "neu: 201")
         XCTAssertFalse(try uhr.melodieSetzen(name: "ping", rtttl: "x:d=4:c"), "ersetzt: 200")
-        XCTAssertEqual(s.zustand.ton.melodien["ping"], "x:d=4:c")
+        XCTAssertEqual(s.zustand.ton.melodien["ping"], "ping:d=4:c", "die Uhr schreibt den Namensteil um")
         let liste = try uhr.melodienLesen()
         XCTAssertEqual(liste.namen, ["ping"])
-        XCTAssertEqual(liste.belegteBytes, 7)
+        XCTAssertEqual(liste.belegteBytes, 10)
         XCTAssertNotNil(liste.gesamteBytes)
         // Die Melodie ist unter ihrem Namen abspielbar.
         try uhr.tonSpielen([Klang(.datei("ping"))])

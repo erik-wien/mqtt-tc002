@@ -13,7 +13,7 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
     /// `loop` mit `station`: Ein Radiostrom wiederholt sich nicht.
     case wiederholenMitSender
     case ungueltigeAnzahl(Int)
-    /// Quelle, die ein Benachrichtigungston nicht kennt (`song`, `station`).
+    /// Quelle, die ein Benachrichtigungston nicht kennt (`station`).
     case nichtInBenachrichtigung(feld: String)
     /// Die Uhr meldet in `capabilities.audio`, dass sie das nicht kann.
     case nichtGekonnt(faehigkeit: String)
@@ -42,7 +42,7 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
         case .ungueltigeAnzahl(let n):
             return lokf("Eine Klangliste hat 1 bis 4 Klänge, nicht %d.", n)
         case .nichtInBenachrichtigung(let feld):
-            return lokf("„%@“ ist als Benachrichtigungston nicht erlaubt; möglich sind Datei, RTTTL und Sprechtext.", feld)
+            return lokf("„%@“ ist als Benachrichtigungston nicht erlaubt; möglich sind Datei, RTTTL, Lied und Sprechtext.", feld)
         case .nichtGekonnt(let f):
             return lokf("Diese Uhr kann das nicht: Sie meldet „%@“ nicht als Fähigkeit.", f)
         case .endungImNamen(let name):
@@ -114,8 +114,8 @@ public enum Tongruppe: String, Equatable, Sendable, CaseIterable {
     }
 }
 
-/// Ein Klang für `audio/play` oder, ohne `song` und `station`, als
-/// Benachrichtigungston (`sound`).
+/// Ein Klang für `audio/play` oder, ohne `station`, als Benachrichtigungston
+/// (`sound`; gemessen: `song` ist dort erlaubt).
 public struct Klang: Equatable, Sendable {
     public enum Quelle: Equatable, Sendable {
         /// Gespeicherter Name, `Skript/name` oder `http(s)://`-Adresse.
@@ -179,7 +179,7 @@ public struct Klang: Equatable, Sendable {
         }
         if inBenachrichtigung {
             switch quelle {
-            case .lied, .sender, .senderPosition:
+            case .sender, .senderPosition:
                 throw KlangFehler.nichtInBenachrichtigung(feld: quelle.schluessel)
             default: break
             }

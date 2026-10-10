@@ -147,6 +147,12 @@ final class KlangTests: XCTestCase {
         XCTAssertNoThrow(try Klangbau.spielen([Klang(.datei("Skript/ding"))]))
     }
 
+    func testRTTTLOhneNamensteilIstErlaubt() {
+        // Gemessen 10.10.2026: `:d=4,o=5,b=100:c` wird angenommen.
+        XCTAssertNoThrow(try Klangbau.spielen([Klang(.rtttl(":d=4,o=5,b=100:c"))]))
+        XCTAssertNoThrow(try Klangbau.melodie(name: "a", rtttl: ":d=4,o=5,b=100:c"))
+    }
+
     func testRTTTLMussDreiTeileHaben() {
         wirft(.unlesbareMelodie) { try Klangbau.spielen([Klang(.rtttl("nur Text"))]) }
         wirft(.unlesbareMelodie) { try Klangbau.spielen([Klang(.rtttl("a:d=4,o=5:"))]) }
@@ -161,16 +167,17 @@ final class KlangTests: XCTestCase {
         wirft(.negativePosition(-1)) { try Klangbau.spielen([Klang(.senderPosition(-1))]) }
     }
 
-    func testBenachrichtigungKenntKeinLiedKeinenSender() {
-        wirft(.nichtInBenachrichtigung(feld: "song")) { try Klangbau.benachrichtigungston([Klang(.lied("x"))]) }
+    func testBenachrichtigungKenntKeinenSender_einLiedIstErlaubt() throws {
+        // Gemessen 10.10.2026: `song` ist in `sound` erlaubt, `station` nicht.
+        XCTAssertEqual(try Klangbau.benachrichtigungston([Klang(.lied("x"))]), #"{"song":"x"}"#)
         wirft(.nichtInBenachrichtigung(feld: "station")) { try Klangbau.benachrichtigungston([Klang(.sender("x"))]) }
         wirft(.nichtInBenachrichtigung(feld: "station")) { try Klangbau.benachrichtigungston([Klang(.senderPosition(1))]) }
         wirft(.ungueltigeAnzahl(5)) {
             try Klangbau.benachrichtigungston(Array(repeating: Klang(.datei("a")), count: 5))
         }
         // In einer Liste zählt jeder Klang.
-        wirft(.nichtInBenachrichtigung(feld: "song")) {
-            try Klangbau.benachrichtigungston([Klang(.datei("a")), Klang(.lied("x"))])
+        wirft(.nichtInBenachrichtigung(feld: "station")) {
+            try Klangbau.benachrichtigungston([Klang(.datei("a")), Klang(.sender("x"))])
         }
     }
 

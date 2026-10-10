@@ -75,10 +75,11 @@ final class TonbefehlTests: XCTestCase {
         XCTAssertEqual(try Optionen.zerlegt(["nachricht", "Post", "--rtttl", melodie]).benachrichtigung.klang,
                        [Klang(.rtttl(melodie))])
         XCTAssertEqual(try Optionen.zerlegt(["nachricht", "Post"]).benachrichtigung.klang, [])
-        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "Post", "--lied", "x"])) {
-            XCTAssertEqual($0 as? KlangFehler, .nichtInBenachrichtigung(feld: "song"))
+        XCTAssertEqual(try Optionen.zerlegt(["nachricht", "Post", "--lied", "x"]).benachrichtigung.klang,
+                       [Klang(.lied("x"))], "gemessen: song ist in sound erlaubt")
+        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "Post", "--sender", "x"])) {
+            XCTAssertEqual($0 as? KlangFehler, .nichtInBenachrichtigung(feld: "station"))
         }
-        XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "Post", "--sender", "x"]))
         XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "Post", "--wiederholen"]), "Loop ohne Klang")
         XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "Post", "--klang", "a", "--rtttl", melodie]))
         XCTAssertThrowsError(try Optionen.zerlegt(["senden", "Post", "--klang", "ding"]), "gilt nur für nachricht")

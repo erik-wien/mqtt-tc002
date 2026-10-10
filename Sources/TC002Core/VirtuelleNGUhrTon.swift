@@ -42,8 +42,8 @@ public struct NGTon: Equatable, Sendable {
 ///   notFound`, wenn einer nur fehlte, sonst `503 unavailable`;
 /// - die Meldungen sind die gemessenen (§3.2.1); ungemessen sind `404` bei einer
 ///   Station (gleicher Wortlaut wie bei `file`), `503` ohne spielbaren Klang und
-///   alles zu `song` (die Syntax des Liedtexts prüft die virtuelle Uhr nicht, sie
-///   weist nur die Länge ab);
+///   die Syntaxfehler von `song` (die virtuelle Uhr weist nur die Länge ab);
+/// - in der Melodienliste ist `durationMs` immer 0 (die Uhr rechnet die Dauer);
 /// - ein Name in `file` mit Schrägstrich (`Skript/name`) gilt als nicht gefunden,
 ///   solange es keine Skriptklänge gibt;
 /// - `song` wird nur auf Länge geprüft, nicht gelesen;
@@ -51,13 +51,11 @@ public struct NGTon: Equatable, Sendable {
 ///   mit Noten besteht; die Uhr prüft vermutlich genauer;
 /// - `audio/stop` mit einem anderen Schlüssel als `group` ist `422` mit dem
 ///   Schlüssel als `field`; leerer Rumpf und `{}` halten alles an;
-/// - Antworten von `PUT`/`DELETE` auf Melodien und Sender sind `{"ok":true}`, der
-///   Eintrag einer Melodie in der Liste ist `{"name","size"}` (Bytes des
-///   Quelltexts), `totalBytes` eine runde Zahl;
+/// - `totalBytes` ist eine runde Zahl; `409 nameTaken` ist im Wortlaut ungemessen;
 /// - Melodiename: 1–24 Zeichen, nur Buchstaben, Ziffern, `_` und `-`
 ///   (`422`, `field` = `name`); ein Name, den schon eine MP3 trägt, ist `409
 ///   nameTaken` (§8);
-/// - Zeilen einer Senderliste werden ab 0 gezählt (`stations[0].name`).
+/// - ein Sendername über 24 Zeichen ist `too long` (ungemessen).
 extension VirtuelleNGUhr {
     static let hoechsteMelodie = 512
     static let hoechsterSprechtext = 512
@@ -91,10 +89,13 @@ extension VirtuelleNGUhr {
         switch wert {
         case .text(let name): o = ["file": .text(name)]
         case .objekt(let x): o = x
-        default: return falsch("must be a string or an object")
+        default: return falsch(meldung ? "must be a string, object or list" : "must be a string or an object")
         }
-        let erlaubt = Set(meldung ? ["file", "rtttl", "speech", "loop"] : klangquellen + ["loop"])
-        for k in o.keys.sorted() where !erlaubt.contains(k) { return falsch("unknown field", k) }
+        // Gemessen: In einer Benachrichtigung ist `station` „not here“, `song` erlaubt.
+        let erlaubt = Set(meldung ? ["file", "rtttl", "song", "speech", "loop"] : klangquellen + ["loop"])
+        for k in o.keys.sorted() where !erlaubt.contains(k) {
+            return falsch(meldung && k == "station" ? "not here" : "unknown field", k)
+        }
         let quellen = klangquellen.filter { o[$0] != nil }
         guard !quellen.isEmpty else { return falsch("one source required") }
         guard quellen.count == 1 else { return falsch("one sound key only", quellen[0]) }
@@ -112,7 +113,7 @@ extension VirtuelleNGUhr {
                 }
             case "rtttl":
                 guard s.count <= hoechsteMelodie else { return falsch("too long", q) }
-                guard rtttlLesbar(s) else { return falsch("unreadable melody", q) }
+                if let grund = rtttlFehler(s) { return falsch(grund, q) }
             case "song":
                 guard s.utf8.count <= hoechstesLied else { return falsch("too long", q) }
             case "speech":
@@ -129,9 +130,15 @@ extension VirtuelleNGUhr {
         return (o, nil)
     }
 
-    static func rtttlLesbar(_ s: String) -> Bool {
+    /// Gemessen für `audio/play`: `kaputt` → `missing ':' (at offset 6)`,
+    /// `a:d=4:` → `empty note (at offset 6)`; der Offset ist die Länge des Textes.
+    /// Ein Namensteil darf fehlen. ❓ Andere Fehlerfälle (ungültige Einstellungen,
+    /// Noten) prüft die Emulation nicht.
+    static func rtttlFehler(_ s: String) -> String? {
         let teile = s.split(separator: ":", omittingEmptySubsequences: false)
-        return teile.count == 3 && !teile[2].trimmingCharacters(in: .whitespaces).isEmpty
+        guard teile.count == 3 else { return "missing ':' (at offset \(s.count))" }
+        guard !teile[2].trimmingCharacters(in: .whitespaces).isEmpty else { return "empty note (at offset \(s.count))" }
+        return nil
     }
 
     /// `sound` einer Benachrichtigung (§5.6): Name, Objekt oder Liste von 1–4;
@@ -218,7 +225,11 @@ extension VirtuelleNGUhr {
             case .unmoeglich: break
             }
         }
-        if let fehlte { return fehler(404, "notFound", "nothing called \"\(fehlte)\"") }
+        if let fehlte {
+            // Gemessen: ohne Schrägstrich `nothing called "x"`, mit `no file "x/y"`.
+            let text = fehlte.contains("/") ? "no file \"\(fehlte)\"" : "nothing called \"\(fehlte)\""
+            return fehler(404, "notFound", text)
+        }
         return fehler(503, "unavailable", "no playable sound")
     }
 
@@ -279,13 +290,15 @@ extension VirtuelleNGUhr {
         var neu: [Radiosender] = []
         for (i, e) in roh.enumerated() {
             guard case .objekt(let o) = e else { return ungueltig("must be an object", feld: "stations[\(i)]") }
-            guard case .text(let name)? = o["name"], (1...24).contains(name.count) else {
-                return ungueltig("invalid name", feld: "stations[\(i)].name")
+            // Gemessen: leerer Name `must not be empty`, `ftp://` `must be an http(s) URL`.
+            guard case .text(let name)? = o["name"], !name.isEmpty else {
+                return ungueltig("must not be empty", feld: "stations[\(i)].name")
             }
+            guard name.count <= 24 else { return ungueltig("too long", feld: "stations[\(i)].name") }
             guard case .text(let url)? = o["url"], url.count <= 255,
                   url.lowercased().hasPrefix("http://") || url.lowercased().hasPrefix("https://"),
                   !url.contains(where: \.isWhitespace) else {
-                return ungueltig("invalid url", feld: "stations[\(i)].url")
+                return ungueltig("must be an http(s) URL", feld: "stations[\(i)].url")
             }
             neu.append(Radiosender(name: name, url: url))
         }
@@ -296,7 +309,13 @@ extension VirtuelleNGUhr {
     /// `GET /api/v1/audio/melodies`.
     static func melodienliste(_ z: NGUhrzustand) -> Antwort {
         let namen = z.ton.melodien.keys.sorted()
-        let eintraege = namen.map { JSONWert.objekt(["name": .text($0), "size": .zahl(Double(z.ton.melodien[$0]!.utf8.count))]) }
+        let eintraege = namen.map { n -> JSONWert in
+            let text = z.ton.melodien[n]!
+            let teile = text.split(separator: ":", omittingEmptySubsequences: false)
+            let noten = teile.count == 3 ? teile[2].split(separator: ",").count : 0
+            return .objekt(["name": .text(n), "rtttl": .text(text), "bytes": .zahl(Double(text.utf8.count)),
+                            "notes": .zahl(Double(noten)), "durationMs": .zahl(0), "valid": .bool(true)])
+        }
         let belegt = z.ton.melodien.values.reduce(0) { $0 + $1.utf8.count }
         return json(.objekt(["melodies": .liste(eintraege), "usedBytes": .zahl(Double(belegt)),
                              "totalBytes": .zahl(Double(gesamtSpeicher))]))
@@ -325,10 +344,12 @@ extension VirtuelleNGUhr {
             return ungueltig("rtttl required", feld: "rtttl")
         }
         guard !text.isEmpty, text.count <= hoechsteMelodie else { return ungueltig("invalid length", feld: "rtttl") }
-        guard rtttlLesbar(text) else { return ungueltig("unreadable melody", feld: "rtttl") }
+        guard rtttlFehler(text) == nil else { return ungueltig("expected name:defaults:notes", feld: "rtttl") }
         guard !z.ton.mp3.contains(name) else { return fehler(409, "nameTaken", "name already taken") }
         let neu = z.ton.melodien[name] == nil
-        z.ton.melodien[name] = text
+        // Gemessen: Die Uhr schreibt den Namensteil des RTTTL auf den Melodienamen um.
+        let teile = text.split(separator: ":", omittingEmptySubsequences: false)
+        z.ton.melodien[name] = name + ":" + teile[1] + ":" + teile[2]
         return Antwort(status: neu ? 201 : 200, koerper: ok.koerper)
     }
 }

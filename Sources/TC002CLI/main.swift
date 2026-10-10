@@ -93,8 +93,8 @@ KLANG
   Die Uhr meldet, was sie kann ("capabilities"); was sie nicht kann, weist das Werkzeug
   vor dem Senden ab. Melodien, Listen und "ton zustand" gehen nur ueber HTTP, die Uhr
   braucht dafuer eine Adresse. Melodienamen: 1-24 Zeichen aus Buchstaben, Ziffern, _ und -.
-  An "nachricht" haengt --klang <Name|Adresse>, --rtttl "<Text>" oder --sprache "<Text>"
-  (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; Lied und Sender gehen dort nicht.
+  An "nachricht" haengt --klang <Name|Adresse>, --lied "<Text>", --rtttl "<Text>" oder
+  --sprache "<Text>" (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; ein Sender geht dort nicht.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
