@@ -156,9 +156,20 @@ public struct UeberView: View {
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("Claude Code & erik.huemer@jardyx.com • www.jardyx.com")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            // Eigennamen und Adressen, nicht zu übersetzen (`verbatim`); die
+            // Adresse öffnet das Mailprogramm.
+            HStack(spacing: 4) {
+                Text(verbatim: "Claude Code &")
+                Link(destination: URL(string: "mailto:erik.huemer@jardyx.com")!) {
+                    Text(verbatim: "erik.huemer@jardyx.com")
+                }
+                Text(verbatim: "•")
+                Link(destination: URL(string: "https://www.jardyx.com")!) {
+                    Text(verbatim: "www.jardyx.com")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 

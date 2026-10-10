@@ -40,6 +40,13 @@ struct TC002App: App {
                 Button("Gerätereferenz") { openWindow(id: Nebenfenster.geraetereferenz.id) }
                 Button("Schriftprobe") { openWindow(id: Nebenfenster.schriftprobe.id) }
             }
+            // Es gibt ein Hauptfenster: ein zweites auf demselben Zustand
+            // zeigte dieselben Regler doppelt und stritte um den Entwurf.
+            CommandGroup(replacing: .newItem) {}
+            Bearbeitenbefehle()
+            // Blendet den Inspektor des Fensters ein und aus (⌥⌘I) —
+            // dieselbe Handlung wie der Knopf in der Werkzeugleiste.
+            InspectorCommands()
             // Beide Ordner liegen normalerweise unsichtbar in der Library und
             // werden von Iconordner.eigene bzw. Bilderordner.eigene bei Bedarf
             // selbst angelegt — der Finder greift hier also nie ins Leere.
@@ -52,6 +59,15 @@ struct TC002App: App {
                     NSWorkspace.shared.open(Bilderordner.eigene)
                 }
             }
+        }
+
+        // ⌘, öffnet dieses Fenster — so findet man Einstellungen am Mac. Der
+        // Eintrag „Einstellungen“ in der Seitenleiste bleibt: Er ist der
+        // Startbereich einer noch nicht eingerichteten App, und der iPad
+        // teilt sich die Seitenleiste. Beide zeigen denselben Zustand.
+        Settings {
+            VerbindungView(zustand: zustand, fensterOeffnen: { openWindow(id: $0) })
+                .frame(minWidth: 520, idealWidth: 600, minHeight: 480, idealHeight: 620)
         }
 
         // Die vier Nebenfenster. Titel und Kennung kommen aus `Nebenfenster`,
@@ -120,5 +136,47 @@ struct TC002App: App {
                 // deshalb hier hoch — und nur, wenn er beim Beenden lief.
                 Virtuelleuhrbetrieb.gemeinsam.beimStart()
             }
+    }
+}
+
+/// Rückgängig, Wiederherstellen, Sichern und Senden in der Menüleiste.
+///
+/// Die Editoraktionen kommen über `FocusedValue` aus dem Fenster
+/// (`EditorBereichView`). Rückgängig und Wiederherstellen ersetzen die
+/// Systemeinträge und müssen deshalb selbst an ein Textfeld weiterreichen:
+/// Wer gerade in einem Feld tippt, meint dessen Verlauf, nicht den der
+/// Leinwand. Die Einträge sind nicht ausgegraut, denn ob ein Feld bearbeitet
+/// wird, ändert sich, ohne dass die Menüleiste neu aufgebaut wird.
+private struct Bearbeitenbefehle: Commands {
+    @FocusedValue(\.editorAktionen) private var editor
+    @FocusedValue(\.sendeAktion) private var sende
+
+    private var textWirdBearbeitet: Bool { NSApp.keyWindow?.firstResponder is NSTextView }
+
+    private func anSystem(_ selektor: String) {
+        NSApp.sendAction(Selector((selektor)), to: nil, from: nil)
+    }
+
+    var body: some Commands {
+        CommandGroup(replacing: .undoRedo) {
+            Button("Rückgängig") {
+                if let editor, !textWirdBearbeitet { editor.zurueck() } else { anSystem("undo:") }
+            }
+            .keyboardShortcut("z", modifiers: .command)
+            Button("Wiederherstellen") {
+                if let editor, !textWirdBearbeitet { editor.vor() } else { anSystem("redo:") }
+            }
+            .keyboardShortcut("z", modifiers: [.command, .shift])
+        }
+        CommandGroup(replacing: .saveItem) {
+            Button("Sichern") { editor?.sichern?() }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(editor?.sichern == nil)
+        }
+        CommandGroup(before: .importExport) {
+            Button("Senden") { sende?.senden?() }
+                .keyboardShortcut(.return, modifiers: .command)
+                .disabled(sende?.senden == nil)
+        }
     }
 }

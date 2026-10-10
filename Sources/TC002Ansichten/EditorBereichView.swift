@@ -424,6 +424,10 @@ public struct EditorBereichView: View {
                                             if !zeigtUebersicht { zeigeInspektor = neu }
                                         })) { inspektor }
         .sheet(isPresented: $zeigeGalerie) { galerieblatt }
+        .focusedSceneValue(\.editorAktionen, EditorAktionen(
+            kannZurueck: verlauf.kannZurueck, kannVor: verlauf.kannVor,
+            zurueck: { rueckgaengig() }, vor: { wiederherstellen() },
+            sichern: zeigtUebersicht ? nil : { sichernAnfragen() }))
         // An der Ansicht, nicht am Knopf im Inspektor: Den gibt es in der
         // Uebersicht nicht, und das Plus dort oeffnet dieselbe Dateiwahl.
         .fileImporter(isPresented: $zeigeDateiImport,
