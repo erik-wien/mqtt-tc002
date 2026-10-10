@@ -402,7 +402,10 @@ public enum Meldungsbau {
     /// `.text`: Text und Regler samt Icon als `Meldungsherkunft`, aus der NG
     /// die Anzeige in ihrer Schrift setzt (`NGNutzlast.anzeige`).
     public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
-                              mass: Anzeigemass = .vorgabe) throws -> Frame {
+                              mass: Anzeigemass = .vorgabe,
+                              bestaende: (() -> [Iconsammlung])? = nil) throws -> Frame {
+        // Je Uhr das Icon in der Groesse, die in ihre Hoehe passt.
+        let icon = icon.map { Iconbestaende.passend($0, fuer: mass, in: bestaende) }
         switch o.weg {
         case .text:
             return Frame(dauer: o.dauer,

@@ -260,6 +260,24 @@ public struct SendenView: View {
     private var mitIcon: Bool { gewaehltesIcon != nil }
     /// Acht ohne Icon — der Wert zaehlt dann ohnehin nicht.
     private var iconKante: Int { gewaehltesIcon?.kante ?? 8 }
+    private var vorschauIconKante: Int { icon(fuer: mass)?.kante ?? 8 }
+
+    /// Das Icon, das eine Uhr dieses Masses bekommt: bei einem 16×16 auf
+    /// einer Anzeige mit acht Zeilen die 8×8-Fassung (`Iconbestaende.passend`).
+    private func icon(fuer mass: Anzeigemass) -> Icon? {
+        gewaehltesIcon.map { Iconbestaende.passend($0, fuer: mass) }
+    }
+
+    /// Der Hinweis unter der Vorschau, wenn eine Uhr nicht bekommt, was
+    /// gewaehlt ist: kleinere Schrift oder kleineres Icon.
+    private func hinweise(fuer uhr: Uhr) -> [String] {
+        let m = Anzeigemass.fuer(uhr)
+        var zeilen: [String] = []
+        if let h = optionen.verkleinerungshinweis(uhr: uhr.name, mass: m) { zeilen.append(h) }
+        if let gewaehlt = gewaehltesIcon, let h = Iconbestaende.hinweis(
+            gewaehlt: gewaehlt, tatsaechlich: icon(fuer: m), uhr: uhr.name) { zeilen.append(h) }
+        return zeilen
+    }
 
     /// Das Seitenverhaeltnis des Vorschaubereichs — das **schmalste** aller
     /// eingetragenen Uhren, nicht das der angesehenen.
@@ -311,6 +329,8 @@ public struct SendenView: View {
     private func vorschau(fuer uhr: Uhr, angesehen: Bool, platz: CGSize) -> some View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.fuerVorschau
+        let iconDerUhr = icon(fuer: uhrmass)
+        let iconKante = iconDerUhr?.kante ?? 8
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
         // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
         let textDerUhr = o.weg == .text
@@ -319,7 +339,7 @@ public struct SendenView: View {
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
         return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
                             kantenlaenge: kante,
-                            icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
+                            icon: (sitzt || textDerUhr) ? iconDerUhr?.datei : nil,
                             iconKante: iconKante,
                             iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass) : 1,
                             laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames)
@@ -328,10 +348,10 @@ public struct SendenView: View {
 
 
     private var passt: Bool {
-        Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: vorschauIconKante, mass: mass)
     }
     private var feld: Pixelfeld {
-        Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, iconKante: vorschauIconKante, mass: mass)
     }
 
     /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
@@ -397,7 +417,7 @@ public struct SendenView: View {
     /// einbaeckt. Leer ohne Icon oder bei unlesbarer Datei — das Senden meldet
     /// den Fehler dann noch einmal richtig.
     private var iconRaster: [[String?]] {
-        guard let icon = gewaehltesIcon else { return [] }
+        guard let icon = icon(fuer: mass) else { return [] }
         return ((try? Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)) ?? [])
             .map(\.pixel)
     }
@@ -470,11 +490,12 @@ public struct SendenView: View {
                 }
                 // Die Groesse, die diese Uhr wirklich bekommt, wenn die
                 // gewaehlte nicht in ihre Hoehe passt.
-                if let uhr = zustand.referenzUhr,
-                   let hinweis = optionen.verkleinerungshinweis(uhr: uhr.name, mass: Anzeigemass.fuer(uhr)) {
-                    Text(hinweis)
-                        .font(.caption).foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                if let uhr = zustand.referenzUhr {
+                    ForEach(hinweise(fuer: uhr), id: \.self) { hinweis in
+                        Text(hinweis)
+                            .font(.caption).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
                 HStack(spacing: 8) {
                     Uhrenpunkte(zustand: zustand)
@@ -606,7 +627,7 @@ public struct SendenView: View {
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
-            let (o, iconBilder, iconKante, mass) = (vorschauOptionen, iconRaster, iconKante, mass)
+            let (o, iconBilder, iconKante, mass) = (vorschauOptionen, iconRaster, vorschauIconKante, mass)
             let frames = await Task.detached(priority: .userInitiated) {
                 Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder,
                                               iconKante: iconKante, mass: mass)
@@ -621,7 +642,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
+        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(icon(fuer: mass)?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,

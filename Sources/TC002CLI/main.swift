@@ -440,6 +440,12 @@ func lauf() throws {
                let hinweis = m.verkleinerungshinweis(uhr: uhr.name, mass: Anzeigemass.fuer(uhr)) {
                 fehlerAusgeben(hinweis)
             }
+            if !optionen.grafikGesetzt, let gewaehlt = icon,
+               let hinweis = Iconbestaende.hinweis(
+                gewaehlt: gewaehlt, tatsaechlich: Iconbestaende.passend(gewaehlt, fuer: Anzeigemass.fuer(uhr)),
+                uhr: uhr.name) {
+                fehlerAusgeben(hinweis)
+            }
             try anzeigen.zeigen(try rahmen(mass: Anzeigemass.fuer(uhr)), auf: optionen.anzeigename,
                                 faehigkeiten: faehigkeiten(uhr))
             // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
