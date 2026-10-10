@@ -236,6 +236,38 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         try lesen { tonzustandAusgeben(try $0.tonzustandLesen()) }
     case .tonMelodien:
         try lesen { melodienAusgeben(try $0.melodienLesen()) }
+    case .tonMP3Liste:
+        try lesen { mp3AusgebenListe(try $0.mp3Lesen()) }
+    case .tonMP3Loeschen(let name):
+        if optionen.trocken {
+            trocken(http: "DELETE /api/v1/audio/mp3/\(name)", thema: { _ in lok("(nur über HTTP)") }, json: ""); return true
+        }
+        try anAlle(lokf("MP3 „%@“ gelöscht", name)) { anzeigen, _ in try anzeigen.mp3Loeschen(name: name) }
+    case .tonMP3Hochladen(let datei, let angegeben, let ersetzen):
+        let url = URL(fileURLWithPath: (datei as NSString).expandingTildeInPath)
+        guard let daten = try? Data(contentsOf: url) else {
+            throw Abbruch(lokf("Die Datei „%@“ ist nicht zu lesen.", datei))
+        }
+        let name = angegeben ?? Klangname.vorschlag(ausDateiname: url.lastPathComponent)
+        if angegeben == nil { print(lokf("Name auf der Uhr: %@", name)) }
+        guard Klangname.gueltig(name) else { throw KlangFehler.ungueltigerKlangname(name) }
+        if optionen.trocken {
+            trocken(http: "POST /api/v1/audio/mp3 (multipart, file=\(name).mp3, \(daten.count) Byte)",
+                    thema: { _ in lok("(nur über HTTP)") }, json: ""); return true
+        }
+        try anAlle(lokf("MP3 „%@“ hochgeladen", name)) { anzeigen, _ in
+            let belegt = try anzeigen.mp3Lesen().namen
+            let melodien = try anzeigen.melodienLesen().namen
+            if melodien.contains(name) {
+                let frei = Klangname.freierName(name, vorhanden: belegt + melodien)
+                throw Abbruch(lokf("„%@“ ist der Name einer Melodie auf der Uhr. Frei wäre „%@“ (--name).", name, frei))
+            }
+            if belegt.contains(name), !ersetzen {
+                let frei = Klangname.freierName(name, vorhanden: belegt + melodien)
+                throw Abbruch(lokf("„%@“ gibt es auf der Uhr schon. Mit --ersetzen überschreiben, oder einen freien Namen nehmen: --name %@", name, frei))
+            }
+            try anzeigen.mp3Hochladen(name: name, daten: daten)
+        }
     case .tonSender:
         try lesen { senderAusgeben(try $0.senderLesen()) }
     case .zustand:

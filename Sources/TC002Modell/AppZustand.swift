@@ -103,6 +103,9 @@ public final class AppZustand {
     /// Melodien und MP3-Dateien auf der Uhr, einmal auf Anforderung geholt
     /// (`tonlistenAbfragen`).
     public var tonlisten: [UUID: Tonlisten] = [:]
+    /// Die MP3-Dateien mit Größe und die Belegung des Speichers, gelesen mit den
+    /// Tonlisten und nach jedem Hochladen und Löschen.
+    public var mp3Ablage: [UUID: Tonablage] = [:]
     /// Gedrückt (`true`) oder losgelassen: nur das Mitlesen über MQTT sieht die
     /// Tasten (`state/buttons/*`). Mit dem Abriss des Mitlesens leer.
     public var tasten: [UUID: [Taste: Bool]] = [:]

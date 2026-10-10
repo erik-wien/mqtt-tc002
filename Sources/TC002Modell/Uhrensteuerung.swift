@@ -30,6 +30,7 @@ extension AppZustand {
         bildschirm[id] = nil
         tonzustand[id] = nil
         tonlisten[id] = nil
+        mp3Ablage[id] = nil
     }
 
     // MARK: - Zustand
@@ -245,14 +246,72 @@ extension AppZustand {
     public func tonlistenAbfragen(_ id: UUID) async -> Bool {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
         let host = uhr.host, sitzung = netzsitzung
-        let geholt = await Hintergrund.lauf { () -> Tonlisten? in
+        let geholt = await Hintergrund.lauf { () -> (Tonlisten, Tonablage?)? in
             let g = Geraet(host: host, sitzung: sitzung)
             guard let melodien = try? g.melodien() else { return nil }
-            return Tonlisten(melodien: melodien.namen, mp3: (try? g.mp3Dateien())?.namen ?? [])
+            let mp3 = try? g.mp3Dateien()
+            return (Tonlisten(melodien: melodien.namen, mp3: mp3?.namen ?? []), mp3)
         }
         guard let geholt, uhren.contains(where: { $0.id == id }) else { return false }
-        tonlisten[id] = geholt
+        tonlisten[id] = geholt.0
+        mp3Ablage[id] = geholt.1
         return true
+    }
+
+    /// Lädt eine MP3-Datei unter `name` auf die Uhr (nur HTTP) und holt danach
+    /// die Listen neu, damit Klang › „Von der Uhr“ den Namen kennt. Gelesen wird
+    /// die Datei im Hintergrund; der Zugriff auf eine vom Anwender gewählte Datei
+    /// gilt nur, solange er ausdrücklich geöffnet ist. Eine gleichnamige MP3
+    /// ersetzt die Uhr still — ob das gewollt ist, fragt die Ansicht vorher.
+    @discardableResult
+    public func mp3Hochladen(datei: URL, name: String, fuer id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return false }
+        guard !uhr.host.isEmpty else {
+            fehler = lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name)
+            return false
+        }
+        let host = uhr.host, sitzung = netzsitzung
+        do {
+            try await Hintergrund.lauf {
+                let offen = datei.startAccessingSecurityScopedResource()
+                defer { if offen { datei.stopAccessingSecurityScopedResource() } }
+                // Die Größe vor dem Lesen: Eine riesige Datei soll nicht erst im Speicher landen.
+                if let groesse = try? datei.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+                   groesse > Geraet.mp3Hoechstgroesse {
+                    throw KlangFehler.mp3ZuGross(bytes: groesse, grenze: Geraet.mp3Hoechstgroesse)
+                }
+                guard let daten = try? Data(contentsOf: datei) else {
+                    throw MP3Fehler.nichtLesbar(datei.lastPathComponent)
+                }
+                try Geraet(host: host, sitzung: sitzung).mp3Hochladen(name: name, daten: daten)
+            }
+            log(lokf("%@: MP3 „%@“ hochgeladen", uhr.name, name))
+            await tonlistenAbfragen(id)
+            return true
+        } catch {
+            melde(error, uhr: uhr)
+            return false
+        }
+    }
+
+    /// Löscht eine MP3-Datei der Uhr (nur HTTP) und holt die Listen neu.
+    @discardableResult
+    public func mp3Loeschen(name: String, fuer id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return false }
+        guard !uhr.host.isEmpty else {
+            fehler = lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name)
+            return false
+        }
+        let host = uhr.host, sitzung = netzsitzung
+        do {
+            try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).mp3Loeschen(name: name) }
+            log(lokf("%@: MP3 „%@“ gelöscht", uhr.name, name))
+            await tonlistenAbfragen(id)
+            return true
+        } catch {
+            melde(error, uhr: uhr)
+            return false
+        }
     }
 
     /// Eine Anzeige vor oder zurück bei genau dieser Uhr.
@@ -363,6 +422,17 @@ extension AppZustand {
         } catch {
             melde(error, uhr: uhr)
             return false
+        }
+    }
+}
+
+/// Was beim Lesen der Datei schiefgehen kann, bevor etwas hinausgeht.
+enum MP3Fehler: Error, LocalizedError {
+    case nichtLesbar(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .nichtLesbar(let name): return lokf("Die Datei „%@“ ist nicht zu lesen.", name)
         }
     }
 }

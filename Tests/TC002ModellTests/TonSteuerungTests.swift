@@ -99,6 +99,52 @@ final class TonSteuerungTests: XCTestCase {
         XCTAssertEqual(z.tonlisten[uhr.id], Tonlisten(melodien: ["ping"], mp3: ["gong"]))
     }
 
+    private func mp3Datei(_ name: String, _ inhalt: Data) throws -> URL {
+        let ordner = FileManager.default.temporaryDirectory.appendingPathComponent("mp3test-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        let url = ordner.appendingPathComponent(name)
+        try inhalt.write(to: url)
+        addTeardownBlock { try? FileManager.default.removeItem(at: ordner) }
+        return url
+    }
+
+    func testMP3HochladenHoltDieListenNeu() async throws {
+        let (z, uhr, s) = try httpUhr(NGTon())
+        let datei = try mp3Datei("Grüße aus Wien.mp3", Data("ID3".utf8) + Data(repeating: 1, count: 997))
+        let ok = await z.mp3Hochladen(datei: datei, name: Klangname.vorschlag(ausDateiname: datei.lastPathComponent),
+                                      fuer: uhr.id)
+        XCTAssertTrue(ok, "\(z.fehler ?? "")")
+        XCTAssertEqual(s.zustand.ton.mp3, ["Gruesse-aus-Wien"])
+        XCTAssertEqual(z.tonlisten[uhr.id]?.mp3, ["Gruesse-aus-Wien"], "Klang › Von der Uhr kennt den Namen")
+        XCTAssertEqual(z.mp3Ablage[uhr.id]?.groessen["Gruesse-aus-Wien"], 1000)
+        XCTAssertEqual(z.mp3Ablage[uhr.id]?.belegteBytes, 1000)
+        let weg = await z.mp3Loeschen(name: "Gruesse-aus-Wien", fuer: uhr.id)
+        XCTAssertTrue(weg)
+        XCTAssertEqual(z.tonlisten[uhr.id]?.mp3, [])
+    }
+
+    func testMP3HochladenMeldetFehlerStattSieZuVerschlucken() async throws {
+        let (z, uhr, _) = try httpUhr(NGTon())
+        let kein = try mp3Datei("text.mp3", Data("kein mp3".utf8))
+        let a = await z.mp3Hochladen(datei: kein, name: "text", fuer: uhr.id)
+        XCTAssertFalse(a)
+        XCTAssertTrue(z.fehler?.contains("MP3") == true, z.fehler ?? "nil")
+        z.fehler = nil
+        let fehlt = FileManager.default.temporaryDirectory.appendingPathComponent("gibt-es-nicht.mp3")
+        let b = await z.mp3Hochladen(datei: fehlt, name: "x", fuer: uhr.id)
+        XCTAssertFalse(b)
+        XCTAssertNotNil(z.fehler)
+    }
+
+    func testMP3HochladenOhneAdresse() async throws {
+        let (z, uhr, _) = try httpUhr(NGTon())
+        z.uhren[0].host = ""
+        let datei = try mp3Datei("x.mp3", Data("ID3abc".utf8))
+        let ok = await z.mp3Hochladen(datei: datei, name: "x", fuer: uhr.id)
+        XCTAssertFalse(ok)
+        XCTAssertNotNil(z.fehler)
+    }
+
     func testNachrichtMitKlangGehtHinaus() async throws {
         let (z, _, _) = try httpUhr(NGTon())
         let wahl = Nachrichtwahl(klang: Klangwahl(art: .vorlesen))

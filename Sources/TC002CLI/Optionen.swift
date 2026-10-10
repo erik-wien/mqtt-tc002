@@ -54,6 +54,10 @@ struct Optionen {
         case tonMelodie(name: String, rtttl: String)
         case tonMelodieLoeschen(name: String)
         case tonSender
+        case tonMP3Liste
+        /// `name` ist `nil`, wenn der Vorschlag gelten soll.
+        case tonMP3Hochladen(datei: String, name: String?, ersetzen: Bool)
+        case tonMP3Loeschen(name: String)
         /// Der TLS-Stand für MQTT und die CA der Uhr (nie TLS selbst).
         case tls
         case tlsCA(datei: String)
@@ -479,7 +483,7 @@ struct Optionen {
             return
         }
         guard let wort = freie.first?.lowercased() else {
-            throw Fehler.unvollstaendig(befehl: "ton", erwartet: "spielen / stopp / zustand / melodien / melodie / sender")
+            throw Fehler.unvollstaendig(befehl: "ton", erwartet: "spielen / stopp / zustand / melodien / melodie / mp3 / sender")
         }
         let rest = Array(freie.dropFirst())
         func hoechstens(_ n: Int, _ name: String) throws {
@@ -508,6 +512,33 @@ struct Optionen {
         case "zustand", "state": try ohneOptionen("ton zustand"); befehl = .tonZustand
         case "melodien", "melodies": try ohneOptionen("ton melodien"); befehl = .tonMelodien
         case "sender", "stations": try ohneOptionen("ton sender"); befehl = .tonSender
+        case "mp3":
+            if let option = klangoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton spielen") }
+            let unter = rest.first?.lowercased()
+            let ersetzenOption = ersetzen ? "--ersetzen" : nil
+            switch unter {
+            case nil:
+                try hoechstens(0, "ton mp3")
+                if nameAngegeben { throw Fehler.optionGiltNurFuer(option: "--name", befehl: "ton mp3 hochladen") }
+                if let option = ersetzenOption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton mp3 hochladen") }
+                befehl = .tonMP3Liste
+            case "hochladen", "upload":
+                guard rest.count >= 2 else { throw Fehler.unvollstaendig(befehl: "ton mp3 hochladen", erwartet: "<Datei> [--name <Name>] [--ersetzen]") }
+                try hoechstens(2, "ton mp3 hochladen")
+                if nameAngegeben, !Klangname.gueltig(anzeigename) { throw KlangFehler.ungueltigerKlangname(anzeigename) }
+                befehl = .tonMP3Hochladen(datei: rest[1], name: nameAngegeben ? anzeigename : nil, ersetzen: ersetzen)
+            case "loeschen", "delete":
+                guard rest.count >= 2 else { throw Fehler.unvollstaendig(befehl: "ton mp3 loeschen", erwartet: "<Name>") }
+                try hoechstens(2, "ton mp3 loeschen")
+                if nameAngegeben { throw Fehler.optionGiltNurFuer(option: "--name", befehl: "ton mp3 hochladen") }
+                if let option = ersetzenOption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton mp3 hochladen") }
+                let roh = rest[1]
+                let name = roh.lowercased().hasSuffix(".mp3") ? String(roh.dropLast(4)) : roh
+                guard Klangname.gueltig(name) else { throw KlangFehler.ungueltigerKlangname(name) }
+                befehl = .tonMP3Loeschen(name: name)
+            default:
+                throw Fehler.ueberzaehligesWort(befehl: "ton mp3", wort: rest[0])
+            }
         case "melodie", "melody":
             guard let name = rest.first else {
                 throw Fehler.unvollstaendig(befehl: "ton melodie", erwartet: "<Name> --rtttl \"…\" / --loeschen")

@@ -1,7 +1,7 @@
 import Foundation
 import TC002Core
 
-// Die Ausgabe der Lesebefehle für Klang (`ton zustand`, `ton melodien`, `ton sender`).
+// Die Ausgabe der Lesebefehle für Klang (`ton zustand`, `ton melodien`, `ton mp3`, `ton sender`).
 // Die Befehle selbst laufen in `steuerbefehl` (Steuerbefehle.swift).
 
 private func wiedergabezeile(_ spielt: Bool, _ name: String) -> String {
@@ -24,6 +24,17 @@ func tonzustandAusgeben(_ z: Tonzustand, ausgabe: (String) -> Void = { print($0)
 func melodienAusgeben(_ ablage: Tonablage, ausgabe: (String) -> Void = { print($0) }) {
     for name in ablage.namen { ausgabe(Terminaltext.sicher(name)) }
     ausgabe(lokf("%d Melodien", ablage.namen.count))
+    if let belegt = ablage.belegteBytes, let gesamt = ablage.gesamteBytes {
+        ausgabe(lokf("%d von %d Byte belegt", belegt, gesamt))
+    }
+}
+
+func mp3AusgebenListe(_ ablage: Tonablage, ausgabe: (String) -> Void = { print($0) }) {
+    for name in ablage.namen {
+        let groesse = ablage.groessen[name].map { "\t" + lokf("%d Byte", $0) } ?? ""
+        ausgabe(Terminaltext.sicher(name) + groesse)
+    }
+    ausgabe(lokf("%d MP3-Dateien", ablage.namen.count))
     if let belegt = ablage.belegteBytes, let gesamt = ablage.gesamteBytes {
         ausgabe(lokf("%d von %d Byte belegt", belegt, gesamt))
     }

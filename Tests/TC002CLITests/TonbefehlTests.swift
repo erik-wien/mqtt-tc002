@@ -183,3 +183,39 @@ extension TonbefehlTests {
         XCTAssertEqual(try Optionen.zerlegt(["ton", "hilfe"]).befehl, .hilfe)
     }
 }
+
+/// `ton mp3`: Zerlegen und die Ausgabe der Liste.
+extension TonbefehlTests {
+    func testMP3Befehle() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["ton", "mp3"]).befehl, .tonMP3Liste)
+        XCTAssertEqual(try Optionen.zerlegt(["sound", "mp3"]).befehl, .tonMP3Liste)
+        XCTAssertEqual(try Optionen.zerlegt(["ton", "mp3", "hochladen", "Grüße aus Wien.mp3"]).befehl,
+                       .tonMP3Hochladen(datei: "Grüße aus Wien.mp3", name: nil, ersetzen: false))
+        XCTAssertEqual(try Optionen.zerlegt(["sound", "mp3", "upload", "a.mp3", "--name", "klingel", "--replace"]).befehl,
+                       .tonMP3Hochladen(datei: "a.mp3", name: "klingel", ersetzen: true))
+        XCTAssertEqual(try Optionen.zerlegt(["ton", "mp3", "loeschen", "klingel"]).befehl, .tonMP3Loeschen(name: "klingel"))
+        XCTAssertEqual(try Optionen.zerlegt(["sound", "mp3", "delete", "klingel.mp3"]).befehl, .tonMP3Loeschen(name: "klingel"))
+    }
+
+    func testMP3BefehleWeisenFalschesAb() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "hochladen"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "hochladen", "a.mp3", "--name", "mit leer"])) {
+            XCTAssertEqual($0 as? KlangFehler, .ungueltigerKlangname("mit leer"))
+        }
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "loeschen", "mit leer"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "loeschen"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "umbenennen", "a"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "--ersetzen"]), "--ersetzen gilt nur beim Hochladen")
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "mp3", "loeschen", "a", "--name", "b"]))
+    }
+
+    func testMP3ListeGibtSteuerzeichenNichtAus() {
+        var zeilen: [String] = []
+        mp3AusgebenListe(Tonablage(namen: ["x\u{1B}[2J", "y"], belegteBytes: 30, gesamteBytes: 100,
+                                   groessen: ["x\u{1B}[2J": 10, "y": 20]), ausgabe: { zeilen.append($0) })
+        XCTAssertEqual(zeilen.count, 4)
+        XCTAssertEqual(zeilen[0], "x\u{FFFD}[2J\t10 Byte")
+        XCTAssertEqual(zeilen[1], "y\t20 Byte")
+        XCTAssertFalse(zeilen.contains { $0.unicodeScalars.contains { $0.value == 0x1B } })
+    }
+}

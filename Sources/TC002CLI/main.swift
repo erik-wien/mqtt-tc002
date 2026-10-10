@@ -49,6 +49,9 @@ AUFRUF
   mqtttc002 ton melodien           die gespeicherten Melodien auflisten
   mqtttc002 ton melodie <Name> --rtttl "..."   eine Melodie anlegen oder ersetzen
   mqtttc002 ton melodie <Name> --loeschen      eine Melodie loeschen
+  mqtttc002 ton mp3                die MP3-Dateien auf der Uhr auflisten
+  mqtttc002 ton mp3 hochladen <Datei> [--name <Name>] [--ersetzen]   eine MP3-Datei auf die Uhr laden
+  mqtttc002 ton mp3 loeschen <Name>                                  eine MP3-Datei loeschen
   mqtttc002 ton sender             die Senderliste der Uhr
   mqtttc002 hilfe                  diesen Text
 
@@ -93,6 +96,11 @@ KLANG
   Die Uhr meldet, was sie kann ("capabilities"); was sie nicht kann, weist das Werkzeug
   vor dem Senden ab. Melodien, Listen und "ton zustand" gehen nur ueber HTTP, die Uhr
   braucht dafuer eine Adresse. Melodienamen: 1-24 Zeichen aus Buchstaben, Ziffern, _ und -.
+  MP3-Namen auf der Uhr: 1-32 Zeichen aus Buchstaben, Ziffern, _ und - (die Uhr haengt .mp3 an).
+  "ton mp3 hochladen" macht ohne --name aus dem Dateinamen einen solchen Namen (Umlaute
+  ausgeschrieben, Leerzeichen zu -) und gibt ihn aus; die Datei darf hoechstens 4 MB gross sein.
+  Gibt es den Namen schon, bricht der Befehl mit einem freien Vorschlag ab; --ersetzen
+  ueberschreibt die vorhandene MP3 (eine gleichnamige Melodie nie).
   An "nachricht" haengt --klang <Name|Adresse>, --lied "<Text>", --rtttl "<Text>" oder
   --sprache "<Text>" (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; ein Sender geht dort nicht.
 
@@ -593,7 +601,8 @@ func lauf() throws {
 
     case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
          .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
-         .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender:
+         .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender,
+         .tonMP3Liste, .tonMP3Hochladen, .tonMP3Loeschen:
         break                                    // oben schon abgehandelt
     case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt
