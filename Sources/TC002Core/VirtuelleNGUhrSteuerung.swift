@@ -135,7 +135,7 @@ extension VirtuelleNGUhr {
             }
         }
         for (k, v) in zu { z.einstellungen[k] = v }
-        return json(.objekt(z.einstellungen))
+        return json(.objekt(einstellungenantwort(z)))
     }
 
     // MARK: - Moodlight

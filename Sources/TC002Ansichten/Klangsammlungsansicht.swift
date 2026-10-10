@@ -99,7 +99,8 @@ public struct Klangsammlungsansicht: View {
             }
         }
         .contextMenu {
-            if let text = k.rtttl, let uhr = zustand.referenzUhr, !uhr.host.isEmpty {
+            if let text = k.rtttl, let uhr = zustand.referenzUhr, !uhr.host.isEmpty,
+               zustand.faehigkeiten[uhr.id]?.kann(.rtttl) != false {
                 Button(lok("Probehören")) { Task { await zustand.rtttlProbehoeren(text, fuer: uhr.id) } }
             }
             Button(lok("Umbenennen …")) { umzubenennen = k }
@@ -301,7 +302,10 @@ struct Melodieblatt: View {
     private var ersetzt: Bool { zustand.klaenge().contains { $0.name == name && $0.art == .melodie } }
     private var darfSichern: Bool { (try? pruefung.get()) != nil && nameFehler == nil }
     private var uhr: Uhr? { zustand.referenzUhr.flatMap { $0.host.isEmpty ? nil : $0 } }
-    private var uhrKannMelodien: Bool { uhr.map { zustand.faehigkeiten[$0.id]?.kann(.rtttl) ?? true } ?? false }
+    /// Die Sammlung gilt für alle Uhren, Sichern hängt an keiner. Nur das
+    /// Probehören braucht die angesehene Uhr; kann sie nie Melodien spielen
+    /// (`audio.rtttl` `false`), entfällt es.
+    private var uhrKannNieMelodien: Bool { uhr.map { zustand.faehigkeiten[$0.id]?.kann(.rtttl) == false } ?? false }
 
     var body: some View {
         Blatt(titel: lok("Melodie"), bestaetigung: lok("Sichern"), bestaetigenMoeglich: darfSichern,
@@ -332,6 +336,7 @@ struct Melodieblatt: View {
                               systemImage: "info.circle").foregroundStyle(.secondary)
                     }
                 }
+                if !uhrKannNieMelodien {
                 Section {
                     Button("Probehören") {
                         if let uhr, case .success(let t) = pruefung {
@@ -339,10 +344,11 @@ struct Melodieblatt: View {
                         }
                     }
                     .knopfBefehl()
-                    .disabled((try? pruefung.get()) == nil || uhr == nil || !uhrKannMelodien)
+                    .disabled((try? pruefung.get()) == nil || uhr == nil)
                     Text(verbatim: uhr.map { lokf("Spielt auf „%@“, ohne etwas zu speichern.", $0.name) }
                          ?? lok("Zum Probehören braucht die gewählte Uhr eine Adresse."))
                         .font(kanon.fussnote).foregroundStyle(.secondary)
+                }
                 }
             }
             .formStyle(.grouped)

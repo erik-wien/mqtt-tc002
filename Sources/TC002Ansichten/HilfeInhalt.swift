@@ -214,6 +214,40 @@ public enum HilfeInhalt {
         .absatz("Die Gruppe „MQTT-Verschlüsselung“ gibt es nur bei Uhren, die MQTT über TLS können. Sie zeigt, wem die Uhr als Broker vertraut, lädt eine eigene CA (eine PEM-Datei) auf die Uhr und entfernt sie nach Rückfrage wieder; das geht nur mit der Adresse der Uhr. TLS selbst ein- oder auszuschalten bleibt der Web-Oberfläche der Uhr („Konfigurieren“), ebenso WLAN, MQTT-Zugang, Anmeldung, Firmware und Zeitzone."),
     ]
 
+    /// Was die beiden Uhrenmodelle können, als Auszug aus `docs/funktionen-je-uhr.md`
+    /// (verbindlich ist die Tabelle dort). Keine Tabelle, sondern Listen
+    /// (siehe `Hilfebaustein`).
+    public static let wasKannWelcheUhr: [Hilfebaustein] = [
+        .ueberschrift("Was kann welche Uhr"),
+        .absatz("Was eine Uhr nicht kann, zeigt die App bei ihr gar nicht an. Grau steht nur, was du selbst einschalten kannst, zum Beispiel eine fehlende Adresse der Uhr oder der Schalter „Schrift der Uhr“. Hier der Vergleich der beiden Modelle, Ulanzi TC002 und TC001."),
+        .untertitel("Anzeigen"),
+        .punkte([
+            "**Text und Bilder** — TC002: 52 × 16 Punkte, TC001: 32 × 8 Punkte. Die App rechnet jedes Bild für die Uhr, an die es geht.",
+            "**Icons** — beide. Ein Icon in 16 × 16 ersetzt die App auf der TC001 durch seine 8 × 8-Fassung, wenn es eine gibt.",
+            "**Fertige Bilder** (gemalt, aus der Sammlung) — nur im Maß der Uhr: TC002 52 × 16, TC001 32 × 8.",
+            "**Kästen-Layouts** — TC002: ja, TC001: nein. Sie gibt es nur im Kommandozeilenwerkzeug.",
+            "**Hintergrund, Effekt, Overlay, Palette, Übergänge** — beide, jeweils mit den Listen, die die Uhr selbst meldet.",
+            "**Zifferblätter** — TC002: ja, TC001: nein.",
+        ]),
+        .untertitel("Klang"),
+        .punkte([
+            "**Gespeicherte Melodien** — beide.",
+            "**MP3-Dateien spielen** — TC002: ja, TC001: nein. Die TC001 nimmt Dateien an, spielt sie aber nie; die App lädt darum keine hoch.",
+            "**Vorlesen, Lied, Radio, MP3 von einer Webadresse** — TC002: ja, TC001: nein.",
+            "**Lautstärke und Stopp** — beide.",
+            "**Startklang** — TC002: ja, TC001: nein.",
+            "**Klangsammlung** — beide; die Melodien der Sammlung gehen auf beide, MP3-Dateien nur auf die TC002.",
+        ]),
+        .untertitel("Fernbedienung"),
+        .punkte([
+            "**Display an oder aus, Helligkeit** — beide.",
+            "**Helligkeit „Automatisch“** — TC001: ja, mit Lichtsensor, TC002: nein.",
+            "**Moodlight, Anzeiger, Live-Bild, Neustart** — beide.",
+            "**Tasten** — beide, im MQTT-Betrieb. Der **Drehknopf** — TC002: ja, TC001: nein (sie hat drei Tasten).",
+            "**MQTT-Verschlüsselung (TLS)** — TC002: ja, TC001: nein.",
+        ]),
+    ]
+
     public static let klangsammlung: [Hilfebaustein] = [
         .ueberschrift("Klänge"),
         .absatz("Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist."),

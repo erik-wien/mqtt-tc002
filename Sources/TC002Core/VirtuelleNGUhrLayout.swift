@@ -362,7 +362,7 @@ extension VirtuelleNGUhr {
     /// `state/settings`, `state/apps/active`, `availability`.
     public static func aufbewahrt(praefix: String, _ z: NGUhrzustand) -> [(thema: String, nutzlast: Data)] {
         [(praefix + "/state/device", geraet(z).daten),
-         (praefix + "/state/settings", JSONWert.objekt(z.einstellungen).daten),
+         (praefix + "/state/settings", JSONWert.objekt(einstellungenantwort(z)).daten),
          (praefix + "/state/apps/active", Data(z.aktiveApp.utf8)),
          (praefix + "/availability", Data("online".utf8))]
     }

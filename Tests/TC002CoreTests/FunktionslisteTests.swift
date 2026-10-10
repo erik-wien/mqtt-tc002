@@ -93,6 +93,8 @@ final class FunktionslisteTests: XCTestCase {
         // Der Schlüssel fehlt bei der TC001 (gemessen 10.10.2026): Die App entscheidet „nein“.
         Zeile(name: "MQTT über TLS (mqttTls)", tc002: true, tc001: false) { $0.mqttTlsUnterstuetzt == true },
         Zeile(name: "Zifferblätter (clockFaces)", tc002: true, tc001: false) { !$0.zifferblaetter.isEmpty },
+        // Drehknopf: die TC001 hat drei Tasten und keinen (ESP32-Zweig der Herstellerdoku).
+        Zeile(name: "Drehknopf (platform.id)", tc002: true, tc001: false) { $0.hatDrehknopf },
     ]
 
     func testJedeZeileDerTabelleStimmtFuerBeideModelle() throws {
@@ -138,6 +140,7 @@ final class FunktionslisteTests: XCTestCase {
         XCTAssertTrue(Klangeignung.mp3Zeigen(in: [Klangziel(id: UUID(), name: "A")]))
         let ohneAudio = Geraetefaehigkeiten()
         for art in Klangart.allCases { XCTAssertTrue(ohneAudio.kann(art), "\(art)") }
+        XCTAssertTrue(ohneAudio.hatDrehknopf)
         // Ausnahmen, gewollt (siehe „Abweichungen“): kein Sensor, kein Layout-Urteil ohne Auskunft.
         XCTAssertFalse(ohneAudio.lichtsensor)
         XCTAssertFalse(Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: nil))
@@ -162,8 +165,20 @@ final class FunktionslisteTests: XCTestCase {
             String(decoding: daten, as: UTF8.self))))
         XCTAssertEqual(virtuell.ton, gemessen.ton)
         XCTAssertEqual(virtuell.lichtsensor, gemessen.lichtsensor)
-        // Bekannte Abweichung der virtuellen TC001 (Tabelle, „Abweichungen“ 4): Sie meldet
-        // weiter die Layouts und das Maß der TC002.
-        XCTAssertEqual(virtuell.layoutUnterstuetzt, true)
+        // Der gemessene Schlüsselsatz der TC001: weder Layouts noch TLS, Zifferblätter,
+        // Startklang oder `enlargeApps`; Anzeige 32 × 8.
+        for schluessel in ["layout", "layouts", "mqttTls", "clockFaces", "bootSound", "enlargeApps"] {
+            XCTAssertNil(o[schluessel], schluessel)
+        }
+        XCTAssertEqual(virtuell.layoutUnterstuetzt, false)
+        XCTAssertEqual(virtuell.mqttTlsUnterstuetzt, false)
+        XCTAssertTrue(virtuell.zifferblaetter.isEmpty)
+        XCTAssertFalse(virtuell.hatDrehknopf)
+        XCTAssertEqual(virtuell.plattform, "esp32")
+        XCTAssertEqual(try mass(String(decoding: daten, as: UTF8.self)), Anzeigemass(breite: 32, hoehe: 8))
+        // Auch die Einstellungen tragen die drei Schlüssel nicht.
+        let einstellungen = VirtuelleNGUhr.einstellungenantwort(z)
+        for schluessel in ["clockFace", "bootSound", "enlargeApps"] { XCTAssertNil(einstellungen[schluessel], schluessel) }
+        XCTAssertNotNil(einstellungen["volume"])
     }
 }

@@ -37,6 +37,9 @@ public struct NGTon: Equatable, Sendable {
         "mp3": false, "rtttl": true, "song": false, "speech": false, "track": false,
         "radio": false, "url": false, "effect": false, "clip": false]
 
+    /// Die virtuelle Uhr gibt sich als TC001 aus (Audiosatz der TC001).
+    var istTC001: Bool { faehigkeiten == Self.tc001 }
+
     func kann(_ schluessel: String) -> Bool {
         if let faehigkeiten { return faehigkeiten[schluessel] ?? false }
         return VirtuelleNGUhr.kannTC002(schluessel)
@@ -103,9 +106,29 @@ extension VirtuelleNGUhr {
         o["sensors"] = .objekt(["light": .bool(z.lichtsensor)])
         if let satz = z.ton.faehigkeiten {
             o["audio"] = .objekt(satz.mapValues { .bool($0) })
-            if satz == NGTon.tc001 { o["platform"] = .objekt(["id": .text("esp32")]) }
+        }
+        if z.ton.istTC001 {
+            // Der gemessene Schlüsselsatz der TC001 (10. Oktober 2026): kein
+            // `layout`, `layouts`, `mqttTls`, `clockFaces`, `bootSound`,
+            // `enlargeApps`; Anzeige 32 × 8, kein Mikrofon.
+            for schluessel in ["layout", "layouts", "mqttTls", "clockFaces", "bootSound", "enlargeApps"] {
+                o[schluessel] = nil
+            }
+            o["platform"] = .objekt(["id": .text("esp32")])
+            o["microphone"] = .bool(false)
+            o["display"] = .objekt(["width": .zahl(32), "height": .zahl(8), "configurable": .bool(true),
+                                    "minWidth": .zahl(32), "maxWidth": .zahl(128),
+                                    "minHeight": .zahl(8), "maxHeight": .zahl(8)])
         }
         return .objekt(o)
+    }
+
+    /// Die Einstellungen, wie die Uhr sie meldet: die TC001 kennt `clockFace`,
+    /// `bootSound` und `enlargeApps` nicht (gleiche Schlüssel wie in
+    /// `faehigkeitenantwort`).
+    static func einstellungenantwort(_ z: NGUhrzustand) -> [String: JSONWert] {
+        guard z.ton.istTC001 else { return z.einstellungen }
+        return z.einstellungen.filter { !["clockFace", "bootSound", "enlargeApps"].contains($0.key) }
     }
 
     // MARK: - Klänge prüfen

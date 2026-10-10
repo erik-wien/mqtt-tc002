@@ -37,12 +37,20 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     /// Angabe, gilt „nein"; erst mit Sensor wirkt `autoBrightness`
     /// (`Geraeteeinstellung.wirkt(faehigkeiten:)`).
     public var lichtsensor = false
+    /// `capabilities.platform.id` (`tc002`, `esp32` für die TC001). `nil`, solange
+    /// nicht gefragt.
+    public var plattform: String?
+
+    /// Die TC001 (`esp32`) hat drei Tasten und keinen Drehknopf (ESP32-Zweig der
+    /// Herstellerdoku); ohne Auskunft gilt „ja".
+    public var hatDrehknopf: Bool { plattform != "esp32" }
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
                 paletten: [String] = [], uebergaenge: [String] = [],
                 layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen(),
                 zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil,
-                ton: Tonfaehigkeiten? = nil, lichtsensor: Bool = false) {
+                ton: Tonfaehigkeiten? = nil, lichtsensor: Bool = false, plattform: String? = nil) {
+        self.plattform = plattform
         self.ton = ton
         self.lichtsensor = lichtsensor
         self.zifferblaetter = zifferblaetter
@@ -70,6 +78,7 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         layoutUnterstuetzt = antwort["layout"] as? Bool == true
         zifferblaetter = (antwort["clockFaces"] as? [Any])?.compactMap { $0 as? String } ?? []
         mqttTlsUnterstuetzt = antwort["mqttTls"] as? Bool == true
+        plattform = (antwort["platform"] as? [String: Any])?["id"] as? String
         lichtsensor = (antwort["sensors"] as? [String: Any])?["light"] as? Bool == true
         ton = (antwort["audio"] as? [String: Any]).map { Tonfaehigkeiten(antwort: $0) }
         if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {

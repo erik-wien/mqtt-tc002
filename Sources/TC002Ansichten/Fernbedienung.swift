@@ -248,12 +248,14 @@ private struct Steuerseite: View {
     // MARK: - Tasten
 
     private var nurMQTT: Bool { uhr.wirksameBetriebsart != .mqtt }
+    /// Eine Uhr ohne Drehknopf (TC001) bekommt weder Zeile noch Symbol.
+    private var hatDrehknopf: Bool { zustand.faehigkeiten[id]?.hatDrehknopf ?? true }
 
     private var tastenabschnitt: some View {
         Section {
             LabeledContent("Tasten") {
                 HStack(spacing: 14) {
-                    ForEach(Taste.allCases, id: \.self) { taste in
+                    ForEach(Taste.allCases.filter { hatDrehknopf || $0 != .knopf }, id: \.self) { taste in
                         let gedrueckt = zustand.tasten[id]?[taste] == true
                         Image(systemName: Self.symbol(taste, gedrueckt: gedrueckt))
                             .foregroundStyle(gedrueckt ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary))
@@ -262,8 +264,10 @@ private struct Steuerseite: View {
                     }
                 }
             }
-            LabeledContent("Drehknopf") {
-                Text(verbatim: drehknopftext)
+            if hatDrehknopf {
+                LabeledContent("Drehknopf") {
+                    Text(verbatim: drehknopftext)
+                }
             }
             if nurMQTT {
                 Label("nur im MQTT-Betrieb", systemImage: "info.circle")

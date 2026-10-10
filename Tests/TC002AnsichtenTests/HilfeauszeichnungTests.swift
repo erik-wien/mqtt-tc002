@@ -100,7 +100,7 @@ final class HilfeauszeichnungTests: XCTestCase {
         HilfeInhalt.uhrEntfernen, HilfeInhalt.brokerSichern,
         HilfeInhalt.uhrAbfragen, HilfeInhalt.brokerFelderLeer,
         HilfeInhalt.brokerKennwort, HilfeInhalt.brokerPruefen,
-        HilfeInhalt.virtuelleUhr, HilfeInhalt.klangsammlung, HilfeInhalt.wolkenabgleich,
+        HilfeInhalt.virtuelleUhr, HilfeInhalt.wasKannWelcheUhr, HilfeInhalt.klangsammlung, HilfeInhalt.wolkenabgleich,
         HilfeInhalt.fuenfPlaetze, HilfeInhalt.blockwissenAnfang,
         HilfeInhalt.blockwissenSchluss, HilfeInhalt.wegeRegel,
         HilfeInhalt.blockierendeAnzeige, HilfeInhalt.blockLoeschen,

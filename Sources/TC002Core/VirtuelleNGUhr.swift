@@ -350,7 +350,7 @@ public enum VirtuelleNGUhr {
                                  "mqttPort": .zahl(1883), "mqttPrefix": .text(z.mqttPrefix),
                                  "hostname": .text("virtuelle-uhr"), "webPort": .zahl(80)]))
         case .einstellungen:
-            return anfrage.methode == "GET" ? json(.objekt(z.einstellungen)) : einstellungenAendern(anfrage, &z)
+            return anfrage.methode == "GET" ? json(.objekt(einstellungenantwort(z))) : einstellungenAendern(anfrage, &z)
         case .anzeige:
             return anfrage.methode == "GET" ? json(anzeige(z)) : anzeigeAendern(anfrage, &z)
         case .bildschirm:
@@ -462,7 +462,7 @@ public enum VirtuelleNGUhr {
             return layoutBild(layout, vorgabe: vorgabe, einstellungen: z.einstellungen).punkte
         }
 
-        let faktor = z.einstellungen["enlargeApps"] == .bool(false) ? 1 : 2
+        let faktor = z.einstellungen["enlargeApps"] == .bool(false) || z.ton.istTC001 ? 1 : 2
         var brett = Brett(breite: breite / faktor, hoehe: hoehe / faktor)
         if let w = nutzlast["backgroundColor"], let f = farbwert(w) {
             brett = Brett(breite: brett.breite, hoehe: brett.hoehe, fuellung: f)

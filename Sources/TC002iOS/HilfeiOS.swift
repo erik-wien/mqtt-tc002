@@ -154,6 +154,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen
+                + HilfeInhalt.wasKannWelcheUhr
         case .anzeigen:
             return [
                     .absatz("Dieses Blatt ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht in der Sendeansicht unter den fünf Blöcken."),

@@ -238,6 +238,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen
+                + HilfeInhalt.wasKannWelcheUhr
                 + [
                     .absatz("Die Gruppen finden sich unter „Einstellungen“ → „Uhren“: Die Uhr antippen, dort steht der Abschnitt „Auf der Uhr“."),
                 ]

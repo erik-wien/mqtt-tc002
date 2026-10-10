@@ -313,6 +313,20 @@ public struct Geraeteeinstellungen: Equatable, Sendable {
         Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: faehigkeiten) && wahrheit(.autoBrightness) == true
     }
 
+    /// Ob die Uhr diesen Schlüssel gemeldet hat (`scroll.speed` für ein Unterfeld).
+    /// Was eine Uhr nicht meldet, kann sie nicht (TC001: `clockFace`, `bootSound`,
+    /// `enlargeApps`), und die App zeigt es nicht an. Ein gemeldetes `null`
+    /// (`timeColor`) zählt als gemeldet.
+    public func hat(pfad: String) -> Bool {
+        let teile = pfad.split(separator: ".", maxSplits: 1).map(String.init)
+        guard let kopf = teile.first, let e = Geraeteeinstellung(rawValue: kopf), let wert = werte[e] else {
+            return false
+        }
+        guard teile.count == 2 else { return true }
+        if case .objekt(let o) = wert { return o[teile[1]] != nil }
+        return false
+    }
+
     public var lauftext: Lauftext? { Lauftext(werte[.scroll]) }
     public var wochentagsleiste: Wochentagsleiste? { Wochentagsleiste(werte[.weekdayBar]) }
 

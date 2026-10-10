@@ -70,10 +70,31 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
         }
     }
 
+    /// Die Abschnitte, die diese Uhr zeigt: nur Zeilen, deren Schlüssel sie
+    /// gemeldet hat und die auf ihr wirken; ein Abschnitt ohne Zeile entfällt.
+    /// Ohne gelesene Einstellungen (`nil`) ist alles erlaubt.
+    func sichtbareAbschnitte(einstellungen: Geraeteeinstellungen?,
+                             faehigkeiten: Geraetefaehigkeiten?) -> [(titel: String?, pfade: [String])] {
+        guard let einstellungen else { return abschnitte }
+        return abschnitte.compactMap { abschnitt in
+            let pfade = abschnitt.pfade.filter { pfad in
+                guard einstellungen.hat(pfad: pfad) else { return false }
+                let kopf = String(pfad.split(separator: ".", maxSplits: 1)[0])
+                return Geraeteeinstellung(rawValue: kopf)?.wirkt(faehigkeiten: faehigkeiten) != false
+            }
+            return pfade.isEmpty ? nil : (abschnitt.titel, pfade)
+        }
+    }
+
     /// Welche Gruppen diese Uhr zeigt: die Verschlüsselung nur, wenn sie MQTT
-    /// über TLS kann (`capabilities.mqttTls`).
-    public static func sichtbar(faehigkeiten: Geraetefaehigkeiten?) -> [Uhrgruppe] {
-        allCases.filter { $0 != .verschluesselung || faehigkeiten?.mqttTlsUnterstuetzt == true }
+    /// über TLS kann (`capabilities.mqttTls`; die Gruppe erscheint erst nach der
+    /// Abfrage, gewollt), die übrigen nur mit mindestens einer Zeile.
+    public static func sichtbar(faehigkeiten: Geraetefaehigkeiten?,
+                                einstellungen: Geraeteeinstellungen? = nil) -> [Uhrgruppe] {
+        allCases.filter { gruppe in
+            if gruppe == .verschluesselung { return faehigkeiten?.mqttTlsUnterstuetzt == true }
+            return !gruppe.sichtbareAbschnitte(einstellungen: einstellungen, faehigkeiten: faehigkeiten).isEmpty
+        }
     }
 }
 
@@ -109,7 +130,8 @@ public struct Uhrgruppenseite: View {
                 }
             } else {
                 Form {
-                    ForEach(Array(ziel.gruppe.abschnitte.enumerated()), id: \.offset) { _, abschnitt in
+                    ForEach(Array(ziel.gruppe.sichtbareAbschnitte(einstellungen: zustand.uhreneinstellungen[ziel.uhr],
+                                                                  faehigkeiten: zustand.faehigkeiten[ziel.uhr]).enumerated()), id: \.offset) { _, abschnitt in
                         Section {
                             ForEach(abschnitt.pfade, id: \.self) { pfad in
                                 Einstellungszeile(zustand: zustand, id: ziel.uhr, pfad: pfad)
@@ -167,7 +189,8 @@ struct Einstellungszeile: View {
     }
 
     var body: some View {
-        if let art, einstellung?.wirkt(faehigkeiten: zustand.faehigkeiten[id]) != false {
+        if let art, stand?.hat(pfad: pfad) == true,
+           einstellung?.wirkt(faehigkeiten: zustand.faehigkeiten[id]) != false {
             zeile(art)
         }
     }

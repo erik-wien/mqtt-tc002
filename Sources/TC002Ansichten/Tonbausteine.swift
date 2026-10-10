@@ -49,8 +49,8 @@ public struct Klangabschnitt: View {
         Section {
             Picker("Klang", selection: $klang.art) {
                 Text("Keiner").tag(Klangwahl.Art.keiner)
-                Text("Von der Uhr").tag(Klangwahl.Art.uhr).selectionDisabled(!kannUhrNamen)
-                Text("Vorlesen").tag(Klangwahl.Art.vorlesen).selectionDisabled(!kannVorlesen)
+                if kannUhrNamen { Text("Von der Uhr").tag(Klangwahl.Art.uhr) }
+                if kannVorlesen { Text("Vorlesen").tag(Klangwahl.Art.vorlesen) }
             }
             if gesperrt {
                 Label(Klangsperre.grund(ohneKlang, von: ziele.count), systemImage: "exclamationmark.triangle.fill")
@@ -62,17 +62,9 @@ public struct Klangabschnitt: View {
             }
             switch klang.art {
             case .keiner:
-                if !kannUhrNamen {
-                    Label(lokf("Von der Uhr: %@", Klangsperre.grund(Klangeignung.ohne(Klangwahl(art: .uhr), in: ziele), von: ziele.count)),
-                          systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
-                }
-                if !kannVorlesen {
-                    Label(lokf("Vorlesen: %@", Klangsperre.grund(Klangeignung.ohne(Klangwahl(art: .vorlesen), in: ziele), von: ziele.count)),
-                          systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
-                }
+                EmptyView()
             case .uhr:
                 namenzeile
-                namensperre
                 if let listen, listen.melodien.isEmpty, listen.mp3.isEmpty || !zeigtMP3 {
                     Text("Keine Melodien oder MP3-Dateien auf der Uhr. Melodien legst du in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -86,6 +78,10 @@ public struct Klangabschnitt: View {
             Abschnittskopf("Klang", hilfe: lok("Der Klang spielt, wenn die Nachricht erscheint. „Von der Uhr“ nimmt eine Melodie oder MP3-Datei, die auf der Uhr liegt. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch. Mit „Wiederholen“ spielt er, bis die Nachricht zurückgezogen wird oder ausläuft. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
         .disabled(!aktiv)
+        // Eine Klangart, die keine Zieluhr kann, wird nicht angeboten; eine
+        // gewählte fällt auf „Keiner“ zurück, wenn das Ziel wechselt.
+        .onChange(of: kannUhrNamen, initial: true) { _, kann in if !kann, klang.art == .uhr { klang.art = .keiner } }
+        .onChange(of: kannVorlesen, initial: true) { _, kann in if !kann, klang.art == .vorlesen { klang.art = .keiner } }
         // Die Namen holt die Uhr nur einmal; ein erneutes Abfragen steht im Menü.
         .task(id: abrufschluessel) {
             guard klang.art == .uhr, listen == nil, let uhr else { return }
@@ -98,7 +94,7 @@ public struct Klangabschnitt: View {
     }
 
     private var namenzeile: some View {
-        let melodien = listen?.melodien ?? []
+        let melodien = kannMelodien ? listen?.melodien ?? [] : []
         let mp3 = zeigtMP3 ? listen?.mp3 ?? [] : []
         let unbekannt = !klang.name.isEmpty && !melodien.contains(klang.name) && !mp3.contains(klang.name)
         return LabeledContent("Name") {
@@ -106,9 +102,9 @@ public struct Klangabschnitt: View {
                 Picker("Name", selection: $klang.name) {
                     Text("Keiner gewählt").tag("")
                     if unbekannt { Text(verbatim: klang.name).tag(klang.name) }
-                    if !melodien.isEmpty {
+                    if !melodien.isEmpty, kannMelodien {
                         Section("Melodien") {
-                            ForEach(melodien, id: \.self) { Text(verbatim: $0).tag($0).selectionDisabled(!kannMelodien) }
+                            ForEach(melodien, id: \.self) { Text(verbatim: $0).tag($0) }
                         }
                     }
                     if !mp3.isEmpty {
@@ -134,15 +130,6 @@ public struct Klangabschnitt: View {
                     Image(systemName: "chevron.up.chevron.down").font(.caption2)
                 }
             }
-        }
-    }
-
-    /// Warum Namen grau sind: kein Ziel spielt Melodien.
-    @ViewBuilder
-    private var namensperre: some View {
-        if !(listen?.melodien.isEmpty ?? true), !kannMelodien {
-            Label(lokf("Melodien: %@", Klangsperre.grund(Klangeignung.ohne(.melodie, in: ziele), von: ziele.count)), systemImage: "info.circle")
-                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -185,12 +172,13 @@ struct Tonabschnitt: View {
     private var faehigkeiten: Geraetefaehigkeiten? { zustand.faehigkeiten[id] }
     private var ton: Tonzustand? { zustand.tonzustand[id] }
     private var ohneAdresse: Bool { uhr.host.isEmpty }
-    /// Die Uhr hat Fähigkeiten gemeldet und keine davon ist Ton.
+    /// Die Uhr hat Fähigkeiten gemeldet und keine davon ist Ton: Der Abschnitt
+    /// entfällt, die Uhr wird es nie können.
     private var ohneTon: Bool {
         guard let f = faehigkeiten else { return false }
         return f.ton == Tonfaehigkeiten()
     }
-    private var gesperrt: Bool { ohneAdresse || ohneTon }
+    private var gesperrt: Bool { ohneAdresse }
     private var radioGekonnt: Bool {
         faehigkeiten?.kann(.radio) ?? true
     }
@@ -199,7 +187,12 @@ struct Tonabschnitt: View {
     private var ablage: Tonablage? { zustand.mp3Ablage[id] }
     private var melodien: Tonablage? { zustand.melodienAblage[id] }
 
+    @ViewBuilder
     var body: some View {
+        if !ohneTon { inhalt }
+    }
+
+    private var inhalt: some View {
         Section {
             LabeledContent("Spielt") { Text(verbatim: wasSpielt).multilineTextAlignment(.trailing) }
             LabeledContent("Alles anhalten") {
@@ -214,9 +207,6 @@ struct Tonabschnitt: View {
             klaengezeilen
             if ohneAdresse {
                 Label("Ohne Adresse der Uhr nicht lesbar", systemImage: "info.circle")
-                    .font(kanon.fussnote).foregroundStyle(.secondary)
-            } else if ohneTon {
-                Label("Diese Uhr meldet keinen Ton.", systemImage: "info.circle")
                     .font(kanon.fussnote).foregroundStyle(.secondary)
             }
         } header: {
