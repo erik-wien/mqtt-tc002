@@ -145,7 +145,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
                 // Derselbe Kanal wie in der App; ueber MQTT wartet die Sendung
                 // auf `<Thema>/result` (`Anzeigen.quittierend`).
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()))?
+                    clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id)))?
                     .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(ziel.name) }) else { continue }
                 do {
                     try anzeigen.benachrichtigen(try Meldungsbau.rahmen(gesetzt, icon: nil, sammlung: sammlung,
@@ -200,7 +200,7 @@ struct BenachrichtigungZurueckziehenIntent: AppIntent {
         try await Task.detached(priority: .userInitiated) {
             for uhrziel in ziele {
                 guard let anzeigen = Anzeigen.fuer(uhrziel, brokerzugang: einstellungen.zugang(
-                    clientID: "tc002-kurz-" + uhrziel.id.uuidString.prefix(8).lowercased()))?
+                    clientID: MQTTKennung.fuer(.kurzbefehl, uhr: uhrziel.id)))?
                     .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(uhrziel.name) }) else { continue }
                 do {
                     try anzeigen.benachrichtigungZurueckziehen(name: ziel)

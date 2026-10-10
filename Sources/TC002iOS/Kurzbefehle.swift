@@ -193,7 +193,7 @@ struct MeldungSendenIntent: AppIntent {
                 // zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus,
                 // steht ein Hinweis im Dialog.
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased()))?
+                    clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id)))?
                     .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(ziel.name) }) else { continue }
                 // Je Uhr in deren Anzeigemass gerastert.
                 do {
@@ -297,7 +297,7 @@ struct MeldungLoeschenIntent: AppIntent {
         try await Task.detached(priority: .userInitiated) {
             for ziel in abgefragt {
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: e.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                    clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id))) else { continue }
                 try anzeigen.loeschen(name)
                 // Erst nach der Sendung und je Uhr: Wer einen Platz raeumt,
                 // wirft die Erinnerung an ihn weg — sonst rechnete ein Block
@@ -369,7 +369,7 @@ struct BildSendenIntent: AppIntent {
         try await Task.detached(priority: .userInitiated) {
             for ziel in ziele {
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: e.zugang(
-                    clientID: "tc002-kurz-" + ziel.id.uuidString.prefix(8).lowercased())) else { continue }
+                    clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id))) else { continue }
                 try anzeigen.zeigen(rahmen, auf: anzeigenname)
                 // Vergessen, nicht merken: Ein Bild hat keine Regler, die
                 // sich merken liessen. Bliebe die Erinnerung an eine fruehere

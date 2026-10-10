@@ -227,6 +227,59 @@ final class MQTTAbonnentTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(broker.verbindungen, 2)
     }
 
+    // MARK: - Abstand der Neuversuche
+
+    /// Trennt der Broker gleich wieder (gleiche Kennung auf zwei Geräten), darf
+    /// das CONNACK den Abstand nicht zurücksetzen: Er wüchse sonst nie über
+    /// zwei Sekunden. Zwei Abrisse kurz hintereinander zählen als zwei.
+    func testKurzeVerbindungSetztDenAbstandNichtZurueck() throws {
+        let broker = try Brokerdoppel()
+        defer { broker.stoppen() }
+        let abonnent = MQTTAbonnent(zugang: broker.zugang, themen: ["a/b"])
+        defer { abonnent.beenden() }
+
+        let abriss = expectation(description: "zweiter Abriss")
+        var abrisse = 0
+        abonnent.beiZustand = { steht, _ in
+            guard !steht else { return }
+            abrisse += 1
+            if abrisse == 2 { abriss.fulfill() }
+        }
+        abonnent.starten()
+        for _ in 0..<50 where broker.verbindungen == 0 { Thread.sleep(forTimeInterval: 0.1) }
+        broker.verbindungTrennen()
+        for _ in 0..<100 where broker.verbindungen < 2 { Thread.sleep(forTimeInterval: 0.1) }   // nach 2 s
+        Thread.sleep(forTimeInterval: 0.3)
+        broker.verbindungTrennen()
+        wait(for: [abriss], timeout: 5)
+
+        XCTAssertEqual(abonnent.zaehlerDerNeuversuche(), 2,
+                       "die zweite, kurze Verbindung darf den Zähler nicht auf null gesetzt haben")
+    }
+
+    /// Steht die Verbindung die Stabilzeit lang, fängt der Abstand wieder bei
+    /// zwei Sekunden an.
+    func testStabileVerbindungSetztDenAbstandZurueck() throws {
+        let broker = try Brokerdoppel()
+        defer { broker.stoppen() }
+        let abonnent = MQTTAbonnent(zugang: broker.zugang, themen: ["a/b"], stabilzeit: 0.4)
+        defer { abonnent.beenden() }
+
+        let abriss = expectation(description: "Abriss gemeldet")
+        abriss.assertForOverFulfill = false
+        abonnent.beiZustand = { steht, _ in if !steht { abriss.fulfill() } }
+        abonnent.starten()
+        for _ in 0..<50 where broker.verbindungen == 0 { Thread.sleep(forTimeInterval: 0.1) }
+        broker.verbindungTrennen()
+        wait(for: [abriss], timeout: 5)
+        XCTAssertEqual(abonnent.zaehlerDerNeuversuche(), 1)
+
+        for _ in 0..<100 where broker.verbindungen < 2 { Thread.sleep(forTimeInterval: 0.1) }
+        Thread.sleep(forTimeInterval: 1.0)
+        XCTAssertEqual(abonnent.zaehlerDerNeuversuche(), 0,
+                       "nach der Stabilzeit zählt der nächste Abriss wieder als erster")
+    }
+
     func testAbgelehnteAnmeldungWirdGemeldet() throws {
         let broker = try Brokerdoppel(connackCode: 4)
         defer { broker.stoppen() }

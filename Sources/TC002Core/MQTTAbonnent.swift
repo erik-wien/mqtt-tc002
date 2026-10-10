@@ -65,6 +65,11 @@ public final class MQTTAbonnent: @unchecked Sendable {
     /// hinge der Abonnent fuer immer an einem Port, hinter dem zwar etwas TCP
     /// annimmt, aber kein MQTT spricht — ohne Meldung und ohne Neuversuch.
     private let anmeldefrist: TimeInterval
+    /// So lange muss eine Verbindung stehen, bevor der Abstand der Neuversuche
+    /// wieder bei zwei Sekunden anfängt. Zählte schon das CONNACK, riss ein
+    /// Broker, der die Sitzung gleich wieder trennt (gleiche Kennung auf zwei
+    /// Geräten), den Abstand bei jedem Zyklus auf zwei Sekunden zurück.
+    private let stabilzeit: TimeInterval
     /// Wachsender Abstand, aber gedeckelt — ein abgestuerzter Broker darf weder
     /// in einer engen Schleife angerufen noch fuer immer aufgegeben werden.
     private static let wartezeiten: [TimeInterval] = [2, 4, 8, 30]
@@ -74,6 +79,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
     private var pingUhr: DispatchSourceTimer?
     private var neuversuch: DispatchWorkItem?
     private var anmeldeUhr: DispatchWorkItem?
+    private var stabilUhr: DispatchWorkItem?
     /// Wann zuletzt irgendetwas vom Broker kam. Bleibt das ueber anderthalb
     /// Ping-Abstaende aus, ist die Verbindung halb offen — WLAN weg, NAT-Tabelle
     /// geraeumt — und TCP wuerde das minutenlang nicht melden.
@@ -89,10 +95,12 @@ public final class MQTTAbonnent: @unchecked Sendable {
     /// Wird gerufen, wenn die Verbindung steht oder abreisst.
     public var beiZustand: ((_ verbunden: Bool, _ grund: String?) -> Void)?
 
-    /// `pingAbstand` und `anmeldefrist` sind nur fuer Tests einstellbar — die
-    /// Vorgaben passen zum CONNECT mit 60 Sekunden Keepalive.
+    /// `pingAbstand`, `anmeldefrist` und `stabilzeit` sind nur fuer Tests
+    /// einstellbar — die Vorgaben passen zum CONNECT mit 60 Sekunden Keepalive.
     public init(zugang: MQTTZugang, themen: [String],
-                pingAbstand: TimeInterval = 30, anmeldefrist: TimeInterval = 10) {
+                pingAbstand: TimeInterval = 30, anmeldefrist: TimeInterval = 10,
+                stabilzeit: TimeInterval = 30) {
+        self.stabilzeit = stabilzeit
         self.zugang = zugang
         self.themen = themen
         self.pingAbstand = pingAbstand
@@ -106,6 +114,12 @@ public final class MQTTAbonnent: @unchecked Sendable {
             versuche = 0
             verbinden()
         }
+    }
+
+    /// Wie viele Neuversuche seit der letzten stabilen Verbindung gelaufen
+    /// sind — für die Tests des Abstands.
+    func zaehlerDerNeuversuche() -> Int {
+        warteschlange.sync { versuche }
     }
 
     public func beenden() {
@@ -160,6 +174,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
         pingUhr?.cancel(); pingUhr = nil
         neuversuch?.cancel(); neuversuch = nil
         anmeldeUhr?.cancel(); anmeldeUhr = nil
+        stabilUhr?.cancel(); stabilUhr = nil
         verbindung?.stateUpdateHandler = nil
         verbindung?.cancel()
         verbindung = nil
@@ -237,7 +252,9 @@ public final class MQTTAbonnent: @unchecked Sendable {
 
     private func angemeldet() {
         anmeldeUhr?.cancel(); anmeldeUhr = nil
-        versuche = 0
+        let stabil = DispatchWorkItem { [weak self] in self?.versuche = 0 }
+        stabilUhr = stabil
+        warteschlange.asyncAfter(deadline: .now() + stabilzeit, execute: stabil)
         // Eine Paketkennung je Thema; 0 ist laut Norm nicht zulaessig.
         for (i, thema) in themen.enumerated() {
             sende(MQTTPaket.subscribe(thema: thema, paketID: UInt16(i + 1)))

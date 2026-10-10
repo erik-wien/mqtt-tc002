@@ -320,7 +320,7 @@ public final class AppZustand {
         // nebenlaeufige Closure faellt, ist unter Swift 6 ein Fehler.
         let pruefZugang: MQTTZugang = {
             var z = zugang
-            z.clientID = "tc002-app-pruef"
+            z.clientID = MQTTKennung.pruefung()
             return z
         }()
         // Blockiert bis zu acht Sekunden — deshalb `Hintergrund`, nicht
@@ -1096,7 +1096,7 @@ public final class AppZustand {
         // Eigene Kennung je Uhr: ein Broker trennt die bestehende Sitzung, sobald
         // dieselbe Kennung erneut verbindet. Mit einer festen Kennung wuerfen sich
         // gleichzeitige Sendungen an mehrere Uhren gegenseitig hinaus.
-        let kennung = "tc002-app-" + uhr.id.uuidString.prefix(8).lowercased()
+        let kennung = MQTTKennung.fuer(.senden, uhr: uhr.id)
         return Anzeigen.fuer(uhr, brokerzugang: zugang?.mit(clientID: kennung),
                              sitzung: netzsitzung, sender: mqttSender)
     }
@@ -1751,7 +1751,7 @@ public final class AppZustand {
             // Eigene Kennung wie beim Senden: ein Broker trennt die bestehende
             // Sitzung, sobald dieselbe Kennung erneut verbindet — und gesendet wird
             // ja weiter, während hier zugehört wird.
-            eigener.clientID = "tc002-app-horch-" + uhr.id.uuidString.prefix(8).lowercased()
+            eigener.clientID = MQTTKennung.fuer(.horchen, uhr: uhr.id)
             let id = uhr.id
             // Das Muster `cmd/apps/pushed/#` macht die App zum Mitleser: was auf
             // ein Thema veroeffentlicht wird, bekommen alle Abonnenten — gleich ob die
