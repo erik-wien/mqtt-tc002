@@ -1,6 +1,6 @@
 # Freigabe: Layout-Editor (10.10.2026)
 
-Mockup: `2026-10-10-layout-editor.html` (Sprint 5b). Grundlage: `docs/awtrix-ng-protokoll.md` §9. Status: **zur Freigabe** (noch keine Antwort).
+Mockup: `2026-10-10-layout-editor.html` (Sprint 5b). Grundlage: `docs/awtrix-ng-protokoll.md` §9. Status: **zurückgestellt** (Erik, 10.10.2026).
 
 Layouts gibt es nur auf der TC002 (52 × 16); die TC001 (32 × 8) weist sie ab. Bis zu 16 Kästen, je genau ein Inhalt (Text, Symbol, Diagramm, Fortschritt, Zeichnung), darüber Hintergrund, Effekt, Overlay und Palette des ganzen Layouts (dieselben Regler wie im Mockup „Darstellung“). Grenzen der Uhr stehen im Reiter „Layout“ (Regionen 16, laufende Texte 8, Icons 4, Text 8192 Byte).
 
@@ -33,4 +33,4 @@ Layouts gibt es nur auf der TC002 (52 × 16); die TC001 (32 × 8) weist sie ab. 
 
 ## Entscheidung
 
-(offen)
+Erik, 10.10.2026: **Zurückgestellt.** Layouts gehen wie Grafik (Diagramm, Fortschritt) vorerst nur über Home Assistant und das Werkzeug (`mqtttc002 layout`, Sprint 5a); Editor (5b) und Sammlung (5c) werden nicht gebaut. Ein Layout lebt von automatisch gefüllten Werten (Temperatur u. ä.), und die kann die Uhr nicht selbst holen — sie bekäme sie nur von einem Absender wie Home Assistant oder einem Kurzbefehl. Die Fragen oben bleiben für eine spätere Wiederaufnahme stehen.
