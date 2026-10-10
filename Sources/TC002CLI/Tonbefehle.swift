@@ -44,3 +44,18 @@ func senderAusgeben(_ sender: [Radiosender], ausgabe: (String) -> Void = { print
     guard !sender.isEmpty else { ausgabe(lok("Keine Sender.")); return }
     for (i, s) in sender.enumerated() { ausgabe("\(i)\t\(Terminaltext.sicher(s.name))\t\(Terminaltext.sicher(s.url))") }
 }
+
+/// Prüft die Klänge einer Sendung gegen die Fähigkeiten der Uhr. Ein Dateiname
+/// ist MP3 oder Melodie; welche, sagen die Listen der Uhr (nur über HTTP — ohne
+/// Antwort bleibt der Name beides, und die Uhr entscheidet). Wirft für diese Uhr,
+/// was sie nicht spielt: Die Sendung geht dann nicht an sie.
+func klaengePruefen(_ klaenge: [Klang], anzeigen: Anzeigen, faehigkeiten: Geraetefaehigkeiten?,
+                    inBenachrichtigung: Bool = false) throws {
+    guard let faehigkeiten, faehigkeiten.ton != nil else { return }
+    var listen: Tonlisten?
+    if klaenge.contains(where: { if case .datei = $0.quelle { return true } else { return false } }),
+       let melodien = try? anzeigen.melodienLesen() {
+        listen = Tonlisten(melodien: melodien.namen, mp3: (try? anzeigen.mp3Lesen())?.namen ?? [])
+    }
+    for k in klaenge { try k.pruefen(inBenachrichtigung: inBenachrichtigung, faehigkeiten: faehigkeiten, listen: listen) }
+}

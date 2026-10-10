@@ -345,7 +345,7 @@ public enum VirtuelleNGUhr {
         case .bildschirm:
             return Antwort(koerper: bildschirmantwort(z))
         case .apps: return json(.liste(z.apps.map(appEintrag)))
-        case .faehigkeiten: return json(capabilities)
+        case .faehigkeiten: return json(faehigkeitenantwort(z))
         case .ton: return json(tonzustand(z))
         case .tonSpielen: return tonSpielen(anfrage, &z)
         case .tonStoppen: return tonStoppen(anfrage, &z)

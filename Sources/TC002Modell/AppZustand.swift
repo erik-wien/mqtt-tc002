@@ -1517,8 +1517,13 @@ public final class AppZustand {
                                 _ optionen: Benachrichtigungsoptionen = .init()) async -> Sendebilanz {
         var erreicht: [String] = []
         let listen = faehigkeiten
+        // Der Klang geht nur an die Uhren, die ihn spielen; die Nachricht geht
+        // an alle (`Klangeignung`).
+        let verteilung = Klangeignung.verteilen(optionen.klang, an: ziele().map(klangziel))
         let ziele = await anZiele({ anzeigen, uhr in
-            try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen,
+            var eigene = optionen
+            if let klaenge = verteilung.klaenge[uhr.id] { eigene.klang = klaenge }
+            return try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), eigene,
                                          faehigkeiten: listen[uhr.id])
         }, was: lok("Nachricht")) { uhr, weg in
             erreicht.append(uhr.name)
@@ -1526,7 +1531,20 @@ public final class AppZustand {
             if weg == .mqtt { antwortErwarten(lok("Nachricht"), uhr: uhr) }
             log(lokf("Nachricht an %@ gesendet", uhr.name))
         }
+        let ohneKlang = verteilung.uebersprungen.filter { erreicht.contains($0.name) }.map(\.name)
+        if !ohneKlang.isEmpty {
+            let hinweis = lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.", ohneKlang.joined(separator: ", "))
+            log(hinweis)
+            if teilfehler?.contains(hinweis) != true {
+                teilfehler = [teilfehler, hinweis].compactMap { $0 }.joined(separator: "\n")
+            }
+        }
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    /// Was `Klangeignung` über eine Uhr wissen muss.
+    public func klangziel(_ uhr: Uhr) -> Klangziel {
+        Klangziel(id: uhr.id, name: uhr.name, faehigkeiten: faehigkeiten[uhr.id], listen: tonlisten[uhr.id])
     }
 
     /// Nimmt die sichtbare Benachrichtigung weg, mit `name` die benannte (auch

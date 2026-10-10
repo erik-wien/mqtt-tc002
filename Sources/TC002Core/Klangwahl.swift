@@ -75,20 +75,23 @@ public struct Klangwahl: Hashable, Sendable, Codable {
 
     /// Die Wahl, wie sie hinausgeht: Kann die Uhr es nicht, ist sie stumm — die
     /// Oberfläche sperrt die Wahl und sagt, warum.
-    public func wirksam(von faehigkeiten: Geraetefaehigkeiten?) -> Klangwahl {
-        gekonnt(von: faehigkeiten) ? self : Klangwahl()
+    public func wirksam(von faehigkeiten: Geraetefaehigkeiten?, listen: Tonlisten? = nil) -> Klangwahl {
+        gekonnt(von: faehigkeiten, listen: listen) ? self : Klangwahl()
     }
 
     /// Ob die Uhr die Fähigkeit meldet, die diese Art braucht. Eine Uhr, deren
     /// Fähigkeiten noch nicht abgefragt sind (`nil`), gilt als fähig: Die Prüfung
-    /// vor dem Senden greift ohnehin.
-    public func gekonnt(von faehigkeiten: Geraetefaehigkeiten?) -> Bool {
+    /// vor dem Senden greift ohnehin. „Von der Uhr“ mit Namen braucht, was der
+    /// Name ist (MP3 oder Melodie, nach den `listen` der Uhr); ohne Namen genügt
+    /// eines von beiden.
+    public func gekonnt(von faehigkeiten: Geraetefaehigkeiten?, listen: Tonlisten? = nil) -> Bool {
         guard let faehigkeiten else { return true }
-        let ton = faehigkeiten.ton ?? Tonfaehigkeiten()
         switch art {
         case .keiner: return true
-        case .uhr: return ton.mp3 || ton.rtttl
-        case .vorlesen: return ton.speech
+        case .uhr:
+            if !name.isEmpty { return Klang(.datei(name)).gekonnt(von: faehigkeiten, listen: listen) }
+            return faehigkeiten.kann(.mp3) || faehigkeiten.kann(.melodie)
+        case .vorlesen: return faehigkeiten.kann(.sprache)
         }
     }
 }

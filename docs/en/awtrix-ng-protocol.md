@@ -1071,6 +1071,16 @@ Over MQTT the topic is **not retained** and is published only as a reply to
 `ring`, `flap`, `month`, `big`); `layout` `true` and `layouts` with `version 1`
 and `limits` (§9.5).
 
+🔬 `audio` differs per device. On 10 October 2026 (NG 1.2.2) the TC001
+(`platform.id` `esp32`, 32 × 8) reports `mp3`, `song`, `speech`, `track`,
+`radio`, `url`, `effect` and `clip` as `false`, only `rtttl` as `true`.
+Measured alongside: stored melodies and `{"rtttl":…}` play on the buzzer; an MP3
+can be uploaded (`POST /api/v1/audio/mp3`, it shows in the list) but not played
+— `{"file":"x"}` is `404 notFound`, `{"file":"MP3/x"}` is `unavailable`. The
+app therefore offers only what the device reports (if `audio` or a single
+switch is missing, nothing is locked) and does not upload an MP3 to a device
+with `mp3` `false`.
+
 ### 7.5 `GET /api/v1/display`, `/audio` and more
 
 🔬 `GET /api/v1/display`:

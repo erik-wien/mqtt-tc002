@@ -60,9 +60,9 @@ final class TonSteuerungTests: XCTestCase {
         XCTAssertEqual(z.tonzustand[uhr.id]?.sender.map(\.name), ["Fm4"])
     }
 
-    func testOhneAudioFaehigkeitWirdDerTonNichtGefragt() async throws {
+    func testOhneTonFaehigkeitWirdDerTonNichtGefragt() async throws {
         let (z, uhr, _) = try httpUhr(NGTon())
-        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten()
+        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten(ton: Tonfaehigkeiten())
         await z.zustandAbfragen(uhr.id)
         XCTAssertNil(z.tonzustand[uhr.id])
     }
@@ -151,5 +151,85 @@ final class TonSteuerungTests: XCTestCase {
         let b = await z.benachrichtigen(rahmenFuer: { _ in Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: "Hallo", weg: .text))) },
                                         wahl.optionen(nachrichtentext: "Hallo"))
         XCTAssertTrue(b.ganz, "\(z.fehler ?? "")")
+    }
+}
+
+/// Gemischte Ziele: Die Nachricht geht an beide Uhren, der Klang nur an die, die ihn spielt.
+@MainActor
+final class KlangGemischteZieleTests: XCTestCase {
+    private let d = UserDefaults.standard
+    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
+                              "brokerHost", "brokerPort", "benutzer", "protokollAn", "verlaufAn"]
+    private var sicherung: [String: Any?] = [:]
+    private var server: [Uhrenserver] = []
+
+    override func setUp() {
+        super.setUp()
+        sicherung = Dictionary(uniqueKeysWithValues: schluessel.map { ($0, d.object(forKey: $0)) })
+    }
+
+    override func tearDown() {
+        server.forEach { $0.beenden() }
+        server = []
+        for schl in schluessel {
+            if let wert = sicherung[schl] ?? nil { d.set(wert, forKey: schl) } else { d.removeObject(forKey: schl) }
+        }
+        super.tearDown()
+    }
+
+    private func start(_ name: String, tc001: Bool) throws -> (Uhr, Uhrenserver) {
+        var stand = NGUhrzustand()
+        if tc001 { stand.ton.faehigkeiten = NGTon.tc001 }
+        for _ in 0..<20 {
+            let port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port, zustand: stand)
+            do {
+                try s.starten()
+                server.append(s)
+                return (Uhr(name: name, host: "127.0.0.1:\(port)", praefix: "", betriebsart: .http), s)
+            } catch { continue }
+        }
+        throw XCTSkip("kein freier Port")
+    }
+
+    func testKlangNurAnDieUhrDieIhnSpielt() async throws {
+        let (alt, serverAlt) = try start("Flur", tc001: true)
+        let (neu, serverNeu) = try start("Küche", tc001: false)
+        d.set(try JSONEncoder().encode([alt, neu]), forKey: "uhren")
+        d.set(neu.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([alt.id, neu.id])), forKey: "zielIDs")
+        let z = AppZustand(schluesselbund: Schluesselbunddoppelgaenger())
+        // Die Fähigkeiten kommen von den Uhren, nicht aus dem Test.
+        z.faehigkeiten[alt.id] = try XCTUnwrap(try Geraet(host: alt.host).faehigkeiten())
+        z.faehigkeiten[neu.id] = try XCTUnwrap(try Geraet(host: neu.host).faehigkeiten())
+        XCTAssertEqual(z.faehigkeiten[alt.id]?.ton?.mp3, false)
+        XCTAssertEqual(z.faehigkeiten[neu.id]?.ton?.mp3, true)
+
+        let wahl = Nachrichtwahl(klang: Klangwahl(art: .vorlesen))
+        let b = await z.benachrichtigen(
+            rahmenFuer: { _ in Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: "Hallo", weg: .text))) },
+            wahl.optionen(nachrichtentext: "Hallo"))
+        XCTAssertTrue(b.ganz, "\(z.fehler ?? "")")
+        XCTAssertEqual(Set(b.erreicht), ["Flur", "Küche"], "die Nachricht geht an beide")
+        XCTAssertNil(serverAlt.zustand.benachrichtigungen.first?.nutzlast["sound"], "kein Klang an die TC001")
+        XCTAssertNotNil(serverNeu.zustand.benachrichtigungen.first?.nutzlast["sound"])
+        XCTAssertEqual(z.teilfehler?.contains("Flur"), true, "der Hinweis steht neben dem Sendezeichen")
+        XCTAssertEqual(z.teilfehler?.contains("Küche"), false)
+    }
+
+    func testMP3HochladenZurTC001WirdAbgelehnt() async throws {
+        let (alt, s) = try start("Flur", tc001: true)
+        d.set(try JSONEncoder().encode([alt]), forKey: "uhren")
+        d.set(alt.id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set([alt.id])), forKey: "zielIDs")
+        let z = AppZustand(schluesselbund: Schluesselbunddoppelgaenger())
+        z.faehigkeiten[alt.id] = try XCTUnwrap(try Geraet(host: alt.host).faehigkeiten())
+        let datei = FileManager.default.temporaryDirectory.appendingPathComponent("mp3-\(UUID().uuidString).mp3")
+        try (Data("ID3".utf8) + Data(repeating: 1, count: 100)).write(to: datei)
+        defer { try? FileManager.default.removeItem(at: datei) }
+        let ok = await z.mp3Hochladen(datei: datei, name: "x", fuer: alt.id)
+        XCTAssertFalse(ok)
+        XCTAssertNotNil(z.fehler)
+        XCTAssertEqual(s.zustand.ton.mp3, [], "nichts liegt auf der Uhr")
     }
 }

@@ -27,6 +27,20 @@ public struct NGTon: Equatable, Sendable {
     /// Das Gerät hat keinen Ausgang: Jedes Abspielen ist `503 unavailable`
     /// („no audio output“, §3.4).
     public var ohneAusgabe = false
+    /// Die Schalter von `capabilities.audio`; `nil` heißt: die der TC002.
+    /// `tc001` ist der Satz der TC001 (gemessen 10. Oktober 2026): Melodien auf
+    /// dem Summer, keine MP3, kein Sprechen. Das Hochladen einer MP3 nimmt auch
+    /// sie an.
+    public var faehigkeiten: [String: Bool]?
+
+    public static let tc001: [String: Bool] = [
+        "mp3": false, "rtttl": true, "song": false, "speech": false, "track": false,
+        "radio": false, "url": false, "effect": false, "clip": false]
+
+    func kann(_ schluessel: String) -> Bool {
+        if let faehigkeiten { return faehigkeiten[schluessel] ?? false }
+        return VirtuelleNGUhr.kannTC002(schluessel)
+    }
 
     public init() {}
 }
@@ -76,10 +90,19 @@ extension VirtuelleNGUhr {
 
     // MARK: - Fähigkeiten
 
-    private static func kann(_ schluessel: String) -> Bool {
+    static func kannTC002(_ schluessel: String) -> Bool {
         guard case .objekt(let o) = capabilities, case .objekt(let a)? = o["audio"],
               case .bool(let b)? = a[schluessel] else { return false }
         return b
+    }
+
+    /// `GET /api/v1/capabilities`; mit eigenem Audiosatz (`NGTon.faehigkeiten`)
+    /// tragen `audio` und `platform.id` (`esp32`, wenn der Satz der der TC001 ist).
+    static func faehigkeitenantwort(_ z: NGUhrzustand) -> JSONWert {
+        guard let satz = z.ton.faehigkeiten, case .objekt(var o) = capabilities else { return capabilities }
+        o["audio"] = .objekt(satz.mapValues { .bool($0) })
+        if satz == NGTon.tc001 { o["platform"] = .objekt(["id": .text("esp32")]) }
+        return .objekt(o)
     }
 
     // MARK: - Klänge prüfen
@@ -177,14 +200,14 @@ extension VirtuelleNGUhr {
     private static func spielbarkeit(_ k: [String: JSONWert], _ z: NGUhrzustand) -> Spielbarkeit {
         if case .text(let name)? = k["file"] {
             let klein = name.lowercased()
-            if klein.hasPrefix("http://") || klein.hasPrefix("https://") { return kann("url") ? .spielbar : .unmoeglich }
-            if z.ton.melodien[name] != nil { return kann("rtttl") ? .spielbar : .unmoeglich }
-            return z.ton.mp3.contains(name) ? (kann("mp3") ? .spielbar : .unmoeglich) : .fehlt(name)
+            if klein.hasPrefix("http://") || klein.hasPrefix("https://") { return z.ton.kann("url") ? .spielbar : .unmoeglich }
+            if z.ton.melodien[name] != nil { return z.ton.kann("rtttl") ? .spielbar : .unmoeglich }
+            return z.ton.mp3.contains(name) ? (z.ton.kann("mp3") ? .spielbar : .unmoeglich) : .fehlt(name)
         }
-        if k["rtttl"] != nil { return kann("rtttl") ? .spielbar : .unmoeglich }
-        if k["song"] != nil { return kann("song") ? .spielbar : .unmoeglich }
-        if k["speech"] != nil { return kann("speech") ? .spielbar : .unmoeglich }
-        guard kann("radio") else { return .unmoeglich }
+        if k["rtttl"] != nil { return z.ton.kann("rtttl") ? .spielbar : .unmoeglich }
+        if k["song"] != nil { return z.ton.kann("song") ? .spielbar : .unmoeglich }
+        if k["speech"] != nil { return z.ton.kann("speech") ? .spielbar : .unmoeglich }
+        guard z.ton.kann("radio") else { return .unmoeglich }
         switch k["station"] {
         case .zahl?:
             guard let n = k["station"]?.ganzzahl else { return .fehlt("?") }

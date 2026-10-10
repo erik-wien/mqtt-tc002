@@ -503,8 +503,9 @@ func lauf() throws {
         // Eine Benachrichtigung ist keine Anzeige: kein Platz, also auch nichts
         // fuers Slotgedaechtnis.
         try anAlle(lokf("Nachricht gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
-            try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo,
-                                         faehigkeiten: faehigkeiten(uhr))
+            let caps = faehigkeiten(uhr)
+            try klaengePruefen(bo.klang, anzeigen: anzeigen, faehigkeiten: caps, inBenachrichtigung: true)
+            try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo, faehigkeiten: caps)
         }
 
     case .layout(let pfad):

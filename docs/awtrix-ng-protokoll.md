@@ -1095,6 +1095,16 @@ nicht.
 (`sheet`, `ring`, `flap`, `month`, `big`); `layout` `true` und `layouts` mit
 `version 1` und `limits` (§9.5).
 
+🔬 `audio` ist je Gerät verschieden. Die TC001 (`platform.id` `esp32`, 32 × 8)
+meldet am 10. Oktober 2026 (NG 1.2.2) `mp3`, `song`, `speech`, `track`, `radio`,
+`url`, `effect` und `clip` als `false`, nur `rtttl` als `true`. Gemessen dazu:
+Gespeicherte Melodien und `{"rtttl":…}` spielen auf dem Summer; eine MP3 lässt
+sich hochladen (`POST /api/v1/audio/mp3`, sie steht in der Liste), aber nicht
+spielen — `{"file":"x"}` ist `404 notFound`, `{"file":"MP3/x"}` ist
+`unavailable`. Die App bietet darum nur an, was die Uhr meldet (fehlt `audio`
+ganz oder ein einzelner Schalter, ist nichts gesperrt), und lädt auf eine Uhr
+mit `mp3` `false` keine MP3 hoch.
+
 ### 7.5 `GET /api/v1/display`, `/audio` und weitere
 
 🔬 `GET /api/v1/display`:

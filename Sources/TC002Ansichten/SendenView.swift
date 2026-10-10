@@ -254,7 +254,7 @@ public struct SendenView: View {
     private var nachrichtwahl: Nachrichtwahl {
         Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
                       ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe,
-                      klang: nachrichtKlang.wirksam(von: zustand.referenzUhr.flatMap { zustand.faehigkeiten[$0.id] }))
+                      klang: nachrichtKlang)
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }

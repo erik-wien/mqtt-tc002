@@ -5,7 +5,8 @@ import TC002Modell
 
 /// Der Klang einer Nachricht — im Popover bzw. Blatt, das der Klangknopf neben
 /// dem Segment „Anzeige | Nachricht“ öffnet (`Sendeartwahl`). Gesperrt mit
-/// Grund, wenn die angesehene Uhr die Fähigkeit nicht meldet.
+/// Grund, was keine der gewählten Uhren spielen kann (`Klangeignung`); was nur
+/// ein Teil kann, bleibt wählbar und geht nur an diese Uhren.
 ///
 /// Die Namen der Melodien und MP3-Dateien kommen von der Uhr (nur über HTTP) und
 /// stehen erst nach der ersten Abfrage da; davor zeigt das Menü „Uhr abfragen …“,
@@ -23,12 +24,26 @@ public struct Klangabschnitt: View {
         self.kanon = kanon
     }
 
+    /// Die angesehene Uhr liefert die Namen; ob etwas spielbar ist, entscheiden die Zieluhren.
     private var uhr: Uhr? { zustand.referenzUhr }
-    private var faehigkeiten: Geraetefaehigkeiten? { uhr.flatMap { zustand.faehigkeiten[$0.id] } }
     private var listen: Tonlisten? { uhr.flatMap { zustand.tonlisten[$0.id] } }
-    private var kannUhrNamen: Bool { Klangwahl(art: .uhr).gekonnt(von: faehigkeiten) }
-    private var kannVorlesen: Bool { Klangwahl(art: .vorlesen).gekonnt(von: faehigkeiten) }
-    private var gesperrt: Bool { !klang.gekonnt(von: faehigkeiten) }
+    private var ziele: [Klangziel] {
+        let gewaehlt = zustand.ziele()
+        return (gewaehlt.isEmpty ? uhr.map { [$0] } ?? [] : gewaehlt).map(zustand.klangziel)
+    }
+    private func keineKann(_ wahl: Klangwahl) -> Bool {
+        !ziele.isEmpty && Klangeignung.ohne(wahl, in: ziele).count == ziele.count
+    }
+    private func keineKann(_ art: Klangart) -> Bool {
+        !ziele.isEmpty && Klangeignung.ohne(art, in: ziele).count == ziele.count
+    }
+    private var kannUhrNamen: Bool { !keineKann(Klangwahl(art: .uhr)) }
+    private var kannVorlesen: Bool { !keineKann(Klangwahl(art: .vorlesen)) }
+    private var kannMelodien: Bool { !keineKann(.melodie) }
+    private var kannMP3: Bool { !keineKann(.mp3) }
+    private var gesperrt: Bool { keineKann(klang) }
+    /// Die Uhren, die die jetzige Wahl nicht spielen und deshalb ohne Klang bleiben.
+    private var ohneKlang: [Klangziel] { klang.art == .keiner ? [] : Klangeignung.ohne(klang, in: ziele) }
 
     public var body: some View {
         Section {
@@ -38,14 +53,26 @@ public struct Klangabschnitt: View {
                 Text("Vorlesen").tag(Klangwahl.Art.vorlesen).selectionDisabled(!kannVorlesen)
             }
             if gesperrt {
-                Label("Diese Uhr meldet diese Fähigkeit nicht.", systemImage: "exclamationmark.triangle.fill")
+                Label(Klangsperre.grund(ohneKlang, von: ziele.count), systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
+            } else if !ohneKlang.isEmpty {
+                Label(lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.", Klangsperre.namen(ohneKlang)),
+                      systemImage: "info.circle")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             switch klang.art {
             case .keiner:
-                EmptyView()
+                if !kannUhrNamen {
+                    Label(lokf("Von der Uhr: %@", Klangsperre.grund(Klangeignung.ohne(Klangwahl(art: .uhr), in: ziele), von: ziele.count)),
+                          systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
+                }
+                if !kannVorlesen {
+                    Label(lokf("Vorlesen: %@", Klangsperre.grund(Klangeignung.ohne(Klangwahl(art: .vorlesen), in: ziele), von: ziele.count)),
+                          systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
+                }
             case .uhr:
                 namenzeile
+                namensperre
                 if let listen, listen.leer {
                     Text("Keine Melodien oder MP3-Dateien auf der Uhr. Melodien legst du in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -80,10 +107,14 @@ public struct Klangabschnitt: View {
                     Text("Keiner gewählt").tag("")
                     if unbekannt { Text(verbatim: klang.name).tag(klang.name) }
                     if !melodien.isEmpty {
-                        Section("Melodien") { ForEach(melodien, id: \.self) { Text(verbatim: $0).tag($0) } }
+                        Section("Melodien") {
+                            ForEach(melodien, id: \.self) { Text(verbatim: $0).tag($0).selectionDisabled(!kannMelodien) }
+                        }
                     }
                     if !mp3.isEmpty {
-                        Section("MP3-Dateien") { ForEach(mp3, id: \.self) { Text(verbatim: $0).tag($0) } }
+                        Section("MP3-Dateien") {
+                            ForEach(mp3, id: \.self) { Text(verbatim: $0).tag($0).selectionDisabled(!kannMP3) }
+                        }
                     }
                 }
                 .pickerStyle(.inline)
@@ -103,6 +134,19 @@ public struct Klangabschnitt: View {
                     Image(systemName: "chevron.up.chevron.down").font(.caption2)
                 }
             }
+        }
+    }
+
+    /// Warum Namen grau sind: kein Ziel spielt Melodien bzw. MP3.
+    @ViewBuilder
+    private var namensperre: some View {
+        if !(listen?.melodien.isEmpty ?? true), !kannMelodien {
+            Label(lokf("Melodien: %@", Klangsperre.grund(Klangeignung.ohne(.melodie, in: ziele), von: ziele.count)), systemImage: "info.circle")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        if !(listen?.mp3.isEmpty ?? true), !kannMP3 {
+            Label(lokf("MP3-Dateien: %@", Klangsperre.grund(Klangeignung.ohne(.mp3, in: ziele), von: ziele.count)), systemImage: "info.circle")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -147,12 +191,13 @@ struct Tonabschnitt: View {
     /// Die Uhr hat Fähigkeiten gemeldet und keine davon ist Ton.
     private var ohneTon: Bool {
         guard let f = faehigkeiten else { return false }
-        return (f.ton ?? Tonfaehigkeiten()) == Tonfaehigkeiten()
+        return f.ton == Tonfaehigkeiten()
     }
     private var gesperrt: Bool { ohneAdresse || ohneTon }
     private var radioGekonnt: Bool {
-        faehigkeiten.map { ($0.ton ?? Tonfaehigkeiten()).radio } ?? true
+        faehigkeiten?.kann(.radio) ?? true
     }
+    private var mp3Hochladbar: Bool { Klangeignung.mp3Hochladbar(faehigkeiten) }
     private var senderNamen: [String] { (ton?.sender ?? []).map(\.name) }
     private var ablage: Tonablage? { zustand.mp3Ablage[id] }
 
@@ -212,6 +257,11 @@ struct Tonabschnitt: View {
         }
         Button("MP3 hochladen …") { waehltMP3 = true }
             .knopfBefehl()
+            .disabled(!mp3Hochladbar)
+        if !mp3Hochladbar {
+            Label("Diese Uhr kann keine MP3 spielen.", systemImage: "info.circle")
+                .font(kanon.fussnote).foregroundStyle(.secondary)
+        }
     }
 
     private var belegung: String {
@@ -270,5 +320,15 @@ struct Tonabschnitt: View {
         if ton.alarm.spielt { return lokf("Alarm: %@", ton.alarm.name.isEmpty ? "—" : ton.alarm.name) }
         if ton.app.spielt { return lokf("App: %@", ton.app.name.isEmpty ? "—" : ton.app.name) }
         return lok("Still")
+    }
+}
+
+/// Die Sätze, mit denen die Oberfläche sagt, welche Uhr einen Klang nicht spielt.
+enum Klangsperre {
+    static func namen(_ ziele: [Klangziel]) -> String { ziele.map(\.name).joined(separator: ", ") }
+
+    /// Bei einer einzigen Zieluhr der Satz, bei mehreren die Namen.
+    static func grund(_ ohne: [Klangziel], von gesamt: Int) -> String {
+        gesamt == 1 ? lok("Diese Uhr kann das nicht.") : lokf("Kann nicht: %@", namen(ohne))
     }
 }

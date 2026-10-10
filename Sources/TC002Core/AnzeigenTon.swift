@@ -80,8 +80,8 @@ extension Anzeigen {
 
     /// Lädt eine MP3-Datei unter `name` hoch (nur HTTP). Eine gleichnamige MP3
     /// ersetzt die Uhr still; wer das nicht will, fragt vorher `mp3Lesen`.
-    public func mp3Hochladen(name: String, daten: Data) throws {
-        try nurHTTP { try $0.mp3Hochladen(name: name, daten: daten) }
+    public func mp3Hochladen(name: String, daten: Data, faehigkeiten: Geraetefaehigkeiten? = nil) throws {
+        try nurHTTP { try $0.mp3Hochladen(name: name, daten: daten, faehigkeiten: faehigkeiten) }
     }
 
     /// Löscht eine MP3-Datei (nur HTTP); `name` ohne `.mp3`.

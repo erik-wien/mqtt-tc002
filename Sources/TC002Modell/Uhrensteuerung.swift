@@ -47,7 +47,7 @@ extension AppZustand {
         let host = uhr.host, sitzung = netzsitzung
         let tls = faehigkeiten[id]?.mqttTlsUnterstuetzt == true
         // Ohne Auskunft über die Fähigkeiten wird gefragt; eine Uhr ohne Audio antwortet mit 404 (`try?`).
-        let ton = faehigkeiten[id].map { $0.ton != nil } ?? true
+        let ton = faehigkeiten[id].map { $0.ton != Tonfaehigkeiten() } ?? true
         do {
             let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand) = try await Hintergrund.lauf {
                 () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?) in
@@ -270,6 +270,12 @@ extension AppZustand {
             fehler = lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name)
             return false
         }
+        // Die TC001 nimmt die Datei an und kann sie nicht spielen (`audio.mp3` aus).
+        let faehig = faehigkeiten[id]
+        guard Klangeignung.mp3Hochladbar(faehig) else {
+            fehler = lokf("%@: %@", uhr.name, KlangFehler.mp3NichtSpielbar.localizedDescription)
+            return false
+        }
         let host = uhr.host, sitzung = netzsitzung
         do {
             try await Hintergrund.lauf {
@@ -283,7 +289,7 @@ extension AppZustand {
                 guard let daten = try? Data(contentsOf: datei) else {
                     throw MP3Fehler.nichtLesbar(datei.lastPathComponent)
                 }
-                try Geraet(host: host, sitzung: sitzung).mp3Hochladen(name: name, daten: daten)
+                try Geraet(host: host, sitzung: sitzung).mp3Hochladen(name: name, daten: daten, faehigkeiten: faehig)
             }
             log(lokf("%@: MP3 „%@“ hochgeladen", uhr.name, name))
             await tonlistenAbfragen(id)

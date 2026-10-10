@@ -31,7 +31,8 @@ extension Geraet {
     /// `POST /api/v1/audio/mp3`, `multipart`, Feld `file`; der Dateiname im Teil
     /// ist der Name auf der Uhr. Eine gleichnamige MP3 überschreibt die Uhr
     /// still (gemessen); Melodien sind `409`. Name und Größe prüft der Kern vorher.
-    public func mp3Hochladen(name: String, daten: Data) throws {
+    public func mp3Hochladen(name: String, daten: Data, faehigkeiten: Geraetefaehigkeiten? = nil) throws {
+        guard Klangeignung.mp3Hochladbar(faehigkeiten) else { throw KlangFehler.mp3NichtSpielbar }
         guard Klangname.gueltig(name) else { throw KlangFehler.ungueltigerKlangname(name) }
         guard !daten.isEmpty else { throw KlangFehler.mp3Leer }
         guard daten.count <= Self.mp3Hoechstgroesse else {

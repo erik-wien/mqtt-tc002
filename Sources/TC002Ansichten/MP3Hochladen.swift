@@ -43,8 +43,9 @@ struct MP3Hochladeblatt: View {
     private var istMP3: Bool { mp3.contains(name) }
     private var gueltig: Bool { Klangname.gueltig(name) }
     private var zuGross: Bool { (groesse ?? 0) > Geraet.mp3Hoechstgroesse }
+    private var kannMP3: Bool { Klangeignung.mp3Hochladbar(zustand.faehigkeiten[uhr.id]) }
     private var darfHochladen: Bool {
-        gueltig && listen != nil && !laeuft && !zuGross && !istMelodie && (!istMP3 || ersetzen)
+        kannMP3 && gueltig && listen != nil && !laeuft && !zuGross && !istMelodie && (!istMP3 || ersetzen)
     }
 
     var body: some View {
@@ -104,7 +105,9 @@ struct MP3Hochladeblatt: View {
 
     @ViewBuilder
     private var meldungen: some View {
-        if name.isEmpty {
+        if !kannMP3 {
+            warnung(lok("Diese Uhr kann keine MP3 spielen."))
+        } else if name.isEmpty {
             warnung(lok("Der Name darf nicht leer sein."))
         } else if !gueltig {
             let falsch = Klangname.ungueltigeZeichen(in: name)

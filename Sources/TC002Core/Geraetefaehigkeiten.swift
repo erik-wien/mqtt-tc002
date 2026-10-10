@@ -30,7 +30,8 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     /// `nil`, solange nicht gefragt.
     public var mqttTlsUnterstuetzt: Bool?
     /// `capabilities.audio`: welche Klangquellen die Uhr kann (§7.4). `nil`,
-    /// solange nicht gefragt; eine Antwort ohne `audio` ergibt lauter `false`.
+    /// solange nicht gefragt und bei einer Antwort ohne `audio`: dann ist nichts
+    /// gesperrt (`kann(_:)`).
     public var ton: Tonfaehigkeiten?
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
@@ -64,7 +65,7 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         layoutUnterstuetzt = antwort["layout"] as? Bool == true
         zifferblaetter = (antwort["clockFaces"] as? [Any])?.compactMap { $0 as? String } ?? []
         mqttTlsUnterstuetzt = antwort["mqttTls"] as? Bool == true
-        ton = Tonfaehigkeiten(antwort: antwort["audio"] as? [String: Any] ?? [:])
+        ton = (antwort["audio"] as? [String: Any]).map { Tonfaehigkeiten(antwort: $0) }
         if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {
             layoutGrenzen = Layoutgrenzen(antwort: grenzen)
         }

@@ -209,7 +209,9 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
                     json: try Klangbau.spielen([klang])); return true
         }
         try anAlle(lok("Klang gesendet")) { anzeigen, uhr in
-            try anzeigen.tonSpielen([klang], faehigkeiten: faehigkeiten(uhr))
+            let caps = faehigkeiten(uhr)
+            try klaengePruefen([klang], anzeigen: anzeigen, faehigkeiten: caps)
+            try anzeigen.tonSpielen([klang], faehigkeiten: caps)
         }
     case .tonStopp(let gruppe):
         if optionen.trocken {
@@ -255,7 +257,9 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
             trocken(http: "POST /api/v1/audio/mp3 (multipart, file=\(name).mp3, \(daten.count) Byte)",
                     thema: { _ in lok("(nur über HTTP)") }, json: ""); return true
         }
-        try anAlle(lokf("MP3 „%@“ hochgeladen", name)) { anzeigen, _ in
+        try anAlle(lokf("MP3 „%@“ hochgeladen", name)) { anzeigen, uhr in
+            let caps = faehigkeiten(uhr)
+            guard Klangeignung.mp3Hochladbar(caps) else { throw KlangFehler.mp3NichtSpielbar }
             let belegt = try anzeigen.mp3Lesen().namen
             let melodien = try anzeigen.melodienLesen().namen
             if melodien.contains(name) {
@@ -266,7 +270,7 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
                 let frei = Klangname.freierName(name, vorhanden: belegt + melodien)
                 throw Abbruch(lokf("„%@“ gibt es auf der Uhr schon. Mit --ersetzen überschreiben, oder einen freien Namen nehmen: --name %@", name, frei))
             }
-            try anzeigen.mp3Hochladen(name: name, daten: daten)
+            try anzeigen.mp3Hochladen(name: name, daten: daten, faehigkeiten: caps)
         }
     case .tonSender:
         try lesen { senderAusgeben(try $0.senderLesen()) }

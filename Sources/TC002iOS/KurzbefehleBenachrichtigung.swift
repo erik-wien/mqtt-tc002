@@ -153,6 +153,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])
         let ausgeblieben = Ausgebliebene()
+        let ohneKlang = Ausgebliebene()
 
         let gesendet = try await Task.detached(priority: .userInitiated) { () -> [String] in
             var erledigt: [String] = []
@@ -162,9 +163,20 @@ struct BenachrichtigungSendenIntent: AppIntent {
                 guard let anzeigen = Anzeigen.fuer(ziel, brokerzugang: einstellungen.zugang(
                     clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id)))?
                     .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(ziel.name) }) else { continue }
+                // Der Klang geht nur an eine Uhr, die ihn spielt; die Nachricht geht in jedem Fall.
+                var eigene = bo
+                if !bo.klang.isEmpty, !ziel.host.isEmpty {
+                    let g = Geraet(host: ziel.host)
+                    let caps = (try? g.faehigkeiten()) ?? nil
+                    let listen = (try? g.melodien()).map { Tonlisten(melodien: $0.namen, mp3: (try? g.mp3Dateien())?.namen ?? []) }
+                    let verteilung = Klangeignung.verteilen(bo.klang, an: [Klangziel(id: ziel.id, name: ziel.name,
+                                                                                    faehigkeiten: caps, listen: listen)])
+                    eigene.klang = verteilung.klaenge[ziel.id] ?? bo.klang
+                    if !verteilung.uebersprungen.isEmpty { ohneKlang.merken(ziel.name) }
+                }
                 do {
                     try anzeigen.benachrichtigen(try Meldungsbau.rahmen(gesetzt, icon: nil, sammlung: sammlung,
-                                                                       mass: Anzeigemass.fuer(ziel)), bo)
+                                                                       mass: Anzeigemass.fuer(ziel)), eigene)
                 } catch {
                     throw KurzbefehlFehler(uhr: ziel.name, error)
                 }
@@ -174,7 +186,9 @@ struct BenachrichtigungSendenIntent: AppIntent {
         }.value
 
         return .result(dialog: IntentDialog(stringLiteral:
-            lokf("Nachricht an %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis))
+            lokf("Nachricht an %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis
+            + (ohneKlang.uhren.isEmpty ? "" : " " + lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.",
+                                                          ohneKlang.uhren.joined(separator: ", ")))))
     }
 }
 

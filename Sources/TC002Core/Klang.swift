@@ -17,6 +17,8 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
     case nichtInBenachrichtigung(feld: String)
     /// Die Uhr meldet in `capabilities.audio`, dass sie das nicht kann.
     case nichtGekonnt(faehigkeit: String)
+    /// `audio.mp3` ist aus: Die Uhr nähme die Datei an, könnte sie aber nicht spielen.
+    case mp3NichtSpielbar
     case endungImNamen(String)
     case unlesbareMelodie
     case ungueltigerMelodiename(String)
@@ -57,6 +59,8 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
             return lokf("„%@“ ist als Benachrichtigungston nicht erlaubt; möglich sind Datei, RTTTL, Lied und Sprechtext.", feld)
         case .nichtGekonnt(let f):
             return lokf("Diese Uhr kann das nicht: Sie meldet „%@“ nicht als Fähigkeit.", f)
+        case .mp3NichtSpielbar:
+            return lok("Diese Uhr kann keine MP3 spielen. Die Datei wird nicht hochgeladen.")
         case .endungImNamen(let name):
             return lokf("„%@“ ist ein Name ohne Endung: „.mp3“ und „.txt“ setzt die Uhr selbst.", name)
         case .ungueltigerKlangname(let name):
@@ -92,7 +96,9 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
 }
 
 /// Die Klangquellen, die eine Uhr als Fähigkeit nennt (`capabilities.audio`,
-/// §7.4). Eine Uhr, deren Antwort `audio` nicht trägt, kann nichts davon.
+/// §7.4). Fehlt `audio` in der Antwort ganz, ist die Auskunft unbekannt
+/// (`Geraetefaehigkeiten.ton == nil`) und nichts gesperrt; ein einzelner
+/// fehlender Schalter in einem vorhandenen `audio` gilt ebenso als erlaubt.
 public struct Tonfaehigkeiten: Equatable, Sendable {
     public var mp3 = false
     public var rtttl = false
@@ -111,10 +117,10 @@ public struct Tonfaehigkeiten: Equatable, Sendable {
         self.radio = radio; self.url = url; self.effect = effect; self.clip = clip; self.track = track
     }
 
-    /// Aus dem Objekt `audio` der Fähigkeitenauskunft; ein fehlender oder
-    /// anders getypter Schalter gilt als `false`.
+    /// Aus dem Objekt `audio` der Fähigkeitenauskunft; ein fehlender Schalter
+    /// ist unbekannt und gilt als erlaubt, ein anders getypter als `false`.
     public init(antwort: [String: Any]) {
-        func schalter(_ k: String) -> Bool { antwort[k] as? Bool == true }
+        func schalter(_ k: String) -> Bool { antwort[k].map { $0 as? Bool == true } ?? true }
         self.init(mp3: schalter("mp3"), rtttl: schalter("rtttl"), song: schalter("song"),
                   speech: schalter("speech"), radio: schalter("radio"), url: schalter("url"),
                   effect: schalter("effect"), clip: schalter("clip"), track: schalter("track"))
@@ -191,7 +197,7 @@ public struct Klang: Equatable, Sendable {
     /// Genau die Regeln aus §3.2.1 und §8. `faehigkeiten` sind die der Ziel-Uhr;
     /// ohne sie (oder ohne ihre `audio`-Auskunft) bleibt die Fähigkeit ungeprüft.
     public func pruefen(inBenachrichtigung: Bool = false,
-                        faehigkeiten: Geraetefaehigkeiten? = nil) throws {
+                        faehigkeiten: Geraetefaehigkeiten? = nil, listen: Tonlisten? = nil) throws {
         let ton = faehigkeiten?.ton
         func gekonnt(_ ok: (Tonfaehigkeiten) -> Bool, _ name: String) throws {
             if let ton, !ok(ton) { throw KlangFehler.nichtGekonnt(faehigkeit: "audio." + name) }
@@ -218,8 +224,14 @@ public struct Klang: Equatable, Sendable {
             } else {
                 let klein = name.lowercased()
                 if klein.contains(".mp3") || klein.contains(".txt") { throw KlangFehler.endungImNamen(name) }
-                // Ein Name ohne Schrägstrich ist zuerst eine MP3, dann eine Melodie.
-                if let ton, !ton.mp3, !ton.rtttl { throw KlangFehler.nichtGekonnt(faehigkeit: "audio.mp3") }
+                // Ein Name ohne Schrägstrich ist zuerst eine MP3, dann eine Melodie;
+                // welche, sagen die `listen` der Uhr (`arten`).
+                if let faehigkeiten, ton != nil {
+                    let arten = self.arten(listen: listen)
+                    if !arten.contains(where: { faehigkeiten.kann($0) }) {
+                        throw KlangFehler.nichtGekonnt(faehigkeit: arten == [.melodie] ? "audio.rtttl" : "audio.mp3")
+                    }
+                }
             }
         case .rtttl(let melodie):
             try text(melodie, feld: "rtttl", grenze: Self.textGrenze, einheit: lok("Zeichen"))

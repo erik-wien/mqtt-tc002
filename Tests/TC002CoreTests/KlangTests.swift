@@ -233,9 +233,9 @@ final class KlangTests: XCTestCase {
         let f = try XCTUnwrap(Geraetefaehigkeiten(antwort: antwort))
         XCTAssertEqual(f.ton, Tonfaehigkeiten(mp3: true, rtttl: true, song: false, speech: true, radio: false,
                                               url: true, effect: true, clip: true, track: false))
-        // Ohne `audio` kann die Uhr nichts davon.
+        // Ohne `audio` ist die Auskunft unbekannt, nichts ist gesperrt.
         let alt = try XCTUnwrap(Geraetefaehigkeiten(antwort: ["effects": ["Fade"]]))
-        XCTAssertEqual(alt.ton, Tonfaehigkeiten())
+        XCTAssertNil(alt.ton)
     }
 
     func testFaehigkeitssperren() {

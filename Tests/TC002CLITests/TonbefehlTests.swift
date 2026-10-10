@@ -218,4 +218,34 @@ extension TonbefehlTests {
         XCTAssertEqual(zeilen[1], "y\t20 Byte")
         XCTAssertFalse(zeilen.contains { $0.unicodeScalars.contains { $0.value == 0x1B } })
     }
+
+    // MARK: - Fähigkeiten der Uhr (virtuelle Uhr mit dem Tonsatz der TC001, nur 127.0.0.1)
+
+    func testKlaengeWerdenGegenDieFaehigkeitenDerUhrGeprueft() throws {
+        var z = NGUhrzustand()
+        z.ton.faehigkeiten = NGTon.tc001
+        z.ton.mp3 = ["ding"]
+        z.ton.melodien = ["ping": melodie]
+        var server: Uhrenserver?
+        var port: UInt16 = 0
+        for _ in 0..<20 {
+            port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port, zustand: z)
+            if (try? s.starten()) != nil { server = s; break }
+        }
+        let s = try XCTUnwrap(server)
+        defer { s.beenden() }
+        let uhr = Uhr(name: "Flur", host: "127.0.0.1:\(port)", praefix: "", betriebsart: .http)
+        let anzeigen = try XCTUnwrap(Anzeigen.fuer(uhr, brokerzugang: nil))
+        let caps = try XCTUnwrap(try Geraet(host: uhr.host).faehigkeiten())
+
+        XCTAssertNoThrow(try klaengePruefen([Klang(.datei("ping"))], anzeigen: anzeigen, faehigkeiten: caps))
+        XCTAssertThrowsError(try klaengePruefen([Klang(.datei("ding"))], anzeigen: anzeigen, faehigkeiten: caps)) {
+            XCTAssertEqual($0 as? KlangFehler, .nichtGekonnt(faehigkeit: "audio.mp3"))
+        }
+        XCTAssertThrowsError(try klaengePruefen([Klang(.sprache("Hi"))], anzeigen: anzeigen, faehigkeiten: caps,
+                                                inBenachrichtigung: true))
+        XCTAssertNoThrow(try klaengePruefen([Klang(.datei("ding"))], anzeigen: anzeigen, faehigkeiten: nil),
+                         "ohne Auskunft bleibt es ungeprüft")
+    }
 }
