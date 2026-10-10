@@ -1,6 +1,6 @@
 # Freigabe: Steuerung der Uhr (10.10.2026)
 
-Mockup: `2026-10-10-steuerung.html` (Sprint 6). Grundlage: `docs/awtrix-ng-protokoll.md` §3.2, §3.5, §7, §10, §11. Status: **zur Freigabe** (noch keine Antwort).
+Mockup: `2026-10-10-steuerung.html` (Sprint 6). Grundlage: `docs/awtrix-ng-protokoll.md` §3.2, §3.5, §7, §10, §11. Status: **freigegeben** (Erik, 10.10.2026), mit den Änderungen unter „Entscheidung“.
 
 ## Was in die App gehört und was bei der Uhr bleibt
 
@@ -36,4 +36,19 @@ Offen aus dem Protokoll: Welche Werte `ca` außer `public` annimmt und was `pend
 
 ## Entscheidung
 
-(offen)
+Erik, 10.10.2026 (wo er unsicher war, gilt die Empfehlung; Einspruch möglich):
+
+1. **C**: Seitenleistenpunkt „Uhr“ als Fernbedienung, gespeicherte Gruppen unter Einstellungen › Uhr.
+2. iPhone: Titelmenü (Name der Uhr oben) mit „Steuerung …“ als Blatt und „Einstellungen der Uhr …“ (Empfehlung).
+3. Live-Bild aktualisiert sich alle 2 s, solange die Seite offen ist.
+4. Helligkeit in Prozent („50 %“).
+5. Moodlight: der Schalter genügt, keine Lichtvorschau.
+6. „Display aus“ **beides**: je Uhr und ein Knopf für alle gewählten Uhren.
+7. **Sieben Gruppen**: Uhr, Zeit & Datum und Wochentagsleiste werden **eine** Gruppe.
+8. Zifferblätter „Blatt, Ring, Klappzahlen, Monat, Groß“.
+9. „Blocknavigation“ **fehlt** bis zur Messung (Empfehlung; Bedeutung unbekannt).
+10. Tasten und Drehknopf nur im MQTT-Betrieb, sonst grau mit Grund.
+11. „Anzeige vergrößert“ wird **nicht erwähnt** (Empfehlung; die App sendet immer volle 52×16).
+12. TLS ein/aus bleibt in der Web-Oberfläche; die App zeigt den Status und lädt/entfernt die CA.
+13. CA entfernen **mit Rückfrage**.
+14. **Neustart der Uhr** kommt in die App (Fernbedienung, mit Rückfrage).
