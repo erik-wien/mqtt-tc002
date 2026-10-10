@@ -25,11 +25,12 @@ public enum Geraeteschrift {
     static let luft = 1
     static let leerzeichen = 2
 
-    /// Abgelesen am 10.10.2026 aus 16 Bildschirmauszügen der TC002 (Texte
-    /// `abcdef` … `<>@[]$`, `textCase: asTyped`). Nicht gemessen und darum nicht
-    /// in der Tabelle: „M“ und „N“ (der Text lief durch, der Auszug zeigt sie
-    /// nicht) sowie alle Zeichen, die in keinem der 16 Texte standen — sie
-    /// zeichnet die Vorschau als „?“. „O“ stammt aus der Messung von „Hello!“.
+    /// Abgelesen am 10.10.2026 aus Bildschirmauszügen der TC002 (Texte
+    /// `abcdef` … `<>@[]$`, dazu `MN`, `MNO`, `|~^{}` und Backslash/Backtick,
+    /// `textCase: asTyped`). Nicht in der Tabelle sind alle Zeichen, die in
+    /// keinem dieser Texte standen — die Vorschau zeichnet sie als „?“. „O“
+    /// steht auch in der Messung von „Hello!“; „P“, „Q“, „R“ sind aus dem
+    /// laufenden Auszug von `MNOPQR` gelesen (nicht im Fixture).
     static let glyphen: [Character: Glyphe] = [
         "!": Glyphe([".", "#", "#", "#", ".", "#", "."]),
         "\"": Glyphe(["...", "#.#", "#.#", "...", "...", "...", "..."]),
@@ -125,6 +126,15 @@ public enum Geraeteschrift {
         "7": Glyphe(["...", "###", "..#", "..#", "..#", "..#", "..."]),
         "8": Glyphe(["...", "###", "#.#", "###", "#.#", "###", "..."]),
         "9": Glyphe(["...", "###", "#.#", "###", "..#", "###", "..."]),
+        "M": Glyphe([".....", "#...#", "##.##", "#.#.#", "#...#", "#...#", "....."]),
+        "N": Glyphe(["....", "#..#", "##.#", "#.##", "#..#", "#..#", "...."]),
+        "|": Glyphe([".", "#", "#", "#", "#", "#", "."]),
+        "~": Glyphe(["...", "...", "...", ".##", "##.", "...", "..."]),
+        "^": Glyphe(["...", ".#.", "#.#", "...", "...", "...", "..."]),
+        "{": Glyphe(["...", ".##", ".#.", "#..", ".#.", ".##", "..."]),
+        "}": Glyphe(["...", "##.", ".#.", "..#", ".#.", "##.", "..."]),
+        "\\": Glyphe(["...", "...", "#..", ".#.", "..#", "...", "..."]),
+        "`": Glyphe(["..", "#.", ".#", "..", "..", "..", ".."]),
     ]
 
     /// Was die Uhr für ein Zeichen ohne Abbildung zeigt: genau ein „?“ (§5.1).
