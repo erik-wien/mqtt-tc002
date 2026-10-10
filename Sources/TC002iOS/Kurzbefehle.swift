@@ -294,6 +294,16 @@ struct MeldungLoeschenIntent: AppIntent {
         if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
             throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Sichern und prüfen“ drücken.")))
         }
+        // Erst nach der Pruefung der Ziele, damit die Rueckfrage nur kommt,
+        // wenn auch wirklich geloescht wuerde. Die Variante mit Text gibt es
+        // ab iOS 18; davor fragt das System mit seinem Standardtext.
+        if #available(iOS 18.0, *) {
+            try await requestConfirmation(
+                actionName: .do,
+                dialog: IntentDialog(stringLiteral: lokf("Slot %d von der Uhr nehmen?", platz)))
+        } else {
+            try await requestConfirmation()
+        }
         let name = Meldungsplatz.name(fuer: platz)
         try await Task.detached(priority: .userInitiated) {
             for ziel in abgefragt {

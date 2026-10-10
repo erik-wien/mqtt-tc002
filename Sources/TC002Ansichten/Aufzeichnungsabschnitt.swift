@@ -8,6 +8,7 @@ import TC002Modell
 public struct Aufzeichnungsabschnitt: View {
     @Bindable var zustand: AppZustand
     private let kanon: Formkanon
+    @State private var fragt = false
 
     public init(zustand: AppZustand, kanon: Formkanon) {
         self.zustand = zustand
@@ -20,8 +21,9 @@ public struct Aufzeichnungsabschnitt: View {
         // Druck darauf stellt es wieder her.
         Section {
             Toggle("Verlauf führen", isOn: $zustand.verlaufAn)
-            Button("Verlauf löschen", role: .destructive) { zustand.verlaufLeeren() }
+            Button("Verlauf löschen", role: .destructive) { fragt = true }
                 .knopfZerstoerend()
+                .verlaufLoeschenBestaetigen($fragt, zustand: zustand)
             // Ein Satz je Schalter, das Laengere hinter dem (?) am Kopf.
             Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen.")
                 .font(kanon.fussnote).foregroundStyle(.secondary)

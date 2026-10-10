@@ -22,6 +22,8 @@ struct IconAuswahlView: View {
     /// Das Icon, fuer das gerade die Loesch-Rueckfrage steht — `nil` heisst
     /// keine.
     @State private var zuLoeschen: Icon?
+    /// Warum sich ein Icon nicht löschen ließ; `nil` heißt keine Meldung.
+    @State private var loeschfehler: String?
     /// Erzwingt das Neulesen von `sammlung.alle()`, das sonst niemand anstoesst:
     /// die Liste wird bei jedem Zugriff frisch von der Platte gelesen, aber
     /// SwiftUI zeichnet nur neu, wenn sich ein beobachteter Zustand aendert.
@@ -190,13 +192,24 @@ struct IconAuswahlView: View {
         } message: { icon in
             Text(lokf("Das Icon „%@“ wird endgültig entfernt.", icon.name))
         }
+        .alert("Löschen fehlgeschlagen",
+               isPresented: Binding(get: { loeschfehler != nil }, set: { if !$0 { loeschfehler = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(loeschfehler ?? "")
+        }
     }
 
     private func loeschen(_ icon: Icon) {
         // Jede Sammlung raeumt nur ihren eigenen Ordner (`istEigen`) — welche
         // es ist, entscheidet also sie selbst und nicht diese Ansicht.
-        guard let heimat = sammlungen.first(where: { $0.istEigen(icon) }),
-              (try? heimat.loeschen(icon)) != nil else { return }
+        guard let heimat = sammlungen.first(where: { $0.istEigen(icon) }) else { return }
+        do {
+            try heimat.loeschen(icon)
+        } catch {
+            loeschfehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return
+        }
         // War das geloeschte Icon gerade gewaehlt, faellt die Wahl auf „ohne"
         // zurueck — es gibt danach schlicht nichts mehr, worauf sie zeigen koennte.
         if gewaehltesIcon?.kennung == icon.kennung { gewaehltesIcon = nil }

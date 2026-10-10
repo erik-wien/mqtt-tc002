@@ -367,7 +367,15 @@ struct Verlaufskopf: View {
             .foregroundStyle(.red)
             .help(lok("Alle Einträge des Verlaufs wegwerfen"))
         }
-        .confirmationDialog(Text("Verlauf löschen?"), isPresented: $fragt, titleVisibility: .visible) {
+        .verlaufLoeschenBestaetigen($fragt, zustand: zustand)
+    }
+}
+
+extension View {
+    /// Die Rückfrage vor „Verlauf löschen“ — im Verlauf selbst und in den
+    /// Einstellungen dieselbe, weil die Löschung nicht rückholbar ist.
+    func verlaufLoeschenBestaetigen(_ fragt: Binding<Bool>, zustand: AppZustand) -> some View {
+        confirmationDialog(Text("Verlauf löschen?"), isPresented: fragt, titleVisibility: .visible) {
             Button("Löschen", role: .destructive) { zustand.verlaufLeeren() }
             Button("Abbrechen", role: .cancel) {}
         } message: {

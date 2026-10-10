@@ -597,6 +597,7 @@ public struct SendenView: View {
             }
         }
         .inspector(isPresented: $zeigeInspektor) { inspektor }
+        .focusedSceneValue(\.sendeAktion, SendeAktion(senden: sendenMoeglich ? { senden() } : nil))
         // Eine Ausrichtung, die AWTRIX NG nicht kennt, wird beim Start
         // sichtbar zurueckgestellt. Sie stehen zu lassen hiesse,
         // im Waehler „rechts" zu zeigen und linksbuendig zu senden — und
@@ -1087,8 +1088,8 @@ struct MeldungLoeschenKnopf: View {
     /// Ein leerer Platz lässt sich nicht löschen. Woher das bekannt ist, steht
     /// bei `belegtePlaetze`: gemeldet schlägt gemerkt.
     let belegt: Bool
-
-    @State private var laeuft = false
+    /// Fragt nach und löscht dann (`Slotleiste`).
+    let loeschen: () -> Void
 
     private var beschriftung: String { lokf("Slot %d auf der Uhr löschen", platz) }
 
@@ -1105,18 +1106,12 @@ struct MeldungLoeschenKnopf: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .disabled(laeuft || zustand.ziele().isEmpty)
+            .disabled(zustand.ziele().isEmpty)
             .help(beschriftung)
             .accessibilityLabel(Text(beschriftung))
             .contextMenu {
                 Button(role: .destructive, action: loeschen) { Text(beschriftung) }
             }
         }
-    }
-
-    private func loeschen() {
-        laeuft = true
-        let name = Meldungsplatz.name(fuer: platz)
-        Task { await zustand.loeschen(name); laeuft = false }
     }
 }

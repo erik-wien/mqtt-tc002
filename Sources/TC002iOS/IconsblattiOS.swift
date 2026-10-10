@@ -398,7 +398,12 @@ struct IconsblattiOS: View {
     /// „Kein Icon" zurück — es gibt danach nichts mehr, worauf sie zeigen
     /// könnte. Dieselbe Entscheidung wie im Auswahlblatt am Schreibtisch.
     private func loeschen(_ eintrag: Editoreintrag) {
-        guard (try? bestand.loeschen(eintrag)) != nil else { return }
+        do {
+            try bestand.loeschen(eintrag)
+        } catch {
+            meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return
+        }
         if gewaehlt?.datei == eintrag.datei { gewaehlt = nil }
         neuLesen()
     }
@@ -634,9 +639,7 @@ private struct AnzeigeseiteiOS: View {
     /// im Sendebildschirm.
     private var belegte: Set<Int> { zustand.belegtePlaetze() }
 
-    private func loeschen(_ i: Int) {
-        Task { await zustand.loeschen(Meldungsplatz.name(fuer: i)) }
-    }
+    @State private var zuLoeschen: Int?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -670,7 +673,7 @@ private struct AnzeigeseiteiOS: View {
                         }
                         .buttonStyle(.plain)
                         .slotmenue(belegt: belegte.contains(i),
-                                   loeschen: { loeschen(i) },
+                                   loeschen: { zuLoeschen = i },
                                    zeigen: { zustand.umschalten(auf: Meldungsplatz.name(fuer: i)) })
                     }
                 }
@@ -686,6 +689,7 @@ private struct AnzeigeseiteiOS: View {
         .padding()
         .navigationTitle(eintrag.name)
         .navigationBarTitleDisplayMode(.inline)
+        .slotLoeschenBestaetigen($zuLoeschen, zustand: zustand)
     }
 
     /// Der Rahmen wird im Kern gebaut (`Bildsendung.rahmen`) — ein Einzelbild

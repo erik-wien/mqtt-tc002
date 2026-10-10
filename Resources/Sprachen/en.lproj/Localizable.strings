@@ -1624,3 +1624,7 @@
 "**Moodlight, Anzeiger, Live-Bild, Neustart** — beide." = "**Moodlight, indicators, live image, restart** — both.";
 "**Tasten** — beide, im MQTT-Betrieb. Der **Drehknopf** — TC002: ja, TC001: nein (sie hat drei Tasten)." = "**Buttons** — both, in MQTT mode. The **rotary knob** — TC002: yes, TC001: no (it has three buttons).";
 "**MQTT-Verschlüsselung (TLS)** — TC002: ja, TC001: nein." = "**MQTT encryption (TLS)** — TC002: yes, TC001: no.";
+"Slot %d löschen?" = "Delete slot %d?";
+"Die Meldung wird von den gewählten Uhren genommen." = "The message is removed from the selected clocks.";
+"Löschen fehlgeschlagen" = "Deleting failed";
+"Slot %d von der Uhr nehmen?" = "Remove slot %d from the clock?";

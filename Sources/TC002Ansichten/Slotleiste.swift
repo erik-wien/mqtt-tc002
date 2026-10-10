@@ -30,6 +30,8 @@ public struct Slotleiste: View {
     /// Finger bleibt der Wert `nil`: Dort gibt es kein Überfahren, und
     /// gelöscht wird über das Kontextmenü (`slotmenue`).
     @State private var ueberfahren: Int?
+    /// Der Platz, dessen Löschung noch bestätigt werden muss.
+    @State private var zuLoeschen: Int?
 
     public init(zustand: AppZustand, gewaehlt: Int, gesperrt: Bool = false,
                 waehlen: @escaping (Int) -> Void) {
@@ -81,18 +83,42 @@ public struct Slotleiste: View {
                 .overlay(alignment: .topTrailing) {
                     if ueberfahren == i {
                         MeldungLoeschenKnopf(zustand: zustand, platz: i,
-                                             belegt: belegte.contains(i))
+                                             belegt: belegte.contains(i),
+                                             loeschen: { loeschen(i) })
                             .offset(x: 8, y: -8)
                     }
                 }
             }
         }
         .opacity(gesperrt ? 0.4 : 1)
+        .slotLoeschenBestaetigen($zuLoeschen, zustand: zustand)
     }
 
-    /// Räumt den Platz auf den gewählten Uhren — derselbe Weg, den auch das ⊗
-    /// nimmt (`AppZustand.loeschen`), samt Slotgedächtnis.
+    /// ⊗ und Kontextmenü führen hierher; gelöscht wird erst nach der
+    /// Rückfrage (`slotLoeschenBestaetigen`, `AppZustand.loeschen`).
     private func loeschen(_ i: Int) {
-        Task { await zustand.loeschen(Meldungsplatz.name(fuer: i)) }
+        zuLoeschen = i
+    }
+}
+
+public extension View {
+    /// Fragt vor dem Löschen eines Meldungsplatzes nach. Das Löschen nimmt die
+    /// Meldung von der echten Uhr und ist nicht rückholbar; ⊗, Kontextmenü und
+    /// langer Druck setzen deshalb nur `platz`, und dieser Dialog löscht.
+    func slotLoeschenBestaetigen(_ platz: Binding<Int?>, zustand: AppZustand) -> some View {
+        confirmationDialog(
+            Text(lokf("Slot %d löschen?", platz.wrappedValue ?? 0)),
+            isPresented: Binding(get: { platz.wrappedValue != nil },
+                                 set: { if !$0 { platz.wrappedValue = nil } }),
+            titleVisibility: .visible,
+            presenting: platz.wrappedValue
+        ) { i in
+            Button("Löschen", role: .destructive) {
+                Task { await zustand.loeschen(Meldungsplatz.name(fuer: i)) }
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { _ in
+            Text("Die Meldung wird von den gewählten Uhren genommen.")
+        }
     }
 }
