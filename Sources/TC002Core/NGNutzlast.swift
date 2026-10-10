@@ -265,7 +265,11 @@ public enum NGNutzlast {
         }
         // Millisekunden, nicht Sekunden. Ein mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.
-        if let dauer = o.dauer { teile.append(#""durationMs":\#(dauer * 1000)"#) }
+        if let dauer = o.dauer {
+            // Begrenzt statt zu trappen: Auf einen Tag, wie der Kurzbefehl; Negatives wird 0.
+            let ms = min(max(dauer, 0), 86_400) * 1000
+            teile.append(#""durationMs":\#(ms)"#)
+        }
         return "{" + teile.joined(separator: ",") + "}"
     }
 

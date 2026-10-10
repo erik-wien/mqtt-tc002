@@ -379,8 +379,14 @@ struct IconsblattiOS: View {
     /// Kommandozeilenwerkzeug beruft. Zurück kommt das umbenannte Stück, damit
     /// die Einzelansicht ihren Titel nachziehen kann.
     private func umbenennen(_ eintrag: Editoreintrag, auf name: String) -> Editoreintrag? {
-        guard let neu = try? bestand.umbenennen(eintrag, name: name,
-                                                nummer: eintrag.nummer ?? eintrag.schluessel) else {
+        let neu: Editoreintrag
+        do {
+            neu = try bestand.umbenennen(eintrag, name: name,
+                                         nummer: eintrag.nummer ?? eintrag.schluessel)
+        } catch {
+            // Ein belegter Name wird nicht ersetzt; ein Ersetzen-Dialog wie am
+            // Mac gehoert nicht in die Einzelansicht am Telefon.
+            meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return nil
         }
         if gewaehlt?.datei == eintrag.datei { gewaehlt = icon(aus: neu) }

@@ -33,6 +33,14 @@ final class NGNutzlastTests: XCTestCase {
             ##"{"text":"Grüße","textCase":"asTyped","textColor":"#00FF66","textCenter":false,"scroll":{"speed":60}}"##)
     }
 
+    /// `dauer * 1000` trappte bei grossen Werten; jetzt wird auf einen Tag
+    /// begrenzt, Negatives wird 0.
+    func testDauerLaeuftNichtUeber() throws {
+        XCTAssertTrue(try NGNutzlast.anzeige(optionen { $0.dauer = Int.max }).contains(#""durationMs":86400000"#))
+        XCTAssertTrue(try NGNutzlast.anzeige(optionen { $0.dauer = -5 }).contains(#""durationMs":0"#))
+        XCTAssertTrue(try NGNutzlast.anzeige(optionen { $0.dauer = 9 }).contains(#""durationMs":9000"#))
+    }
+
     /// Der Text bleibt, wie er eingetippt wurde: NG versalisiert selbst und
     /// erhaelt dabei die Zeichen; der Schalter gehoert deshalb nach `textCase`
     /// und nicht in den Text (`uppercased()` machte aus „ß“ ein „SS“).

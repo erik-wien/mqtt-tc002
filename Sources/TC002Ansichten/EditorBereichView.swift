@@ -1800,7 +1800,8 @@ public struct EditorBereichView: View {
     private func umbenennen(_ eintrag: Editoreintrag) {
         let offen = istGeoeffnet(eintrag)
         do {
-            let neu = try bestand.umbenennen(eintrag, name: benennName, nummer: benennNummer)
+            let neu = try bestand.umbenennen(eintrag, name: benennName, nummer: benennNummer,
+                                            ueberschreiben: benennBelegt(eintrag) != nil)
             vorhandene = bestand.alle()
         bewegungLesen()
             if offen {

@@ -33,7 +33,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Icon-Nummer", description: "Nummer eines vorhandenen Icons.")
     var iconNummer: String?
 
-    @Parameter(title: "Dauer in Sekunden")
+    @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
     var dauer: Int?
 
     @Parameter(title: "Slot", description: "Platz 1 bis 5 auf der Uhr.",
