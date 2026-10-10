@@ -13,5 +13,13 @@ Adressen. Statusleiste 9:41.
 
 Deutsch für die deutsche, Englisch für die englische Lokalisierung. Reihenfolge = Dateinummer.
 
+| iPhone | iPad |
+|---|---|
+| `01-senden` Senden mit 52×16-Vorschau, Plätze belegt | `01-senden` Senden mit Inspektor |
+| `02-darstellung` Formatblatt Darstellung (Schrift der Uhr, Effekt, Palette) | `02-darstellung` Inspektor-Reiter Darstellung |
+| `03-klang` Nachricht mit Klang (Formatblatt) | `03-steuerung` Fernbedienung mit Live-Bild, Ton, Radio |
+| `04-steuerung` Fernbedienung mit Live-Bild, Ton, Radio | `04-icons` Icons (Sammlung) |
+| `05-icons` Icons (Sammlung) | |
+
 Die Banner entstehen aus `~/GitSwift/Marketing/appstore/banner-mqtt.html` per `render-mqtt.sh` (verwenden die
-iPhone-Screenshots `01-senden` und `02-laufschrift`).
+iPhone-Screenshots `01-senden` und `02-darstellung`).
