@@ -266,6 +266,38 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertNotNil(gedaechtnis.gemerkt(fuer: uhr.id, platz: 1), "gemerkt bleibt es, nur nicht gueltig")
     }
 
+    /// Das Mitlesen zerlegt auf der Warteschlange des Abonnenten und gibt nur
+    /// das Ergebnis an den Hauptakteur: Eine 50-KiB-Nutzlast (GIF-Icon) vom
+    /// Hintergrund aus wird hier übernommen. Kein Broker: Der Abonnent wird
+    /// nie gestartet.
+    func testMitgelesenGrosseNutzlastWirdAbseitsZerlegtUndHierUebernommen() throws {
+        let uhr = ngUhr()
+        let zustand = try mitUhr(uhr)
+        zustand.protokollAn = true
+        let gedaechtnis = Slotgedaechtnis(ordner: temp())
+        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis))
+
+        let abonnent = MQTTAbonnent(zugang: MQTTZugang(host: "127.0.0.1", port: 1, benutzer: nil,
+                                                       kennwort: nil, clientID: "test"),
+                                    themen: [])
+        zustand.nachrichtenVerdrahten(abonnent, praefix: uhr.praefix, fuer: uhr.id, gedaechtnis: gedaechtnis)
+        let gross = Data(#"{"icon":""#.utf8) + Data(repeating: 0x41, count: 50 * 1024) + Data(#""}"#.utf8)
+        let abgeliefert = expectation(description: "Rückruf auf der Hintergrundschlange")
+        DispatchQueue.global().async {
+            XCTAssertFalse(Thread.isMainThread)
+            abonnent.beiNachricht?("wohnzimmer/uhr/cmd/apps/pushed/meldung1", gross)
+            abgeliefert.fulfill()
+        }
+        wait(for: [abgeliefert], timeout: 5)
+        let spur = "\(gross.count) Bytes"
+        warteBis({ zustand.protokoll.contains { $0.contains(spur) } })
+
+        XCTAssertTrue(zustand.protokoll.contains { $0.contains(spur) })
+        XCTAssertNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis),
+                     "fremde Nutzlast macht den gemerkten Stand ungültig")
+    }
+
     /// Das Echo der eigenen Sendung ist keine fremde Nutzlast.
     func testDasEchoDerEigenenSendungMachtNichtsUngueltig() async throws {
         let uhr = Uhr(name: "Küche", host: "uhr.example", praefix: "wohnzimmer/uhr", betriebsart: .http)

@@ -1796,11 +1796,7 @@ public final class AppZustand {
             let abonnent = MQTTAbonnent(zugang: eigener, themen: Self.themen(fuer: uhr))
             // Die Rückmeldungen kommen von der Warteschlange des Abonnenten;
             // AppZustand ist @MainActor-isoliert, also dorthin zurück.
-            abonnent.beiNachricht = { [weak self] thema, nutzlast in
-                Task { @MainActor [weak self] in
-                    self?.gemeldet(thema: thema, nutzlast: nutzlast, fuer: id)
-                }
-            }
+            nachrichtenVerdrahten(abonnent, praefix: uhr.praefix, fuer: id)
             abonnent.beiZustand = { [weak self] steht, grund in
                 Task { @MainActor [weak self] in self?.horchzustand(steht, grund, fuer: id) }
             }
@@ -1859,26 +1855,43 @@ public final class AppZustand {
     /// sagt deshalb „belegt, Inhalt unbekannt" — das ist weniger, aber wahr.
     private func ngGemeldet(thema: String, nutzlast: Data, uhr: Uhr,
                             gedaechtnis: Slotgedaechtnis) {
+        meldungUebernehmen(NGMeldung.auswerten(thema: thema, nutzlast: nutzlast, praefix: uhr.praefix),
+                           uhr: uhr, gedaechtnis: gedaechtnis)
+    }
+
+    /// Verdrahtet die Rückmeldungen eines Abonnenten: zerlegt wird auf dessen
+    /// Warteschlange (seriell, die Reihenfolge der Nachrichten bleibt), auf den
+    /// Hauptakteur geht nur das Ergebnis. Das Präfix ist fest, weil sich bei
+    /// einem anderen Präfix das Abonnement ohnehin erneuert (`horchenAbgleichen`).
+    func nachrichtenVerdrahten(_ abonnent: MQTTAbonnent, praefix: String, fuer id: UUID,
+                               gedaechtnis: Slotgedaechtnis = .gemeinsam) {
+        abonnent.beiNachricht = { [weak self] thema, nutzlast in
+            let meldung = NGMeldung.auswerten(thema: thema, nutzlast: nutzlast, praefix: praefix)
+            Task { @MainActor [weak self] in
+                guard let self, let uhr = self.uhren.first(where: { $0.id == id }) else { return }
+                self.meldungUebernehmen(meldung, uhr: uhr, gedaechtnis: gedaechtnis)
+            }
+        }
+    }
+
+    /// Wendet eine zerlegte Nachricht auf den Zustand an.
+    func meldungUebernehmen(_ meldung: NGMeldung, uhr: Uhr, gedaechtnis: Slotgedaechtnis) {
         let id = uhr.id
-        if thema == NGThema.erreichbarkeit(praefix: uhr.praefix) {
-            let text = String(data: nutzlast, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            let online = text == "online"
+        switch meldung {
+        case .unbeachtet:
+            return
+        case .erreichbarkeit(let online):
             guard geraetOnline[id] != online else { return }
             geraetOnline[id] = online
             log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
-            return
-        }
-        if let ereignis = Uhrenereignis.lesen(thema: thema, nutzlast: nutzlast, praefix: uhr.praefix) {
+        case .ereignis(let ereignis):
             ereignisUebernehmen(ereignis, fuer: uhr)
-            return
-        }
-        if let name = NGThema.ergebnisBezeichnung(thema: thema, praefix: uhr.praefix) {
+        case .antwort(let name, let ergebnis):
             // Eine Antwort ist da, gleich welche.
             let schluessel = antwortSchluessel(name, id)
             ausstehendeAntworten[schluessel]?.cancel()
             ausstehendeAntworten[schluessel] = nil
-            switch NGNutzlast.ergebnis(nutzlast) {
+            switch ergebnis {
             case .gelungen, .unlesbar: return
             case .abgewiesen(let grund):
                 // Sichtbar und nicht nur im Protokoll: Diese Antwort ist der
@@ -1889,28 +1902,24 @@ public final class AppZustand {
                 abweisungMerken(meldung)
                 log(meldung)
             }
-            return
-        }
-        let vorsilbe = NGThema.anzeige(praefix: uhr.praefix, name: "")
-        guard thema.hasPrefix(vorsilbe) else { return }
-        let rest = String(thema.dropFirst(vorsilbe.count))
-
-        guard let platz = Meldungsplatz.platz(fuerName: rest) else { return }
-        // Genau null Bytes loeschen die Anzeige (§3.2) — die verlaesslichste
-        // Auskunft, die es hier gibt.
-        guard !nutzlast.isEmpty else {
+        case .anzeige(let rest, let platz, let leer, let text, let bytes):
+            guard let platz else { return }
+            // Genau null Bytes loeschen die Anzeige (§3.2) — die verlaesslichste
+            // Auskunft, die es hier gibt.
+            guard !leer else {
+                slotInhalt[id]?[platz] = nil
+                eigeneNutzlast[id]?[platz] = nil
+                fremdBeschrieben[id]?.remove(platz)
+                anzeigeGeloescht(rest, fuer: uhr, gedaechtnis: gedaechtnis)
+                return
+            }
             slotInhalt[id]?[platz] = nil
-            eigeneNutzlast[id]?[platz] = nil
-            fremdBeschrieben[id]?.remove(platz)
-            anzeigeGeloescht(rest, fuer: uhr, gedaechtnis: gedaechtnis)
-            return
+            if text != eigeneNutzlast[id]?[platz] {
+                fremdBeschrieben[id, default: []].insert(platz)
+            }
+            log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, rest, bytes))
+            anzeigeBestaetigt(rest, fuer: uhr)
         }
-        slotInhalt[id]?[platz] = nil
-        if String(data: nutzlast, encoding: .utf8) != eigeneNutzlast[id]?[platz] {
-            fremdBeschrieben[id, default: []].insert(platz)
-        }
-        log(lokf("%@ mitgelesen: %@ · %d Bytes", uhr.name, rest, nutzlast.count))
-        anzeigeBestaetigt(rest, fuer: uhr)
     }
 
     /// Nur ins Protokoll, nicht in `fehler`: ein Abriss im Hintergrund darf nicht
