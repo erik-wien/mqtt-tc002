@@ -13,13 +13,15 @@ final class FunktionslisteTests: XCTestCase {
     private static let tc002Antwort = """
     {"effects":["Fade"],"platform":{"id":"tc002"},"sensors":{"light":false},
      "display":{"width":52,"height":16,"maxPixels":832},"layout":true,"mqttTls":true,
+     "clockFaces":["sheet","ring","flap","month","big"],
      "audio":{"mp3":true,"rtttl":true,"song":true,"speech":true,"track":false,
               "radio":true,"url":true,"effect":true,"clip":true}}
     """
 
     private static let tc001Antwort = """
     {"effects":["Fade"],"platform":{"id":"esp32"},"sensors":{"light":true},
-     "display":{"width":32,"height":8,"maxPixels":256},
+     "microphone":false,"scriptUpdates":true,
+     "display":{"width":32,"height":8,"configurable":true,"minWidth":32,"maxWidth":128,"minHeight":8,"maxHeight":8},
      "audio":{"mp3":false,"rtttl":true,"song":false,"speech":false,"track":false,
               "radio":false,"url":false,"effect":false,"clip":false}}
     """
@@ -88,7 +90,9 @@ final class FunktionslisteTests: XCTestCase {
             return true
         },
         // Verschlüsselung (nur TC002 gemessen; die TC001-Antwort trägt das Feld nicht)
+        // Der Schlüssel fehlt bei der TC001 (gemessen 10.10.2026): Die App entscheidet „nein“.
         Zeile(name: "MQTT über TLS (mqttTls)", tc002: true, tc001: false) { $0.mqttTlsUnterstuetzt == true },
+        Zeile(name: "Zifferblätter (clockFaces)", tc002: true, tc001: false) { !$0.zifferblaetter.isEmpty },
     ]
 
     func testJedeZeileDerTabelleStimmtFuerBeideModelle() throws {

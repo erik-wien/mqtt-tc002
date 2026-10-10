@@ -41,9 +41,9 @@ Wo der Code von dieser Regel abweicht, steht es im Abschnitt „Abweichungen“.
 | Fertiges Bild (gemalt, Sammlung) | nur 52 × 16 | nur 32 × 8 | 🔬 09.10.2026 | falsches Maß: `NGFehler.massPasstNicht`, Meldung nennt es | Mac/iPad (Malen, Sammlung), iPhone (Sammlung), CLI `bild` |
 | Layouts (Kästen mit Inhalt) | ja | nein (`422 unknown field`) | 🔬 09.10.2026 | `capabilities.layout` (`Geraetefaehigkeiten.layoutUnterstuetzt`); `false` weist `Kastenlayout.pruefen` mit `LayoutFehler.nichtUnterstuetzt` ab, `nil` (nie gefragt) lässt zu | nur CLI `layout`; keine Auswahl in der Oberfläche (Hilfe nennt es) |
 | Standbild/Bewegtes als GIF, Zustellweg HTTP/MQTT | ja | ja | 🔬 09.10.2026 | `Pixelweg.zustellweg` (8192 Byte MQTT) | alle |
-| Hintergrund, Effekt, Overlay, Palette | Listen der Uhr | ❓ Listen nicht festgehalten | 🔬 TC002 | `capabilities.effects/overlays/palettes`; Auswahl zeigt die Liste der Uhr, leere Liste = keine Auswahl, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (Darstellung), CLI `effekte` |
-| Overlay der Uhr (Fernbedienung) | ja | ❓ | 🔬 TC002 | `capabilities.overlays` nicht leer | Mac/iPad, iPhone, CLI |
-| Übergänge, Zifferblätter (Einstellungen) | `transitions`, `clockFaces` (5) | ❓ | 🔬 TC002 | `capabilities.transitions/clockFaces`; fehlen sie, gelten die fest eingebauten Zifferblätter | Mac/iPad, iPhone (Uhr-Einstellungen), CLI |
+| Hintergrund, Effekt, Overlay, Palette | Listen der Uhr | Listen der Uhr (19 Effekte, 16 Paletteneffekte, 6 Overlays, 8 Paletten) | 🔬 10.10.2026 | `capabilities.effects/overlays/palettes`; Auswahl zeigt die Liste der Uhr, leere Liste = keine Auswahl, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (Darstellung), CLI `effekte` |
+| Overlay der Uhr (Fernbedienung) | ja | ja (6) | 🔬 10.10.2026 | `capabilities.overlays` nicht leer | Mac/iPad, iPhone, CLI |
+| Übergänge, Zifferblätter (Einstellungen) | `transitions`, `clockFaces` (5) | 22 `transitions`; `clockFaces` fehlt, also keine Zifferblätter | 🔬 10.10.2026 | `capabilities.transitions/clockFaces`; fehlen sie, gelten die fest eingebauten Zifferblätter | Mac/iPad, iPhone (Uhr-Einstellungen), CLI |
 | Nachricht (einmalig über der Schleife) | ja | ja | 🔬 | keine Fähigkeit | alle |
 
 ### Klang
@@ -78,7 +78,7 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | Tasten, Drehknopf (nur MQTT mitlesen) | ja | ❓ (Drehknopf) | 📄 | Betriebsart `mqtt`; sonst Zeilen grau mit Hinweis „nur im MQTT-Betrieb“ | Mac/iPad, iPhone |
 | Live-Bild des Displays | ja | ❓ | 🔬 TC002 | Bild im Maß der Uhr | Mac/iPad, iPhone, CLI `bildschirm` |
 | Neustart | ja | ja | 📄 | keine Fähigkeit | Mac/iPad, iPhone, CLI |
-| MQTT über TLS, CA hochladen | ja (`mqttTls` `true`) | ❓ | 🔬 TC002 | `capabilities.mqttTls`; Gruppe „Verschlüsselung“ nur bei `true` | Mac/iPad, iPhone (Uhr-Einstellungen), CLI `tls` |
+| MQTT über TLS, CA hochladen | ja (`mqttTls` `true`) | nein (`mqttTls` fehlt) | 🔬 10.10.2026 | `capabilities.mqttTls`; Gruppe „Verschlüsselung“ nur bei `true` | Mac/iPad, iPhone (Uhr-Einstellungen), CLI `tls` |
 | `enlargeApps` | ja, nicht schreibbar | gibt es nicht | 🔬 09.10.2026 | App rechnet alle Bilder für das Anzeigemaß; Einstellung wird nie geschrieben (`Geraeteeinstellung.schreibbar`) | – |
 | Virtuelle Uhr | TC002-Modus (Vorgabe) | `NGTon.tc001` (nur `audio` und `platform.id`) | 🔬 10.10.2026 | `NGTon.faehigkeiten`, `NGUhrzustand.lichtsensor` | Mac/iPad, iPhone (Einstellungen), Tests |
 
@@ -115,15 +115,17 @@ oben.
    `Fernbedienung.swift` zeigt Moodlight, Anzeiger, Drehknopf, Live-Bild und den
    Gruppenseiten „Klang“ (`bootSound`, `musicSource`), „Übergänge“ und
    „Zifferblatt“ (Uhr-Einstellungen, `Uhrgruppen.swift:46-100`) unterschiedslos
-   für beide Modelle. Ob die TC001 sie hat, ist nicht gemessen (❓ in der Tabelle).
+   für beide Modelle. Die TC001 meldet weder `clockFaces` noch `bootSound` (Schlüssel fehlen,
+   gemessen 10.10.2026): `Uhrgruppen.swift:55` und `:205` zeigt dennoch die fest eingebaute Zifferblattliste,
+   und `bootSound` (Gruppe „Klang“, `Uhrgruppen.swift:67`) hängt an keiner Fähigkeit; beide
+   sollten bei fehlendem Schlüssel verschwinden. Moodlight, Anzeiger, Drehknopf und
+   Live-Bild haben keinen Fähigkeitsschlüssel und bleiben ❓.
 4. **Virtuelle Uhr im TC001-Modus.** `Sources/TC002Core/VirtuelleNGUhrTon.swift:100-108`
    setzt nur `audio` und `platform.id` um; `layout`, `display` (52 × 16),
-   `mqttTls`, `enlargeApps` und die Listen bleiben die der TC002. Die virtuelle
+   `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps` und die Listen bleiben die der TC002. Die virtuelle
    TC001 meldet also Layouts und 52 × 16, die die echte nicht hat.
 
 ## Offene Fragen
 
-- Moodlight, Anzeiger, Drehknopf, Live-Bild, `mqttTls`, Zifferblätter und die
-  Listen für Effekte, Overlays und Paletten sind an der TC001 nicht festgehalten.
-  Sie nachzumessen (10.10.2026-Messreihe verlängern) macht aus ❓ in der Tabelle
-  eine Regel.
+- Moodlight, Anzeiger, Drehknopf und Live-Bild haben keinen Fähigkeitsschlüssel;
+  ob die TC001 sie hat, zeigt nur ein Versuch am Gerät.

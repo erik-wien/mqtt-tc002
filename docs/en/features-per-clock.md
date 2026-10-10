@@ -41,9 +41,9 @@ Where the code departs from this rule, see "Deviations".
 | Finished image (painted, collection) | 52 × 16 only | 32 × 8 only | 🔬 9 Oct 2026 | wrong size: `NGFehler.massPasstNicht`, message says so | Mac/iPad (paint, collection), iPhone (collection), CLI `bild` |
 | Layouts (boxes with content) | yes | no (`422 unknown field`) | 🔬 9 Oct 2026 | `capabilities.layout` (`Geraetefaehigkeiten.layoutUnterstuetzt`); `false` makes `Kastenlayout.pruefen` throw `LayoutFehler.nichtUnterstuetzt`, `nil` (never queried) lets it through | CLI `layout` only; no picker in the UI (the help says so) |
 | Still/animated GIF, delivery HTTP/MQTT | yes | yes | 🔬 9 Oct 2026 | `Pixelweg.zustellweg` (8192 bytes MQTT) | all |
-| Background, effect, overlay, palette | the clock's lists | ❓ lists not recorded | 🔬 TC002 | `capabilities.effects/overlays/palettes`; the picker shows the clock's list, an empty list means no picker, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (appearance), CLI `effekte` |
-| Clock overlay (remote control) | yes | ❓ | 🔬 TC002 | `capabilities.overlays` not empty | Mac/iPad, iPhone, CLI |
-| Transitions, clock faces (settings) | `transitions`, `clockFaces` (5) | ❓ | 🔬 TC002 | `capabilities.transitions/clockFaces`; if missing, the built-in clock faces apply | Mac/iPad, iPhone (clock settings), CLI |
+| Background, effect, overlay, palette | the clock's lists | the clock's lists (19 effects, 16 palette effects, 6 overlays, 8 palettes) | 🔬 10 Oct 2026 | `capabilities.effects/overlays/palettes`; the picker shows the clock's list, an empty list means no picker, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (appearance), CLI `effekte` |
+| Clock overlay (remote control) | yes | yes (6) | 🔬 10 Oct 2026 | `capabilities.overlays` not empty | Mac/iPad, iPhone, CLI |
+| Transitions, clock faces (settings) | `transitions`, `clockFaces` (5) | 22 `transitions`; `clockFaces` absent, so no clock faces | 🔬 10 Oct 2026 | `capabilities.transitions/clockFaces`; if missing, the built-in clock faces apply | Mac/iPad, iPhone (clock settings), CLI |
 | Notification (one-off above the loop) | yes | yes | 🔬 | no capability | all |
 
 ### Sound
@@ -78,7 +78,7 @@ A sound kind is allowed if the clock's `audio.<switch>` is `true`
 | Buttons, knob (read only via MQTT) | yes | ❓ (knob) | 📄 | operating mode `mqtt`; otherwise rows greyed with the note "nur im MQTT-Betrieb" | Mac/iPad, iPhone |
 | Live image of the display | yes | ❓ | 🔬 TC002 | image at the clock's size | Mac/iPad, iPhone, CLI `bildschirm` |
 | Restart | yes | yes | 📄 | no capability | Mac/iPad, iPhone, CLI |
-| MQTT over TLS, upload CA | yes (`mqttTls` `true`) | ❓ | 🔬 TC002 | `capabilities.mqttTls`; group "Verschlüsselung" only when `true` | Mac/iPad, iPhone (clock settings), CLI `tls` |
+| MQTT over TLS, upload CA | yes (`mqttTls` `true`) | no (`mqttTls` absent) | 🔬 10 Oct 2026 | `capabilities.mqttTls`; group "Verschlüsselung" only when `true` | Mac/iPad, iPhone (clock settings), CLI `tls` |
 | `enlargeApps` | yes, not writable | does not exist | 🔬 9 Oct 2026 | the app rasterises every image for the display size; the setting is never written (`Geraeteeinstellung.schreibbar`) | – |
 | Virtual clock | TC002 mode (default) | `NGTon.tc001` (only `audio` and `platform.id`) | 🔬 10 Oct 2026 | `NGTon.faehigkeiten`, `NGUhrzustand.lichtsensor` | Mac/iPad, iPhone (settings), tests |
 
@@ -115,15 +115,17 @@ rule above.
 3. **Not bound to capabilities although unmeasured for the TC001.**
    `Fernbedienung.swift` shows moodlight, indicators, knob, live image, and the
    settings pages "Klang" (`bootSound`, `musicSource`), transitions and clock
-   faces (`Uhrgruppen.swift:46-100`) indiscriminately for both models. Whether
-   the TC001 has them is not measured (❓ in the table).
+   faces (`Uhrgruppen.swift:46-100`) indiscriminately for both models. The TC001 reports neither `clockFaces` nor `bootSound`
+   (keys absent, measured 10 Oct 2026): `Uhrgruppen.swift:55` and `:205` still shows the built-in
+   clock face list, and `bootSound` (group "Klang", `Uhrgruppen.swift:67`) depends on no
+   capability; both should disappear when the key is absent. Moodlight, indicators, knob
+   and live image have no capability key and stay ❓.
 4. **Virtual clock in TC001 mode.** `Sources/TC002Core/VirtuelleNGUhrTon.swift:100-108`
    only switches `audio` and `platform.id`; `layout`, `display` (52 × 16),
-   `mqttTls`, `enlargeApps` and the lists stay those of the TC002. The virtual
+   `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps` and the lists stay those of the TC002. The virtual
    TC001 therefore reports layouts and 52 × 16, which the real one does not have.
 
 ## Open questions
 
-- Moodlight, indicators, knob, live image, `mqttTls`, clock faces and the lists
-  for effects, overlays and palettes are not recorded for the TC001. Measuring
-  them (extending the 10 Oct 2026 series) turns ❓ into a rule.
+- Moodlight, indicators, knob and live image have no capability key; only a
+  trial on the device shows whether the TC001 has them.
