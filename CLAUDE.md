@@ -6,7 +6,9 @@ sie bedient, in ihrer Hilfe (⌘?); was das Gerät kann, in
 52×16 — die einzige unterstützte Firmware; die Werksfirmware fiel am 09.10.2026 weg); was
 uns an einer Firmware als Mangel aufgefallen
 ist und bei einem Update nachzuprüfen wäre, in
-`docs/firmware-beobachtungen.md`. Hier nur, was sonst verletzt würde.
+`docs/firmware-beobachtungen.md`; was je Uhrenmodell erlaubt, ausgeblendet
+und gesperrt ist, in `docs/funktionen-je-uhr.md` (vom Test
+`FunktionslisteTests` gehalten). Hier nur, was sonst verletzt würde.
 
 - **Die App heißt „Pixel Clock Messenger", das Repo weiter `mqtt-tc002`.**
   Geändert wurde nur, was angezeigt wird (`CFBundleName`,

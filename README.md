@@ -15,7 +15,8 @@ vorhandene Bestände.
 - **Uhr:** Ulanzi **TC002** (Display 52×16) oder **TC001** (32×8) mit AWTRIX NG.
   AWTRIX NG ist die einzige unterstützte Firmware; die Werksfirmware der Uhr
   wird nicht mehr bedient. Die Beschreibung der Schnittstelle, wie sie sich am
-  Gerät zeigt, steht in [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
+  Gerät zeigt, steht in [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md). Was je Modell
+  geht, steht in [`docs/funktionen-je-uhr.md`](docs/funktionen-je-uhr.md).
 - **Netz:** Die Uhr muss im selben Netz erreichbar sein. Über HTTP genügt ihre
   Adresse; für MQTT braucht es zusätzlich einen Broker, auf den die Uhr hört.
 - **System:** macOS 14, iOS 17 (iPhone und iPad) oder neuer. Es gibt keine externen

@@ -15,7 +15,8 @@ collections hang on them.
 - **Clock:** Ulanzi **TC002** (52×16 display) or **TC001** (32×8) running AWTRIX NG.
   AWTRIX NG is the only supported firmware; the clock's factory firmware is no
   longer served. The interface, as it shows on the device, is described in
-  [`docs/en/awtrix-ng-protocol.md`](docs/en/awtrix-ng-protocol.md).
+  [`docs/en/awtrix-ng-protocol.md`](docs/en/awtrix-ng-protocol.md). What each model
+  supports is in [`docs/en/features-per-clock.md`](docs/en/features-per-clock.md).
 - **Network:** The clock must be reachable on the same network. Over HTTP its
   address is enough; MQTT additionally needs a broker the clock listens to.
 - **System:** macOS 14, iOS 17 (iPhone and iPad) or later. There are no external
