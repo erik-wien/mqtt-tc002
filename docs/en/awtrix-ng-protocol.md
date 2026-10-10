@@ -1404,15 +1404,16 @@ checked on a device):
 - ❓ **Whether the behaviors measured in §2 on 1.1.0** (a space at the edge of
   the prefix counts; a prefix change takes effect only on a new connection)
   **carry over to 1.2.2/TC002.** The docs require a restart for `mqttPrefix`.
+- 🔬 **Measured 10.10.2026 (TC002, NG 1.2.2):** `GET /api/v1/display/screen`
+  returns all black while the panel is off and the moodlight color everywhere
+  while a moodlight runs. `weekendDays` comes back in English, lowercase
+  (`["sunday","saturday"]`).
 - ❓ **Control (moodlight, settings, events):** whether `kelvin` outside
   1000–40000 is rejected (only `brightness` is noted as unchecked), which
   kelvin → RGB conversion applies and how `GET /api/v1/display` writes the
-  moodlight color; whether `GET /api/v1/display/screen` returns black while the
-  panel is off, or the moodlight color while a moodlight runs (§7.3 only says
-  "the colors of the apps"); whether `PATCH /api/v1/settings` merges a nested
+  moodlight color; whether `PATCH /api/v1/settings` merges a nested
   object (`scroll`, `weekdayBar`) with the stored one or replaces it (the app
-  therefore sends the whole object); the weekday names in `weekendDays`
-  (assumed: English, lowercase, like `sunday`/`saturday` in the default); the
+  therefore sends the whole object); the
   form of `error` in `<P>/event/error` (word or error body); whether `select`
   is the middle button and `knob` the knob press; an upper bound for `turn` in
   `<P>/event/knob` (the app discards magnitudes above 1000).
