@@ -249,3 +249,33 @@ extension TonbefehlTests {
                          "ohne Auskunft bleibt es ungeprüft")
     }
 }
+
+/// `ton sammlung` und `ton abgleichen`: Zerlegen und Ausgabe.
+extension TonbefehlTests {
+    func testSammlungsbefehle() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["ton", "sammlung"]).befehl, .tonSammlung)
+        XCTAssertEqual(try Optionen.zerlegt(["sound", "library"]).befehl, .tonSammlung)
+        let o = try Optionen.zerlegt(["ton", "abgleichen", "--an", "Küche", "--trocken"])
+        XCTAssertEqual(o.befehl, .tonAbgleichen)
+        XCTAssertEqual(o.ziele, ["Küche"])
+        XCTAssertTrue(o.trocken)
+        XCTAssertThrowsError(try Optionen.zerlegt(["ton", "abgleichen", "extra"]))
+    }
+
+    func testSammlungUndAbgleichAusgabe() {
+        var zeilen: [String] = []
+        let k = [Sammlungsklang(name: "ping", art: .melodie, groesse: 20, datei: URL(fileURLWithPath: "/x"), rtttl: "ping:d=4:c"),
+                 Sammlungsklang(name: "gruss", art: .mp3, groesse: 4000, datei: URL(fileURLWithPath: "/y"), rtttl: nil)]
+        sammlungAusgeben(k, ausgabe: { zeilen.append($0) })
+        XCTAssertEqual(zeilen.count, 3)
+        XCTAssertTrue(zeilen[0].hasPrefix("ping\t"))
+        zeilen = []
+        var e = Uhrenabgleich(uhr: "Küche")
+        e.hinzugefuegt = ["ping"]; e.unveraendert = ["x"]
+        e.uebersprungen = [.init(name: "gruss", art: .mp3, grund: .faehigkeitFehlt("audio.mp3"))]
+        abgleichAusgeben(e, ausgabe: { zeilen.append($0) })
+        XCTAssertEqual(zeilen.first, "# Küche")
+        XCTAssertTrue(zeilen.contains { $0.hasPrefix("übersprungen\tgruss\t") })
+        XCTAssertTrue(zeilen.contains { $0.hasPrefix("hinzugefügt\tping") })
+    }
+}

@@ -53,6 +53,8 @@ AUFRUF
   mqtttc002 ton mp3 hochladen <Datei> [--name <Name>] [--ersetzen]   eine MP3-Datei auf die Uhr laden
   mqtttc002 ton mp3 loeschen <Name>                                  eine MP3-Datei loeschen
   mqtttc002 ton sender             die Senderliste der Uhr
+  mqtttc002 ton sammlung           die Klangsammlung der App auflisten (nur lesen)
+  mqtttc002 ton abgleichen         die Uhren an die Klangsammlung angleichen (--an, --trocken)
   mqtttc002 hilfe                  diesen Text
 
 Ein Bild ist eine ganze Anzeige (52x16) aus dem Editor der App und ersetzt
@@ -101,6 +103,11 @@ KLANG
   ausgeschrieben, Leerzeichen zu -) und gibt ihn aus; die Datei darf hoechstens 4 MB gross sein.
   Gibt es den Namen schon, bricht der Befehl mit einem freien Vorschlag ab; --ersetzen
   ueberschreibt die vorhandene MP3 (eine gleichnamige Melodie nie).
+  "ton abgleichen" legt fehlende Melodien und MP3-Dateien der Sammlung auf den Uhren an und
+  ersetzt abweichende (Melodie: anderer Text; MP3: andere Groesse). Was nur auf der Uhr liegt,
+  bleibt. Uebersprungen wird, was die Uhr nicht kann (TC001: keine MP3) oder was nicht
+  mehr hineinpasst; die Ausgabe nennt je Uhr hinzugefuegt, ersetzt, uebersprungen, unveraendert.
+  Importieren in die Sammlung geht nur in der App; das Werkzeug liest sie nur.
   An "nachricht" haengt --klang <Name|Adresse>, --lied "<Text>", --rtttl "<Text>" oder
   --sprache "<Text>" (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; ein Sender geht dort nicht.
 
@@ -262,6 +269,11 @@ func lauf() throws {
         for bild in alle {
             print("\(bild.name)\t\(Leinwandgroesse.anzeige.beschriftung)\t\(bild.nummer ?? "")")
         }
+        return
+    }
+
+    if case .tonSammlung = optionen.befehl {
+        sammlungAusgeben(Klangsammlung(ordner: Klangordner.eigene).alle())
         return
     }
 
@@ -617,7 +629,7 @@ func lauf() throws {
     case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
          .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
          .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender,
-         .tonMP3Liste, .tonMP3Hochladen, .tonMP3Loeschen:
+         .tonMP3Liste, .tonMP3Hochladen, .tonMP3Loeschen, .tonSammlung, .tonAbgleichen:
         break                                    // oben schon abgehandelt
     case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt

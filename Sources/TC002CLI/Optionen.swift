@@ -58,6 +58,10 @@ struct Optionen {
         /// `name` ist `nil`, wenn der Vorschlag gelten soll.
         case tonMP3Hochladen(datei: String, name: String?, ersetzen: Bool)
         case tonMP3Loeschen(name: String)
+        /// Die Klangsammlung der App auflisten (nur lesen).
+        case tonSammlung
+        /// Die Uhren an die Sammlung angleichen.
+        case tonAbgleichen
         /// Der TLS-Stand für MQTT und die CA der Uhr (nie TLS selbst).
         case tls
         case tlsCA(datei: String)
@@ -492,7 +496,7 @@ struct Optionen {
             return
         }
         guard let wort = freie.first?.lowercased() else {
-            throw Fehler.unvollstaendig(befehl: "ton", erwartet: "spielen / stopp / zustand / melodien / melodie / mp3 / sender")
+            throw Fehler.unvollstaendig(befehl: "ton", erwartet: "spielen / stopp / zustand / melodien / melodie / mp3 / sender / sammlung / abgleichen")
         }
         let rest = Array(freie.dropFirst())
         func hoechstens(_ n: Int, _ name: String) throws {
@@ -521,6 +525,8 @@ struct Optionen {
         case "zustand", "state": try ohneOptionen("ton zustand"); befehl = .tonZustand
         case "melodien", "melodies": try ohneOptionen("ton melodien"); befehl = .tonMelodien
         case "sender", "stations": try ohneOptionen("ton sender"); befehl = .tonSender
+        case "sammlung", "library": try ohneOptionen("ton sammlung"); befehl = .tonSammlung
+        case "abgleichen", "sync": try ohneOptionen("ton abgleichen"); befehl = .tonAbgleichen
         case "mp3":
             if let option = klangoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "ton spielen") }
             let unter = rest.first?.lowercased()

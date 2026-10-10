@@ -65,6 +65,10 @@ public struct Abgleichplan: Equatable, Sendable {
         public var name: String
         public var art: Sammlungsart
         public var grund: Abgleichgrund
+
+        public init(name: String, art: Sammlungsart, grund: Abgleichgrund) {
+            self.name = name; self.art = art; self.grund = grund
+        }
     }
 }
 

@@ -22,6 +22,10 @@ public struct Sammlungsklang: Equatable, Sendable, Identifiable {
     public var rtttl: String?
 
     public var id: String { art.rawValue + "/" + name }
+
+    public init(name: String, art: Sammlungsart, groesse: Int, datei: URL, rtttl: String?) {
+        self.name = name; self.art = art; self.groesse = groesse; self.datei = datei; self.rtttl = rtttl
+    }
 }
 
 public enum SammlungFehler: Error, LocalizedError, Equatable {

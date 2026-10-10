@@ -108,6 +108,32 @@ final class TonSteuerungTests: XCTestCase {
         return url
     }
 
+    func testKlangsammlungVonUhrUebernehmenUndAbgleichen() async throws {
+        var ton = NGTon()
+        ton.melodien["ping"] = "ping:d=4,o=5,b=100:c"
+        let (z, uhr, s) = try httpUhr(ton)
+        let ordner = FileManager.default.temporaryDirectory.appendingPathComponent("klangtest-" + UUID().uuidString)
+        addTeardownBlock { try? FileManager.default.removeItem(at: ordner) }
+        z.klangordnerAnders = ordner
+        let bilanz = await z.melodienVonUhrUebernehmen(uhr.id)
+        XCTAssertEqual(bilanz?.neu, ["ping"])
+        XCTAssertEqual(z.klaenge().map(\.name), ["ping"])
+        XCTAssertTrue(z.melodieSammeln(name: "pong", rtttl: "x:d=8:e"))
+        XCTAssertFalse(z.melodieSammeln(name: "schlecht", rtttl: "kaputt"))
+        XCTAssertNotNil(z.fehler)
+        let datei = try mp3Datei("lied.mp3", Data("ID3".utf8) + Data(repeating: 1, count: 97))
+        let dateiOK = await z.dateiSammeln(datei, name: "lied")
+        XCTAssertTrue(dateiOK)
+        let e = await z.klaengeAbgleichen(mit: [uhr.id])
+        XCTAssertEqual(e.first?.hinzugefuegt.sorted(), ["lied", "pong"])
+        XCTAssertEqual(e.first?.unveraendert, ["ping"])
+        XCTAssertEqual(s.zustand.ton.mp3, ["lied"])
+        XCTAssertEqual(z.tonlisten[uhr.id]?.melodien.sorted(), ["ping", "pong"])
+        let probe = await z.rtttlProbehoeren("x:d=4:c", fuer: uhr.id)
+        XCTAssertEqual(probe.erreicht.count, 1)
+        XCTAssertEqual(s.zustand.ton.gespielt.count, 1)
+    }
+
     func testMP3HochladenHoltDieListenNeu() async throws {
         let (z, uhr, s) = try httpUhr(NGTon())
         let datei = try mp3Datei("Grüße aus Wien.mp3", Data("ID3".utf8) + Data(repeating: 1, count: 997))

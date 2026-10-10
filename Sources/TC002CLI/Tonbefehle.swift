@@ -59,3 +59,29 @@ func klaengePruefen(_ klaenge: [Klang], anzeigen: Anzeigen, faehigkeiten: Geraet
     }
     for k in klaenge { try k.pruefen(inBenachrichtigung: inBenachrichtigung, faehigkeiten: faehigkeiten, listen: listen) }
 }
+
+func sammlungAusgeben(_ klaenge: [Sammlungsklang], ausgabe: (String) -> Void = { print($0) }) {
+    guard !klaenge.isEmpty else { ausgabe(lok("Die Klangsammlung ist leer. Sie wird in der App gefüllt.")); return }
+    for k in klaenge {
+        let art = k.art == .melodie ? lok("Melodie") : "MP3"
+        ausgabe("\(Terminaltext.sicher(k.name))\t\(art)\t" + lokf("%d Byte", k.groesse))
+    }
+    let m = klaenge.filter { $0.art == .melodie }.count
+    ausgabe(lokf("%d Melodien, %d MP3-Dateien", m, klaenge.count - m))
+}
+
+func abgleichAusgeben(_ e: Uhrenabgleich, ausgabe: (String) -> Void = { print($0) }) {
+    ausgabe("# " + Terminaltext.sicher(e.uhr))
+    if let f = e.fehler { ausgabe(lokf("nicht erreicht: %@", Terminaltext.sicher(f))); return }
+    func zeile(_ titel: String, _ namen: [String]) {
+        guard !namen.isEmpty else { return }
+        ausgabe(titel + "\t" + namen.map(Terminaltext.sicher).joined(separator: ", "))
+    }
+    let trocken = e.trocken
+    zeile(trocken ? lok("würde hinzufügen") : lok("hinzugefügt"), e.hinzugefuegt)
+    zeile(trocken ? lok("würde ersetzen") : lok("ersetzt"), e.ersetzt)
+    for u in e.uebersprungen {
+        ausgabe(lok("übersprungen") + "\t" + Terminaltext.sicher(u.name) + "\t" + u.grund.text)
+    }
+    ausgabe(lokf("%d unverändert", e.unveraendert.count))
+}

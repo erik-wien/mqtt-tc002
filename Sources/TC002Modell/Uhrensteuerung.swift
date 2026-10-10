@@ -239,6 +239,14 @@ extension AppZustand {
         }
     }
 
+    /// Spielt einen RTTTL-Text zur Probe auf dieser Uhr; gespeichert wird nichts.
+    @discardableResult
+    public func rtttlProbehoeren(_ text: String, fuer id: UUID) async -> Sendebilanz {
+        await steuern(was: lok("Melodie probehören"), fuer: id) { anzeigen, _, caps in
+            try anzeigen.tonSpielen([Klang(.rtttl(text))], faehigkeiten: caps)
+        }
+    }
+
     /// Holt Melodien und MP3-Dateien der Uhr (nur HTTP). Eine Uhr ohne Adresse
     /// oder ohne Antwort lässt die Listen, wie sie waren; die Ansicht zeigt dann
     /// weiter „Uhr abfragen …“.

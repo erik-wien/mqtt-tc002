@@ -274,6 +274,21 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         }
     case .tonSender:
         try lesen { senderAusgeben(try $0.senderLesen()) }
+    case .tonAbgleichen:
+        let bestand = Klangsammlung(ordner: Klangordner.eigene).alle()
+        guard !bestand.isEmpty else {
+            throw Abbruch(lok("Die Klangsammlung ist leer. In der App unter „Einstellungen › Klänge“ füllen."))
+        }
+        var fehler: [String] = []
+        for uhr in gewaehlte {
+            guard !uhr.host.isEmpty else { fehler.append(lokf("%@: keine Adresse", uhr.name)); continue }
+            let e = Klangabgleich.abgleichen(sammlung: bestand, geraet: Geraet(host: uhr.host), uhrname: uhr.name,
+                                             faehigkeiten: faehigkeiten(uhr), trocken: optionen.trocken)
+            abgleichAusgeben(e)
+            if let f = e.fehler { fehler.append("\(uhr.name): \(f)") }
+        }
+        if optionen.trocken { print(lok("nichts gesendet (--trocken).")) }
+        guard fehler.isEmpty else { throw Abbruch(fehler.joined(separator: "\n")) }
     case .zustand:
         try lesen { anzeigen in
             zustandAusgeben(try anzeigen.geraetezustandLesen())

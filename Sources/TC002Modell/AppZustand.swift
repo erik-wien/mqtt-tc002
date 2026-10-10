@@ -106,6 +106,10 @@ public final class AppZustand {
     /// Die MP3-Dateien mit Größe und die Belegung des Speichers, gelesen mit den
     /// Tonlisten und nach jedem Hochladen und Löschen.
     public var mp3Ablage: [UUID: Tonablage] = [:]
+    /// Zählt die Änderungen an der Klangsammlung, damit Ansichten neu lesen.
+    public var klangstand = 0
+    /// Nur für Tests: ein anderer Ordner für die Klangsammlung.
+    @ObservationIgnored public var klangordnerAnders: URL?
     /// Gedrückt (`true`) oder losgelassen: nur das Mitlesen über MQTT sieht die
     /// Tasten (`state/buttons/*`). Mit dem Abriss des Mitlesens leer.
     public var tasten: [UUID: [Taste: Bool]] = [:]
