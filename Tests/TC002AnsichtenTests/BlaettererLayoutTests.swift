@@ -13,7 +13,7 @@ import TC002Modell
 @MainActor
 final class BlaettererLayoutTests: XCTestCase {
     private let d = UserDefaults.standard
-    private let schluessel = ["uhren", "aktiveID", "zielIDs"]
+    private let schluessel = ["uhren", "aktiveID", "zielIDs", "grabsteine"]
     private var sicherung: [String: Any?] = [:]
 
     private struct LeererSchluesselbund: Schluesselbundzugriff {

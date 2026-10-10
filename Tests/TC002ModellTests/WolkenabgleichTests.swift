@@ -48,7 +48,7 @@ final class Wolkendoppelgaenger: Wolkenablage, @unchecked Sendable {
 final class WolkenabgleichTests: XCTestCase {
     private let d = UserDefaults.standard
     private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
-                              "brokerHost", "brokerPort", "benutzer"]
+                              "brokerHost", "brokerPort", "benutzer", "grabsteine"]
     private var sicherung: [String: Any?] = [:]
 
     override func setUp() {

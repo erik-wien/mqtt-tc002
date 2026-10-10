@@ -51,7 +51,7 @@ final class AppZustandTests: XCTestCase {
                               // abgeschaltete Verlauf liess dort jede
                               // Aufzeichnung ausfallen, und es sah aus, als
                               // zeichne er gar nicht auf.
-                              "protokollAn", "verlaufAn"]
+                              "protokollAn", "verlaufAn", "grabsteine"]
     private var sicherung: [String: Any?] = [:]
     private var schluesselbund = Schluesselbunddoppelgaenger()
 

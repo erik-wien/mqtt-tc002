@@ -33,7 +33,7 @@ private final class MQTTDoppelgaenger: NachrichtSendend, @unchecked Sendable {
 final class SendewegTests: XCTestCase {
     private let d = UserDefaults.standard
     private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
-                              "brokerHost", "brokerPort", "benutzer", "protokollAn", "verlaufAn"]
+                              "brokerHost", "brokerPort", "benutzer", "protokollAn", "verlaufAn", "grabsteine"]
     private var sicherung: [String: Any?] = [:]
 
     override func setUp() {

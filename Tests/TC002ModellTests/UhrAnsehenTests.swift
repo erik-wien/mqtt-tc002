@@ -8,7 +8,7 @@ import TC002Core
 @MainActor
 final class UhrAnsehenTests: XCTestCase {
     private let d = UserDefaults.standard
-    private let schluessel = ["uhren", "aktiveID", "zielIDs"]
+    private let schluessel = ["uhren", "aktiveID", "zielIDs", "grabsteine"]
     private var sicherung: [String: Any?] = [:]
 
     private struct LeererSchluesselbund: Schluesselbundzugriff {
