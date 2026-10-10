@@ -31,6 +31,15 @@ final class SteuerbefehlTests: XCTestCase {
         XCTAssertThrowsError(try befehl("helligkeit"))
     }
 
+    func testHelligkeitAutomatik() throws {
+        XCTAssertEqual(try befehl("helligkeit", "auto", "an"), .helligkeitAutomatik(an: true))
+        XCTAssertEqual(try befehl("helligkeit", "auto", "aus"), .helligkeitAutomatik(an: false))
+        XCTAssertEqual(try befehl("brightness", "auto", "off"), .helligkeitAutomatik(an: false))
+        XCTAssertThrowsError(try befehl("helligkeit", "auto"))
+        XCTAssertThrowsError(try befehl("helligkeit", "auto", "vielleicht"))
+        XCTAssertThrowsError(try befehl("helligkeit", "auto", "an", "aus"))
+    }
+
     func testMoodlight() throws {
         XCTAssertEqual(try befehl("moodlight", "aus"), .moodlightAus)
         XCTAssertEqual(try befehl("moodlight", "--farbe", "#ff8800", "--helligkeit", "90"),

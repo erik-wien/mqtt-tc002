@@ -18,6 +18,8 @@ public enum SteuerungsFehler: Error, LocalizedError, Equatable {
     case unbekannteEinstellung(String)
     /// Ein Schlüssel, den diese App nie schreibt (`enlargeApps`, Zugangsdaten …).
     case gesperrteEinstellung(String)
+    /// Ein Schlüssel, den die Uhr nicht beachtet (`autoBrightness` ohne Lichtsensor).
+    case wirkungslos(String)
     case ungueltigeKennziffer(Int)
     /// Eine CA-Datei, die kein PEM-Zertifikat ist oder die Grenze überschreitet.
     case ungueltigesZertifikat(String)
@@ -40,6 +42,8 @@ public enum SteuerungsFehler: Error, LocalizedError, Equatable {
             return lokf("„%@“ ist keine Einstellung, die diese App kennt.", s)
         case .gesperrteEinstellung(let s):
             return lokf("„%@“ stellt diese App nie ein.", s)
+        case .wirkungslos(let s):
+            return lokf("„%@“ hat auf dieser Uhr keine Wirkung: Sie hat keinen Lichtsensor.", s)
         case .ungueltigeKennziffer(let n):
             return lokf("Es gibt die Anzeiger 1 bis 3, nicht %d.", n)
         case .ungueltigesZertifikat(let grund):

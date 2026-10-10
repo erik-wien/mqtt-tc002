@@ -1081,6 +1081,18 @@ app therefore offers only what the device reports (if `audio` or a single
 switch is missing, nothing is locked) and does not upload an MP3 to a device
 with `mp3` `false`.
 
+🔬 `sensors.light` and `autoBrightness` belong together. Measured on 10 October
+2026 (NG 1.2.2): the TC001 reports `sensors.light` `true`, and its setting
+`autoBrightness` is `true`. Then `brightness` (via `PATCH /api/v1/settings`) is
+stored, but the panel stays at the sensor value (`GET /api/v1/display` shows
+`brightness` around 32, `device` as well). With `autoBrightness` `false`,
+`brightness` takes effect immediately (100 → `display.brightness` 100); switching
+the automatic back on returns the panel to the sensor value (around 33). The
+TC002 reports `sensors.light` `false` and `autoBrightness` `false`; there the key
+has no effect. The app therefore shows "Automatic" and writes `autoBrightness`
+only for a device with `sensors.light` `true`, and locks the brightness slider
+while the sensor is in control.
+
 ### 7.5 `GET /api/v1/display`, `/audio` and more
 
 🔬 `GET /api/v1/display`:
@@ -1303,7 +1315,7 @@ and where the device's state differs, that is noted.
 | Group | Key | Type · range · default |
 |---|---|---|
 | Brightness | `brightness` | int 0–255, default 120 (measured 128); raw value, not a percentage |
-| | `autoBrightness` | bool, `false` — **no effect** (no light sensor) |
+| | `autoBrightness` | bool, `false` — only effective with a light sensor (`capabilities.sensors.light`), otherwise **no effect** (TC002); with a sensor and `true` the panel follows the sensor and `brightness` is merely stored (§7.4) |
 | Color | `saturation` | int 0–100, 100 |
 | | `gamma` | number > 0, 1.9 |
 | | `colorCorrection`, `colorTint` | color or `null`, `null`; multiply every pixel, the second after the first |

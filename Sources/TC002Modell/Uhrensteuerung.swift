@@ -48,12 +48,16 @@ extension AppZustand {
         let tls = faehigkeiten[id]?.mqttTlsUnterstuetzt == true
         // Ohne Auskunft über die Fähigkeiten wird gefragt; eine Uhr ohne Audio antwortet mit 404 (`try?`).
         let ton = faehigkeiten[id].map { $0.ton != Tonfaehigkeiten() } ?? true
+        // Die Fernbedienung braucht den Lichtsensor, ehe jemand die Uhrenliste aktualisiert hat.
+        let fragtFaehigkeiten = faehigkeiten[id] == nil
         do {
-            let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand) = try await Hintergrund.lauf {
-                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?) in
+            let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand, gelesene) = try await Hintergrund.lauf {
+                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?,
+                              Geraetefaehigkeiten?) in
                 let g = Geraet(host: host, sitzung: sitzung)
                 return (try g.geraetezustand(), try? g.anzeigestand(), try? g.einstellungen(),
-                        tls ? (try? g.tlsStatus()) : nil, ton ? (try? g.tonzustand()) : nil)
+                        tls ? (try? g.tlsStatus()) : nil, ton ? (try? g.tonzustand()) : nil,
+                        fragtFaehigkeiten ? ((try? g.faehigkeiten()) ?? nil) : nil)
             }
             guard uhren.contains(where: { $0.id == id }) else { return false }
             erreichbar[id] = true
@@ -63,6 +67,7 @@ extension AppZustand {
             if let einstellungen { uhreneinstellungen[id] = einstellungen }
             if let verschluesselung { tlsStatus[id] = verschluesselung }
             if let tonStand { tonzustand[id] = tonStand }
+            if let gelesene, faehigkeiten[id] == nil { faehigkeiten[id] = gelesene }
             return true
         } catch {
             guard uhren.contains(where: { $0.id == id }) else { return false }
@@ -104,7 +109,10 @@ extension AppZustand {
             }
         case .einstellungen(let e):
             uhreneinstellungen[id] = e
-            if var a = anzeigestand[id], let h = e.ganzzahl(.brightness) {
+            // Regelt der Lichtsensor, ist `brightness` nur der gespeicherte Wunsch;
+            // das Panel leuchtet mit dem Sensorwert, den die Anzeige schon trägt.
+            if var a = anzeigestand[id], let h = e.ganzzahl(.brightness),
+               !e.sensorRegeltHelligkeit(faehigkeiten: faehigkeiten[id]) {
                 a.helligkeit = h
                 anzeigestand[id] = a
             }
@@ -167,6 +175,30 @@ extension AppZustand {
     public func helligkeitSetzen(_ wert: Int, fuer id: UUID? = nil) async -> Sendebilanz {
         await steuern(was: lok("Helligkeit"), fuer: id) { anzeigen, _, caps in
             try anzeigen.helligkeit(wert, faehigkeiten: caps)
+        }
+    }
+
+    /// Mit welcher Helligkeit das Panel dieser Uhr leuchtet, 0–255: die Anzeige
+    /// der Uhr, sonst ihr Gerätezustand, sonst die gespeicherte Einstellung.
+    /// `nil`, solange von dieser Uhr nichts gelesen ist — ein erfundener
+    /// Mittelwert stünde nach einem Uhrwechsel für einen Wert, den die neue Uhr
+    /// gar nicht hat.
+    public func panelhelligkeit(fuer id: UUID) -> Int? {
+        anzeigestand[id]?.helligkeit ?? geraetezustand[id]?.helligkeit ?? uhreneinstellungen[id]?.ganzzahl(.brightness)
+    }
+
+    /// Ob der Lichtsensor dieser Uhr die Helligkeit regelt (Sensor da und
+    /// `autoBrightness` an). Dann ist der Regler gesperrt.
+    public func helligkeitAutomatisch(fuer id: UUID) -> Bool {
+        uhreneinstellungen[id]?.sensorRegeltHelligkeit(faehigkeiten: faehigkeiten[id]) ?? false
+    }
+
+    /// Schaltet die Regelung durch den Lichtsensor um (`autoBrightness`). Eine
+    /// Uhr ohne Sensor lehnt der Kern ab.
+    @discardableResult
+    public func helligkeitAutomatikSetzen(_ an: Bool, fuer id: UUID) async -> Sendebilanz {
+        await steuern(was: lok("Automatische Helligkeit"), fuer: id) { anzeigen, _, caps in
+            try anzeigen.helligkeitAutomatik(an, faehigkeiten: caps)
         }
     }
 

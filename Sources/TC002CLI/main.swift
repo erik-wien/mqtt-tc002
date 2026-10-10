@@ -33,6 +33,7 @@ AUFRUF
   mqtttc002 effekte                Effekte, Overlays und Paletten der Uhr auflisten
   mqtttc002 display an|aus         das Panel ein- oder ausschalten
   mqtttc002 helligkeit <0-255>     die Helligkeit des Panels (roh, kein Prozentsatz)
+  mqtttc002 helligkeit auto an|aus   die Regelung durch den Lichtsensor (nur Uhren mit Sensor)
   mqtttc002 moodlight ...          das Panel einfarbig fluten, oder "moodlight aus"
   mqtttc002 indikator <1-3> ...    einen der drei Anzeiger setzen, oder "indikator <1-3> aus"
   mqtttc002 weiter | zurueck       eine Anzeige weiter oder zurueck
@@ -626,7 +627,7 @@ func lauf() throws {
             try anzeigen.umschalten(auf: name)
         }
 
-    case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
+    case .display, .helligkeit, .helligkeitAutomatik, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
          .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
          .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender,
          .tonMP3Liste, .tonMP3Hochladen, .tonMP3Loeschen, .tonSammlung, .tonAbgleichen:

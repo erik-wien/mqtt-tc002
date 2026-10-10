@@ -132,12 +132,23 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var neustarts = 0
     /// Klang: Melodien, Sender und was gespielt wurde (`VirtuelleNGUhrTon.swift`).
     public var ton = NGTon()
+    /// Die Uhr hat einen Lichtsensor (`capabilities.sensors.light`). Dann folgt
+    /// das Panel bei `autoBrightness: true` dem Sensor (`sensorHelligkeit`) und
+    /// nicht `brightness` (gemessen 10. Oktober 2026 an einer TC001).
+    public var lichtsensor = false
+    /// Was der Sensor als Panelhelligkeit ergibt, 0–255.
+    public var sensorHelligkeit = 32
 
     public init() {
         einstellungen = VirtuelleNGUhr.vorgabeEinstellungen
     }
 
-    var helligkeit: Int { einstellungen["brightness"]?.ganzzahl ?? 128 }
+    /// Der Wert, mit dem das Panel leuchtet (`device`/`display` `brightness`);
+    /// die gespeicherte Einstellung steht in `einstellungen["brightness"]`.
+    var helligkeit: Int {
+        if lichtsensor, einstellungen["autoBrightness"] == .bool(true) { return sensorHelligkeit }
+        return einstellungen["brightness"]?.ganzzahl ?? 128
+    }
 }
 
 /// Beantwortet die HTTP-Anfragen einer AWTRIX-NG-1.2.2-Uhr auf der TC002 — als

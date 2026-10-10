@@ -149,10 +149,11 @@ public indirect enum Einstellungsart: Equatable, Sendable {
 /// **Nie hier und nie geschrieben:** `enlargeApps` (alle Bilder werden für das
 /// Anzeigemaß gerechnet; der Schlüssel ist lesbar, aber gesperrt), alles der
 /// Systemkonfiguration (WLAN, MQTT-Zugang, Firmware, Zugang …) und die Schlüssel,
-/// die laut Doku ohne Wirkung sind (`autoBrightness`, `timeMode`,
-/// `dateWeekdayBar`, Fühler-Apps).
+/// die laut Doku ohne Wirkung sind (`timeMode`, `dateWeekdayBar`, Fühler-Apps).
+/// `autoBrightness` wirkt nur auf einer Uhr mit Lichtsensor und wird nur dort
+/// geschrieben (`wirkt(faehigkeiten:)`).
 public enum Geraeteeinstellung: String, CaseIterable, Sendable, Hashable {
-    case brightness, saturation, gamma, colorCorrection, colorTint
+    case brightness, autoBrightness, saturation, gamma, colorCorrection, colorTint
     case textColor, uppercase, scroll, enlargeApps
     case autoTransition, appDurationMs, transitionEffect, transitionDirection, transitionDurationMs
     case clockFace, timeColor, calendarHeaderColor, calendarTextColor, calendarBodyColor, calendarAnimation
@@ -165,9 +166,16 @@ public enum Geraeteeinstellung: String, CaseIterable, Sendable, Hashable {
     /// `false` nur für `enlargeApps`.
     public var schreibbar: Bool { self != .enlargeApps }
 
+    /// Ob die Uhr diesen Schlüssel beachtet. Bis auf `autoBrightness` immer;
+    /// dieser wirkt nur mit Lichtsensor (gemessen 10. Oktober 2026: TC001 `true`,
+    /// TC002 `false` und die Einstellung ohne Wirkung). Ohne Auskunft gilt „nein".
+    public func wirkt(faehigkeiten: Geraetefaehigkeiten?) -> Bool {
+        self != .autoBrightness || faehigkeiten?.lichtsensor == true
+    }
+
     public var gruppe: Einstellungsgruppe {
         switch self {
-        case .brightness, .saturation, .gamma, .colorCorrection, .colorTint: return .helligkeitFarbe
+        case .brightness, .autoBrightness, .saturation, .gamma, .colorCorrection, .colorTint: return .helligkeitFarbe
         case .textColor, .uppercase, .scroll, .enlargeApps: return .text
         case .autoTransition, .appDurationMs, .transitionEffect, .transitionDirection,
              .transitionDurationMs: return .schleife
@@ -206,7 +214,7 @@ public enum Geraeteeinstellung: String, CaseIterable, Sendable, Hashable {
         case .gamma: return .zahlUeberNull
         case .colorCorrection, .colorTint, .timeColor, .dateColor: return .farbeOderNull
         case .textColor, .calendarHeaderColor, .calendarTextColor, .calendarBodyColor: return .farbe
-        case .uppercase, .enlargeApps, .autoTransition, .calendarAnimation, .time24h, .timeLeadingZero,
+        case .uppercase, .enlargeApps, .autoBrightness, .autoTransition, .calendarAnimation, .time24h, .timeLeadingZero,
              .timeShowSeconds, .timeShowAmPm, .dateShowWeekday, .dateMonthNames, .bootSound,
              .blockNavigation: return .wahrheit
         case .scroll: return Self.lauftext
@@ -298,6 +306,13 @@ public struct Geraeteeinstellungen: Equatable, Sendable {
         if case .text(let t)? = werte[e] { return t }
         return nil
     }
+    /// Ob der Lichtsensor der Uhr die Helligkeit regelt: Sensor da und
+    /// `autoBrightness` an. Dann bleibt `brightness` gespeichert, das Panel folgt
+    /// aber dem Sensor.
+    public func sensorRegeltHelligkeit(faehigkeiten: Geraetefaehigkeiten?) -> Bool {
+        Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: faehigkeiten) && wahrheit(.autoBrightness) == true
+    }
+
     public var lauftext: Lauftext? { Lauftext(werte[.scroll]) }
     public var wochentagsleiste: Wochentagsleiste? { Wochentagsleiste(werte[.weekdayBar]) }
 
@@ -319,6 +334,7 @@ public struct Geraeteeinstellungen: Equatable, Sendable {
             throw SteuerungsFehler.unbekannteEinstellung(schluessel)
         }
         guard e.schreibbar else { throw SteuerungsFehler.gesperrteEinstellung(kopf) }
+        guard e.wirkt(faehigkeiten: faehigkeiten) else { throw SteuerungsFehler.wirkungslos(kopf) }
         var a = Einstellungsaenderung()
         guard teile.count == 2 else {
             try a.setzen(e, try e.art.wert(aus: text, feld: schluessel), faehigkeiten: faehigkeiten)
@@ -348,6 +364,7 @@ public struct Einstellungsaenderung: Equatable, Sendable {
     public mutating func setzen(_ e: Geraeteeinstellung, _ wert: JSONWert,
                                 faehigkeiten: Geraetefaehigkeiten? = nil) throws {
         guard e.schreibbar else { throw SteuerungsFehler.gesperrteEinstellung(e.rawValue) }
+        guard e.wirkt(faehigkeiten: faehigkeiten) else { throw SteuerungsFehler.wirkungslos(e.rawValue) }
         werte[e] = try e.art.pruefen(wert, feld: e.rawValue, faehigkeiten: faehigkeiten)
     }
 

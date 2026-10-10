@@ -49,9 +49,10 @@ private struct Steuerseite: View {
     private var geraet: Geraetezustand? { zustand.geraetezustand[id] }
     private var anzeige: Anzeigestand? { zustand.anzeigestand[id] }
     private var panelAn: Bool { anzeige?.an ?? geraet?.panelAn ?? true }
-    private var helligkeitRoh: Int {
-        anzeige?.helligkeit ?? geraet?.helligkeit ?? zustand.uhreneinstellungen[id]?.ganzzahl(.brightness) ?? 128
-    }
+    /// `nil`, solange von dieser Uhr nichts gelesen ist: Dann ist der Regler gesperrt.
+    private var helligkeitRoh: Int? { zustand.panelhelligkeit(fuer: id) }
+    private var hatLichtsensor: Bool { zustand.faehigkeiten[id]?.lichtsensor == true }
+    private var sensorRegelt: Bool { zustand.helligkeitAutomatisch(fuer: id) }
     private var overlayNamen: [String] { zustand.faehigkeiten[id]?.overlays ?? [] }
 
     var body: some View {
@@ -204,9 +205,15 @@ private struct Steuerseite: View {
                     }
                 }
             }
+            if hatLichtsensor {
+                Toggle("Automatisch", isOn: Binding(
+                    get: { sensorRegelt },
+                    set: { neu in Task { await zustand.helligkeitAutomatikSetzen(neu, fuer: id) } }))
+            }
             Wertregler(titel: lok("Helligkeit"),
-                       wert: Steuerwerte.helligkeitProzent(roh: helligkeitRoh), bereich: 0...100,
-                       anzeige: { "\($0) %" },
+                       wert: Steuerwerte.helligkeitProzent(roh: helligkeitRoh ?? 0), bereich: 0...100,
+                       anzeige: { helligkeitRoh == nil ? "—" : "\($0) %" },
+                       gesperrt: sensorRegelt || helligkeitRoh == nil,
                        setzen: { p in Task { await zustand.helligkeitSetzen(Steuerwerte.helligkeitRoh(prozent: p), fuer: id) } })
             if !overlayNamen.isEmpty {
                 Picker("Overlay", selection: Binding(
@@ -221,6 +228,8 @@ private struct Steuerseite: View {
             }
         } header: {
             Text("Anzeige")
+        } footer: {
+            if sensorRegelt { Text("Der Lichtsensor der Uhr regelt die Helligkeit.") }
         }
     }
 

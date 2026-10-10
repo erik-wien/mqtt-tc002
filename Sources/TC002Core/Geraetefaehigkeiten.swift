@@ -33,13 +33,18 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     /// solange nicht gefragt und bei einer Antwort ohne `audio`: dann ist nichts
     /// gesperrt (`kann(_:)`).
     public var ton: Tonfaehigkeiten?
+    /// `capabilities.sensors.light`: ob die Uhr einen Lichtsensor hat. Fehlt die
+    /// Angabe, gilt „nein"; erst mit Sensor wirkt `autoBrightness`
+    /// (`Geraeteeinstellung.wirkt(faehigkeiten:)`).
+    public var lichtsensor = false
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
                 paletten: [String] = [], uebergaenge: [String] = [],
                 layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen(),
                 zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil,
-                ton: Tonfaehigkeiten? = nil) {
+                ton: Tonfaehigkeiten? = nil, lichtsensor: Bool = false) {
         self.ton = ton
+        self.lichtsensor = lichtsensor
         self.zifferblaetter = zifferblaetter
         self.mqttTlsUnterstuetzt = mqttTlsUnterstuetzt
         self.layoutUnterstuetzt = layoutUnterstuetzt
@@ -65,6 +70,7 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         layoutUnterstuetzt = antwort["layout"] as? Bool == true
         zifferblaetter = (antwort["clockFaces"] as? [Any])?.compactMap { $0 as? String } ?? []
         mqttTlsUnterstuetzt = antwort["mqttTls"] as? Bool == true
+        lichtsensor = (antwort["sensors"] as? [String: Any])?["light"] as? Bool == true
         ton = (antwort["audio"] as? [String: Any]).map { Tonfaehigkeiten(antwort: $0) }
         if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {
             layoutGrenzen = Layoutgrenzen(antwort: grenzen)

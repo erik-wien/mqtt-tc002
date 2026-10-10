@@ -32,6 +32,8 @@ struct Optionen {
         case display(an: Bool)
         /// Die Helligkeit des Panels, 0–255.
         case helligkeit(Int)
+        /// `helligkeit auto an|aus`: der Lichtsensor regelt die Helligkeit (nur Uhren mit Sensor).
+        case helligkeitAutomatik(an: Bool)
         case moodlight(Moodlight)
         case moodlightAus
         case indikator(Indikator)
@@ -585,7 +587,7 @@ struct Optionen {
         let name: String
         switch befehl {
         case .display: name = "display"
-        case .helligkeit: name = "helligkeit"
+        case .helligkeit, .helligkeitAutomatik: name = "helligkeit"
         case .moodlightAus, .moodlight: name = "moodlight"
         case .indikatorAus, .indikator: name = "indikator"
         case .weiter: name = "weiter"
@@ -618,8 +620,20 @@ struct Optionen {
             default: throw Fehler.unvollstaendig(befehl: name, erwartet: "an / aus")
             }
             try keinWeiteres(ab: 1)
-        case .helligkeit:
-            guard let w = freie.first else { throw Fehler.unvollstaendig(befehl: name, erwartet: "0–255") }
+        case .helligkeit, .helligkeitAutomatik:
+            guard let w = freie.first else { throw Fehler.unvollstaendig(befehl: name, erwartet: "0–255 / auto an|aus") }
+            if ["auto", "automatik"].contains(w.lowercased()) {
+                guard let stand = freie.dropFirst().first?.lowercased() else {
+                    throw Fehler.unvollstaendig(befehl: "helligkeit auto", erwartet: "an / aus")
+                }
+                switch stand {
+                case "an", "ein", "on": befehl = .helligkeitAutomatik(an: true)
+                case "aus", "off": befehl = .helligkeitAutomatik(an: false)
+                default: throw Fehler.unvollstaendig(befehl: "helligkeit auto", erwartet: "an / aus")
+                }
+                try keinWeiteres(ab: 2)
+                return
+            }
             guard let n = Int(w) else { throw Fehler.keineZahl(option: name, wert: w) }
             guard (0...255).contains(n) else {
                 throw SteuerungsFehler.ausserhalb(feld: "brightness", wert: String(n), bereich: "0–255")

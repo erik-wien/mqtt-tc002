@@ -198,7 +198,7 @@ public enum HilfeInhalt {
     /// Hilfen: am Schreibtisch ist es ein Bereich, am Telefon ein Blatt.
     public static let fernbedienung: [Hilfebaustein] = [
         .ueberschrift("Fernbedienung der Uhr"),
-        .absatz("Die Fernbedienung zeigt, was die angesehene Uhr gerade tut, und schaltet es: das Live-Bild ihres Displays, Gerät, aktive Anzeige mit Vor und Zurück, Erreichbarkeit, WLAN-Stärke, Laufzeit und Batterie; dazu Display an oder aus, Helligkeit in Prozent, Overlay, Moodlight und die drei Anzeiger am Rand. Jeder Schalter gilt genau der angesehenen Uhr; nur „Alle gewählten Uhren“ beim Display geht an alle Uhren, die als Ziel gewählt sind."),
+        .absatz("Die Fernbedienung zeigt, was die angesehene Uhr gerade tut, und schaltet es: das Live-Bild ihres Displays, Gerät, aktive Anzeige mit Vor und Zurück, Erreichbarkeit, WLAN-Stärke, Laufzeit und Batterie; dazu Display an oder aus, Helligkeit in Prozent (bei einer Uhr mit Lichtsensor mit dem Schalter „Automatisch“: Solange er an ist, regelt der Sensor die Helligkeit und der Regler ist gesperrt), Overlay, Moodlight und die drei Anzeiger am Rand. Jeder Schalter gilt genau der angesehenen Uhr; nur „Alle gewählten Uhren“ beim Display geht an alle Uhren, die als Ziel gewählt sind."),
         .absatz("Das Live-Bild wird alle zwei Sekunden neu geholt, solange die Seite offen ist, und ruht, sobald man sie verlässt. Es zeigt die Farben der Anzeigen; Helligkeit und Farbkorrektur der Uhr sind nicht eingerechnet. Das Moodlight flutet das Display einfarbig, solange es an ist — die Seite zeigt dafür keine Vorschau."),
         .absatz("Tasten und Drehknopf sieht die App nur im MQTT-Betrieb, weil nur das Mitlesen sie mitbekommt; im HTTP-Betrieb stehen sie grau da."),
         .absatz("„Uhr neu starten …“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist."),
@@ -371,7 +371,7 @@ public enum HilfeInhalt {
             "**Senden:** `senden` (Text mit Format und Darstellung, auch Diagramm und Fortschritt), `nachricht`, `zurueckziehen`, `bild` (ein fertiges Bild aus dem Editor), `loeschen`, `umschalten`.",
             "**Layout:** `layout` schickt Kästen mit je einem Inhalt aus einer JSON-Datei; die TC001 kann das nicht.",
             "**Bildschirm:** `bildschirm` liest das Display der Uhr und gibt es als Text aus, ein Zeichen je Pixel.",
-            "**Steuerung:** `display`, `helligkeit`, `moodlight`, `indikator`, `weiter`, `zurueck`, `neustart`, `zustand`, `einstellungen` (lesen und mit `setzen` ändern) und `tls` (Stand lesen, CA laden oder entfernen; TLS selbst schaltet es nie ein).",
+            "**Steuerung:** `display`, `helligkeit` (auch `helligkeit auto an|aus` für den Lichtsensor), `moodlight`, `indikator`, `weiter`, `zurueck`, `neustart`, `zustand`, `einstellungen` (lesen und mit `setzen` ändern) und `tls` (Stand lesen, CA laden oder entfernen; TLS selbst schaltet es nie ein).",
             "**Ton:** `ton spielen` (Datei, Melodie, Lied, Sprache oder Radiosender), `ton stopp`, `ton zustand`, `ton melodien`, `ton melodie`, `ton sender`; an `nachricht` hängt `--klang` einen Ton.",
             "**MP3 auf der Uhr:** `ton mp3` listet die Dateien, `ton mp3 hochladen <Datei>` lädt eine hoch (ohne `--name` gilt der Vorschlag und wird ausgegeben; eine vorhandene Datei ersetzt nur `--ersetzen`), `ton mp3 loeschen <Name>` löscht sie.",
             "**Auflisten:** `uhren`, `icons`, `bilder`, `effekte`.",

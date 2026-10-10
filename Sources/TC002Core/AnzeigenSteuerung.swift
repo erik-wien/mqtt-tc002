@@ -53,6 +53,15 @@ extension Anzeigen {
         try einstellungenAendern(a)
     }
 
+    /// Schaltet die Helligkeitsregelung durch den Lichtsensor ein oder aus
+    /// (`autoBrightness`). Nur für eine Uhr mit Sensor; ohne Auskunft darüber
+    /// lehnt der Kern ab (`Geraeteeinstellung.wirkt(faehigkeiten:)`).
+    public func helligkeitAutomatik(_ an: Bool, faehigkeiten: Geraetefaehigkeiten?) throws {
+        var a = Einstellungsaenderung()
+        try a.setzen(.autoBrightness, .bool(an), faehigkeiten: faehigkeiten)
+        try einstellungenAendern(a)
+    }
+
     /// Flutet das Panel einfarbig.
     public func moodlight(_ licht: Moodlight) throws {
         let json = try licht.json()

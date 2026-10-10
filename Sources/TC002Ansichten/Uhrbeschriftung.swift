@@ -8,6 +8,7 @@ enum Uhrbeschriftung {
     static func titel(_ pfad: String) -> String {
         switch pfad {
         case "brightness": return lok("Helligkeit")
+        case "autoBrightness": return lok("Automatisch")
         case "saturation": return lok("Sättigung")
         case "gamma": return lok("Gamma")
         case "colorCorrection": return lok("Farbkorrektur")

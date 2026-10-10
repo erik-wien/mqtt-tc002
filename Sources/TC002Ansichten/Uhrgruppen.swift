@@ -43,7 +43,7 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
     var abschnitte: [(titel: String?, pfade: [String])] {
         switch self {
         case .helligkeitFarbe:
-            return [(nil, ["brightness", "saturation", "gamma", "colorCorrection", "colorTint"])]
+            return [(nil, ["autoBrightness", "brightness", "saturation", "gamma", "colorCorrection", "colorTint"])]
         case .text:
             return [(nil, ["textColor", "uppercase"]),
                     (lok("Laufschrift"), ["scroll.mode", "scroll.direction", "scroll.entry",
@@ -116,6 +116,10 @@ public struct Uhrgruppenseite: View {
                             }
                         } header: {
                             if let titel = abschnitt.titel { Text(verbatim: titel) }
+                        } footer: {
+                            if abschnitt.pfade.contains("brightness"), zustand.helligkeitAutomatisch(fuer: ziel.uhr) {
+                                Text("Der Lichtsensor der Uhr regelt die Helligkeit.")
+                            }
                         }
                     }
                 }
@@ -163,7 +167,7 @@ struct Einstellungszeile: View {
     }
 
     var body: some View {
-        if let art {
+        if let art, einstellung?.wirkt(faehigkeiten: zustand.faehigkeiten[id]) != false {
             zeile(art)
         }
     }
@@ -236,7 +240,9 @@ struct Einstellungszeile: View {
         switch pfad {
         case "brightness":
             Wertregler(titel: titel, wert: Steuerwerte.helligkeitProzent(roh: n), bereich: 0...100,
-                       anzeige: { "\($0) %" }) { setzen(String(Steuerwerte.helligkeitRoh(prozent: $0))) }
+                       anzeige: { "\($0) %" }, gesperrt: zustand.helligkeitAutomatisch(fuer: id)) {
+                setzen(String(Steuerwerte.helligkeitRoh(prozent: $0)))
+            }
         case "saturation", "volume", "radioVolume", "appVolume", "alertVolume":
             Wertregler(titel: titel, wert: n, bereich: bereich, anzeige: { "\($0)" }) { setzen(String($0)) }
         case "appDurationMs", "transitionDurationMs", "scroll.holdMs":

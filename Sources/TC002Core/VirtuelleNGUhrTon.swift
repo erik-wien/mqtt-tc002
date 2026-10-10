@@ -99,9 +99,12 @@ extension VirtuelleNGUhr {
     /// `GET /api/v1/capabilities`; mit eigenem Audiosatz (`NGTon.faehigkeiten`)
     /// tragen `audio` und `platform.id` (`esp32`, wenn der Satz der der TC001 ist).
     static func faehigkeitenantwort(_ z: NGUhrzustand) -> JSONWert {
-        guard let satz = z.ton.faehigkeiten, case .objekt(var o) = capabilities else { return capabilities }
-        o["audio"] = .objekt(satz.mapValues { .bool($0) })
-        if satz == NGTon.tc001 { o["platform"] = .objekt(["id": .text("esp32")]) }
+        guard case .objekt(var o) = capabilities else { return capabilities }
+        o["sensors"] = .objekt(["light": .bool(z.lichtsensor)])
+        if let satz = z.ton.faehigkeiten {
+            o["audio"] = .objekt(satz.mapValues { .bool($0) })
+            if satz == NGTon.tc001 { o["platform"] = .objekt(["id": .text("esp32")]) }
+        }
         return .objekt(o)
     }
 

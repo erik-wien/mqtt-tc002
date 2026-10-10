@@ -18,6 +18,9 @@ struct Wertregler: View {
     var schritt: Int = 1
     /// Wie der Wert neben dem Regler steht.
     let anzeige: (Int) -> String
+    /// Grau und ohne Wirkung: der Wert wird von woanders bestimmt (Lichtsensor)
+    /// oder ist noch nicht gelesen.
+    var gesperrt = false
     let setzen: (Int) -> Void
 
     @State private var gezogen: Double?
@@ -37,6 +40,7 @@ struct Wertregler: View {
                         if !Task.isCancelled { gezogen = nil }
                     }
                 }
+                .disabled(gesperrt)
                 .accessibilityLabel(Text(verbatim: titel))
                 Text(verbatim: anzeige(Int((gezogen ?? Double(wert)).rounded())))
                     .monospacedDigit()

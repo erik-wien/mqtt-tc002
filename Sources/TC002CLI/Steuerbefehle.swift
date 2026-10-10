@@ -173,7 +173,20 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         try anAlle(an ? lok("Display eingeschaltet") : lok("Display ausgeschaltet")) { a, _ in try a.anzeigeStrom(an) }
     case .helligkeit(let n):
         if optionen.trocken { trocken(http: "PATCH /api/v1/settings", thema: { NGThema.einstellungen(praefix: $0) }, json: "{\"brightness\":\(n)}"); return true }
-        try anAlle(lokf("Helligkeit %d", n)) { a, _ in try a.helligkeit(n) }
+        try anAlle(lokf("Helligkeit %d", n)) { a, uhr in
+            try a.helligkeit(n)
+            // Der Sensor übergeht den Wert, solange die Automatik an ist; die Uhr meldet das nicht.
+            if let e = try? a.einstellungenLesen(),
+               e.sensorRegeltHelligkeit(faehigkeiten: faehigkeiten(uhr)) {
+                print(lokf("Hinweis: %@ regelt die Helligkeit mit dem Lichtsensor; der Wert gilt erst, wenn die Automatik aus ist (helligkeit auto aus).", uhr.name))
+            }
+        }
+    case .helligkeitAutomatik(let an):
+        let json = "{\"autoBrightness\":\(an)}"
+        if optionen.trocken { trocken(http: "PATCH /api/v1/settings", thema: { NGThema.einstellungen(praefix: $0) }, json: json); return true }
+        try anAlle(an ? lok("Helligkeit automatisch") : lok("Helligkeit von Hand")) { a, uhr in
+            try a.helligkeitAutomatik(an, faehigkeiten: faehigkeiten(uhr))
+        }
     case .moodlight(let licht):
         if optionen.trocken { trocken(http: "PUT /api/v1/display/moodlight", thema: { NGThema.moodlight(praefix: $0) }, json: try licht.json()); return true }
         try anAlle(lok("Moodlight gesetzt")) { a, _ in try a.moodlight(licht) }

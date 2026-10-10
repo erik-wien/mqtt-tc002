@@ -124,9 +124,10 @@ final class SteuerungTests: XCTestCase {
     }
 
     /// Nichts, was laut Doku ohne Wirkung ist, und nichts aus der Systemkonfiguration.
+    /// `autoBrightness` fehlt hier mit Absicht: Es wirkt mit Lichtsensor (`HelligkeitAutomatikTests`).
     func testKeinSchluesselDerSystemkonfigurationOderOhneWirkung() {
         let namen = Set(Geraeteeinstellung.allCases.map(\.rawValue))
-        for verboten in ["autoBrightness", "timeMode", "dateWeekdayBar", "useCelsius", "temperatureColor",
+        for verboten in ["timeMode", "dateWeekdayBar", "useCelsius", "temperatureColor",
                          "humidityColor", "batteryColor", "wifiSsid", "wifiPass", "mqttHost", "mqttPass",
                          "mqttPrefix", "mqttTls", "mqttTlsPin", "authEnabled", "authPass", "hostname",
                          "webPort", "swapButtons", "buttonCallback", "tz", "ntpServer"] {
@@ -172,7 +173,7 @@ final class SteuerungTests: XCTestCase {
         XCTAssertEqual(e.wochentagsleiste?.weekendDays, ["sunday", "saturday"])
         XCTAssertEqual(e.wochentagsleiste?.inactiveColor, "#666666")
         XCTAssertNil(e[.volume].flatMap { _ in e.ganzzahl(.radioVolume) }, "nicht gemeldet bleibt nil")
-        XCTAssertEqual(e.zeilen(in: .helligkeitFarbe).map(\.schluessel), ["brightness", "saturation", "gamma"])
+        XCTAssertEqual(e.zeilen(in: .helligkeitFarbe).map(\.schluessel), ["brightness", "autoBrightness", "saturation", "gamma"])
         XCTAssertNil(e[.timeColor])
         XCTAssertThrowsError(try Geraeteeinstellungen(daten: Data("[1]".utf8)))
     }

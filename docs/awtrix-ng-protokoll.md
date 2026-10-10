@@ -1105,6 +1105,18 @@ spielen — `{"file":"x"}` ist `404 notFound`, `{"file":"MP3/x"}` ist
 ganz oder ein einzelner Schalter, ist nichts gesperrt), und lädt auf eine Uhr
 mit `mp3` `false` keine MP3 hoch.
 
+🔬 `sensors.light` und `autoBrightness` hängen zusammen. Gemessen am
+10. Oktober 2026 (NG 1.2.2): Die TC001 meldet `sensors.light` `true`, ihre
+Einstellung `autoBrightness` steht auf `true`. Dann wird `brightness` (über
+`PATCH /api/v1/settings`) gespeichert, das Panel bleibt aber beim Sensorwert
+(`GET /api/v1/display` zeigt `brightness` um 32, auch `device`). Mit
+`autoBrightness` `false` wirkt `brightness` sofort (100 → `display.brightness`
+100); schaltet man die Automatik wieder ein, kehrt das Panel zum Sensorwert
+zurück (um 33). Die TC002 meldet `sensors.light` `false` und `autoBrightness`
+`false`; dort hat der Schlüssel keine Wirkung. Die App zeigt „Automatisch" und
+schreibt `autoBrightness` darum nur bei einer Uhr mit `sensors.light` `true`
+und sperrt den Helligkeitsregler, solange der Sensor regelt.
+
 ### 7.5 `GET /api/v1/display`, `/audio` und weitere
 
 🔬 `GET /api/v1/display`:
@@ -1338,7 +1350,7 @@ Geräts, wo er von der dokumentierten Vorgabe abweicht, ist das vermerkt.
 | Gruppe | Schlüssel | Typ · Bereich · Vorgabe |
 |---|---|---|
 | Helligkeit | `brightness` | int 0–255, Vorgabe 120 (gemessen 128); roher Wert, kein Prozentsatz |
-| | `autoBrightness` | bool, `false` — **ohne Wirkung** (kein Lichtsensor) |
+| | `autoBrightness` | bool, `false` — wirkt nur mit Lichtsensor (`capabilities.sensors.light`), sonst **ohne Wirkung** (TC002); mit Sensor und `true` folgt das Panel dem Sensor, `brightness` bleibt nur gespeichert (§7.4) |
 | Farbe | `saturation` | int 0–100, 100 |
 | | `gamma` | Zahl > 0, 1.9 |
 | | `colorCorrection`, `colorTint` | Farbe oder `null`, `null`; multiplizieren jedes Pixel, die zweite nach der ersten |

@@ -106,6 +106,85 @@ final class UhrensteuerungTests: XCTestCase {
         XCTAssertFalse(ok)
     }
 
+    // MARK: - Helligkeit je Uhr, Lichtsensor
+
+    private var weitereServer: [Uhrenserver] = []
+
+    /// Zwei HTTP-Uhren an zwei virtuellen Uhren: die erste wie die TC002 (ohne
+    /// Sensor, Helligkeit 128), die zweite wie die TC001 (Sensor, Automatik an).
+    private func zweiUhren() throws -> (AppZustand, Uhr, Uhr) {
+        var uhren: [Uhr] = []
+        for (name, sensor) in [("Küche", false), ("Vorzimmer", true)] {
+            var start = NGUhrzustand()
+            start.lichtsensor = sensor
+            start.einstellungen["autoBrightness"] = .bool(sensor)
+            var gestartet = false
+            for _ in 0..<20 where !gestartet {
+                let port = UInt16.random(in: 20_000...60_000)
+                let s = Uhrenserver(port: port, zustand: start)
+                do {
+                    try s.starten()
+                    weitereServer.append(s)
+                    uhren.append(Uhr(name: name, host: "127.0.0.1:\(port)", praefix: "", betriebsart: .http))
+                    gestartet = true
+                } catch { continue }
+            }
+            if !gestartet { throw XCTSkip("kein freier Port") }
+        }
+        addTeardownBlock { [weitereServer] in weitereServer.forEach { $0.beenden() } }
+        return (try zustand(mit: uhren), uhren[0], uhren[1])
+    }
+
+    /// Die Fernbedienung liest den Regler je Uhr aus dem Zustand dieser Uhr:
+    /// Was von der einen gelesen ist, steht nie für die andere da.
+    func testPanelhelligkeitGiltJeUhr() async throws {
+        let (z, a, b) = try zweiUhren()
+        XCTAssertNil(z.panelhelligkeit(fuer: a.id), "nichts gelesen, kein erfundener Wert")
+        await z.zustandAbfragen(a.id)
+        XCTAssertEqual(z.panelhelligkeit(fuer: a.id), 128)
+        XCTAssertNil(z.panelhelligkeit(fuer: b.id), "die andere Uhr ist noch nicht gelesen")
+        await z.zustandAbfragen(b.id)
+        XCTAssertEqual(z.panelhelligkeit(fuer: b.id), 32, "das Panel der TC001 folgt dem Sensor")
+        XCTAssertEqual(z.panelhelligkeit(fuer: a.id), 128)
+        z.uhrAnsehen(b.id)
+        XCTAssertEqual(z.panelhelligkeit(fuer: z.referenzUhr!.id), 32)
+    }
+
+    func testFaehigkeitenKommenMitDemZustandUndZeigenDenSensor() async throws {
+        let (z, a, b) = try zweiUhren()
+        await z.zustandAbfragen(a.id)
+        await z.zustandAbfragen(b.id)
+        XCTAssertEqual(z.faehigkeiten[a.id]?.lichtsensor, false)
+        XCTAssertEqual(z.faehigkeiten[b.id]?.lichtsensor, true)
+        XCTAssertFalse(z.helligkeitAutomatisch(fuer: a.id))
+        XCTAssertTrue(z.helligkeitAutomatisch(fuer: b.id))
+    }
+
+    func testAutomatikUmschaltenSchaltetDenReglerFrei() async throws {
+        let (z, _, b) = try zweiUhren()
+        await z.zustandAbfragen(b.id)
+        _ = await z.helligkeitSetzen(200, fuer: b.id)
+        XCTAssertEqual(z.uhreneinstellungen[b.id]?.ganzzahl(.brightness), 200)
+        XCTAssertEqual(z.panelhelligkeit(fuer: b.id), 32, "mit Automatik bleibt das Panel beim Sensor")
+        XCTAssertTrue(z.helligkeitAutomatisch(fuer: b.id))
+
+        let aus = await z.helligkeitAutomatikSetzen(false, fuer: b.id)
+        XCTAssertTrue(aus.ganz)
+        XCTAssertFalse(z.helligkeitAutomatisch(fuer: b.id))
+        XCTAssertEqual(z.panelhelligkeit(fuer: b.id), 200)
+        _ = await z.helligkeitAutomatikSetzen(true, fuer: b.id)
+        XCTAssertEqual(z.panelhelligkeit(fuer: b.id), 32)
+    }
+
+    func testOhneSensorLehntDieAutomatikAb() async throws {
+        let (z, a, _) = try zweiUhren()
+        await z.zustandAbfragen(a.id)
+        let b = await z.helligkeitAutomatikSetzen(true, fuer: a.id)
+        XCTAssertEqual(b.erreicht, [])
+        XCTAssertNotNil(z.fehler)
+        XCTAssertEqual(z.uhreneinstellungen[a.id]?.wahrheit(.autoBrightness), false)
+    }
+
     // MARK: - Befehle
 
     func testPanelAusSchaltenHolztDenStandNach() async throws {
