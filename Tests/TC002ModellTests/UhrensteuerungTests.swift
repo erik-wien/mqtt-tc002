@@ -1,0 +1,247 @@
+import Foundation
+import XCTest
+import TC002Core
+@testable import TC002Modell
+
+/// Der Zustand und die Befehle der Steuerung im `AppZustand`. Die Uhr ist die
+/// virtuelle auf `127.0.0.1` (HTTP) bzw. eine von Hand gefüllte Meldung (MQTT);
+/// nichts verlässt den Rechner, der Schlüsselbund wird nie angefasst.
+@MainActor
+final class UhrensteuerungTests: XCTestCase {
+    private let d = UserDefaults.standard
+    private let schluessel = ["uhren", "aktiveID", "bekannteAnzeigen", "zielIDs",
+                              "brokerHost", "brokerPort", "benutzer", "protokollAn", "verlaufAn"]
+    private var sicherung: [String: Any?] = [:]
+    private var schluesselbund = Schluesselbunddoppelgaenger()
+    private var server: Uhrenserver?
+
+    override func setUp() {
+        super.setUp()
+        sicherung = Dictionary(uniqueKeysWithValues: schluessel.map { ($0, d.object(forKey: $0)) })
+        schluesselbund = Schluesselbunddoppelgaenger()
+    }
+
+    override func tearDown() {
+        server?.beenden()
+        server = nil
+        for schl in schluessel {
+            if let wert = sicherung[schl] ?? nil { d.set(wert, forKey: schl) } else { d.removeObject(forKey: schl) }
+        }
+        super.tearDown()
+    }
+
+    private func zustand(mit uhren: [Uhr]) throws -> AppZustand {
+        d.set(try JSONEncoder().encode(uhren), forKey: "uhren")
+        d.set(uhren[0].id.uuidString, forKey: "aktiveID")
+        d.set(try JSONEncoder().encode(Set(uhren.map(\.id))), forKey: "zielIDs")
+        return AppZustand(schluesselbund: schluesselbund)
+    }
+
+    private func temp() -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    }
+
+    /// Eine HTTP-Uhr an einer virtuellen Uhr.
+    private func httpUhr() throws -> (AppZustand, Uhr, Uhrenserver) {
+        for _ in 0..<20 {
+            let port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port)
+            do {
+                try s.starten()
+                server = s
+                let uhr = Uhr(name: "Küche", host: "127.0.0.1:\(port)", praefix: "", betriebsart: .http)
+                return (try zustand(mit: [uhr]), uhr, s)
+            } catch { continue }
+        }
+        throw XCTSkip("kein freier Port")
+    }
+
+    private func mqttUhr() throws -> (AppZustand, Uhr) {
+        let uhr = Uhr(name: "Wohnzimmer", host: "10.0.0.9", praefix: "wz/uhr", betriebsart: .mqtt)
+        return (try zustand(mit: [uhr]), uhr)
+    }
+
+    private func gemeldet(_ z: AppZustand, _ uhr: Uhr, _ thema: String, _ nutzlast: String) {
+        z.gemeldet(thema: "wz/uhr/" + thema, nutzlast: Data(nutzlast.utf8), fuer: uhr.id,
+                   gedaechtnis: Slotgedaechtnis(ordner: temp()))
+    }
+
+    // MARK: - Abfragen
+
+    func testZustandAbfragenFuelltAllesUndMachtErreichbar() async throws {
+        let (z, uhr, _) = try httpUhr()
+        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten(mqttTlsUnterstuetzt: true)
+        let ok = await z.zustandAbfragen(uhr.id)
+        XCTAssertTrue(ok)
+        XCTAssertEqual(z.erreichbar[uhr.id], true)
+        XCTAssertEqual(z.geraetezustand[uhr.id]?.fassung, "1.2.2")
+        XCTAssertEqual(z.aktiveAnzeige[uhr.id], "Time")
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.an, true)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.ganzzahl(.brightness), 128)
+        XCTAssertEqual(z.tlsStatus[uhr.id]?.oeffentlich, true)
+    }
+
+    /// Ohne `capabilities.mqttTls` wird `/mqtt/tls` nicht gefragt (sonst `404`).
+    func testOhneTLSFaehigkeitBleibtDerTLSStandLeer() async throws {
+        let (z, uhr, _) = try httpUhr()
+        await z.zustandAbfragen(uhr.id)
+        XCTAssertNil(z.tlsStatus[uhr.id])
+        XCTAssertNotNil(z.geraetezustand[uhr.id])
+    }
+
+    func testEineStummeUhrIstUnerreichbarOhneFehlerleiste() async throws {
+        let (z, uhr, s) = try httpUhr()
+        s.beenden()
+        let ok = await z.zustandAbfragen(uhr.id)
+        XCTAssertFalse(ok)
+        XCTAssertEqual(z.erreichbar[uhr.id], false)
+        XCTAssertNil(z.fehler, "kein Fenster vor den Rest der App")
+        XCTAssertNil(z.geraetezustand[uhr.id])
+    }
+
+    func testOhneAdresseGibtEsNichtsZuFragen() async throws {
+        let uhr = Uhr(name: "X", host: "", praefix: "wz/uhr", betriebsart: .mqtt)
+        let z = try zustand(mit: [uhr])
+        let ok = await z.zustandAbfragen(uhr.id)
+        XCTAssertFalse(ok)
+    }
+
+    // MARK: - Befehle
+
+    func testPanelAusSchaltenHolztDenStandNach() async throws {
+        let (z, uhr, s) = try httpUhr()
+        let b = await z.panelSchalten(an: false)
+        XCTAssertTrue(b.ganz)
+        XCTAssertFalse(s.zustand.power)
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.an, false, "der Stand kommt von der Uhr")
+        XCTAssertEqual(z.geraetezustand[uhr.id]?.panelAn, false)
+        _ = await z.panelSchalten(an: true)
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.an, true)
+    }
+
+    func testHelligkeitMoodlightUndAnzeiger() async throws {
+        let (z, uhr, s) = try httpUhr()
+        let h = await z.helligkeitSetzen(20)
+        XCTAssertTrue(h.ganz)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.ganzzahl(.brightness), 20)
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.helligkeit, 20)
+
+        _ = await z.moodlightSetzen(Moodlight(farbe: "#112233", helligkeit: 60))
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.moodlight, Moodlightstand(farbe: "#112233", helligkeit: 60))
+        _ = await z.moodlightSetzen(Moodlight(helligkeit: 70))
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.moodlight, Moodlightstand(farbe: "#112233", helligkeit: 70),
+                       "fehlende Felder behalten ihren Wert — das weiß nur die Uhr")
+        _ = await z.moodlightAusschalten()
+        XCTAssertNil(z.anzeigestand[uhr.id]?.moodlight)
+
+        _ = await z.indikatorSetzen(Indikator(nummer: 1, farbe: "#FF0000", blinkMs: 100))
+        XCTAssertEqual(z.geraetezustand[uhr.id]?.indikatoren[0].an, true)
+        XCTAssertEqual(s.zustand.indikatoren[0].blinkMs, 100)
+        _ = await z.indikatorAusschalten(1)
+        XCTAssertEqual(z.geraetezustand[uhr.id]?.indikatoren[0].an, false)
+    }
+
+    func testOverlayMitDenNamenDerUhr() async throws {
+        let (z, uhr, s) = try httpUhr()
+        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten(overlays: ["rain", "snow"])
+        _ = await z.overlaySetzen("SNOW")
+        XCTAssertEqual(s.zustand.overlay, "snow")
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.overlay, "snow")
+        let falsch = await z.overlaySetzen("hagel")
+        XCTAssertTrue(falsch.nichts)
+        XCTAssertNotNil(z.fehler, "die Abweisung ist sichtbar")
+        XCTAssertEqual(s.zustand.overlay, "snow")
+    }
+
+    func testEinstellungenAendernUndBlaettern() async throws {
+        let (z, uhr, s) = try httpUhr()
+        await z.zustandAbfragen(uhr.id)
+        var a = Einstellungsaenderung()
+        try a.setzen(.volume, .zahl(30))
+        try a.setzen(.clockFace, .text("big"))
+        let b = await z.einstellungenAendern(a)
+        XCTAssertTrue(b.ganz)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.ganzzahl(.volume), 30)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.text(.clockFace), "big")
+        XCTAssertEqual(s.zustand.einstellungen["enlargeApps"], .bool(true))
+
+        _ = await z.anzeigeBlaettern(vor: true)
+        await z.zustandAbfragen(uhr.id)
+        XCTAssertEqual(z.aktiveAnzeige[uhr.id], "Status")
+    }
+
+    func testTLSCAHochladenUndEntfernenSchaltetNichtsEin() async throws {
+        let (z, uhr, s) = try httpUhr()
+        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten(mqttTlsUnterstuetzt: true)
+        let pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
+        let ok = await z.tlsCAHochladen(pem, fuer: uhr.id)
+        XCTAssertTrue(ok)
+        XCTAssertTrue(s.zustand.eigeneCA)
+        XCTAssertEqual(z.tlsStatus[uhr.id]?.oeffentlich, false)
+        XCTAssertEqual(s.zustand.einstellungen["mqttTls"], nil, "TLS einzuschalten ist Sache der Web-Oberfläche")
+        let weg = await z.tlsCAEntfernen(fuer: uhr.id)
+        XCTAssertTrue(weg)
+        XCTAssertEqual(z.tlsStatus[uhr.id]?.oeffentlich, true)
+        let schlecht = await z.tlsCAHochladen("kein Zertifikat", fuer: uhr.id)
+        XCTAssertFalse(schlecht)
+        XCTAssertNotNil(z.fehler)
+    }
+
+    // MARK: - Mitlesen
+
+    func testMitgelesenerZustandKommtInsModell() throws {
+        let (z, uhr) = try mqttUhr()
+        gemeldet(z, uhr, "state/apps/active", "Status")
+        XCTAssertEqual(z.aktiveAnzeige[uhr.id], "Status")
+        gemeldet(z, uhr, "state/device", #"{"version":"1.2.2","brightness":12,"matrixPower":false,"currentApp":"Time"}"#)
+        XCTAssertEqual(z.geraetezustand[uhr.id]?.helligkeit, 12)
+        XCTAssertEqual(z.aktiveAnzeige[uhr.id], "Time")
+        gemeldet(z, uhr, "state/settings", #"{"volume":42,"brightness":99}"#)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.ganzzahl(.volume), 42)
+    }
+
+    func testMitgeleseneHelligkeitFuehrtDenAnzeigestandNach() throws {
+        let (z, uhr) = try mqttUhr()
+        z.anzeigestand[uhr.id] = try Anzeigestand(daten: Data(#"{"power":true,"brightness":1}"#.utf8))
+        gemeldet(z, uhr, "state/settings", #"{"brightness":99}"#)
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.helligkeit, 99)
+        gemeldet(z, uhr, "state/device", #"{"matrixPower":false}"#)
+        XCTAssertEqual(z.anzeigestand[uhr.id]?.an, false)
+    }
+
+    func testTastenDrehknopfUndFehler() throws {
+        let (z, uhr) = try mqttUhr()
+        gemeldet(z, uhr, "state/buttons/left", "1")
+        gemeldet(z, uhr, "state/buttons/knob", "1")
+        gemeldet(z, uhr, "state/buttons/left", "0")
+        XCTAssertEqual(z.tasten[uhr.id], [.links: false, .knopf: true])
+
+        gemeldet(z, uhr, "event/knob", #"{"turn":2}"#)
+        gemeldet(z, uhr, "event/knob", #"{"turn":2}"#)
+        gemeldet(z, uhr, "event/knob", #"{"turn":-1}"#)
+        XCTAssertEqual(z.drehknopf[uhr.id], Drehknopfstand(letzteRasten: -1, summe: 3, zaehler: 3))
+
+        XCTAssertNil(z.uhrenfehler[uhr.id])
+        gemeldet(z, uhr, "event/error", #"{"source":"http","request":"PATCH settings","error":{"code":"validationFailed","field":"volume"}}"#)
+        XCTAssertEqual(z.uhrenfehler[uhr.id]?.fehler, "validationFailed (volume)")
+        XCTAssertNil(z.fehler, "ein Ereignis ist kein Fenster; die Ansicht entscheidet")
+    }
+
+    func testDerAbrissDesMitlesensLeertDieTasten() throws {
+        let (z, uhr) = try mqttUhr()
+        gemeldet(z, uhr, "state/buttons/right", "1")
+        XCTAssertEqual(z.tasten[uhr.id], [.rechts: true])
+        z.horchzustand(true, nil, fuer: uhr.id)
+        z.horchzustand(false, "weg", fuer: uhr.id)
+        XCTAssertNil(z.tasten[uhr.id])
+    }
+
+    func testEineEntferntUhrBehaeltKeinenZustand() throws {
+        let (z, uhr) = try mqttUhr()
+        gemeldet(z, uhr, "state/apps/active", "Time")
+        gemeldet(z, uhr, "event/knob", #"{"turn":1}"#)
+        z.uhrEntfernen(uhr.id, gedaechtnis: Slotgedaechtnis(ordner: temp()))
+        XCTAssertNil(z.aktiveAnzeige[uhr.id])
+        XCTAssertNil(z.drehknopf[uhr.id])
+    }
+}

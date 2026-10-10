@@ -79,6 +79,31 @@ public final class AppZustand {
     private var karenzVerbraucht: [UUID: Set<String>] = [:]
     /// Was die Uhr ueber sich selbst meldet (`<praefix>/availability`, §3.4).
     public var geraetOnline: [UUID: Bool] = [:]
+
+    // MARK: Zustand der Uhren (Steuerung)
+    //
+    // Nicht gesichert: Momentaufnahmen, die die Uhr selbst nennt. Gefüllt von
+    // `zustandAbfragen` (HTTP) und — bei MQTT-Uhren — vom Mitlesen der
+    // `state/*`-Themen (`ereignisUebernehmen`); die jüngere Auskunft gilt.
+
+    /// `GET /api/v1/device` bzw. `state/device`.
+    public var geraetezustand: [UUID: Geraetezustand] = [:]
+    /// `GET /api/v1/display`: Strom, Helligkeit, Overlay, Moodlight. Nur über HTTP;
+    /// Strom und Helligkeit führt das Mitlesen nach.
+    public var anzeigestand: [UUID: Anzeigestand] = [:]
+    /// `GET /api/v1/settings` bzw. `state/settings`.
+    public var uhreneinstellungen: [UUID: Geraeteeinstellungen] = [:]
+    /// Die laufende Anzeige (`state/apps/active` bzw. `currentApp`).
+    public var aktiveAnzeige: [UUID: String] = [:]
+    /// `GET /api/v1/mqtt/tls`; nur, wo `capabilities.mqttTls` gilt.
+    public var tlsStatus: [UUID: TLSStatus] = [:]
+    /// Gedrückt (`true`) oder losgelassen: nur das Mitlesen über MQTT sieht die
+    /// Tasten (`state/buttons/*`). Mit dem Abriss des Mitlesens leer.
+    public var tasten: [UUID: [Taste: Bool]] = [:]
+    /// Der Drehknopf (`event/knob`), nur über MQTT.
+    public var drehknopf: [UUID: Drehknopfstand] = [:]
+    /// Die letzte Abweisung, die die Uhr auf `event/error` meldete.
+    public var uhrenfehler: [UUID: Uhrenfehler] = [:]
     /// Was zuletzt auf einem Slot zu sehen war, als Pixel: von dieser App
     /// gemalt und gesendet. Die Uhr verraet den Inhalt nicht; was fremde
     /// Absender schicken, ist Text und Regler und ergibt kein Bild. Kein
@@ -894,6 +919,7 @@ public final class AppZustand {
         }
         uhren.removeAll { $0.id == id }
         verbunden[id] = nil
+        steuerungszustandVergessen(id)
         bekannteAnzeigen[id] = nil
         // Auch die Datei auf der Platte: Die Kennung einer entfernten Uhr
         // kommt nicht zurueck, ihre `Slots/<uuid>.json` laege sonst fuer
@@ -1198,7 +1224,7 @@ public final class AppZustand {
     /// anderen nicht aufhalten. Fehler landen sichtbar in `fehler`, nicht nur im
     /// Protokoll — sonst ist ein Totalausfall von Erfolg nicht zu unterscheiden.
     @discardableResult
-    private func anZiele<Ergebnis: Sendable>(
+    func anZiele<Ergebnis: Sendable>(
         _ tat: @escaping @Sendable (Anzeigen, Uhr) throws -> Ergebnis,
         was: String = "", erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
         let abweisungenVorher = abweisungsZaehler
@@ -1759,6 +1785,7 @@ public final class AppZustand {
          NGThema.anzeigenMuster(praefix: uhr.praefix),
          NGThema.benachrichtigungenMuster(praefix: uhr.praefix),
          NGThema.freigabeErgebnisse(praefix: uhr.praefix)]
+            + NGThema.zustandsthemen(praefix: uhr.praefix)
     }
 
     /// Was von der Uhr hereinkommt. Das Thema entscheidet, nicht die Reihenfolge:
@@ -1800,6 +1827,10 @@ public final class AppZustand {
             guard geraetOnline[id] != online else { return }
             geraetOnline[id] = online
             log(online ? lokf("%@ meldet sich online", uhr.name) : lokf("%@ meldet sich offline", uhr.name))
+            return
+        }
+        if let ereignis = Uhrenereignis.lesen(thema: thema, nutzlast: nutzlast, praefix: uhr.praefix) {
+            ereignisUebernehmen(ereignis, fuer: uhr)
             return
         }
         if let name = NGThema.ergebnisBezeichnung(thema: thema, praefix: uhr.praefix) {
@@ -1862,6 +1893,7 @@ public final class AppZustand {
             // ersetzen soll.
             geraetOnline[id] = nil
             slotInhalt[id] = nil
+            tasten[id] = nil
             belegungAbfragen(id)
             log(lokf("hört bei %@ nicht mehr mit: %@", uhr.name, grund ?? lok("Verbindung weg")))
         }

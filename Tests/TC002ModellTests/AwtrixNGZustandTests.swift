@@ -70,12 +70,17 @@ final class AwtrixNGZustandTests: XCTestCase {
     // MARK: - Worauf gehorcht wird
 
     /// NG hoert auf `availability` und auf alles unter `cmd/apps/pushed`, dazu
-    /// auf die Antworten zu Benachrichtigungen und zum Ein-/Ausschalten. Die
+    /// auf die Antworten zu Benachrichtigungen und zum Ein-/Ausschalten, auf den
+    /// Zustand (`state/device`, `state/settings`, `state/apps/active`,
+    /// `state/buttons/*`) und die Ereignisse (`event/knob`, `event/error`). Die
     /// Anzeigenliste kommt allein ueber HTTP.
     func testDieAbonnierteThemen() {
         XCTAssertEqual(AppZustand.themen(fuer: ngUhr()),
                        ["wohnzimmer/uhr/availability", "wohnzimmer/uhr/cmd/apps/pushed/#",
-                        "wohnzimmer/uhr/cmd/notify/#", "wohnzimmer/uhr/cmd/apps/+/enabled/result"])
+                        "wohnzimmer/uhr/cmd/notify/#", "wohnzimmer/uhr/cmd/apps/+/enabled/result",
+                        "wohnzimmer/uhr/state/device", "wohnzimmer/uhr/state/settings",
+                        "wohnzimmer/uhr/state/apps/active", "wohnzimmer/uhr/state/buttons/+",
+                        "wohnzimmer/uhr/event/knob", "wohnzimmer/uhr/event/error"])
     }
 
     // MARK: - Was hereinkommt

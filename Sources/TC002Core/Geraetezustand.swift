@@ -28,6 +28,10 @@ public struct Indikatorstand: Equatable, Sendable {
     public var farbe: String
     public var blinkMs: Int
     public var fadeMs: Int
+
+    public init(an: Bool, farbe: String, blinkMs: Int, fadeMs: Int) {
+        self.an = an; self.farbe = farbe; self.blinkMs = blinkMs; self.fadeMs = fadeMs
+    }
 }
 
 /// Was die Uhr über sich sagt (`GET /api/v1/device` und `<P>/state/device`,
@@ -89,6 +93,8 @@ public struct Moodlightstand: Equatable, Sendable {
     /// wird in diese Form gebracht.
     public var farbe: String
     public var helligkeit: Int
+
+    public init(farbe: String, helligkeit: Int) { self.farbe = farbe; self.helligkeit = helligkeit }
 }
 
 /// `GET /api/v1/display` (§7.5): Strom, Helligkeit, Overlay, Moodlight.
