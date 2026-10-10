@@ -73,7 +73,7 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | MP3 hochladen | ja | nein (Uhr nimmt die Datei an, spielt sie nie) | 🔬 10.10.2026 | `Klangeignung.mp3Hochladbar` = `kann(.mp3)`; gesperrt auch ohne Adresse | Mac/iPad, iPhone (Fernbedienung › Ton: Knopf und MP3-Liste ausgeblendet), CLI `ton mp3 hochladen` |
 | Lied (`song`) | ja | nein | 🔬 10.10.2026 | `audio.song` (`Klangart.lied`) | CLI `ton spielen --lied` |
 | Vorlesen (`speech`) | ja | nein | 🔬 10.10.2026 | `audio.speech` (`Klangart.sprache`) | Mac/iPad, iPhone („Vorlesen“ nicht angeboten, wenn keine Zieluhr es kann), CLI `--sprache` |
-| Radio, Sender wählen | ja | nein | 🔬 10.10.2026 | `audio.radio`; Radiozeilen in der Fernbedienung nur dann | Mac/iPad, iPhone, CLI `--sender` |
+| Radio, Sender wählen | ja | nein | 🔬 10.10.2026 | `audio.radio`; Radiozeilen in der Fernbedienung und die Einstellung Radiolautstärke nur dann | Mac/iPad, iPhone, CLI `--sender` |
 | MP3 von Webadresse (`url`) | ja | nein | 🔬 10.10.2026 | `audio.url` (`Klangart.adresse`) | CLI `ton spielen --datei <Adresse>` |
 | Klang-Clip (`clip`), Klangeffekt (`effect`), Spur (`track`) | `clip` ja, `effect` ja, `track` nein | alle nein | 🔬 10.10.2026 | von der App nicht angeboten | – |
 | Klang in einer Nachricht (mehrere Zieluhren) | – | – | – | `Klangeignung.verteilen`: der Klang geht nur an Uhren, die ihn spielen; die Nachricht geht an alle | Mac/iPad, iPhone, CLI |

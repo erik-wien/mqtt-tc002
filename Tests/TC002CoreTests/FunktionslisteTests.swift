@@ -81,6 +81,9 @@ final class FunktionslisteTests: XCTestCase {
         Zeile(name: "autoBrightness wirkt", tc002: false, tc001: true) {
             Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: $0)
         },
+        Zeile(name: "Radiolautstärke wirkt", tc002: true, tc001: false) {
+            Geraeteeinstellung.radioVolume.wirkt(faehigkeiten: $0)
+        },
         // Layouts
         Zeile(name: "Layouts (layout)", tc002: true, tc001: false) { $0.layoutUnterstuetzt == true },
         Zeile(name: "Kastenlayout wird nicht als nichtUnterstuetzt abgewiesen", tc002: true, tc001: false) {

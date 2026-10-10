@@ -73,7 +73,7 @@ A sound kind is allowed if the clock's `audio.<switch>` is `true`
 | Upload MP3 | yes | no (the clock accepts the file and never plays it) | 🔬 10 Oct 2026 | `Klangeignung.mp3Hochladbar` = `kann(.mp3)`; also disabled without an address | Mac/iPad, iPhone (remote control › sound: button and MP3 list hidden), CLI `ton mp3 hochladen` |
 | Song | yes | no | 🔬 10 Oct 2026 | `audio.song` (`Klangart.lied`) | CLI `ton spielen --lied` |
 | Speech (`speech`) | yes | no | 🔬 10 Oct 2026 | `audio.speech` (`Klangart.sprache`) | Mac/iPad, iPhone ("Vorlesen" not offered if no target clock can), CLI `--sprache` |
-| Radio, choose a station | yes | no | 🔬 10 Oct 2026 | `audio.radio`; radio rows in the remote control only then | Mac/iPad, iPhone, CLI `--sender` |
+| Radio, choose a station | yes | no | 🔬 10 Oct 2026 | `audio.radio`; radio rows in the remote control and the radio volume setting only then | Mac/iPad, iPhone, CLI `--sender` |
 | MP3 from a web address (`url`) | yes | no | 🔬 10 Oct 2026 | `audio.url` (`Klangart.adresse`) | CLI `ton spielen --datei <address>` |
 | Sound clip (`clip`), sound effect (`effect`), track (`track`) | `clip` yes, `effect` yes, `track` no | all no | 🔬 10 Oct 2026 | not offered by the app | – |
 | Sound in a message (several target clocks) | – | – | – | `Klangeignung.verteilen`: the sound goes only to clocks that play it; the message goes to all | Mac/iPad, iPhone, CLI |

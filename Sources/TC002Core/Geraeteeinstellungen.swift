@@ -170,7 +170,12 @@ public enum Geraeteeinstellung: String, CaseIterable, Sendable, Hashable {
     /// dieser wirkt nur mit Lichtsensor (gemessen 10. Oktober 2026: TC001 `true`,
     /// TC002 `false` und die Einstellung ohne Wirkung). Ohne Auskunft gilt „nein".
     public func wirkt(faehigkeiten: Geraetefaehigkeiten?) -> Bool {
-        self != .autoBrightness || faehigkeiten?.lichtsensor == true
+        switch self {
+        case .autoBrightness: return faehigkeiten?.lichtsensor == true
+        // Eine Uhr ohne Radio (TC001) meldet `radioVolume` trotzdem.
+        case .radioVolume: return faehigkeiten?.kann(.radio) ?? true
+        default: return true
+        }
     }
 
     public var gruppe: Einstellungsgruppe {
