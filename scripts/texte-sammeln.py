@@ -52,6 +52,13 @@ ERSTES_ARGUMENT = [
     # deutsch. Die Erklaerung dahinter steht als `lok(…)` da und wird ohnehin
     # gefunden.
     "Abschnittskopf",
+    # Eigene Helfer, deren erster Parameter ein `LocalizedStringKey` ist
+    # (`Darstellungsabschnitte.namenmenue`, `Schrittwahl`). Ein Literal dort
+    # wird zur Laufzeit nachgeschlagen, steht aber hinter keinem der oben
+    # genannten SwiftUI-Aufrufe — der Sammler sah es nicht („Effekt“ blieb im
+    # englischen Reiter deutsch). Neuer Helfer mit `LocalizedStringKey`-Titel:
+    # hier eintragen.
+    "namenmenue", "Schrittwahl",
 ]
 # Aufrufe, die eine *Liste* von Texten bekommen — die Hilfe baut ihre
 # Aufzaehlungen so. Hier steht der Text nicht hinter der Klammer, sondern

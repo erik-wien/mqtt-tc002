@@ -1229,6 +1229,7 @@
 "Uhr abfragen …" = "Query clock …";
 "Noch nicht abgefragt. Die Namen kommen von der Uhr." = "Not queried yet. The names come from the clock.";
 "Der Text geht als Bild an die Uhr, und ein Bild deckt Farbe und Effekt zu. Mit „Schrift der Uhr“ im Format geht beides." = "The text goes to the clock as an image, and an image covers color and effect. With “Clock font” in Format both work.";
+"Effekt" = "Effect";
 "Ein Effekt ersetzt die Hintergrundfarbe." = "An effect replaces the background color.";
 "Die Palette färbt nichts, solange weder Effekt noch Overlay noch „Text aus Palette“ sie nutzt." = "The palette colors nothing as long as neither an effect, an overlay nor “Paint text” uses it.";
 "Nur mit „Schrift der Uhr“: Dann malt die Uhr den Text selbst." = "Only with “Clock font”: then the clock paints the text itself.";
