@@ -366,6 +366,9 @@ public struct Einstellungen: Sendable {
         return gewaehlt.isEmpty ? uhren : gewaehlt
     }
 
+    /// Sucht eine Uhr ueber ihre Kennung.
+    public func uhr(id: UUID) -> Uhr? { uhren.first { $0.id == id } }
+
     /// Sucht eine Uhr ueber Name oder Adresse, ohne Ruecksicht auf Gross- und
     /// Kleinschreibung.
     public func uhr(benannt name: String) -> Uhr? {

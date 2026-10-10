@@ -27,8 +27,8 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Text")
     var text: String
 
-    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
-    var uhr: String?
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    var uhr: UhrEntity?
 
     @Parameter(title: "Icon-Nummer", description: "Nummer eines vorhandenen Icons.")
     var iconNummer: String?
@@ -123,7 +123,7 @@ struct MeldungSendenIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let einstellungen = Einstellungen.gelesen()
-        let ziele = try zieleBestimmen(einstellungen)
+        let ziele = try KurzbefehlFehler.ziele(einstellungen, uhr: uhr)
 
         // Die Formatangaben legen sich über das, was zuletzt unter „Senden“
         // eingestellt war. Eine verlangte Größe, die es zu dieser Schrift nicht
@@ -219,37 +219,6 @@ struct MeldungSendenIntent: AppIntent {
         return .result(dialog: IntentDialog(stringLiteral:
             lokf("An %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis))
     }
-
-    /// Die gemeinten Uhren, oder ein Fehler, der sagt was fehlt.
-    private func zieleBestimmen(_ e: Einstellungen) throws -> [Uhr] {
-        guard !e.uhren.isEmpty else {
-            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
-        }
-        let gewaehlt: [Uhr]
-        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
-            guard let gefunden = e.uhr(benannt: name) else {
-                throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Keine Uhr namens %@.", name)))
-            }
-            gewaehlt = [gefunden]
-        } else {
-            gewaehlt = e.ziele
-        }
-        // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
-        // wenigstens eine dieser Uhren ueber ihn geht — sonst scheiterte ein
-        // Kurzbefehl an einer Uhr aus einer Einrichtung, die er nicht benutzt.
-        if Einstellungen.brokerNoetig(fuer: gewaehlt), !e.brokerEingerichtet {
-            throw $text.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
-        }
-        let ohnePraefix = gewaehlt.filter { $0.wirksameBetriebsart == .mqtt && !$0.beschickbar }
-        guard ohnePraefix.isEmpty else {
-            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ohnePraefix.map(\.name).joined(separator: ", "))))
-        }
-        let ohneAdresse = gewaehlt.filter { $0.wirksameBetriebsart == .http && !$0.beschickbar }
-        guard ohneAdresse.isEmpty else {
-            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", ohneAdresse.map(\.name).joined(separator: ", "))))
-        }
-        return gewaehlt
-    }
 }
 
 /// Nimmt eine Meldung wieder von der Uhr — auf dem Weg, der für sie
@@ -266,8 +235,8 @@ struct MeldungLoeschenIntent: AppIntent {
                inclusiveRange: (1, 5))
     var platz: Int
 
-    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
-    var uhr: String?
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
         Summary("Platz \(\.$platz) von der Uhr löschen") { \.$uhr }
@@ -275,25 +244,7 @@ struct MeldungLoeschenIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let e = Einstellungen.gelesen()
-        guard !e.uhren.isEmpty else {
-            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
-        }
-        let ziele: [Uhr]
-        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
-            guard let gefunden = e.uhr(benannt: name) else {
-                throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Keine Uhr namens %@.", name)))
-            }
-            ziele = [gefunden]
-        } else {
-            ziele = e.ziele
-        }
-        let abgefragt = ziele.filter(\.beschickbar)
-        guard !abgefragt.isEmpty else {
-            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", ziele.map(\.name).joined(separator: ", "))))
-        }
-        if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
-            throw $platz.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
-        }
+        let abgefragt = try KurzbefehlFehler.ziele(e, uhr: uhr, nurBeschickbare: true)
         // Erst nach der Pruefung der Ziele, damit die Rueckfrage nur kommt,
         // wenn auch wirklich geloescht wuerde. Die Variante mit Text gibt es
         // ab iOS 18; davor fragt das System mit seinem Standardtext.
@@ -337,11 +288,11 @@ struct BildSendenIntent: AppIntent {
         "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "Bild", description: "Der Name, unter dem es im Editor gesichert wurde.")
-    var bild: String
+    @Parameter(title: "Bild", description: "Das Bild, wie es im Editor gesichert wurde.")
+    var bild: BildEntity
 
-    @Parameter(title: "Uhr", description: "Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
-    var uhr: String?
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    var uhr: UhrEntity?
 
     @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
@@ -360,7 +311,7 @@ struct BildSendenIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let e = Einstellungen.gelesen()
-        let name = bild.trimmingCharacters(in: .whitespaces)
+        let name = bild.id
         let bestand = Bildersammlung(ordner: Bilderordner.eigene)
         guard let gefunden = bestand.alle().first(where: { $0.name == name }) else {
             // Die Meldung nennt, was es gibt — ein Kurzbefehl hat keine Liste
@@ -372,7 +323,7 @@ struct BildSendenIntent: AppIntent {
                 : lokf("Kein Bild namens %@. Vorhanden: %@", name, alle)))
         }
 
-        let ziele = try zieleBestimmenFuerBild(e)
+        let ziele = try KurzbefehlFehler.ziele(e, uhr: uhr, nurBeschickbare: true)
         // Dieselbe Entscheidung wie in App und Werkzeug: ein Einzelbild als
         // Standbild, mehrere als GIF (`Bildsendung.rahmen`).
         let rahmen = try Bildsendung.rahmen(aus: gefunden.datei, dauer: (dauer ?? 0) > 0 ? dauer : nil)
@@ -392,33 +343,6 @@ struct BildSendenIntent: AppIntent {
             }
         }.value
         return .result(dialog: IntentDialog(stringLiteral: lokf("%@ geschickt.", gefunden.name)))
-    }
-
-    /// Dieselbe Reihe von Pruefungen wie bei den beiden anderen Kurzbefehlen —
-    /// eingerichtet, abgefragt, Broker vorhanden —, nur an den Feldern dieses
-    /// Kurzbefehls aufgehaengt, damit die Rueckfrage dort landet, wo sie
-    /// hingehoert.
-    private func zieleBestimmenFuerBild(_ e: Einstellungen) throws -> [Uhr] {
-        guard !e.uhren.isEmpty else {
-            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“.")))
-        }
-        let gewaehlt: [Uhr]
-        if let name = uhr?.trimmingCharacters(in: .whitespaces), !name.isEmpty {
-            guard let ziel = e.uhr(benannt: name) else {
-                throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Keine Uhr namens %@.", name)))
-            }
-            gewaehlt = [ziel]
-        } else {
-            gewaehlt = e.ziele
-        }
-        let abgefragt = gewaehlt.filter(\.beschickbar)
-        guard !abgefragt.isEmpty else {
-            throw $uhr.needsValueError(IntentDialog(stringLiteral: lokf("Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen.", gewaehlt.map(\.name).joined(separator: ", "))))
-        }
-        if Einstellungen.brokerNoetig(fuer: abgefragt), !e.brokerEingerichtet {
-            throw $bild.needsValueError(IntentDialog(stringLiteral: lok("Kein Broker eingerichtet. In der App unter „Einstellungen“ Adresse und Port eintragen und „Verbindung prüfen“ drücken.")))
-        }
-        return abgefragt
     }
 }
 

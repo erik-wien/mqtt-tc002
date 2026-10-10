@@ -422,11 +422,11 @@
 "Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen." = "No icon with the number or name %@. Check under “Icon” in the app.";
 "An %@ geschickt." = "Sent to %@.";
 "Noch keine Uhr eingerichtet. Das geht in der App unter „Einstellungen“." = "No clock set up yet. That's done in the app under “Settings”.";
-"Keine Uhr namens %@." = "No clock named %@.";
+"Diese Uhr gibt es in der App nicht mehr. Im Kurzbefehl eine andere wählen." = "This clock no longer exists in the app. Choose another one in the shortcut.";
 "Noch nicht abgefragt: %@. In der App unter „Einstellungen“ auf „Abfragen“ tippen." = "Not queried yet: %@. Tap “Query” under “Settings” in the app.";
 "Platz %d entfernt." = "Slot %d removed.";
 "Uhr" = "Clock";
-"Name oder Adresse. Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten." = "Name or address. Empty means: the targets selected in the app, otherwise all configured ones.";
+"Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten." = "Empty means: the targets selected in the app, otherwise all configured ones.";
 "Icon-Nummer" = "Icon number";
 "Nummer eines vorhandenen Icons." = "Number of an existing icon.";
 "Dauer in Sekunden" = "Duration in seconds";
@@ -507,7 +507,7 @@
 "Und alle folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung." = "And all of them follow the method that is set for the clock — there is no separate entry for it in the shortcut. A tool that sends differently from the app would be a trap: the same slot, the same clock, a different channel, and nobody would see it. The same holds for the command line tool of the Mac version.";
 "Kurzbefehle" = "Shortcuts";
 "Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung löschen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls." = "The app comes with five shortcuts: “Show on clock”, “Send image”, “Send message”, “Dismiss message” and “Remove from clock”. They appear in the Shortcuts app by themselves and can be placed into a shortcut of your own, into an automation or onto a button; Siri knows them as well.";
-"Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Platz — und das ganze Format." = "Only the text is required. Everything else is optional and sits under the expandable details in the Shortcuts app: clock, icon number, duration, slot — and the whole format.";
+"Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Platz — und das ganze Format. Die Uhr wählst du aus der Liste der eingerichteten Uhren, du tippst keinen Namen. Fehlt in der App etwas — keine Uhr, kein Broker, eine Uhr ohne Abfrage —, sagt der Kurzbefehl das mit einer Meldung und fragt nicht nach einem neuen Wert." = "Only the text is required. Everything else is optional and sits under the expandable details in the Shortcuts app: clock, icon number, duration, slot — and the whole format. You pick the clock from the list of configured clocks instead of typing a name. If something is missing in the app — no clock, no broker, a clock that has not been queried — the shortcut says so in a message and does not ask for a new value.";
 "Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine." = "Whatever is not given comes from what was last set under Send. So a shortcut without any format details sends exactly what the app would have sent; one with a single detail changes exactly that one.";
 "Die Formatangaben" = "The format details";
 "Weg, Schriftart, Farbe, die beiden Ausrichtungen und das Tempo sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett, Großbuchstaben und „Icon mitscrollen“ sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier." = "Method, typeface, color, both alignments and speed are pop-up menus — there is nothing to mistype. Bold, capital letters and “Scroll icon along” are switches, margin and gap are numbers from 0 to 3. They all do what the controls of the same name under Send do; whatever has no effect there — bold with a font that has no bold cut, say — has none here either.";
@@ -665,7 +665,7 @@
 "Kein Bild namens „%@“. „mqtttc002 bilder“ zeigt alle." = "No image named \"%@\". \"mqtttc002 bilder\" lists them all.";
 "„%@“ gesendet an „%@“ (%d Byte)" = "\"%@\" sent to \"%@\" (%d bytes)";
 "Bild" = "Image";
-"Der Name, unter dem es im Editor gesichert wurde." = "The name it was saved under in the editor.";
+"Das Bild, wie es im Editor gesichert wurde." = "The image as saved in the editor.";
 "Noch keine Bilder. Sie entstehen im Editor am Mac und am iPad." = "No images yet. They are made in the editor on the Mac and the iPad.";
 "Kein Bild namens %@. Vorhanden: %@" = "No image named %@. Available: %@";
 "%@ geschickt." = "%@ sent.";
@@ -673,7 +673,7 @@
 "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon." = "Sends a finished 52 × 16 display from the stock to a configured Ulanzi TC002. It fills the screen and replaces text and icon.";
 "Bild schicken" = "Send image";
 "Bild ${bild} an die Uhr schicken" = "Send image ${bild} to the clock";
-"„Bild schicken“ nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Platz und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen." = "“Send image” takes the name of a 52 × 16 display from the stock and sends it to a slot. Of the settings above only clock, slot and duration apply there — everything else formats text, which an image has none of. If it does not know the name, the follow-up question lists all the ones there are.";
+"„Bild schicken“ nimmt eine 52 × 16-Anzeige aus dem Bestand, die du aus einer Liste wählst, und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Platz und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Gibt es das Bild nicht mehr, nennt die Rückfrage alle vorhandenen." = "“Send image” takes a 52 × 16 display from the stock, chosen from a list, and sends it to a slot. Of the settings above only clock, slot and duration apply there — everything else formats text, which an image has none of. If the image no longer exists, the follow-up question lists all the ones there are.";
 
 /* 18.09.2026 — „Senden als“ ist entfallen: Die App waehlt den Weg selbst
    (SendeWeg im Kern). Die Saetze hier sagen, was sie statt dessen tut. */

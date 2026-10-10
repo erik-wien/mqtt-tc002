@@ -373,8 +373,8 @@ public enum HilfeInhalt {
                 .absatz("Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung löschen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
 
                 .ueberschrift("Meldung schicken"),
-                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Platz — und das ganze Format."),
-                .absatz("„Bild schicken“ nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Platz und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
+                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Platz — und das ganze Format. Die Uhr wählst du aus der Liste der eingerichteten Uhren, du tippst keinen Namen. Fehlt in der App etwas — keine Uhr, kein Broker, eine Uhr ohne Abfrage —, sagt der Kurzbefehl das mit einer Meldung und fragt nicht nach einem neuen Wert."),
+                .absatz("„Bild schicken“ nimmt eine 52 × 16-Anzeige aus dem Bestand, die du aus einer Liste wählst, und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Platz und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Gibt es das Bild nicht mehr, nennt die Rückfrage alle vorhandenen."),
                 .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
 
                 .ueberschrift("Die Formatangaben"),
