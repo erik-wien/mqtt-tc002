@@ -581,6 +581,12 @@ the font therefore never turns a letter into `?`. Capitalization (`uppercase`,
 
 🔬 On the measured device the global setting `uppercase` is `true`.
 
+🔬 **Umlauts measured** (TC002, NG 1.2.2, 10.10.2026, layout read back via
+`display/screen`): “Grüße äöß” in `small` appears in capitals (`uppercase`), the
+umlauts with their dots, no character missing or turned into `?`; “ÄÖÜ €°” in
+`matrix-chunky8` is complete as well. The factory firmware's defect
+(`firmware-observations.md` §7) does not exist under NG.
+
 📄 **Colored parts:** instead of a string, `text` takes an array of `{"text":
 string, "color": color}`. The parts are drawn left to right, each advancing by
 its own width. A missing or non-string `text` becomes `""`; a part without

@@ -597,6 +597,12 @@ hinaus und behält Akzente. Eine Zahl oder ein bool als `text` wird übergangen.
 
 🔬 Am gemessenen Gerät steht die globale Einstellung `uppercase` auf `true`.
 
+🔬 **Umlaute gemessen** (TC002, NG 1.2.2, 10.10.2026, Layout gelesen über
+`display/screen`): „Grüße äöß“ in `small` erscheint in Großbuchstaben
+(`uppercase`), die Umlaute mit ihren Punkten, kein Zeichen fehlt oder wird `?`;
+„ÄÖÜ €°“ in `matrix-chunky8` ebenso vollständig. Der
+Mangel der Werksfirmware (`firmware-beobachtungen.md` §7) besteht unter NG nicht.
+
 📄 **Eingefärbte Teile:** Statt einer Zeichenkette nimmt `text` ein Feld von
 `{"text": string, "color": Farbe}`. Die Teile werden von links nach rechts
 gezeichnet, jedes um seine eigene Breite vorrückend. Fehlt `text` oder ist es
