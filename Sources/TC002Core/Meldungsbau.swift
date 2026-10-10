@@ -116,6 +116,10 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     /// ihre Anzeigen bekommen dann wie jede neue die Vorgabe. Ausgeschaltet ist
     /// `Lebensdauer.aus`.
     public var lebensdauer: Lebensdauer?
+    /// Hintergrund, Effekt, Overlay und Palette, wie die Oberfläche sie gewählt
+    /// hat. `nil` heißt nichts gewählt; ältere Dateien kennen den Schlüssel nicht.
+    /// Was davon hinausgeht, entscheidet der Weg (`Darstellungswahl.darstellung`).
+    public var darstellung: Darstellungswahl?
 
     /// Was die Uhr bekommt: die gewählte oder die Vorgabe; `nil`, wenn
     /// ausgeschaltet.
@@ -138,7 +142,8 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
                 tempo: Lauftempo = .mittel,
                 iconLaeuftMit: Bool = false,
                 dauer: Int? = nil,
-                lebensdauer: Lebensdauer? = nil) {
+                lebensdauer: Lebensdauer? = nil,
+                darstellung: Darstellungswahl? = nil) {
         self.text = text
         self.weg = weg
         self.schrift = schrift
@@ -154,6 +159,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
         self.iconLaeuftMit = iconLaeuftMit
         self.dauer = dauer
         self.lebensdauer = lebensdauer
+        self.darstellung = darstellung
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. geschickt wird — die einzige
@@ -384,10 +390,12 @@ public enum Meldungsbau {
                          herkunft: Meldungsherkunft(
                             optionen: o,
                             iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }),
-                         lebensdauer: o.wirksameLebensdauer)
+                         lebensdauer: o.wirksameLebensdauer,
+                         darstellung: o.darstellung?.darstellung(weg: .text))
         case .pixel:
             return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer,
-                         lebensdauer: o.wirksameLebensdauer)
+                         lebensdauer: o.wirksameLebensdauer,
+                         darstellung: o.darstellung?.darstellung(weg: .pixel))
         }
     }
 

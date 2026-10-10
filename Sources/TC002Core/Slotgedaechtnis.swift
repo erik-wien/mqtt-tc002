@@ -63,6 +63,10 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// Anzeige.
     public var lebensdauer: Int?
     public var lebensablauf: String?
+    /// Die Darstellung (Hintergrund, Effekt, Overlay, Palette). Optional aus
+    /// demselben Grund wie `lebensdauer`: ältere Dateien tragen sie nicht und
+    /// bleiben lesbar; `nil` heißt nichts gewählt.
+    public var darstellung: Darstellungswahl?
     /// Fingerabdruck der Pixel, die diese Regler zum Sendezeitpunkt ergeben
     /// haben (`Slotgedaechtnis.pruefsumme(pixel:)`). Der Kern dieses Typs:
     /// Weicht die ueber den Broker gesehene Nutzlast davon ab — zerlegt in
@@ -78,7 +82,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
                 fett: Bool, grossbuchstaben: Bool, rand: Int, abstand: Int, waagrecht: String,
                 senkrecht: String, farbe: String, tempo: String, iconLaeuftMit: Bool,
                 icon: String?, iconKante: Int? = nil, dauer: Int?,
-                lebensdauer: Int? = nil, lebensablauf: String? = nil, pruefsumme: String) {
+                lebensdauer: Int? = nil, lebensablauf: String? = nil,
+                darstellung: Darstellungswahl? = nil, pruefsumme: String) {
         self.platz = platz
         self.text = text
         self.weg = weg
@@ -98,6 +103,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
         self.dauer = dauer
         self.lebensdauer = lebensdauer
         self.lebensablauf = lebensablauf
+        self.darstellung = darstellung
         self.pruefsumme = pruefsumme
     }
 
@@ -124,7 +130,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
                                 lebensdauer: lebensdauer.map {
                                     Lebensdauer(sekunden: $0,
                                                 ablauf: Lebensablauf(rawValue: lebensablauf ?? "") ?? .entfernen)
-                                })
+                                },
+                                darstellung: darstellung)
     }
 }
 
@@ -292,6 +299,7 @@ public struct Slotgedaechtnis: Sendable {
             dauer: optionen.dauer,
             lebensdauer: optionen.lebensdauer?.sekunden,
             lebensablauf: optionen.lebensdauer.flatMap { $0.ablauf == .entfernen ? nil : $0.ablauf.rawValue },
+            darstellung: optionen.darstellung,
             pruefsumme: Self.pruefsumme(pixel: pixel))
         // Ein Platz traegt entweder Regler oder ein Bild, nie beides: Wer hier
         // schreibt, hat zuletzt gesendet, und ein Bild von vorher gehoert
