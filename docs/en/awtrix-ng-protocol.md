@@ -1404,3 +1404,19 @@ checked on a device):
 - ❓ **Whether the behaviors measured in §2 on 1.1.0** (a space at the edge of
   the prefix counts; a prefix change takes effect only on a new connection)
   **carry over to 1.2.2/TC002.** The docs require a restart for `mqttPrefix`.
+- ❓ **Control (moodlight, settings, events):** whether `kelvin` outside
+  1000–40000 is rejected (only `brightness` is noted as unchecked), which
+  kelvin → RGB conversion applies and how `GET /api/v1/display` writes the
+  moodlight color; whether `GET /api/v1/display/screen` returns black while the
+  panel is off, or the moodlight color while a moodlight runs (§7.3 only says
+  "the colors of the apps"); whether `PATCH /api/v1/settings` merges a nested
+  object (`scroll`, `weekdayBar`) with the stored one or replaces it (the app
+  therefore sends the whole object); the weekday names in `weekendDays`
+  (assumed: English, lowercase, like `sunday`/`saturday` in the default); the
+  form of `error` in `<P>/event/error` (word or error body); whether `select`
+  is the middle button and `knob` the knob press; an upper bound for `turn` in
+  `<P>/event/knob` (the app discards magnitudes above 1000).
+- ❓ **TLS certificate:** what `PUT /api/v1/mqtt/tls/ca` answers, whether a body
+  without a PEM block is `422` (the app checks the `-----BEGIN CERTIFICATE-----`
+  header itself) and under which key the SHA-256 fingerprint appears in `GET
+  /api/v1/mqtt/tls`.

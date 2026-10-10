@@ -83,7 +83,8 @@ final class BenachrichtigungZustandTests: XCTestCase {
     func testDieAntwortenAufBenachrichtigungenWerdenMitgehoert() {
         XCTAssertEqual(AppZustand.themen(fuer: mqttUhr),
                        ["kue/uhr/availability", "kue/uhr/cmd/apps/pushed/#",
-                        "kue/uhr/cmd/notify/#", "kue/uhr/cmd/apps/+/enabled/result"])
+                        "kue/uhr/cmd/notify/#", "kue/uhr/cmd/apps/+/enabled/result"]
+                       + NGThema.zustandsthemen(praefix: "kue/uhr"))
     }
 
     func testBenachrichtigenGehtJeUhrInIhremMassAufCmdNotify() async throws {

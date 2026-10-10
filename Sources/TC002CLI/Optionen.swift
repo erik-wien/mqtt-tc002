@@ -27,6 +27,26 @@ struct Optionen {
         case layout(datei: String)
         /// Das Display der Uhr lesen und als Text ausgeben.
         case bildschirm
+        // Fernsteuerung und Zustand (docs/awtrix-ng-protokoll.md §3.2, §4.2, §10, §11.1).
+        /// Das Panel ein- oder ausschalten.
+        case display(an: Bool)
+        /// Die Helligkeit des Panels, 0–255.
+        case helligkeit(Int)
+        case moodlight(Moodlight)
+        case moodlightAus
+        case indikator(Indikator)
+        case indikatorAus(nummer: Int)
+        /// Eine Anzeige weiter oder zurück.
+        case weiter, zurueck
+        /// Den Zustand der Uhr ausgeben.
+        case zustand
+        /// Die Einstellungen der Uhr ausgeben.
+        case einstellungen
+        case einstellungenSetzen(schluessel: String, wert: String)
+        /// Der TLS-Stand für MQTT und die CA der Uhr (nie TLS selbst).
+        case tls
+        case tlsCA(datei: String)
+        case tlsCAEntfernen
         case hilfe
         case fassung
     }
@@ -71,6 +91,16 @@ struct Optionen {
     /// Die erste Option, die nur „senden“ und „nachricht“ kennen — für die
     /// Meldung, wenn sie bei einem anderen Befehl steht.
     var darstellungsoption: String?
+    /// `--farbe` stand da (die Vorgabe `#00FF66` gehört dem Text, nicht dem Moodlight).
+    var farbeAngegeben = false
+    var kelvin: Int?
+    var steuerhelligkeit: Int?
+    var blinken: Int?
+    var blenden: Int?
+    /// Die erste Option nur für Moodlight bzw. Anzeiger — für die Meldung, wenn sie
+    /// bei einem anderen Befehl steht.
+    var moodlightoption: String?
+    var indikatoroption: String?
 
     enum Fehler: Error, LocalizedError {
         case unbekannteOption(String)
@@ -94,6 +124,10 @@ struct Optionen {
         case keineGrafikfarbe(option: String, wert: String)
         /// Text und Grafik zugleich.
         case grafikMitText
+        /// Ein Befehl, dem ein Wort fehlt (`display` ohne `an`/`aus`).
+        case unvollstaendig(befehl: String, erwartet: String)
+        /// Ein Wort, das der Befehl nicht kennt.
+        case ueberzaehligesWort(befehl: String, wort: String)
 
         var errorDescription: String? {
             switch self {
@@ -127,6 +161,10 @@ struct Optionen {
                 return lokf("„%@“ erwartet #RRGGBB oder „palette“, bekam aber „%@“.", o, w)
             case .grafikMitText:
                 return lok("Ein Diagramm oder Fortschritt hat keinen Text. Entweder Text angeben oder --balken, --linie, --fortschritt.")
+            case .unvollstaendig(let b, let e):
+                return lokf("„%@“ erwartet %@.", b, e)
+            case .ueberzaehligesWort(let b, let w):
+                return lokf("„%@“ kennt das Wort „%@“ nicht.", b, w)
             }
         }
     }
@@ -167,6 +205,24 @@ struct Optionen {
             o.befehl = .layout(datei: "")
         case "bildschirm", "screen":
             o.befehl = .bildschirm
+        case "display":
+            o.befehl = .display(an: true)
+        case "helligkeit", "brightness":
+            o.befehl = .helligkeit(0)
+        case "moodlight":
+            o.befehl = .moodlightAus
+        case "indikator", "indicator":
+            o.befehl = .indikatorAus(nummer: 0)
+        case "weiter", "next":
+            o.befehl = .weiter
+        case "zurueck", "previous":
+            o.befehl = .zurueck
+        case "zustand", "state":
+            o.befehl = .zustand
+        case "einstellungen", "settings":
+            o.befehl = .einstellungen
+        case "tls":
+            o.befehl = .tls
         case "hilfe", "help", "--help", "-h":
             return Optionen(befehl: .hilfe)
         case "fassung", "version", "--version":
@@ -245,12 +301,17 @@ struct Optionen {
             case "--fortschritt", "--progress":   o.grafik.fortschritt = try zahl(); grafikMerken()
             case "--fortschrittsfarbe", "--progress-color": o.grafik.fortschrittsfarbe = try grafikfarbe(); grafikMerken()
             case "--fortschrittsgrund", "--progress-track": o.grafik.fortschrittsgrund = try farbe(); grafikMerken()
+            case "--kelvin":              o.kelvin = try zahl(); o.moodlightoption = o.moodlightoption ?? arg
+            case "--helligkeit", "--brightness": o.steuerhelligkeit = try zahl(); o.moodlightoption = o.moodlightoption ?? arg
+            case "--blinken", "--blink":  o.blinken = try zahl(); o.indikatoroption = o.indikatoroption ?? arg
+            case "--blenden", "--fade":   o.blenden = try zahl(); o.indikatoroption = o.indikatoroption ?? arg
             case "--an", "--to":          o.ziele.append(try wert())
             case "--name":                o.anzeigename = try wert(); o.nameAngegeben = true
             case "--farbe", "--color":
                 let w = try wert()
                 guard Self.istFarbe(w) else { throw Fehler.keineFarbe(w) }
                 o.farbe = w
+                o.farbeAngegeben = true
             case "--icon":                o.iconNummer = try wert()
             case "--schrift", "--font":   o.schrift = try wert()
             case "--groesse", "--size":   o.groesse = Double(try zahl())
@@ -311,6 +372,7 @@ struct Optionen {
             if let option = o.darstellungsoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
         }
         if o.behalten, o.lebensdauer != nil || o.ablauf != nil { throw Fehler.behaltenMitLebensdauer }
+        try o.steuerbefehlPruefen(freie)
         switch o.befehl {
         case .senden:
             guard !freierText.isEmpty || o.grafikGesetzt else { throw Fehler.fehlenderText }
@@ -343,6 +405,115 @@ struct Optionen {
             break
         }
         return o
+    }
+
+    /// Die Befehle der Fernsteuerung: ihre Wörter und Optionen prüfen und die
+    /// Werte in den Befehl legen. Die Bereiche prüft der Kern (`Moodlight`,
+    /// `Indikator`), damit dieselben Grenzen gelten wie in der App.
+    private mutating func steuerbefehlPruefen(_ freie: [String]) throws {
+        let name: String
+        switch befehl {
+        case .display: name = "display"
+        case .helligkeit: name = "helligkeit"
+        case .moodlightAus, .moodlight: name = "moodlight"
+        case .indikatorAus, .indikator: name = "indikator"
+        case .weiter: name = "weiter"
+        case .zurueck: name = "zurueck"
+        case .zustand: name = "zustand"
+        case .einstellungen: name = "einstellungen"
+        case .tls: name = "tls"
+        default:
+            if let option = moodlightoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "moodlight") }
+            if let option = indikatoroption { throw Fehler.optionGiltNurFuer(option: option, befehl: "indikator") }
+            return
+        }
+        let istMoodlight = name == "moodlight", istIndikator = name == "indikator"
+        if !istMoodlight, let option = moodlightoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "moodlight") }
+        if !istIndikator, let option = indikatoroption { throw Fehler.optionGiltNurFuer(option: option, befehl: "indikator") }
+        if !istMoodlight, !istIndikator, farbeAngegeben {
+            // `--farbe` gehört dem Text, dem Moodlight und dem Anzeiger.
+            throw Fehler.optionGiltNurFuer(option: "--farbe", befehl: "moodlight")
+        }
+        func keinWeiteres(ab i: Int) throws {
+            if freie.count > i { throw Fehler.ueberzaehligesWort(befehl: name, wort: freie[i]) }
+        }
+        switch befehl {
+        case .display:
+            guard let w = freie.first?.lowercased() else { throw Fehler.unvollstaendig(befehl: name, erwartet: "an / aus") }
+            switch w {
+            case "an", "ein", "on": befehl = .display(an: true)
+            case "aus", "off": befehl = .display(an: false)
+            default: throw Fehler.unvollstaendig(befehl: name, erwartet: "an / aus")
+            }
+            try keinWeiteres(ab: 1)
+        case .helligkeit:
+            guard let w = freie.first else { throw Fehler.unvollstaendig(befehl: name, erwartet: "0–255") }
+            guard let n = Int(w) else { throw Fehler.keineZahl(option: name, wert: w) }
+            guard (0...255).contains(n) else {
+                throw SteuerungsFehler.ausserhalb(feld: "brightness", wert: String(n), bereich: "0–255")
+            }
+            befehl = .helligkeit(n)
+            try keinWeiteres(ab: 1)
+        case .moodlightAus, .moodlight:
+            if let w = freie.first?.lowercased(), ["aus", "off"].contains(w) {
+                guard !farbeAngegeben, kelvin == nil, steuerhelligkeit == nil else {
+                    throw Fehler.ueberzaehligesWort(befehl: "moodlight aus", wort: moodlightoption ?? "--farbe")
+                }
+                befehl = .moodlightAus
+                try keinWeiteres(ab: 1)
+                return
+            }
+            // Eine Farbe darf auch als Wort dastehen: `moodlight "#FF8800"`.
+            var wahl = farbeAngegeben ? self.farbe : nil
+            if let w = freie.first {
+                guard Self.istFarbe(w) else { throw Fehler.keineFarbe(w) }
+                wahl = w
+                try keinWeiteres(ab: 1)
+            }
+            let licht = Moodlight(farbe: wahl, kelvin: kelvin, helligkeit: steuerhelligkeit)
+            try licht.pruefen()
+            befehl = .moodlight(licht)
+        case .indikatorAus, .indikator:
+            guard let erstes = freie.first else { throw Fehler.unvollstaendig(befehl: name, erwartet: "1–3") }
+            guard let n = Int(erstes), Indikator.nummern.contains(n) else {
+                throw SteuerungsFehler.ungueltigeKennziffer(Int(erstes) ?? 0)
+            }
+            if let w = freie.dropFirst().first?.lowercased(), ["aus", "off"].contains(w) {
+                guard !farbeAngegeben, blinken == nil, blenden == nil else {
+                    throw Fehler.ueberzaehligesWort(befehl: "indikator aus", wort: indikatoroption ?? "--farbe")
+                }
+                befehl = .indikatorAus(nummer: n)
+                try keinWeiteres(ab: 2)
+                return
+            }
+            guard farbeAngegeben else { throw Fehler.unvollstaendig(befehl: name, erwartet: "aus / --farbe #RRGGBB") }
+            try keinWeiteres(ab: 1)
+            let stand = Indikator(nummer: n, farbe: farbe, blinkMs: blinken ?? 0, fadeMs: blenden ?? 0)
+            try stand.pruefen()
+            befehl = .indikator(stand)
+        case .weiter, .zurueck, .zustand:
+            try keinWeiteres(ab: 0)
+        case .einstellungen:
+            guard let w = freie.first else { return }
+            guard ["setzen", "set"].contains(w.lowercased()) else {
+                throw Fehler.ueberzaehligesWort(befehl: name, wort: w)
+            }
+            guard freie.count >= 3 else { throw Fehler.unvollstaendig(befehl: name + " setzen", erwartet: "<Schlüssel> <Wert>") }
+            try keinWeiteres(ab: 3)
+            befehl = .einstellungenSetzen(schluessel: freie[1], wert: freie[2])
+        case .tls:
+            guard let w = freie.first else { return }
+            guard w.lowercased() == "ca" else { throw Fehler.ueberzaehligesWort(befehl: name, wort: w) }
+            guard freie.count >= 2 else { throw Fehler.unvollstaendig(befehl: "tls ca", erwartet: "<Datei.pem> / entfernen") }
+            if ["entfernen", "remove"].contains(freie[1].lowercased()) {
+                befehl = .tlsCAEntfernen
+            } else {
+                befehl = .tlsCA(datei: freie[1])
+            }
+            try keinWeiteres(ab: 2)
+        default:
+            break
+        }
     }
 
     /// Entfernt die Argumente, die Foundation fuer sich beansprucht, samt ihrem

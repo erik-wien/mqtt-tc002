@@ -31,6 +31,17 @@ AUFRUF
   mqtttc002 icons                  die vorhandenen Icons auflisten
   mqtttc002 bilder                 die vorhandenen 16x52-Bilder auflisten
   mqtttc002 effekte                Effekte, Overlays und Paletten der Uhr auflisten
+  mqtttc002 display an|aus         das Panel ein- oder ausschalten
+  mqtttc002 helligkeit <0-255>     die Helligkeit des Panels (roh, kein Prozentsatz)
+  mqtttc002 moodlight ...          das Panel einfarbig fluten, oder "moodlight aus"
+  mqtttc002 indikator <1-3> ...    einen der drei Anzeiger setzen, oder "indikator <1-3> aus"
+  mqtttc002 weiter | zurueck       eine Anzeige weiter oder zurueck
+  mqtttc002 zustand                den Zustand der Uhr ausgeben
+  mqtttc002 einstellungen          die Einstellungen der Uhr nach Gruppen ausgeben
+  mqtttc002 einstellungen setzen <Schluessel> <Wert>   eine Einstellung aendern
+  mqtttc002 tls                    der TLS-Stand fuer MQTT (nur lesen)
+  mqtttc002 tls ca <Datei.pem>     die CA des Brokers auf die Uhr laden
+  mqtttc002 tls ca entfernen       die hochgeladene CA entfernen
   mqtttc002 hilfe                  diesen Text
 
 Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
@@ -49,6 +60,19 @@ unter einem der Plaetze (meldung1 bis meldung5) abgelegt.
 „bildschirm" liest das Display ueber HTTP bzw. MQTT (cmd/screen/get -> state/screen)
 und zeichnet es als Text: je Pixel ein Zeichen, "." ist schwarz, "#" die erste
 andere Farbe in Leserichtung, dann A, B, ...; darunter die Farben als #RRGGBB.
+
+STEUERUNG DER UHR
+  Alle Befehle gehen an die Uhren wie bei "senden" (--an, --trocken); "zustand",
+  "einstellungen" und "tls" lesen nur. TLS selbst schaltet das Werkzeug nie ein.
+  moodlight --farbe #RRGGBB | --kelvin 1000-40000 [--helligkeit 0-255]
+                      Farbe oder Kelvin, nicht beides; fehlende Angaben behalten ihren Wert
+  indikator <1-3> --farbe #RRGGBB [--blinken <ms>] [--blenden <ms>]   0-65535 ms
+  einstellungen setzen: Schluessel der Uhr wie "volume", "clockFace", "transitionEffect";
+                      Unterfelder als "scroll.speed" oder "weekdayBar.show"; Ja/Nein als
+                      ein/aus. "einstellungen" zeigt die Schluessel. "enlargeApps" und
+                      alles aus der Systemkonfiguration (WLAN, Broker, Firmware) stellt
+                      das Werkzeug nicht ein.
+  tls, tls ca: nur ueber HTTP, die Uhr braucht eine Adresse.
 
 OPTIONEN FUER „senden"
   --an <Uhr>          Name oder Adresse; mehrfach moeglich.
@@ -121,6 +145,10 @@ BEISPIELE
   mqtttc002 loeschen cli
   mqtttc002 layout drei-felder.json --name meldung2 --trocken
   mqtttc002 bildschirm --an Kueche
+  mqtttc002 display aus --an Kueche
+  mqtttc002 moodlight --kelvin 2700 --helligkeit 80
+  mqtttc002 indikator 1 --farbe "#FF0000" --blinken 500
+  mqtttc002 einstellungen setzen volume 40
 
 Zu lange Texte laufen von selbst durch; das macht die App genauso.
 """
@@ -266,6 +294,9 @@ func lauf() throws {
         return
     }
 
+    // Nur über HTTP, auch für MQTT-Uhren: der TLS-Stand und die CA der Uhr.
+    if try tlsBefehl(optionen.befehl, uhren: gewaehlte, trocken: optionen.trocken) { return }
+
     // Erst jetzt, wo die Ziele feststehen: Ein Broker ist nur noetig, wenn
     // wenigstens eine dieser Uhren ueber ihn geht. Wer ausschliesslich ueber
     // HTTP sendet, soll hier nicht an einer Bedingung scheitern, die seine
@@ -327,6 +358,8 @@ func lauf() throws {
         }
         guard fehler.isEmpty else { throw Abbruch(fehler.joined(separator: "\n")) }
     }
+
+    if try steuerbefehl(optionen, gewaehlte: gewaehlte, einstellungen: einstellungen, anAlle: anAlle) { return }
 
     switch optionen.befehl {
     case .senden(let text):
@@ -529,6 +562,9 @@ func lauf() throws {
             try anzeigen.umschalten(auf: name)
         }
 
+    case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
+         .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen:
+        break                                    // oben schon abgehandelt
     case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt
     }

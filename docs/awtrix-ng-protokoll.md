@@ -1441,3 +1441,20 @@ am Gerät geprüft):
   Rand des Präfixes zählt mit; Präfixwechsel greift erst bei neuer Verbindung)
   **auf 1.2.2/TC002 übertragen.** Die Doku verlangt für `mqttPrefix` einen
   Neustart.
+- ❓ **Steuerung (Moodlight, Einstellungen, Ereignisse):** ob `kelvin` außerhalb
+  von 1000–40000 abgewiesen wird (nur `brightness` ist als ungeprüft
+  vermerkt), welche Umrechnung Kelvin → RGB gilt und in welcher Schreibweise
+  `GET /api/v1/display` die Farbe des Moodlights nennt; ob `GET
+  /api/v1/display/screen` bei ausgeschaltetem Panel oder laufendem Moodlight
+  Schwarz bzw. die Moodlightfarbe liefert (§7.3 nennt nur „die Farben der
+  Apps“); ob `PATCH /api/v1/settings` ein verschachteltes Objekt (`scroll`,
+  `weekdayBar`) mit dem gespeicherten zusammenführt oder ersetzt (die App
+  schickt darum das ganze Objekt); die Wochentagsnamen in `weekendDays`
+  (angenommen: englisch, klein, wie `sunday`/`saturday` in der Vorgabe); die
+  Form von `error` in `<P>/event/error` (Wort oder Fehlerrumpf); ob `select` die
+  mittlere Taste und `knob` der Druck auf den Drehknopf ist; eine Obergrenze
+  für `turn` in `<P>/event/knob` (die App verwirft Beträge über 1000).
+- ❓ **TLS-Zertifikat:** was `PUT /api/v1/mqtt/tls/ca` antwortet, ob ein Rumpf
+  ohne PEM-Block `422` ist (die App prüft den Kopf `-----BEGIN CERTIFICATE-----`
+  selbst) und unter welchem Schlüssel der SHA-256-Fingerabdruck in `GET
+  /api/v1/mqtt/tls` steht.
