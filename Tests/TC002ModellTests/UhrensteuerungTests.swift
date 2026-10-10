@@ -264,4 +264,96 @@ final class UhrensteuerungTests: XCTestCase {
         XCTAssertNil(z.aktiveAnzeige[uhr.id])
         XCTAssertNil(z.drehknopf[uhr.id])
     }
+
+    // MARK: - Steuerungsseite
+
+    /// Zwei HTTP-Uhren an zwei virtuellen Uhren, beide gewählt.
+    private func zweiUhren() throws -> (AppZustand, Uhr, Uhr, Uhrenserver, Uhrenserver) {
+        var gestartet: [(Uhrenserver, UInt16)] = []
+        while gestartet.count < 2 {
+            let port = UInt16.random(in: 20_000...60_000)
+            let s = Uhrenserver(port: port)
+            if (try? s.starten()) != nil { gestartet.append((s, port)) }
+        }
+        let a = Uhr(name: "Küche", host: "127.0.0.1:\(gestartet[0].1)", praefix: "", betriebsart: .http)
+        let b = Uhr(name: "Büro", host: "127.0.0.1:\(gestartet[1].1)", praefix: "", betriebsart: .http)
+        server = gestartet[0].0
+        addTeardownBlock { gestartet[1].0.beenden() }
+        return (try zustand(mit: [a, b]), a, b, gestartet[0].0, gestartet[1].0)
+    }
+
+    func testEinBefehlMitKennungTrifftNurDieseUhr() async throws {
+        let (z, a, b, sa, sb) = try zweiUhren()
+        let nur = await z.panelSchalten(an: false, fuer: b.id)
+        XCTAssertTrue(nur.ganz)
+        XCTAssertEqual(nur.ziele, 1)
+        XCTAssertTrue(sa.zustand.power, "die andere gewählte Uhr bleibt an")
+        XCTAssertFalse(sb.zustand.power)
+        let alle = await z.panelSchalten(an: true)
+        XCTAssertEqual(alle.ziele, 2, "ohne Kennung gelten alle gewählten")
+        XCTAssertTrue(sb.zustand.power)
+        _ = a
+    }
+
+    func testEineUnbekannteKennungSendetNichts() async throws {
+        let (z, _, _, sa, sb) = try zweiUhren()
+        let b = await z.panelSchalten(an: false, fuer: UUID())
+        XCTAssertEqual(b, Sendebilanz(erreicht: [], ziele: 0))
+        XCTAssertTrue(sa.zustand.power)
+        XCTAssertTrue(sb.zustand.power)
+    }
+
+    func testEinstellungSetzenZerlegtSchluesselUndLiestDenStandZurueck() async throws {
+        let (z, uhr, s) = try httpUhr()
+        await z.zustandAbfragen(uhr.id)
+        let b = await z.einstellungSetzen("scroll.speed", wert: "7", fuer: uhr.id)
+        XCTAssertTrue(b.ganz)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.lauftext?.speed, 7)
+        _ = await z.einstellungSetzen("uppercase", wert: "ein", fuer: uhr.id)
+        XCTAssertEqual(z.uhreneinstellungen[uhr.id]?.wahrheit(.uppercase), true)
+        XCTAssertEqual(s.zustand.einstellungen["uppercase"], .bool(true))
+        let schlecht = await z.einstellungSetzen("volume", wert: "101", fuer: uhr.id)
+        XCTAssertTrue(schlecht.nichts)
+        XCTAssertNotNil(z.fehler, "eine Eingabe, die jemand berichtigen kann, ist ein Dialog")
+    }
+
+    func testNeustartKommtAnUndHolztNichtsZurueck() async throws {
+        let (z, uhr, s) = try httpUhr()
+        z.bildschirm[uhr.id] = (Bildschirmauszug(breite: 52, hoehe: 16, pixel: [Int](repeating: 0, count: 832))!, Date())
+        let b = await z.neustarten(fuer: uhr.id)
+        XCTAssertTrue(b.ganz)
+        XCTAssertEqual(s.zustand.neustarts, 1)
+        XCTAssertNil(z.geraetezustand[uhr.id], "keine Abfrage gegen eine Uhr, die gerade hochfährt")
+        XCTAssertNil(z.bildschirm[uhr.id], "das alte Bild gilt nicht mehr")
+    }
+
+    func testBildschirmFolgenHoertMitDerAufgabeAuf() async throws {
+        let (z, uhr, _) = try httpUhr()
+        let aufgabe = Task { await z.bildschirmFolgen(uhr.id, takt: .milliseconds(20)) }
+        for _ in 0..<100 where z.bildschirm[uhr.id] == nil { try await Task.sleep(for: .milliseconds(20)) }
+        let erstes = try XCTUnwrap(z.bildschirm[uhr.id])
+        XCTAssertEqual(erstes.bild.breite, 52)
+        XCTAssertEqual(erstes.bild.hoehe, 16)
+        for _ in 0..<100 where z.bildschirm[uhr.id]?.abgerufen == erstes.abgerufen {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertNotEqual(z.bildschirm[uhr.id]?.abgerufen, erstes.abgerufen, "es läuft im Takt")
+        aufgabe.cancel()
+        await aufgabe.value
+        let stand = z.bildschirm[uhr.id]?.abgerufen
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(z.bildschirm[uhr.id]?.abgerufen, stand, "nach dem Abbruch fragt nichts mehr")
+    }
+
+    func testEinBildschirmFehlschlagLaesstDasLetzteBildStehen() async throws {
+        let (z, uhr, s) = try httpUhr()
+        let ersteres = await z.bildschirmAbfragen(uhr.id)
+        XCTAssertTrue(ersteres)
+        let erstes = z.bildschirm[uhr.id]?.abgerufen
+        s.beenden()
+        let zweites = await z.bildschirmAbfragen(uhr.id)
+        XCTAssertFalse(zweites)
+        XCTAssertEqual(z.bildschirm[uhr.id]?.abgerufen, erstes)
+        XCTAssertNil(z.fehler)
+    }
 }

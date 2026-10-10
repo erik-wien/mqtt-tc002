@@ -27,6 +27,7 @@ extension AppZustand {
         tasten[id] = nil
         drehknopf[id] = nil
         uhrenfehler[id] = nil
+        bildschirm[id] = nil
     }
 
     // MARK: - Zustand
@@ -112,14 +113,25 @@ extension AppZustand {
 
     // MARK: - Befehle an die gewählten Uhren
 
-    /// Führt einen Steuerbefehl bei den gewählten Uhren aus und holt danach den
-    /// Stand von jeder erreichten Uhr mit Adresse — sie ist die Wahrheit, vor
-    /// allem bei einem Moodlight, dessen fehlende Felder ihren alten Wert behalten.
+    /// Führt einen Steuerbefehl aus und holt danach den Stand von jeder erreichten
+    /// Uhr mit Adresse — sie ist die Wahrheit, vor allem bei einem Moodlight,
+    /// dessen fehlende Felder ihren alten Wert behalten.
+    ///
+    /// Ohne `id` bei den gewählten Uhren, mit `id` bei genau dieser, ob gewählt
+    /// oder nicht: Die Steuerungsseite zeigt den Stand **einer** Uhr, und ihre
+    /// Schalter gelten dieser.
     @discardableResult
-    private func steuern(was: String, _ tat: @escaping @Sendable (Anzeigen, Uhr, Geraetefaehigkeiten?) throws -> Void) async -> Sendebilanz {
+    private func steuern(was: String, fuer id: UUID? = nil,
+                         _ tat: @escaping @Sendable (Anzeigen, Uhr, Geraetefaehigkeiten?) throws -> Void) async -> Sendebilanz {
+        var einzige: Uhr?
+        if let id {
+            guard let uhr = uhren.first(where: { $0.id == id }) else { return Sendebilanz(erreicht: [], ziele: 0) }
+            einzige = uhr
+        }
         let caps = faehigkeiten
         var erreicht: [Uhr] = []
-        let ziele = await anZiele({ anzeigen, uhr in try tat(anzeigen, uhr, caps[uhr.id]) }, was: was) { uhr, _ in
+        let ziele = await anZiele({ anzeigen, uhr in try tat(anzeigen, uhr, caps[uhr.id]) }, was: was,
+                                  nur: einzige) { uhr, _ in
             erreicht.append(uhr)
         }
         for uhr in erreicht where !uhr.host.isEmpty { await zustandAbfragen(uhr.id) }
@@ -128,55 +140,126 @@ extension AppZustand {
 
     /// Panel an oder aus (`power`).
     @discardableResult
-    public func panelSchalten(an: Bool) async -> Sendebilanz {
-        await steuern(was: an ? lok("Display einschalten") : lok("Display ausschalten")) { anzeigen, _, _ in
+    public func panelSchalten(an: Bool, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: an ? lok("Display einschalten") : lok("Display ausschalten"), fuer: id) { anzeigen, _, _ in
             try anzeigen.anzeigeStrom(an)
         }
     }
 
     /// Helligkeit 0–255, roh.
     @discardableResult
-    public func helligkeitSetzen(_ wert: Int) async -> Sendebilanz {
-        await steuern(was: lok("Helligkeit")) { anzeigen, _, caps in
+    public func helligkeitSetzen(_ wert: Int, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lok("Helligkeit"), fuer: id) { anzeigen, _, caps in
             try anzeigen.helligkeit(wert, faehigkeiten: caps)
         }
     }
 
     /// Wetter-Overlay; `nil` nimmt es weg.
     @discardableResult
-    public func overlaySetzen(_ name: String?) async -> Sendebilanz {
-        await steuern(was: lok("Overlay")) { anzeigen, _, caps in
+    public func overlaySetzen(_ name: String?, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lok("Overlay"), fuer: id) { anzeigen, _, caps in
             try anzeigen.overlay(name, faehigkeiten: caps)
         }
     }
 
     @discardableResult
-    public func moodlightSetzen(_ licht: Moodlight) async -> Sendebilanz {
-        await steuern(was: lok("Moodlight")) { anzeigen, _, _ in try anzeigen.moodlight(licht) }
+    public func moodlightSetzen(_ licht: Moodlight, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lok("Moodlight"), fuer: id) { anzeigen, _, _ in try anzeigen.moodlight(licht) }
     }
 
     @discardableResult
-    public func moodlightAusschalten() async -> Sendebilanz {
-        await steuern(was: lok("Moodlight ausschalten")) { anzeigen, _, _ in try anzeigen.moodlightAus() }
+    public func moodlightAusschalten(fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lok("Moodlight ausschalten"), fuer: id) { anzeigen, _, _ in try anzeigen.moodlightAus() }
     }
 
     @discardableResult
-    public func indikatorSetzen(_ stand: Indikator) async -> Sendebilanz {
-        await steuern(was: lokf("Anzeiger %d", stand.nummer)) { anzeigen, _, _ in try anzeigen.indikator(stand) }
+    public func indikatorSetzen(_ stand: Indikator, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lokf("Anzeiger %d", stand.nummer), fuer: id) { anzeigen, _, _ in try anzeigen.indikator(stand) }
     }
 
     @discardableResult
-    public func indikatorAusschalten(_ nummer: Int) async -> Sendebilanz {
-        await steuern(was: lokf("Anzeiger %d", nummer)) { anzeigen, _, _ in try anzeigen.indikatorAus(nummer) }
+    public func indikatorAusschalten(_ nummer: Int, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lokf("Anzeiger %d", nummer), fuer: id) { anzeigen, _, _ in try anzeigen.indikatorAus(nummer) }
     }
 
     /// Eine geprüfte Teilmenge der Einstellungen (`PATCH`). Die Prüfung gegen die
     /// Namenslisten der jeweiligen Uhr geschah beim Zusammenstellen; hier geht
     /// sie hinaus.
     @discardableResult
-    public func einstellungenAendern(_ aenderung: Einstellungsaenderung) async -> Sendebilanz {
-        await steuern(was: lok("Einstellungen der Uhr")) { anzeigen, _, _ in
+    public func einstellungenAendern(_ aenderung: Einstellungsaenderung, fuer id: UUID? = nil) async -> Sendebilanz {
+        await steuern(was: lok("Einstellungen der Uhr"), fuer: id) { anzeigen, _, _ in
             try anzeigen.einstellungenAendern(aenderung)
+        }
+    }
+
+    /// Eine Einstellung der Uhr aus Schlüssel und Wort (`scroll.speed`,
+    /// `weekdayBar.show` …) — dieselbe Zerlegung wie im Werkzeug
+    /// (`Geraeteeinstellungen.aenderung`): Ein Unterfeld geht mit dem gelesenen
+    /// Stand des übrigen Objekts hinaus. Was die Prüfung abweist, steht in
+    /// `fehler`.
+    @discardableResult
+    public func einstellungSetzen(_ schluessel: String, wert: String, fuer id: UUID) async -> Sendebilanz {
+        let stand = uhreneinstellungen[id] ?? Geraeteeinstellungen()
+        do {
+            let aenderung = try stand.aenderung(schluessel: schluessel, wert: wert, faehigkeiten: faehigkeiten[id])
+            return await einstellungenAendern(aenderung, fuer: id)
+        } catch {
+            fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return Sendebilanz(erreicht: [], ziele: 1)
+        }
+    }
+
+    /// Eine Anzeige vor oder zurück bei genau dieser Uhr.
+    @discardableResult
+    public func anzeigeBlaettern(vor: Bool, fuer id: UUID) async -> Sendebilanz {
+        await steuern(was: vor ? lok("Weiterblättern") : lok("Zurückblättern"), fuer: id) { anzeigen, _, _ in
+            try anzeigen.blaettern(vor: vor)
+        }
+    }
+
+    /// Startet die Uhr neu. Anders als die übrigen Befehle liest sie danach nichts
+    /// zurück: Die Uhr antwortet erst nach dem Hochfahren wieder, und eine
+    /// Abfrage davor zeichnete sie als unerreichbar.
+    @discardableResult
+    public func neustarten(fuer id: UUID) async -> Sendebilanz {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return Sendebilanz(erreicht: [], ziele: 0) }
+        var erreicht: [String] = []
+        let ziele = await anZiele({ anzeigen, _ in try anzeigen.neustarten() }, was: lok("Neustart"), nur: uhr) { uhr, _ in
+            erreicht.append(uhr.name)
+        }
+        if !erreicht.isEmpty { bildschirm[id] = nil }
+        return Sendebilanz(erreicht: erreicht, ziele: ziele)
+    }
+
+    // MARK: - Bildspeicher
+
+    /// Holt das Bild des Bildspeichers. Mit Adresse über HTTP — auch bei einer
+    /// MQTT-Uhr, denn alle zwei Sekunden eine eigene Broker-Verbindung für
+    /// `cmd/screen/get` wäre teurer als eine kurze Anfrage; ohne Adresse über
+    /// MQTT. Ein Fehlschlag lässt das letzte Bild stehen und ist keine Meldung:
+    /// Die Seite zeigt dessen Alter.
+    @discardableResult
+    public func bildschirmAbfragen(_ id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return false }
+        let sitzung = netzsitzung
+        let host = uhr.host
+        let anzeigen = host.isEmpty ? self.anzeigen(fuer: uhr) : nil
+        guard !host.isEmpty || anzeigen != nil else { return false }
+        let bild = await Hintergrund.lauf { () -> Bildschirmauszug? in
+            if !host.isEmpty { return try? Geraet(host: host, sitzung: sitzung).bildschirm() }
+            return try? anzeigen?.bildschirmLesen(frist: 2)
+        }
+        guard !Task.isCancelled, let bild, uhren.contains(where: { $0.id == id }) else { return false }
+        bildschirm[id] = (bild, Date())
+        return true
+    }
+
+    /// Fragt das Bild im Takt ab, bis die Aufgabe abgebrochen wird. Die Ansicht
+    /// hängt es an `.task`: Verlässt man die Seite, endet die Schleife mit ihr.
+    public func bildschirmFolgen(_ id: UUID, takt: Duration = .seconds(2)) async {
+        while !Task.isCancelled {
+            await bildschirmAbfragen(id)
+            try? await Task.sleep(for: takt)
         }
     }
 

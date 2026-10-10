@@ -104,6 +104,9 @@ public final class AppZustand {
     public var drehknopf: [UUID: Drehknopfstand] = [:]
     /// Die letzte Abweisung, die die Uhr auf `event/error` meldete.
     public var uhrenfehler: [UUID: Uhrenfehler] = [:]
+    /// Das Bild des Bildspeichers, solange die Steuerungsseite offen ist
+    /// (`bildschirmFolgen`), mit dem Zeitpunkt des Abrufs.
+    public var bildschirm: [UUID: (bild: Bildschirmauszug, abgerufen: Date)] = [:]
     /// Was zuletzt auf einem Slot zu sehen war, als Pixel: von dieser App
     /// gemalt und gesendet. Die Uhr verraet den Inhalt nicht; was fremde
     /// Absender schicken, ist Text und Regler und ergibt kein Bild. Kein
@@ -1226,15 +1229,16 @@ public final class AppZustand {
     @discardableResult
     func anZiele<Ergebnis: Sendable>(
         _ tat: @escaping @Sendable (Anzeigen, Uhr) throws -> Ergebnis,
-        was: String = "", erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
+        was: String = "", nur einzige: Uhr? = nil, erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
         let abweisungenVorher = abweisungsZaehler
-        let ziele = ziele()
+        // `nur`: genau diese eine Uhr, ob gewählt oder nicht (Steuerungsseite).
+        let ziele = einzige.map { $0.beschickbar ? [$0] : [] } ?? ziele()
         // Wer uebersprungen wird, steht im Protokoll: `ziele()` filtert
         // still heraus, was nicht beschickbar ist — einer MQTT-Uhr fehlt dann
         // das Praefix, einer HTTP-Uhr die Adresse. Ohne diese Zeile faende
         // sich dafuer im Protokoll kein Hinweis, weil dort sonst nur
         // gelungene Sendungen stehen.
-        for uhr in uhren where !ziele.contains(where: { $0.id == uhr.id }) && istZiel(uhr) {
+        for uhr in uhren where !ziele.contains(where: { $0.id == uhr.id }) && (einzige != nil ? uhr.id == einzige?.id : istZiel(uhr)) {
             log(lokf("%@ übersprungen: %@", uhr.name,
                      uhr.wirksameBetriebsart == .http
                         ? lok("keine Adresse") : lok("kein Präfix — erst abfragen")))
