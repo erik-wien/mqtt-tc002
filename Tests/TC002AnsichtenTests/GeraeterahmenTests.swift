@@ -99,7 +99,7 @@ final class GeraeterahmenTests: XCTestCase {
     /// Läge die ganze Luecke rechts und unten, saesse das Raster um einen
     /// halben Punkt schief im Feld.
     func testPunkteSitzenMittigInIhrerZelle() {
-        for z in [Geraetezeichnung.tc002] {
+        for z in [Geraetezeichnung.tc002, .tc001] {
             for zelle in [4.0, 8, 14] {
                 let kasten = z.pixelstil.kaestchen(spalte: 3, zeile: 2, zelle: zelle)
                 XCTAssertEqual(kasten.midX, 3.5 * zelle, accuracy: 0.0001)
@@ -112,7 +112,7 @@ final class GeraeterahmenTests: XCTestCase {
     /// Ein Schriftzug, der aus dem Geraet herausragt oder ins Display
     /// hineinragt, uebersieht man auf einem kleinen Bild leicht.
     func testAufdruckSitztUnterDemDisplayImGehaeuse() {
-        for z in [Geraetezeichnung.tc002] {
+        for z in [Geraetezeichnung.tc002, .tc001] {
             for teil in z.teile {
                 guard case let .schrift(wortlaut, x, grundlinie, _, _, _) = teil else { continue }
                 XCTAssertGreaterThan(grundlinie, z.feld.unten, "\(wortlaut) ragt ins Display")
@@ -127,7 +127,7 @@ final class GeraeterahmenTests: XCTestCase {
     /// von `Canvas` stillschweigend abgeschnitten — am Bild sieht man dann
     /// nur, dass etwas fehlt, nicht warum.
     func testAlleTeileLiegenImZeichenraum() {
-        for z in [Geraetezeichnung.tc002] {
+        for z in [Geraetezeichnung.tc002, .tc001] {
             for teil in z.teile {
                 guard case let .flaeche(r, _, _) = teil else { continue }
                 XCTAssertGreaterThanOrEqual(r.x, 0)
@@ -151,5 +151,43 @@ final class GeraeterahmenTests: XCTestCase {
         let quelle = try String(contentsOf: Self.wurzel
             .appendingPathComponent("Sources/TC002Ansichten/GeraeteRahmen.swift"), encoding: .utf8)
         XCTAssertTrue(quelle.contains("Text(verbatim: wortlaut)"))
+    }
+
+    /// Die Zeichnung folgt dem Anzeigemass der Uhr.
+    func testZeichnungWirdNachDemAnzeigemassGewaehlt() {
+        XCTAssertEqual(Geraetezeichnung.fuer(Anzeigemass(breite: 32, hoehe: 8)), .tc001)
+        XCTAssertEqual(Geraetezeichnung.fuer(Anzeigemass(breite: 52, hoehe: 16)), .tc002)
+        XCTAssertEqual(Geraetezeichnung.fuer(Anzeigemass(breite: 64, hoehe: 8)), .tc002)
+    }
+
+    /// Das Raster ragt bei keinem Mass und keiner Kante aus dem Feld, und bei
+    /// den beiden Geraeten fuellt es es auch aus.
+    func testRasterPasstInsFeldDerGewaehltenZeichnung() {
+        for (breite, hoehe, fuellt) in [(32, 8, true), (52, 16, true), (64, 8, false), (40, 16, false)] {
+            let mass = Anzeigemass(breite: breite, hoehe: hoehe)
+            let z = Geraetezeichnung.fuer(mass)
+            for kante in [4.0, 6, 12] {
+                let m = z.masse(fuer: mass, kante: kante)
+                let wo = "\(breite)×\(hoehe), Kante \(kante)"
+                XCTAssertGreaterThanOrEqual(m.feldBreite, Double(breite) * kante - 0.0001, "ragt rechts heraus — \(wo)")
+                XCTAssertGreaterThanOrEqual(m.feldHoehe, Double(hoehe) * kante - 0.0001, "ragt unten heraus — \(wo)")
+                if fuellt {
+                    XCTAssertLessThan(m.feldBreite - Double(breite) * kante, kante, "Rest breiter als ein Pixel — \(wo)")
+                }
+            }
+        }
+    }
+
+    /// Das Feld der TC001 hat genau das Verhaeltnis 32:8.
+    func testFeldDerTC001IstGenau32Zu8() {
+        let z = Geraetezeichnung.tc001
+        XCTAssertEqual(z.feld.breite / z.feld.hoehe, 4, accuracy: 0.0001)
+        XCTAssertGreaterThanOrEqual(z.feld.x, z.gehaeuse.x)
+        XCTAssertLessThanOrEqual(z.feld.rechts, z.gehaeuse.rechts)
+        for teil in z.teile {
+            guard case let .flaeche(r, _, _) = teil else { continue }
+            XCTAssertGreaterThanOrEqual(r.x, 0); XCTAssertGreaterThanOrEqual(r.y, 0)
+            XCTAssertLessThanOrEqual(r.rechts, z.breite); XCTAssertLessThanOrEqual(r.unten, z.hoehe)
+        }
     }
 }

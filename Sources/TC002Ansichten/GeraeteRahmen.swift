@@ -19,21 +19,27 @@ import TC002Core
 /// tatsaechliche Nutzlast erzeugt; hier geht es allein um Bildschirmgeometrie.
 public struct GeraeteRahmen<Inhalt: View>: View {
     let hoehe: Double
+    let mass: Anzeigemass
     let zeichnung: Geraetezeichnung
     @ViewBuilder let inhalt: Inhalt
 
-    public init(hoehe: Double,
+    /// `mass` ist das Raster des Inhalts und waehlt die Zeichnung
+    /// (`Geraetezeichnung.fuer`); `hoehe` ist seine Hoehe in Punkten.
+    public init(hoehe: Double, mass: Anzeigemass = .vorgabe,
                 @ViewBuilder inhalt: () -> Inhalt) {
         self.hoehe = hoehe
-        self.zeichnung = .tc002
+        self.mass = mass
+        self.zeichnung = .fuer(mass)
         self.inhalt = inhalt()
     }
 
-    private var masse: Geraetezeichnung.Masse { zeichnung.masse(inhaltHoehe: hoehe) }
+    private var masse: Geraetezeichnung.Masse {
+        zeichnung.masse(fuer: mass, kante: hoehe / Double(mass.hoehe))
+    }
 
     public var body: some View {
         let m = masse
-        let ecke = zeichnung.inhaltEcke(inhaltHoehe: hoehe)
+        let ecke = (x: m.feldX, y: m.feldY)
         return ZStack(alignment: .topLeading) {
             Canvas { kontext, _ in
                 Self.zeichnen(zeichnung, in: kontext, massstab: m.massstab)

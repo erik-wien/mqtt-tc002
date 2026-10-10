@@ -34,7 +34,8 @@ struct VorschauiOS: View {
 
     /// Wie ein einzelner Punkt gezeichnet wird — dieselbe Quelle wie der
     /// Rahmen, damit Mac und Telefon dasselbe Raster zeigen.
-    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.tc002.pixelstil }
+    private var mass: Anzeigemass { Anzeigemass(breite: feld.breite, hoehe: feld.hoehe) }
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(mass).pixelstil }
 
     /// Die Kantenlaenge, bei der der ganze Rahmen die Breite ausfuellt.
     ///
@@ -45,7 +46,7 @@ struct VorschauiOS: View {
     /// Nach oben begrenzt, damit ein einzelnes Pixel nicht zur Kachel wird.
     private func passendeKante(fuer breite: Double) -> Double {
         guard breite > 0 else { return 6 }
-        return min(12, breite / (Double(feld.breite) * Geraetezeichnung.tc002.breitenFaktor))
+        return min(12, breite / Geraetezeichnung.fuer(mass).masse(fuer: mass, kante: 1).rahmenBreite)
     }
 
     /// Breite zu Hoehe des **ganzen Rahmens**, nicht des Displayfeldes. Daran
@@ -54,8 +55,7 @@ struct VorschauiOS: View {
     /// gerechnete Hoehe liess oben und unten Weissraum stehen, sobald die
     /// Breite eine kleinere erzwang.
     private var seitenverhaeltnis: Double {
-        let z = Geraetezeichnung.tc002
-        return (Double(feld.breite) * z.breitenFaktor) / (Double(feld.hoehe) * z.hoehenFaktor)
+        Geraetezeichnung.fuer(mass).masse(fuer: mass, kante: 1).seitenverhaeltnis
     }
 
     var body: some View {
@@ -76,7 +76,7 @@ struct VorschauiOS: View {
     private func rahmen(kante: Double) -> some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(feld.hoehe) * kante) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kante, mass: mass) {
             Group {
                 if let bilder = laufschriftBilder, !bilder.isEmpty {
                     if bilder.count > 1 {

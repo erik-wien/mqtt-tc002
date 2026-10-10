@@ -289,10 +289,10 @@ public struct SendenView: View {
     private var vorschauverhaeltnis: Double {
         let alle = zustand.uhren.map { uhr -> Double in
             let mass = Anzeigemass.fuer(uhr)
-            return Geraetezeichnung.tc002.masse(inhaltHoehe: Double(mass.hoehe)).seitenverhaeltnis
+            return Geraetezeichnung.fuer(mass).masse(fuer: mass, kante: 1).seitenverhaeltnis
         }
         return alle.min()
-            ?? Geraetezeichnung.tc002.masse(inhaltHoehe: Double(feld.hoehe)).seitenverhaeltnis
+            ?? Geraetezeichnung.tc002.masse(fuer: .vorgabe, kante: 1).seitenverhaeltnis
     }
 
     /// Siehe `.task(id:)` oben.
@@ -334,7 +334,7 @@ public struct SendenView: View {
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
         // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
         let textDerUhr = o.weg == .text
-        let einheit = Geraetezeichnung.tc002.masse(inhaltHoehe: Double(uhrmass.hoehe))
+        let einheit = Geraetezeichnung.fuer(uhrmass).masse(fuer: uhrmass, kante: 1)
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
         return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),

@@ -38,12 +38,12 @@ struct VorschauView: View {
 
     /// Wie ein einzelner Punkt gezeichnet wird — kommt aus derselben Quelle
     /// wie der Rahmen, damit grobes Panel und grober Punkt zusammenpassen.
-    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.tc002.pixelstil }
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(mass).pixelstil }
 
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge, mass: mass) {
             Group {
                 if let laufschriftBilder, !laufschriftBilder.isEmpty {
                     if laufschriftBilder.count > 1 {

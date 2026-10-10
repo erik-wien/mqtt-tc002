@@ -176,6 +176,27 @@ public struct Geraetezeichnung: Equatable, Sendable {
                      feldHoehe: feld.hoehe * massstab)
     }
 
+    /// Wie `masse(inhaltHoehe:)`, aber fuer ein Raster von `mass` Punkten bei
+    /// `kante` Punkten je Pixel: Der Massstab richtet sich nach der Achse, die
+    /// mehr Platz braucht, damit der Inhalt nie ueber das Displayfeld hinausragt.
+    /// Bei den beiden bekannten Geraeten bestimmt die Hoehe (TC002) bzw. beide
+    /// Achsen gleich (TC001, Feld genau 32:8); erst eine fremde Anzeigebreite
+    /// vergroessert die Zeichnung.
+    public func masse(fuer mass: Anzeigemass, kante: Double) -> Masse {
+        let hoehe = Double(mass.hoehe) * kante
+        let breite = Double(mass.breite) * kante
+        let faktor = max(hoehe / feld.hoehe, breite / feld.breite)
+        return masse(inhaltHoehe: feld.hoehe * faktor)
+    }
+
+    /// Die Zeichnung zu einer Uhr: das Anzeigemass 32×8 gehoert zur TC001,
+    /// alles andere zur TC002. Eine Uhr mit fremdem Mass bekommt die TC002,
+    /// deren Zeichnung sich nach `masse(fuer:kante:)` so weit vergroessert, dass
+    /// das Raster ins Feld passt.
+    public static func fuer(_ mass: Anzeigemass) -> Geraetezeichnung {
+        mass.breite == 32 && mass.hoehe == 8 ? .tc001 : .tc002
+    }
+
     /// Um wieviel der ganze Rahmen breiter ist als sein Displayfeld. Wer den
     /// Rahmen in eine gegebene Flaeche einpassen will, rechnet damit von der
     /// Pixelbreite auf die Rahmenbreite hoch — ohne die Zahlen abzuschreiben.
@@ -267,5 +288,44 @@ public struct Geraetezeichnung: Equatable, Sendable {
             // Quadrat mit genau einem Punkt Luft, bei jeder Kantenlaenge.
             // Siehe `Luecke` — ein Anteil taete es hier nicht.
             pixelstil: Pixelstil(luecke: .punkte(1), eckenAnteil: 0))
+    }()
+
+    // MARK: - Die Ulanzi TC001
+
+    /// Die Front der TC001: gerade Ansicht, heller Koerper, runde Ecken,
+    /// keine Tasten oben. Von vorn ist das ein schmaler weisser Rand um ein
+    /// schwarzes Feld; damit man das Geraet erkennt, steht unten links der
+    /// Aufdruck, und die Blende unter dem Display ist dafuer tiefer als der
+    /// Rand ringsum (16 gegen 40). Das ist eine Freiheit gegenueber dem echten
+    /// Geraet, keine Messung.
+    ///
+    /// Das Feld ist genau 4:1 (584×146), das Raster der TC001 32×8
+    /// (`docs/awtrix-ng-protokoll.md`, §1). Auf derselben Flaeche sind das
+    /// weniger und deshalb groessere Punkte als bei der TC002; `pixelstil`
+    /// traegt dem Rechnung.
+    public static let tc001: Geraetezeichnung = {
+        let gehaeuse = Rechteck(x: 8, y: 8, breite: 616, hoehe: 202)
+        let feld = Rechteck(x: 24, y: 24, breite: 584, hoehe: 146)
+        return Geraetezeichnung(
+            breite: 632, hoehe: 218,
+            feld: feld,
+            gehaeuse: gehaeuse, gehaeuseRadius: 28,
+            teile: [
+                // Aussenkante und Fusskante in einem Stueck: derselbe Koerper,
+                // eine Spur groesser und nach unten versetzt. Ein waagrechter
+                // Balken taete es nicht — seine Enden stuenden bei einem
+                // Radius von 28 ueber die runden Ecken hinaus.
+                .flaeche(Rechteck(x: 6, y: 8, breite: 620, hoehe: 206), radius: 29, farbe: "#BFBFC9"),
+                .flaeche(gehaeuse, radius: 28, farbe: "#F7F7F9"),
+                // Dunkle Fuge zwischen Koerper und Scheibe
+                .flaeche(Rechteck(x: 20, y: 20, breite: 592, hoehe: 154), radius: 12, farbe: "#1E1E24"),
+                .flaeche(feld, radius: 9, farbe: "#0A0A0B"),
+                .flaeche(Rechteck(x: 24, y: 24, breite: 584, hoehe: 4), radius: 2, farbe: "#131318"),
+                .schrift("Ulanzi TC001", x: 28, grundlinie: 196, groesse: 14,
+                         farbe: "#85858D", rechtsbuendig: false),
+            ],
+            // Eine mitwachsende Fuge und harte Ecken — so sieht ein grobes
+            // Panel aus der Naehe aus.
+            pixelstil: Pixelstil(luecke: .anteil(0.05), eckenAnteil: 0))
     }()
 }
