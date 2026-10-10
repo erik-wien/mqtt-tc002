@@ -31,6 +31,7 @@ extension AppZustand {
         tonzustand[id] = nil
         tonlisten[id] = nil
         mp3Ablage[id] = nil
+        melodienAblage[id] = nil
     }
 
     // MARK: - Zustand
@@ -45,29 +46,30 @@ extension AppZustand {
     public func zustandAbfragen(_ id: UUID) async -> Bool {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
         let host = uhr.host, sitzung = netzsitzung
-        let tls = faehigkeiten[id]?.mqttTlsUnterstuetzt == true
-        // Ohne Auskunft über die Fähigkeiten wird gefragt; eine Uhr ohne Audio antwortet mit 404 (`try?`).
-        let ton = faehigkeiten[id].map { $0.ton != Tonfaehigkeiten() } ?? true
-        // Die Fernbedienung braucht den Lichtsensor, ehe jemand die Uhrenliste aktualisiert hat.
-        let fragtFaehigkeiten = faehigkeiten[id] == nil
+        let bekannt = faehigkeiten[id]
         do {
-            let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand, gelesene) = try await Hintergrund.lauf {
-                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?,
-                              Geraetefaehigkeiten?) in
+            let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand, geholt) = try await Hintergrund.lauf {
+                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?, Geraetefaehigkeiten?) in
                 let g = Geraet(host: host, sitzung: sitzung)
+                // Die Fähigkeiten kommen sonst nur mit „Abfragen“; die Fernbedienung
+                // braucht sie sofort, um zu wissen, was die Uhr kann (TC001: keine MP3, kein Radio).
+                let caps = bekannt ?? ((try? g.faehigkeiten()) ?? nil)
+                let tls = caps?.mqttTlsUnterstuetzt == true
+                // Ohne Auskunft über die Fähigkeiten wird gefragt; eine Uhr ohne Audio antwortet mit 404 (`try?`).
+                let ton = caps.map { $0.ton != Tonfaehigkeiten() } ?? true
                 return (try g.geraetezustand(), try? g.anzeigestand(), try? g.einstellungen(),
                         tls ? (try? g.tlsStatus()) : nil, ton ? (try? g.tonzustand()) : nil,
-                        fragtFaehigkeiten ? ((try? g.faehigkeiten()) ?? nil) : nil)
+                        bekannt == nil ? caps : nil)
             }
             guard uhren.contains(where: { $0.id == id }) else { return false }
             erreichbar[id] = true
+            if let geholt { faehigkeiten[id] = geholt }
             geraetezustand[id] = geraetStand
             if let name = geraetStand.aktiveAnzeige { aktiveAnzeige[id] = name }
             if let anzeige { anzeigestand[id] = anzeige }
             if let einstellungen { uhreneinstellungen[id] = einstellungen }
             if let verschluesselung { tlsStatus[id] = verschluesselung }
             if let tonStand { tonzustand[id] = tonStand }
-            if let gelesene, faehigkeiten[id] == nil { faehigkeiten[id] = gelesene }
             return true
         } catch {
             guard uhren.contains(where: { $0.id == id }) else { return false }
@@ -286,15 +288,16 @@ extension AppZustand {
     public func tonlistenAbfragen(_ id: UUID) async -> Bool {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
         let host = uhr.host, sitzung = netzsitzung
-        let geholt = await Hintergrund.lauf { () -> (Tonlisten, Tonablage?)? in
+        let geholt = await Hintergrund.lauf { () -> (Tonlisten, Tonablage?, Tonablage)? in
             let g = Geraet(host: host, sitzung: sitzung)
             guard let melodien = try? g.melodien() else { return nil }
             let mp3 = try? g.mp3Dateien()
-            return (Tonlisten(melodien: melodien.namen, mp3: mp3?.namen ?? []), mp3)
+            return (Tonlisten(melodien: melodien.namen, mp3: mp3?.namen ?? []), mp3, melodien)
         }
         guard let geholt, uhren.contains(where: { $0.id == id }) else { return false }
         tonlisten[id] = geholt.0
         mp3Ablage[id] = geholt.1
+        melodienAblage[id] = geholt.2
         return true
     }
 
@@ -352,6 +355,26 @@ extension AppZustand {
         do {
             try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).mp3Loeschen(name: name) }
             log(lokf("%@: MP3 „%@“ gelöscht", uhr.name, name))
+            await tonlistenAbfragen(id)
+            return true
+        } catch {
+            melde(error, uhr: uhr)
+            return false
+        }
+    }
+
+    /// Löscht eine Melodie der Uhr (nur HTTP) und holt die Listen neu.
+    @discardableResult
+    public func melodieLoeschen(name: String, fuer id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return false }
+        guard !uhr.host.isEmpty else {
+            fehler = lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name)
+            return false
+        }
+        let host = uhr.host, sitzung = netzsitzung
+        do {
+            try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).melodieLoeschen(name: name) }
+            log(lokf("%@: Melodie „%@“ gelöscht", uhr.name, name))
             await tonlistenAbfragen(id)
             return true
         } catch {

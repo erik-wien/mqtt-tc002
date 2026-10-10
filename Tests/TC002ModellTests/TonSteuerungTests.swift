@@ -134,6 +134,34 @@ final class TonSteuerungTests: XCTestCase {
         XCTAssertEqual(s.zustand.ton.gespielt.count, 1)
     }
 
+    func testZustandHoltFehlendeFaehigkeitenMit() async throws {
+        var ton = NGTon()
+        ton.faehigkeiten = NGTon.tc001
+        let (z, uhr, _) = try httpUhr(ton)
+        z.faehigkeiten[uhr.id] = nil
+        await z.zustandAbfragen(uhr.id)
+        XCTAssertEqual(z.faehigkeiten[uhr.id]?.kann(.mp3), false, "die Fernbedienung weiß sofort, dass die TC001 keine MP3 spielt")
+        XCTAssertEqual(z.faehigkeiten[uhr.id]?.kann(.radio), false)
+        XCTAssertFalse(Klangeignung.mp3Hochladbar(z.faehigkeiten[uhr.id]))
+    }
+
+    func testMelodieLoeschenHoltDieListenNeu() async throws {
+        var ton = NGTon()
+        ton.faehigkeiten = NGTon.tc001
+        ton.melodien = ["ping": "ping:d=4,o=5,b=120:c,e,g", "pong": "pong:d=8,o=5,b=100:c"]
+        let (z, uhr, s) = try httpUhr(ton)
+        await z.tonlistenAbfragen(uhr.id)
+        XCTAssertEqual(z.melodienAblage[uhr.id]?.namen.sorted(), ["ping", "pong"])
+        let ok = await z.melodieLoeschen(name: "ping", fuer: uhr.id)
+        XCTAssertTrue(ok, "\(z.fehler ?? "")")
+        XCTAssertEqual(Array(s.zustand.ton.melodien.keys), ["pong"])
+        XCTAssertEqual(z.melodienAblage[uhr.id]?.namen, ["pong"])
+        XCTAssertEqual(z.tonlisten[uhr.id]?.melodien, ["pong"])
+        let nochmal = await z.melodieLoeschen(name: "ping", fuer: uhr.id)
+        XCTAssertFalse(nochmal)
+        XCTAssertNotNil(z.fehler)
+    }
+
     func testMP3HochladenHoltDieListenNeu() async throws {
         let (z, uhr, s) = try httpUhr(NGTon())
         let datei = try mp3Datei("Grüße aus Wien.mp3", Data("ID3".utf8) + Data(repeating: 1, count: 997))

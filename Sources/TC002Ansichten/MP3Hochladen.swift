@@ -154,6 +154,7 @@ struct MP3Hochladeblatt: View {
 struct MP3Zeile: View {
     let name: String
     let groesse: Int?
+    var symbol = "waveform"
     let loeschen: () -> Void
     @State private var darueber = false
 
@@ -171,7 +172,7 @@ struct MP3Zeile: View {
                 }
             }
         } label: {
-            Text(verbatim: name)
+            Label { Text(verbatim: name) } icon: { Image(systemName: symbol) }
         }
         .onHover { darueber = $0 }
         .contextMenu {

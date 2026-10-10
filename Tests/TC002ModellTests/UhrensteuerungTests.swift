@@ -84,6 +84,7 @@ final class UhrensteuerungTests: XCTestCase {
     /// Ohne `capabilities.mqttTls` wird `/mqtt/tls` nicht gefragt (sonst `404`).
     func testOhneTLSFaehigkeitBleibtDerTLSStandLeer() async throws {
         let (z, uhr, _) = try httpUhr()
+        z.faehigkeiten[uhr.id] = Geraetefaehigkeiten()
         await z.zustandAbfragen(uhr.id)
         XCTAssertNil(z.tlsStatus[uhr.id])
         XCTAssertNotNil(z.geraetezustand[uhr.id])

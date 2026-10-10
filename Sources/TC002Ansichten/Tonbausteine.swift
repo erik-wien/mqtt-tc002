@@ -40,7 +40,7 @@ public struct Klangabschnitt: View {
     private var kannUhrNamen: Bool { !keineKann(Klangwahl(art: .uhr)) }
     private var kannVorlesen: Bool { !keineKann(Klangwahl(art: .vorlesen)) }
     private var kannMelodien: Bool { !keineKann(.melodie) }
-    private var kannMP3: Bool { !keineKann(.mp3) }
+    private var zeigtMP3: Bool { Klangeignung.mp3Zeigen(in: ziele) }
     private var gesperrt: Bool { keineKann(klang) }
     /// Die Uhren, die die jetzige Wahl nicht spielen und deshalb ohne Klang bleiben.
     private var ohneKlang: [Klangziel] { klang.art == .keiner ? [] : Klangeignung.ohne(klang, in: ziele) }
@@ -73,7 +73,7 @@ public struct Klangabschnitt: View {
             case .uhr:
                 namenzeile
                 namensperre
-                if let listen, listen.leer {
+                if let listen, listen.melodien.isEmpty, listen.mp3.isEmpty || !zeigtMP3 {
                     Text("Keine Melodien oder MP3-Dateien auf der Uhr. Melodien legst du in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -99,7 +99,7 @@ public struct Klangabschnitt: View {
 
     private var namenzeile: some View {
         let melodien = listen?.melodien ?? []
-        let mp3 = listen?.mp3 ?? []
+        let mp3 = zeigtMP3 ? listen?.mp3 ?? [] : []
         let unbekannt = !klang.name.isEmpty && !melodien.contains(klang.name) && !mp3.contains(klang.name)
         return LabeledContent("Name") {
             Menu {
@@ -113,7 +113,7 @@ public struct Klangabschnitt: View {
                     }
                     if !mp3.isEmpty {
                         Section("MP3-Dateien") {
-                            ForEach(mp3, id: \.self) { Text(verbatim: $0).tag($0).selectionDisabled(!kannMP3) }
+                            ForEach(mp3, id: \.self) { Text(verbatim: $0).tag($0) }
                         }
                     }
                 }
@@ -137,15 +137,11 @@ public struct Klangabschnitt: View {
         }
     }
 
-    /// Warum Namen grau sind: kein Ziel spielt Melodien bzw. MP3.
+    /// Warum Namen grau sind: kein Ziel spielt Melodien.
     @ViewBuilder
     private var namensperre: some View {
         if !(listen?.melodien.isEmpty ?? true), !kannMelodien {
             Label(lokf("Melodien: %@", Klangsperre.grund(Klangeignung.ohne(.melodie, in: ziele), von: ziele.count)), systemImage: "info.circle")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-        if !(listen?.mp3.isEmpty ?? true), !kannMP3 {
-            Label(lokf("MP3-Dateien: %@", Klangsperre.grund(Klangeignung.ohne(.mp3, in: ziele), von: ziele.count)), systemImage: "info.circle")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -183,6 +179,7 @@ struct Tonabschnitt: View {
     @State private var waehltMP3 = false
     @State private var mp3Auswahl: MP3Auswahl?
     @State private var loeschtMP3: String?
+    @State private var loeschtMelodie: String?
 
     private var id: UUID { uhr.id }
     private var faehigkeiten: Geraetefaehigkeiten? { zustand.faehigkeiten[id] }
@@ -200,6 +197,7 @@ struct Tonabschnitt: View {
     private var mp3Hochladbar: Bool { Klangeignung.mp3Hochladbar(faehigkeiten) }
     private var senderNamen: [String] { (ton?.sender ?? []).map(\.name) }
     private var ablage: Tonablage? { zustand.mp3Ablage[id] }
+    private var melodien: Tonablage? { zustand.melodienAblage[id] }
 
     var body: some View {
         Section {
@@ -229,7 +227,7 @@ struct Tonabschnitt: View {
         .onAppear { senderWaehlen() }
         .onChange(of: senderNamen) { _, _ in senderWaehlen() }
         .task(id: id) {
-            if !gesperrt, zustand.mp3Ablage[id] == nil { await zustand.tonlistenAbfragen(id) }
+            if !gesperrt, zustand.tonlisten[id] == nil { await zustand.tonlistenAbfragen(id) }
         }
         .fileImporter(isPresented: $waehltMP3, allowedContentTypes: [.mp3]) { ergebnis in
             if case .success(let url) = ergebnis { mp3Auswahl = MP3Auswahl(url: url) }
@@ -244,33 +242,33 @@ struct Tonabschnitt: View {
                 if let name = loeschtMP3 { Task { await zustand.mp3Loeschen(name: name, fuer: id) } }
             }
         }
+        .confirmationDialog(lokf("„%@“ von der Uhr löschen?", loeschtMelodie ?? ""),
+                            isPresented: Binding(get: { loeschtMelodie != nil }, set: { if !$0 { loeschtMelodie = nil } }),
+                            titleVisibility: .visible) {
+            Button("Löschen", role: .destructive) {
+                if let name = loeschtMelodie { Task { await zustand.melodieLoeschen(name: name, fuer: id) } }
+            }
+        }
     }
 
-    /// Die MP3-Dateien der Uhr: Zahl und Belegung, die Liste, der Knopf zum Hochladen.
+    /// Melodien und MP3-Dateien der Uhr: Zahl und Belegung, die Liste, der Knopf
+    /// zum Hochladen. Eine Uhr ohne MP3 bekommt weder Knopf noch Hinweis.
     @ViewBuilder
     private var klaengezeilen: some View {
         LabeledContent("Klänge auf der Uhr") {
-            Text(verbatim: belegung).multilineTextAlignment(.trailing)
+            Text(verbatim: Klangbelegung.zusammenfassung(melodien: melodien, mp3: ablage, mp3Spielbar: mp3Hochladbar))
+                .multilineTextAlignment(.trailing)
         }
-        ForEach(ablage?.namen ?? [], id: \.self) { name in
-            MP3Zeile(name: name, groesse: ablage?.groessen[name]) { loeschtMP3 = name }
+        ForEach(melodien?.namen ?? [], id: \.self) { name in
+            MP3Zeile(name: name, groesse: melodien?.groessen[name], symbol: "music.note") { loeschtMelodie = name }
         }
-        Button("MP3 hochladen …") { waehltMP3 = true }
-            .knopfBefehl()
-            .disabled(!mp3Hochladbar)
-        if !mp3Hochladbar {
-            Label("Diese Uhr kann keine MP3 spielen.", systemImage: "info.circle")
-                .font(kanon.fussnote).foregroundStyle(.secondary)
+        if mp3Hochladbar {
+            ForEach(ablage?.namen ?? [], id: \.self) { name in
+                MP3Zeile(name: name, groesse: ablage?.groessen[name]) { loeschtMP3 = name }
+            }
+            Button("MP3 hochladen …") { waehltMP3 = true }
+                .knopfBefehl()
         }
-    }
-
-    private var belegung: String {
-        guard let ablage else { return "—" }
-        func menge(_ b: Int) -> String { ByteCountFormatter.string(fromByteCount: Int64(b), countStyle: .file) }
-        guard let belegt = ablage.belegteBytes, let gesamt = ablage.gesamteBytes else {
-            return lokf("%d MP3", ablage.namen.count)
-        }
-        return lokf("%d MP3 · %@ von %@", ablage.namen.count, menge(belegt), menge(gesamt))
     }
 
     @ViewBuilder

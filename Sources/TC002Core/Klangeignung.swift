@@ -129,6 +129,12 @@ public enum Klangeignung {
         return nein > 0 && nein < ziele.count
     }
 
+    /// Ob MP3-Dateien für diese Ziele überhaupt vorkommen: nicht, wenn jedes Ziel
+    /// sie als nicht spielbar meldet. Ohne Ziel oder ohne Auskunft gelten sie als da.
+    public static func mp3Zeigen(in ziele: [Klangziel]) -> Bool {
+        ziele.isEmpty || ohne(.mp3, in: ziele).count < ziele.count
+    }
+
     /// Ob das Hochladen einer MP3 bei dieser Uhr sinnvoll ist: Die TC001 nimmt
     /// die Datei an, kann sie aber nicht spielen.
     public static func mp3Hochladbar(_ faehigkeiten: Geraetefaehigkeiten?) -> Bool {
