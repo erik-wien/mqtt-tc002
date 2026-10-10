@@ -6,6 +6,12 @@ import TC002Core
 final class SteuerbefehlTests: XCTestCase {
     private func befehl(_ a: String...) throws -> Optionen.Befehl { try Optionen.zerlegt(a).befehl }
 
+    func testNeustart() throws {
+        XCTAssertEqual(try befehl("neustart"), .neustart)
+        XCTAssertEqual(try befehl("reboot"), .neustart)
+        XCTAssertThrowsError(try befehl("neustart", "jetzt"))
+    }
+
     func testDisplayAnUndAus() throws {
         XCTAssertEqual(try befehl("display", "an"), .display(an: true))
         XCTAssertEqual(try befehl("display", "aus"), .display(an: false))

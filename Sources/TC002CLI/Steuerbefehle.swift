@@ -198,6 +198,11 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
                     thema: { NGThema.blaettern(praefix: $0, vor: vor) }, json: ""); return true
         }
         try anAlle(vor ? lok("weitergeschaltet") : lok("zurückgeschaltet")) { a, _ in try a.blaettern(vor: vor) }
+    case .neustart:
+        if optionen.trocken {
+            trocken(http: "POST /api/v1/device/reboot", thema: { NGThema.neustart(praefix: $0) }, json: ""); return true
+        }
+        try anAlle(lok("Neustart ausgelöst")) { a, _ in try a.neustarten() }
     case .zustand:
         try lesen { anzeigen in
             zustandAusgeben(try anzeigen.geraetezustandLesen())

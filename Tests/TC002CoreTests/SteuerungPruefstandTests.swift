@@ -84,6 +84,23 @@ final class SteuerungPruefstandTests: XCTestCase {
         abgewiesen({ try uhr.overlay("hagel") }, status: 422, code: "validationFailed", feld: "overlay")
     }
 
+    // MARK: - Neustart
+
+    func testNeustartKommtAnUndLaesstDenRestStehen() throws {
+        let (s, uhr, g) = try gestartet()
+        try uhr.helligkeit(33)
+        XCTAssertEqual(s.zustand.neustarts, 0)
+        try uhr.neustarten()
+        XCTAssertEqual(s.zustand.neustarts, 1)
+        XCTAssertEqual(try g.geraetezustand().helligkeit, 33, "die virtuelle Uhr setzt nichts zurück")
+    }
+
+    func testNeustartEinerUhrOhneAntwortGiltAlsGesendetEinerFehlendenNicht() throws {
+        // Nichts lauscht auf diesem Port: Wer nicht verbindet, hat nichts neu gestartet.
+        let g = Geraet(host: "127.0.0.1:9")
+        XCTAssertThrowsError(try Anzeigen(geraet: g).neustarten())
+    }
+
     // MARK: - Moodlight
 
     func testMoodlightErstesMalWeissBei120UndBehaeltFelder() throws {

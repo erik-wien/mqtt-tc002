@@ -86,6 +86,13 @@ extension Anzeigen {
         try steuern(NGThema.einstellungen, nutzlast: Data(json.utf8)) { try $0.einstellungenAendern(json) }
     }
 
+    /// Startet die Uhr neu (`POST /api/v1/device/reboot`, MQTT `cmd/device/reboot`).
+    /// Über MQTT ist „abgeschickt" alles, was sich sagen lässt: Die Uhr kann
+    /// nach dem Neustart nicht mehr antworten.
+    public func neustarten() throws {
+        try steuern(NGThema.neustart, nutzlast: Data()) { try $0.neustarten() }
+    }
+
     // MARK: - Lesen
 
     /// Der Zustand der Uhr. Mit Adresse über HTTP (`GET /api/v1/device`), das

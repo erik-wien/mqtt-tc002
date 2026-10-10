@@ -127,6 +127,9 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var benachrichtigungen: [NGBenachrichtigung] = []
     /// `mqttPrefix` der Systemkonfiguration (§11); leer heisst: die uid.
     public var mqttPrefix = ""
+    /// Wie oft `POST /api/v1/device/reboot` angekommen ist. Der Rest des Zustands
+    /// bleibt: Was ein Neustart zurücksetzt, nennt die Doku nicht.
+    public var neustarts = 0
 
     public init() {
         einstellungen = VirtuelleNGUhr.vorgabeEinstellungen
@@ -245,7 +248,7 @@ public enum VirtuelleNGUhr {
 
     private enum Route {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
-        case moodlight, tlsStatus, tlsCA
+        case moodlight, tlsStatus, tlsCA, neustart
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
         case meldungSenden, meldungAktivLoeschen, meldungLoeschen(String)
@@ -257,7 +260,7 @@ public enum VirtuelleNGUhr {
             case .einstellungen, .anzeige: return ["GET", "PATCH"]
             case .appSenden, .appAktiv, .appFreigabe: return ["PUT"]
             case .appLoeschen, .meldungAktivLoeschen, .meldungLoeschen: return ["DELETE"]
-            case .appWeiter, .appZurueck, .meldungSenden: return ["POST"]
+            case .appWeiter, .appZurueck, .meldungSenden, .neustart: return ["POST"]
             case .indikator, .moodlight, .tlsCA: return ["PUT", "DELETE"]
             case .tlsStatus: return ["GET"]
             }
@@ -270,6 +273,7 @@ public enum VirtuelleNGUhr {
         let r = Array(teile[3...])
         switch (r.count, r[0]) {
         case (1, "device"): return .geraet
+        case (2, "device") where r[1] == "reboot": return .neustart
         case (1, "version"): return .version
         case (1, "system"): return .system
         case (1, "settings"): return .einstellungen
@@ -317,6 +321,7 @@ public enum VirtuelleNGUhr {
 
         switch route {
         case .geraet: return json(geraet(z))
+        case .neustart: z.neustarts += 1; return ok
         case .version: return json(.objekt(["version": .text("1.2.2")]))
         case .system:
             return json(.objekt(["mqttEnabled": .bool(false), "mqttHost": .text(""),

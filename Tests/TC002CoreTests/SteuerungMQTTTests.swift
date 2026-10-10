@@ -32,6 +32,14 @@ final class SteuerungMQTTTests: XCTestCase {
         XCTAssertNil(uhr.zustand.overlay)
     }
 
+    func testNeustartAufDemDeviceThemaOhneNutzlast() throws {
+        let uhr = MQTTUhrDoppelgaenger(praefix: p)
+        try kanal(uhr).neustarten()
+        XCTAssertEqual(letzte(uhr)?.thema, "wz/uhr/cmd/device/reboot")
+        XCTAssertEqual(letzte(uhr)?.nutzlast, "")
+        XCTAssertEqual(uhr.zustand.neustarts, 1)
+    }
+
     func testHelligkeitUndEinstellungenAufDemSettingsThema() throws {
         let uhr = MQTTUhrDoppelgaenger(praefix: p)
         try kanal(uhr).helligkeit(77)

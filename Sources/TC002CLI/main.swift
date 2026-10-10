@@ -36,6 +36,7 @@ AUFRUF
   mqtttc002 moodlight ...          das Panel einfarbig fluten, oder "moodlight aus"
   mqtttc002 indikator <1-3> ...    einen der drei Anzeiger setzen, oder "indikator <1-3> aus"
   mqtttc002 weiter | zurueck       eine Anzeige weiter oder zurueck
+  mqtttc002 neustart               die Uhr neu starten (eine Antwort kommt nicht mehr)
   mqtttc002 zustand                den Zustand der Uhr ausgeben
   mqtttc002 einstellungen          die Einstellungen der Uhr nach Gruppen ausgeben
   mqtttc002 einstellungen setzen <Schluessel> <Wert>   eine Einstellung aendern
@@ -563,7 +564,7 @@ func lauf() throws {
         }
 
     case .display, .helligkeit, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
-         .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen:
+         .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen:
         break                                    // oben schon abgehandelt
     case .uhren, .icons, .bilder, .effekte, .hilfe, .fassung:
         break                                    // oben schon abgehandelt

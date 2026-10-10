@@ -403,6 +403,10 @@ extension VirtuelleNGUhr {
             return ergebnis(beantworten(Anfrage("PATCH", "/api/v1/display", koerper: nutzlast, kopf: kopf), &z))
         case "settings":
             return ergebnis(beantworten(Anfrage("PATCH", "/api/v1/settings", koerper: nutzlast, kopf: kopf), &z))
+        case "device/reboot":
+            // Die Uhr startet neu und antwortet womöglich nicht mehr (§3.2).
+            _ = beantworten(Anfrage("POST", "/api/v1/device/reboot"), &z)
+            return []
         case "apps/next", "apps/previous":
             return ergebnis(beantworten(Anfrage("POST", "/api/v1/" + rest), &z))
         case "display/moodlight":

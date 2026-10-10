@@ -114,6 +114,10 @@ public enum NGThema {
         "\(praefix)/cmd/apps/" + (vor ? "next" : "previous")
     }
 
+    /// Neustart der Uhr; die Nutzlast wird ignoriert, eine `/result`-Antwort
+    /// kann ausbleiben (§3.2).
+    public static func neustart(praefix: String) -> String { "\(praefix)/cmd/device/reboot" }
+
     /// Wo NG auf ein Kommando antwortet (§3.4). Erfolg ist genau
     /// `{"ok":true}`; bleibt die Antwort ganz aus, hat das Thema keine Route
     /// getroffen.

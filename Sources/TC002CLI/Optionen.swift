@@ -38,6 +38,8 @@ struct Optionen {
         case indikatorAus(nummer: Int)
         /// Eine Anzeige weiter oder zurück.
         case weiter, zurueck
+        /// Die Uhr neu starten.
+        case neustart
         /// Den Zustand der Uhr ausgeben.
         case zustand
         /// Die Einstellungen der Uhr ausgeben.
@@ -217,6 +219,8 @@ struct Optionen {
             o.befehl = .weiter
         case "zurueck", "previous":
             o.befehl = .zurueck
+        case "neustart", "reboot":
+            o.befehl = .neustart
         case "zustand", "state":
             o.befehl = .zustand
         case "einstellungen", "settings":
@@ -419,6 +423,7 @@ struct Optionen {
         case .indikatorAus, .indikator: name = "indikator"
         case .weiter: name = "weiter"
         case .zurueck: name = "zurueck"
+        case .neustart: name = "neustart"
         case .zustand: name = "zustand"
         case .einstellungen: name = "einstellungen"
         case .tls: name = "tls"
@@ -491,7 +496,7 @@ struct Optionen {
             let stand = Indikator(nummer: n, farbe: farbe, blinkMs: blinken ?? 0, fadeMs: blenden ?? 0)
             try stand.pruefen()
             befehl = .indikator(stand)
-        case .weiter, .zurueck, .zustand:
+        case .weiter, .zurueck, .zustand, .neustart:
             try keinWeiteres(ab: 0)
         case .einstellungen:
             guard let w = freie.first else { return }

@@ -187,6 +187,17 @@ public struct Geraet {
         try ngAnfrage("POST", "/api/v1/apps/" + (vor ? "next" : "previous"), koerper: nil)
     }
 
+    /// Startet die Uhr neu (`POST /api/v1/device/reboot`, §4.2).
+    ///
+    /// Die Doku nennt keine Antwort. Eine Uhr, die sofort neu startet, kann die
+    /// Verbindung kappen, bevor die Antwort draußen ist; eine abgebrochene
+    /// Verbindung oder eine ausbleibende Antwort gilt darum als angenommen.
+    /// Eine Abweisung (Statuscode ab 400) und eine Uhr, die gar nicht erst
+    /// verbindet, bleiben Fehler.
+    public func neustarten() throws {
+        try ngAnfrage("POST", "/api/v1/device/reboot", koerper: nil, abbruchGilt: true)
+    }
+
     /// Ein Anzeigenname im Pfad. `[A-Za-z0-9_-]{1,32}` ist alles, was NG
     /// annimmt (§8) — was daneben liegt, wird trotzdem kodiert statt von Hand
     /// eingesetzt, sonst zerlegte ein Schraegstrich im Namen die Route.
@@ -206,14 +217,15 @@ public struct Geraet {
     /// `Content-Type: application/json` ist bei `PUT` Pflicht: Ohne ihn wird
     /// die Anfrage abgewiesen, bevor der Rumpf ueberhaupt gelesen wird.
     @discardableResult
-    func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?) throws -> Data {
+    func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?,
+                   abbruchGilt: Bool = false) throws -> Data {
         var anfrage = try self.anfrage(url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
             anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
             anfrage.httpBody = koerper
         }
-        let (daten, status) = try fuehreAusMitStatus(anfrage)
+        let (daten, status) = try fuehreAusMitStatus(anfrage, abbruchGilt: abbruchGilt)
         guard status >= 400 else { return daten }
         let rumpf = (try? JSONSerialization.jsonObject(with: daten)) as? [String: Any]
         let fehler = rumpf?["error"] as? [String: Any]
@@ -331,7 +343,11 @@ public struct Geraet {
     /// einer Antwort mit Fehlerstatus, und wer den Status vorher zum Fehler
     /// macht, wirft die Begruendung weg und meldet „Status 422" statt
     /// „validationFailed im Feld durationMs".
-    private func fuehreAusMitStatus(_ anfrage: URLRequest) throws -> (Data, Int) {
+    ///
+    /// `abbruchGilt`: Eine Verbindung, die nach dem Senden abreißt, oder eine
+    /// Antwort, die ausbleibt, ist dann kein Fehler (`neustarten`). Wer gar nicht
+    /// erst verbindet, ist es weiterhin.
+    private func fuehreAusMitStatus(_ anfrage: URLRequest, abbruchGilt: Bool = false) throws -> (Data, Int) {
         var ergebnis: Data?
         var antwort: URLResponse?
         var fehler: Error?
@@ -340,9 +356,17 @@ public struct Geraet {
             ergebnis = d; antwort = r; fehler = f; fertig.signal()
         }.resume()
         guard fertig.wait(timeout: .now() + 10) == .success else {
+            if abbruchGilt { return (Data(), 200) }
             throw GeraetFehler.nichtErreichbar(lok("keine Antwort"))
         }
-        if let fehler { throw GeraetFehler.nichtErreichbar(fehler.localizedDescription) }
+        if let fehler {
+            let abgerissen: Set<URLError.Code> = [.networkConnectionLost, .timedOut, .badServerResponse,
+                                                  .cannotParseResponse, .zeroByteResource]
+            if abbruchGilt, let code = (fehler as? URLError)?.code, abgerissen.contains(code) {
+                return (Data(), 200)
+            }
+            throw GeraetFehler.nichtErreichbar(fehler.localizedDescription)
+        }
         guard let ergebnis else { throw GeraetFehler.nichtErreichbar("leere Antwort") }
         // Die Antworten, die diese App liest, sind wenige KiB gross.
         guard ergebnis.count <= 1 << 20 else { throw GeraetFehler.nichtErreichbar("Antwort zu gross") }
