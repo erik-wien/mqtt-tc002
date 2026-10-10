@@ -232,16 +232,66 @@ public enum Meldungsbau {
         mass.breite - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
     }
 
-    /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage für `versatzY`
-    /// und für das fertige Feld.
-    public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Pixelfeld {
-        Textraster.rasterPuffer(o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
-                                fett: o.fett, farbe: o.farbe, luecke: o.abstand, mass: mass)
+    /// Der Schlüssel der Rasterrechnung: genau die Größen, von denen
+    /// `Textraster` abhängt. Alles andere an den Optionen (Ausrichtung, Rand,
+    /// Tempo) ändert das Ergebnis nicht.
+    private struct Rasterschluessel: Hashable {
+        let text: String, schrift: String, groesse: Double, fett: Bool
+        let farbe: String, luecke: Int, breite: Int, hoehe: Int
     }
 
+    private final class Rasterspeicher: @unchecked Sendable {
+        let sperre = NSLock()
+        var puffer: [Rasterschluessel: Pixelfeld] = [:]
+        var breiten: [Rasterschluessel: Int] = [:]
+    }
+    private static let rasterspeicher = Rasterspeicher()
+
+    /// Eine Obergrenze, damit eine lange Sitzung den Speicher nicht füllt: Je
+    /// Tastendruck entsteht ein neuer Schlüssel, gebraucht werden ein paar je Uhr.
+    private static let rasterspeicherGrenze = 64
+
+    /// Der gerasterte Text ohne jede Ausrichtung — die Grundlage für `versatzY`
+    /// und für das fertige Feld.
+    ///
+    /// Zwischengespeichert, weil die Vorschau je Neuberechnung ihres Aufbaus
+    /// `passt`, `feld` und `versatzY` für jede Uhr fragt — das sind je Uhr drei
+    /// Rasterläufe (ein `CGContext` je Zeichen) für dieselben Werte, und
+    /// jedes Layout der Vorschau wiederholt sie. Die Rechnung ist rein; der
+    /// Schlüssel enthält alles, wovon sie abhängt.
+    public static func puffer(_ o: Meldungsoptionen, mass: Anzeigemass = .vorgabe) -> Pixelfeld {
+        let k = Rasterschluessel(text: o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
+                                 fett: o.fett, farbe: o.farbe, luecke: o.abstand,
+                                 breite: mass.breite, hoehe: mass.hoehe)
+        rasterspeicher.sperre.lock()
+        let bekannt = rasterspeicher.puffer[k]
+        rasterspeicher.sperre.unlock()
+        if let bekannt { return bekannt }
+        let f = Textraster.rasterPuffer(k.text, schrift: k.schrift, groesse: k.groesse,
+                                        fett: k.fett, farbe: k.farbe, luecke: k.luecke, mass: mass)
+        rasterspeicher.sperre.lock()
+        if rasterspeicher.puffer.count >= rasterspeicherGrenze { rasterspeicher.puffer.removeAll() }
+        rasterspeicher.puffer[k] = f
+        rasterspeicher.sperre.unlock()
+        return f
+    }
+
+    /// Zwischengespeichert aus demselben Grund wie `puffer`; die Breite hängt
+    /// nicht vom Anzeigemaß ab.
     public static func breite(_ o: Meldungsoptionen) -> Int {
-        Textraster.breite(o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
-                          fett: o.fett, luecke: o.abstand)
+        let k = Rasterschluessel(text: o.gesendeterText, schrift: o.schrift, groesse: o.groesse,
+                                 fett: o.fett, farbe: "", luecke: o.abstand, breite: 0, hoehe: 0)
+        rasterspeicher.sperre.lock()
+        let bekannt = rasterspeicher.breiten[k]
+        rasterspeicher.sperre.unlock()
+        if let bekannt { return bekannt }
+        let b = Textraster.breite(k.text, schrift: k.schrift, groesse: k.groesse,
+                                  fett: k.fett, luecke: k.luecke)
+        rasterspeicher.sperre.lock()
+        if rasterspeicher.breiten.count >= rasterspeicherGrenze { rasterspeicher.breiten.removeAll() }
+        rasterspeicher.breiten[k] = b
+        rasterspeicher.sperre.unlock()
+        return b
     }
 
     /// Passt der Text in die verfügbare Breite, steht er still — sonst läuft er

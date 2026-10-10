@@ -679,7 +679,13 @@ public final class AppZustand {
     /// Dass das Senden trotzdem dem Blick folgt, solange niemand ein Ziel
     /// gewaehlt hat, besorgt `ziele()`: Eine leere Zielmenge heisst „an die
     /// angesehene Uhr".
+    ///
+    /// Dieselbe Uhr noch einmal anzusehen tut nichts: `@Observable` meldet
+    /// jede Zuweisung, auch eine gleiche, und `aktiveID` schreibt dazu in die
+    /// Einstellungen und die Wolke. Der Blaetterer ruft das aus einem
+    /// Layoutlauf heraus.
     public func uhrAnsehen(_ id: UUID) {
+        guard aktiveID != id else { return }
         aktiveID = id
     }
 
