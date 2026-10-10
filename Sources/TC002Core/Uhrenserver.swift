@@ -120,8 +120,14 @@ public final class Uhrenserver: @unchecked Sendable {
 
     // MARK: - Eine Verbindung
 
+    /// Hoechstdauer je Verbindung, vom Annehmen bis zur Antwort. Wer weniger
+    /// Bytes schickt, als er angekuendigt hat, haelt sonst Verbindung und
+    /// Puffer fuer immer.
+    nonisolated(unsafe) static var anfragefrist: TimeInterval = 10
+
     private func bedienen(_ verbindung: NWConnection) {
         verbindung.start(queue: schlange)
+        schlange.asyncAfter(deadline: .now() + Self.anfragefrist) { verbindung.cancel() }
         lesen(verbindung, bisher: Data())
     }
 
@@ -177,6 +183,7 @@ public final class Uhrenserver: @unchecked Sendable {
         case 400: return "Bad Request"
         case 404: return "Not Found"
         case 405: return "Method Not Allowed"
+        case 403: return "Forbidden"
         case 413: return "Payload Too Large"
         case 415: return "Unsupported Media Type"
         case 422: return "Unprocessable Entity"
@@ -204,6 +211,20 @@ public final class Uhrenserver: @unchecked Sendable {
             || "!#$%&'*+-.^_`|~".utf8.contains(b)
     }
 
+    /// Ohne `Host` (HTTP/1.0) gilt die Anfrage als lokal; sonst muss der Name
+    /// der eigene Rechner sein, mit oder ohne Port.
+    static func hostIstLokal(_ host: String?) -> Bool {
+        guard let host else { return true }
+        let name: Substring
+        if host.hasPrefix("[") {
+            guard let ende = host.firstIndex(of: "]") else { return false }
+            name = host[host.startIndex...ende]
+        } else {
+            name = host.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
+        }
+        return ["127.0.0.1", "localhost", "[::1]"].contains(name.lowercased())
+    }
+
     /// Liest eine Anfrage — Kopf, Grenzen und Rumpf in einem Zug, damit die
     /// Groessenpruefung und das Einlesen des Rumpfes denselben, einmal
     /// ermittelten `Content-Length` benutzen.
@@ -221,6 +242,10 @@ public final class Uhrenserver: @unchecked Sendable {
     ///   virtuelle Uhr nicht lesen.
     ///
     /// Ein `Content-Length` ueber `VirtuelleNGUhr.maxRumpf` ist sofort `413`.
+    ///
+    /// `403` bekommt jede Anfrage mit `Origin` (so schickt ein Browser eine
+    /// Anfrage von einer fremden Seite; die App selbst sendet keinen) und jede,
+    /// deren `Host` nicht der eigene Rechner ist (DNS-Rebinding).
     static func einlesen(_ daten: Data) -> Lesestand {
         let zuGross = VirtuelleNGUhr.fehler(413, "payloadTooLarge", "payload too large")
         let schlecht = VirtuelleNGUhr.fehler(400, "badRequest", "bad request")
@@ -249,6 +274,9 @@ public final class Uhrenserver: @unchecked Sendable {
             kopf[name] = wert
         }
         if laengenangaben.count > 1 { return .abweisen(schlecht) }
+        if kopf["origin"] != nil || !hostIstLokal(kopf["host"]) {
+            return .abweisen(VirtuelleNGUhr.fehler(403, "forbidden", "forbidden"))
+        }
         var laenge = 0
         if let angabe = laengenangaben.first {
             guard !angabe.isEmpty, angabe.count <= 18, angabe.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),

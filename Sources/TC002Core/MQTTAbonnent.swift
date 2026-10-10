@@ -123,6 +123,12 @@ public final class MQTTAbonnent: @unchecked Sendable {
             beiZustand?(false, lok("Der Broker-Port ist keine gültige Zahl."))
             return
         }
+        do {
+            try MQTTPaket.pruefen([zugang.clientID, zugang.benutzer, zugang.kennwort] + themen)
+        } catch {
+            beiZustand?(false, error.localizedDescription)
+            return
+        }
         let v = NWConnection(host: NWEndpoint.Host(zugang.host), port: port, using: .tcp)
         verbindung = v
         strom = Paketstrom()

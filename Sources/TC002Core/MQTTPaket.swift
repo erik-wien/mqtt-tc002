@@ -4,6 +4,9 @@ public enum MQTTFehler: Error, LocalizedError {
     case nichtVerbunden(String)
     case abgelehnt(code: UInt8)
     case zeitueberschreitung
+    /// Eine Zeichenkette (Thema, Kennung, Benutzer, Kennwort) passt nicht in das
+    /// Zwei-Byte-Laengenfeld von MQTT.
+    case zuLang
 
     public var errorDescription: String? {
         switch self {
@@ -20,6 +23,8 @@ public enum MQTTFehler: Error, LocalizedError {
             }
         case .zeitueberschreitung:
             return lok("Der Broker hat nicht geantwortet.")
+        case .zuLang:
+            return lok("Ein Thema, eine Kennung oder ein Kennwort ist für MQTT zu lang (höchstens 65 535 Byte).")
         }
     }
 }
@@ -40,9 +45,24 @@ public enum MQTTPaket {
         return out
     }
 
-    /// Laengenpraefigierte Zeichenkette: zwei Byte Laenge, dann UTF-8.
+    /// Hoechstlaenge einer MQTT-Zeichenkette in Byte (Zwei-Byte-Laengenfeld).
+    static let maxZeichenkette = 0xFFFF
+
+    /// Wirft `MQTTFehler.zuLang`, wenn eine der Zeichenketten nicht in ein
+    /// Paket passt. Wer Pakete baut, ruft das vorher; die Baufunktionen selbst
+    /// bleiben ohne `throws`.
+    public static func pruefen(_ texte: [String?]) throws {
+        for t in texte {
+            if let t, t.utf8.count > maxZeichenkette { throw MQTTFehler.zuLang }
+        }
+    }
+
+    /// Laengenpraefigierte Zeichenkette: zwei Byte Laenge, dann UTF-8. Eine
+    /// zu lange Zeichenkette wird auf `maxZeichenkette` Byte gekuerzt statt zu
+    /// trappen; `pruefen` weist sie vorher ab, das Kuerzen ist nur das Netz
+    /// darunter.
     static func zeichenkette(_ s: String) -> Data {
-        let b = Data(s.utf8)
+        let b = Data(s.utf8.prefix(maxZeichenkette))
         return Data([UInt8(b.count >> 8), UInt8(b.count & 0xFF)]) + b
     }
 

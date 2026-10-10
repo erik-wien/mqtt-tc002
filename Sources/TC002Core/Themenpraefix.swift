@@ -27,4 +27,18 @@ public enum Themenpraefix {
             + String(zeichen[vorn...hinten])
             + String(repeating: "␣", count: zeichen.count - 1 - hinten)
     }
+
+    /// Hoechstlaenge in Byte. Ein Praefix steht in jedem Thema; was weit ueber
+    /// jede vernuenftige Einstellung hinausgeht, kommt nicht von einer Uhr.
+    public static let maxLaenge = 128
+
+    /// Ob ein von der Uhr gemeldetes Praefix als Themenanfang taugt: nicht
+    /// laenger als `maxLaenge` Byte, keine Steuerzeichen, kein `#` und kein `+`.
+    /// Die beiden Platzhalter machen aus Veroeffentlichungen Muster und legen den
+    /// MQTT-Client der Uhr lahm (gemessen 09.10.2026). Leerzeichen am Rand und
+    /// `/` bleiben erlaubt, NG nimmt das Praefix woertlich.
+    public static func gueltig(_ praefix: String) -> Bool {
+        guard !praefix.isEmpty, praefix.utf8.count <= maxLaenge else { return false }
+        return !praefix.unicodeScalars.contains { $0.properties.generalCategory == .control || $0 == "#" || $0 == "+" }
+    }
 }

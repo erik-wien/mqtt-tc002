@@ -104,4 +104,15 @@ final class MQTTPaketTests: XCTestCase {
         XCTAssertNil(MQTTPaket.connackCode(Data([0x30, 0x02, 0x00, 0x00])))   // kein CONNACK
         XCTAssertNil(MQTTPaket.connackCode(Data([0x20])))                      // zu kurz
     }
+
+    func testZuLangeZeichenketteTrapptNichtUndWirdVonPruefenAbgewiesen() {
+        let lang = String(repeating: "a", count: 70_000)
+        XCTAssertThrowsError(try MQTTPaket.pruefen(["ok", lang])) { fehler in
+            guard case MQTTFehler.zuLang = fehler else { return XCTFail("\(fehler)") }
+        }
+        XCTAssertNoThrow(try MQTTPaket.pruefen(["ok", nil, String(repeating: "a", count: 65_535)]))
+        // Das Netz darunter: kein Trap, die Laenge im Paket stimmt mit den Daten ueberein.
+        let paket = MQTTPaket.publish(thema: lang, nutzlast: Data())
+        XCTAssertEqual(MQTTPaket.publishGelesen(paket)?.thema.utf8.count, 65_535)
+    }
 }

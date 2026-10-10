@@ -52,6 +52,16 @@ final class GeraetNGTests: XCTestCase {
 
     // MARK: - Das Praefix
 
+    func testEinPraefixMitPlatzhalternLaengeOderSteuerzeichenWirdAbgewiesen() {
+        for schlecht in ["a/#", "a+b", String(repeating: "x", count: 129), "a\nb", "a\u{0}b"] {
+            Doppelgaenger.antworten["/api/v1/system"] = #"{"mqttPrefix":"\#(schlecht.replacingOccurrences(of: "\n", with: "\\n").replacingOccurrences(of: "\u{0}", with: "\\u0000"))"}"#
+            XCTAssertThrowsError(try geraet().praefixUndBasis(), schlecht) { fehler in
+                guard case GeraetFehler.ungueltigesPraefix = fehler else { return XCTFail("\(fehler)") }
+            }
+        }
+        XCTAssertTrue(Themenpraefix.gueltig(" awtrix "))
+    }
+
     /// NG nimmt `mqttPrefix` genau so, wie es dasteht. Haengte die App etwas
     /// an, schriebe sie auf ein Thema, das kein Geraet abonniert — und NG
     /// antwortet darauf gar nicht.

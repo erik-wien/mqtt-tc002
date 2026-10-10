@@ -5,6 +5,8 @@ public enum GeraetFehler: Error, LocalizedError {
     case unerwarteteAntwort(String)
     case httpFehler(pfad: String, code: Int)
     case keinPraefix
+    /// Das Praefix der Uhr ist zu lang oder enthaelt Steuerzeichen, `#` oder `+`.
+    case ungueltigesPraefix
     /// Die eingetragene Adresse ergibt keine gueltige URL — ein Leerzeichen
     /// genuegt dafuer schon.
     case ungueltigeAdresse(String)
@@ -22,6 +24,7 @@ public enum GeraetFehler: Error, LocalizedError {
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
         case .keinPraefix: return lok("Die Uhr nennt weder ein MQTT-Präfix noch eine Kennung. Erneut abfragen.")
+        case .ungueltigesPraefix: return lok("Das MQTT-Präfix der Uhr ist unbrauchbar (zu lang oder mit Steuerzeichen, „#“ oder „+“). In den Einstellungen der Uhr berichtigen.")
         case .ungueltigeAdresse(let a): return lokf("„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt.", a)
         case .ngAbgewiesen(let status, let code, let feld):
             guard let feld else {
@@ -69,6 +72,7 @@ public struct Geraet {
         // Weder ein Praefix noch eine uid: Dann ist das keine AWTRIX, die man
         // ansprechen koennte — und ein leeres Thema waere `/cmd/apps/pushed/x`.
         guard !praefix.isEmpty else { throw GeraetFehler.keinPraefix }
+        guard Themenpraefix.gueltig(praefix) else { throw GeraetFehler.ungueltigesPraefix }
         let mass = try? anzeigemass()
         return (praefix, uid, mass ?? nil)
     }

@@ -123,6 +123,31 @@ final class UhrenserverGrenzenTests: XCTestCase {
         XCTAssertNil(Uhrenserver.vorabpruefung(Data("GET /x HTTP/1.1\r\n".utf8)))
     }
 
+    func testEineAngekuendigteAberNichtGelieferteAnfrageWirdNachDerFristGeschlossen() throws {
+        let alt = Uhrenserver.anfragefrist
+        Uhrenserver.anfragefrist = 0.5
+        defer { Uhrenserver.anfragefrist = alt }
+        let port = try gestartet()
+        let begonnen = Date()
+        // Kopf verspricht 1000 Byte, geliefert wird keines.
+        let antwort = roh(port, Data("PUT /api/v1/apps/pushed/x HTTP/1.1\r\nContent-Length: 1000\r\n\r\n".utf8))
+        XCTAssertTrue(antwort.isEmpty, antwort)
+        XCTAssertLessThan(Date().timeIntervalSince(begonnen), 3, "die Verbindung blieb offen, bis der Test aufgab")
+    }
+
+    func testEineAnfrageMitOriginWirdAbgewiesen() {
+        pruefeAbgewiesen("Origin: https://fremd.example\r\nContent-Length: 0", 403)
+    }
+
+    func testFremderHostIstVerboten() {
+        pruefeAbgewiesen("Host: fremd.example\r\nContent-Length: 0", 403)
+        XCTAssertTrue(Uhrenserver.hostIstLokal("127.0.0.1:8752"))
+        XCTAssertTrue(Uhrenserver.hostIstLokal("localhost"))
+        XCTAssertTrue(Uhrenserver.hostIstLokal("[::1]:8752"))
+        XCTAssertTrue(Uhrenserver.hostIstLokal(nil))
+        XCTAssertFalse(Uhrenserver.hostIstLokal("127.0.0.1.fremd.example"))
+    }
+
     // MARK: Eindeutigkeit des Kopfes
 
     private func anfrage(_ kopfzeilen: String) -> String {

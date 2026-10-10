@@ -49,6 +49,7 @@ public struct MQTTSender {
     public init(frist: TimeInterval = 8) { self.frist = frist }
 
     public func senden(_ nutzlast: Data, an thema: String, zugang: MQTTZugang) throws {
+        try MQTTPaket.pruefen([thema, zugang.clientID, zugang.benutzer, zugang.kennwort])
         let verbindung = try verbundenUndGeprueft(zugang: zugang)
         defer { verbindung.cancel() }
 
