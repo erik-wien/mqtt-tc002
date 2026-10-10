@@ -43,6 +43,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case verbindung = "Einstellungen"
     case senden = "Senden"
     case editor = "Icons"
+    case uhr = "Uhr"
     case anzeigen = "Protokoll"
     case fehlersuche = "Wenn nichts erscheint"
 
@@ -53,10 +54,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .ueberblick:
             return HilfeInhalt.wasEsTut
                 + [
-                    .ueberschrift("Die vier Bereiche in der Seitenleiste"),
+                    .ueberschrift("Die Bereiche in der Seitenleiste"),
                     .punkte([
                         "**Senden** — Text und Icon verschicken.",
                         "**Icons** — Icons und ganze Anzeigen malen.",
+                        "**Uhr** — die Fernbedienung: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger.",
                         "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
                         "**Einstellungen** — Uhren, Broker, Aufzeichnung, iCloud und Erweitert.",
                     ]),
@@ -217,6 +219,15 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Die Sendezeile unter der Leinwand gilt für jede Größe: Auch bei einem Icon will man sehen, wie es auf dem Gerät aussieht — es geht dann als Icon ohne Text hinaus. Als Zubehör einer Meldung wählt man es weiterhin unter „Senden“. Die fünf Slot-Blöcke stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App von einem gemalten Bild die Pixel statt der Regler, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war."),
                     .absatz("Das ⊗ an einem belegten Block löscht die Anzeige auf der Uhr — nicht die Leinwand. Die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist. Eine eigene Dauer bekommt ein von hier geschicktes Bild nicht; wie lange es steht, entscheidet der Seitenwechsel der Uhr."),
                     .absatz("Ein Einzelbild geht als Standbild an die Uhr, mehrere als animiertes GIF mit ihren Standzeiten. Ist die Anzeige für eine MQTT-Nachricht zu groß, nimmt die App den Weg über HTTP an dieselbe Uhr."),
+                ]
+        case .uhr:
+            return [
+                    .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr. Die Uhr wählst du oben auf der Seite, sobald mehr als eine eingetragen ist."),
+                ]
+                + HilfeInhalt.fernbedienung
+                + HilfeInhalt.uhreinstellungen
+                + [
+                    .absatz("Die Gruppen finden sich unter „Einstellungen“ → „Uhren“: Die Uhr antippen, dort steht der Abschnitt „Auf der Uhr“."),
                 ]
         case .anzeigen:
             return [

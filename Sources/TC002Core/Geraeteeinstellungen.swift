@@ -26,7 +26,7 @@ public indirect enum Einstellungsart: Equatable, Sendable {
     case objekt([String: Einstellungsart])
 
     static let wochentagsnamen = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    static let zifferblaetter = ["sheet", "ring", "flap", "month", "big"]
+    public static let zifferblaetter = ["sheet", "ring", "flap", "month", "big"]
     /// „int ≥ 0“ nennt die Doku ohne Obergrenze; was ein `int32` fasst, nimmt die App an.
     static let nichtNegativ = 0...Int(Int32.max)
 

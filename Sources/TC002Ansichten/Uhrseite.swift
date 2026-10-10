@@ -79,6 +79,18 @@ private struct Uhrblatt: View {
                 Abschnittskopf("Betriebsart", hilfe: lok("Das Präfix ermittelt die App selbst: Es ist genau das in der Uhr eingestellte, und ist keines eingestellt, die Kennung der Uhr. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen."))
             }
 
+            // Die gespeicherten Einstellungen der Uhr, in Gruppen; was man jetzt
+            // schalten will, steht in der Fernbedienung (Bereich „Uhr“).
+            Section {
+                ForEach(Uhrgruppe.sichtbar(faehigkeiten: zustand.faehigkeiten[uhr.id])) { gruppe in
+                    NavigationLink(value: Uhrgruppenziel(uhr: uhr.id, gruppe: gruppe)) {
+                        Label { Text(verbatim: gruppe.titel) } icon: { Image(systemName: gruppe.symbol) }
+                    }
+                }
+            } header: {
+                Text("Auf der Uhr")
+            }
+
             Section {
                 LabeledContent {
                     Button("Abfragen") { zustand.abfragen(uhr.id) }
@@ -100,6 +112,10 @@ private struct Uhrblatt: View {
             }
         }
         .formStyle(.grouped)
+        .navigationDestination(for: Uhrgruppenziel.self) { ziel in
+            Uhrgruppenseite(zustand: zustand, ziel: ziel, kanon: kanon)
+        }
+        .task { await zustand.zustandAbfragen(uhr.id) }
         .uhrentfernenRueckfrage(zeigt: $fragtEntfernen, zustand: zustand, id: uhr.id)
     }
 

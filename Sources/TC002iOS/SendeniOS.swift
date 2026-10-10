@@ -55,6 +55,8 @@ struct SendeniOS: View {
     /// genau einmal je Ansicht. Wer das Blatt wegwischt, ohne etwas
     /// einzutragen, bekommt es nicht gleich wieder vorgesetzt.
     @State private var zeigeEinstellungen: Bool
+    @State private var zeigeSteuerung = false
+    @State private var zeigeUhreinstellungen = false
 
     @MainActor
     init(zustand: AppZustand) {
@@ -341,7 +343,11 @@ struct SendeniOS: View {
                 formatleiste
                 eingabe
             }
-            .navigationTitle(Text("Senden"))
+            // Der Name der angesehenen Uhr, mit dem Titelmenü des Systems: die
+            // Wahl der Uhr und der Weg zur Steuerung und zu den Einstellungen
+            // der Uhr. Ohne Uhr bleibt es bei „Senden“.
+            .navigationTitle(zustand.aktiveUhr?.name ?? lok("Senden"))
+            .toolbarTitleMenu { titelmenue }
             // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
             // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
             // von noetigen rund 265 Punkten fuer den Inhalt, die Slot-Zeile
@@ -378,8 +384,43 @@ struct SendeniOS: View {
         }
     }
 
+    /// Der Inhalt des Titelmenüs. Die Uhrenwahl nur ab zwei Uhren, wie die
+    /// Punktreihe unter der Vorschau.
+    @ViewBuilder
+    private var titelmenue: some View {
+        if zustand.uhren.count > 1 {
+            Picker("Angesehene Uhr", selection: Binding(
+                get: { zustand.aktiveID },
+                set: { if let neu = $0 { zustand.uhrAnsehen(neu) } })) {
+                ForEach(zustand.uhren) { uhr in Text(verbatim: uhr.name).tag(Optional(uhr.id)) }
+            }
+            .pickerStyle(.inline)
+        }
+        if zustand.aktiveUhr != nil {
+            Button {
+                zeigeSteuerung = true
+            } label: {
+                Label("Steuerung …", systemImage: "slider.horizontal.3")
+            }
+            // Einträge eines Menüs: Das System setzt den Stil.
+            .buttonStyle(.automatic)
+            Button {
+                zeigeUhreinstellungen = true
+            } label: {
+                Label("Einstellungen der Uhr …", systemImage: "gearshape")
+            }
+            .buttonStyle(.automatic)
+        }
+    }
+
     var body: some View {
         rumpf
+        .sheet(isPresented: $zeigeSteuerung) {
+            SteuerungsblattiOS(zustand: zustand)
+        }
+        .sheet(isPresented: $zeigeUhreinstellungen) {
+            UhreinstellungeniOS(zustand: zustand)
+        }
         .sheet(isPresented: $zeigeFormat) {
             FormatblattiOS(zustand: zustand, darstellung: $darstellung, weg: optionen.weg,
                            tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,

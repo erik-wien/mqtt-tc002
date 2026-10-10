@@ -320,8 +320,11 @@ final class KnopfstilTests: XCTestCase {
             // vom System statt aus eigener Färbung. Der Sendeknopf fehlt hier
             // — die Eingabetaste schickt, wie in Nachrichten. Das 🖼 am Ende
             // fehlt seit „Icons": Die 52 × 16 stehen im selben Blatt wie die
-            // Icons, und der Knopf davor ist ihr einziger Einstieg.
-            "Sources/TC002iOS/SendeniOS.swift": 2,
+            // Icons, und der Knopf davor ist ihr einziger Einstieg. Dazu
+            // „Steuerung …“ und „Einstellungen der Uhr …“ im Titelmenü
+            // (`toolbarTitleMenu`): Einträge eines Systemmenüs, deren Stil
+            // das System setzt (+2).
+            "Sources/TC002iOS/SendeniOS.swift": 4,
             // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
             // weiterführen, jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/VerbindungiOS.swift": 2,

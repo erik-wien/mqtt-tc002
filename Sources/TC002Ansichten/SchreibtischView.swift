@@ -33,7 +33,7 @@ public struct SchreibtischView: View {
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", editor = "Icons",
+        case senden = "Senden", editor = "Icons", uhr = "Uhr",
              // „Protokoll", nicht „Verlauf": Der Bereich zeigt, was jetzt auf
              // der Uhr liegt, und darunter die technische Mitschrift. „Verlauf"
              // heisst die Liste der gesendeten Meldungen unter den Bloecken.
@@ -43,12 +43,13 @@ public struct SchreibtischView: View {
             switch self {
             case .senden: return "paperplane"
             case .editor: return "square.grid.3x3"
+            case .uhr: return "slider.horizontal.3"
             case .protokoll: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }
         }
         /// Die unteren stehen abgesetzt am Fuss der Seitenleiste.
-        static let oben: [Bereich] = [.senden, .editor]
+        static let oben: [Bereich] = [.senden, .editor, .uhr]
         static let unten: [Bereich] = [.protokoll, .einstellungen]
 
         /// Ohne Protokoll gibt es den Eintrag nicht: Ein Bereich, der nichts
@@ -178,6 +179,7 @@ public struct SchreibtischView: View {
             switch gewaehlt {
             case .senden: SendenView(zustand: zustand)
             case .editor: EditorBereichView(zustand: zustand)
+            case .uhr: Fernbedienung(zustand: zustand, kanon: .schreibtisch)
             case .protokoll: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
             }

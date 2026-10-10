@@ -66,6 +66,16 @@ extension AppZustand {
         }
     }
 
+    /// Fragt den Zustand im Takt, bis die Aufgabe abgebrochen wird — für die
+    /// Steuerungsseite, solange sie offen ist. Eine MQTT-Uhr ohne Adresse führt
+    /// ihren Stand das Mitlesen nach; `zustandAbfragen` tut dort nichts.
+    public func zustandFolgen(_ id: UUID, takt: Duration = .seconds(10)) async {
+        while !Task.isCancelled {
+            await zustandAbfragen(id)
+            try? await Task.sleep(for: takt)
+        }
+    }
+
     /// Fragt alle Uhren mit Adresse, nebeneinander.
     public func alleZustandAbfragen() async {
         let ids = uhren.filter { !$0.host.isEmpty }.map(\.id)
@@ -271,6 +281,25 @@ extension AppZustand {
     @discardableResult
     public func tlsCAHochladen(_ pem: String, fuer id: UUID) async -> Bool {
         await tlsAendern(id, was: lok("Zertifikat hochladen")) { try $0.tlsCAHochladen(pem: pem) }
+    }
+
+    /// Wie `tlsCAHochladen`, aus einer Datei. Der Zugriff auf eine vom Anwender
+    /// gewählte Datei gilt nur, solange er ausdrücklich geöffnet ist; gelesen
+    /// wird im Hintergrund. Was nicht lesbar ist, steht in `fehler`.
+    @discardableResult
+    public func tlsCAHochladen(datei: URL, fuer id: UUID) async -> Bool {
+        let pem = await Hintergrund.lauf { () -> String? in
+            let offen = datei.startAccessingSecurityScopedResource()
+            defer { if offen { datei.stopAccessingSecurityScopedResource() } }
+            guard let daten = try? Data(contentsOf: datei, options: .mappedIfSafe),
+                  daten.count <= TLSZertifikat.hoechstGroesse * 4 else { return nil }
+            return String(data: daten, encoding: .utf8)
+        }
+        guard let pem else {
+            fehler = lokf("Die Datei „%@“ ist nicht zu lesen.", datei.lastPathComponent)
+            return false
+        }
+        return await tlsCAHochladen(pem, fuer: id)
     }
 
     /// Entfernt die hochgeladene CA (`DELETE /api/v1/mqtt/tls/ca`).

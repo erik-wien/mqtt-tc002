@@ -192,6 +192,24 @@ public enum HilfeInhalt {
         .absatz("Sie spricht HTTP, kein MQTT: Ein MQTT-Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
 
+    /// Die Fernbedienung der Uhr. Wo man sie aufschlägt, steht in den beiden
+    /// Hilfen: am Schreibtisch ist es ein Bereich, am Telefon ein Blatt.
+    public static let fernbedienung: [Hilfebaustein] = [
+        .ueberschrift("Fernbedienung der Uhr"),
+        .absatz("Die Fernbedienung zeigt, was die angesehene Uhr gerade tut, und schaltet es: das Live-Bild ihres Displays, Gerät, aktive Anzeige mit Vor und Zurück, Erreichbarkeit, WLAN-Stärke, Laufzeit und Batterie; dazu Display an oder aus, Helligkeit in Prozent, Overlay, Moodlight und die drei Anzeiger am Rand. Jeder Schalter gilt genau der angesehenen Uhr; nur „Alle gewählten Uhren“ beim Display geht an alle Uhren, die als Ziel gewählt sind."),
+        .absatz("Das Live-Bild wird alle zwei Sekunden neu geholt, solange die Seite offen ist, und ruht, sobald man sie verlässt. Es zeigt die Farben der Anzeigen; Helligkeit und Farbkorrektur der Uhr sind nicht eingerechnet. Das Moodlight flutet das Display einfarbig, solange es an ist — die Seite zeigt dafür keine Vorschau."),
+        .absatz("Tasten und Drehknopf sieht die App nur im MQTT-Betrieb, weil nur das Mitlesen sie mitbekommt; im HTTP-Betrieb stehen sie grau da."),
+        .absatz("„Uhr neu starten …“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist."),
+    ]
+
+    /// Die gespeicherten Einstellungen der Uhr. Wo man sie findet, steht in
+    /// den beiden Hilfen.
+    public static let uhreinstellungen: [Hilfebaustein] = [
+        .ueberschrift("Einstellungen der Uhr"),
+        .absatz("Was auf der Uhr gespeichert ist und selten geändert wird, steht auf der Seite der Uhr unter „Auf der Uhr“: Helligkeit & Farbe, Text & Laufschrift, Schleife, Uhr, Zeit & Datum (mit der Wochentagsleiste) und Klang. Jede Änderung geht sofort an die Uhr, danach liest die App den Stand zurück."),
+        .absatz("Die Gruppe „MQTT-Verschlüsselung“ gibt es nur bei Uhren, die MQTT über TLS können. Sie zeigt, wem die Uhr als Broker vertraut, lädt eine eigene CA (eine PEM-Datei) auf die Uhr und entfernt sie nach Rückfrage wieder; das geht nur mit der Adresse der Uhr. TLS selbst ein- oder auszuschalten bleibt der Web-Oberfläche der Uhr („Konfigurieren“), ebenso WLAN, MQTT-Zugang, Anmeldung, Firmware und Zeitzone."),
+    ]
+
     public static let wolkenabgleich: [Hilfebaustein] = [
         .ueberschrift("Über iCloud abgleichen"),
         .absatz("Ist der Schalter an, liegen die eigenen Icons (8×8 und 16×16), die gemalten Bilder, die Einstellungen und das Gedächtnis der fünf Plätze nicht mehr auf diesem Gerät, sondern in iCloud — und damit auf jedem Gerät, auf dem die App mit demselben Konto läuft."),

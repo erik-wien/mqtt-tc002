@@ -33,11 +33,11 @@ final class EditorbereichTests: XCTestCase {
             .joined(separator: "\n")
     }
 
-    func testDieSeitenleisteHatVierEintraegeUndDarunterDenEditor() {
-        XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor])
+    func testDieSeitenleisteHatFuenfEintraegeUndDarunterDenEditor() {
+        XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor, .uhr])
         XCTAssertEqual(SchreibtischView.Bereich.unten, [.protokoll, .einstellungen])
-        XCTAssertEqual(SchreibtischView.Bereich.allCases.count, 4,
-                       "„Bilder“ und „Icons“ sind zu einem Eintrag geworden")
+        XCTAssertEqual(SchreibtischView.Bereich.allCases.count, 5,
+                       "„Bilder“ und „Icons“ sind ein Eintrag, die Fernbedienung „Uhr“ ein weiterer")
     }
 
     /// Der Eintrag heißt „Icons" und trägt ein Raster. Beim ersten
