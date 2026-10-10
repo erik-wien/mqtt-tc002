@@ -247,7 +247,7 @@ final class EinblendtextGegenstueckTests: XCTestCase {
                       "am Mac steht kein Winkel mehr, der zurückführt")
         XCTAssertTrue(zeile.contains("Button(lok(\"Sichern\"))"),
                       "am Mac trägt die Haupthandlung wieder kein Wort")
-        XCTAssertTrue(zeile.contains("rundzeichen(\"xmark\"") && zeile.contains("rundzeichen(\"checkmark\""),
+        XCTAssertTrue(zeile.contains("rundzeichen(\"chevron.left\"") && zeile.contains("rundzeichen(\"square.and.arrow.down\""),
                       "am iPad stehen nicht mehr die beiden runden Zeichen")
 
         // Das runde Zeichen trägt seinen Namen weiterhin nur für die

@@ -107,7 +107,7 @@ public extension View {
     /// langer Druck setzen deshalb nur `platz`, und dieser Dialog löscht.
     func slotLoeschenBestaetigen(_ platz: Binding<Int?>, zustand: AppZustand) -> some View {
         confirmationDialog(
-            Text(lokf("Slot %d löschen?", platz.wrappedValue ?? 0)),
+            Text(lokf("Platz %d löschen?", platz.wrappedValue ?? 0)),
             isPresented: Binding(get: { platz.wrappedValue != nil },
                                  set: { if !$0 { platz.wrappedValue = nil } }),
             titleVisibility: .visible,

@@ -25,6 +25,10 @@ public struct Uhrenliste: View {
     public var body: some View {
         Form {
             Section {
+                if zustand.uhren.isEmpty {
+                    ContentUnavailableView("Keine Uhr eingerichtet", systemImage: "clock",
+                                           description: Text("Mit „Uhr hinzufügen …“ wird eine eingerichtet."))
+                }
                 ForEach(zustand.uhren) { uhr in
                     NavigationLink(value: uhr.id) {
                         zeile(uhr)

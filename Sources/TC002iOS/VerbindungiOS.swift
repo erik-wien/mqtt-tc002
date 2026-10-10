@@ -17,8 +17,6 @@ struct VerbindungiOS: View {
     @Bindable var zustand: AppZustand
     @Environment(\.dismiss) private var schliessen
     @State private var zeigeVirtuelleUhr = false
-    @State private var zeigeHilfe = false
-    @State private var zeigeUeber = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +35,13 @@ struct VerbindungiOS: View {
                     ueberAbschnitt
                 }
             }
+            // Weiter im selben Stapel statt ein Blatt auf dem Blatt: Die
+            // Einstellungen sind selbst schon eines.
+            .navigationDestination(isPresented: $zeigeVirtuelleUhr) {
+                VirtuelleUhrView(betrieb: .gemeinsam)
+                    .navigationTitle("Virtuelle Uhr")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
             .navigationDestination(for: Einstellungsthema.self) { thema in
                 Einstellungsinhalt(zustand: zustand, thema: thema, kanon: .telefon,
                                    virtuelleUhrAnsehen: { zeigeVirtuelleUhr = true })
@@ -54,9 +59,6 @@ struct VerbindungiOS: View {
             } }
         }
         .presentationDragIndicator(.visible)
-        .sheet(isPresented: $zeigeVirtuelleUhr) { VirtuelleUhrView(betrieb: .gemeinsam) }
-        .sheet(isPresented: $zeigeHilfe) { HilfeiOS() }
-        .sheet(isPresented: $zeigeUeber) { UeberiOS() }
     }
 
     /// Hilfe und Über am Fuß der Einstellungen. iOS stellt für „Über“ keine
@@ -67,14 +69,9 @@ struct VerbindungiOS: View {
     /// kein verbreitetes Muster.
     private var ueberAbschnitt: some View {
         Section {
-            // Zwei Listenzeilen, keine Befehlsknoepfe: Sie fuehren weiter,
-            // statt etwas zu tun, und eine Formularzeile ist auf dem Telefon
-            // selbst schon als antippbar zu erkennen. Ausdruecklich
-            // `.automatic`, damit die Entscheidung im Quelltext steht.
-            Button("Hilfe") { zeigeHilfe = true }
-                .buttonStyle(.automatic)
-            Button("Über Pixel Clock Messenger") { zeigeUeber = true }
-                .buttonStyle(.automatic)
+            // Zwei Listenzeilen, die weiterführen statt etwas zu tun.
+            NavigationLink("Hilfe") { HilfeiOS(eingebettet: true) }
+            NavigationLink("Über Pixel Clock Messenger") { UeberiOS(eingebettet: true) }
         }
     }
 }

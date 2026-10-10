@@ -484,9 +484,14 @@ public struct SendenView: View {
                 // Punkte schmaler als die Spalte — er sah klein aus und liess
                 // oben Luft stehen.
                 if zustand.uhren.count > 1 {
-                    Text(zustand.referenzUhr?.name ?? "")
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    HStack(spacing: 4) {
+                        Text(zustand.referenzUhr?.name ?? "")
+                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        if let id = zustand.referenzUhr?.id {
+                            Erreichbarkeitszeichen(zustand: zustand, id: id)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 // Die Groesse, die diese Uhr wirklich bekommt, wenn die
                 // gewaehlte nicht in ihre Hoehe passt.

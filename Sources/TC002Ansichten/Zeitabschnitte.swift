@@ -28,6 +28,13 @@ struct Zeitabschnitte<Zusatz: View>: View {
     /// hier schon einmal die falsch beantwortete.
     @ViewBuilder let zusatz: Zusatz
 
+    /// Text im Feld, der keine ganze Zahl ist: Gesendet wird er nie, das Feld
+    /// würde sonst stumm als leer gelten.
+    private var dauerUngueltig: Bool {
+        let t = dauerText.trimmingCharacters(in: .whitespaces)
+        return !t.isEmpty && Int(t) == nil
+    }
+
     var body: some View {
         // Die Ueberschriften nennen die Reichweite, nicht den Gegenstand:
         // Beide Abschnitte handeln von Sekunden, und woran die Sekunden
@@ -43,8 +50,13 @@ struct Zeitabschnitte<Zusatz: View>: View {
                     .keyboardType(.numberPad)
                     #endif
             }
-            Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
-                .font(.footnote).foregroundStyle(.secondary)
+            if dauerUngueltig {
+                Text("Das ist keine ganze Zahl — es gilt keine eigene Dauer.")
+                    .font(.footnote).foregroundStyle(.red)
+            } else {
+                Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
         } header: {
             Abschnittskopf("Nur diese Meldung", hilfe: lok("Dauer und Lauftempo reisen mit dieser einen Meldung mit."))
         }

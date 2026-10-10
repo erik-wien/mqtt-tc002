@@ -43,6 +43,31 @@ public struct Hilfeabschnitt: Identifiable {
     }
 }
 
+extension Hilfebaustein {
+    /// Ob `suche` im (übersetzten) Text dieses Bausteins vorkommt, ohne
+    /// Rücksicht auf Groß- und Kleinschreibung. Abbildungen haben keinen Text.
+    func enthaelt(_ suche: String) -> Bool {
+        switch self {
+        case .ueberschrift(let t), .untertitel(let t), .absatz(let t):
+            return lok(t).localizedCaseInsensitiveContains(suche)
+        case .punkte(let eintraege):
+            return eintraege.contains { lok($0).localizedCaseInsensitiveContains(suche) }
+        case .abbildung:
+            return false
+        }
+    }
+}
+
+extension Hilfeabschnitt {
+    /// Ob der Abschnitt `suche` im Titel oder in einem Baustein nennt. Eine
+    /// leere Suche trifft jeden Abschnitt.
+    public func enthaelt(_ suche: String) -> Bool {
+        let s = suche.trimmingCharacters(in: .whitespaces)
+        if s.isEmpty { return true }
+        return lok(titel).localizedCaseInsensitiveContains(s) || bausteine.contains { $0.enthaelt(s) }
+    }
+}
+
 /// Stellt einen Abschnitt dar — dieselbe Maschinerie für Mac und iPhone.
 ///
 /// `zeigtTitel` steuert nur, ob der Titel noch einmal im Text steht: Am Mac

@@ -169,7 +169,7 @@ struct IconsblattiOS: View {
             }
             TextField("Name", text: $importName)
             Button("Abbrechen", role: .cancel) { importDaten = nil }
-            Button("Übernehmen") { einlesen() }
+            Button("Hinzufügen") { einlesen() }
         } message: {
             Text(importZiel.map { lokf("Die Datei kommt zu den %@.", lok($0.beschriftung)) } ?? "")
         }
@@ -566,7 +566,7 @@ private struct IconseiteiOS: View {
         .alert("Umbenennen", isPresented: $fragtUmbenennen) {
             TextField("Name", text: $neuerName)
             Button("Abbrechen", role: .cancel) {}
-            Button("Sichern") {
+            Button("Umbenennen") {
                 if let neu = umbenennen(eintrag, neuerName) { eintrag = neu }
             }
         } message: {

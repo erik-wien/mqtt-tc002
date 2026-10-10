@@ -12,13 +12,22 @@ import TC002Core
 /// nur, was man in der App klickt.
 public struct HilfeView: View {
     @State private var abschnitt: Abschnitt? = .ueberblick
+    @State private var suche = ""
 
     public init() {}
 
+    /// Die Abschnitte, in denen die Suche etwas findet; ohne Suche alle.
+    private var treffer: [Abschnitt] {
+        Abschnitt.sichtbar.filter { Hilfeabschnitt($0.rawValue, $0.bausteine).enthaelt(suche) }
+    }
+
     public var body: some View {
         NavigationSplitView {
-            List(Abschnitt.sichtbar, selection: $abschnitt) { a in
+            List(treffer, selection: $abschnitt) { a in
                 Text(lok(a.rawValue)).tag(a)
+            }
+            .overlay {
+                if treffer.isEmpty { ContentUnavailableView.search(text: suche) }
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 210, max: 260)
         } detail: {
@@ -29,6 +38,12 @@ public struct HilfeView: View {
                     .padding(24)
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .searchable(text: $suche, placement: .sidebar, prompt: Text("Suchen"))
+        .onChange(of: suche) { _, _ in
+            if let erster = treffer.first, !treffer.contains(where: { $0 == abschnitt }) {
+                abschnitt = erster
+            }
         }
         // Nur am Mac — siehe GeraeteReferenzView: 760 Punkte hat kein iPad
         // hochkant ausser dem 13-Zoll-Geraet.
@@ -180,7 +195,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Der Bereich „Icons“ malt Pixel. Was dabei herauskommt, entscheidet allein die Größe der Leinwand: Ein 8×8 ist das kanonische LaMetric-Icon mit Nummer, ein 16×16 ein Icon ohne, und ein 52×16 ist die ganze Anzeige."),
                     .absatz("Er beginnt mit der **Übersicht**: alles, was im Bestand liegt, nach Größe gruppiert im Hauptfenster. Darüber grenzt ein Suchfeld nach Name und Nummer ein, und daneben liegt die Filterleiste — eine Kapsel mit den drei Größen und, durch einen Strich getrennt, dem Zeichen für „nur bewegte“. „Zurücksetzen“ steht nur da, solange etwas eingeschränkt ist. Ein Druck auf ein Stück holt es auf die Leinwand; in der Werkzeugleiste steht dort nur das Plus, und dahinter alles, was Neues hereinholt."),
                     .absatz("Das Kontextmenü einer Kachel bietet „Öffnen“, „Duplizieren“, „Umbenennen …“ und „Löschen“. **Duplizieren** ist der Weg, ein mitgeliefertes oder von LaMetric geholtes Icon zu bearbeiten, ohne das Vorbild zu verlieren: Die Kopie bekommt den nächsten freien Namen und, wo es eine gibt, die nächste freie Nummer."),
-                    .absatz("Auf der Leinwand ist der Aufbau dreispaltig: Seitenleiste, Leinwand, Inspektor. Über der Leinwand steht eine Zeile: links geht es zurück zur Übersicht, in der Mitte steht der Name des Stücks, rechts wird gesichert. Am Mac sind das ein Winkel und ein beschrifteter Knopf, auf dem iPad zwei runde Zeichen — ✗ und ✓, wie sie Fotos über dem bearbeiteten Bild zeigt. Am Kopf des Inspektors schaltet eine Segmentwahl um, was er zeigt — „Malen“, „Animation“, „Bestand“; in der Werkzeugleiste darüber liegen „Rückgängig“, „Wiederherstellen“ und der Knopf für den Inspektor."),
+                    .absatz("Auf der Leinwand ist der Aufbau dreispaltig: Seitenleiste, Leinwand, Inspektor. Über der Leinwand steht eine Zeile: links geht es zurück zur Übersicht, in der Mitte steht der Name des Stücks, rechts wird gesichert. Am Mac sind das ein Winkel und ein beschrifteter Knopf, auf dem iPad zwei runde Zeichen — derselbe Winkel und ein Pfeil in eine Ablage zum Sichern. Am Kopf des Inspektors schaltet eine Segmentwahl um, was er zeigt — „Malen“, „Animation“, „Bestand“; in der Werkzeugleiste darüber liegen „Rückgängig“, „Wiederherstellen“ und der Knopf für den Inspektor."),
                     .absatz("Die Leinwand nimmt den Platz, den ihre Spalte hergibt, und macht sie nie breiter, als sie ist: Bei 8×8 und 16×16 entscheidet die Höhe, bei 52×16 die Breite — dort bleiben die Kästchen zwangsläufig kleiner. Wird es so schmal, dass ein Kästchen unter sechs Punkte fiele, rollt die Leinwand waagrecht, statt über ihren Bereich hinauszulaufen. Das zuletzt Gemalte bleibt über einen Neustart der App hinweg erhalten."),
                     .ueberschrift("Malen"),
                     .absatz("Gemalt wird mit gedrückter Maustaste oder mit dem Finger. In der Karte „Werkzeug“ des Inspektors steht die Farbe und daneben die Wahl zwischen drei Werkzeugen: Der **Stift** malt, der **Radierer** nimmt weg, der **Eimer** füllt eine Fläche."),
@@ -200,7 +215,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("„Verdoppeln“ und „Entfernen“ stehen unter dem gewählten Einzelbild — an dem Bild also, auf das sie wirken. Dasselbe bietet das Kontextmenü jedes Bildes, dazu „Nach vorn“ und „Nach hinten“ zum Umsortieren. „Entfernen“ ist gesperrt, wenn nur noch ein Bild übrig ist."),
                     .absatz("„Verzögerung“ gilt für jedes Einzelbild gleich, in Sekunden. Abgespielt wird über das runde Zeichen — groß neben der Leinwand, bei einer 52 × 16-Anzeige knapp darunter, und klein neben „Einzelbild anhängen“ im Reiter „Animation“. Auf dem Bild liegt es nie: Ein Zeichen im Raster verdeckt Pixel, die man malen will. Es läuft probeweise in Schleife, ohne dass vorher gesichert werden muss, und wird zur Pause, solange es läuft; angehalten bleibt das gerade gezeigte Einzelbild stehen. Bei nur einem Einzelbild steht es gar nicht erst da. Die Uhr spielt animierte GIFs ab, nicht nur deren erstes Einzelbild — am Gerät bestätigt (Hilfe → Gerätereferenz, §4.2)."),
                     .ueberschrift("Sichern"),
-                    .absatz("„Ungesichert“ heißt hier: Was auf der Leinwand steht, weicht von dem ab, was im Bestand liegt — nicht, dass es beim Beenden verloren ginge; das zuletzt Gemalte übersteht einen Neustart ohnehin. Eine nie gesicherte Zeichnung ist deshalb ungesichert, ein eben geöffnetes Bild nicht, und wer seinen Strich mit „Rückgängig“ zurücknimmt, steht wieder auf dem gesicherten Stand. Danach fragt, was die Leinwand verwirft: das Kreuz, „Neu“, ein Größenwechsel und ein geladenes Bild. Ein Stück aus der Übersicht zu öffnen fragt nicht — dort ist der Druck darauf die Ansage, dass man es will. Name und Nummer zählen ohnehin nicht mit; sie sind in zwei Anschlägen wieder eingetippt."),
+                    .absatz("„Ungesichert“ heißt hier: Was auf der Leinwand steht, weicht von dem ab, was im Bestand liegt — nicht, dass es beim Beenden verloren ginge; das zuletzt Gemalte übersteht einen Neustart ohnehin. Eine nie gesicherte Zeichnung ist deshalb ungesichert, ein eben geöffnetes Bild nicht, und wer seinen Strich mit „Rückgängig“ zurücknimmt, steht wieder auf dem gesicherten Stand. Danach fragt, was die Leinwand verwirft: der Winkel zurück zur Übersicht, „Neu“, ein Größenwechsel und ein geladenes Bild. Ein Stück aus der Übersicht zu öffnen fragt nicht — dort ist der Druck darauf die Ansage, dass man es will. Name und Nummer zählen ohnehin nicht mit; sie sind in zwei Anschlägen wieder eingetippt."),
                     .absatz("Gesichert wird mit dem Knopf rechts über der Leinwand; er legt alle Einzelbilder auf einmal ab. Links in derselben Zeile geht es zurück zur Übersicht, ohne zu sichern — steht Ungesichertes da, fragt es vorher nach."),
                     .absatz("Bei einem neuen Stück und bei jedem Icon mit Nummer fragt vorher ein Blatt nach Nummer und Namen und sagt, was es ersetzen würde. So ersetzt ein bearbeitetes LaMetric-Icon sein Vorbild nicht stillschweigend."),
                     .untertitel("Name und Nummer"),

@@ -789,6 +789,12 @@ public struct EditorBereichView: View {
                     Text("s").foregroundStyle(.secondary)
                 }
             }
+            // Das GIF kennt Hundertstel und die Uhr nichts unter 20 ms:
+            // Eine kürzere Zeit würde stillschweigend angehoben.
+            if leinwand.verzoegerung < 0.02 {
+                Text("Mindestens 0,02 s — kürzere Zeiten werden auf diesen Wert gesetzt.")
+                    .font(.footnote).foregroundStyle(.red)
+            }
         } header: {
             Abschnittskopf("Abspielen", hilfe: Self.abspielenHilfe)
         }
@@ -1109,17 +1115,18 @@ public struct EditorBereichView: View {
                 .knopfHaupthandlung()
                 .controlSize(.large)
             #else
-            // Am iPad die runden Zeichen, wie Fotos sie ueber dem Bild
-            // stehen hat: kein Wort, dafuer eine Trefferflaeche, die der
-            // Finger sicher trifft.
-            rundzeichen("xmark", beschriftung: lok("Fertig"), haupt: false) { fertigAnfragen() }
+            // Am iPad runde Zeichen: kein Wort, dafuer eine Trefferflaeche,
+            // die der Finger sicher trifft. Die Symbole nennen, was die
+            // Knoepfe tun — zurueck und sichern —, nicht Abbrechen und
+            // Bestaetigen; ✗ stand fuer „Fertig" und ✓ fuer „Sichern".
+            rundzeichen("chevron.left", beschriftung: lok("Zurück zur Übersicht"), haupt: false) { fertigAnfragen() }
                 .keyboardShortcut(.cancelAction)
             empfaenger
             Spacer()
             Text(name.isEmpty ? lok("Ohne Namen") : name)
                 .font(.headline).lineLimit(1)
             Spacer()
-            rundzeichen("checkmark", beschriftung: lok("Sichern"), haupt: true) { sichernAnfragen() }
+            rundzeichen("square.and.arrow.down", beschriftung: lok("Sichern"), haupt: true) { sichernAnfragen() }
             #endif
         }
     }

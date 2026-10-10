@@ -45,6 +45,9 @@ public struct Verlaufsliste: View {
                 Verlaufszeilenbild(zustand: zustand, zeile: zeile, uebernehmen: uebernehmen)
             }
             .listStyle(.plain)
+        } else if zustand.verlaufAn {
+            ContentUnavailableView("Noch nichts gesendet", systemImage: "clock.arrow.circlepath",
+                                   description: Text("Was gesendet wird, steht hier und lässt sich mit einem Klick wieder aufnehmen."))
         }
     }
 }

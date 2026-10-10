@@ -7,16 +7,27 @@ import TC002Ansichten
 /// „Format“ und „Verlauf“ auch.
 struct UeberiOS: View {
     @Environment(\.dismiss) private var schliessen
+    /// Als Seite im Stapel der Einstellungen: ohne eigenen Stapel, und der
+    /// Rückweg ist der des Stapels.
+    var eingebettet = false
 
     var body: some View {
-        NavigationStack {
-            UeberView()
-                .navigationTitle("Über Pixel Clock Messenger")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") { schliessen() }
-                } }
+        if eingebettet {
+            inhalt
+        } else {
+            NavigationStack {
+                inhalt
+                    .toolbar { ToolbarItem(placement: .confirmationAction) {
+                        Button("Fertig") { schliessen() }
+                    } }
+            }
+            .presentationDragIndicator(.visible)
         }
-        .presentationDragIndicator(.visible)
+    }
+
+    private var inhalt: some View {
+        UeberView()
+            .navigationTitle("Über Pixel Clock Messenger")
+            .navigationBarTitleDisplayMode(.inline)
     }
 }

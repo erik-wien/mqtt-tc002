@@ -45,7 +45,7 @@ final class ErreichbarkeitTests: XCTestCase {
                       "das Zeichen hängt nicht mehr an der Erreichbarkeit")
 
         for (datei, wo) in [("Sources/TC002Ansichten/Uhrenliste.swift", "die Liste der Uhren"),
-                            ("Sources/TC002Ansichten/Uhrenwahl.swift", "der Titel am Schreibtisch")] {
+                            ("Sources/TC002Ansichten/SendenView.swift", "der Name unter der Vorschau am Schreibtisch")] {
             XCTAssertTrue(try quelltext(datei).contains("Erreichbarkeitszeichen("),
                           "\(wo) zeigt nicht mehr an, dass eine Uhr nicht geantwortet hat")
         }

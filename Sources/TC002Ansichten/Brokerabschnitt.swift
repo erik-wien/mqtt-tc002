@@ -38,6 +38,10 @@ public struct Brokerabschnitt: View {
                 TextField("z. B. 192.168.0.20", text: $zustand.brokerHost)
                     .eingabefeld(inZeile: kanon)
                     .ohneAutokorrektur()
+                    #if !os(macOS)
+                    .keyboardType(.URL)
+                    .textContentType(.URL)
+                    #endif
             }
             LabeledContent("Port") {
                 TextField("Port", text: $zustand.brokerPort)
@@ -48,10 +52,12 @@ public struct Brokerabschnitt: View {
                 TextField("z. B. pixdeck", text: $zustand.benutzer)
                     .eingabefeld(inZeile: kanon)
                     .ohneAutokorrektur()
+                    .textContentType(.username)
             }
             LabeledContent("Kennwort") {
                 SecureField("Kennwort", text: $zustand.kennwort)
                     .eingabefeld(inZeile: kanon)
+                    .textContentType(.password)
                     .focused($kennwortFokus)
                     .onSubmit { zustand.kennwortSichern() }
                     .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }

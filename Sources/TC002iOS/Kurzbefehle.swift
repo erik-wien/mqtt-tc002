@@ -270,7 +270,7 @@ struct MeldungLoeschenIntent: AppIntent {
     var uhr: String?
 
     static var parameterSummary: some ParameterSummary {
-        Summary("Slot \(\.$platz) von der Uhr löschen") { \.$uhr }
+        Summary("Platz \(\.$platz) von der Uhr löschen") { \.$uhr }
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -300,7 +300,7 @@ struct MeldungLoeschenIntent: AppIntent {
         if #available(iOS 18.0, *) {
             try await requestConfirmation(
                 actionName: .do,
-                dialog: IntentDialog(stringLiteral: lokf("Slot %d von der Uhr nehmen?", platz)))
+                dialog: IntentDialog(stringLiteral: lokf("Platz %d von der Uhr löschen?", platz)))
         } else {
             try await requestConfirmation()
         }

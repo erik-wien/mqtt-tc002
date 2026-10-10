@@ -28,8 +28,13 @@ struct AnzeigeniOS: View {
 
     private var protokollAbschnitt: some View {
         Section {
+            if zustand.protokoll.isEmpty {
+                ContentUnavailableView("Das Protokoll ist leer", systemImage: "list.bullet.rectangle",
+                                       description: Text("Was die App sendet und von den Uhren hört, steht hier."))
+            }
             ForEach(Array(zustand.protokoll.enumerated()), id: \.offset) { _, zeile in
                 Text(zeile).font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
             }
         } header: {
             // Ohne Wort: Die Seite heisst schon „Protokoll", und zweimal

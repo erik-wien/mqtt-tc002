@@ -326,9 +326,6 @@ final class KnopfstilTests: XCTestCase {
             // das System setzt (+2). Uhr und Pinsel am Ende der Pille sind zwei
             // Knöpfe dieser Bauart (Zeit, Darstellung) statt des einen.
             "Sources/TC002iOS/SendeniOS.swift": 5,
-            // „Hilfe“ und „Über MQTT-TC002“: zwei Listenzeilen, die
-            // weiterführen, jede für sich allein in ihrer Zeile.
-            "Sources/TC002iOS/VerbindungiOS.swift": 2,
             // „Uhr hinzufuegen …“ — eine Listenzeile, die weiterfuehrt und
             // ein Blatt oeffnet, wie „Account hinzufuegen" in den
             // Systemeinstellungen.

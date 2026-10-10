@@ -13,10 +13,27 @@ import TC002Core
 /// Icon-Editor, weder Inspektor noch Finder gibt es auf dem Telefon.
 struct HilfeiOS: View {
     @Environment(\.dismiss) private var schliessen
+    /// Als Seite im Stapel der Einstellungen: ohne eigenen Stapel und ohne
+    /// „Fertig“, der Rückweg ist der des Stapels.
+    var eingebettet = false
+    @State private var suche = ""
 
     var body: some View {
-        NavigationStack {
-            List(Abschnitt.allCases) { a in
+        if eingebettet {
+            liste
+        } else {
+            NavigationStack {
+                liste
+                    .toolbar { ToolbarItem(placement: .confirmationAction) {
+                        Button("Fertig") { schliessen() }
+                    } }
+            }
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    private var liste: some View {
+            List(Abschnitt.allCases.filter { Hilfeabschnitt($0.rawValue, $0.bausteine).enthaelt(suche) }) { a in
                 NavigationLink(lok(a.rawValue)) {
                     ScrollView {
                         // Ohne Titel im Text: Die Navigationsleiste trägt ihn
@@ -31,13 +48,14 @@ struct HilfeiOS: View {
                     .navigationBarTitleDisplayMode(.inline)
                 }
             }
+            .overlay {
+                if !suche.isEmpty, !Abschnitt.allCases.contains(where: { Hilfeabschnitt($0.rawValue, $0.bausteine).enthaelt(suche) }) {
+                    ContentUnavailableView.search(text: suche)
+                }
+            }
+            .searchable(text: $suche, prompt: Text("Suchen"))
             .navigationTitle("Hilfe")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) {
-                Button("Fertig") { schliessen() }
-            } }
-        }
-        .presentationDragIndicator(.visible)
     }
 }
 
