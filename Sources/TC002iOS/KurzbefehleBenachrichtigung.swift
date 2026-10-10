@@ -187,7 +187,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
 
         return .result(dialog: IntentDialog(stringLiteral:
             lokf("Nachricht an %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis
-            + (ohneKlang.uhren.isEmpty ? "" : " " + lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.",
+            + (ohneKlang.uhren.isEmpty ? "" : " " + lokf("%@ zeigt die Nachricht ohne Ton: Diese Uhr kann den Klang nicht abspielen.",
                                                           ohneKlang.uhren.joined(separator: ", ")))))
     }
 }

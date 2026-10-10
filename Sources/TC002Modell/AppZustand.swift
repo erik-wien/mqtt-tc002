@@ -1533,7 +1533,7 @@ public final class AppZustand {
         }
         let ohneKlang = verteilung.uebersprungen.filter { erreicht.contains($0.name) }.map(\.name)
         if !ohneKlang.isEmpty {
-            let hinweis = lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.", ohneKlang.joined(separator: ", "))
+            let hinweis = lokf("%@ zeigt die Nachricht ohne Ton: Diese Uhr kann den Klang nicht abspielen.", ohneKlang.joined(separator: ", "))
             log(hinweis)
             if teilfehler?.contains(hinweis) != true {
                 teilfehler = [teilfehler, hinweis].compactMap { $0 }.joined(separator: "\n")

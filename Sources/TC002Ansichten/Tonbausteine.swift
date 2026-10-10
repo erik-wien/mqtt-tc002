@@ -56,7 +56,7 @@ public struct Klangabschnitt: View {
                 Label(Klangsperre.grund(ohneKlang, von: ziele.count), systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
             } else if !ohneKlang.isEmpty {
-                Label(lokf("Ohne Klang an %@: Die Uhr kann ihn nicht spielen.", Klangsperre.namen(ohneKlang)),
+                Label(lokf("%@ zeigt die Nachricht ohne Ton: Diese Uhr kann den Klang nicht abspielen.", Klangsperre.namen(ohneKlang)),
                       systemImage: "info.circle")
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -329,6 +329,6 @@ enum Klangsperre {
 
     /// Bei einer einzigen Zieluhr der Satz, bei mehreren die Namen.
     static func grund(_ ohne: [Klangziel], von gesamt: Int) -> String {
-        gesamt == 1 ? lok("Diese Uhr kann das nicht.") : lokf("Kann nicht: %@", namen(ohne))
+        gesamt == 1 ? lok("Diese Uhr kann diesen Klang nicht abspielen.") : lokf("Nicht abspielbar auf %@", namen(ohne))
     }
 }
