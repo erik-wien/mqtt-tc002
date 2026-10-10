@@ -45,6 +45,14 @@ und gesperrt ist, in `docs/funktionen-je-uhr.md` (vom Test
   Titelmenü, schiebbare Formatpille und Blätter; Mac und iPad teilen sich die
   Desktop-Oberfläche mit Seitenleiste und Inspektor.
 
+- **Ausgrauen nur, was der Nutzer einschalten kann (Erik, 10.10.2026):**
+  „Etwas, das an der Uhr nie funktionieren wird, wird einfach nicht angezeigt.“
+  Kann die Uhr es nie (Fähigkeit `false` oder Schlüssel fehlt in ihrer Antwort),
+  gibt es weder Zeile noch grauen Hinweis; gesperrt mit Grund wird nur, was der
+  Nutzer selbst ändern kann (Schalter „Schrift der Uhr“, Lichtsensor regelt,
+  keine Adresse, MQTT-Funktion im HTTP-Betrieb). Unbekannt (nie abgefragt) ist
+  erlaubt; mehrere Ziele: bleibt, wenn eines es kann. Verbindlich:
+  `docs/funktionen-je-uhr.md`, gehalten von `FunktionslisteTests`.
 - **Bedienelemente so, wie Apple sie festlegt** — ein eigener Nachbau braucht
   eine Begründung, und die gehört an den Nachbau geschrieben. Bisher gibt es
   zwei. Der erste ist `Farbkreis` (`TC002Ansichten`). Das Systemfeld ist bei weißer
