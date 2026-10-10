@@ -2,105 +2,76 @@
 
 *[English version](README.en.md)*
 
-Meldungen an die Ulanzi TC002 (Pixbar, 52×16, Firmware AWTRIX NG) schicken — per MQTT oder HTTP.
+**Pixel Clock Messenger** schickt Text, Bilder und Steuerbefehle an Ulanzi-Pixeluhren
+mit der freien Firmware **AWTRIX NG** — per HTTP oder über einen MQTT-Broker.
 
-## Was die App tut
+Die App heißt seit dem 14.09.2026 „Pixel Clock Messenger“; das Repo, die
+Bündelkennung `cloud.eriks.mqtt-tc002`, der Datenordner `MQTT-TC002` und der
+Befehl `mqtttc002` behalten ihren Namen — daran hängen Identität, Freigaben und
+vorhandene Bestände.
 
-**Pixel Clock Messenger** (so heißt die App seit dem 14.09.2026 in den
-Stores; das Repo, die Bündelkennung `cloud.eriks.mqtt-tc002`, der Datenordner
-und der Befehl `mqtttc002` behalten ihren Namen — daran hängen Identität,
-Freigaben und vorhandene Bestände) ist eine App für macOS, iPhone und iPad,
-die Text, Bilder und selbst gemalte Icons an eine oder mehrere
-Ulanzi-TC002-Pixeluhren mit der Firmware AWTRIX NG schickt. Die App rastert
-Text und Bilder selbst und schickt sie pixelgenau (Standbild als `bitmap` in
-einem Layout, Bewegtes als animiertes GIF); auf Wunsch setzt die Uhr den Text
-mit ihrer eigenen Schrift. Der Weg dorthin führt entweder direkt über HTTP oder
-über einen MQTT-Broker, auf den die Uhr hört; was für eine MQTT-Nachricht
-(8192 Byte) zu groß ist, geht über HTTP an dieselbe Uhr.
+## Voraussetzungen
+
+- **Uhr:** Ulanzi **TC002** (Display 52×16) oder **TC001** (32×8) mit AWTRIX NG.
+  AWTRIX NG ist die einzige unterstützte Firmware; die Werksfirmware der Uhr
+  wird nicht mehr bedient. Die Beschreibung der Schnittstelle, wie sie sich am
+  Gerät zeigt, steht in [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
+- **Netz:** Die Uhr muss im selben Netz erreichbar sein. Über HTTP genügt ihre
+  Adresse; für MQTT braucht es zusätzlich einen Broker, auf den die Uhr hört.
+- **System:** macOS 14, iOS 17 (iPhone und iPad) oder neuer. Es gibt keine externen
+  Paketabhängigkeiten.
+- **Ohne Uhr** lässt sich alles in der App mit der eingebauten virtuellen Uhr
+  ausprobieren (siehe unten).
+
+## Was die App kann
+
+- **Senden:** Text mit Icon, Schrift, Größe, Farbe, Rand, Abstand und Ausrichtung.
+  Die App rastert den Text selbst und schickt der Uhr Pixel; die Vorschau zeigt
+  genau das, was hinausgeht (außer bei „Schrift der Uhr“, wo die Uhr den Text
+  mit ihrer eigenen Schrift setzt). Fünf Blöcke zeigen die festen Plätze der Uhr.
+  Bilder gehen pixelgenau als GIF in dem Maß, das das Display der Zieluhr hat;
+  Bewegtes als animiertes GIF.
+- **Darstellung:** Hintergrundfarbe, Effekte, Overlays (Wetter) und Paletten, die
+  die Uhr selbst liefert.
+- **Anzeigen und Nachrichten:** Eine Anzeige liegt auf einem Platz und läuft in der
+  Schleife der Uhr, mit Dauer und Lebensdauer (verfällt von selbst oder bleibt).
+  Eine Nachricht unterbricht die Schleife einmal, kann gehalten und
+  zurückgezogen werden und einen Klang mitbringen (Melodie, MP3, Sprache).
+- **Mehrere Uhren:** Ziel wählbar je Sendung, Betriebsart je Uhr (HTTP oder MQTT).
+- **Steuerung der Uhr:** Fernbedienung mit Live-Bild des Displays, Zustand,
+  Display an/aus, Helligkeit, Moodlight, Anzeiger, Overlay, Neustart sowie Ton
+  und Radio; Tasten und Drehknopf, wo die App sie mitliest.
+- **Einstellungen der Uhr:** die auf der Uhr gespeicherten Einstellungen in
+  Gruppen, dazu das TLS-Zertifikat für MQTT.
+- **Editor (Mac, iPad):** Icons (8×8, 16×16) und ganze Anzeigen malen, mit
+  Animation; Icons lassen sich über eine LaMetric-Nummer nachladen.
+- **Kurzbefehle (iPhone, iPad)** und **Kommandozeile (Mac)**.
+- **Abgleich** der eigenen Bestände über iCloud; Deutsch und Englisch.
+
+Wie man das bedient, steht in der Hilfe im Programm (⌘?).
 
 ## Bauen
 
 `./build.sh` schnürt `erzeugt/mac/MQTT-TC002.app`. Wer lieber in Xcode arbeitet,
-öffnet `Package.swift` direkt. Es gibt keine externen Paketabhängigkeiten;
-vorausgesetzt wird macOS 14 aufwärts.
+öffnet `Package.swift`.
 
-## Die fünf Bereiche
+Die iOS-Fassung wird aus `project.yml` erzeugt; das Projekt selbst ist nicht
+eingecheckt:
 
-- **Verbindung** — Uhren eintragen und abfragen, Broker-Zugang verwalten.
-  „Abfragen“ ermittelt Themen-Präfix, MAC und Displaygröße direkt von der Uhr; von Hand
-  eingetragen wird hier nichts.
-- **Senden** — Text und wahlweise ein Icon zu einer benannten Anzeige
-  zusammensetzen und verschicken. Fünf Blöcke zeigen dabei die festen Plätze
-  der Uhr, samt Inhalt, wo die App ihn kennt. Die Vorschau zeigt
-  genau das Pixelfeld, das hinausgeht.
-- **Editor** — Pixel malen; die Größe der Leinwand entscheidet, was dabei
-  herauskommt: ein 8×8 ist das LaMetric-Icon mit Nummer, ein 16×16 eines
-  ohne, ein 52×16 die ganze Anzeige. Eine ganze Anzeige geht
-  pixelgenau an die Uhr; mehrere Einzelbilder ergeben ein animiertes GIF. Icons lassen sich außerdem über
-  eine LaMetric-Nummer nachladen.
-- **Anzeigen** — was die App bei der aktiven Uhr bereits angelegt hat,
-  umschalten oder löschen. Diese Liste führt
-  die App je Uhr getrennt: gelöscht wird immer nur bei der aktiven, und was
-  über „an alle“ auf andere Uhren ging, bleibt dort stehen, bis es dort
-  gelöscht wird.
+```bash
+xcodegen generate
+open MQTT-TC002-iOS.xcodeproj
+```
 
-Wie man diese Bereiche im Einzelnen bedient, steht in der Hilfe im Programm
-(⌘?); was die Uhr selbst kann und wie ihr Protokoll aussieht, steht in
-[`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
-
-## Schriften und Abstand
-
-Drei Pixelschriften liegen bei — **Micro 5**, **Silkscreen** und **Tiny5**,
-alle unter der SIL Open Font License. Sie sind auf einem Pixelraster
-entworfen, nicht als Bildschirmschriften mit Kurven, und sitzen deshalb bei
-ihrer Entwurfsgröße genau auf den Punkten des Displays. Krumme Zwischengrößen
-gibt es bei ihnen nicht: Dort landen die Striche zwischen zwei Pixeln, und
-ohne Kantenglättung — die das Display nicht kennt — entscheidet ein Schwellwert
-willkürlich. Die Auswahl bietet deshalb nur die sauberen Größen an.
-
-Dazu kommen ein paar Schriften aus dem System für alle, die es gewöhnlicher
-mögen.
-
-Die Einstellung **Rand** bestimmt, wie viele Zeilen bei „oben" und „unten" frei
-bleiben. Sie ist nötig, weil bündig je nach Schrift verschieden aussieht: Manche
-bringen über der Großbuchstabenhöhe Platz mit, andere nicht.
-
-Die Einstellung **Abstand** ist keine Unterschneidung im üblichen Sinn: Die App
-rastert jedes Zeichen einzeln, misst, wo seine Tinte anfängt und aufhört, und
-setzt die Zeichen so aneinander, dass dazwischen genau so viele leere Spalten
-stehen, wie eingestellt. Der Wert ist also wörtlich eine Anzahl Pixelspalten.
-Die Vorschubbreiten der Schrift werden dabei verworfen — sie sind für
-gedruckte Größen gedacht und ergeben auf sechzehn Pixeln mal zu enge, mal zu
-weite Buchstabenpaare.
-
-## Warum Text als Pixel geht
-
-Die eingebaute Schrift der Uhr kennt keine Umlaute und kaum Satzzeichen. Die
-App umgeht das, indem sie Text nicht als Zeichenkette schickt, sondern selbst
-mit CoreText rastert und als Pixel überträgt — damit gehen „ä“, „ö“, „ü“ und
-„ß“ trotzdem, und die Vorschau zeigt exakt das Bild, das auch gesendet wird,
-weil beide aus demselben Pixelfeld stammen. Ein Standbild ist rund 3,4 KB groß,
-eine Laufschrift wie „Grüße aus Wien“ rund 9 KB und geht deshalb über HTTP.
-
-## Icons
-
-Alle Icons liegen an einer Stelle:
-`~/Library/Application Support/MQTT-TC002/Icons` — nicht im App-Bündel, denn
-dort wären sie beim nächsten Bau weg, und unter `/Applications` ist der
-Ordner ohnehin nicht beschreibbar. Dorthin kommen sie auf drei Wegen: Ein
-**Grundschatz** von rund dreißig 8×8-Icons wird beim allerersten Start
-einmalig aus dem App-Paket übernommen, danach sind es ganz normale eigene
-Icons — löschbar und überschreibbar. Weitere entstehen unter „Editor“ bei
-Leinwandgröße 8×8 oder lassen sich über ihre Nummer von developer.lametric.com
-nachladen. Wer zu gründlich aufgeräumt hat, holt fehlende Grundschatz-Icons
-mit „Grundschatz wiederherstellen“ zurück; Vorhandenes bleibt dabei
-unangetastet.
+Ein grüner Bau sagt nichts darüber, ob Schriften, Icons, App-Symbol,
+Übersetzungen und die `LICENSE` im Bündel gelandet sind — das prüft
+`scripts/buendel-pruefen.sh`.
 
 ## Auf der Kommandozeile
 
-Im App-Bündel reist ein Werkzeug mit, das dieselbe Einrichtung benutzt wie die
-App — Broker, Kennwort und Uhren kommen aus deren Einstellungen, eingerichtet
-wird weiterhin nur in der App. Einmal verlinken:
+Im Mac-Bündel reist ein Werkzeug mit, das dieselbe Einrichtung benutzt wie die
+App — Uhren, Betriebsart und Broker kommen aus deren Einstellungen, eingerichtet
+wird nur in der App. Einmal verlinken:
 
 ```bash
 mkdir -p ~/.local/bin
@@ -111,106 +82,45 @@ ln -sf /Applications/MQTT-TC002.app/Contents/MacOS/mqtttc002 ~/.local/bin/mqtttc
 mqtttc002 "Kaffee fertig"
 mqtttc002 senden "Post da" --icon post --farbe "#FFAA00" --dauer 10
 mqtttc002 senden Achtung --an Küche --zentriert --unten
-mqtttc002 uhren            # was eingerichtet ist, * sind die Ziele
-mqtttc002 icons            # Nummer und Name
-mqtttc002 bilder           # die 16×52-Anzeigen aus dem Editor
-mqtttc002 bild Herz        # eine davon schicken, statt Text
-mqtttc002 senden Wetter --lebensdauer 600   # verfällt nach 10 Minuten von selbst
-mqtttc002 nachricht "Tür offen" --name tuer # einmalige Nachricht über der Schleife
-mqtttc002 zurueckziehen tuer                # die Nachricht wieder wegnehmen
-mqtttc002 loeschen cli     # die Anzeige wieder von der Uhr nehmen
-mqtttc002 hilfe            # alle Optionen
+mqtttc002 nachricht "Tür offen" --name tuer   # einmalige Nachricht über der Schleife
+mqtttc002 zurueckziehen tuer
+mqtttc002 layout kaesten.json                 # Kästen mit je einem Inhalt
+mqtttc002 bildschirm                          # das Display der Uhr als Text
+mqtttc002 helligkeit 120 ; mqtttc002 moodlight --farbe "#FF8800"
+mqtttc002 ton spielen --sprache "Hello"       # Klang, Melodie, Radio
+mqtttc002 uhren                               # was eingerichtet ist
+mqtttc002 hilfe                               # alle Befehle und Optionen
 ```
 
-Zu lange Texte laufen von selbst als GIF durch, genau wie in der App.
-
-Eine Nachricht bleibt stehen, weckt das Panel und läuft zweimal durch;
-`--nicht-halten`, `--nicht-wecken`, `--ersetzen` und `--wiederholungen` ändern das.
 Über MQTT wartet das Werkzeug auf die Antwort der Uhr: Weist sie ab, steht der
-Grund auf der Fehlerausgabe und der Aufruf endet mit 1; bleibt die Antwort aus,
-gibt es nur eine Warnung.
-`--trocken` zeigt Thema, Nutzlast und Größe, ohne zu senden — und nebenbei, ob
-ein Broker-Kennwort gefunden wurde. Beim ersten Lauf fragt macOS einmal, ob das
-Werkzeug an den Schlüsselbundeintrag der App darf.
+Grund auf der Fehlerausgabe, und der Aufruf endet mit 1. `--trocken` zeigt, was
+gesendet würde. Beim ersten Lauf fragt macOS einmal, ob das Werkzeug an den
+Schlüsselbundeintrag der App darf.
+
+## Ohne Uhr ausprobieren
+
+In den Einstellungen unter „Erweitert“ steht der Schalter **„Virtuelle Uhr“**. Er
+startet einen kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle von
+AWTRIX NG spricht und die Anzeigen in einem Fenster mit Geräterahmen zeigt.
+„Als Uhr eintragen“ legt sie in der Uhrenliste an; ab da sind Abfragen, Senden,
+Löschen und der Verlauf wie bei einem Gerät. Sie hört nur auf dem eigenen Rechner
+zu und spricht HTTP, kein MQTT.
 
 ## Sprachen
 
 Die App gibt es auf Deutsch und Englisch und folgt der Sprache des Systems.
-Einzeln umstellen lässt sie sich in den Systemeinstellungen unter Allgemein →
-Sprache & Region bei „Programme“. Einmalig zum Probieren:
-
-```bash
-/Applications/MQTT-TC002.app/Contents/MacOS/TC002App -AppleLanguages '(en)'
-mqtttc002 -AppleLanguages '(en)' hilfe
-```
-
-Deutsch ist die Entwicklungssprache: Der deutsche Wortlaut steht im Quelltext
-und ist zugleich der Schlüssel, eine fehlende Übersetzung fällt also auf den
-deutschen Satz zurück. `python3 scripts/texte-sammeln.py --pruefen` meldet jeden
-sichtbaren Text ohne Übersetzung. Eine weitere Sprache ist ein Ordner
+Deutsch ist die Entwicklungssprache: Der deutsche Wortlaut steht im Quelltext und
+ist zugleich der Schlüssel. `python3 scripts/texte-sammeln.py --pruefen` meldet
+jeden sichtbaren Text ohne Übersetzung. Eine weitere Sprache ist ein Ordner
 `Resources/Sprachen/<code>.lproj` mit einer `Localizable.strings`.
-
-## Auf dem iPhone
-
-Eine iOS-Fassung (`MQTT-TC002-iOS.xcodeproj`, iOS 17 aufwärts) teilt sich Kern
-und Zustandsschicht mit der Mac-App. Sie kann Uhren einrichten und abfragen
-(„Einstellungen“), Text mit Icon und Format senden („Senden“, die Wurzel der
-App), und zeigen, was auf der aktiven Uhr steht samt Protokoll („Verlauf“) —
-beides über Menüpunkte in der Titelleiste erreichbar statt über eine eigene
-Reiterleiste. Bewusst fehlt der Editor: Malen bleibt dem Schreibtisch
-vorbehalten.
-
-Am Fuß der Einstellungen stehen „Hilfe“ und „Über MQTT-TC002“, beide als
-Blatt: iOS hat für „Über“ keine vom System gestellte Stelle, und die
-eingebürgerte ist das Ende der App-eigenen Einstellungen. Die Hilfe ist nicht
-dieselbe wie am Mac — was am Gerät hängt (die fünf Plätze, die drei
-Blockzustände, die Stille von MQTT 3.1.1, die drei Pixelschriften, Präfix und
-Broker) steht als geteilter Text in `TC002Ansichten/HilfeInhalt.swift`, was
-einen bestimmten Knopf bedient, in der Hilfe der jeweiligen Oberfläche. Das
-Über-Blatt zeigt Fassung, GPL-3.0 mit Lizenztext und die Danksagungen; die
-`LICENSE` fährt dafür über `project.yml` mit ins Bündel, wie am Mac über
-`build.sh`.
-
-Gebaut wird mit
-
-```bash
-xcodegen generate
-open MQTT-TC002-iOS.xcodeproj
-```
-
-und dann in Xcode Ziel wählen und starten. `xcodegen` erzeugt das Projekt aus
-`project.yml`; das Projekt selbst ist nicht eingecheckt. Ein erfolgreicher Bau
-sagt nichts darüber, ob Schriften, Icons, App-Symbol, Übersetzungen und die
-`LICENSE` im Bündel gelandet sind — das prüft `scripts/buendel-pruefen.sh`.
-
-## Ohne Uhr ausprobieren
-
-In den Einstellungen steht ein Schalter **„Virtuelle Uhr"**. Er startet einen
-kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle von AWTRIX NG
-spricht; „Als Uhr eintragen" legt sie in der Uhrenliste an,
-„Ansehen" öffnet ein Fenster mit Geräterahmen, den fünf Plätzen und dem
-Blättern.
-
-Ab da ist alles echt: Abfragen, Senden, Löschen,
-Umschalten, der Verlauf. Kein Sonderweg im Code — die App merkt nicht, dass am
-anderen Ende kein Gerät hängt. Sie hört nur auf dem eigenen Rechner zu und
-spricht HTTP, keinen MQTT: Ein Broker ist ein fremdes Programm und kann nicht
-mitkommen.
 
 ## Tests
 
-`swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe an die Uhr
-laufen gegen einen `URLProtocol`-Doppelgänger, das Senden über MQTT gegen
-einen `NachrichtSendend`-Doppelgänger. Die erzeugten MQTT-Bytes selbst sind
-gegen eine echte Aufzeichnung von `mosquitto_pub` geprüft. Die echte Uhr und
-der Broker im Haus sind in Tests tabu.
-
-Vier Tests sprechen dabei über einen **echten Port** mit der virtuellen Uhr —
-dieselbe `URLSession`, dieselben Pfade, dieselbe Auswertung wie am Gerät. Das
-ist kein Verstoß gegen die Regel oben: Die Testreihe hört sich selbst zu, auf
-`127.0.0.1` und einem Port, den sie selbst aufmacht. Gefunden hat das gleich
-einen echten Fehler — eine Adresse **mit Portangabe** scheiterte an genau
-einem Pfad.
+`swift test` läuft ohne Netz und ohne echtes Gerät: HTTP-Aufrufe laufen gegen
+einen `URLProtocol`-Doppelgänger, das Senden über MQTT gegen einen
+`NachrichtSendend`-Doppelgänger, und ein Teil der Tests spricht über einen
+Port auf `127.0.0.1` mit der virtuellen Uhr. Die erzeugten MQTT-Bytes sind gegen
+eine echte Aufzeichnung von `mosquitto_pub` geprüft.
 
 ## Lizenz
 
@@ -220,9 +130,5 @@ wäre der App Store ein Lizenzverstoß, auch bei offenem Quelltext.
 
 Quelltext von [PixDeck](https://github.com/cailurus/PixDeck) ist **nicht**
 enthalten: Es war eine Referenz über das Verhalten des Geräts, und Tatsachen
-über ein Gerät sind nicht urheberrechtlich geschützt.
-
-## Quellen
-
-- **AWTRIX NG:** das Protokoll, so wie es sich am Gerät zeigt, steht in
-  [`docs/awtrix-ng-protokoll.md`](docs/awtrix-ng-protokoll.md).
+über ein Gerät sind nicht urheberrechtlich geschützt. Die drei Pixelschriften
+(Micro 5, Silkscreen, Tiny5) stehen unter der SIL Open Font License.
