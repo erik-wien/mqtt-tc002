@@ -438,11 +438,14 @@ public struct Tonablage: Equatable, Sendable {
     public var gesamteBytes: Int?
     /// Größe je Name in Byte, soweit die Uhr sie nennt (`size` bei MP3-Dateien).
     public var groessen: [String: Int]
+    /// Der RTTTL-Text je Melodie, soweit die Uhr ihn nennt (`rtttl` in der
+    /// Melodienliste, mit dem von der Uhr umgeschriebenen Namensteil).
+    public var texte: [String: String]
 
     public init(namen: [String], belegteBytes: Int? = nil, gesamteBytes: Int? = nil,
-                groessen: [String: Int] = [:]) {
+                groessen: [String: Int] = [:], texte: [String: String] = [:]) {
         self.namen = namen; self.belegteBytes = belegteBytes; self.gesamteBytes = gesamteBytes
-        self.groessen = groessen
+        self.groessen = groessen; self.texte = texte
     }
 
     /// Die Doku nennt für die Einträge keine Form (§4); gelesen wird ein Name
@@ -457,12 +460,14 @@ public struct Tonablage: Equatable, Sendable {
         }
         namen = roh.compactMap { ($0 as? String) ?? (($0 as? [String: Any])?["name"] as? String) }.map(ohneEndung)
         var groessen: [String: Int] = [:]
+        var texte: [String: String] = [:]
         for eintrag in roh {
-            if let o = eintrag as? [String: Any], let n = o["name"] as? String, let g = o["size"] as? Int {
-                groessen[ohneEndung(n)] = g
-            }
+            guard let o = eintrag as? [String: Any], let n = o["name"] as? String else { continue }
+            if let g = o["size"] as? Int { groessen[ohneEndung(n)] = g }
+            if let t = o["rtttl"] as? String { texte[ohneEndung(n)] = t }
         }
         self.groessen = groessen
+        self.texte = texte
         belegteBytes = antwort["usedBytes"] as? Int
         gesamteBytes = antwort["totalBytes"] as? Int
     }
