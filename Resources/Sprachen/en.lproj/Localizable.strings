@@ -1469,7 +1469,6 @@
 "Zeigt, was die Uhr gerade spielt, und hält es an. Die Sender der Uhr legst du in ihrer Web-Oberfläche unter „Konfigurieren“ an; die App wählt nur aus. Gelesen wird über die Adresse der Uhr, alle fünf bis zehn Sekunden, solange diese Seite offen ist." = "Shows what the clock is playing and stops it. You create the clock's stations in its web interface under “Configure”; the app only selects. It is read via the clock's address, every five to ten seconds while this page is open.";
 "Keine Sender eingetragen. Sender legst du in der Web-Oberfläche der Uhr unter „Konfigurieren“ an." = "No stations entered. Create stations in the clock's web interface under “Configure”.";
 "Radio aus" = "Radio off";
-"Diese Uhr meldet kein Radio." = "This clock reports no radio.";
 "Radio: %@" = "Radio: %@";
 "Alarm: %@" = "Alarm: %@";
 "App: %@" = "App: %@";

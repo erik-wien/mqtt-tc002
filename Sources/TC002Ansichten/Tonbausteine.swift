@@ -271,6 +271,7 @@ struct Tonabschnitt: View {
         }
     }
 
+    /// Eine Uhr ohne Radio (TC001, Hardware) bekommt die Zeilen gar nicht.
     @ViewBuilder
     private var radiozeilen: some View {
         if radioGekonnt {
@@ -294,9 +295,6 @@ struct Tonabschnitt: View {
                     }
                 }
             }
-        } else {
-            Label("Diese Uhr meldet kein Radio.", systemImage: "info.circle")
-                .font(kanon.fussnote).foregroundStyle(.secondary)
         }
     }
 
