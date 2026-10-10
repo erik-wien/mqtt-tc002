@@ -35,6 +35,12 @@ public final class AppZustand {
     /// Warum eine Uhr nicht am Broker haengt, wenn sie es selbst sagt.
     /// (`badCredentials` und dergleichen.)
     public var brokergrund: [UUID: String] = [:]
+    /// Die Namenslisten jeder Uhr (Effekte, Overlays, Paletten) aus
+    /// `GET /api/v1/capabilities`, bei der Abfrage geholt. Nicht gesichert: Sie
+    /// gehören der Firmware, und eine neue Fassung kann sie ändern. `nil` heißt:
+    /// noch nicht abgefragt oder keine Auskunft; Oberflächen bieten dann nichts
+    /// an, und die Prüfung vor dem Senden lässt Namen durch.
+    public var faehigkeiten: [UUID: Geraetefaehigkeiten] = [:]
     /// Was die Uhr selbst als ihre Anzeigen nennt, erfragt ueber
     /// `GET /api/v1/apps` (§4): Ueber MQTT gibt es keine Liste (§3.5).
     ///
@@ -958,7 +964,7 @@ public final class AppZustand {
         // dort, wo es hingehoert.
         Task { [weak self] in
             do {
-                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [Inventareintrag]?) in
+                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [Inventareintrag]?, Geraetefaehigkeiten?) in
                     let geraet = Geraet(host: host, sitzung: sitzung)
                     // In einem Zug: Praefix, MAC und Anzeigemass.
                     //
@@ -979,9 +985,10 @@ public final class AppZustand {
                     // Uhr auf diese eine Frage nicht, ist deshalb die Abfrage von
                     // Praefix und Verbindungsstand noch lange nicht gescheitert.
                     let namen = try? geraet.anzeigeninventar()
-                    return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen)
+                    let listen = (try? geraet.faehigkeiten()) ?? nil
+                    return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen, listen)
                 }
-                let (praefix, mac, mass, steht, grund, namen) = geholt
+                let (praefix, mac, mass, steht, grund, namen, listen) = geholt
                 do {
                     guard let self, let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
                     self.uhren[i].praefix = praefix
@@ -995,6 +1002,8 @@ public final class AppZustand {
                         self.uhren[i].panelhoehe = mass.hoehe
                     }
                     self.verbunden[id] = steht
+                    // Eine Antwort ohne Listen lässt die bekannten stehen.
+                    if let listen { self.faehigkeiten[id] = listen }
                     // Der Grund steht nur da, wenn es einen gibt.
                     self.erreichbar[id] = true
                     self.brokergrund[id] = grund
@@ -1305,9 +1314,11 @@ public final class AppZustand {
         // Der Verlauf erzaehlt, was man geschickt hat, und das war eine
         // Meldung, auch wenn sie an drei Uhren ging.
         var erreicht: [String] = []
+        let listen = faehigkeiten
         let ziele = await anZiele({ anzeigen, uhr in
             let frame = try bau(Anzeigemass.fuer(uhr))
-            return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name))
+            return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name,
+                                                               faehigkeiten: listen[uhr.id]))
         }, was: lokf("Sendung „%@“", name)) { uhr, zugestellt in
             let frame = zugestellt.frame
             erreicht.append(uhr.name)
@@ -1465,8 +1476,10 @@ public final class AppZustand {
     public func benachrichtigen(rahmenFuer bau: @escaping @Sendable (Anzeigemass) throws -> Frame,
                                 _ optionen: Benachrichtigungsoptionen = .init()) async -> Sendebilanz {
         var erreicht: [String] = []
+        let listen = faehigkeiten
         let ziele = await anZiele({ anzeigen, uhr in
-            try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen)
+            try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), optionen,
+                                         faehigkeiten: listen[uhr.id])
         }, was: lok("Nachricht")) { uhr, weg in
             erreicht.append(uhr.name)
             if optionen.halten { gehalteneNachrichten.insert(uhr.id) }

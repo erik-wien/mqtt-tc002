@@ -280,6 +280,38 @@ final class AwtrixNGZustandTests: XCTestCase {
         XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 4, fuer: uhr))
     }
 
+    /// Die Namenslisten kommen mit der Abfrage von der Uhr und gelten je Uhr; eine
+    /// Darstellung mit einem Namen, den diese Uhr nicht führt, geht nicht hinaus.
+    func testDieAbfrageHoltDieNamenslistenUndDieSendungPruefstSieDagegen() async throws {
+        let (server, port) = try serverStarten(zustand: NGUhrzustand())
+        defer { server.beenden() }
+        let uhr = Uhr(name: "Wohnzimmer", host: "127.0.0.1:\(port)", betriebsart: .http)
+        let zustand = try mitUhr(uhr)
+        XCTAssertNil(zustand.faehigkeiten[uhr.id])
+
+        zustand.abfragen(uhr.id)
+        // In einem `async`-Test bleibt der Hauptakteur nur frei, wenn man
+        // abgibt; `warteBis` liefe an der losgelösten Abfrage vorbei.
+        for _ in 0..<500 where zustand.faehigkeiten[uhr.id] == nil {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(zustand.faehigkeiten[uhr.id]?.effekte.count, 19)
+        XCTAssertEqual(zustand.faehigkeiten[uhr.id]?.overlays.contains("rain"), true)
+
+        let text = Frame(herkunft: Meldungsherkunft(optionen: Meldungsoptionen(text: "x", weg: .text)),
+                         darstellung: Darstellung(effekt: "Quatsch"))
+        await zustand.senden(text, als: "t")
+        XCTAssertNotNil(zustand.fehler, "ein Effekt, den die Uhr nicht führt, geht nicht hinaus")
+        XCTAssertFalse(server.zustand.apps.contains { $0.name == "t" })
+
+        zustand.fehler = nil
+        var gut = text
+        gut.darstellung = Darstellung(effekt: "plasma", overlay: "snow")
+        await zustand.senden(gut, als: "t")
+        XCTAssertNil(zustand.fehler)
+        XCTAssertTrue(server.zustand.apps.contains { $0.name == "t" })
+    }
+
     private func serverStarten(zustand: NGUhrzustand) throws -> (Uhrenserver, UInt16) {
         for _ in 0..<20 {
             let port = UInt16.random(in: 20_000...60_000)
