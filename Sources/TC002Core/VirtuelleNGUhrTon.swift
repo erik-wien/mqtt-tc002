@@ -12,7 +12,7 @@ public struct NGTon: Equatable, Sendable {
     public var melodien: [String: String] = [:]
     /// Namen gespeicherter MP3-Dateien. Hochladen gibt es hier nicht; Tests legen sie an.
     public var mp3: [String] = []
-    public var sender: [Radiosender] = [Radiosender(name: "Fm4", url: "http://orf-live.ors-shoutcast.at/fm4-q2a")]
+    public var sender: [Radiosender] = [Radiosender(name: "Fm4", url: "http://radio.example.com/stream")]
     /// Die Klangobjekte, die `audio/play` gewählt hat — je Anfrage eines, in
     /// der Reihenfolge der Anfragen. Das Objekt ist so, wie es angenommen wurde.
     public var gespielt: [JSONWert] = []
