@@ -161,32 +161,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.protokollListe
                 + HilfeInhalt.protokollLeeren
         case .kurzbefehle:
-            return [
-                .absatz("Die App bringt zwei Kurzbefehle mit: „Meldung schicken“ und „Meldung nehmen“. Beide stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
-
-                .ueberschrift("Meldung schicken"),
-                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
-                .absatz("„Bild an die Uhr schicken“ ist der dritte: Er nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
-                .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
-
-                .ueberschrift("Die Formatangaben"),
-                .absatz("Weg, Schriftart, Farbe, die beiden Ausrichtungen und das Tempo sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett, Großbuchstaben und „Icon mitscrollen“ sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier."),
-                .absatz("Die Farbe ist eine Liste aus zehn Tönen, kein Farbrad: In einem Kurzbefehl bliebe nur ein Feld für einen Hexwert, und ein Tippfehler darin fiele niemandem auf. Wer einen anderen Ton braucht, stellt ihn in der App ein und gibt im Kurzbefehl keine Farbe an."),
-
-                .ueberschrift("Größe im Kurzbefehl"),
-                .absatz("Angeboten werden nur die Größen, die die App zu dieser Schriftart anbietet. Steht die verlangte nicht darauf, sendet der Kurzbefehl nicht, sondern fragt noch einmal und nennt die möglichen. Stillschweigend die nächstbeste zu nehmen hieße, etwas anderes zu senden, als im Kurzbefehl steht — und niemand sähe es."),
-                .absatz("Wer nur die Schriftart wechselt und keine Größe angibt, bekommt die nächstgelegene ihrer Liste — genau wie beim Umschalten der Schriftart in der App."),
-
-                .ueberschrift("Meldung nehmen"),
-                .absatz("Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten."),
-                .absatz("Beide Kurzbefehle schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
-                .absatz("Und beide folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung."),
-
-                .ueberschrift("Nachricht senden und zurückziehen"),
-                .absatz("Zwei weitere Kurzbefehle: „Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare."),
-                .absatz("Zwei wahlfreie Felder geben der Nachricht einen Klang: „Klang“ nimmt den Namen einer Melodie oder MP3-Datei auf der Uhr, „Vorlesen“ lässt die Uhr den Text auf Englisch sprechen. Beides zugleich geht nicht."),
-                .absatz("„Nachricht zurückziehen“ nimmt die sichtbare Nachricht weg, mit Namen die benannte. Über MQTT wartet jeder Kurzbefehl auf die Antwort der Uhr: Weist sie ab, zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus, steht ein Hinweis im Dialog."),
-            ]
+            return HilfeInhalt.kurzbefehle
         case .fehlersuche:
             return HilfeInhalt.fehlerStille
                 + [

@@ -27,7 +27,7 @@ public enum HilfeInhalt {
     /// fuer etwas, das man nicht kennt.
     ///
     public static let wasEsTut: [Hilfebaustein] = [
-        .absatz("Pixel Clock Messenger schickt Text, Farbe und kleine Bilder an eine Pixeluhr: an eine Ulanzi TC002 mit der freien Firmware AWTRIX NG. Du tippst den Text unten ein, die Vorschau darüber zeigt, wie er auf der Uhr aussehen wird, und die Eingabetaste schickt ihn hin."),
+        .absatz("Pixel Clock Messenger schickt Text, Farbe und kleine Bilder an eine Pixeluhr: an eine Ulanzi TC002 oder TC001 mit der freien Firmware AWTRIX NG. Du tippst den Text unten ein, die Vorschau darüber zeigt, wie er auf der Uhr aussehen wird, und die Eingabetaste schickt ihn hin."),
         .ueberschrift("Zwei Wege zur Uhr"),
         .absatz("Wie die Anzeige zur Uhr kommt, legst du je Uhr unter „Einstellungen“ fest. Es gibt zwei Wege, und sie unterscheiden sich vor allem darin, was du hinterher weißt."),
         .untertitel("Direkt über HTTP"),
@@ -64,11 +64,12 @@ public enum HilfeInhalt {
     /// Fenster. Alles Weitere steht in der Geraetereferenz.
     public static let geraeteart: [Hilfebaustein] = [
         .ueberschrift("Die Uhr: AWTRIX NG"),
-        .absatz("Die App spricht AWTRIX NG und schickt der Uhr **Pixel**: Text rastert sie selbst, und was die Vorschau zeigt, kommt Punkt für Punkt auf dem Display an — außer mit der „Schrift der Uhr“ (unten). Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
+        .absatz("Die App spricht AWTRIX NG und schickt der Uhr **Pixel**: Text rastert sie selbst, und was die Vorschau zeigt, kommt Punkt für Punkt auf dem Display an — außer mit der „Schrift der Uhr“ (unten). Das Display der TC002 ist 52 × 16 Pixel groß, das der TC001 32 × 8; die App liest das Maß bei „Abfragen“ von der Uhr."),
+        .absatz("Die Maße und Spaltenzahlen in dieser Hilfe nennen die TC002. Für jede Uhr rastert die App im Maß ihres Displays; ein fertiges Bild (gemalt oder aus der Sammlung) in einem anderen Maß nimmt die Uhr nicht, und die Meldung sagt es. Layouts kann die TC001 nicht. Ging eine Sendung an mehrere Uhren und kam nur bei einem Teil an, zeigt ein gelbes Dreieck neben dem Sendezeichen, dass nicht alle sie genommen haben."),
         .untertitel("Text in der Schrift der Uhr"),
         .absatz("Mit dem Schalter „Schrift der Uhr“ im Format setzt die Uhr den Text selbst, mit ihrer eigenen Schrift, vergrößert auf 26 × 8 Punkte (in den Kurzbefehlen: „als Text“): Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch und lässt langen Text von selbst laufen. Eine Wahl der Schrift, einen fetten Schnitt, Rand und Zeichenabstand gibt es dort nicht, und die Regler sind dann ausgegraut; senkrecht ausrichten geht ebenfalls nicht, und rechtsbündig kennt sie nicht. Dafür gelten Hintergrundfarbe, Effekt und „Text malen“ im Reiter „Darstellung“. Die Großschreibung folgt dem Schalter „Großbuchstaben“. Der Schalter ist ausgeschaltet, bis du ihn einschaltest, und wird wie die übrigen Regler gemerkt."),
         .untertitel("Große Anzeigen"),
-        .absatz("Ein Standbild ist rund 3 KB groß. Eine Laufschrift besteht aus vielen Einzelbildern und passt nicht in eine MQTT-Nachricht (höchstens 8 KB): Sie geht dann als HTTP-Anfrage an die Adresse der Uhr, die dafür eingetragen sein muss. Fehlt sie, sagt die App es vor dem Senden, statt die Anzeige verloren gehen zu lassen. Mehr als 2 MB nimmt die Uhr gar nicht."),
+        .absatz("Ein Standbild ist als GIF nur wenige hundert Byte groß. Eine Laufschrift besteht aus vielen Einzelbildern und passt oft nicht in eine MQTT-Nachricht (höchstens 8 KB samt Thema): Sie geht dann als HTTP-Anfrage an die Adresse der Uhr, die dafür eingetragen sein muss. Fehlt sie, sagt die App es vor dem Senden, statt die Anzeige verloren gehen zu lassen. Mehr als 56 KiB nimmt die Uhr als Anzeige nicht an; ein kürzerer Text hilft."),
         .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
@@ -324,6 +325,51 @@ public enum HilfeInhalt {
         .absatz("Der Klang einer Nachricht steht gleich darunter. „Keiner“ ist die Vorgabe. „Von der Uhr“ spielt eine Melodie oder MP3-Datei, die auf der Uhr liegt; die Namen kommen von der Uhr selbst (bis zur ersten Abfrage steht dort „Uhr abfragen …“). Liegt dort noch nichts, legst du Melodien in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch: den Text der Nachricht oder, wenn du ihn ausfüllst, einen eigenen kurzen Text (höchstens 512 Byte). „Wiederholen, bis die Nachricht geht“ spielt den Klang, bis die Nachricht zurückgezogen wird oder abläuft. Meldet die Uhr die Fähigkeit nicht, ist die Wahl gesperrt und die Nachricht geht stumm hinaus. Eine Anzeige hat keinen Klang."),
     ]
 
+    /// Die Kurzbefehle (iPhone und iPad). Der Mac hat keine; dort ersetzt sie
+    /// das Kommandozeilenwerkzeug.
+    public static let kurzbefehle: [Hilfebaustein] = [
+                .absatz("Die App bringt fünf Kurzbefehle mit: „Meldung schicken“, „Bild schicken“, „Nachricht senden“, „Nachricht zurückziehen“ und „Meldung nehmen“. Sie stehen von selbst in der Kurzbefehle-App und lassen sich in einen eigenen Ablauf, in eine Automation oder auf einen Knopf legen; Siri kennt sie ebenfalls."),
+
+                .ueberschrift("Meldung schicken"),
+                .absatz("Verlangt wird allein der Text. Alles Weitere ist wahlfrei und steht in der Kurzbefehle-App unter den aufklappbaren Angaben: Uhr, Icon-Nummer, Dauer, Slot — und das ganze Format."),
+                .absatz("„Bild schicken“ nimmt den Namen einer 52 × 16-Anzeige aus dem Bestand und schickt sie an einen Platz. Von den Angaben oben gelten dort nur Uhr, Slot und Dauer — alles Übrige formatiert Text, den ein Bild nicht hat. Kennt er den Namen nicht, nennt die Rückfrage alle vorhandenen."),
+                .absatz("Was nicht angegeben ist, kommt aus dem, was zuletzt unter „Senden“ eingestellt war. Ein Kurzbefehl ohne Formatangaben schickt also genau das, was auch die App geschickt hätte; einer mit einer einzigen Angabe ändert genau diese eine."),
+
+                .ueberschrift("Die Formatangaben"),
+                .absatz("Weg, Schriftart, Farbe, die beiden Ausrichtungen und das Tempo sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett, Großbuchstaben und „Icon mitscrollen“ sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier."),
+                .absatz("Die Farbe ist eine Liste aus zehn Tönen, kein Farbrad: In einem Kurzbefehl bliebe nur ein Feld für einen Hexwert, und ein Tippfehler darin fiele niemandem auf. Wer einen anderen Ton braucht, stellt ihn in der App ein und gibt im Kurzbefehl keine Farbe an."),
+
+                .ueberschrift("Größe im Kurzbefehl"),
+                .absatz("Angeboten werden nur die Größen, die die App zu dieser Schriftart anbietet. Steht die verlangte nicht darauf, sendet der Kurzbefehl nicht, sondern fragt noch einmal und nennt die möglichen. Stillschweigend die nächstbeste zu nehmen hieße, etwas anderes zu senden, als im Kurzbefehl steht — und niemand sähe es."),
+                .absatz("Wer nur die Schriftart wechselt und keine Größe angibt, bekommt die nächstgelegene ihrer Liste — genau wie beim Umschalten der Schriftart in der App."),
+
+                .ueberschrift("Meldung nehmen"),
+                .absatz("Nimmt einen der fünf Plätze wieder von der Uhr, wahlweise von einer bestimmten."),
+                .absatz("„Meldung schicken“ und „Meldung nehmen“ schreiben dasselbe Gedächtnis wie die App: Was ein Kurzbefehl auf einen der fünf Plätze geschickt hat, zeigt der Block unter „Senden“ auch nach einem Neustart, und ein Antippen holt die Regler zurück."),
+                .absatz("Und alle folgen der Betriebsart, die für die Uhr eingestellt ist — es gibt dafür keine eigene Angabe im Kurzbefehl. Ein Werkzeug, das anders sendet als die App, wäre eine Falle: derselbe Platz, dieselbe Uhr, ein anderer Kanal, und niemand sähe es. Dasselbe gilt für das Kommandozeilenwerkzeug der Mac-Fassung."),
+
+                .ueberschrift("Nachricht senden und zurückziehen"),
+                .absatz("„Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare."),
+                .absatz("Zwei wahlfreie Felder geben der Nachricht einen Klang: „Klang“ nimmt den Namen einer Melodie oder MP3-Datei auf der Uhr, „Vorlesen“ lässt die Uhr den Text auf Englisch sprechen. Beides zugleich geht nicht."),
+                .absatz("„Nachricht zurückziehen“ nimmt die sichtbare Nachricht weg, mit Namen die benannte. Über MQTT wartet jeder Kurzbefehl auf die Antwort der Uhr: Weist sie ab, zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus, steht ein Hinweis im Dialog."),
+    ]
+
+    /// Das Kommandozeilenwerkzeug im Mac-Bündel. Die Befehle und Optionen
+    /// stehen in `mqtttc002 hilfe`; hier steht, was es kann und woran es sich
+    /// hält.
+    public static let kommandozeile: [Hilfebaustein] = [
+        .absatz("Das Werkzeug `mqtttc002` liegt im Programmpaket (`Contents/MacOS/mqtttc002`) und schickt vom Terminal aus, was die App schickt. Es liest die Einrichtung der App — Uhren, Betriebsart, Broker — und ändert sie nie; eingerichtet wird nur in der App. Jede Uhr wird auf dem Weg beschickt, der für sie eingestellt ist. `mqtttc002 hilfe` listet alle Befehle und Optionen."),
+        .punkte([
+            "**Senden:** `senden` (Text mit Format und Darstellung, auch Diagramm und Fortschritt), `nachricht`, `zurueckziehen`, `bild` (ein fertiges Bild aus dem Editor), `loeschen`, `umschalten`.",
+            "**Layout:** `layout` schickt Kästen mit je einem Inhalt aus einer JSON-Datei; die TC001 kann das nicht.",
+            "**Bildschirm:** `bildschirm` liest das Display der Uhr und gibt es als Text aus, ein Zeichen je Pixel.",
+            "**Steuerung:** `display`, `helligkeit`, `moodlight`, `indikator`, `weiter`, `zurueck`, `neustart`, `zustand`, `einstellungen` (lesen und mit `setzen` ändern) und `tls` (Stand lesen, CA laden oder entfernen; TLS selbst schaltet es nie ein).",
+            "**Ton:** `ton spielen` (Datei, Melodie, Lied, Sprache oder Radiosender), `ton stopp`, `ton zustand`, `ton melodien`, `ton melodie`, `ton sender`; an `nachricht` hängt `--klang` einen Ton.",
+            "**Auflisten:** `uhren`, `icons`, `bilder`, `effekte`.",
+        ]),
+        .absatz("Über MQTT wartet das Werkzeug auf die Antwort der Uhr: Weist sie ab, stehen Code und Feld auf der Fehlerausgabe, und der Aufruf endet mit 1. `--trocken` zeigt nur, was gesendet würde. Melodien, Senderliste, Tonzustand, TLS und Zustandsabfragen laufen über HTTP und brauchen die Adresse der Uhr."),
+    ]
+
     /// Umlaute und Sonderzeichen: eine Eigenschaft der Uhr.
     public static let zeichen: [Hilfebaustein] = [
         .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
@@ -476,7 +522,7 @@ public enum HilfeInhalt {
     /// gemeint ist (`AppZustand.zusammengefasst`).
     public static let fehlerWelche: [Hilfebaustein] = [
         .ueberschrift("Welche Meldung ist gemeint?"),
-        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den MQTT-Broker mit Adresse und Port („Der Broker 192.0.2.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
+        .absatz("Das sind zwei verschiedene Suchen, und die Meldung sagt, welche gemeint ist. Nennt sie den MQTT-Broker mit Adresse und Port („Der Broker 192.0.2.10:1883 antwortet nicht.“), ist die App gar nicht bis dorthin gekommen — dann hilft nur „Einstellungen“ → „MQTT-Broker“ → „Verbindung prüfen“, und keine Uhr ist daran schuld; diese Meldung erscheint deshalb auch nur einmal, selbst wenn an fünf Uhren gesendet wurde. Beginnt die Meldung dagegen mit dem Namen einer Uhr, betrifft sie genau diese und die übrigen wurden beliefert."),
     ]
 
     /// Die vier Punkte der Reihe nach. Alle vier gibt es auf beiden Geraeten.

@@ -17,7 +17,7 @@ public struct HilfeView: View {
 
     public var body: some View {
         NavigationSplitView {
-            List(Abschnitt.allCases, selection: $abschnitt) { a in
+            List(Abschnitt.sichtbar, selection: $abschnitt) { a in
                 Text(lok(a.rawValue)).tag(a)
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 210, max: 260)
@@ -45,9 +45,20 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case editor = "Icons"
     case uhr = "Uhr"
     case anzeigen = "Protokoll"
+    case kommandozeile = "Kommandozeile"
+    case kurzbefehle = "Kurzbefehle"
     case fehlersuche = "Wenn nichts erscheint"
 
     var id: String { rawValue }
+
+    /// Kommandozeile gibt es nur am Mac, Kurzbefehle nur auf dem iPad.
+    static var sichtbar: [Abschnitt] {
+        #if os(macOS)
+        allCases.filter { $0 != .kurzbefehle }
+        #else
+        allCases.filter { $0 != .kommandozeile }
+        #endif
+    }
 
     var bausteine: [Hilfebaustein] {
         switch self {
@@ -240,6 +251,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.protokollLeeren
                 + [
                 ]
+        case .kommandozeile:
+            return HilfeInhalt.kommandozeile
+        case .kurzbefehle:
+            return HilfeInhalt.kurzbefehle
         case .fehlersuche:
             return HilfeInhalt.fehlerStille
                 + [

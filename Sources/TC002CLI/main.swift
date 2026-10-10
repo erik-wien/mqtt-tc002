@@ -29,7 +29,7 @@ AUFRUF
   mqtttc002 bildschirm             das Display der Uhr lesen und als Text ausgeben
   mqtttc002 uhren                  die eingerichteten Uhren auflisten
   mqtttc002 icons                  die vorhandenen Icons auflisten
-  mqtttc002 bilder                 die vorhandenen 16x52-Bilder auflisten
+  mqtttc002 bilder                 die vorhandenen 52x16-Bilder auflisten
   mqtttc002 effekte                Effekte, Overlays und Paletten der Uhr auflisten
   mqtttc002 display an|aus         das Panel ein- oder ausschalten
   mqtttc002 helligkeit <0-255>     die Helligkeit des Panels (roh, kein Prozentsatz)
@@ -52,7 +52,7 @@ AUFRUF
   mqtttc002 ton sender             die Senderliste der Uhr
   mqtttc002 hilfe                  diesen Text
 
-Ein Bild ist eine ganze Anzeige (16x52) aus dem Editor der App und ersetzt
+Ein Bild ist eine ganze Anzeige (52x16) aus dem Editor der App und ersetzt
 Text und Icon. Von „senden" gelten dafuer nur --an, --name und --dauer; alles
 Uebrige formatiert Text, den es dort nicht gibt. Ein Einzelbild geht pixelgenau
 als Standbild an die Uhr, mehrere als animiertes GIF.

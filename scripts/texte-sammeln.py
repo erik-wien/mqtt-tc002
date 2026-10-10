@@ -94,9 +94,9 @@ DYNAMISCH = [
     "8 × 8", "16 × 16", "52 × 16",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
-    # Nur die iPhone-Hilfe (HilfeiOS.swift, enum Abschnitt) — die Mac-Fassung
-    # hat keinen Abschnitt dieses Namens, weil es dort keine Kurzbefehle gibt.
-    "Kurzbefehle",
+    # Nur die Hilfe von iPhone und iPad (enum Abschnitt) — am Mac gibt es keine
+    # Kurzbefehle, dafür nur dort die Kommandozeile.
+    "Kurzbefehle", "Kommandozeile",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
     # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
     "Meldung an die Uhr schicken",
