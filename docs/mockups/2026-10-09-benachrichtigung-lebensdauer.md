@@ -1,6 +1,6 @@
 # Freigabe: Benachrichtigung, Lebensdauer, Anzeigen ein/aus (09.10.2026)
 
-Mockup: `2026-10-09-benachrichtigung-lebensdauer.html`. Grundlage: `docs/awtrix-ng-protokoll.md` §5.4 und §5.6. Status: **offen**, noch nicht freigegeben.
+Mockup: `2026-10-09-benachrichtigung-lebensdauer.html`. Grundlage: `docs/awtrix-ng-protokoll.md` §5.4 und §5.6. Status: **freigegeben** (Erik, 10.10.2026), umgesetzt in Sprint 3b.
 
 **Varianten für die Wahl Anzeige | Benachrichtigung**
 - A: Segment (`Picker`, `.segmented`) über dem Eingabefeld; bei Benachrichtigung sind die fünf Plätze ausgegraut. Empfohlen: Die Art der Sendung kommt vor dem Ziel, und es bleibt bei fünf gleich großen Blöcken, auch am iPhone.
