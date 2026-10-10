@@ -104,6 +104,12 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Dauer in Sekunden")
     var dauer: Int?
 
+    @Parameter(title: "Klang", description: "Name einer Melodie oder MP3-Datei auf der Uhr.")
+    var klang: String?
+
+    @Parameter(title: "Vorlesen", description: "Die Uhr liest den Text vor, auf Englisch.", default: false)
+    var vorlesen: Bool
+
     static var parameterSummary: some ParameterSummary {
         Summary("\(\.$text) als Nachricht an die Uhr senden") {
             \.$uhr
@@ -111,6 +117,8 @@ struct BenachrichtigungSendenIntent: AppIntent {
             \.$aufwecken
             \.$name
             \.$dauer
+            \.$klang
+            \.$vorlesen
         }
     }
 
@@ -125,8 +133,15 @@ struct BenachrichtigungSendenIntent: AppIntent {
         }
 
         let benannt = name?.trimmingCharacters(in: .whitespaces)
+        let klangname = klang?.trimmingCharacters(in: .whitespaces) ?? ""
+        if vorlesen && !klangname.isEmpty {
+            throw $vorlesen.needsValueError(IntentDialog(stringLiteral: lok("Entweder ein Klang oder Vorlesen, nicht beides.")))
+        }
+        let klangwahl = vorlesen ? Klangwahl(art: .vorlesen)
+            : (klangname.isEmpty ? Klangwahl() : Klangwahl(art: .uhr, name: klangname))
         let bo = Benachrichtigungsoptionen(name: (benannt?.isEmpty ?? true) ? nil : benannt,
-                                           halten: halten, aufwecken: aufwecken)
+                                           halten: halten, aufwecken: aufwecken,
+                                           klang: klangwahl.klaenge(nachrichtentext: text))
         if let n = bo.name, !Benachrichtigungsoptionen.nameGueltig(n) {
             throw $name.needsValueError(IntentDialog(stringLiteral: NGFehler.ungueltigerName(n).localizedDescription))
         }

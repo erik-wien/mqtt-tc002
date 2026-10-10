@@ -62,6 +62,7 @@ private struct Steuerseite: View {
             anzeigeabschnitt
             Moodlightabschnitt(zustand: zustand, uhr: uhr, an: $moodlightAn, helligkeit: $moodlightHelligkeit)
             indikatorabschnitt
+            Tonabschnitt(zustand: zustand, uhr: uhr, kanon: kanon)
             tastenabschnitt
             Section {
                 Button("Uhr neu starten …", role: .destructive) { fragtNeustart = true }

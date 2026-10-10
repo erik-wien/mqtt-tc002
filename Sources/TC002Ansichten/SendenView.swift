@@ -17,6 +17,7 @@ public struct SendenView: View {
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
     @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
     @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
     @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
     @AppStorage("senden.lebensdauer.einheit") private var lebensdauerEinheit: Lebensdauereinheit = .minuten
@@ -252,7 +253,8 @@ public struct SendenView: View {
 
     private var nachrichtwahl: Nachrichtwahl {
         Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
-                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe)
+                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe,
+                      klang: nachrichtKlang.wirksam(von: zustand.referenzUhr.flatMap { zustand.faehigkeiten[$0.id] }))
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -675,6 +677,8 @@ public struct SendenView: View {
                 Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
                                    ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
                                    aktiv: art == .nachricht)
+                Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht,
+                               kanon: .schreibtisch)
             }
             .formStyle(.grouped)
         case .darstellung:
@@ -1024,7 +1028,7 @@ extension SendenView {
         let o = optionen
         let icon = gewaehltesIcon
         let sammlung = sammlung
-        let wahl = nachrichtwahl.optionen
+        let wahl = nachrichtwahl.optionen(nachrichtentext: o.text)
         Task {
             let angekommen = await zustand.benachrichtigen(
                 rahmenFuer: { try Meldungsbau.rahmen(o, icon: icon, sammlung: sammlung, mass: $0) }, wahl)

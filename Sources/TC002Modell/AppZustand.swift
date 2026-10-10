@@ -97,6 +97,12 @@ public final class AppZustand {
     public var aktiveAnzeige: [UUID: String] = [:]
     /// `GET /api/v1/mqtt/tls`; nur, wo `capabilities.mqttTls` gilt.
     public var tlsStatus: [UUID: TLSStatus] = [:]
+    /// `GET /api/v1/audio`: was spielt, und die Senderliste; nur, wo die Uhr
+    /// `capabilities.audio` meldet.
+    public var tonzustand: [UUID: Tonzustand] = [:]
+    /// Melodien und MP3-Dateien auf der Uhr, einmal auf Anforderung geholt
+    /// (`tonlistenAbfragen`).
+    public var tonlisten: [UUID: Tonlisten] = [:]
     /// Gedrückt (`true`) oder losgelassen: nur das Mitlesen über MQTT sieht die
     /// Tasten (`state/buttons/*`). Mit dem Abriss des Mitlesens leer.
     public var tasten: [UUID: [Taste: Bool]] = [:]

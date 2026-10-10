@@ -91,6 +91,7 @@ struct SendeniOS: View {
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
     @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = false
     @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
     @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
     @AppStorage("senden.lebensdauer.einheit") private var lebensdauerEinheit: Lebensdauereinheit = .minuten
@@ -217,7 +218,8 @@ struct SendeniOS: View {
 
     private var nachrichtwahl: Nachrichtwahl {
         Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
-                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe)
+                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe,
+                      klang: nachrichtKlang.wirksam(von: zustand.referenzUhr.flatMap { zustand.faehigkeiten[$0.id] }))
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -435,6 +437,7 @@ struct SendeniOS: View {
                            nachrichtAufwecken: $nachrichtAufwecken,
                            nachrichtErsetzen: $nachrichtErsetzen,
                            nachrichtDurchlaeufe: $nachrichtDurchlaeufe,
+                           nachrichtKlang: $nachrichtKlang,
                            lebensdauerBehalten: $lebensdauerBehalten,
                            lebensdauerZahl: $lebensdauerZahl,
                            lebensdauerEinheit: $lebensdauerEinheit,
@@ -1025,7 +1028,7 @@ struct SendeniOS: View {
         if art == .nachricht {
             angekommen = await zustand.benachrichtigen(
                 rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
-                nachrichtwahl.optionen)
+                nachrichtwahl.optionen(nachrichtentext: slotOptionen.text))
         } else {
             angekommen = await zustand.senden(
                 rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },

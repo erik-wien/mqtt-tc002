@@ -28,6 +28,8 @@ extension AppZustand {
         drehknopf[id] = nil
         uhrenfehler[id] = nil
         bildschirm[id] = nil
+        tonzustand[id] = nil
+        tonlisten[id] = nil
     }
 
     // MARK: - Zustand
@@ -43,12 +45,14 @@ extension AppZustand {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
         let host = uhr.host, sitzung = netzsitzung
         let tls = faehigkeiten[id]?.mqttTlsUnterstuetzt == true
+        // Ohne Auskunft über die Fähigkeiten wird gefragt; eine Uhr ohne Audio antwortet mit 404 (`try?`).
+        let ton = faehigkeiten[id].map { $0.ton != nil } ?? true
         do {
-            let (geraetStand, anzeige, einstellungen, verschluesselung) = try await Hintergrund.lauf {
-                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?) in
+            let (geraetStand, anzeige, einstellungen, verschluesselung, tonStand) = try await Hintergrund.lauf {
+                () throws -> (Geraetezustand, Anzeigestand?, Geraeteeinstellungen?, TLSStatus?, Tonzustand?) in
                 let g = Geraet(host: host, sitzung: sitzung)
                 return (try g.geraetezustand(), try? g.anzeigestand(), try? g.einstellungen(),
-                        tls ? (try? g.tlsStatus()) : nil)
+                        tls ? (try? g.tlsStatus()) : nil, ton ? (try? g.tonzustand()) : nil)
             }
             guard uhren.contains(where: { $0.id == id }) else { return false }
             erreichbar[id] = true
@@ -57,6 +61,7 @@ extension AppZustand {
             if let anzeige { anzeigestand[id] = anzeige }
             if let einstellungen { uhreneinstellungen[id] = einstellungen }
             if let verschluesselung { tlsStatus[id] = verschluesselung }
+            if let tonStand { tonzustand[id] = tonStand }
             return true
         } catch {
             guard uhren.contains(where: { $0.id == id }) else { return false }
@@ -217,6 +222,37 @@ extension AppZustand {
             fehler = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return Sendebilanz(erreicht: [], ziele: 1)
         }
+    }
+
+    /// Hält Klang an: ohne Gruppe alles, mit Gruppe nur diese (`audio/stop`).
+    @discardableResult
+    public func tonStoppen(_ gruppe: Tongruppe? = nil, fuer id: UUID) async -> Sendebilanz {
+        await steuern(was: lok("Ton anhalten"), fuer: id) { anzeigen, _, _ in try anzeigen.tonStoppen(gruppe) }
+    }
+
+    /// Spielt den Radiosender mit diesem Namen aus der Senderliste der Uhr.
+    @discardableResult
+    public func radioSpielen(sender: String, fuer id: UUID) async -> Sendebilanz {
+        await steuern(was: lok("Radio"), fuer: id) { anzeigen, _, caps in
+            try anzeigen.tonSpielen([Klang(.sender(sender))], faehigkeiten: caps)
+        }
+    }
+
+    /// Holt Melodien und MP3-Dateien der Uhr (nur HTTP). Eine Uhr ohne Adresse
+    /// oder ohne Antwort lässt die Listen, wie sie waren; die Ansicht zeigt dann
+    /// weiter „Uhr abfragen …“.
+    @discardableResult
+    public func tonlistenAbfragen(_ id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
+        let host = uhr.host, sitzung = netzsitzung
+        let geholt = await Hintergrund.lauf { () -> Tonlisten? in
+            let g = Geraet(host: host, sitzung: sitzung)
+            guard let melodien = try? g.melodien() else { return nil }
+            return Tonlisten(melodien: melodien.namen, mp3: (try? g.mp3Dateien())?.namen ?? [])
+        }
+        guard let geholt, uhren.contains(where: { $0.id == id }) else { return false }
+        tonlisten[id] = geholt
+        return true
     }
 
     /// Eine Anzeige vor oder zurück bei genau dieser Uhr.

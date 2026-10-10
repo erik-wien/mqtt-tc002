@@ -32,6 +32,7 @@ struct FormatblattiOS: View {
     @Binding var nachrichtAufwecken: Bool
     @Binding var nachrichtErsetzen: Bool
     @Binding var nachrichtDurchlaeufe: Int
+    @Binding var nachrichtKlang: Klangwahl
     @Binding var lebensdauerBehalten: Bool
     @Binding var lebensdauerZahl: Int
     @Binding var lebensdauerEinheit: Lebensdauereinheit
@@ -112,6 +113,8 @@ struct FormatblattiOS: View {
                 Nachrichtabschnitt(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
                                    ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
                                    aktiv: art == .nachricht)
+                Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht,
+                               kanon: .telefon)
             }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {

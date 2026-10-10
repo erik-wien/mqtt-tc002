@@ -67,8 +67,11 @@ public struct Nachrichtwahl: Equatable, Sendable {
     public var aufwecken: Bool
     public var ersetzen: Bool
     public var durchlaeufe: Int
+    public var klang: Klangwahl
 
-    public init(halten: Bool = true, aufwecken: Bool = true, ersetzen: Bool = false, durchlaeufe: Int = 2) {
+    public init(halten: Bool = true, aufwecken: Bool = true, ersetzen: Bool = false, durchlaeufe: Int = 2,
+                klang: Klangwahl = Klangwahl()) {
+        self.klang = klang
         self.halten = halten
         self.aufwecken = aufwecken
         self.ersetzen = ersetzen
@@ -76,8 +79,12 @@ public struct Nachrichtwahl: Equatable, Sendable {
     }
 
     /// „Ersetzen“ ist das Gegenteil von „Einreihen“ (`stack`).
-    public var optionen: Benachrichtigungsoptionen {
+    public var optionen: Benachrichtigungsoptionen { optionen(nachrichtentext: "") }
+
+    /// Mit dem Klang; „Vorlesen“ ohne eigenen Sprechtext liest `nachrichtentext`.
+    public func optionen(nachrichtentext: String) -> Benachrichtigungsoptionen {
         Benachrichtigungsoptionen(halten: halten, einreihen: !ersetzen, aufwecken: aufwecken,
-                                  wiederholungen: min(Self.hoechstdurchlaeufe, max(1, durchlaeufe)))
+                                  wiederholungen: min(Self.hoechstdurchlaeufe, max(1, durchlaeufe)),
+                                  klang: klang.klaenge(nachrichtentext: nachrichtentext))
     }
 }

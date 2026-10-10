@@ -184,6 +184,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
                 .ueberschrift("Nachricht senden und zurückziehen"),
                 .absatz("Zwei weitere Kurzbefehle: „Nachricht senden“ zeigt einen Text einmalig über der Schleife der Uhr, ohne einen Platz zu belegen. Sie bleibt standardmäßig stehen und weckt das Panel; mit den Schaltern „Halten“ und „Aufwecken“ ändert man das. Mit einem Namen lässt sie sich später gezielt zurückziehen, ohne Namen nur die sichtbare."),
+                .absatz("Zwei wahlfreie Felder geben der Nachricht einen Klang: „Klang“ nimmt den Namen einer Melodie oder MP3-Datei auf der Uhr, „Vorlesen“ lässt die Uhr den Text auf Englisch sprechen. Beides zugleich geht nicht."),
                 .absatz("„Nachricht zurückziehen“ nimmt die sichtbare Nachricht weg, mit Namen die benannte. Über MQTT wartet jeder Kurzbefehl auf die Antwort der Uhr: Weist sie ab, zeigt die Kurzbefehle-App den Grund; bleibt die Antwort aus, steht ein Hinweis im Dialog."),
             ]
         case .fehlersuche:

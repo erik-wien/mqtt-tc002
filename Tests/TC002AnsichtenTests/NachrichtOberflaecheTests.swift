@@ -36,9 +36,21 @@ final class NachrichtOberflaecheTests: XCTestCase {
             let text = try quelltext(datei)
             XCTAssertTrue(text.contains("Lebensdauerabschnitt("), datei)
             XCTAssertTrue(text.contains("Nachrichtabschnitt("), datei)
+            XCTAssertTrue(text.contains("Klangabschnitt(zustand: zustand, klang: $nachrichtKlang, aktiv: art == .nachricht"),
+                          "\(datei): Klang der Nachricht fehlt")
             XCTAssertTrue(text.contains("aktiv: art == .anzeige"), datei)
             XCTAssertTrue(text.contains("aktiv: art == .nachricht"), datei)
         }
+    }
+
+    /// Beide Sendeflächen schicken den Klang mit dem Text der Nachricht, und die
+    /// Fernbedienung (Mac, iPad, iPhone-Blatt) trägt den Abschnitt „Ton“.
+    func testKlangGehtMitUndDieFernbedienungHatTon() throws {
+        for datei in ["Sources/TC002Ansichten/SendenView.swift", "Sources/TC002iOS/SendeniOS.swift"] {
+            XCTAssertTrue(try quelltext(datei).contains("optionen(nachrichtentext:"), "\(datei) schickt keinen Klang")
+        }
+        XCTAssertTrue(try quelltext("Sources/TC002Ansichten/Fernbedienung.swift")
+            .contains("Tonabschnitt(zustand: zustand, uhr: uhr, kanon: kanon)"))
     }
 
     /// „Nach“ und „Dann“ sind bei „Behalten“ gesperrt, nicht versteckt.
