@@ -234,7 +234,10 @@ final class MQTTUhrDoppelgaenger: @unchecked Sendable {
     private var _eingang: [(thema: String, nutzlast: Data)] = []
     let praefix: String
 
-    init(praefix: String = "wz/uhr") { self.praefix = praefix }
+    init(praefix: String = "wz/uhr", zustand: NGUhrzustand = NGUhrzustand()) {
+        self.praefix = praefix
+        _zustand = zustand
+    }
 
     var zustand: NGUhrzustand { sperre.lock(); defer { sperre.unlock() }; return _zustand }
     var eingang: [(thema: String, nutzlast: Data)] { sperre.lock(); defer { sperre.unlock() }; return _eingang }

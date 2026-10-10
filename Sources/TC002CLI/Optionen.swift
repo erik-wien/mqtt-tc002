@@ -257,6 +257,11 @@ struct Optionen {
             rest = argumente
         }
 
+        // `ton --help` und `ton hilfe` zeigen die Hilfe, in der der Abschnitt KLANG steht.
+        if o.tonwort, rest.contains(where: { ["--help", "-h", "hilfe", "help"].contains($0) }) {
+            return Optionen(befehl: .hilfe)
+        }
+
         var freie: [String] = []
         var i = 0
         while i < rest.count {

@@ -38,8 +38,8 @@ func tlsBefehl(_ befehl: Optionen.Befehl, uhren: [Uhr], trocken: Bool) throws ->
             switch befehl {
             case .tls:
                 let s = try geraet.tlsStatus()
-                print(lokf("CA: %@", s.ca))
-                print(lokf("Ausstehend: %@", s.pending ?? "—"))
+                print(lokf("CA: %@", Terminaltext.sicher(s.ca)))
+                print(lokf("Ausstehend: %@", Terminaltext.sicher(s.pending ?? "—")))
             case .tlsCA:
                 if trocken {
                     print("PUT http://\(uhr.host)/api/v1/mqtt/tls/ca")
@@ -47,7 +47,7 @@ func tlsBefehl(_ befehl: Optionen.Befehl, uhren: [Uhr], trocken: Bool) throws ->
                 } else {
                     let s = try geraet.tlsCAHochladen(pem: pem)
                     print(lokf("%@: Zertifikat hochgeladen", uhr.name))
-                    if let s { print(lokf("CA: %@", s.ca)) }
+                    if let s { print(lokf("CA: %@", Terminaltext.sicher(s.ca))) }
                 }
             default:
                 if trocken {
@@ -56,7 +56,7 @@ func tlsBefehl(_ befehl: Optionen.Befehl, uhren: [Uhr], trocken: Bool) throws ->
                 } else {
                     let s = try geraet.tlsCAEntfernen()
                     print(lokf("%@: Zertifikat entfernt", uhr.name))
-                    if let s { print(lokf("CA: %@", s.ca)) }
+                    if let s { print(lokf("CA: %@", Terminaltext.sicher(s.ca))) }
                 }
             }
             gelungen += 1
@@ -92,7 +92,7 @@ private func verbindung(_ v: Verbindungsstand?) -> String {
 
 /// Gibt den Zustand einer Uhr aus: Zeilen `Name<Tab>Wert`.
 private func zustandAusgeben(_ z: Geraetezustand) {
-    func zeile(_ name: String, _ wert: String?) { print("\(name)\t\(wert ?? "—")") }
+    func zeile(_ name: String, _ wert: String?) { print("\(name)\t\(Terminaltext.sicher(wert ?? "—"))") }
     zeile(lok("Fassung"), z.fassung)
     zeile(lok("Platine"), z.platine)
     zeile(lok("Display"), aus(z.panelAn))
@@ -115,7 +115,7 @@ private func einstellungenAusgeben(_ e: Geraeteeinstellungen) {
         print("[\(gruppentitel(g))]")
         for z in zeilen {
             let gesperrt = Geraeteeinstellung(rawValue: z.schluessel)?.schreibbar == false
-            print("\(z.schluessel)\t\(z.wert)" + (gesperrt ? "\t" + lok("(nur lesen)") : ""))
+            print("\(Terminaltext.sicher(z.schluessel))\t\(Terminaltext.sicher(z.wert))" + (gesperrt ? "\t" + lok("(nur lesen)") : ""))
         }
     }
     print(lokf("%d Schlüssel insgesamt; die übrigen stellt diese App nicht ein.", e.schluesselinsgesamt))
