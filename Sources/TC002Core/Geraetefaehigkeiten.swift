@@ -18,9 +18,18 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     public var overlays: [String]
     public var paletten: [String]
     public var uebergaenge: [String]
+    /// `capabilities.layout`: ob die Uhr Layouts kann (§9). `nil`, solange nicht
+    /// gefragt; ein Gerät, dessen Antwort das Feld nicht trägt (TC001/ESP32),
+    /// kann es nicht.
+    public var layoutUnterstuetzt: Bool?
+    /// `capabilities.layouts.limits`; ohne Angabe die gemessenen Werte.
+    public var layoutGrenzen = Layoutgrenzen()
 
     public init(effekte: [String] = [], paletteneffekte: [String] = [], overlays: [String] = [],
-                paletten: [String] = [], uebergaenge: [String] = []) {
+                paletten: [String] = [], uebergaenge: [String] = [],
+                layoutUnterstuetzt: Bool? = nil, layoutGrenzen: Layoutgrenzen = Layoutgrenzen()) {
+        self.layoutUnterstuetzt = layoutUnterstuetzt
+        self.layoutGrenzen = layoutGrenzen
         self.effekte = effekte
         self.paletteneffekte = paletteneffekte
         self.overlays = overlays
@@ -39,6 +48,10 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         guard alle.contains(where: { $0 != nil }) else { return nil }
         self.init(effekte: alle[0] ?? [], paletteneffekte: alle[1] ?? [], overlays: alle[2] ?? [],
                   paletten: alle[3] ?? [], uebergaenge: alle[4] ?? [])
+        layoutUnterstuetzt = antwort["layout"] as? Bool == true
+        if let grenzen = (antwort["layouts"] as? [String: Any])?["limits"] as? [String: Any] {
+            layoutGrenzen = Layoutgrenzen(antwort: grenzen)
+        }
     }
 
     /// Die Schreibweise aus der Liste, ohne Rücksicht auf Groß-/Kleinschreibung.

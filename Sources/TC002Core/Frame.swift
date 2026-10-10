@@ -48,7 +48,10 @@ public struct Meldungsherkunft: Equatable, Sendable {
 /// `pixel` geht vor; eine Grafik verträgt weder Pixel noch Text
 /// (`DarstellungsFehler.grafikMitInhalt`). Zu jeder der drei Arten kann eine
 /// `darstellung` (Hintergrund, Effekt, Overlay, Palette) gehören — was davon bei
-/// gerasterten Pixeln wirkt, steht bei `Darstellung`.
+/// gerasterten Pixeln wirkt, steht bei `Darstellung`. Ein `layout` ist eine
+/// vierte, eigene Art: Es verträgt neben sich weder Pixel noch Text noch Grafik
+/// noch Darstellung (`LayoutFehler.mitAnderemInhalt`) — die gehören in seine
+/// Regionen und auf seine Ebene.
 public struct Frame: Equatable, Sendable {
     public var pixel: Pixelinhalt?
     public var dauer: Int?
@@ -58,11 +61,14 @@ public struct Frame: Equatable, Sendable {
     public var lebensdauer: Lebensdauer?
     public var darstellung: Darstellung?
     public var grafik: Grafikinhalt?
+    public var layout: Kastenlayout?
 
     /// Was hier hinausgeht, in einem Satz — fuer das Protokoll.
     public var beschreibung: String {
         var teile: [String] = []
-        if grafik != nil {
+        if let layout {
+            teile.append(layout.beschreibung)
+        } else if grafik != nil {
             teile.append(lok("Grafik"))
         } else if let pixel {
             teile.append(pixel.istBewegt ? lokf("%d Bilder", pixel.bilder.count) : lok("Pixelbild"))
@@ -77,11 +83,12 @@ public struct Frame: Equatable, Sendable {
 
     public init(pixel: Pixelinhalt? = nil, dauer: Int? = nil, herkunft: Meldungsherkunft? = nil,
                 lebensdauer: Lebensdauer? = nil, darstellung: Darstellung? = nil,
-                grafik: Grafikinhalt? = nil) {
+                grafik: Grafikinhalt? = nil, layout: Kastenlayout? = nil) {
         self.pixel = pixel; self.dauer = dauer
         self.herkunft = herkunft
         self.lebensdauer = lebensdauer
         self.darstellung = darstellung
         self.grafik = grafik
+        self.layout = layout
     }
 }

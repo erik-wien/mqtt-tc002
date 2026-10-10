@@ -15,11 +15,11 @@ public struct Anzeigen {
     /// Wohin die Bytes gehen. Ein Aufzaehlungstyp und nicht zwei Klassen: Die
     /// drei Taetigkeiten sind auf beiden Wegen dieselben, und jeder Aufrufer
     /// — App, Werkzeug, Kurzbefehl — soll genau einen Typ kennen.
-    private enum Kanal {
+    enum Kanal {
         case mqtt(sender: NachrichtSendend, zugang: MQTTZugang, praefix: String, ausweich: Geraet?)
         case http(Geraet)
     }
-    private let kanal: Kanal
+    let kanal: Kanal
 
     /// Wie lange und von wem auf `<Thema>/result` gewartet wird — nur für
     /// Absender, die nicht ohnehin am Broker mitlesen (Werkzeug, Kurzbefehle).
@@ -90,8 +90,12 @@ public struct Anzeigen {
     /// wird nicht geschickt: MQTT 3.1.1 kennt keinen Rueckkanal fuer eine
     /// abgelehnte Veroeffentlichung, und stillschweigend nichts zu tun ist das
     /// Gegenteil einer Loesung.
-    public static func nutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
-        let grund = try grundnutzlast(frame, faehigkeiten: faehigkeiten)
+    ///
+    /// `mass` ist das Anzeigemaß der Ziel-Uhr; nur ein Layout braucht es (seine
+    /// Kästen müssen ganz darin liegen). Ohne Angabe gilt 52 × 16.
+    public static func nutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil,
+                                mass: Anzeigemass? = nil) throws -> String {
+        let grund = try grundnutzlast(frame, faehigkeiten: faehigkeiten, mass: mass)
         guard let lebensdauer = frame.lebensdauer else { return grund }
         return NGNutzlast.ergaenzt(grund, um: NGNutzlast.lebensdauerfelder(lebensdauer))
     }
@@ -101,7 +105,17 @@ public struct Anzeigen {
     ///
     /// Die Darstellung wird geprüft und angehängt; `faehigkeiten` sind die
     /// Namenslisten der Ziel-Uhr (ohne sie bleiben Namen ungeprüft).
-    static func grundnutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
+    static func grundnutzlast(_ frame: Frame, faehigkeiten: Geraetefaehigkeiten? = nil,
+                              mass: Anzeigemass? = nil) throws -> String {
+        if let layout = frame.layout {
+            // Neben `layout` sind nur Standzeit, Lebensdauer und die Felder einer
+            // Benachrichtigung zulässig (§9.4); die Darstellung steht im Layout.
+            guard frame.pixel == nil, frame.herkunft == nil, frame.grafik == nil,
+                  frame.darstellung?.istLeer ?? true else { throw LayoutFehler.mitAnderemInhalt }
+            try layout.pruefen(mass: mass ?? .vorgabe, faehigkeiten: faehigkeiten)
+            let dauer = frame.dauer.map { #","durationMs":\#($0 * 1000)"# } ?? ""
+            return #"{"layout":\#(layout.json(gegen: faehigkeiten))\#(dauer)}"#
+        }
         let darstellung = frame.darstellung ?? Darstellung()
         try darstellung.pruefen(gegen: faehigkeiten)
         let json: String
@@ -137,7 +151,7 @@ public struct Anzeigen {
             throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
                                           anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
         }
-        let json = try Self.nutzlast(frame, faehigkeiten: faehigkeiten)
+        let json = try Self.nutzlast(frame, faehigkeiten: faehigkeiten, mass: anzeigemass)
         let daten = Data(json.utf8)
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, let ausweich):
@@ -192,7 +206,8 @@ public struct Anzeigen {
             throw NGFehler.massPasstNicht(bildBreite: pixel.breite, bildHoehe: pixel.hoehe,
                                           anzeigeBreite: mass.breite, anzeigeHoehe: mass.hoehe)
         }
-        let json = try NGNutzlast.benachrichtigung(frame, optionen, faehigkeiten: faehigkeiten)
+        let json = try NGNutzlast.benachrichtigung(frame, optionen, faehigkeiten: faehigkeiten,
+                                                   mass: anzeigemass)
         let daten = Data(json.utf8)
         switch kanal {
         case .mqtt(let sender, let zugang, let praefix, let ausweich):
