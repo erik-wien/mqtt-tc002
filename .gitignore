@@ -40,3 +40,6 @@ claude-resume.sh
 # verweist der Quelltext, und sie sagen, warum etwas so ist, wie es ist.
 docs/superpowers/plans/
 .claude/worktrees/
+
+# Klangdateien fuer die Uhr (fremde Rechte, nicht ins Repo)
+mp3/
