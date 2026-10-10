@@ -10,8 +10,11 @@ public struct NGTon: Equatable, Sendable {
 
     /// Melodienname → RTTTL-Text (`/MELODIES/<name>.txt`).
     public var melodien: [String: String] = [:]
-    /// Namen gespeicherter MP3-Dateien. Hochladen gibt es hier nicht; Tests legen sie an.
+    /// Namen gespeicherter MP3-Dateien (ohne `.mp3`). Tests legen sie an oder
+    /// laden sie hoch (`POST /audio/mp3`).
     public var mp3: [String] = []
+    /// Größe je MP3-Datei in Byte; eine fehlende zählt 0.
+    public var mp3Groessen: [String: Int] = [:]
     public var sender: [Radiosender] = [Radiosender(name: "Fm4", url: "http://radio.example.com/stream")]
     /// Die Klangobjekte, die `audio/play` gewählt hat — je Anfrage eines, in
     /// der Reihenfolge der Anfragen. Das Objekt ist so, wie es angenommen wurde.
@@ -30,8 +33,7 @@ public struct NGTon: Equatable, Sendable {
 
 /// Die Audio-Routen der virtuellen NG-Uhr (§3.2.1, §4.2, §7.5, §8).
 ///
-/// Nicht nachgebildet: `POST /audio/clip`, MP3 hochladen, löschen und
-/// umbenennen (`404 unknown route`).
+/// Nicht nachgebildet: `POST /audio/clip` und MP3 umbenennen (`404 unknown route`).
 ///
 /// Annahmen, wo die Doku schweigt (❓):
 /// - `audio/play` spielt in die Gruppe `alert`, `station` ins Radio; der Name in
@@ -51,11 +53,20 @@ public struct NGTon: Equatable, Sendable {
 ///   mit Noten besteht; die Uhr prüft vermutlich genauer;
 /// - `audio/stop` mit einem anderen Schlüssel als `group` ist `422` mit dem
 ///   Schlüssel als `field`; leerer Rumpf und `{}` halten alles an;
-/// - `totalBytes` ist eine runde Zahl; `409 nameTaken` ist im Wortlaut ungemessen;
+/// - `totalBytes` ist eine runde Zahl; `409 nameTaken` bei einer Melodie: Wortlaut ungemessen, bei einer MP3 `name taken`;
 /// - Melodiename: 1–24 Zeichen, nur Buchstaben, Ziffern, `_` und `-`
 ///   (`422`, `field` = `name`); ein Name, den schon eine MP3 trägt, ist `409
 ///   nameTaken` (§8);
-/// - ein Sendername über 24 Zeichen ist `too long` (ungemessen).
+/// - ein Sendername über 24 Zeichen ist `too long` (ungemessen);
+/// - MP3 hochladen, auflisten, löschen nach der Messung vom 10. Oktober 2026
+///   (§4.2): Name `[A-Za-z0-9_-]{1,32}` mit `.mp3` im Dateinamen des
+///   `multipart`-Teils `file`, sonst `400 invalidName`; gleicher Name ersetzt still;
+///   eine Melodie gleichen Namens ist `409 nameTaken`; kein MP3-Inhalt ist `415`.
+///   ❓ Als MP3 gilt, was mit `ID3` oder einem MPEG-Frame-Sync (`0xFF`, dann die
+///   oberen drei Bits des zweiten Bytes gesetzt) beginnt. ❓ Reihenfolge der
+///   Prüfungen: Name, Inhalt, Melodie, Platz; ein Rumpf ohne `multipart` oder ohne
+///   Teil `file` ist `400 badRequest`; zu wenig Platz ist `507 insufficientStorage`;
+///   `DELETE` einer unbekannten Datei ist `404 notFound`.
 extension VirtuelleNGUhr {
     static let hoechsteMelodie = 512
     static let hoechsterSprechtext = 512
@@ -321,10 +332,74 @@ extension VirtuelleNGUhr {
                              "totalBytes": .zahl(Double(gesamtSpeicher))]))
     }
 
-    /// `GET /api/v1/audio/mp3`.
+    private static func mp3Belegt(_ z: NGUhrzustand) -> Int {
+        z.ton.mp3.reduce(0) { $0 + (z.ton.mp3Groessen[$1] ?? 0) }
+    }
+
+    /// `GET /api/v1/audio/mp3`: die Namen mit Endung, wie die Uhr sie führt.
     static func mp3liste(_ z: NGUhrzustand) -> Antwort {
-        json(.objekt(["files": .liste(z.ton.mp3.sorted().map { .objekt(["name": .text($0)]) }),
-                      "scripts": .liste([]), "usedBytes": .zahl(0), "totalBytes": .zahl(Double(gesamtSpeicher))]))
+        let dateien = z.ton.mp3.sorted().map { n -> JSONWert in
+            .objekt(["name": .text(n + ".mp3"), "size": .zahl(Double(z.ton.mp3Groessen[n] ?? 0))])
+        }
+        return json(.objekt(["files": .liste(dateien), "scripts": .liste([]),
+                             "usedBytes": .zahl(Double(mp3Belegt(z))), "totalBytes": .zahl(Double(gesamtSpeicher))]))
+    }
+
+    private static func istMP3(_ daten: Data) -> Bool {
+        let b = [UInt8](daten.prefix(3))
+        if b == [0x49, 0x44, 0x33] { return true }
+        return b.count >= 2 && b[0] == 0xFF && b[1] & 0xE0 == 0xE0
+    }
+
+    /// Der Dateiname und der Inhalt des Teils `file` eines `multipart/form-data`-Rumpfes.
+    private static func dateiteil(_ a: Anfrage) -> (name: String, inhalt: Data)? {
+        let art = a.kopf["content-type"] ?? ""
+        guard art.lowercased().hasPrefix("multipart/form-data"),
+              let r = art.range(of: "boundary=") else { return nil }
+        let grenze = String(art[r.upperBound...]).trimmingCharacters(in: CharacterSet(charactersIn: "\" ;"))
+        let trenner = Data(("--" + grenze).utf8)
+        let kopfende = Data("\r\n\r\n".utf8)
+        var start = a.koerper.startIndex
+        while let hit = a.koerper.range(of: trenner, in: start..<a.koerper.endIndex) {
+            let teilStart = hit.upperBound
+            guard let naechster = a.koerper.range(of: trenner, in: teilStart..<a.koerper.endIndex) else { break }
+            var teil = a.koerper[teilStart..<naechster.lowerBound]
+            if teil.starts(with: Data("\r\n".utf8)) { teil = teil.dropFirst(2) }
+            if let ende = teil.range(of: kopfende) {
+                let kopf = String(decoding: teil[teil.startIndex..<ende.lowerBound], as: UTF8.self)
+                var inhalt = teil[ende.upperBound...]
+                if inhalt.suffix(2) == Data("\r\n".utf8) { inhalt = inhalt.dropLast(2) }
+                if kopf.contains("name=\"file\""),
+                   let f = kopf.range(of: "filename=\""),
+                   let zu = kopf[f.upperBound...].firstIndex(of: "\"") {
+                    return (String(kopf[f.upperBound..<zu]), Data(inhalt))
+                }
+            }
+            start = naechster.lowerBound
+        }
+        return nil
+    }
+
+    /// `POST /api/v1/audio/mp3`.
+    static func mp3Hochladen(_ a: Anfrage, _ z: inout NGUhrzustand) -> Antwort {
+        guard let teil = dateiteil(a) else { return fehler(400, "badRequest", "expected multipart file") }
+        let name = teil.name.hasSuffix(".mp3") ? String(teil.name.dropLast(4)) : ""
+        guard Klangname.gueltig(name) else { return fehler(400, "invalidName", "invalid file name") }
+        guard istMP3(teil.inhalt) else { return fehler(415, "unsupportedMediaType", "expected MP3") }
+        guard z.ton.melodien[name] == nil else { return fehler(409, "nameTaken", "name taken") }
+        let frei = gesamtSpeicher - mp3Belegt(z) + (z.ton.mp3Groessen[name] ?? 0)
+        guard teil.inhalt.count <= frei else { return fehler(507, "insufficientStorage", "not enough space") }
+        if !z.ton.mp3.contains(name) { z.ton.mp3.append(name) }
+        z.ton.mp3Groessen[name] = teil.inhalt.count
+        return ok
+    }
+
+    /// `DELETE /api/v1/audio/mp3/{name}`.
+    static func mp3Loeschen(_ name: String, _ z: inout NGUhrzustand) -> Antwort {
+        guard z.ton.mp3.contains(name) else { return fehler(404, "notFound", "file not found") }
+        z.ton.mp3.removeAll { $0 == name }
+        z.ton.mp3Groessen[name] = nil
+        return ok
     }
 
     /// `PUT`/`DELETE /api/v1/audio/melodies/{name}`.
@@ -345,7 +420,7 @@ extension VirtuelleNGUhr {
         }
         guard !text.isEmpty, text.count <= hoechsteMelodie else { return ungueltig("invalid length", feld: "rtttl") }
         guard rtttlFehler(text) == nil else { return ungueltig("expected name:defaults:notes", feld: "rtttl") }
-        guard !z.ton.mp3.contains(name) else { return fehler(409, "nameTaken", "name already taken") }
+        guard !z.ton.mp3.contains(name) else { return fehler(409, "nameTaken", "name taken") }
         let neu = z.ton.melodien[name] == nil
         // Gemessen: Die Uhr schreibt den Namensteil des RTTTL auf den Melodienamen um.
         let teile = text.split(separator: ":", omittingEmptySubsequences: false)

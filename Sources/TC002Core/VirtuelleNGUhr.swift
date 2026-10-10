@@ -246,7 +246,7 @@ public enum VirtuelleNGUhr {
 
     private enum Route {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
-        case tonSpielen, tonStoppen, tonSender, tonMelodien, tonMP3, tonMelodie(String)
+        case tonSpielen, tonStoppen, tonSender, tonMelodien, tonMP3, tonMP3Datei(String), tonMelodie(String)
         case moodlight, tlsStatus, tlsCA, neustart
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
@@ -255,7 +255,9 @@ public enum VirtuelleNGUhr {
 
         var methoden: [String] {
             switch self {
-            case .geraet, .version, .system, .bildschirm, .apps, .faehigkeiten, .ton, .tonMelodien, .tonMP3: return ["GET"]
+            case .geraet, .version, .system, .bildschirm, .apps, .faehigkeiten, .ton, .tonMelodien: return ["GET"]
+            case .tonMP3: return ["GET", "POST"]
+            case .tonMP3Datei: return ["DELETE"]
             case .tonSpielen, .tonStoppen: return ["POST"]
             case .tonSender: return ["GET", "PUT"]
             case .tonMelodie: return ["PUT", "DELETE"]
@@ -290,6 +292,7 @@ public enum VirtuelleNGUhr {
         case (2, "audio") where r[1] == "melodies": return .tonMelodien
         case (2, "audio") where r[1] == "mp3": return .tonMP3
         case (3, "audio") where r[1] == "melodies": return .tonMelodie(r[2])
+        case (3, "audio") where r[1] == "mp3": return .tonMP3Datei(r[2])
         case (2, "display") where r[1] == "screen": return .bildschirm
         case (2, "display") where r[1] == "moodlight": return .moodlight
         case (2, "mqtt") where r[1] == "tls": return .tlsStatus
@@ -348,7 +351,8 @@ public enum VirtuelleNGUhr {
         case .tonStoppen: return tonStoppen(anfrage, &z)
         case .tonSender: return tonSender(anfrage, &z)
         case .tonMelodien: return melodienliste(z)
-        case .tonMP3: return mp3liste(z)
+        case .tonMP3: return anfrage.methode == "GET" ? mp3liste(z) : mp3Hochladen(anfrage, &z)
+        case .tonMP3Datei(let name): return mp3Loeschen(name, &z)
         case .tonMelodie(let name): return melodie(name, anfrage, &z)
         case .appSenden(let name): return appSenden(name, anfrage, &z)
         case .appLoeschen(let name): return appLoeschen(name, &z)

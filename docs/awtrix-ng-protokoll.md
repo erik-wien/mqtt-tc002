@@ -536,6 +536,22 @@ Dateirouten, Geheimnisexport und Firmware sind gesperrt.
 | `GET` / `POST` / `DELETE /api/v1/audio/mp3[/{name}]` · `POST …/mp3/rename` | MP3-Dateien (`multipart`-Feld `file`), umbenennen mit `{"from","to"}` |
 | `GET` / `PUT /api/v1/audio/stations` | Senderliste lesen bzw. ganz ersetzen (`{"stations":[…]}` oder blankes Feld, höchstens 32) |
 
+🔬 MP3 hochladen, gemessen am 10. Oktober 2026 (TC002, NG 1.2.2): `POST
+/api/v1/audio/mp3`, `multipart`, Feld `file`; der Name auf der Uhr ist der
+Dateiname des Teils. Gültig ist `[A-Za-z0-9_-]`, 1–32 Zeichen, gefolgt von
+`.mp3` (angenommen: 32 Zeichen, `Gross_MIX-9`, `star_trek`). Abgewiesen mit
+`400 {"error":{"code":"invalidName","message":"invalid file name"}}`: 33 Zeichen,
+Leerzeichen, Umlaut, Punkt im Namen und ein Dateiname ohne `.mp3`. Eine
+gleichnamige MP3 wird **still überschrieben** (`200`); eine gleichnamige Melodie
+ist `409 {"error":{"code":"nameTaken","message":"name taken"}}`; Inhalt, der
+keine MP3 ist, `415 {"error":{"code":"unsupportedMediaType","message":"expected
+MP3"}}`. `GET` liefert `{"files":[{"name":"x.mp3","size":…}],"scripts":[],
+"usedBytes":…,"totalBytes":…}` (die Namen **mit** Endung), `DELETE
+/api/v1/audio/mp3/<name ohne .mp3>` `200 {"ok":true}`. Die App schlägt aus jedem
+Dateinamen einen gültigen vor (`Klangname`) und zeigt ihn vor dem Hochladen.
+❓ Eine Größengrenze für das Hochladen ist nicht gemessen; die App nimmt 4 MB an
+(wie bei MP3 von einer Adresse, §5).
+
 **Fähigkeiten, System, Dateien**
 
 | Route | Wozu |

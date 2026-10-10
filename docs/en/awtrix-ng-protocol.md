@@ -522,6 +522,22 @@ restore. Log, scripts, file routes, secrets export and firmware are blocked.
 | `GET` / `POST` / `DELETE /api/v1/audio/mp3[/{name}]` · `POST …/mp3/rename` | MP3 files (`multipart` field `file`), rename with `{"from","to"}` |
 | `GET` / `PUT /api/v1/audio/stations` | read the station list or replace it whole (`{"stations":[…]}` or a bare array, at most 32) |
 
+🔬 Uploading an MP3, measured on 10 October 2026 (TC002, NG 1.2.2): `POST
+/api/v1/audio/mp3`, `multipart`, field `file`; the name on the clock is the file
+name of the part. Valid is `[A-Za-z0-9_-]`, 1 to 32 characters, followed by `.mp3`
+(accepted: 32 characters, `Gross_MIX-9`, `star_trek`). Rejected with
+`400 {"error":{"code":"invalidName","message":"invalid file name"}}`: 33
+characters, a space, an umlaut, a dot in the name and a file name without
+`.mp3`. An MP3 of the same name is **silently overwritten** (`200`); a melody of
+the same name is `409 {"error":{"code":"nameTaken","message":"name taken"}}`;
+content that is not an MP3 is `415 {"error":{"code":"unsupportedMediaType",
+"message":"expected MP3"}}`. `GET` returns `{"files":[{"name":"x.mp3","size":…}],
+"scripts":[],"usedBytes":…,"totalBytes":…}` (names **with** the extension),
+`DELETE /api/v1/audio/mp3/<name without .mp3>` returns `200 {"ok":true}`. The app
+suggests a valid name for any file name (`Klangname`) and shows it before
+uploading. ❓ No size limit for uploads has been measured; the app assumes 4 MB
+(as for an MP3 from an address, §5).
+
 **Capabilities, system, files**
 
 | Route | Purpose |

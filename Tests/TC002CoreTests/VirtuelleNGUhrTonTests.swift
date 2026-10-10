@@ -244,7 +244,7 @@ final class VirtuelleNGUhrTonTests: XCTestCase {
         guard case .liste(let eintraege)? = melodien, case .objekt(let m)? = eintraege.first else { return XCTFail() }
         XCTAssertEqual(m["name"], .text("ping"))
         XCTAssertEqual(m["bytes"], .zahl(20))
-        XCTAssertEqual(senden("GET", "/audio/mp3", &z).objekt["files"], .liste([.objekt(["name": .text("ding")])]))
+        XCTAssertEqual(senden("GET", "/audio/mp3", &z).objekt["files"], .liste([.objekt(["name": .text("ding.mp3"), "size": .zahl(0)])]))
     }
 
     // MARK: - Sender

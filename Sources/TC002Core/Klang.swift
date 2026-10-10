@@ -26,6 +26,18 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
     case negativePosition(Int)
     /// Melodien und Listen gibt es nur über HTTP.
     case nurUeberHTTP
+    /// Kein Name, den die Uhr für eine MP3-Datei nimmt (`Klangname`).
+    case ungueltigerKlangname(String)
+    case mp3Leer
+    case mp3ZuGross(bytes: Int, grenze: Int)
+    /// `409 nameTaken`: Eine Melodie heißt schon so.
+    case mp3NameBelegt(String)
+    /// `415 unsupportedMediaType`: Die Uhr erkennt die Datei nicht als MP3.
+    case keinMP3
+    /// `507` oder `413`: Die Uhr hat keinen Platz für die Datei.
+    case mp3KeinPlatz
+    /// `404` beim Löschen.
+    case mp3Unbekannt(String)
 
     public var errorDescription: String? {
         switch self {
@@ -47,6 +59,20 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
             return lokf("Diese Uhr kann das nicht: Sie meldet „%@“ nicht als Fähigkeit.", f)
         case .endungImNamen(let name):
             return lokf("„%@“ ist ein Name ohne Endung: „.mp3“ und „.txt“ setzt die Uhr selbst.", name)
+        case .ungueltigerKlangname(let name):
+            return lokf("„%@“ ist kein Name für eine MP3-Datei: erlaubt sind 1 bis 32 Zeichen aus Buchstaben, Ziffern, „_“ und „-“.", name)
+        case .mp3Leer:
+            return lok("Die Datei ist leer.")
+        case .mp3ZuGross(let bytes, let grenze):
+            return lokf("Die Datei ist zu groß: %d Byte, höchstens %d.", bytes, grenze)
+        case .mp3NameBelegt(let name):
+            return lokf("„%@“ ist auf der Uhr schon vergeben, und zwar von einer Melodie.", name)
+        case .keinMP3:
+            return lok("Die Uhr erkennt die Datei nicht als MP3.")
+        case .mp3KeinPlatz:
+            return lok("Auf der Uhr ist für die Datei kein Platz mehr.")
+        case .mp3Unbekannt(let name):
+            return lokf("Auf der Uhr gibt es keine MP3-Datei „%@“.", name)
         case .unlesbareMelodie:
             return lok("Die Melodie ist kein RTTTL: Name, Einstellungen und Noten, durch „:“ getrennt.")
         case .ungueltigerMelodiename(let name):
@@ -398,16 +424,33 @@ public struct Tonablage: Equatable, Sendable {
     public var namen: [String]
     public var belegteBytes: Int?
     public var gesamteBytes: Int?
+    /// Größe je Name in Byte, soweit die Uhr sie nennt (`size` bei MP3-Dateien).
+    public var groessen: [String: Int]
 
-    public init(namen: [String], belegteBytes: Int? = nil, gesamteBytes: Int? = nil) {
+    public init(namen: [String], belegteBytes: Int? = nil, gesamteBytes: Int? = nil,
+                groessen: [String: Int] = [:]) {
         self.namen = namen; self.belegteBytes = belegteBytes; self.gesamteBytes = gesamteBytes
+        self.groessen = groessen
     }
 
     /// Die Doku nennt für die Einträge keine Form (§4); gelesen wird ein Name
     /// als Zeichenkette oder als Objekt mit `name`.
-    init(antwort: [String: Any], liste: String) {
+    ///
+    /// `endung` wird von den Namen abgezogen: Die MP3-Liste führt `x.mp3`,
+    /// während Abspielen und Löschen den Namen ohne Endung brauchen.
+    init(antwort: [String: Any], liste: String, endung: String = "") {
         let roh = antwort[liste] as? [Any] ?? []
-        namen = roh.compactMap { ($0 as? String) ?? (($0 as? [String: Any])?["name"] as? String) }
+        func ohneEndung(_ n: String) -> String {
+            !endung.isEmpty && n.lowercased().hasSuffix(endung) ? String(n.dropLast(endung.count)) : n
+        }
+        namen = roh.compactMap { ($0 as? String) ?? (($0 as? [String: Any])?["name"] as? String) }.map(ohneEndung)
+        var groessen: [String: Int] = [:]
+        for eintrag in roh {
+            if let o = eintrag as? [String: Any], let n = o["name"] as? String, let g = o["size"] as? Int {
+                groessen[ohneEndung(n)] = g
+            }
+        }
+        self.groessen = groessen
         belegteBytes = antwort["usedBytes"] as? Int
         gesamteBytes = antwort["totalBytes"] as? Int
     }

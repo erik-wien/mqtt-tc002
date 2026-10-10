@@ -218,21 +218,25 @@ public struct Geraet {
     /// die Anfrage abgewiesen, bevor der Rumpf ueberhaupt gelesen wird.
     @discardableResult
     func ngAnfrage(_ methode: String, _ pfad: String, koerper: Data?,
+                   inhaltsart: String = "application/json", frist: TimeInterval = 10,
                    abbruchGilt: Bool = false) throws -> Data {
-        try ngAntwort(methode, pfad, koerper: koerper, abbruchGilt: abbruchGilt).daten
+        try ngAntwort(methode, pfad, koerper: koerper, inhaltsart: inhaltsart, frist: frist,
+                      abbruchGilt: abbruchGilt).daten
     }
 
     /// Wie `ngAnfrage`, mit dem Statuscode der Antwort (`201` und `200` unterscheiden
     /// bei Melodien neu und ersetzt).
     func ngAntwort(_ methode: String, _ pfad: String, koerper: Data?,
+                   inhaltsart: String = "application/json", frist: TimeInterval = 10,
                    abbruchGilt: Bool = false) throws -> (daten: Data, status: Int) {
         var anfrage = try self.anfrage(url(pfad))
         anfrage.httpMethod = methode
         if let koerper {
-            anfrage.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            anfrage.setValue(inhaltsart, forHTTPHeaderField: "Content-Type")
             anfrage.httpBody = koerper
         }
-        let (daten, status) = try fuehreAusMitStatus(anfrage, abbruchGilt: abbruchGilt)
+        anfrage.timeoutInterval = max(frist, 60)
+        let (daten, status) = try fuehreAusMitStatus(anfrage, frist: frist, abbruchGilt: abbruchGilt)
         guard status >= 400 else { return (daten, status) }
         let rumpf = (try? JSONSerialization.jsonObject(with: daten)) as? [String: Any]
         let fehler = rumpf?["error"] as? [String: Any]
@@ -354,7 +358,8 @@ public struct Geraet {
     /// `abbruchGilt`: Eine Verbindung, die nach dem Senden abreißt, oder eine
     /// Antwort, die ausbleibt, ist dann kein Fehler (`neustarten`). Wer gar nicht
     /// erst verbindet, ist es weiterhin.
-    private func fuehreAusMitStatus(_ anfrage: URLRequest, abbruchGilt: Bool = false) throws -> (Data, Int) {
+    private func fuehreAusMitStatus(_ anfrage: URLRequest, frist: TimeInterval = 10,
+                                    abbruchGilt: Bool = false) throws -> (Data, Int) {
         var ergebnis: Data?
         var antwort: URLResponse?
         var fehler: Error?
@@ -362,7 +367,7 @@ public struct Geraet {
         sitzung.dataTask(with: anfrage) { d, r, f in
             ergebnis = d; antwort = r; fehler = f; fertig.signal()
         }.resume()
-        guard fertig.wait(timeout: .now() + 10) == .success else {
+        guard fertig.wait(timeout: .now() + frist) == .success else {
             if abbruchGilt { return (Data(), 200) }
             throw GeraetFehler.nichtErreichbar(lok("keine Antwort"))
         }

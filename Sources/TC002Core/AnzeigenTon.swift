@@ -78,6 +78,18 @@ extension Anzeigen {
         try nurHTTP { try $0.melodieLoeschen(name: name) }
     }
 
+    /// Lädt eine MP3-Datei unter `name` hoch (nur HTTP). Eine gleichnamige MP3
+    /// ersetzt die Uhr still; wer das nicht will, fragt vorher `mp3Lesen`.
+    public func mp3Hochladen(name: String, daten: Data) throws {
+        try nurHTTP { try $0.mp3Hochladen(name: name, daten: daten) }
+    }
+
+    /// Löscht eine MP3-Datei (nur HTTP); `name` ohne `.mp3`.
+    public func mp3Loeschen(name: String) throws {
+        guard Klangname.gueltig(name) else { throw KlangFehler.ungueltigerKlangname(name) }
+        try nurHTTP { try $0.mp3Loeschen(name: name) }
+    }
+
     // MARK: - Lesen (nur HTTP)
 
     public func tonzustandLesen() throws -> Tonzustand { try nurHTTP { try $0.tonzustand() } }
