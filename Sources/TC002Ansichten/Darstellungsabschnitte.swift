@@ -54,7 +54,7 @@ public struct Darstellungsabschnitte: View {
             Text("Hintergrund")
         } footer: {
             if regeln.textAlsBild {
-                Text("Der Text geht als Bild an die Uhr, und ein Bild deckt Farbe und Effekt zu. Mit Gerätschrift (Kurzbefehl, Werkzeug) geht beides.")
+                Text("Der Text geht als Bild an die Uhr, und ein Bild deckt Farbe und Effekt zu. Mit „Schrift der Uhr“ im Format geht beides.")
             } else if regeln.farbeDurchEffekt {
                 Text("Ein Effekt ersetzt die Hintergrundfarbe.")
             }
@@ -109,7 +109,7 @@ public struct Darstellungsabschnitte: View {
             Text("Text malen")
         } footer: {
             if regeln.textMalenGesperrt {
-                Text("Nur mit Gerätschrift: Dann malt die Uhr den Text selbst.")
+                Text("Nur mit „Schrift der Uhr“: Dann malt die Uhr den Text selbst.")
             }
         }
     }

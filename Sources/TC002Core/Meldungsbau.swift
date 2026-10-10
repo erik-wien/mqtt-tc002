@@ -14,15 +14,25 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Co
     public var id: String { rawValue }
 }
 
-/// Der Weg, auf dem der Text zur Uhr kommt. AWTRIX NG setzt den Text selbst
-/// (`Anzeigen.nutzlast`): Beide Stellungen schicken denselben Text samt
-/// Reglern, die Uhr sieht unsere Pixel nie.
+/// Der Weg, auf dem der Text zur Uhr kommt. `.pixel`: die App rastert selbst
+/// und schickt ein GIF in Anzeigegroesse (`Pixelweg`). `.text`: die Uhr setzt
+/// den Text mit ihrer eigenen Schrift (`Anzeigen.nutzlast`,
+/// `NGNutzlast.anzeige`).
 ///
-/// Das Feld bleibt, weil es Teil des Dateiformats von Slotgedaechtnis, Verlauf
-/// und Formatangaben ist, das auch andere Geraete im iCloud-Behaelter lesen.
+/// In der Oberflaeche ist das der Schalter „Schrift der Uhr" im Format
+/// (`SendeWeg.schriftDerUhr`), Vorgabe aus; Kurzbefehl und Werkzeug waehlen den
+/// Weg ueber `Formatangaben.weg`. Der Wert steht im Dateiformat von
+/// Slotgedaechtnis, Verlauf und Formatangaben, das auch andere Geraete im
+/// iCloud-Behaelter lesen.
 public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
     case pixel, text
     public var id: String { rawValue }
+
+    /// Der Schalter „Schrift der Uhr" als Wahrheitswert.
+    public var schriftDerUhr: Bool {
+        get { self == .text }
+        set { self = newValue ? .text : .pixel }
+    }
 }
 
 /// Wie schnell die Laufschrift durchlaeuft. Ein Regler statt zweier Zahlen:

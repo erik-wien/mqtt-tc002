@@ -28,6 +28,10 @@ public struct SendenView: View {
     /// Als "#RRGGBB": @AppStorage kennt keine Color. `farbe` unten wandelt fuer
     /// den ColorPicker um, `Textraster.rastern` nimmt den Hex-Wert ohnehin direkt.
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
+    /// Der Schalter „Schrift der Uhr": `.text`, wenn die Uhr den Text selbst
+    /// setzt, sonst rastert die App. Der Schluessel liest auch
+    /// `Meldungsoptionen.ausAblage` (Kurzbefehl).
+    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     @AppStorage("senden.schriftart") private var schrift = "Silkscreen"
     /// 8, nicht 11: Vorgabeschrift ist Silkscreen, und 8 steht auf ihrer Liste
     /// (`Pixelgroessen.abgesegnet`), 11 nicht.
@@ -152,6 +156,7 @@ public struct SendenView: View {
 
     private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
+        weg = o.weg
         schrift = o.schrift
         groesse = o.groesse
         fett = o.fett
@@ -232,7 +237,7 @@ public struct SendenView: View {
     /// Die Optionen dieser Ansicht als Wertetyp — die einzige Stelle, an der
     /// aus Ansichtszustand ein Auftrag wird.
     private var optionen: Meldungsoptionen {
-        Meldungsoptionen(text: text, schrift: schrift, groesse: groesse,
+        Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
@@ -369,7 +374,7 @@ public struct SendenView: View {
     /// Ob die Schrift eigene Kleinbuchstaben kennt. Silkscreen etwa setzt alles
     /// in Versalien — dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
-        Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+        AwtrixNG.grossbuchstabenWirken(weg: weg, schrift: schrift, groesse: groesse)
     }
 
     private var fettHilfe: String {
@@ -558,7 +563,7 @@ public struct SendenView: View {
         // gerade weil das niemandem auffiele, geschieht es hier oben und
         // nicht erst im Sendeweg. `.task` deckt den ersten Aufbau ab, bei dem
         // `onChange` noch nicht gefeuert hat.
-        .task { ausrichtungPruefen() }
+        .task(id: weg) { ausrichtungPruefen() }
         .onChange(of: gewaehltesIcon) { _, neu in
             iconNummer = neu?.nummer ?? ""
             iconKanteGemerkt = neu?.kante ?? 8
@@ -603,7 +608,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
+        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(gewaehltesIcon?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -726,6 +731,7 @@ public struct SendenView: View {
             }
 
             Section {
+                SchriftDerUhrSchalter(weg: $weg)
                 // Blank, ohne `LabeledContent` und ohne `labelsHidden`: Ein
                 // Waehler in einem gruppierten `Form` zeichnet die kanonische
                 // Zeile selbst — Beschriftung links, Wert im grauen Kaestchen
@@ -809,7 +815,9 @@ public struct SendenView: View {
             } header: {
                 // Der Größenwähler steht in der Zeile darunter und hat keine
                 // eigene Überschrift; seine Erklärung gehört deshalb hierher.
-                Abschnittskopf("Schrift", hilfe: lok("Zur Wahl stehen nur Schriften, die aufs Pixelraster der Uhr gezeichnet oder dafür durchgesehen sind — schmale, dicktengleiche stehen bei sechzehn Zeilen am besten. Sechzehn Pixel füllen die volle Höhe; die hat nur die TC002. Eine TC001 unter AWTRIX NG hat acht Zeilen und setzt den Text ohnehin mit ihrer eigenen Schrift."))
+                Abschnittskopf("Schrift", hilfe: lok("Zur Wahl stehen nur Schriften, die aufs Pixelraster der Uhr gezeichnet oder dafür durchgesehen sind — schmale, dicktengleiche stehen bei sechzehn Zeilen am besten. Sechzehn Pixel füllen die volle Höhe; die hat nur die TC002."))
+            } footer: {
+                if weg.schriftDerUhr { Text(AwtrixNG.schriftDerUhrFussnote) }
             }
 
             Section("Lage") {

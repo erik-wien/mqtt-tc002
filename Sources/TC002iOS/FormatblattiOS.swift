@@ -10,8 +10,9 @@ import TC002Modell
 /// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Dauer
 /// und Laufschrift.
 ///
-/// „Senden als" gibt es hier nicht: Die App wählt den Weg selbst, siehe
-/// `SendeWeg` im Kern.
+/// Der Schalter „Schrift der Uhr" steht über der Darstellung, weil er
+/// bestimmt, was dort frei ist; die Regler, die er ausgraut, sitzen in der
+/// Formatpille.
 ///
 /// Die Dauer steht bei der Laufschrift, nicht als eigene Zeile neben den
 /// fünf Blöcken — dort nähme sie die Breite weg, die die Blöcke brauchen.
@@ -20,7 +21,7 @@ import TC002Modell
 struct FormatblattiOS: View {
     @Bindable var zustand: AppZustand
     @Binding var darstellung: Darstellungswahl
-    let weg: SendeWeg
+    @Binding var weg: SendeWeg
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
@@ -61,7 +62,14 @@ struct FormatblattiOS: View {
                 switch reiter {
                 case .zeit: zeitform
                 case .darstellung:
-                    Form { Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: weg) }
+                    Form {
+                        Section {
+                            SchriftDerUhrSchalter(weg: $weg)
+                        } footer: {
+                            if weg.schriftDerUhr { Text(AwtrixNG.schriftDerUhrFussnote) }
+                        }
+                        Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: weg)
+                    }
                 }
             }
             .navigationTitle("Format")

@@ -69,6 +69,8 @@ struct SendeniOS: View {
     @AppStorage("senden.darstellung") private var darstellung = Darstellungswahl()
     @AppStorage("senden.text") private var text = "Hallo"
     @AppStorage("senden.farbe") private var farbeHex = "#00FF66"
+    /// „Schrift der Uhr": `.text`, wenn die Uhr den Text selbst setzt.
+    @AppStorage("senden.weg") private var weg: SendeWeg = .pixel
     @AppStorage("senden.schriftart") private var schrift = "Silkscreen"
     @AppStorage("senden.groesse") private var groesse = 8.0
     @AppStorage("senden.fett") private var fett = false
@@ -168,6 +170,7 @@ struct SendeniOS: View {
 
     private func reglerUebernehmen(_ o: Meldungsoptionen, icon: String?, iconKante: Int) {
         text = o.text
+        weg = o.weg
         schrift = o.schrift
         groesse = o.groesse
         fett = o.fett
@@ -199,7 +202,7 @@ struct SendeniOS: View {
 
     /// Die einzige Stelle, an der aus Ansichtszustand ein Auftrag wird.
     private var optionen: Meldungsoptionen {
-        Meldungsoptionen(text: text, schrift: schrift, groesse: groesse,
+        Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
                          abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
@@ -277,7 +280,7 @@ struct SendeniOS: View {
     /// `SendenView.kleinbuchstabenMoeglich` (Mac). Silkscreen etwa setzt alles
     /// in Versalien; dort bliebe der Grossbuchstaben-Schalter wirkungslos.
     private var kleinbuchstabenMoeglich: Bool {
-        Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+        AwtrixNG.grossbuchstabenWirken(weg: weg, schrift: schrift, groesse: groesse)
     }
 
     /// Erklaerung fuer den gesperrten Fett-Knopf. Auf dem Telefon gibt es kein
@@ -422,7 +425,7 @@ struct SendeniOS: View {
             UhreinstellungeniOS(zustand: zustand)
         }
         .sheet(isPresented: $zeigeFormat) {
-            FormatblattiOS(zustand: zustand, darstellung: $darstellung, weg: optionen.weg,
+            FormatblattiOS(zustand: zustand, darstellung: $darstellung, weg: $weg,
                            tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
                            dauerText: $dauerText, art: art,
                            nachrichtHalten: $nachrichtHalten,
@@ -453,7 +456,7 @@ struct SendeniOS: View {
         // auch der erste Aufbau abgedeckt ist, bei dem noch nichts gewechselt
         // hat — eine seit je gewaehlte Ausrichtung „rechts" traefe sonst auf
         // eine AWTRIX, die sie nicht kennt.
-        .task { ausrichtungPruefen() }
+        .task(id: weg) { ausrichtungPruefen() }
         // Wie am Mac (`SendenView`): Nach dem Schriftwechsel gilt die Liste der
         // neuen Schrift; steht die eingestellte Groesse nicht darauf, faellt sie
         // auf die naechstgelegene, nicht auf die kleinste.
@@ -986,7 +989,7 @@ struct SendeniOS: View {
     /// Fasst alles zusammen, wovon die Laufschrift abhängt — damit die (nicht
     /// ganz billige) Berechnung nur bei einer tatsächlichen Änderung neu läuft.
     private var laufschriftSchluessel: String {
-        "\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
+        "\(weg.rawValue)|\(passt)|\(optionen.gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(iconNummer)|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
     }
 
     /// Mehrere hundert Einzelbilder rastern — bei jedem Tastendruck. Das gehört

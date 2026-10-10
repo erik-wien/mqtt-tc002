@@ -64,9 +64,9 @@ public enum HilfeInhalt {
     /// Fenster. Alles Weitere steht in der Geraetereferenz.
     public static let geraeteart: [Hilfebaustein] = [
         .ueberschrift("Die Uhr: AWTRIX NG"),
-        .absatz("Die App spricht AWTRIX NG und schickt der Uhr **Pixel**: Text rastert sie selbst, und was die Vorschau zeigt, kommt Punkt für Punkt auf dem Display an. Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
+        .absatz("Die App spricht AWTRIX NG und schickt der Uhr **Pixel**: Text rastert sie selbst, und was die Vorschau zeigt, kommt Punkt für Punkt auf dem Display an — außer mit der „Schrift der Uhr“ (unten). Ihr Display ist 52 × 16 Pixel groß; die App liest das Maß bei „Abfragen“ von der Uhr."),
         .untertitel("Text in der Schrift der Uhr"),
-        .absatz("Über Kurzbefehle lässt sich ein Text auch „als Text“ schicken. Dann setzt ihn die Uhr mit ihrer eigenen Schrift, vergrößert auf 26 × 8 Punkte: Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch und lässt langen Text von selbst laufen. Eine Wahl der Schrift, einen fetten Schnitt, Rand und Zeichenabstand gibt es dort nicht; senkrecht ausrichten geht ebenfalls nicht, und rechtsbündig kennt sie nicht."),
+        .absatz("Mit dem Schalter „Schrift der Uhr“ im Format setzt die Uhr den Text selbst, mit ihrer eigenen Schrift, vergrößert auf 26 × 8 Punkte (in den Kurzbefehlen: „als Text“): Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch und lässt langen Text von selbst laufen. Eine Wahl der Schrift, einen fetten Schnitt, Rand und Zeichenabstand gibt es dort nicht, und die Regler sind dann ausgegraut; senkrecht ausrichten geht ebenfalls nicht, und rechtsbündig kennt sie nicht. Dafür gelten Hintergrundfarbe, Effekt und „Text malen“ im Reiter „Darstellung“. Die Großschreibung folgt dem Schalter „Großbuchstaben“. Der Schalter ist ausgeschaltet, bis du ihn einschaltest, und wird wie die übrigen Regler gemerkt."),
         .untertitel("Große Anzeigen"),
         .absatz("Ein Standbild ist rund 3 KB groß. Eine Laufschrift besteht aus vielen Einzelbildern und passt nicht in eine MQTT-Nachricht (höchstens 8 KB): Sie geht dann als HTTP-Anfrage an die Adresse der Uhr, die dafür eingetragen sein muss. Fehlt sie, sagt die App es vor dem Senden, statt die Anzeige verloren gehen zu lassen. Mehr als 2 MB nimmt die Uhr gar nicht."),
         .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
@@ -267,7 +267,7 @@ public enum HilfeInhalt {
     public static let wegeRegel: [Hilfebaustein] = [
         .absatz("Ob der Text stehenbleibt oder durchläuft, entscheidet die Breite: Passt er in die verfügbare Breite, bleibt er stehen, sonst läuft er durch — als Folge von Einzelbildern, die die Vorschau genauso abspielt."),
         .abbildung(.stehtOderLaeuft),
-        .absatz("Nur bei „als Text“ ist die Vorschau eine Näherung, weil die Uhr den Text dann mit ihrer eigenen Schrift setzt; das (?) neben der Punktreihe unter ihr sagt, warum."),
+        .absatz("Nur mit der „Schrift der Uhr“ ist die Vorschau eine Näherung, weil die Uhr den Text dann mit ihrer eigenen Schrift setzt; das (?) neben der Punktreihe unter ihr sagt, warum."),
     ]
 
     /// Warum eine stehende Anzeige alles andere blockiert — eine Eigenschaft der
@@ -309,7 +309,7 @@ public enum HilfeInhalt {
     public static let darstellung: [Hilfebaustein] = [
         .ueberschrift("Darstellung"),
         .absatz("Hintergrund, Effekt, Overlay und Palette bestimmen, wie die Uhr die Anzeige zeichnet. Die Namen von Effekt, Overlay und Palette liefert die Uhr selbst; bis zur ersten Abfrage zeigt jedes Menü nur „Keiner“ bzw. „Keines“ und „Uhr abfragen …“. Eigene Palette: 1 bis 16 Farben, gleichmäßig verteilt oder mit einer Position von 0 bis 100 je Farbe. „Überblenden“ lässt die Farben ineinanderfließen; aus, entstehen scharfe Streifen. Das Tempo gilt für Effekt und Overlay und ist nur mit einem von beiden frei."),
-        .absatz("Geht der Text als Bild an die Uhr — so schickt ihn die App —, deckt das Bild Hintergrundfarbe und Effekt zu; beide sind dann gesperrt, Overlay und Palette gehen. Setzt die Uhr den Text in ihrer Gerätschrift (Kurzbefehl, Werkzeug), gilt alles, und „Text malen“ füllt den Text aus der Palette: „Spanne“ sind die Pixel je Durchlauf (0 dehnt die Palette über den Text), „Lauf“ die Durchläufe je Sekunde. Ein Effekt ersetzt die Hintergrundfarbe."),
+        .absatz("Geht der Text als Bild an die Uhr — das ist die Vorgabe —, deckt das Bild Hintergrundfarbe und Effekt zu; beide sind dann gesperrt, Overlay und Palette gehen. Setzt die Uhr den Text in ihrer eigenen Schrift („Schrift der Uhr“ im Format), gilt alles, und „Text malen“ füllt den Text aus der Palette: „Spanne“ sind die Pixel je Durchlauf (0 dehnt die Palette über den Text), „Lauf“ die Durchläufe je Sekunde. Ein Effekt ersetzt die Hintergrundfarbe."),
         .absatz("Der Platz merkt sich die Darstellung wie die übrigen Regler, bis er gelöscht oder neu belegt wird. Diagramme und Fortschrittsbalken gibt es nur für Home Assistant und das Kommandozeilenwerkzeug."),
     ]
 
@@ -325,7 +325,7 @@ public enum HilfeInhalt {
     /// Umlaute und Sonderzeichen: eine Eigenschaft der Uhr.
     public static let zeichen: [Hilfebaustein] = [
         .ueberschrift("Zeichen: Umlaute und Sonderzeichen"),
-        .absatz("Die App rastert die Zeichen selbst, mit einer der mitgelieferten Pixelschriften; Umlaute und „ß“ gehören dazu. Setzt die Uhr den Text („als Text“), nimmt sie ihre eingebaute Schrift: Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen (Gerätereferenz, §1)."),
+        .absatz("Die App rastert die Zeichen selbst, mit einer der mitgelieferten Pixelschriften; Umlaute und „ß“ gehören dazu. Setzt die Uhr den Text („Schrift der Uhr“), nimmt sie ihre eingebaute Schrift: Sie kennt Umlaute, Akzente, das Eurozeichen und Kyrillisch, und ein Zeichen, das sie nicht hat, wird zum Fragezeichen (Gerätereferenz, §1)."),
     ]
 
     /// Die Schriftauswahl und die drei mitgelieferten Pixelschriften. Beide

@@ -51,6 +51,26 @@ public enum AwtrixNG {
         lok("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.")
     }
 
+    /// Was der Schalter „Schrift der Uhr" bewirkt, als Einblendtext am (?).
+    /// Im Kern, damit beide Oberflaechen denselben Satz sagen; als gewoehnliches
+    /// `String` weitergereicht, deshalb `lok`.
+    public static var schriftDerUhrHilfe: String {
+        lok("Die Uhr setzt den Text selbst, mit ihrer eigenen Schrift: Sie kennt Umlaute und Akzente und lässt langen Text von selbst laufen. Dafür gelten Hintergrundfarbe, Effekt und „Text malen“. Schriftwahl, Größe, Fett, Rand, Abstand und senkrechte Ausrichtung gibt es dann nicht, rechtsbündig auch nicht. Die Großschreibung folgt dem Schalter „Großbuchstaben“. Die Vorschau ist nur eine Näherung.")
+    }
+
+    /// Die Fußnote unter dem Schalter, solange er an ist: welche Regler dann
+    /// ausgegraut sind.
+    public static var schriftDerUhrFussnote: String {
+        lok("Ausgegraut ist, was die Schrift der Uhr nicht kennt: Schriftwahl, Größe, Fett, Rand, Abstand und senkrechte Ausrichtung.")
+    }
+
+    /// Ob „Großbuchstaben" etwas bewirkt: Bei der Schrift der Uhr immer (sie hat
+    /// Kleinbuchstaben und schaltet auf Wunsch um), sonst nur, wenn die gerasterte
+    /// Schrift eigene Kleinbuchstaben kennt.
+    public static func grossbuchstabenWirken(weg: SendeWeg, schrift: String, groesse: Double) -> Bool {
+        weg == .text || Textraster.kannKleinbuchstaben(schrift: schrift, groesse: groesse)
+    }
+
     /// Ob dieser Regler etwas bewirkt. Auf dem Pixelweg rastert die App selbst,
     /// und jeder Regler wirkt. Bei „als Text" setzt AWTRIX NG den Text, und
     /// damit fallen genau die Regler weg, die unsere Rasterung steuern.
