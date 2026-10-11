@@ -437,11 +437,24 @@ struct DateiEintrag: Identifiable, Equatable {
 /// seiner Zeile, nicht in der Fehlerleiste des Hauptfensters (die das Blatt
 /// verdeckt). Das Blatt schließt nur, wenn danach jede Zeile übernommen ist;
 /// übernommene Zeilen werden nicht ein zweites Mal aufgenommen.
+///
+/// Eine Zeile mit Fehler, den der Nutzer nicht über den Namen beheben kann
+/// (MP3 zu groß, Aufnahme gescheitert), trägt in der Kopfzeile ein Entfernen-
+/// Zeichen und fällt aus der Auswahl. Bleiben danach keine oder nur übernommene
+/// Zeilen, schließt das Blatt wie nach einer vollständigen Aufnahme. Sobald eine
+/// Zeile übernommen ist, heißt der Weg hinaus „Schließen": Die Dateien bleiben
+/// in der Sammlung, es gibt nichts mehr abzubrechen.
 struct Dateiblatt: View {
     @Bindable var zustand: AppZustand
     let kanon: Formkanon
-    let eintraege: [DateiEintrag]
+    @State private var eintraege: [DateiEintrag]
     @Environment(\.dismiss) private var schliessen
+
+    init(zustand: AppZustand, kanon: Formkanon, eintraege: [DateiEintrag]) {
+        self.zustand = zustand
+        self.kanon = kanon
+        _eintraege = State(initialValue: eintraege)
+    }
 
     @State private var namen: [URL: String] = [:]
     @State private var laeuft = false
@@ -478,6 +491,24 @@ struct Dateiblatt: View {
         return nil
     }
 
+    private func zuGross(_ e: DateiEintrag) -> Bool {
+        e.istMP3 && (groessen[e.url] ?? 0) > Geraet.mp3Hoechstgroesse
+    }
+    private func entfernbar(_ e: DateiEintrag) -> Bool {
+        !laeuft && !uebernommen.contains(e.url) && (aufnahmefehler[e.url] != nil || zuGross(e))
+    }
+
+    private func entfernen(_ e: DateiEintrag) {
+        eintraege.removeAll { $0.url == e.url }
+        namen[e.url] = nil
+        aufnahmefehler[e.url] = nil
+        schliesstWennFertig()
+    }
+
+    private func schliesstWennFertig() {
+        if eintraege.allSatisfy({ uebernommen.contains($0.url) }) { schliessen() }
+    }
+
     private var offeneZeilen: [DateiEintrag] {
         eintraege.filter { !uebernommen.contains($0.url) && fehler($0) == nil }
     }
@@ -485,6 +516,7 @@ struct Dateiblatt: View {
 
     var body: some View {
         Blatt(titel: lok("Aus Datei"), bestaetigung: lok("Hinzufügen"), bestaetigenMoeglich: darfHinzufuegen,
+              abbrechenTitel: uebernommen.isEmpty ? nil : lok("Schließen"),
               schliessen: { schliessen() }, bestaetigen: hinzufuegen) {
             Form {
                 ForEach(eintraege) { e in
@@ -507,7 +539,20 @@ struct Dateiblatt: View {
                                   systemImage: "info.circle").foregroundStyle(.secondary)
                         }
                     } header: {
-                        Text(verbatim: e.istMP3 ? "MP3" : lok("Melodie"))
+                        HStack {
+                            Text(verbatim: e.istMP3 ? "MP3" : lok("Melodie"))
+                            Spacer()
+                            if entfernbar(e) {
+                                Button { entfernen(e) } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                                .buttonStyle(.plain)
+                                .fingerflaeche()
+                                .foregroundStyle(.secondary)
+                                .help(lok("Aus der Auswahl entfernen"))
+                                .accessibilityLabel(Text("Aus der Auswahl entfernen"))
+                            }
+                        }
                     }
                 }
             }
@@ -548,7 +593,7 @@ struct Dateiblatt: View {
                 }
             }
             laeuft = false
-            if eintraege.allSatisfy({ uebernommen.contains($0.url) }) { schliessen() }
+            schliesstWennFertig()
         }
     }
 }

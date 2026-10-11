@@ -19,6 +19,9 @@ struct Blatt<Inhalt: View>: View {
     /// hinaus, und der heißt „Fertig".
     var bestaetigung: String?
     var bestaetigenMoeglich: Bool = true
+    /// Beschriftung des Weges hinaus neben einer Haupthandlung. `nil` heißt
+    /// „Abbrechen"; „Schließen" gehört dahin, wenn nichts mehr abzubrechen ist.
+    var abbrechenTitel: String?
     let schliessen: () -> Void
     var bestaetigen: (() -> Void)?
     @ViewBuilder let inhalt: () -> Inhalt
@@ -30,7 +33,7 @@ struct Blatt<Inhalt: View>: View {
             inhalt()
             HStack {
                 Spacer()
-                Button(bestaetigung == nil ? lok("Fertig") : lok("Abbrechen")) { schliessen() }
+                Button(bestaetigung == nil ? lok("Fertig") : (abbrechenTitel ?? lok("Abbrechen"))) { schliessen() }
                     .knopfBefehl()
                     .keyboardShortcut(.cancelAction)
                 if let bestaetigung, let bestaetigen {
@@ -56,7 +59,7 @@ struct Blatt<Inhalt: View>: View {
                         }
                     } else {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button(lok("Abbrechen")) { schliessen() }
+                            Button(abbrechenTitel ?? lok("Abbrechen")) { schliessen() }
                         }
                         if let bestaetigung, let bestaetigen {
                             ToolbarItem(placement: .confirmationAction) {

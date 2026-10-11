@@ -1486,7 +1486,7 @@
 "%d MP3-Dateien" = "%d MP3 files";
 "„%@“ ist kein Name für eine MP3-Datei: erlaubt sind 1 bis 32 Zeichen aus Buchstaben, Ziffern, „_“ und „-“." = "“%@” is not a name for an MP3 file: 1 to 32 characters of letters, digits, “_” and “-” are allowed.";
 "Die Datei ist leer." = "The file is empty.";
-"Die Datei ist zu groß: %d Byte, höchstens %d." = "The file is too large: %d bytes, at most %d.";
+"Die Datei ist zu groß: %@, höchstens %@." = "The file is too large: %@, at most %@.";
 "„%@“ ist auf der Uhr schon vergeben, und zwar von einer Melodie." = "“%@” is already taken on the clock, by a melody.";
 "Die Uhr erkennt die Datei nicht als MP3." = "The clock does not recognize the file as an MP3.";
 "Auf der Uhr ist für die Datei kein Platz mehr." = "The clock has no room left for the file.";
@@ -1667,3 +1667,4 @@
 "nein" = "no";
 "Öffnet die Web-Oberfläche der Uhr unter ihrer Adresse im Browser." = "Opens the clock’s web interface at its address in the browser.";
 "Übernommen" = "Added";
+"Aus der Auswahl entfernen" = "Remove from selection";

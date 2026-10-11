@@ -299,4 +299,15 @@ final class KlangTests: XCTestCase {
         XCTAssertEqual(a.belegteBytes, 10)
         XCTAssertEqual(a.gesamteBytes, 100)
     }
+
+    func testZuGrosseMP3NenntMegabyteStattByte() {
+        let text = KlangFehler.mp3ZuGross(bytes: 4_700_000, grenze: 4_000_000).errorDescription ?? ""
+        XCTAssertFalse(text.contains("Byte"), text)
+        XCTAssertTrue(text.contains("MB"), text)
+    }
+
+    func testKnappUeberDerGrenzeWirdNichtAufDieGrenzeGerundet() {
+        let text = KlangFehler.mp3ZuGross(bytes: 4_000_001, grenze: 4_000_000).errorDescription ?? ""
+        XCTAssertFalse(text.contains("4 MB, höchstens"), text)
+    }
 }

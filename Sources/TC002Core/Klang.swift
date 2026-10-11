@@ -68,7 +68,10 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
         case .mp3Leer:
             return lok("Die Datei ist leer.")
         case .mp3ZuGross(let bytes, let grenze):
-            return lokf("Die Datei ist zu groß: %d Byte, höchstens %d.", bytes, grenze)
+            // Die Größe wird auf 0,1 MB aufgerundet: knapp über der Grenze
+            // soll nie „4 MB, höchstens 4 MB" dastehen.
+            let aufgerundet = (bytes + 99_999) / 100_000 * 100_000
+            return lokf("Die Datei ist zu groß: %@, höchstens %@.", Self.megabyte(aufgerundet), Self.megabyte(grenze))
         case .mp3NameBelegt(let name):
             return lokf("„%@“ ist auf der Uhr schon vergeben, und zwar von einer Melodie.", name)
         case .keinMP3:
@@ -92,6 +95,15 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
         case .nurUeberHTTP:
             return lok("Das gibt es nur über HTTP, und für diese Uhr ist keine Adresse eingetragen. Unter „Einstellungen“ die Adresse eintragen.")
         }
+    }
+
+    /// Dezimal-Megabyte in der Landesschreibweise („4,7 MB"), eine Stelle.
+    private static func megabyte(_ bytes: Int) -> String {
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        f.allowedUnits = .useMB
+        f.includesUnit = true
+        return f.string(fromByteCount: Int64(bytes))
     }
 }
 
