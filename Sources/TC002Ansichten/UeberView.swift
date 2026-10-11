@@ -117,16 +117,6 @@ public struct UeberView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Danksagungen").font(.subheadline).fontWeight(.semibold)
                 danksagung(
-                    name: "PixDeck",
-                    url: "https://github.com/cailurus/PixDeck",
-                    text: "Von PixDeck stammt die Erkenntnis, dass sich dasselbe Rahmen-JSON auch per HTTP an /api/custom?name= schicken lässt — und die GPL-3.0-Lizenz, unter der auch diese App steht."
-                )
-                danksagung(
-                    name: "Ulanzi",
-                    url: "https://github.com/UlanziTechnology/Ulanzi-U-Clock-TC002",
-                    text: "Das Herstellerrepository belegt die Präfixbildung der Themen und die Zeichenbefehle der Uhr."
-                )
-                danksagung(
                     name: "AWTRIX",
                     url: "https://blueforcer.github.io/awtrix-light/",
                     text: "Aus der AWTRIX-Gemeinschaft rund um solche Pixeluhren stammt die Sitte, Icons über LaMetric-Nummern anzusprechen."
