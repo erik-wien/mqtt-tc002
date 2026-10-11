@@ -34,6 +34,17 @@ extension AppZustand {
     /// Datei gilt nur, solange er ausdrücklich geöffnet ist.
     @discardableResult
     public func dateiSammeln(_ datei: URL, name: String) async -> Bool {
+        if let meldung = await dateiSammelnMeldung(datei, name: name) {
+            fehler = meldung
+            return false
+        }
+        return true
+    }
+
+    /// Wie `dateiSammeln`, setzt aber `fehler` nicht, sondern gibt die Meldung
+    /// zurück (`nil`: aufgenommen). Für ein Blatt, das den Fehler in der Zeile der
+    /// Datei zeigt; die Fehlerleiste des Hauptfensters läge unter dem Blatt.
+    public func dateiSammelnMeldung(_ datei: URL, name: String) async -> String? {
         let sammlung = klangsammlung
         do {
             try await Hintergrund.lauf {
@@ -56,8 +67,8 @@ extension AppZustand {
                 }
             }
             klangstand += 1
-            return true
-        } catch { sammlungsfehler(error); return false }
+            return nil
+        } catch { return (error as? LocalizedError)?.errorDescription ?? "\(error)" }
     }
 
     public func klangUmbenennen(_ klang: Sammlungsklang, nach neu: String) {

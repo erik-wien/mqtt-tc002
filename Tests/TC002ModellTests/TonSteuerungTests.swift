@@ -108,6 +108,26 @@ final class TonSteuerungTests: XCTestCase {
         return url
     }
 
+    func testDateiUeberDemHoechstmassMeldetGroesseUndLaesstSammlungUnberuehrt() async throws {
+        let (z, _, _) = try httpUhr(NGTon())
+        let ordner = FileManager.default.temporaryDirectory.appendingPathComponent("klangtest-" + UUID().uuidString)
+        addTeardownBlock { try? FileManager.default.removeItem(at: ordner) }
+        z.klangordnerAnders = ordner
+        let datei = try mp3Datei("gross.mp3", Data())
+        let h = try FileHandle(forWritingTo: datei)
+        try h.truncate(atOffset: UInt64(Geraet.mp3Hoechstgroesse + 1))
+        try h.close()
+        let meldung = await z.dateiSammelnMeldung(datei, name: "gross")
+        XCTAssertEqual(meldung, KlangFehler.mp3ZuGross(bytes: Geraet.mp3Hoechstgroesse + 1,
+                                                       grenze: Geraet.mp3Hoechstgroesse).errorDescription)
+        XCTAssertNil(z.fehler, "die Meldung geht an den Aufrufer, nicht in die Fehlerleiste")
+        XCTAssertTrue(z.klaenge().isEmpty)
+        let ok = await z.dateiSammeln(datei, name: "gross")
+        XCTAssertFalse(ok)
+        XCTAssertNotNil(z.fehler)
+        XCTAssertTrue(z.klaenge().isEmpty)
+    }
+
     func testKlangsammlungVonUhrUebernehmenUndAbgleichen() async throws {
         var ton = NGTon()
         ton.melodien["ping"] = "ping:d=4,o=5,b=100:c"

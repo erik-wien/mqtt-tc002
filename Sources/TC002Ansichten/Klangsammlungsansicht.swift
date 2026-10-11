@@ -430,6 +430,13 @@ struct DateiEintrag: Identifiable, Equatable {
 
 /// Mehrere gewählte Dateien: je Zeile ein Name auf der Uhr, vorbelegt mit dem
 /// Vorschlag aus dem Dateinamen und live geprüft.
+///
+/// „Hinzufügen" nimmt alle Zeilen ohne Fehler auf und überspringt die übrigen;
+/// deren rote Meldung bleibt stehen und sagt, dass sie nicht mitkommen. Möglich ist
+/// es, sobald eine Zeile fehlerfrei ist. Ein Fehler beim Aufnehmen erscheint in
+/// seiner Zeile, nicht in der Fehlerleiste des Hauptfensters (die das Blatt
+/// verdeckt). Das Blatt schließt nur, wenn danach jede Zeile übernommen ist;
+/// übernommene Zeilen werden nicht ein zweites Mal aufgenommen.
 struct Dateiblatt: View {
     @Bindable var zustand: AppZustand
     let kanon: Formkanon
@@ -438,6 +445,9 @@ struct Dateiblatt: View {
 
     @State private var namen: [URL: String] = [:]
     @State private var laeuft = false
+    @State private var groessen: [URL: Int] = [:]
+    @State private var uebernommen: Set<URL> = []
+    @State private var aufnahmefehler: [URL: String] = [:]
 
     private var bestand: [Sammlungsklang] { zustand.klaenge() }
 
@@ -449,6 +459,10 @@ struct Dateiblatt: View {
     private func name(_ e: DateiEintrag) -> String { namen[e.url] ?? vorschlag(e) }
 
     private func fehler(_ e: DateiEintrag) -> String? {
+        if let f = aufnahmefehler[e.url] { return f }
+        if e.istMP3, let g = groessen[e.url], g > Geraet.mp3Hoechstgroesse {
+            return KlangFehler.mp3ZuGross(bytes: g, grenze: Geraet.mp3Hoechstgroesse).errorDescription
+        }
         let n = name(e)
         if e.istMP3 {
             guard Klangname.gueltig(n) else { return lokf("Erlaubt sind Buchstaben, Ziffern, _ und -, höchstens %d Zeichen.", Klangname.hoechstlaenge) }
@@ -464,7 +478,10 @@ struct Dateiblatt: View {
         return nil
     }
 
-    private var darfHinzufuegen: Bool { !laeuft && eintraege.allSatisfy { fehler($0) == nil } }
+    private var offeneZeilen: [DateiEintrag] {
+        eintraege.filter { !uebernommen.contains($0.url) && fehler($0) == nil }
+    }
+    private var darfHinzufuegen: Bool { !laeuft && !offeneZeilen.isEmpty }
 
     var body: some View {
         Blatt(titel: lok("Aus Datei"), bestaetigung: lok("Hinzufügen"), bestaetigenMoeglich: darfHinzufuegen,
@@ -477,11 +494,13 @@ struct Dateiblatt: View {
                                 .lineLimit(2).truncationMode(.middle).multilineTextAlignment(.trailing)
                         }
                         LabeledContent("Name") {
-                            TextField("Name", text: Binding(get: { name(e) }, set: { namen[e.url] = $0 }))
+                            TextField("Name", text: Binding(get: { name(e) }, set: { namen[e.url] = $0; aufnahmefehler[e.url] = nil }))
                                 .eingabefeld(inZeile: kanon)
                                 .ohneAutokorrektur()
                         }
-                        if let f = fehler(e) {
+                        if uebernommen.contains(e.url) {
+                            Label("Übernommen", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                        } else if let f = fehler(e) {
                             Label(f, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
                         } else if bestand.contains(where: { $0.name == name(e) }) {
                             Label(lokf("„%@“ gibt es in der Sammlung schon und wird ersetzt.", name(e)),
@@ -497,18 +516,39 @@ struct Dateiblatt: View {
             .frame(minWidth: 460, minHeight: 240)
             #endif
         }
+        .task { await groessenLesen() }
+    }
+
+    /// Die Dateigrößen der MP3 einmal beim Öffnen, nicht bei jedem Zeichnen.
+    private func groessenLesen() async {
+        let urls = eintraege.filter(\.istMP3).map(\.url)
+        let gelesen: [URL: Int] = await Task.detached {
+            var r: [URL: Int] = [:]
+            for u in urls {
+                let offen = u.startAccessingSecurityScopedResource()
+                defer { if offen { u.stopAccessingSecurityScopedResource() } }
+                if let g = try? u.resourceValues(forKeys: [.fileSizeKey]).fileSize { r[u] = g }
+            }
+            return r
+        }.value
+        groessen = gelesen
     }
 
     private func hinzufuegen() {
         guard darfHinzufuegen else { return }
         laeuft = true
+        let zeilen = offeneZeilen
         Task {
-            var alleGut = true
-            for e in eintraege {
-                if await !zustand.dateiSammeln(e.url, name: name(e)) { alleGut = false; break }
+            for e in zeilen {
+                if let meldung = await zustand.dateiSammelnMeldung(e.url, name: name(e)) {
+                    aufnahmefehler[e.url] = meldung
+                } else {
+                    aufnahmefehler[e.url] = nil
+                    uebernommen.insert(e.url)
+                }
             }
             laeuft = false
-            if alleGut { schliessen() }
+            if eintraege.allSatisfy({ uebernommen.contains($0.url) }) { schliessen() }
         }
     }
 }
