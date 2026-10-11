@@ -270,7 +270,7 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         if angegeben == nil { print(lokf("Name auf der Uhr: %@", name)) }
         guard Klangname.gueltig(name) else { throw KlangFehler.ungueltigerKlangname(name) }
         if optionen.trocken {
-            trocken(http: "POST /api/v1/audio/mp3 (multipart, file=\(name).mp3, \(daten.count) Byte)",
+            trocken(http: "POST /api/v1/audio/mp3 (multipart, file=\(name).mp3, \(KlangFehler.megabyte(daten.count)))",
                     thema: { _ in lok("(nur über HTTP)") }, json: ""); return true
         }
         try anAlle(lokf("MP3 „%@“ hochgeladen", name)) { anzeigen, uhr in

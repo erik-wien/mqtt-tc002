@@ -98,7 +98,7 @@ public enum KlangFehler: Error, LocalizedError, Equatable {
     }
 
     /// Dezimal-Megabyte in der Landesschreibweise („4,7 MB"), eine Stelle.
-    private static func megabyte(_ bytes: Int) -> String {
+    public static func megabyte(_ bytes: Int) -> String {
         let f = ByteCountFormatter()
         f.countStyle = .file
         f.allowedUnits = .useMB
