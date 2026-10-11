@@ -219,6 +219,7 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         try anAlle(lok("Neustart ausgelöst")) { a, _ in try a.neustarten() }
     case .tonSpielen(let klang):
         if optionen.trocken {
+            for uhr in gewaehlte where !uhr.hatLautsprecher { fehlerAusgeben(Tonhinweise.ohneLautsprecher(uhr.name)) }
             trocken(http: "POST /api/v1/audio/play", thema: { NGThema.tonSpielen(praefix: $0) },
                     json: try Klangbau.spielen([klang])); return true
         }
