@@ -415,9 +415,14 @@ public enum Schriftprobe {
     /// `|` getrennt. Zwei Zeichen mit gleicher Signatur haben dasselbe Bild —
     /// verschieden breite Bilder koennen dabei nie gleich ausfallen.
     private static func signatur(_ feld: Pixelfeld) -> String {
+        // Nur die Zeilen der Standardanzeige: Der Puffer ist hoeher
+        // (`Textraster.rasterPuffer`), die Probe urteilt aber ueber das, was
+        // auf 52 × 16 sichtbar bleibt — eine abgeschnittene Unterlaenge
+        // unterscheidet dort nichts mehr.
+        let zeilen = min(feld.hoehe, Pixelfeld.hoeheStandard)
         var s = ""
-        s.reserveCapacity(feld.breite * feld.hoehe + feld.hoehe)
-        for y in 0..<feld.hoehe {
+        s.reserveCapacity(feld.breite * zeilen + zeilen)
+        for y in 0..<zeilen {
             for x in 0..<feld.breite { s.append(feld.farbe(x: x, y: y) == nil ? "0" : "1") }
             s.append("|")
         }

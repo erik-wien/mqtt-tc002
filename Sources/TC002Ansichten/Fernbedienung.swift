@@ -167,7 +167,7 @@ private struct Steuerseite: View {
             LabeledContent("Laufzeit") {
                 Text(verbatim: geraet?.laufzeitSekunden.map { Steuerwerte.laufzeit(sekunden: $0) } ?? "—")
             }
-            if let batterie = geraet?.batterieProzent {
+            if let batterie = geraet?.batterieAnzeige {
                 LabeledContent("Batterie") {
                     Text(verbatim: "\(batterie) %" + (geraet?.batterieSchwach == true ? " (!)" : ""))
                 }

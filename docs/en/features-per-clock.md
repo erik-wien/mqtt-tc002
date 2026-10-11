@@ -92,6 +92,7 @@ A sound kind is allowed if the clock's `audio.<switch>` is `true`
 | Buttons (read only via MQTT) | yes | yes (three buttons) | 📄 | operating mode `mqtt`; otherwise rows greyed with the note "nur im MQTT-Betrieb" (the user changes the mode) | Mac/iPad, iPhone |
 | Knob (row and knob press) | yes | no (three buttons only) | 📄 ESP32 branch (TC001 overview) | `Geraetefaehigkeiten.hatDrehknopf` = `platform.id` is not `esp32`; shown without an answer | Mac/iPad, iPhone |
 | Live image of the display | yes | yes | 🔬 TC002, 📄 ESP32 branch (`GET /api/v1/display/screen`) | image at the clock's size | Mac/iPad, iPhone, CLI `bildschirm` |
+| Battery (charge level) | TC002 yes (77 %) | TC001 yes (3.9 V, 63 %); a self-built board without a cell reports 0 %, 0.25 V | 🔬 11 Oct 2026 | `Geraetezustand.hatBatterie`: voltage below 2.0 V = no battery, row hidden; shown when no voltage is reported (`SteuerungTests.testBatterieNurMitBatterieAnzeigen`) | Mac/iPad, iPhone (remote), CLI `zustand` |
 | Restart | yes | yes | 📄 | no capability | Mac/iPad, iPhone, CLI |
 | MQTT over TLS, upload CA | yes (`mqttTls` `true`) | no (`mqttTls` absent) | 🔬 10 Oct 2026 | `capabilities.mqttTls`; group "Verschlüsselung" only when `true` | Mac/iPad, iPhone (clock settings), CLI `tls` |
 | `enlargeApps` | yes, not writable | does not exist | 🔬 9 Oct 2026 | the app rasterises every image for the display size; the setting is never written (`Geraeteeinstellung.schreibbar`) | – |

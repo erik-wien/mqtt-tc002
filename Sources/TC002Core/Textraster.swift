@@ -212,15 +212,23 @@ public enum Textraster {
     /// `zeichenTinte`) und danach nur noch kopiert, nie erneut an anderer Stelle
     /// gerastert — genau das haette bei ungeglaetteter Schrift dieselben Zeichen
     /// mal duenner, mal dicker aussehen lassen.
+    ///
+    /// Der Puffer ist mindestens `rasterhoehe` Zeilen hoch, auch auf einer
+    /// niedrigeren Anzeige: Die Grundlinie sitzt beim Zeichnen `groesse` Zeilen
+    /// unter dem oberen Rand, auf einem 8-Zeilen-Puffer also ausserhalb, und die
+    /// unterste Tintenzeile ginge verloren, bevor `Meldungsbau.versatzY` sie
+    /// ausrichten kann. Ausgerichtet und auf die Anzeige beschnitten wird erst
+    /// beim Einsetzen ins Anzeigefeld.
     public static func rasterPuffer(_ text: String, schrift: String, groesse: Double,
                                     fett: Bool, farbe: String, luecke: Int = 0,
                                     mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         let luecke = max(0, luecke)
+        let hoch = Anzeigemass(breite: mass.breite, hoehe: max(mass.hoehe, rasterhoehe))
         let zeichen = text.map { zeichenTinte($0, schrift: schrift, groesse: groesse, fett: fett,
-                                              farbe: farbe, mass: mass) }
+                                              farbe: farbe, mass: hoch) }
         let tintenbreite = zeichen.reduce(0) { $0 + $1.breite }
         let gesamtbreite = tintenbreite + luecke * max(0, zeichen.count - 1)
-        var puffer = Pixelfeld(breite: max(gesamtbreite, 1), hoehe: mass.hoehe)
+        var puffer = Pixelfeld(breite: max(gesamtbreite, 1), hoehe: hoch.hoehe)
 
         var x = 0
         for (index, ausschnitt) in zeichen.enumerated() {
@@ -230,6 +238,10 @@ public enum Textraster {
         }
         return puffer
     }
+
+    /// Mindesthoehe des Puffers: gross genug fuer 16 px samt Unterlaenge;
+    /// dasselbe Mass, auf dem `Pixelgroessen.zeilenbedarf` misst.
+    private static let rasterhoehe = 64
 
     /// Legt ein fertiges Raster an eine Stelle des Feldes. Nur gesetzte Punkte
     /// wandern mit — was darunter liegt, bleibt sonst stehen.

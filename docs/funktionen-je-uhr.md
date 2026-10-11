@@ -49,7 +49,7 @@ Gruppe ohne sichtbare Zeile entfällt (`Uhrgruppe.sichtbar`).
 |---|---|---|---|---|---|
 | Gerasterter Text und Bilder (GIF im `icon`) | ja, 52 × 16 | ja, 32 × 8 | 🔬 09.10.2026 | `Uhr.anzeigemass` aus `display.width/height` (`Anzeigemass.fuer`); ohne Auskunft 52 × 16 | alle, immer angezeigt |
 | Schrift der Uhr (Uhr setzt den Text selbst) | ja | ja | 📄 | keine Fähigkeit; Schalter immer da, Regler für Schriftwahl, Größe, Fett, Rand, Abstand, Ausrichtung dann grau (der Nutzer schaltet es selbst) | Mac/iPad, iPhone |
-| Schriftgröße passt nicht in die Höhe | – | 16 px passt nicht in 8 Zeilen: größte passende Größe derselben Schrift, Hinweis unter der Vorschau | 🔬 09.10.2026 | Anzeigemaß der Zieluhr (`Meldungsbau`, `Pixelgroessen`) | alle (automatisch) |
+| Schriftgröße passt nicht in die Höhe | – | 16 px passt nicht in 8 Zeilen: größte passende Größe derselben Schrift (Maß: Tinte von „ÄÖÜH“, `TinteImFeldTests`), Hinweis unter der Vorschau | 🔬 09.10.2026 | Anzeigemaß der Zieluhr (`Meldungsbau`, `Pixelgroessen`) | alle (automatisch) |
 | Icon 8×8 | ja | ja | 🔬 09.10.2026 | Maß der Zieluhr | alle |
 | Icon 16×16 | ja | durch seine 8×8-Fassung ersetzt, wenn es eine gibt | 🔬 09.10.2026 | `Iconbestaende.passend(_:fuer:)` nach Anzeigemaß | alle (automatisch, Hinweis) |
 | Fertiges Bild (gemalt, Sammlung) | nur 52 × 16 | nur 32 × 8 | 🔬 09.10.2026 | falsches Maß: `NGFehler.massPasstNicht`, Meldung nennt es | Mac/iPad (Malen, Sammlung), iPhone (Sammlung), CLI `bild` |
@@ -92,6 +92,7 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | Tasten (nur MQTT mitlesen) | ja | ja (drei Tasten) | 📄 | Betriebsart `mqtt`; sonst Zeilen grau mit Hinweis „nur im MQTT-Betrieb“ (der Nutzer stellt die Betriebsart um) | Mac/iPad, iPhone |
 | Drehknopf (Zeile und Knopfdruck) | ja | nein (nur drei Tasten) | 📄 ESP32-Zweig (Übersicht der TC001) | `Geraetefaehigkeiten.hatDrehknopf` = `platform.id` nicht `esp32`; ohne Auskunft angezeigt | Mac/iPad, iPhone |
 | Live-Bild des Displays | ja | ja | 🔬 TC002, 📄 ESP32-Zweig (`GET /api/v1/display/screen`) | Bild im Maß der Uhr | Mac/iPad, iPhone, CLI `bildschirm` |
+| Batterie (Ladestand) | TC002 ja (77 %) | TC001 ja (3,9 V, 63 %); selbstgebaute Platine ohne Zelle meldet 0 %, 0,25 V | 🔬 11.10.2026 | `Geraetezustand.hatBatterie`: Spannung unter 2,0 V = keine Batterie, Zeile nicht angezeigt; ohne gemeldete Spannung angezeigt (`SteuerungTests.testBatterieNurMitBatterieAnzeigen`) | Mac/iPad, iPhone (Fernbedienung), CLI `zustand` |
 | Neustart | ja | ja | 📄 | keine Fähigkeit | Mac/iPad, iPhone, CLI |
 | MQTT über TLS, CA hochladen | ja (`mqttTls` `true`) | nein (`mqttTls` fehlt) | 🔬 10.10.2026 | `capabilities.mqttTls`; Gruppe „Verschlüsselung“ nur bei `true` | Mac/iPad, iPhone (Uhr-Einstellungen), CLI `tls` |
 | `enlargeApps` | ja, nicht schreibbar | gibt es nicht | 🔬 09.10.2026 | App rechnet alle Bilder für das Anzeigemaß; Einstellung wird nie geschrieben (`Geraeteeinstellung.schreibbar`) | – |

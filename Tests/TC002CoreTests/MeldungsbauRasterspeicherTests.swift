@@ -14,8 +14,11 @@ final class MeldungsbauRasterspeicherTests: XCTestCase {
     func testMassUndTextUnterscheiden() {
         let o = Meldungsoptionen(text: "Speicher")
         let klein = Anzeigemass(breite: 32, hoehe: 8)
-        XCTAssertEqual(Meldungsbau.puffer(o, mass: klein).hoehe, 8)
-        XCTAssertEqual(Meldungsbau.puffer(o, mass: .vorgabe).hoehe, Anzeigemass.vorgabe.hoehe)
+        // Der Puffer ist nie niedriger als die Anzeige, aber hoeher, damit auf
+        // acht Zeilen nichts vor dem Ausrichten abgeschnitten wird.
+        XCTAssertGreaterThanOrEqual(Meldungsbau.puffer(o, mass: klein).hoehe, 8)
+        XCTAssertGreaterThanOrEqual(Meldungsbau.puffer(o, mass: .vorgabe).hoehe, Anzeigemass.vorgabe.hoehe)
+        XCTAssertEqual(Meldungsbau.puffer(o, mass: klein).breite, Meldungsbau.puffer(o, mass: .vorgabe).breite)
         var p = o
         p.text = "Speicher und mehr"
         XCTAssertGreaterThan(Meldungsbau.breite(p), Meldungsbau.breite(o))

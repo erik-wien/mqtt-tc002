@@ -246,6 +246,26 @@ final class SteuerungTests: XCTestCase {
         XCTAssertNil(z.wlan)
     }
 
+    /// Gemessen 11. Oktober 2026: TC001 mit Batterie, TC002, und eine selbstgebaute
+    /// Platine ohne Batterie, die trotzdem `batteryPercent` 0 meldet.
+    func testBatterieNurMitBatterieAnzeigen() throws {
+        func zustand(_ batterie: String) throws -> Geraetezustand {
+            try Geraetezustand(daten: Data(#"{"version":"1.2.2",\#(batterie)}"#.utf8))
+        }
+        let tc001 = try zustand(#""batteryPercent":63,"batteryVoltage":3.9,"batteryPinMillivolts":1950"#)
+        XCTAssertTrue(tc001.hatBatterie)
+        XCTAssertEqual(tc001.batterieAnzeige, 63)
+        let tc002 = try zustand(#""batteryPercent":77,"lowBattery":false"#)
+        XCTAssertTrue(tc002.hatBatterie)
+        XCTAssertEqual(tc002.batterieAnzeige, 77)
+        let ohne = try zustand(#""batteryPercent":0,"batteryVoltage":0.25,"batteryPinMillivolts":142"#)
+        XCTAssertFalse(ohne.hatBatterie)
+        XCTAssertEqual(ohne.batterieProzent, 0)
+        XCTAssertNil(ohne.batterieAnzeige)
+        let leer = try zustand(#""batteryPercent":0,"batteryVoltage":3.1"#)
+        XCTAssertEqual(leer.batterieAnzeige, 0, "eine fast leere Zelle ist keine fehlende")
+    }
+
     func testAnzeigestandMitUndOhneMoodlight() throws {
         let aus = try Anzeigestand(daten: Data(#"{"power":true,"brightness":128,"overlay":null,"overlaySettings":{"speed":1,"palette":null,"blend":true},"moodlight":null}"#.utf8))
         XCTAssertEqual(aus, try Anzeigestand(daten: Data(#"{"power":true,"brightness":128,"overlay":"","moodlight":null}"#.utf8)))

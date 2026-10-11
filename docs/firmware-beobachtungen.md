@@ -32,6 +32,7 @@ geändert — und womöglich etwas in der App.
 | 7 | Schrift ohne Umlaute | `"content":"Grüße"` schicken | ❌ |
 | 8 | Uhr wird unerreichbar, bis sie stromlos war | `curl http://<adresse>/getBase` | ❌ |
 | 9 | das wirksame Präfix steht nirgends | in der Geräteoberfläche nachsehen | ❌ |
+| 10 | Platine ohne Batterie meldet `batteryPercent` 0 und rund 0,25 V | `GET /api/v1/device` einer Platine ohne Zelle | ❌ |
 
 Die Nummern sind Bezeichner: Sie bleiben stehen, auch wenn ein Punkt keiner mehr
 ist — andere Dokumente verweisen darauf.
@@ -222,6 +223,25 @@ selbst, statt es eintragen zu lassen.
 
 **Prüfung.** In der Geräteoberfläche nachsehen, ob das vollständige Thema
 irgendwo steht.
+
+---
+
+## 10. Eine selbstgebaute Platine ohne Batterie meldet trotzdem einen Ladestand
+
+**Gemessen 11. Oktober 2026**, AWTRIX NG 1.2.2, Platine „awtrixng“ ohne
+eingesetzte Zelle: `GET /api/v1/device` liefert `batteryPercent` 0,
+`batteryVoltage` 0,25 und `batteryPinMillivolts` 142 statt der fehlenden Schlüssel
+(Gerätereferenz §7.1: sie fehlen sonst, solange keine Batterie gemeldet wird). Der
+offene Messpin schwebt. Zum Vergleich: eine TC001 mit Zelle meldet 3,9 V und 63 %,
+eine TC002 77 %.
+
+**Was die App tut.** Unter 2,0 V gilt die Batterie als nicht vorhanden
+(`Geraetezustand.hatBatterie`): Eine Li-Ion-Zelle fällt im Betrieb nie unter etwa
+2,5 V. Die Zeile „Batterie“ in der Fernbedienung und im CLI-Befehl `zustand`
+entfällt dann. Fehlt `batteryVoltage`, bleibt es bei der Anzeige.
+
+**Prüfung.** Bei einer neuen Firmware die Schlüssel einer Platine ohne Batterie
+ansehen; fehlen sie dort, ist der Umweg überflüssig.
 
 ---
 

@@ -32,6 +32,7 @@ reference needs changing, and possibly something in the app.
 | 7 | built-in font has no umlauts | send `"content":"Grüße"` | ❌ |
 | 8 | clock drops off the network until power-cycled | `curl http://<address>/getBase` | ❌ |
 | 9 | the effective prefix is shown nowhere | look for it in the device's own interface | ❌ |
+| 10 | a board without a battery reports `batteryPercent` 0 and about 0.25 V | `GET /api/v1/device` on a board without a cell | ❌ |
 
 The numbers are identifiers: they stay put even when a point is no longer a
 defect — other documents refer to them.
@@ -202,6 +203,25 @@ subscribes to stays silent. This is exactly why our app determines the prefix
 itself instead of letting the user type it.
 
 **Check.** Look for the full topic anywhere in the device's own interface.
+
+---
+
+## 10. A self-built board without a battery still reports a charge level
+
+**Measured 11 October 2026**, AWTRIX NG 1.2.2, "awtrixng" board with no cell
+fitted: `GET /api/v1/device` returns `batteryPercent` 0, `batteryVoltage` 0.25
+and `batteryPinMillivolts` 142 instead of omitting the keys (device reference
+§7.1: they are otherwise absent while no battery is reported). The unconnected
+sense pin floats. For comparison, a TC001 with a cell reports 3.9 V and 63 %, a
+TC002 77 %.
+
+**What the app does.** Below 2.0 V the battery counts as not fitted
+(`Geraetezustand.hatBatterie`): a Li-ion cell never drops below about 2.5 V while
+running. The "Battery" row in the remote and in the CLI command `zustand` is then
+hidden. If `batteryVoltage` is missing, the row is shown as before.
+
+**Check.** On a new firmware, look at the keys of a board without a battery; if
+they are absent there, the workaround is unnecessary.
 
 ---
 

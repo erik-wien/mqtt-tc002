@@ -101,7 +101,7 @@ private func zustandAusgeben(_ z: Geraetezustand) {
     zeile("WLAN", verbindung(z.wlan) + (z.wlanSignal.map { " \($0) dBm" } ?? ""))
     zeile("MQTT", verbindung(z.mqtt))
     zeile(lok("Laufzeit"), z.laufzeitSekunden.map { "\($0) s" })
-    if let b = z.batterieProzent { zeile(lok("Batterie"), "\(b) %" + (z.batterieSchwach == true ? " (!)" : "")) }
+    if let b = z.batterieAnzeige { zeile(lok("Batterie"), "\(b) %" + (z.batterieSchwach == true ? " (!)" : "")) }
     if let u = z.usbStrom { zeile("USB", aus(u)) }
     for (i, a) in z.indikatoren.enumerated() {
         zeile(lokf("Anzeiger %d", i + 1), a.an ? "\(a.farbe) blink \(a.blinkMs) fade \(a.fadeMs)" : lok("aus"))

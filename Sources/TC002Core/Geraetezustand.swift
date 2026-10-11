@@ -58,10 +58,28 @@ public struct Geraetezustand: Equatable, Sendable {
     public var indikatoren: [Indikatorstand]
     public var batterieProzent: Int?
     public var batterieSchwach: Bool?
+    /// `batteryVoltage` in Volt.
+    public var batterieSpannung: Double?
     public var usbStrom: Bool?
     public var nachrichten: Int?
     public var wlan: Verbindungsstand?
     public var mqtt: Verbindungsstand?
+
+    /// Unter dieser Spannung sitzt keine Batterie: Eine Li-Ion-Zelle fällt im
+    /// Betrieb nie unter etwa 2,5 V, der offene Messpin einer selbstgebauten
+    /// Platine ohne Zelle liest rund 0,25 V und meldet dabei `batteryPercent` 0
+    /// (gemessen 11. Oktober 2026).
+    public static let batterieMindestspannung = 2.0
+
+    /// Ob eine Batterie sitzt. Ohne gemeldete Spannung bleibt es bei „ja“.
+    public var hatBatterie: Bool {
+        guard let u = batterieSpannung else { return true }
+        return u >= Self.batterieMindestspannung
+    }
+
+    /// Der Ladestand für die Anzeige; `nil`, wenn die Uhr keinen meldet oder
+    /// keine Batterie sitzt (dann gibt es nichts zu zeigen).
+    public var batterieAnzeige: Int? { hatBatterie ? batterieProzent : nil }
 
     public init(daten: Data) throws {
         guard let o = (try? JSONSerialization.jsonObject(with: daten)) as? [String: Any] else {
@@ -80,6 +98,7 @@ public struct Geraetezustand: Equatable, Sendable {
         }
         batterieProzent = o["batteryPercent"] as? Int
         batterieSchwach = o["lowBattery"] as? Bool
+        batterieSpannung = (o["batteryVoltage"] as? NSNumber)?.doubleValue
         usbStrom = o["usbPower"] as? Bool
         nachrichten = o["messageCount"] as? Int
         wlan = Verbindungsstand(o["wifi"])

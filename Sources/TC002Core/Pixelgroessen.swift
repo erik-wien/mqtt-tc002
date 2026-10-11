@@ -74,18 +74,20 @@ extension Pixelgroessen {
     private static let hoehenspeicher = Hoehenspeicher()
 
     /// Wie viele Zeilen die Schrift in dieser Groesse braucht: die Tinte von
-    /// „ÄH" (Versalie samt Umlautpunkten, ohne Unterlaenge), gerastert wie beim
+    /// „ÄÖÜH" (Versalie samt Umlautpunkten, ohne Unterlaenge), gerastert wie beim
     /// Senden, aber auf einem Feld, das hoch genug ist, um nichts abzuschneiden.
     /// Ein Bezugswort statt des gesendeten Textes, damit die Groesse nicht mit
     /// jedem getippten Buchstaben springt; Unterlaengen gehen dabei bewusst nicht
-    /// ein (die Pixelschriften sind Versalienschriften).
+    /// ein (die Pixelschriften sind Versalienschriften). Alle drei Umlaute, weil
+    /// ihre Punkte verschieden hoch sitzen: bei Silkscreen 9 liegen sie ueber Ä
+    /// eine Zeile tiefer als ueber Ü (gemessen 11. Oktober 2026).
     public static func zeilenbedarf(schrift: String, groesse: Double, fett: Bool) -> Int {
         let k = Hoehenspeicher.Schluessel(schrift: schrift, groesse: groesse, fett: fett)
         hoehenspeicher.sperre.lock()
         let bekannt = hoehenspeicher.werte[k]
         hoehenspeicher.sperre.unlock()
         if let bekannt { return bekannt }
-        let feld = Textraster.rasterPuffer("ÄH", schrift: schrift, groesse: groesse, fett: fett,
+        let feld = Textraster.rasterPuffer("ÄÖÜH", schrift: schrift, groesse: groesse, fett: fett,
                                            farbe: "#FFFFFF",
                                            mass: Anzeigemass(breite: Pixelfeld.breiteStandard, hoehe: 64))
         let zeilen = Textraster.tintenZeilen(feld).map { $0.letzte - $0.erste + 1 } ?? 0
