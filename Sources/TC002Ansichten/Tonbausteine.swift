@@ -202,7 +202,8 @@ struct Tonabschnitt: View {
             Wertregler(titel: lok("Lautstärke"),
                        wert: zustand.uhreneinstellungen[id]?.ganzzahl(.volume) ?? 0, bereich: 0...100,
                        anzeige: { "\($0) %" },
-                       setzen: { p in Task { await zustand.einstellungSetzen("volume", wert: "\(p)", fuer: id) } })
+                       setzen: { p in await zustand.einstellungSetzen("volume", wert: "\(p)", fuer: id).ganz })
+            .id(id)
             radiozeilen
             klaengezeilen
             if ohneAdresse {

@@ -185,7 +185,12 @@ struct Einstellungszeile: View {
     private var titel: String { Uhrbeschriftung.titel(pfad) }
 
     private func setzen(_ s: String) {
-        Task { await zustand.einstellungSetzen(pfad, wert: s, fuer: id) }
+        Task { await setzenUndWarten(s) }
+    }
+
+    @discardableResult
+    private func setzenUndWarten(_ s: String) async -> Bool {
+        await zustand.einstellungSetzen(pfad, wert: s, fuer: id).ganz
     }
 
     var body: some View {
@@ -264,10 +269,12 @@ struct Einstellungszeile: View {
         case "brightness":
             Wertregler(titel: titel, wert: Steuerwerte.helligkeitProzent(roh: n), bereich: 0...100,
                        anzeige: { "\($0) %" }, gesperrt: zustand.helligkeitAutomatisch(fuer: id)) {
-                setzen(String(Steuerwerte.helligkeitRoh(prozent: $0)))
+                await setzenUndWarten(String(Steuerwerte.helligkeitRoh(prozent: $0)))
             }
+            .id(id)
         case "saturation", "volume", "radioVolume", "appVolume", "alertVolume":
-            Wertregler(titel: titel, wert: n, bereich: bereich, anzeige: { "\($0)" }) { setzen(String($0)) }
+            Wertregler(titel: titel, wert: n, bereich: bereich, anzeige: { "\($0)" }) { await setzenUndWarten(String($0)) }
+                .id(id)
         case "appDurationMs", "transitionDurationMs", "scroll.holdMs":
             Zahlzeile(titel: titel, wert: n, bereich: bereich, schritt: pfad == "appDurationMs" ? 500 : 100,
                       anzeige: { lokf("%@ s", (Double($0) / 1000).formatted(.number.precision(.fractionLength(0...1)))) }) {

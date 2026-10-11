@@ -214,7 +214,8 @@ private struct Steuerseite: View {
                        wert: Steuerwerte.helligkeitProzent(roh: helligkeitRoh ?? 0), bereich: 0...100,
                        anzeige: { helligkeitRoh == nil ? "—" : "\($0) %" },
                        gesperrt: sensorRegelt || helligkeitRoh == nil,
-                       setzen: { p in Task { await zustand.helligkeitSetzen(Steuerwerte.helligkeitRoh(prozent: p), fuer: id) } })
+                       setzen: { p in await zustand.helligkeitSetzen(Steuerwerte.helligkeitRoh(prozent: p), fuer: id).ganz })
+            .id(id)
             if !overlayNamen.isEmpty {
                 Picker("Overlay", selection: Binding(
                     get: { overlay.flatMap { Geraetefaehigkeiten.aufgeloest($0, in: overlayNamen) } },
@@ -356,8 +357,9 @@ private struct Moodlightabschnitt: View {
                            wert: Steuerwerte.helligkeitProzent(roh: helligkeit), bereich: 0...100,
                            anzeige: { "\($0) %" }) { p in
                     helligkeit = Steuerwerte.helligkeitRoh(prozent: p)
-                    senden()
+                    return await sendenUndWarten()
                 }
+                .id(uhr.id)
             }
         } header: {
             Text("Moodlight")
@@ -376,7 +378,12 @@ private struct Moodlightabschnitt: View {
     }
 
     private func senden() {
-        Task { await zustand.moodlightSetzen(licht(), fuer: uhr.id) }
+        Task { await sendenUndWarten() }
+    }
+
+    @discardableResult
+    private func sendenUndWarten() async -> Bool {
+        await zustand.moodlightSetzen(licht(), fuer: uhr.id).ganz
     }
 }
 

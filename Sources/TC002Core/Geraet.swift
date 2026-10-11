@@ -13,6 +13,9 @@ public enum GeraetFehler: Error, LocalizedError {
     /// Die AWTRIX NG hat mit ihrem Fehlerrumpf geantwortet. `code` ist
     /// maschinenlesbar und stabil; auf `message` ist nicht zu prüfen.
     case ngAbgewiesen(status: Int, code: String, feld: String?)
+    /// Die Antwort ist größer als die Grenze für diese Art von Antwort
+    /// (`Antwortgrenze`); sie wird nicht geladen, sondern abgebrochen.
+    case antwortZuGross(pfad: String, grenze: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -23,6 +26,9 @@ public enum GeraetFehler: Error, LocalizedError {
         case .nichtErreichbar(let g): return lokf("Die Uhr ist nicht erreichbar: %@", g)
         case .unerwarteteAntwort(let w): return lokf("Die Uhr hat unerwartet geantwortet: %@", w)
         case .httpFehler(let pfad, let code): return lokf("Die Uhr hat einen Fehler gemeldet: %@ (Status %d)", pfad, code)
+        case .antwortZuGross(let pfad, let grenze):
+            return lokf("Die Antwort der Uhr auf %@ ist größer als %@ und wurde abgebrochen.", pfad,
+                        ByteCountFormatter.string(fromByteCount: Int64(grenze), countStyle: .file))
         case .keinPraefix: return lok("Die Uhr nennt weder ein MQTT-Präfix noch eine Kennung. Erneut abfragen.")
         case .ungueltigesPraefix: return lok("Das MQTT-Präfix der Uhr ist unbrauchbar (zu lang oder mit Steuerzeichen, „#“ oder „+“). In den Einstellungen der Uhr berichtigen.")
         case .ungueltigeAdresse(let a): return lokf("„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt.", a)
@@ -96,7 +102,7 @@ public struct Geraet {
     public func bildschirm() throws -> Bildschirmauszug {
         let pfad = "/api/v1/display/screen"
         do {
-            return try Bildschirmauszug(daten: try fuehreAus(try anfrage(url(pfad))))
+            return try Bildschirmauszug(daten: try fuehreAus(try anfrage(url(pfad)), grenze: Antwortgrenze.bildschirm))
         } catch is Bildschirmauszug.Fehler {
             throw GeraetFehler.unerwarteteAntwort(pfad)
         }
@@ -340,8 +346,8 @@ public struct Geraet {
 
     /// Der Fehlerstatus wird hier zum Fehler — fuer jeden Aufrufer, der den
     /// Rumpf einer abgewiesenen Antwort nicht braucht.
-    private func fuehreAus(_ anfrage: URLRequest) throws -> Data {
-        let (daten, status) = try fuehreAusMitStatus(anfrage)
+    private func fuehreAus(_ anfrage: URLRequest, grenze: Int = Antwortgrenze.standard) throws -> Data {
+        let (daten, status) = try fuehreAusMitStatus(anfrage, grenze: grenze)
         if status >= 400 {
             throw GeraetFehler.httpFehler(pfad: anfrage.url?.path ?? "", code: status)
         }
@@ -359,14 +365,21 @@ public struct Geraet {
     /// Antwort, die ausbleibt, ist dann kein Fehler (`neustarten`). Wer gar nicht
     /// erst verbindet, ist es weiterhin.
     private func fuehreAusMitStatus(_ anfrage: URLRequest, frist: TimeInterval = 10,
-                                    abbruchGilt: Bool = false) throws -> (Data, Int) {
+                                    abbruchGilt: Bool = false,
+                                    grenze: Int = Antwortgrenze.standard) throws -> (Data, Int) {
         let fach = Rueckruffach<(Data?, URLResponse?, Error?)>()
-        let aufgabe = sitzung.dataTask(with: anfrage) { d, r, f in fach.abgeben((d, r, f)) }
+        let begrenzer = Antwortbegrenzer(grenze: grenze, fach: fach)
+        let aufgabe = sitzung.dataTask(with: anfrage)
+        aufgabe.delegate = begrenzer
         aufgabe.resume()
+        defer { withExtendedLifetime(begrenzer) {} }
         guard let (ergebnis, antwort, fehler) = fach.abwarten(frist: frist) else {
             aufgabe.cancel()
             if abbruchGilt { return (Data(), 200) }
             throw GeraetFehler.nichtErreichbar(lok("keine Antwort"))
+        }
+        if fehler is Antwortbegrenzer.ZuGross {
+            throw GeraetFehler.antwortZuGross(pfad: anfrage.url?.path ?? "", grenze: grenze)
         }
         if let fehler {
             let abgerissen: Set<URLError.Code> = [.networkConnectionLost, .timedOut, .badServerResponse,
@@ -377,8 +390,6 @@ public struct Geraet {
             throw GeraetFehler.nichtErreichbar(fehler.localizedDescription)
         }
         guard let ergebnis else { throw GeraetFehler.nichtErreichbar("leere Antwort") }
-        // Die Antworten, die diese App liest, sind wenige KiB gross.
-        guard ergebnis.count <= 1 << 20 else { throw GeraetFehler.nichtErreichbar("Antwort zu gross") }
         return (ergebnis, (antwort as? HTTPURLResponse)?.statusCode ?? 200)
     }
 }
