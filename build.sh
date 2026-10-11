@@ -273,8 +273,8 @@ if [ -z "$SIGNATUR" ] && security find-certificate -c "MQTT-TC002" >/dev/null 2>
 fi
 # Das mitreisende Werkzeug ist eine eigene Mach-O-Datei und muss vor dem
 # Buendel signiert werden — danach besiegelt die Signatur des Buendels es mit.
-BERECHTIGUNGSARGUMENT=""
-[ -n "$BERECHTIGUNGEN" ] && BERECHTIGUNGSARGUMENT="--entitlements $BERECHTIGUNGEN"
+# Hardened Runtime auch im Entwicklungsbau (wie `release.sh`): Fehler, die erst
+# dort auftraeten (Bibliotheksvalidierung, Ausnahmen), zeigen sich so beim Bauen.
 # Das Werkzeug bekommt die Berechtigungen ausdruecklich NICHT. Die
 # iCloud-Berechtigungen sind eingeschraenkt und gelten nur zusammen mit einem
 # Bereitstellungsprofil; ein Profil laesst sich aber nur in ein Buendel
@@ -285,11 +285,24 @@ BERECHTIGUNGSARGUMENT=""
 # Ohne die Berechtigung erreicht es den iCloud-Behaelter nicht und arbeitet im
 # oertlichen Ordner (`Ablageort`). Bei eingeschaltetem Abgleich schreibt es sein
 # Slotgedaechtnis damit woanders hin als die App.
+# Eine gefundene Identitaet, die nicht signieren kann (gesperrter Schluesselbund,
+# abgelaufenes Zertifikat), bricht den Bau ab: Ein stiller Rueckfall auf ad hoc
+# gaebe eine App mit anderer Identitaet, und macOS zoege die Freigabe fuers
+# lokale Netzwerk zurueck. Optional bleibt nur der Fall ganz ohne Identitaet.
+signieren() {
+    if ! codesign --force --options runtime -s "$SIGNATUR" "$@"; then
+        echo "Fehler: Signieren mit '$SIGNATUR' ist fehlgeschlagen: $*" >&2
+        echo "        Schluesselbund entsperrt? Zertifikat gueltig?" >&2
+        exit 1
+    fi
+}
 if [ -n "$SIGNATUR" ]; then
-    codesign --force -s "$SIGNATUR" "$APP/Contents/MacOS/mqtttc002" >/dev/null 2>&1 || true
-fi
-# shellcheck disable=SC2086
-if [ -n "$SIGNATUR" ] && codesign --force $BERECHTIGUNGSARGUMENT -s "$SIGNATUR" "$APP" >/dev/null 2>&1; then
+    signieren "$APP/Contents/MacOS/mqtttc002"
+    if [ -n "$BERECHTIGUNGEN" ]; then
+        signieren --entitlements "$BERECHTIGUNGEN" "$APP"
+    else
+        signieren "$APP"
+    fi
     echo "signiert als $(codesign -dv "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
 else
     echo "Hinweis: keine Signieridentitaet gefunden, die App bleibt ad hoc signiert." >&2

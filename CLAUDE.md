@@ -399,6 +399,14 @@ Zwei Eigenheiten, die dahinterstecken:
   `actool`, kein `Assets.car`, ein leerer Rahmen zur Laufzeit. `build.sh` holt
   den Übersetzungsschritt deshalb selbst nach.
 
+## Verzicht auf die Mac-Sandbox
+
+- **Mac ohne App Sandbox (bewusst, Erik 11.10.2026, eingang#109):** Eine Sandbox bräuchte `network.client` (Uhren, Broker) und
+  Dateirechte, und das mitreisende Werkzeug `mqtttc002` sowie der gemeinsame Datenordner (`Application Support/MQTT-TC002/`, Slotdateien)
+  haben mehrere Schreiber, die sich nicht in einen Container pferchen lassen. Eingaben sind lokale Dateien und der Broker im Hausnetz;
+  geschützt wird mit Hardened Runtime schon im Entwicklungsbau. Neu bewerten bei Plänen für den Mac App Store (dort Pflicht)
+  oder neuen Importwegen für fremde Dateien.
+
 ## Fassungsnummer
 
 Nicht im Quelltext eintragen. `build.sh` nimmt sie aus `TC002_VERSION` oder vom
@@ -433,7 +441,10 @@ einem `../..` erschlagen, aber dann gilt die Beschreibung nur noch für genau
 einen Aufruf, und der nächste `xcodegen generate` ohne `--project` baut ein
 Projekt, das nicht übersetzt. Die zwei Einträge in der Wurzel
 (`MQTT-TC002-iOS.xcodeproj`, `MQTT-TC002-iOS.entitlements`) sind beide
-ignoriert und in einem frischen Klon ohnehin nicht da.
+ignoriert und in einem frischen Klon ohnehin nicht da. Die Entitlements-Datei
+wird nicht erzeugt, sondern schreibt nur Xcode, wenn dort eine Fähigkeit
+eingeschaltet wird; gelesen wird sie nie. iOS und Mac teilen sich
+`Resources/MQTT-TC002.entitlements` (die iCloud-Schlüssel sind dieselben).
 
     brew install xcodegen        # einmalig
     xcodegen generate

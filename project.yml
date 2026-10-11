@@ -118,6 +118,13 @@ targets:
         # schreibt in die `.xcodeproj` — die ist nicht eingecheckt und wird
         # beim naechsten `xcodegen generate` ueberschrieben. Xcode war der Weg,
         # den Behaelter im **Konto** anzulegen; eingetragen ist er hier.
+        #
+        # **Dieselbe Datei wie am Mac, mit Absicht.** Die vier iCloud-Schluessel
+        # (Container, Ubiquity-Container, Dienst CloudDocuments, KVStore) heissen
+        # auf iOS und macOS gleich; eine zweite Datei waere eine zweite Wahrheit
+        # ueber denselben Behaelter. Eine `MQTT-TC002-iOS.entitlements` in der
+        # Wurzel schreibt nur Xcode, wenn jemand dort eine Faehigkeit einschaltet;
+        # sie ist ignoriert und wird von nichts gelesen.
         CODE_SIGN_ENTITLEMENTS: Resources/MQTT-TC002.entitlements
     info:
       # NICHT nach build/ — das ist das Ausgabeverzeichnis der Mac-App, und
