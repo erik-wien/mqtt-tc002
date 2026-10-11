@@ -261,7 +261,7 @@ public enum HilfeInhalt {
 
     public static let klangsammlung: [Hilfebaustein] = [
         .ueberschrift("Klänge"),
-        .absatz("Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist."),
+        .absatz("Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist. Dateien kommen hinzu, indem du sie auf die Ablegefläche unter „Hinzufügen“ ziehst oder dort „Datei wählen …“ drückst."),
         .absatz("**Hinzufügen** geht auf drei Wegen: die Melodien einer Uhr übernehmen, eine Melodie tippen oder einfügen — mit „Probehören“ auf der angesehenen Uhr, bevor sie gesichert wird — oder eine oder mehrere Dateien (`.mp3`, `.txt`, `.rtttl`) wählen. Der Name gilt so, wie ihn die Uhr nimmt: Buchstaben, Ziffern, _ und -, bei Melodien bis 24 Zeichen, bei MP3-Dateien bis 32. Eine Melodie und eine MP3 teilen sich keinen Namen. MP3-Dateien lassen sich nicht von der Uhr holen."),
         .absatz("**Mit Uhren abgleichen** legt Fehlendes auf den gewählten Uhren an und ersetzt Abweichendes — bei einer Melodie einen anderen Text, bei einer MP3 eine andere Größe. Was nur auf der Uhr liegt, bleibt dort; gelöscht wird dort nur einzeln. Übersprungen wird, was die Uhr nicht spielt (die TC001 nimmt keine MP3) oder was nicht mehr hineinpasst. Das Ergebnis steht je Uhr darunter. Am Kommandozeilenwerkzeug gibt es dasselbe als „ton abgleichen“."),
     ]

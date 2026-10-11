@@ -1566,7 +1566,10 @@
 "Melodien von „%@“ übernehmen" = "Take over melodies from “%@”";
 "Melodien von der Uhr übernehmen" = "Take over melodies from the clock";
 "Melodie eingeben oder einfügen …" = "Type or paste a melody …";
-"Aus Datei …" = "From file …";
+"MP3- oder Melodiedateien hierher ziehen" = "Drop MP3 or melody files here";
+"Datei wählen …" = "Choose file …";
+"Ablegefläche für MP3- oder Melodiedateien" = "Drop area for MP3 or melody files";
+"Nicht angenommen, nur MP3- und Melodiedateien: %@" = "Not accepted, only MP3 and melody files: %@";
 "Klang hinzufügen" = "Add sound";
 "MP3-Dateien lassen sich nicht von der Uhr holen; sie kommen aus Dateien." = "MP3 files cannot be fetched from the clock; they come from files.";
 "Keine Uhr mit Adresse. Der Abgleich läuft über die Adresse der Uhr." = "No clock with an address. The synchronisation uses the clock's address.";
@@ -1589,7 +1592,7 @@
 "„%@“ gehört in der Sammlung schon einem anderen Klang." = "“%@” already belongs to another sound in the library.";
 "Aus Datei" = "From file";
 "**Klänge** — die Klangsammlung der App: Melodien und MP3-Dateien, nach denen du die Uhren abgleichst." = "**Sounds** — the app's sound library: melodies and MP3 files that you synchronise the clocks with.";
-"Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist." = "Under Sounds sits the sound library: melodies (RTTTL texts) and MP3 files. It is the original; the clocks are synchronised with it. It travels with iCloud if the synchronisation is switched on there.";
+"Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist. Dateien kommen hinzu, indem du sie auf die Ablegefläche unter „Hinzufügen“ ziehst oder dort „Datei wählen …“ drückst." = "Under Sounds sits the sound library: melodies (RTTTL texts) and MP3 files. It is the original; the clocks are synchronised with it. It travels with iCloud if the synchronisation is switched on there. Add files by dropping them on the drop area under Add or pressing Choose file … there.";
 "**Hinzufügen** geht auf drei Wegen: die Melodien einer Uhr übernehmen, eine Melodie tippen oder einfügen — mit „Probehören“ auf der angesehenen Uhr, bevor sie gesichert wird — oder eine oder mehrere Dateien (`.mp3`, `.txt`, `.rtttl`) wählen. Der Name gilt so, wie ihn die Uhr nimmt: Buchstaben, Ziffern, _ und -, bei Melodien bis 24 Zeichen, bei MP3-Dateien bis 32. Eine Melodie und eine MP3 teilen sich keinen Namen. MP3-Dateien lassen sich nicht von der Uhr holen." = "**Adding** works in three ways: take over a clock's melodies, type or paste a melody — with Audition on the clock you are looking at before it is saved — or choose one or more files (`.mp3`, `.txt`, `.rtttl`). The name applies as the clock accepts it: letters, digits, _ and -, up to 24 characters for melodies, up to 32 for MP3 files. A melody and an MP3 cannot share a name. MP3 files cannot be fetched from a clock.";
 "**Mit Uhren abgleichen** legt Fehlendes auf den gewählten Uhren an und ersetzt Abweichendes — bei einer Melodie einen anderen Text, bei einer MP3 eine andere Größe. Was nur auf der Uhr liegt, bleibt dort; gelöscht wird dort nur einzeln. Übersprungen wird, was die Uhr nicht spielt (die TC001 nimmt keine MP3) oder was nicht mehr hineinpasst. Das Ergebnis steht je Uhr darunter. Am Kommandozeilenwerkzeug gibt es dasselbe als „ton abgleichen“." = "**Synchronise with clocks** creates what is missing on the selected clocks and replaces what differs — a different text for a melody, a different size for an MP3. Whatever is only on the clock stays there; deleting there is done one by one. It skips what the clock does not play (the TC001 takes no MP3) or what no longer fits. The result stands below, per clock. The command-line tool does the same as “sound sync”.";
 "„%@“ gibt es in der Sammlung schon." = "“%@” is already in the library.";

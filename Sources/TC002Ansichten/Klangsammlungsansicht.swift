@@ -14,6 +14,8 @@ public struct Klangsammlungsansicht: View {
     @State private var neueMelodie = false
     @State private var waehltDatei = false
     @State private var gewaehlteDateien: [DateiEintrag] = []
+    @State private var ziehtDrueber = false
+    @State private var abgelehnt: [String] = []
     @State private var zuLoeschen: Sammlungsklang?
     @State private var umzubenennen: Sammlungsklang?
     @State private var uebernahme: String?
@@ -48,7 +50,7 @@ public struct Klangsammlungsansicht: View {
         .fileImporter(isPresented: $waehltDatei,
                       allowedContentTypes: Self.dateitypen, allowsMultipleSelection: true) { ergebnis in
             guard case .success(let urls) = ergebnis else { return }
-            gewaehlteDateien = urls.map { DateiEintrag(url: $0) }
+            dateienUebernehmen(urls)
         }
         .confirmationDialog(lokf("„%@“ aus der Sammlung löschen?", zuLoeschen?.name ?? ""),
                             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
@@ -69,6 +71,23 @@ public struct Klangsammlungsansicht: View {
         if let t = UTType(filenameExtension: "rtttl") { typen.append(t) }
         return typen
     }()
+
+    /// Ob die Datei zu `dateitypen` gehört. Der Dateiwähler filtert selbst; beim
+    /// Ablegen prüft das diese Funktion, über die Dateiendung wie `DateiEintrag`.
+    static func angenommen(_ url: URL) -> Bool {
+        guard let typ = UTType(filenameExtension: url.pathExtension.lowercased()) else { return false }
+        return dateitypen.contains { typ.conforms(to: $0) }
+    }
+
+    /// Der eine Weg für Dateiwähler und Ablegen: angenommene Dateien öffnen das
+    /// Dateiblatt (Namen, Größe, Ersetzen und Fehler prüft es und
+    /// `AppZustand.dateiSammeln`, dort auch der Zugriff außerhalb der Sandbox),
+    /// die übrigen werden gemeldet.
+    private func dateienUebernehmen(_ urls: [URL]) {
+        let gut = urls.filter(Self.angenommen)
+        abgelehnt = urls.filter { !Self.angenommen($0) }.map(\.lastPathComponent)
+        if !gut.isEmpty { gewaehlteDateien = gut.map { DateiEintrag(url: $0) } }
+    }
 
     // MARK: - Abschnitte
 
@@ -122,11 +141,16 @@ public struct Klangsammlungsansicht: View {
                     }
                 }
                 Button(lok("Melodie eingeben oder einfügen …")) { neueMelodie = true }
-                Button(lok("Aus Datei …")) { waehltDatei = true }
             } label: {
                 Label("Klang hinzufügen", systemImage: "plus")
             }
             .disabled(uebernimmt)
+            ablegeflaeche
+            if !abgelehnt.isEmpty {
+                Label(lokf("Nicht angenommen, nur MP3- und Melodiedateien: %@", abgelehnt.joined(separator: ", ")),
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(kanon.fussnote).foregroundStyle(Warnfarbe.symbol)
+            }
             if let uebernahme {
                 Text(verbatim: uebernahme).font(kanon.fussnote).foregroundStyle(.secondary)
             }
@@ -135,6 +159,34 @@ public struct Klangsammlungsansicht: View {
         } header: {
             Text("Hinzufügen")
         }
+    }
+
+    /// Ablegefläche mit gestricheltem Rand. Der Knopf darin ist der Weg ohne
+    /// Ziehen (iPhone, Tastatur, Sprachausgabe) und öffnet denselben Dateiwähler.
+    private var ablegeflaeche: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "square.and.arrow.down").font(.title2)
+            Text("MP3- oder Melodiedateien hierher ziehen").font(kanon.fussnote)
+            Button(lok("Datei wählen …")) { waehltDatei = true }
+                .knopfBefehl()
+        }
+        .foregroundStyle(ziehtDrueber ? Color.accentColor : Color.secondary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(ziehtDrueber ? Color.accentColor : Color.secondary.opacity(0.6),
+                              style: StrokeStyle(lineWidth: ziehtDrueber ? 2 : 1, dash: [6, 4]))
+        }
+        .dropDestination(for: URL.self) { urls, _ in
+            let dateien = urls.filter(\.isFileURL)
+            guard !dateien.isEmpty else { return false }
+            dateienUebernehmen(dateien)
+            return true
+        } isTargeted: { ziehtDrueber = $0 }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(lok("Ablegefläche für MP3- oder Melodiedateien"))
     }
 
     private var abgleich: some View {
