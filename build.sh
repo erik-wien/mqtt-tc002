@@ -156,9 +156,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <!-- CFBundleDisplayName muss hier stehen, nicht nur in InfoPlist.strings:
          Eine Uebersetzung ueberschreibt nur, was es im Original gibt; fehlt der
          Schluessel, zeigen Finder, Dock und Menueleiste den Dateinamen.
+         Hier steht der Dateiname, der Name kommt aus InfoPlist.strings: Finder
+         nimmt den uebersetzten Namen (LSHasLocalizedDisplayName) nur, wenn
+         dieser Wert dem Dateinamen gleicht. Die Datei heisst weiter
+         MQTT-TC002.app, die Freigabe Lokales Netzwerk haengt am Programm.
          Dieses Hierdokument ist unquotiert (es setzt ${VERSION} ein) — darin
          keine Rueckwaerts-Anfuehrungszeichen, die fuehrt die Shell aus. -->
-    <key>CFBundleDisplayName</key><string>Pixel Clock Messenger</string>
+    <key>CFBundleDisplayName</key><string>MQTT-TC002</string>
+    <key>LSHasLocalizedDisplayName</key><true/>
     <key>CFBundleExecutable</key><string>TC002App</string>
     <key>CFBundleIdentifier</key><string>cloud.eriks.mqtt-tc002</string>
     <key>CFBundlePackageType</key><string>APPL</string>
