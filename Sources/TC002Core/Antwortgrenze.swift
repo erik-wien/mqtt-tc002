@@ -10,7 +10,7 @@ public enum Antwortgrenze {
     /// KiB-Bereich; 1 MiB lässt einer langen Liste von Dateinamen Raum.
     public static let standard = 1 << 20
     /// Das Abbild des Displays (`display/screen`): bei 52 × 16 Punkten rund
-    /// 8 KiB JSON; 128 KiB ist das Mehr als Zehnfache.
+    /// 8 KiB JSON; 128 KiB lassen mehr als das Zehnfache Raum.
     public static let bildschirm = 128 << 10
 }
 
