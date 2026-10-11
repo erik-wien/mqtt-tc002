@@ -90,7 +90,8 @@ public struct Sendeartwahl: View {
             .fixedSize()
             switch art {
             case .nachricht:
-                klangknopf
+                // Kann keine Zieluhr Klang (ohne Lautsprecher), gibt es den Knopf nicht.
+                if zustand.klangMoeglich { klangknopf }
                 optionenknopf
             case .anzeige:
                 lebensdauerknopf

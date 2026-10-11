@@ -33,6 +33,8 @@ reference needs changing, and possibly something in the app.
 | 8 | clock drops off the network until power-cycled | `curl http://<address>/getBase` | ❌ |
 | 9 | the effective prefix is shown nowhere | look for it in the device's own interface | ❌ |
 | 10 | a board without a battery reports `batteryPercent` 0 and about 0.25 V | `GET /api/v1/device` on a board without a cell | ❌ |
+| 11 | a board without a photoresistor reports `ldrRaw` 0, but `sensors.light` `true` | `GET /api/v1/device` and `/capabilities` on a board without an LDR | ❌ |
+| 12 | `audio.rtttl` is `true` even without a speaker | `/capabilities` on a board without a speaker | ❌ |
 
 The numbers are identifiers: they stay put even when a point is no longer a
 defect — other documents refer to them.
@@ -222,6 +224,40 @@ hidden. If `batteryVoltage` is missing, the row is shown as before.
 
 **Check.** On a new firmware, look at the keys of a board without a battery; if
 they are absent there, the workaround is unnecessary.
+
+---
+
+## 11. A board without a photoresistor reports `ldrRaw` 0, but `sensors.light` `true`
+
+**Measured 11 October 2026**, AWTRIX NG 1.2.2 on ESP32 (`platform.id` `esp32`,
+`boardType` `awtrixng`): `capabilities.sensors.light` is `true` on every ESP32,
+including a self-built board without a photoresistor. `GET /api/v1/device`
+returns `ldrRaw` exactly 0 there; a TC001 reports 281 or 1454.
+
+**What the app does.** For a clock whose model is "ESP32 (self-built)", `ldrRaw`
+0 counts as "no light sensor" (`Geraetefaehigkeiten.mitAusstattung`): the
+"Automatic" switch is hidden. A real sensor in total darkness could read 0 as
+well, which is why the rule applies to the self-build only, never to the TC001.
+`Uhrmodell.vorschlag` derives the model from battery and `ldrRaw`.
+
+**Check.** On a new firmware, look at `sensors.light` of a board without a
+photoresistor; if it reports `false` there, the workaround is unnecessary.
+
+---
+
+## 12. `audio.rtttl` is `true` even without a speaker
+
+**Measured 11 October 2026**, AWTRIX NG 1.2.2: `capabilities.audio.rtttl` is
+`true` on a self-built board without a speaker. Whether a speaker is fitted can
+be read neither from the capabilities nor from the device state.
+
+**What the app does.** A self-built clock has a "Speaker" switch
+(`Uhr.lautsprecher`, default on). When off, the clock supports no sound type
+(`Geraetefaehigkeiten.lautsprecher`): the sound controls disappear and the clock
+is left out of the sound sync.
+
+**Check.** On a new firmware, look at the `audio` capabilities of a board without
+a speaker; if they report `false` there, the switch can go.
 
 ---
 

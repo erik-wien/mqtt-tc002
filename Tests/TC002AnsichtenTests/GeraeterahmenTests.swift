@@ -190,4 +190,40 @@ final class GeraeterahmenTests: XCTestCase {
             XCTAssertLessThanOrEqual(r.rechts, z.breite); XCTAssertLessThanOrEqual(r.unten, z.hoehe)
         }
     }
+
+    /// Das Modell der Uhr wählt die Zeichnung, wo es bekannt ist; sonst gilt das Maß.
+    func testDasModellWaehltDieZeichnung() {
+        let breit = Anzeigemass(breite: 64, hoehe: 8)
+        XCTAssertEqual(Geraetezeichnung.fuer(breit, modell: nil), .tc002)
+        XCTAssertEqual(Geraetezeichnung.fuer(breit, modell: .esp32DIY), Geraetezeichnung.diy(breit))
+        XCTAssertEqual(Geraetezeichnung.fuer(Anzeigemass(breite: 32, hoehe: 8), modell: .tc001), .tc001)
+        XCTAssertEqual(Geraetezeichnung.fuer(Anzeigemass(breite: 32, hoehe: 8), modell: .esp32DIY),
+                       Geraetezeichnung.diy(Anzeigemass(breite: 32, hoehe: 8)),
+                       "auch 32 × 8 ist mit gewähltem Modell kein Ulanzi-Gehäuse")
+        XCTAssertEqual(Geraetezeichnung.fuer(Uhr(name: "x", host: "h", panelbreite: 128, panelhoehe: 8,
+                                                  modell: .esp32DIY)),
+                       Geraetezeichnung.diy(Anzeigemass(breite: 128, hoehe: 8)))
+    }
+
+    /// Das Panel der Eigenbauuhr folgt der Breite des Feldes: Das Feld hat
+    /// genau das Verhältnis des Rasters (quadratische Pixel), liegt im Rahmen,
+    /// und der Rahmen ist ein Panel ohne Aufdruck.
+    func testDasEigenbaupanelFolgtDerBreite() {
+        for breite in [32, 64, 96, 128] {
+            let mass = Anzeigemass(breite: breite, hoehe: 8)
+            let z = Geraetezeichnung.diy(mass)
+            XCTAssertEqual(z.feld.breite / z.feld.hoehe, Double(breite) / 8, accuracy: 0.0001)
+            XCTAssertGreaterThan(z.feld.x, 0)
+            XCTAssertLessThan(z.feld.rechts, z.breite)
+            XCTAssertLessThan(z.feld.unten, z.hoehe)
+            XCTAssertFalse(z.teile.contains { if case .schrift = $0 { return true } else { return false } })
+            for kante in [4.0, 6, 12] {
+                let m = z.masse(fuer: mass, kante: kante)
+                XCTAssertEqual(m.feldBreite, Double(breite) * kante, accuracy: 0.0001, "Breite \(breite), Kante \(kante)")
+                XCTAssertEqual(m.feldHoehe, 8 * kante, accuracy: 0.0001)
+            }
+        }
+        XCTAssertGreaterThan(Geraetezeichnung.diy(Anzeigemass(breite: 128, hoehe: 8)).breite,
+                             Geraetezeichnung.diy(Anzeigemass(breite: 64, hoehe: 8)).breite)
+    }
 }

@@ -36,7 +36,8 @@ Gruppe ohne sichtbare Zeile entfällt (`Uhrgruppe.sichtbar`).
   ESP32-Zweig, <https://blueforcer.github.io/awtrix-ng/esp32/>; die der TC002:
   der Zweig `/tc002/`), ❓ nicht gemessen.
 - Modelle: **TC002** = 52 × 16, `platform.id` `tc002`; **TC001** = 32 × 8,
-  `platform.id` `esp32`. Beide mit AWTRIX NG 1.2.2.
+  `platform.id` `esp32`. Beide mit AWTRIX NG 1.2.2. **ESP32 DIY** = selbstgebaute
+  Uhr, 32 bis 128 × 8, `platform.id` `esp32` (eigener Abschnitt unten).
 - Oberfläche: **Mac/iPad** = Desktop-Oberfläche (Fernbedienung = Bereich „Uhr“,
   Seitenleiste, Inspektor), **iPhone** = Blatt „Steuerung“ und Sendeansicht,
   **CLI** = `mqtttc002`. „alle“ = alle drei.
@@ -97,6 +98,38 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | MQTT über TLS, CA hochladen | ja (`mqttTls` `true`) | nein (`mqttTls` fehlt) | 🔬 10.10.2026 | `capabilities.mqttTls`; Gruppe „Verschlüsselung“ nur bei `true` | Mac/iPad, iPhone (Uhr-Einstellungen), CLI `tls` |
 | `enlargeApps` | ja, nicht schreibbar | gibt es nicht | 🔬 09.10.2026 | App rechnet alle Bilder für das Anzeigemaß; Einstellung wird nie geschrieben (`Geraeteeinstellung.schreibbar`) | – |
 | Virtuelle Uhr | TC002-Modus (Vorgabe) | `NGTon.tc001`: gemessener Schlüsselsatz (kein `layout`, `layouts`, `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps`; Anzeige 32 × 8; Einstellungen ohne `clockFace`, `bootSound`, `enlargeApps`) | 🔬 10.10.2026 | `NGTon.istTC001`, `VirtuelleNGUhr.faehigkeitenantwort/einstellungenantwort` | Mac/iPad, iPhone (Einstellungen), Tests |
+
+## ESP32 DIY (selbstgebaute Uhr)
+
+Eigenbau mit AWTRIX NG 1.2.2 auf ESP32 (11. Oktober 2026): `platform.id`
+`esp32` und `boardType` `awtrixng` wie bei der TC001, Anzeige 32 bis 128 × 8
+(`capabilities.display`: `configurable` `true`, `minWidth` 32, `maxWidth` 128,
+`minHeight` 8, `maxHeight` 8), derzeit 32 × 8. `Uhr.modell` hält das Modell
+(`Uhrmodell`: `tc002`, `tc001`, `esp32DIY`; `nil` = noch nicht bestimmt).
+
+**Erkennung** (`Uhrmodell.vorschlag`, bei „Abfragen“, nur wenn noch kein Modell
+steht; der Nutzer ändert es auf der Uhrseite, eine Wahl bleibt):
+
+| Antwort der Uhr | Modell |
+|---|---|
+| `platform.id` `tc002` | TC002 |
+| `esp32`, Batterie (`Geraetezustand.hatBatterie`) **und** `ldrRaw` über 0 | TC001 |
+| jeder andere `esp32` | ESP32 DIY |
+| sonst, oder Gerätezustand/`ldrRaw` fehlt | unbestimmt |
+
+`capabilities.sensors.light` ist auf jedem ESP32 `true` und entscheidet nichts.
+
+| Funktion | ESP32 DIY | Quelle | Entscheidung der App | Oberfläche |
+|---|---|---|---|---|
+| Anzeige | 32…128 × 8, aus `display.width/height` | 🔬 11.10.2026 | `Uhr.anzeigemass`; Zeichnung `Geraetezeichnung.diy` (Panel ohne Gehäuse, Breite folgt dem Feld) | alle |
+| Batterie | nur mit Zelle (unter 2,0 V keine) | 🔬 11.10.2026 | `Geraetezustand.hatBatterie` | Fernbedienung, CLI `zustand`; Ausstattung auf der Uhrseite |
+| Lichtsensor / „Automatisch“ | nur wenn `ldrRaw` über 0; `ldrRaw` 0 = kein Fotowiderstand | 🔬 11.10.2026 | `Geraetefaehigkeiten.mitAusstattung` setzt `ohneLichtmessung`; nur für den Eigenbau (ein echter Sensor in völliger Dunkelheit könnte 0 lesen), nie für die TC001 | wie TC001 |
+| Temperatur, Feuchte | nur mit Fühler (`temperature`/`humidity` in `/api/v1/device`) | 🔬 11.10.2026 | die App zeigt beide nicht an; sie stehen in der Ausstattung der Uhrseite | Uhrseite |
+| MP3-Player (DFPlayer) | `audio.mp3` der Uhr | 🔬 11.10.2026 | `audio.mp3` gilt (spiegelt das Abspielen); `/api/v1/system` `dfplayer` wird nicht gelesen | wie TC001 |
+| Lautsprecher | **nicht erkennbar** (`audio.rtttl` ist auch ohne einen `true`) | 🔬 11.10.2026 | Schalter „Lautsprecher“ (`Uhr.lautsprecher`, nil = ein); aus = `Geraetefaehigkeiten.lautsprecher` `false`, `ton` leer, `kann(_:)` für jede Klangart `false` | Uhrseite |
+| Klang ohne Lautsprecher | keiner | – | Abschnitt „Ton“ der Fernbedienung, Klangknopf der Nachricht (`AppZustand.klangMoeglich`, `Klangeignung.keinKlang`), Klangeinstellungen der Uhr, „Probehören“; nicht im Klangabgleich (App und `ton abgleichen`); CLI `ton spielen` meldet und überspringt, `nachricht --rtttl` sendet ohne Klang; mehrere Ziele: bleibt, wenn eine Uhr es kann | alle |
+| Klangabgleich je Uhr | wählbar | – | `Uhr.klangAbgleich` (nil = mit); Uhren ohne Lautsprecher erscheinen nicht; `ton abgleichen` ohne `--an` liest sie, mit `--an` wird die genannte Uhr abgeglichen, ohne Lautsprecher mit Hinweis übersprungen | Mac/iPad, iPhone (Einstellungen › Klänge), CLI |
+| Layouts, Drehknopf | nein (wie TC001) | 🔬 | `capabilities.layout` fehlt, `platform.id` `esp32` | wie TC001 |
 
 ## Abweichungen
 

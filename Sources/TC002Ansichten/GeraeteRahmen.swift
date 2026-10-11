@@ -24,12 +24,12 @@ public struct GeraeteRahmen<Inhalt: View>: View {
     @ViewBuilder let inhalt: Inhalt
 
     /// `mass` ist das Raster des Inhalts und waehlt die Zeichnung
-    /// (`Geraetezeichnung.fuer`); `hoehe` ist seine Hoehe in Punkten.
-    public init(hoehe: Double, mass: Anzeigemass = .vorgabe,
+    /// zusammen mit `modell` (`Geraetezeichnung.fuer`); `hoehe` ist seine Hoehe in Punkten.
+    public init(hoehe: Double, mass: Anzeigemass = .vorgabe, modell: Uhrmodell? = nil,
                 @ViewBuilder inhalt: () -> Inhalt) {
         self.hoehe = hoehe
         self.mass = mass
-        self.zeichnung = .fuer(mass)
+        self.zeichnung = .fuer(mass, modell: modell)
         self.inhalt = inhalt()
     }
 

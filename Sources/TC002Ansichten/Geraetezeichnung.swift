@@ -197,6 +197,22 @@ public struct Geraetezeichnung: Equatable, Sendable {
         mass.breite == 32 && mass.hoehe == 8 ? .tc001 : .tc002
     }
 
+    /// Ist das Modell der Uhr bekannt, bestimmt es die Zeichnung (die
+    /// selbstgebaute Uhr bekommt ein Panel ohne Gehäuse, so breit wie ihre
+    /// Anzeige); sonst entscheidet das Maß wie bisher.
+    public static func fuer(_ mass: Anzeigemass, modell: Uhrmodell?) -> Geraetezeichnung {
+        switch modell {
+        case .tc002: return .tc002
+        case .tc001: return .tc001
+        case .esp32DIY: return diy(mass)
+        case nil: return fuer(mass)
+        }
+    }
+
+    public static func fuer(_ uhr: Uhr) -> Geraetezeichnung {
+        fuer(Anzeigemass.fuer(uhr), modell: uhr.modell)
+    }
+
     /// Um wieviel der ganze Rahmen breiter ist als sein Displayfeld. Wer den
     /// Rahmen in eine gegebene Flaeche einpassen will, rechnet damit von der
     /// Pixelbreite auf die Rahmenbreite hoch — ohne die Zahlen abzuschreiben.
@@ -328,4 +344,27 @@ public struct Geraetezeichnung: Equatable, Sendable {
             // Panel aus der Naehe aus.
             pixelstil: Pixelstil(luecke: .anteil(0.05), eckenAnteil: 0))
     }()
+
+    // MARK: - Das selbstgebaute Panel
+
+    /// Ein Matrixpanel ohne Gehäuse: dunkle Platine mit schmalem Rand und dem
+    /// Displayfeld darin. Die Breite folgt dem Anzeigemaß (32 bis 128 Punkte);
+    /// das Feld hat je Pixel 18 Einheiten Kantenlänge, damit es genau das
+    /// Seitenverhältnis des Rasters hat und nichts gestreckt wird.
+    public static func diy(_ mass: Anzeigemass) -> Geraetezeichnung {
+        let zelle = 18.0, rand = 10.0
+        let feld = Rechteck(x: rand, y: rand, breite: Double(mass.breite) * zelle,
+                            hoehe: Double(mass.hoehe) * zelle)
+        let gehaeuse = Rechteck(x: 0, y: 0, breite: feld.breite + 2 * rand, hoehe: feld.hoehe + 2 * rand)
+        return Geraetezeichnung(
+            breite: gehaeuse.breite, hoehe: gehaeuse.hoehe,
+            feld: feld,
+            gehaeuse: gehaeuse, gehaeuseRadius: 4,
+            teile: [
+                .flaeche(gehaeuse, radius: 4, farbe: "#1B1D21"),
+                .flaeche(feld, radius: 2, farbe: "#0A0A0B"),
+            ],
+            // Wie bei der TC001: ein grobes Panel mit mitwachsender Fuge.
+            pixelstil: Pixelstil(luecke: .anteil(0.05), eckenAnteil: 0))
+    }
 }

@@ -24,6 +24,8 @@ struct VorschauView: View {
     /// Punkte je Pixel des Icons: 2, wenn die Uhr die Anzeige vergroessert
     /// zeichnet (`Geraeteschrift.masstab`).
     var iconMasstab: Int = 1
+    /// Das Modell der Uhr, wenn bekannt: wählt die Zeichnung (`Geraetezeichnung.fuer`).
+    var modell: Uhrmodell? = nil
     private var mass: Anzeigemass { Anzeigemass(breite: feld.breite, hoehe: feld.hoehe) }
     /// Volle 52×16-Einzelbilder, die `feld` und das Icon ersetzen statt sie zu
     /// ueberlagern — fuer die Laufschrift, die selbst schon das ganze Display
@@ -38,12 +40,12 @@ struct VorschauView: View {
 
     /// Wie ein einzelner Punkt gezeichnet wird — kommt aus derselben Quelle
     /// wie der Rahmen, damit grobes Panel und grober Punkt zusammenpassen.
-    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(mass).pixelstil }
+    private var pixelstil: Geraetezeichnung.Pixelstil { Geraetezeichnung.fuer(mass, modell: modell).pixelstil }
 
     var body: some View {
         // Das Pixelraster selbst (Groesse, Rasterung) bleibt unveraendert; der
         // Geraeterahmen legt sich nur darum, siehe `GeraeteRahmen` (TC002Ansichten).
-        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge, mass: mass) {
+        GeraeteRahmen(hoehe: Double(feld.hoehe) * kantenlaenge, mass: mass, modell: modell) {
             Group {
                 if let laufschriftBilder, !laufschriftBilder.isEmpty {
                     if laufschriftBilder.count > 1 {

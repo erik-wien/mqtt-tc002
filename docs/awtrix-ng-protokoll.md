@@ -23,6 +23,7 @@ Jede Angabe trägt ihre Herkunft:
 |---|---|---|
 | Ulanzi **TC002** | 52 × 16 | Linux (`boardType tc002`, `soc armv7l`) |
 | Ulanzi **TC001** | 32 × 8 | ESP32 |
+| selbstgebaute **ESP32-Uhr** (11.10.2026) | 32 × 8, bis 128 × 8 (`display.minWidth` 32, `maxWidth` 128) | ESP32, gleiche `platform.id` und `boardType` wie die TC001 |
 
 Was hier 🔬 trägt, gilt zunächst für das genannte Gerät und diesen einen Bau —
 steht keines dabei, ist es die TC002; was 📄 trägt, für die Firmware im

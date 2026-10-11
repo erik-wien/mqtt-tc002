@@ -33,6 +33,8 @@ geändert — und womöglich etwas in der App.
 | 8 | Uhr wird unerreichbar, bis sie stromlos war | `curl http://<adresse>/getBase` | ❌ |
 | 9 | das wirksame Präfix steht nirgends | in der Geräteoberfläche nachsehen | ❌ |
 | 10 | Platine ohne Batterie meldet `batteryPercent` 0 und rund 0,25 V | `GET /api/v1/device` einer Platine ohne Zelle | ❌ |
+| 11 | Platine ohne Fotowiderstand meldet `ldrRaw` 0, aber `sensors.light` `true` | `GET /api/v1/device` und `/capabilities` einer Platine ohne LDR | ❌ |
+| 12 | `audio.rtttl` ist `true`, auch ohne Lautsprecher | `/capabilities` einer Platine ohne Lautsprecher | ❌ |
 
 Die Nummern sind Bezeichner: Sie bleiben stehen, auch wenn ein Punkt keiner mehr
 ist — andere Dokumente verweisen darauf.
@@ -242,6 +244,41 @@ entfällt dann. Fehlt `batteryVoltage`, bleibt es bei der Anzeige.
 
 **Prüfung.** Bei einer neuen Firmware die Schlüssel einer Platine ohne Batterie
 ansehen; fehlen sie dort, ist der Umweg überflüssig.
+
+---
+
+## 11. Eine Platine ohne Fotowiderstand meldet `ldrRaw` 0, aber `sensors.light` `true`
+
+**Gemessen 11. Oktober 2026**, AWTRIX NG 1.2.2 auf ESP32 (`platform.id` `esp32`,
+`boardType` `awtrixng`): `capabilities.sensors.light` ist auf jedem ESP32 `true`,
+auch bei einer selbstgebauten Platine ohne Fotowiderstand. `GET /api/v1/device`
+liefert dort `ldrRaw` genau 0; eine TC001 meldet 281 oder 1454.
+
+**Was die App tut.** Bei einer Uhr, deren Modell „ESP32 (selbstgebaut)“ ist, gilt
+`ldrRaw` 0 als „kein Lichtsensor“ (`Geraetefaehigkeiten.mitAusstattung`): Der
+Schalter „Automatisch“ entfällt. Ein echter Sensor in völliger Dunkelheit könnte
+ebenfalls 0 lesen; deshalb gilt die Regel nur für den Eigenbau, nie für die TC001.
+Das Modell schlägt `Uhrmodell.vorschlag` aus Akku und `ldrRaw` vor.
+
+**Prüfung.** Bei einer neuen Firmware `sensors.light` einer Platine ohne
+Fotowiderstand ansehen; meldet sie dort `false`, ist der Umweg überflüssig.
+
+---
+
+## 12. `audio.rtttl` ist `true`, auch ohne Lautsprecher
+
+**Gemessen 11. Oktober 2026**, AWTRIX NG 1.2.2: `capabilities.audio.rtttl` ist
+auf einer selbstgebauten Platine ohne Lautsprecher `true`. Ob ein Lautsprecher
+dran ist, lässt sich weder aus den Fähigkeiten noch aus dem Gerätezustand
+ablesen.
+
+**Was die App tut.** Bei der selbstgebauten Uhr gibt es den Schalter
+„Lautsprecher“ (`Uhr.lautsprecher`, Vorgabe ein). Ist er aus, kann die Uhr keine
+Klangart (`Geraetefaehigkeiten.lautsprecher`): Die Klangbedienung entfällt, die
+Uhr bleibt beim Klangabgleich außen vor.
+
+**Prüfung.** Bei einer neuen Firmware die `audio`-Fähigkeiten einer Platine ohne
+Lautsprecher ansehen; melden sie dort `false`, kann der Schalter entfallen.
 
 ---
 

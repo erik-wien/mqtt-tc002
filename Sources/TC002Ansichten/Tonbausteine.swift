@@ -27,10 +27,7 @@ public struct Klangabschnitt: View {
     /// Die angesehene Uhr liefert die Namen; ob etwas spielbar ist, entscheiden die Zieluhren.
     private var uhr: Uhr? { zustand.referenzUhr }
     private var listen: Tonlisten? { uhr.flatMap { zustand.tonlisten[$0.id] } }
-    private var ziele: [Klangziel] {
-        let gewaehlt = zustand.ziele()
-        return (gewaehlt.isEmpty ? uhr.map { [$0] } ?? [] : gewaehlt).map(zustand.klangziel)
-    }
+    private var ziele: [Klangziel] { zustand.klangziele() }
     private func keineKann(_ wahl: Klangwahl) -> Bool {
         !ziele.isEmpty && Klangeignung.ohne(wahl, in: ziele).count == ziele.count
     }

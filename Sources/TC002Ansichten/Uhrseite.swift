@@ -79,6 +79,18 @@ private struct Uhrblatt: View {
                 Abschnittskopf("Betriebsart", hilfe: lok("Das Präfix ermittelt die App selbst: Es ist genau das in der Uhr eingestellte, und ist keines eingestellt, die Kennung der Uhr. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen."))
             }
 
+            Section {
+                Picker("Modell", selection: modell) {
+                    Text("Noch nicht bestimmt").tag(Uhrmodell?.none)
+                    ForEach(Uhrmodell.allCases, id: \.self) { m in
+                        Text(verbatim: m.bezeichnung).tag(Uhrmodell?.some(m))
+                    }
+                }
+                if uhr.modell == .esp32DIY { eigenbau }
+            } header: {
+                Abschnittskopf("Modell", hilfe: lok("Das Modell schlägt die App bei der ersten Abfrage vor; hier lässt es sich ändern. Es bestimmt, wie die Vorschau die Uhr zeichnet und, beim selbstgebauten ESP32, welche Bauteile angenommen werden."))
+            }
+
             // Die gespeicherten Einstellungen der Uhr, in Gruppen; was man jetzt
             // schalten will, steht in der Fernbedienung (Bereich „Uhr“).
             Section {
@@ -119,6 +131,53 @@ private struct Uhrblatt: View {
         }
         .task { await zustand.zustandAbfragen(uhr.id) }
         .uhrentfernenRueckfrage(zeigt: $fragtEntfernen, zustand: zustand, id: uhr.id)
+    }
+
+    /// Die selbstgebaute Uhr: der Lautsprecher lässt sich nicht erkennen und
+    /// wird deshalb angegeben; die übrigen Bauteile liest die App aus den
+    /// Antworten der Uhr (`Ausstattung`) und zeigt sie nur an.
+    @ViewBuilder
+    private var eigenbau: some View {
+        Toggle("Lautsprecher", isOn: lautsprecher)
+        Text("Ob ein Lautsprecher dran ist, lässt sich nicht erkennen. Ohne ihn verschwinden alle Klangfunktionen für diese Uhr.")
+            .font(kanon.fussnote).foregroundStyle(.secondary)
+        let a = Ausstattung(uhr: uhr, zustand: zustand.geraetezustand[uhr.id],
+                            faehigkeiten: zustand.faehigkeiten[uhr.id])
+        Text("Ausstattung").font(.subheadline.weight(.semibold))
+        LabeledContent("Display") { Text(verbatim: "\(a.anzeige.breite) × \(a.anzeige.hoehe)") }
+        ausstattungszeile(lok("Akku"), a.akku)
+        ausstattungszeile(lok("Lichtsensor"), a.lichtsensor)
+        ausstattungszeile(lok("Temperatur"), a.temperatur)
+        ausstattungszeile(lok("Feuchte"), a.feuchte)
+        ausstattungszeile(lok("MP3-Player"), a.mp3Player)
+    }
+
+    private func ausstattungszeile(_ titel: String, _ vorhanden: Bool?) -> some View {
+        LabeledContent {
+            Text(verbatim: vorhanden.map { $0 ? lok("ja") : lok("nein") } ?? "–")
+                .foregroundStyle(.secondary)
+        } label: {
+            Text(verbatim: titel)
+        }
+    }
+
+    /// `Uhr.modell` ist ein `Optional`: `nil` heißt „noch nicht bestimmt".
+    private var modell: Binding<Uhrmodell?> {
+        Binding(get: { uhr.modell },
+                set: { neu in
+                    guard neu != uhr.modell else { return }
+                    uhr.modell = neu
+                    zustand.ausstattungGeaendert(uhr.id)
+                })
+    }
+
+    /// `Uhr.lautsprecher` ist ein `Optional`, `nil` heißt „ja".
+    private var lautsprecher: Binding<Bool> {
+        Binding(get: { uhr.hatLautsprecher },
+                set: { an in
+                    uhr.lautsprecher = an ? nil : false
+                    zustand.ausstattungGeaendert(uhr.id)
+                })
     }
 
     /// Das Themenpraefix ist eine Auskunft, kein Feld — und nur im

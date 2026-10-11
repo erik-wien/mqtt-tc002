@@ -88,6 +88,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
+                + HilfeInhalt.uhrmodell
                 + HilfeInhalt.uhrEntfernen
                 + HilfeInhalt.brokerEintragen
                 + HilfeInhalt.brokerNurFuerMqtt

@@ -101,6 +101,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
                 + HilfeInhalt.geraeteart
+                + HilfeInhalt.uhrmodell
                 + [
                     .absatz("Ändert man die Adresse einer eingetragenen Uhr, verwirft die App Präfix, MAC und Verbindungsstand; die Zeile der Uhr zeigt dann wieder „noch nicht abgefragt“: die neue Adresse gehört womöglich zu einer anderen Uhr, und das alte Präfix wäre dann das falsche Thema. Nach einer Adressänderung also erneut „Abfragen“."),
                 ]

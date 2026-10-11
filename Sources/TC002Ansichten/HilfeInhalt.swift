@@ -73,6 +73,15 @@ public enum HilfeInhalt {
         .absatz("Die fünf Blöcke unter der Vorschau zeigen dasselbe wie die Vorschau. Ob ein Platz belegt ist, weiß er genau: Die Uhr nennt zu jeder Anzeige, wer sie abgelegt hat."),
     ]
 
+    /// Das Modell einer Uhr und der Lautsprecherschalter der selbstgebauten
+    /// ESP32-Uhr (`Uhrmodell`, `Uhr.hatLautsprecher`). Gilt für beide
+    /// Oberflächen: Die Seite jeder Uhr ist dieselbe.
+    public static let uhrmodell: [Hilfebaustein] = [
+        .untertitel("Modell und Lautsprecher"),
+        .absatz("Auf der Seite jeder Uhr steht ihr **Modell**: Ulanzi TC002, Ulanzi TC001 oder ESP32 (selbstgebaut). Die App schlägt es bei der ersten Abfrage vor und erkennt eine TC001 an Akku und Lichtsensor, jeden anderen ESP32 hält sie für einen Eigenbau. Du kannst es ändern; eine Wahl überschreibt die App nie. Das Modell bestimmt, wie die Vorschau die Uhr zeichnet."),
+        .absatz("Bei einem selbstgebauten ESP32 zeigt die Seite zusätzlich die **Ausstattung**, wie die Uhr sie meldet: Display, Akku, Lichtsensor, Temperatur, Feuchte und MP3-Player. Nur den Lautsprecher kann die App nicht erkennen; dafür gibt es den Schalter „Lautsprecher“. Ist er aus, verschwinden für diese Uhr alle Klangfunktionen, und sie wird beim Abgleich der Klangsammlung übersprungen. Ohne Lichtsensor fehlt der Schalter „Automatisch“ bei der Helligkeit. Ein Lichtsensor in völliger Dunkelheit kann bei einer selbstgebauten Uhr als fehlend erscheinen, weil er dann 0 meldet."),
+    ]
+
     /// Die Ueberschrift des Brokerabschnitts und was darunter steht. Beide
     /// Hilfen fuehren denselben Satz; als Konstante ist es ein
     /// Uebersetzungsschluessel statt zweier.

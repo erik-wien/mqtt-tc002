@@ -247,7 +247,8 @@ struct SendeniOS: View {
             VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
                         icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
                         laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames,
-                        iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: 8, mass: uhrmass) : 1)
+                        iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: 8, mass: uhrmass) : 1,
+                        modell: uhr.modell)
             if let hinweis = optionen.verkleinerungshinweis(uhr: uhr.name, mass: uhrmass) {
                 Text(hinweis)
                     .font(.caption)

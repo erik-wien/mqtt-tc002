@@ -23,6 +23,7 @@ Every statement carries its provenance:
 |---|---|---|
 | Ulanzi **TC002** | 52 × 16 | Linux (`boardType tc002`, `soc armv7l`) |
 | Ulanzi **TC001** | 32 × 8 | ESP32 |
+| self-built **ESP32 clock** (11 Oct 2026) | 32 × 8, up to 128 × 8 (`display.minWidth` 32, `maxWidth` 128) | ESP32, same `platform.id` and `boardType` as the TC001 |
 
 What carries 🔬 holds, to begin with, for the named device and that one build —
 where none is named, it is the TC002; what carries 📄 holds for the firmware in

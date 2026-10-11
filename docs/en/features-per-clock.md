@@ -36,7 +36,8 @@ row disappears (`Uhrgruppe.sichtbar`).
   <https://blueforcer.github.io/awtrix-ng/esp32/>; TC002 rows: the `/tc002/`
   branch), ❓ not measured.
 - Models: **TC002** = 52 × 16, `platform.id` `tc002`; **TC001** = 32 × 8,
-  `platform.id` `esp32`. Both on AWTRIX NG 1.2.2.
+  `platform.id` `esp32`. Both on AWTRIX NG 1.2.2. **ESP32 DIY** = self-built
+  clock, 32 to 128 × 8, `platform.id` `esp32` (own section below).
 - Interface: **Mac/iPad** = desktop interface (remote control = the "Uhr"
   area, sidebar, inspector), **iPhone** = "Steuerung" sheet and send view,
   **CLI** = `mqtttc002`. "all" = all three.
@@ -97,6 +98,38 @@ A sound kind is allowed if the clock's `audio.<switch>` is `true`
 | MQTT over TLS, upload CA | yes (`mqttTls` `true`) | no (`mqttTls` absent) | 🔬 10 Oct 2026 | `capabilities.mqttTls`; group "Verschlüsselung" only when `true` | Mac/iPad, iPhone (clock settings), CLI `tls` |
 | `enlargeApps` | yes, not writable | does not exist | 🔬 9 Oct 2026 | the app rasterises every image for the display size; the setting is never written (`Geraeteeinstellung.schreibbar`) | – |
 | Virtual clock | TC002 mode (default) | `NGTon.tc001`: the measured key set (no `layout`, `layouts`, `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps`; display 32 × 8; settings without `clockFace`, `bootSound`, `enlargeApps`) | 🔬 10 Oct 2026 | `NGTon.istTC001`, `VirtuelleNGUhr.faehigkeitenantwort/einstellungenantwort` | Mac/iPad, iPhone (settings), tests |
+
+## ESP32 DIY (self-built clock)
+
+Self-build with AWTRIX NG 1.2.2 on ESP32 (11 October 2026): `platform.id`
+`esp32` and `boardType` `awtrixng` as on the TC001, display 32 to 128 × 8
+(`capabilities.display`: `configurable` `true`, `minWidth` 32, `maxWidth` 128,
+`minHeight` 8, `maxHeight` 8), currently 32 × 8. `Uhr.modell` holds the model
+(`Uhrmodell`: `tc002`, `tc001`, `esp32DIY`; `nil` = not yet determined).
+
+**Detection** (`Uhrmodell.vorschlag`, on "Abfragen", only while no model is
+stored; the user changes it on the clock page, a choice stays):
+
+| The clock's answer | Model |
+|---|---|
+| `platform.id` `tc002` | TC002 |
+| `esp32`, battery (`Geraetezustand.hatBatterie`) **and** `ldrRaw` above 0 | TC001 |
+| any other `esp32` | ESP32 DIY |
+| otherwise, or device state/`ldrRaw` missing | undetermined |
+
+`capabilities.sensors.light` is `true` on every ESP32 and decides nothing.
+
+| Feature | ESP32 DIY | Source | How the app decides | Interface |
+|---|---|---|---|---|
+| Display | 32…128 × 8, from `display.width/height` | 🔬 11 Oct 2026 | `Uhr.anzeigemass`; drawing `Geraetezeichnung.diy` (panel without housing, width follows the field) | all |
+| Battery | only with a cell (below 2.0 V none) | 🔬 11 Oct 2026 | `Geraetezustand.hatBatterie` | remote, CLI `zustand`; equipment on the clock page |
+| Light sensor / "Automatisch" | only if `ldrRaw` is above 0; `ldrRaw` 0 = no photoresistor | 🔬 11 Oct 2026 | `Geraetefaehigkeiten.mitAusstattung` sets `ohneLichtmessung`; self-build only (a real sensor in total darkness could read 0), never the TC001 | as TC001 |
+| Temperature, humidity | only with a sensor (`temperature`/`humidity` in `/api/v1/device`) | 🔬 11 Oct 2026 | the app shows neither; they appear in the equipment list on the clock page | clock page |
+| MP3 player (DFPlayer) | the clock's `audio.mp3` | 🔬 11 Oct 2026 | `audio.mp3` counts (it reflects playback); `/api/v1/system` `dfplayer` is not read | as TC001 |
+| Speaker | **cannot be detected** (`audio.rtttl` is `true` even without one) | 🔬 11 Oct 2026 | "Speaker" switch (`Uhr.lautsprecher`, nil = on); off = `Geraetefaehigkeiten.lautsprecher` `false`, `ton` empty, `kann(_:)` `false` for every sound type | clock page |
+| Sound without a speaker | none | – | "Ton" section of the remote, the message's sound button (`AppZustand.klangMoeglich`, `Klangeignung.keinKlang`), the clock's sound settings, "Probehören"; not in the sound sync (app and `ton abgleichen`); CLI `ton spielen` prints a note and skips, `nachricht --rtttl` sends without sound; several targets: stays if one clock can | all |
+| Sound sync per clock | selectable | – | `Uhr.klangAbgleich` (nil = included); clocks without a speaker do not appear; `ton abgleichen` without `--an` honours it, with `--an` the named clock is synced, skipped with a note if it has no speaker | Mac/iPad, iPhone (Settings › Sounds), CLI |
+| Layouts, rotary knob | no (as TC001) | 🔬 | `capabilities.layout` absent, `platform.id` `esp32` | as TC001 |
 
 ## Deviations
 

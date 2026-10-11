@@ -139,7 +139,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
                 var eigene = bo
                 if !bo.klang.isEmpty, !ziel.host.isEmpty {
                     let g = Geraet(host: ziel.host)
-                    let caps = (try? g.faehigkeiten()) ?? nil
+                    let caps = (try? g.faehigkeiten(fuer: ziel)) ?? nil
                     let listen = (try? g.melodien()).map { Tonlisten(melodien: $0.namen, mp3: (try? g.mp3Dateien())?.namen ?? []) }
                     let verteilung = Klangeignung.verteilen(bo.klang, an: [Klangziel(id: ziel.id, name: ziel.name,
                                                                                     faehigkeiten: caps, listen: listen)])

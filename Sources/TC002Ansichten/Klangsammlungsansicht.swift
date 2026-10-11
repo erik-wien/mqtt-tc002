@@ -18,7 +18,6 @@ public struct Klangsammlungsansicht: View {
     @State private var umzubenennen: Sammlungsklang?
     @State private var uebernahme: String?
     @State private var uebernimmt = false
-    @State private var abgleichZiele: Set<UUID>?
     @State private var gleichtAb = false
     @State private var ergebnisse: [Uhrenabgleich] = []
 
@@ -28,10 +27,10 @@ public struct Klangsammlungsansicht: View {
     }
 
     private var klaenge: [Sammlungsklang] { zustand.klaenge() }
-    private var uhrenMitAdresse: [Uhr] { zustand.uhren.filter { !$0.host.isEmpty } }
-    private var gewaehlteUhren: Set<UUID> {
-        abgleichZiele ?? Set(uhrenMitAdresse.map(\.id))
-    }
+    /// Uhren, die Klang haben können: mit Adresse und, bei der selbstgebauten
+    /// Uhr, mit Lautsprecher (`Uhr.hatLautsprecher`). Die anderen kommen hier
+    /// nicht vor.
+    private var uhrenMitAdresse: [Uhr] { zustand.uhren.filter { !$0.host.isEmpty && $0.hatLautsprecher } }
 
     public var body: some View {
         Form {
@@ -145,12 +144,13 @@ public struct Klangsammlungsansicht: View {
                     .font(kanon.fussnote).foregroundStyle(.secondary)
             }
             ForEach(uhrenMitAdresse) { uhr in
+                // Die Wahl liegt an der Uhr (`Uhr.klangAbgleich`), damit auch
+                // `mqtttc002 ton abgleichen` sie kennt.
                 Toggle(isOn: Binding(
-                    get: { gewaehlteUhren.contains(uhr.id) },
+                    get: { uhr.gleichtKlaengeAb },
                     set: { an in
-                        var neu = gewaehlteUhren
-                        if an { neu.insert(uhr.id) } else { neu.remove(uhr.id) }
-                        abgleichZiele = neu
+                        guard let i = zustand.uhren.firstIndex(where: { $0.id == uhr.id }) else { return }
+                        zustand.uhren[i].klangAbgleich = an ? nil : false
                     })) {
                     Text(verbatim: uhr.name)
                 }
@@ -158,7 +158,7 @@ public struct Klangsammlungsansicht: View {
             HStack {
                 Button("Mit Uhren abgleichen") { Task { await abgleichen() } }
                     .knopfBefehl()
-                    .disabled(gleichtAb || klaenge.isEmpty || gewaehlteUhren.isEmpty)
+                    .disabled(gleichtAb || klaenge.isEmpty || abgleichIDs.isEmpty)
                 if gleichtAb { ProgressView().controlSize(.small) }
             }
             Text("Fehlendes kommt auf die Uhr, Abweichendes wird ersetzt. Was nur auf der Uhr liegt, bleibt dort.")
@@ -209,11 +209,12 @@ public struct Klangsammlungsansicht: View {
         uebernahme = lokf("Von „%@“: ", uhr.name) + teile.joined(separator: " · ")
     }
 
+    private var abgleichIDs: [UUID] { uhrenMitAdresse.filter(\.gleichtKlaengeAb).map(\.id) }
+
     private func abgleichen() async {
         gleichtAb = true
         defer { gleichtAb = false }
-        let ids = uhrenMitAdresse.map(\.id).filter { gewaehlteUhren.contains($0) }
-        ergebnisse = await zustand.klaengeAbgleichen(mit: ids)
+        ergebnisse = await zustand.klaengeAbgleichen(mit: abgleichIDs)
     }
 }
 
