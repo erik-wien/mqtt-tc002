@@ -82,6 +82,7 @@ public struct Uhrenliste: View {
                 HStack(spacing: 6) {
                     Text(uhr.name)
                     Erreichbarkeitszeichen(zustand: zustand, id: uhr.id)
+                    Firmwarezeichen(zustand: zustand, id: uhr.id)
                 }
                 Text(Uhrenliste.kennzeile(uhr))
                     .font(kanon.fussnote).foregroundStyle(.secondary)

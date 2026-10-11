@@ -1037,7 +1037,7 @@ public final class AppZustand {
         // dort, wo es hingehoert.
         Task { [weak self] in
             do {
-                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [Inventareintrag]?, Geraetefaehigkeiten?) in
+                let geholt = try await Hintergrund.lauf { () throws -> (String, String, (breite: Int, hoehe: Int)?, Bool?, String?, [Inventareintrag]?, Geraetefaehigkeiten?, Geraetezustand?) in
                     let geraet = Geraet(host: host, sitzung: sitzung)
                     // In einem Zug: Praefix, MAC und Anzeigemass.
                     //
@@ -1059,9 +1059,12 @@ public final class AppZustand {
                     // Praefix und Verbindungsstand noch lange nicht gescheitert.
                     let namen = try? geraet.anzeigeninventar()
                     let listen = (try? geraet.faehigkeiten()) ?? nil
-                    return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen, listen)
+                    // Die Firmware-Fassung steht im Gerätezustand; ohne ihn bleibt
+                    // der Hinweis aus (`Firmwarestand`).
+                    let geraetAntwort = try? geraet.geraetezustand()
+                    return (ergebnis.praefix, ergebnis.mac, ergebnis.mass, stand?.steht, stand?.grund, namen, listen, geraetAntwort)
                 }
-                let (praefix, mac, mass, steht, grund, namen, listen) = geholt
+                let (praefix, mac, mass, steht, grund, namen, listen, geraetStand) = geholt
                 do {
                     guard let self, self.abfrageLauf[id] == lauf else { return }
                     guard let i = self.uhren.firstIndex(where: { $0.id == id }) else { return }
@@ -1082,6 +1085,7 @@ public final class AppZustand {
                     self.verbunden[id] = steht
                     // Eine Antwort ohne Listen lässt die bekannten stehen.
                     if let listen { self.faehigkeiten[id] = listen }
+                    if let geraetStand { self.geraetezustand[id] = geraetStand }
                     // Der Grund steht nur da, wenn es einen gibt.
                     self.erreichbar[id] = true
                     self.brokergrund[id] = grund

@@ -147,6 +147,7 @@ public enum HilfeInhalt {
         .absatz("Das Zeichen neben dem Präfix sagt, ob die Uhr gerade beim Broker angemeldet ist. Ein Warndreieck heißt: ist sie nicht. Die Uhr nennt dann auch den Grund — „badCredentials“ etwa heißt, dass Benutzer und Kennwort, die **in der Uhr** eingetragen sind, der Broker nicht annimmt; die Angaben dieser App sind davon unberührt."),
 
         .absatz("Antwortet eine Uhr auf die letzte Abfrage gar nicht, steht ein rotes Zeichen neben ihrem Namen — in der Uhrenliste und in der Uhrenwahl. Ein Fenster kommt dafür nicht: Eine stumme Uhr ist kein Fehler, den jemand wegklicken müsste. Sie ist aus, sie steht woanders, das WLAN schläft."),
+        .absatz("Meldet eine Uhr eine ältere Firmware, als die App kennt (AWTRIX NG 1.2.2), steht neben ihrem Namen in der Uhrenliste ein orangefarbenes Zeichen, und die Uhrenseite sowie die Fernbedienung nennen den Grund: Ältere Fassungen melden ihre Fähigkeiten unvollständig, und die App behandelt solche Uhren dann falsch. Es ist ein Hinweis, gesperrt wird nichts. Aktualisieren lässt sich über die Weboberfläche der Uhr (Update) oder den Web-Installer von AWTRIX NG; danach „Abfragen“ drücken."),
 
         .ueberschrift("Die Web-Oberfläche der Uhr"),
         .absatz("„Konfigurieren“ öffnet die Web-Oberfläche der Uhr im Browser. Dort steht alles, was diese App nicht einstellt: WLAN, Helligkeit, die eingebauten Anzeigen, der MQTT-Broker samt Präfix."),

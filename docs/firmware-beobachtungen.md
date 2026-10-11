@@ -269,6 +269,18 @@ jeweils in der Gerätereferenz §7.
 
 ---
 
+## AWTRIX NG 1.1.0 meldet sich unvollständig
+
+Gemessen am 11. Oktober 2026 an zwei selbstgebauten ESP32-Uhren: Unter 1.1.0
+fehlen in `/api/v1/capabilities` `platform`, `display`, `fonts` und `sensors`,
+das Audio steht als `{"buzzer":true, …}` statt `rtttl`, und die Einstellungen
+heißen anders (`buzzerVolume`, `mp3Volume`, `soundEnabled`); `/api/v1/device`
+kennt kein `updateImage`. Nach dem Update auf 1.2.2 stimmte alles. Die App
+zeigt darum bei einer älteren Fassung als 1.2.2 einen Hinweis zum Aktualisieren
+(`Firmwarestand`).
+
+---
+
 ## Wo es eine neue Firmware gäbe
 
 Das Herstellerrepository

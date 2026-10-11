@@ -101,6 +101,7 @@ private struct Uhrblatt: View {
                 }
                 Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                 Brokergrund(grund: zustand.brokergrund[uhr.id])
+                Firmwarewarnung(zustand: zustand, id: uhr.id, kanon: kanon)
                 Uhrlink(host: uhr.host)
             }
 

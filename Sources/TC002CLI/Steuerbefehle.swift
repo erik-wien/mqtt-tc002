@@ -94,6 +94,7 @@ private func verbindung(_ v: Verbindungsstand?) -> String {
 private func zustandAusgeben(_ z: Geraetezustand) {
     func zeile(_ name: String, _ wert: String?) { print("\(name)\t\(Terminaltext.sicher(wert ?? "—"))") }
     zeile(lok("Fassung"), z.fassung)
+    if let hinweis = z.firmwarehinweis { zeile(lok("Hinweis"), hinweis.volltext) }
     zeile(lok("Platine"), z.platine)
     zeile(lok("Display"), aus(z.panelAn))
     zeile(lok("Helligkeit"), z.helligkeit.map(String.init))

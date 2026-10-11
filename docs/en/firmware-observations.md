@@ -248,6 +248,17 @@ occasion to settle them. The checks are described in device reference §7.
 
 ---
 
+## AWTRIX NG 1.1.0 reports itself incompletely
+
+Measured on 11 October 2026 on two self-built ESP32 clocks: under 1.1.0
+`/api/v1/capabilities` lacks `platform`, `display`, `fonts` and `sensors`,
+audio is `{"buzzer":true, …}` instead of `rtttl`, and the settings keys differ
+(`buzzerVolume`, `mp3Volume`, `soundEnabled`); `/api/v1/device` has no
+`updateImage`. After updating to 1.2.2 everything matched. The app therefore
+shows an update hint for any version older than 1.2.2 (`Firmwarestand`).
+
+---
+
 ## Where a new firmware would appear
 
 The vendor repository

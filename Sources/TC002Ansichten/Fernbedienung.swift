@@ -147,6 +147,7 @@ private struct Steuerseite: View {
     private var zustandsabschnitt: some View {
         Section {
             LabeledContent("Gerät") { Text(verbatim: geraetetext) }
+            Firmwarewarnung(zustand: zustand, id: id, kanon: kanon)
             LabeledContent("Aktive Anzeige") {
                 HStack(spacing: 10) {
                     Text(verbatim: zustand.aktiveAnzeige[id] ?? "—")
