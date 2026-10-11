@@ -332,6 +332,9 @@ public enum Meldungsbau {
         let o = o.angepasst(an: mass)
         guard let tinte = Textraster.tintenZeilen(puffer(o, mass: mass)) else { return 0 }
         let hoehe = tinte.letzte - tinte.erste + 1
+        // Ragt die Tinte ueber das Feld hinaus (Unterlaengen), bleibt sie oben
+        // buendig: Abgeschnitten wird die Unterlaenge, nicht die Versalie.
+        if hoehe > mass.hoehe { return -tinte.erste }
         // Mehr Rand, als Platz da ist, gaebe es nicht — dann bliebe nur
         // Abschneiden, und das will niemand.
         let r = min(o.rand, max(0, (mass.hoehe - hoehe) / 2))
