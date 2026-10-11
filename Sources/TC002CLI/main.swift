@@ -108,6 +108,8 @@ KLANG
   ersetzt abweichende (Melodie: anderer Text; MP3: andere Groesse). Was nur auf der Uhr liegt,
   bleibt. Uebersprungen wird, was die Uhr nicht kann (TC001: keine MP3) oder was nicht
   mehr hineinpasst; die Ausgabe nennt je Uhr hinzugefuegt, ersetzt, uebersprungen, unveraendert.
+  Ohne --an gleicht es die Uhren ab, die in der App unter "Klaenge" zum Abgleich gewaehlt sind;
+  eine Uhr ohne Lautsprecher (Eigenbau) bekommt nie Klaenge, auch nicht mit --an.
   Importieren in die Sammlung geht nur in der App; das Werkzeug liest sie nur.
   An "nachricht" haengt --klang <Name|Adresse>, --lied "<Text>", --rtttl "<Text>" oder
   --sprache "<Text>" (mit --wiederholen) einen Ton an, der beim Erscheinen spielt; ein Sender geht dort nicht.
