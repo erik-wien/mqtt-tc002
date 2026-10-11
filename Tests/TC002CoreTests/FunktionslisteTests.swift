@@ -184,4 +184,55 @@ final class FunktionslisteTests: XCTestCase {
         for schluessel in ["clockFace", "bootSound", "enlargeApps"] { XCTAssertNil(einstellungen[schluessel], schluessel) }
         XCTAssertNotNil(einstellungen["volume"])
     }
+
+    // MARK: - ESP32 DIY
+
+    /// Die Eigenbauuhr (gemessen 11. Oktober 2026, NG 1.2.2): dieselbe Antwort
+    /// wie die TC001 (`platform.id` `esp32`, `sensors.light` `true`,
+    /// `audio.rtttl` `true`), aber ohne Akku, Fotowiderstand und Fühler. Die
+    /// Spalte „ESP32 DIY“ der Tabelle in `docs/funktionen-je-uhr.md`.
+    private static let diyZustand = #"{"boardType":"awtrixng","batteryVoltage":0.25,"batteryPercent":0,"ldrRaw":0}"#
+
+    func testDieSpalteESP32DIYOhneLautsprecher() throws {
+        let uhr = Uhr(name: "Bastel", host: "h", panelbreite: 64, panelhoehe: 8, modell: .esp32DIY, lautsprecher: false)
+        let zustand = try Geraetezustand(daten: Data(Self.diyZustand.utf8))
+        let roh = try faehigkeiten(Self.tc001Antwort)
+        XCTAssertEqual(Uhrmodell.vorschlag(faehigkeiten: roh, zustand: zustand), .esp32DIY)
+        let f = roh.mitAusstattung(fuer: uhr, zustand: zustand)
+
+        // Klang: nichts, auch nicht, was die Antwort der Uhr verspricht.
+        for art in Klangart.allCases { XCTAssertFalse(f.kann(art), "\(art)") }
+        XCTAssertFalse(Klangeignung.mp3Hochladbar(f))
+        XCTAssertFalse(Klangwahl(art: .uhr).gekonnt(von: f))
+        XCTAssertFalse(Geraeteeinstellung.volume.wirkt(faehigkeiten: f))
+        XCTAssertTrue(Klangeignung.keinKlang(in: [Klangziel(id: uhr.id, name: uhr.name, faehigkeiten: f)]))
+        XCTAssertFalse(uhr.gleichtKlaengeAb)
+        // Kein Lichtsensor, also keine Automatik.
+        XCTAssertFalse(f.lichtsensor)
+        XCTAssertFalse(Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: f))
+        // Keine Batterie, kein Fühler.
+        XCTAssertFalse(zustand.hatBatterie)
+        XCTAssertNil(zustand.batterieAnzeige)
+        XCTAssertNil(zustand.temperatur)
+        XCTAssertNil(zustand.feuchte)
+        // Das Maß folgt der gemeldeten Breite.
+        XCTAssertEqual(Anzeigemass.fuer(uhr), Anzeigemass(breite: 64, hoehe: 8))
+        // Der Rest bleibt, was die Antwort sagt: Weder Drehknopf noch Layouts.
+        XCTAssertFalse(f.hatDrehknopf)
+        XCTAssertEqual(f.layoutUnterstuetzt, false)
+    }
+
+    func testDieSpalteESP32DIYMitLautsprecherUndSensoren() throws {
+        let uhr = Uhr(name: "Bastel", host: "h", modell: .esp32DIY)
+        let zustand = try Geraetezustand(daten: Data(#"{"batteryVoltage":3.9,"ldrRaw":900,"temperature":21.4,"humidity":37}"#.utf8))
+        let f = try faehigkeiten(Self.tc001Antwort).mitAusstattung(fuer: uhr, zustand: zustand)
+        XCTAssertTrue(f.kann(.melodie))
+        XCTAssertTrue(f.kann(.rtttl))
+        XCTAssertFalse(f.kann(.mp3), "audio.mp3 der Uhr: ohne DFPlayer false")
+        XCTAssertTrue(f.lichtsensor)
+        XCTAssertTrue(Geraeteeinstellung.autoBrightness.wirkt(faehigkeiten: f))
+        XCTAssertTrue(zustand.hatBatterie)
+        XCTAssertEqual(zustand.temperatur, 21.4)
+        XCTAssertEqual(zustand.feuchte, 37)
+    }
 }

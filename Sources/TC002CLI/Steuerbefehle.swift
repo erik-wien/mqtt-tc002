@@ -164,7 +164,7 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         }
     }
     func faehigkeiten(_ uhr: Uhr) -> Geraetefaehigkeiten? {
-        uhr.host.isEmpty ? nil : ((try? Geraet(host: uhr.host).faehigkeiten()) ?? nil)
+        uhr.host.isEmpty ? nil : ((try? Geraet(host: uhr.host).faehigkeiten(fuer: uhr)) ?? nil)
     }
 
     switch optionen.befehl {
@@ -223,6 +223,7 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
                     json: try Klangbau.spielen([klang])); return true
         }
         try anAlle(lok("Klang gesendet")) { anzeigen, uhr in
+            guard uhr.hatLautsprecher else { fehlerAusgeben(Tonhinweise.ohneLautsprecher(uhr.name)); return }
             let caps = faehigkeiten(uhr)
             try klaengePruefen([klang], anzeigen: anzeigen, faehigkeiten: caps)
             try anzeigen.tonSpielen([klang], faehigkeiten: caps)
@@ -295,6 +296,10 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
         }
         var fehler: [String] = []
         for uhr in gewaehlte {
+            // Ohne Lautsprecher gibt es nichts abzugleichen; ohne „--an“ fehlt
+            // außerdem, wer in der App vom Abgleich abgewählt wurde.
+            guard uhr.hatLautsprecher else { fehlerAusgeben(Tonhinweise.ohneLautsprecher(uhr.name)); continue }
+            if optionen.ziele.isEmpty, !uhr.gleichtKlaengeAb { continue }
             guard !uhr.host.isEmpty else { fehler.append(lokf("%@: keine Adresse", uhr.name)); continue }
             let e = Klangabgleich.abgleichen(sammlung: bestand, geraet: Geraet(host: uhr.host), uhrname: uhr.name,
                                              faehigkeiten: faehigkeiten(uhr), trocken: optionen.trocken)

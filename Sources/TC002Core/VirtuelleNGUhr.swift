@@ -138,6 +138,14 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var lichtsensor = false
     /// Was der Sensor als Panelhelligkeit ergibt, 0–255.
     public var sensorHelligkeit = 32
+    /// Das Raster, das `display/screen` liefert und auf dem `bildschirm` zeichnet.
+    /// Vorgabe 52 × 16; für eine selbstgebaute Uhr (32…128 × 8) lassen sie sich
+    /// ändern. Annahme: Mit dem Satz der TC001 (`NGTon.tc001`, ohne Vergrößerung)
+    /// füllt ein GIF in voller Anzeigegröße die Anzeige. Nicht mitgewachsen sind
+    /// `layout` (rechnet weiter auf 52 × 16, die ESP32-Uhr kennt keines) und die
+    /// Ansicht der virtuellen Uhr.
+    public var anzeigebreite = VirtuelleNGUhr.breite
+    public var anzeigehoehe = VirtuelleNGUhr.hoehe
 
     public init() {
         einstellungen = VirtuelleNGUhr.vorgabeEinstellungen
@@ -423,7 +431,7 @@ public enum VirtuelleNGUhr {
     /// `<P>/state/screen` (§7.3).
     public static func bildschirmantwort(_ z: NGUhrzustand) -> Data {
         let punkte = bildschirm(z).map(String.init).joined(separator: ",")
-        return Data(#"{"width":\#(breite),"height":\#(hoehe),"pixels":[\#(punkte)]}"#.utf8)
+        return Data(#"{"width":\#(z.anzeigebreite),"height":\#(z.anzeigehoehe),"pixels":[\#(punkte)]}"#.utf8)
     }
 
     /// Was die Uhr gerade zeigt: `breite × hoehe` gepackte RGB-Werte,
@@ -441,6 +449,7 @@ public enum VirtuelleNGUhr {
     /// Bild schwarz, und ein Moodlight füllt es mit seiner Farbe (ohne
     /// Helligkeit, wie bei den Apps).
     public static func bildschirm(_ z: NGUhrzustand) -> [Int] {
+        let breite = z.anzeigebreite, hoehe = z.anzeigehoehe
         var bild = Brett(breite: breite, hoehe: hoehe)
         if !z.power { return bild.punkte }
         if let licht = z.moodlight {
@@ -484,7 +493,8 @@ public enum VirtuelleNGUhr {
         // vollen 52 × 16 (§1.1; gemessen 09.10.2026), das Bild sitzt mittig.
         // Kleinere Icons zeichnet die Emulation nicht. Das erste Bild genuegt.
         if case .text(let uri)? = nutzlast["icon"], let g = gifBild(uri),
-           g.breite > breite / faktor || g.hoehe > hoehe / faktor {
+           g.breite > breite / faktor || g.hoehe > hoehe / faktor
+            || (g.breite == breite && g.hoehe == hoehe) {
             let ox = (breite - g.breite) / 2, oy = (hoehe - g.hoehe) / 2
             for y in 0..<g.hoehe {
                 for x in 0..<g.breite { bild.setze(ox + x, oy + y, g.punkte[y * g.breite + x]) }

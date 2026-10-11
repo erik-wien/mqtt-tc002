@@ -1081,11 +1081,17 @@ public final class AppZustand {
                         aktualisiert.panelbreite = mass.breite
                         aktualisiert.panelhoehe = mass.hoehe
                     }
+                    // Das Modell nur vorschlagen, wo noch keines steht: Eine
+                    // Wahl des Nutzers bleibt, wie oft auch abgefragt wird.
+                    if aktualisiert.modell == nil {
+                        aktualisiert.modell = Uhrmodell.vorschlag(faehigkeiten: listen, zustand: geraetStand)
+                    }
                     if aktualisiert != self.uhren[i] { self.uhren[i] = aktualisiert }
                     self.verbunden[id] = steht
                     // Eine Antwort ohne Listen lässt die bekannten stehen.
                     if let listen { self.faehigkeiten[id] = listen }
                     if let geraetStand { self.geraetezustand[id] = geraetStand }
+                    self.ausstattungAnwenden(id)
                     // Der Grund steht nur da, wenn es einen gibt.
                     self.erreichbar[id] = true
                     self.brokergrund[id] = grund
@@ -1591,9 +1597,22 @@ public final class AppZustand {
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
     }
 
+    /// Die Zieluhren für Klang: die gewählten, ohne Wahl die angesehene.
+    public func klangziele() -> [Klangziel] {
+        let gewaehlt = ziele()
+        return (gewaehlt.isEmpty ? referenzUhr.map { [$0] } ?? [] : gewaehlt).map(klangziel)
+    }
+
+    /// Ob für diese Ziele Klang überhaupt vorkommt (`Klangeignung.keinKlang`).
+    public var klangMoeglich: Bool { !Klangeignung.keinKlang(in: klangziele()) }
+
     /// Was `Klangeignung` über eine Uhr wissen muss.
     public func klangziel(_ uhr: Uhr) -> Klangziel {
-        Klangziel(id: uhr.id, name: uhr.name, faehigkeiten: faehigkeiten[uhr.id], listen: tonlisten[uhr.id])
+        // Ohne Auskunft der Uhr gilt sie als fähig, außer der Nutzer hat ihren
+        // Lautsprecher abgewählt.
+        let caps = faehigkeiten[uhr.id]
+            ?? (uhr.hatLautsprecher ? nil : Geraetefaehigkeiten().mitAusstattung(fuer: uhr, zustand: nil))
+        return Klangziel(id: uhr.id, name: uhr.name, faehigkeiten: caps, listen: tonlisten[uhr.id])
     }
 
     /// Nimmt die sichtbare Benachrichtigung weg, mit `name` die benannte (auch

@@ -98,6 +98,15 @@ public struct Geraet {
         Geraetefaehigkeiten(antwort: try hole("/api/v1/capabilities"))
     }
 
+    /// Die Fähigkeiten, wie sie für diese Uhr gelten (`Geraetefaehigkeiten.mitAusstattung`):
+    /// für das Werkzeug, das keinen Zustand hält. Der Gerätezustand wird nur bei
+    /// der Eigenbauuhr zusätzlich gelesen, weil nur dort `ldrRaw` gilt.
+    public func faehigkeiten(fuer uhr: Uhr) throws -> Geraetefaehigkeiten? {
+        guard let f = try faehigkeiten() else { return nil }
+        let zustand = uhr.modell == .esp32DIY ? try? geraetezustand() : nil
+        return f.mitAusstattung(fuer: uhr, zustand: zustand)
+    }
+
     /// Was das Display gerade zeigt (`GET /api/v1/display/screen`, §7.3).
     public func bildschirm() throws -> Bildschirmauszug {
         let pfad = "/api/v1/display/screen"

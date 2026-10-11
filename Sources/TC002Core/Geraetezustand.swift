@@ -61,6 +61,13 @@ public struct Geraetezustand: Equatable, Sendable {
     /// `batteryVoltage` in Volt.
     public var batterieSpannung: Double?
     public var usbStrom: Bool?
+    /// `ldrRaw`: der Rohwert des Fotowiderstands. Eine Platine ohne Widerstand
+    /// meldet genau 0 (gemessen 11. Oktober 2026).
+    public var ldrRoh: Int?
+    /// `temperature` und `humidity` stehen nur in der Antwort, wenn ein Fühler
+    /// sitzt.
+    public var temperatur: Double?
+    public var feuchte: Double?
     public var nachrichten: Int?
     public var wlan: Verbindungsstand?
     public var mqtt: Verbindungsstand?
@@ -100,6 +107,9 @@ public struct Geraetezustand: Equatable, Sendable {
         batterieSchwach = o["lowBattery"] as? Bool
         batterieSpannung = (o["batteryVoltage"] as? NSNumber)?.doubleValue
         usbStrom = o["usbPower"] as? Bool
+        ldrRoh = o["ldrRaw"] as? Int
+        temperatur = (o["temperature"] as? NSNumber)?.doubleValue
+        feuchte = (o["humidity"] as? NSNumber)?.doubleValue
         nachrichten = o["messageCount"] as? Int
         wlan = Verbindungsstand(o["wifi"])
         mqtt = Verbindungsstand(o["mqtt"])

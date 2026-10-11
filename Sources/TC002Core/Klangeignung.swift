@@ -129,6 +129,15 @@ public enum Klangeignung {
         return nein > 0 && nein < ziele.count
     }
 
+    /// Ob kein Ziel irgendeine Klangart spielt (Audio leer oder Lautsprecher
+    /// abgewählt). Dann wird von Klang nichts angezeigt; mit einem Ziel, das
+    /// etwas kann oder nichts gemeldet hat, bleibt es sichtbar.
+    public static func keinKlang(in ziele: [Klangziel]) -> Bool {
+        !ziele.isEmpty && ziele.allSatisfy { ziel in
+            Klangart.allCases.allSatisfy { !(ziel.faehigkeiten?.kann($0) ?? true) }
+        }
+    }
+
     /// Ob MP3-Dateien für diese Ziele überhaupt vorkommen: nicht, wenn jedes Ziel
     /// sie als nicht spielbar meldet. Ohne Ziel oder ohne Auskunft gelten sie als da.
     public static func mp3Zeigen(in ziele: [Klangziel]) -> Bool {

@@ -18,6 +18,10 @@ public enum NGFehler: Error, LocalizedError {
     case keineAdresseFuerGrosse(bytes: Int)
     /// Eine Laufschrift, deren GIF groesser ist als NG als `icon` annimmt.
     case laufschriftZuLang(bytes: Int)
+    /// Eine Laufschrift mit mehr Bildern, als die App je Anzeige schickt
+    /// (`Pixelweg.hoechsteBildzahl`). Auf einer breiten Anzeige (bis 128 Spalten)
+    /// braucht ein Durchlauf mehr Bilder als auf 52.
+    case laufschriftZuVieleBilder(bilder: Int)
     /// Ein Rahmen ohne Text und ohne Pixel.
     case leer
     /// Ein fertiges Bild, dessen Mass nicht das der Anzeige dieser Uhr ist. Ein
@@ -45,6 +49,8 @@ public enum NGFehler: Error, LocalizedError {
             return lokf("Diese Anzeige ist mit %d KB zu groß für MQTT (höchstens 8 KB), und für die Uhr ist keine Adresse eingetragen, über die sie als HTTP-Anfrage ginge. Unter „Einstellungen“ die Adresse eintragen.", (bytes + 1023) / 1024)
         case .laufschriftZuLang(let bytes):
             return lokf("Diese Laufschrift ist zu lang: Ihr Bild wäre %d KB groß, die Uhr nimmt höchstens 56 KB. Den Text kürzen.", (bytes + 1023) / 1024)
+        case .laufschriftZuVieleBilder(let bilder):
+            return lokf("Diese Laufschrift ist zu lang: Sie braucht %d Bilder, die App schickt höchstens %d. Den Text kürzen.", bilder, Pixelweg.hoechsteBildzahl)
         case .leer:
             return lok("Es gibt nichts zu senden.")
         case .massPasstNicht(let bb, let bh, let ab, let ah):

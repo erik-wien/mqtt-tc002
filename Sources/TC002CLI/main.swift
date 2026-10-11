@@ -383,7 +383,7 @@ func lauf() throws {
         // Ob die Uhr den Ton kann, steht ebenfalls nur in ihrer Auskunft.
         if !optionen.klang.isEmpty { nennt = true }
         guard nennt, !uhr.host.isEmpty else { return nil }
-        return (try? Geraet(host: uhr.host).faehigkeiten()) ?? nil
+        return (try? Geraet(host: uhr.host).faehigkeiten(fuer: uhr)) ?? nil
     }
 
     /// Fuehrt eine Sendung an jede gewaehlte Uhr aus und zaehlt, was schiefging.
@@ -516,6 +516,12 @@ func lauf() throws {
         // Eine Benachrichtigung ist keine Anzeige: kein Platz, also auch nichts
         // fuers Slotgedaechtnis.
         try anAlle(lokf("Nachricht gesendet (%d Byte)", json.utf8.count)) { anzeigen, uhr in
+            // Ohne Lautsprecher geht die Nachricht ohne Klang hinaus.
+            var bo = bo
+            if !bo.klang.isEmpty, !uhr.hatLautsprecher {
+                fehlerAusgeben(Tonhinweise.ohneLautsprecher(uhr.name))
+                bo.klang = []
+            }
             let caps = faehigkeiten(uhr)
             try klaengePruefen(bo.klang, anzeigen: anzeigen, faehigkeiten: caps, inBenachrichtigung: true)
             try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo, faehigkeiten: caps)

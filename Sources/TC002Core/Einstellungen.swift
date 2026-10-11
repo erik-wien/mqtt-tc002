@@ -168,6 +168,31 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// `wirksameBetriebsart` — damit die Lesart an genau einer Stelle steht.
     public var betriebsart: Betriebsart?
 
+    /// Das Modell der Uhr. `nil` heißt „noch nicht bestimmt": Die erste
+    /// Abfrage trägt den Vorschlag ein (`Uhrmodell.vorschlag`), danach gilt
+    /// die Wahl des Nutzers. Optional aus demselben Grund wie `betriebsart`:
+    /// Ein Pflichtfeld machte ältere Dateien unlesbar.
+    public var modell: Uhrmodell?
+
+    /// Ob an der selbstgebauten Uhr ein Lautsprecher sitzt. `nil` heißt „ja";
+    /// gelesen wird es nur über `hatLautsprecher`. Der Lautsprecher ist nicht
+    /// zu erkennen (`audio.rtttl` ist auch ohne einen `true`).
+    public var lautsprecher: Bool?
+
+    /// Ob diese Uhr bei „Mit Uhren abgleichen" der Klangsammlung mitgeht.
+    /// `nil` heißt „ja"; gelesen wird es nur über `gleichtKlaengeAb`. Hier und
+    /// nicht in der Ansicht, damit das Werkzeug (`ton abgleichen`) dieselbe
+    /// Auswahl liest.
+    public var klangAbgleich: Bool?
+
+    /// Der Lautsprecher gilt nur für die selbstgebaute Uhr: TC001 und TC002
+    /// haben einen festen.
+    public var hatLautsprecher: Bool { modell != .esp32DIY || lautsprecher != false }
+
+    /// Ob der Klangabgleich diese Uhr beschickt: nicht ohne Lautsprecher, und
+    /// nicht, wenn der Nutzer sie abgewählt hat.
+    public var gleichtKlaengeAb: Bool { hatLautsprecher && klangAbgleich != false }
+
     /// Was fuer diese Uhr gilt. Der einzige Leser von `betriebsart`.
     public var wirksameBetriebsart: Betriebsart { betriebsart ?? .mqtt }
 
@@ -185,7 +210,8 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     public init(id: UUID = UUID(), name: String, host: String,
                 praefix: String = "", mac: String = "",
                 betriebsart: Betriebsart? = nil, panelbreite: Int? = nil,
-                panelhoehe: Int? = nil, angelegt: Date? = nil) {
+                panelhoehe: Int? = nil, angelegt: Date? = nil,
+                modell: Uhrmodell? = nil, lautsprecher: Bool? = nil, klangAbgleich: Bool? = nil) {
         self.id = id
         self.name = name
         self.host = host
@@ -195,6 +221,9 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         self.betriebsart = betriebsart
         self.panelbreite = panelbreite
         self.panelhoehe = panelhoehe
+        self.modell = modell
+        self.lautsprecher = lautsprecher
+        self.klangAbgleich = klangAbgleich
     }
 
     /// Der Stand der Einrichtung, wie er in der Datei steht. Eine Uhr ohne
@@ -204,6 +233,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 
     private enum Schluessel: String, CodingKey {
         case id, name, host, praefix, mac, angelegt, betriebsart, panelbreite, panelhoehe
+        case modell, lautsprecher, klangAbgleich
         case einrichtung
     }
 
@@ -228,6 +258,11 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? ""
         angelegt = try c.decodeIfPresent(Date.self, forKey: .angelegt)
         betriebsart = try c.decodeIfPresent(Betriebsart.self, forKey: .betriebsart)
+        // Ein Modell, das eine spätere Fassung kennt und diese nicht, wird zu
+        // „nicht bestimmt" statt zu einer unlesbaren Uhrenliste.
+        modell = (try? c.decodeIfPresent(Uhrmodell.self, forKey: .modell)) ?? nil
+        lautsprecher = try c.decodeIfPresent(Bool.self, forKey: .lautsprecher)
+        klangAbgleich = try c.decodeIfPresent(Bool.self, forKey: .klangAbgleich)
         let aktuell = (try c.decodeIfPresent(Int.self, forKey: .einrichtung) ?? 0) >= Self.einrichtungsstand
         praefix = aktuell ? try c.decodeIfPresent(String.self, forKey: .praefix) ?? "" : ""
         panelbreite = aktuell ? try c.decodeIfPresent(Int.self, forKey: .panelbreite) : nil
@@ -245,6 +280,9 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         try c.encodeIfPresent(betriebsart, forKey: .betriebsart)
         try c.encodeIfPresent(panelbreite, forKey: .panelbreite)
         try c.encodeIfPresent(panelhoehe, forKey: .panelhoehe)
+        try c.encodeIfPresent(modell, forKey: .modell)
+        try c.encodeIfPresent(lautsprecher, forKey: .lautsprecher)
+        try c.encodeIfPresent(klangAbgleich, forKey: .klangAbgleich)
         try c.encode(Self.einrichtungsstand, forKey: .einrichtung)
     }
 }

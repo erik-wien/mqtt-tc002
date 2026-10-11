@@ -9,6 +9,14 @@ private func wiedergabezeile(_ spielt: Bool, _ name: String) -> String {
     return name.isEmpty ? lok("spielt") : lokf("spielt „%@“", Terminaltext.sicher(name))
 }
 
+enum Tonhinweise {
+    /// Die Uhr hat nach Auskunft des Nutzers keinen Lautsprecher (Schalter in
+    /// der App); was Klang betrifft, wird sie übersprungen.
+    static func ohneLautsprecher(_ name: String) -> String {
+        lokf("%@ hat keinen Lautsprecher (Einstellung in der App) und wird bei Klängen übersprungen.", Terminaltext.sicher(name))
+    }
+}
+
 func tonzustandAusgeben(_ z: Tonzustand, ausgabe: (String) -> Void = { print($0) }) {
     func zeile(_ name: String, _ wert: String) { ausgabe("\(name)\t\(wert)") }
     zeile("Radio", wiedergabezeile(z.radio.spielt, z.radio.sender))

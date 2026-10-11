@@ -90,6 +90,9 @@ public enum Pixelweg {
 
     /// Mass und Bildzahl, bevor etwas gebaut wird.
     public static func pruefen(_ inhalt: Pixelinhalt) throws {
+        if inhalt.bilder.count > hoechsteBildzahl {
+            throw NGFehler.laufschriftZuVieleBilder(bilder: inhalt.bilder.count)
+        }
         guard (1...hoechsteBreite).contains(inhalt.breite), (1...hoechsteHoehe).contains(inhalt.hoehe),
               (1...hoechsteBildzahl).contains(inhalt.bilder.count),
               inhalt.bilder.allSatisfy({ $0.pixel.count == inhalt.breite * inhalt.hoehe }) else {

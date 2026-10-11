@@ -166,14 +166,18 @@ public enum Geraeteeinstellung: String, CaseIterable, Sendable, Hashable {
     /// `false` nur für `enlargeApps`.
     public var schreibbar: Bool { self != .enlargeApps }
 
-    /// Ob die Uhr diesen Schlüssel beachtet. Bis auf `autoBrightness` immer;
-    /// dieser wirkt nur mit Lichtsensor (gemessen 10. Oktober 2026: TC001 `true`,
-    /// TC002 `false` und die Einstellung ohne Wirkung). Ohne Auskunft gilt „nein".
+    /// Ob die Uhr diesen Schlüssel beachtet. Bis auf `autoBrightness` und die
+    /// Klangschlüssel immer; `autoBrightness` wirkt nur mit Lichtsensor (gemessen
+    /// 10. Oktober 2026: TC001 `true`, TC002 `false` und die Einstellung ohne
+    /// Wirkung). Ohne Auskunft gilt „nein".
     public func wirkt(faehigkeiten: Geraetefaehigkeiten?) -> Bool {
         switch self {
         case .autoBrightness: return faehigkeiten?.lichtsensor == true
         // Eine Uhr ohne Radio (TC001) meldet `radioVolume` trotzdem.
         case .radioVolume: return faehigkeiten?.kann(.radio) ?? true
+        // Ohne Lautsprecher (Eigenbau, Schalter in der App) gibt es keine Klangeinstellungen.
+        case .volume, .appVolume, .alertVolume, .bootSound, .musicSource:
+            return faehigkeiten?.lautsprecher != false
         default: return true
         }
     }

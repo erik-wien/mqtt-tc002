@@ -106,6 +106,18 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertEqual(uhren[0].mac, "AA:BB")
     }
 
+    /// Die Felder `modell`, `lautsprecher` und `klangAbgleich` kamen später dazu:
+    /// Eine Datei ohne sie bleibt lesbar, und die Uhr gilt als „Modell nicht
+    /// bestimmt“, mit Lautsprecher und im Klangabgleich.
+    func testAlteUhrOhneModellBleibtLesbar() throws {
+        let uhr = try JSONDecoder().decode([Uhr].self, from: Data(Self.alteZeile.utf8))[0]
+        XCTAssertNil(uhr.modell)
+        XCTAssertNil(uhr.lautsprecher)
+        XCTAssertNil(uhr.klangAbgleich)
+        XCTAssertTrue(uhr.hatLautsprecher)
+        XCTAssertTrue(uhr.gleichtKlaengeAb)
+    }
+
     /// Alle drei Altformen bleiben lesbar, ohne dass eine Uhr verloren geht
     /// (die Leser lesen mit `try?`: ein Fehler waere eine leere Liste). Das
     /// Präfix der Werksfirmware stimmt für NG nicht und wird verworfen, die

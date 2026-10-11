@@ -32,11 +32,31 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
     /// `capabilities.audio`: welche Klangquellen die Uhr kann (§7.4). `nil`,
     /// solange nicht gefragt und bei einer Antwort ohne `audio`: dann ist nichts
     /// gesperrt (`kann(_:)`).
-    public var ton: Tonfaehigkeiten?
+    public var tonGemeldet: Tonfaehigkeiten?
+    /// Ob ein Lautsprecher dran ist. Er lässt sich nicht erkennen
+    /// (`audio.rtttl` ist auch ohne einen `true`); den Schalter gibt es bei der
+    /// selbstgebauten Uhr (`Uhr.hatLautsprecher`). Ohne Lautsprecher kann die Uhr
+    /// keine Klangart, und `ton` ist leer wie bei einer Uhr ohne Audio.
+    public var lautsprecher = true
+    /// `capabilities.audio` mit dem Lautsprecher verrechnet: Wer alle
+    /// Klangfragen über `ton` und `kann(_:)` stellt, bekommt den Schalter
+    /// ohne eigene Prüfung mit.
+    public var ton: Tonfaehigkeiten? {
+        get { lautsprecher ? tonGemeldet : Tonfaehigkeiten() }
+        set { tonGemeldet = newValue }
+    }
     /// `capabilities.sensors.light`: ob die Uhr einen Lichtsensor hat. Fehlt die
     /// Angabe, gilt „nein"; erst mit Sensor wirkt `autoBrightness`
     /// (`Geraeteeinstellung.wirkt(faehigkeiten:)`).
-    public var lichtsensor = false
+    public var lichtsensorGemeldet = false
+    /// Bei der selbstgebauten Uhr meldet die Fähigkeit auch ohne Fotowiderstand
+    /// `true`; dort zählt `ldrRaw == 0` als „kein Sensor" (`mitAusstattung`).
+    public var ohneLichtmessung = false
+    /// Ob ein Lichtsensor wirkt: gemeldet und nicht als fehlend erkannt.
+    public var lichtsensor: Bool {
+        get { lichtsensorGemeldet && !ohneLichtmessung }
+        set { lichtsensorGemeldet = newValue }
+    }
     /// `capabilities.platform.id` (`tc002`, `esp32` für die TC001). `nil`, solange
     /// nicht gefragt.
     public var plattform: String?
@@ -51,8 +71,8 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
                 zifferblaetter: [String] = [], mqttTlsUnterstuetzt: Bool? = nil,
                 ton: Tonfaehigkeiten? = nil, lichtsensor: Bool = false, plattform: String? = nil) {
         self.plattform = plattform
-        self.ton = ton
-        self.lichtsensor = lichtsensor
+        self.tonGemeldet = ton
+        self.lichtsensorGemeldet = lichtsensor
         self.zifferblaetter = zifferblaetter
         self.mqttTlsUnterstuetzt = mqttTlsUnterstuetzt
         self.layoutUnterstuetzt = layoutUnterstuetzt
@@ -62,6 +82,18 @@ public struct Geraetefaehigkeiten: Equatable, Sendable {
         self.overlays = overlays
         self.paletten = paletten
         self.uebergaenge = uebergaenge
+    }
+
+    /// Die Fähigkeiten, wie sie für diese Uhr gelten: bei der selbstgebauten
+    /// Uhr ohne Lautsprecher kein Klang, und mit `ldrRaw` 0 kein Lichtsensor.
+    /// Bei jedem anderen Modell bleibt die Antwort der Uhr unberührt. Ein
+    /// echter Sensor in völliger Dunkelheit könnte 0 lesen; deshalb gilt die
+    /// Regel nur für die Eigenbauuhr, nie für die TC001.
+    public func mitAusstattung(fuer uhr: Uhr, zustand: Geraetezustand?) -> Geraetefaehigkeiten {
+        var f = self
+        f.lautsprecher = uhr.hatLautsprecher
+        f.ohneLichtmessung = uhr.modell == .esp32DIY && zustand?.ldrRoh == 0
+        return f
     }
 
     /// Aus der Antwort von `GET /api/v1/capabilities`. Eine fehlende oder

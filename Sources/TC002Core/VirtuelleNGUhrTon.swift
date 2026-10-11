@@ -120,6 +120,13 @@ extension VirtuelleNGUhr {
                                     "minWidth": .zahl(32), "maxWidth": .zahl(128),
                                     "minHeight": .zahl(8), "maxHeight": .zahl(8)])
         }
+        // Ein anderes Raster (selbstgebaute Uhr) steht in `display`.
+        if z.anzeigebreite != VirtuelleNGUhr.breite || z.anzeigehoehe != VirtuelleNGUhr.hoehe,
+           case .objekt(var anzeige)? = o["display"] {
+            anzeige["width"] = .zahl(Double(z.anzeigebreite))
+            anzeige["height"] = .zahl(Double(z.anzeigehoehe))
+            o["display"] = .objekt(anzeige)
+        }
         return .objekt(o)
     }
 

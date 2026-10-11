@@ -34,6 +34,20 @@ extension AppZustand {
         melodienAblage[id] = nil
     }
 
+    // MARK: - Ausstattung
+
+    /// Rechnet Modell, Lautsprecher und Lichtmessung der Uhr in ihre
+    /// Fähigkeiten ein (`Geraetefaehigkeiten.mitAusstattung`); alle Oberflächen
+    /// lesen nur diese.
+    func ausstattungAnwenden(_ id: UUID) {
+        guard let uhr = uhren.first(where: { $0.id == id }), let f = faehigkeiten[id] else { return }
+        let neu = f.mitAusstattung(fuer: uhr, zustand: geraetezustand[id])
+        if neu != f { faehigkeiten[id] = neu }
+    }
+
+    /// Modell oder Lautsprecher einer Uhr wurden umgestellt.
+    public func ausstattungGeaendert(_ id: UUID) { ausstattungAnwenden(id) }
+
     // MARK: - Zustand
 
     /// Fragt die Uhr nach Gerät, Anzeige, Einstellungen und — wenn sie es kann —
@@ -65,6 +79,7 @@ extension AppZustand {
             erreichbar[id] = true
             if let geholt { faehigkeiten[id] = geholt }
             geraetezustand[id] = geraetStand
+            ausstattungAnwenden(id)
             if let name = geraetStand.aktiveAnzeige { aktiveAnzeige[id] = name }
             if let anzeige { anzeigestand[id] = anzeige }
             if let einstellungen { uhreneinstellungen[id] = einstellungen }
@@ -103,6 +118,7 @@ extension AppZustand {
         switch ereignis {
         case .geraet(let z):
             geraetezustand[id] = z
+            ausstattungAnwenden(id)
             if let name = z.aktiveAnzeige { aktiveAnzeige[id] = name }
             if var a = anzeigestand[id] {
                 if let an = z.panelAn { a.an = an }

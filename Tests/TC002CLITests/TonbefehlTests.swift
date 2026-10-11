@@ -278,4 +278,12 @@ extension TonbefehlTests {
         XCTAssertTrue(zeilen.contains { $0.hasPrefix("übersprungen\tgruss\t") })
         XCTAssertTrue(zeilen.contains { $0.hasPrefix("hinzugefügt\tping") })
     }
+
+    /// Eine Uhr ohne Lautsprecher wird bei Klängen mit einem Hinweis übersprungen;
+    /// der Name steht im Hinweis, und Steuerzeichen darin kommen nicht durch.
+    func testHinweisOhneLautsprecherNenntDieUhr() {
+        let text = Tonhinweise.ohneLautsprecher("Bastel\u{1B}[31m")
+        XCTAssertTrue(text.contains("Bastel"))
+        XCTAssertFalse(text.contains("\u{1B}"))
+    }
 }
