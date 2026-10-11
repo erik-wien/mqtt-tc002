@@ -66,6 +66,11 @@ public struct Sendeartwahl: View {
     let lebensdauer: Lebensdauerbindungen
     let kanon: Formkanon
 
+    /// Die Größenklasse der Sendezeile, nicht die im Popover: Dort meldet iPadOS
+    /// `.compact`, auch bei voller Breite.
+    @Environment(\.horizontalSizeClass) private var klasse
+    private var kompakt: Bool { klasse == .compact }
+
     @State private var zeigeKlang = false
     @State private var zeigeOptionen = false
     @State private var zeigeLebensdauer = false
@@ -137,7 +142,7 @@ public struct Sendeartwahl: View {
         .controlSize(.small)
         .accessibilityLabel(Text("Klang") + Text(verbatim: klangname.map { " " + $0 } ?? ""))
         .popover(isPresented: $zeigeKlang) {
-            Optionenblatt(titel: "Klang") {
+            Optionenblatt(kompakt: kompakt, titel: "Klang") {
                 Klangabschnitt(zustand: zustand, klang: nachricht.klang, aktiv: true, kanon: kanon)
             }
         }
@@ -152,7 +157,7 @@ public struct Sendeartwahl: View {
         .buttonStyle(.bordered)
         .controlSize(.small)
         .popover(isPresented: $zeigeOptionen) {
-            Optionenblatt(titel: "Nachricht") {
+            Optionenblatt(kompakt: kompakt, titel: "Nachricht") {
                 Nachrichtabschnitt(halten: nachricht.halten, aufwecken: nachricht.aufwecken,
                                    ersetzen: nachricht.ersetzen, durchlaeufe: nachricht.durchlaeufe,
                                    aktiv: true)
@@ -178,7 +183,7 @@ public struct Sendeartwahl: View {
         .controlSize(.small)
         .accessibilityLabel(Text("Lebensdauer") + Text(verbatim: " " + lebensdauertext))
         .popover(isPresented: $zeigeLebensdauer) {
-            Optionenblatt(titel: "Lebensdauer") {
+            Optionenblatt(kompakt: kompakt, titel: "Lebensdauer") {
                 Lebensdauerabschnitt(behalten: lebensdauer.behalten, zahl: lebensdauer.zahl,
                                      einheit: lebensdauer.einheit, ablauf: lebensdauer.ablauf,
                                      aktiv: true)
@@ -189,11 +194,13 @@ public struct Sendeartwahl: View {
 
 /// Der Rahmen um einen Abschnitt, der aus der Sendezeile aufgeht: ein Blatt mit
 /// „Fertig“ im schmalen Fenster (iPhone), sonst der Inhalt eines Popovers in
-/// fester Größe.
+/// fester Größe. `kompakt` kommt von der präsentierenden Ansicht, weil die
+/// Größenklasse im Popover selbst auf dem iPad immer `.compact` ist und es sonst
+/// ohne Größe aufgeht.
 struct Optionenblatt<Inhalt: View>: View {
+    let kompakt: Bool
     let titel: LocalizedStringKey
     @ViewBuilder let inhalt: Inhalt
-    @Environment(\.horizontalSizeClass) private var klasse
     @Environment(\.dismiss) private var schliessen
 
     var body: some View {
@@ -202,7 +209,7 @@ struct Optionenblatt<Inhalt: View>: View {
 
     @ViewBuilder
     private var gewaehlt: some View {
-        if klasse == .compact {
+        if kompakt {
             NavigationStack {
                 Form { inhalt }
                     .navigationTitle(titel)
