@@ -514,6 +514,10 @@ public struct SendenView: View {
             // uebrige Platz gehoert dem Verlauf darunter, nicht einer leeren
             // Flaeche unter der Vorschau.
             .frame(maxWidth: .infinity, alignment: .topLeading)
+            // Bei knapper Hoehe (iPad quer mit Bildschirmtastatur) gibt zuerst
+            // der Verlauf nach: Die Vorschau hat Vorrang und bekommt ihre
+            // Hoehe, bevor die Liste ihren Rest erhaelt.
+            .layoutPriority(1)
 
             // Nur noch die fuenf Bloecke: Die Dauer steht im Zeit-Reiter des
             // Inspektors, bei Seitenwechsel und Scrolltempo. Damit faellt
