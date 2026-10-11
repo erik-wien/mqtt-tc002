@@ -7,11 +7,22 @@ public struct MQTTZugang: Sendable {
     public var benutzer: String?
     public var kennwort: String?
     public var clientID: String
+    /// Verschlüsselt die Verbindung (TLS). Vertraut wird allein dem System;
+    /// weder gibt es ein festgelegtes Zertifikat noch einen Schalter, der die
+    /// Prüfung abstellt.
+    public var tls: Bool
 
     public init(host: String, port: UInt16 = 1883, benutzer: String?,
-                kennwort: String?, clientID: String = "tc002-app") {
+                kennwort: String?, clientID: String = "tc002-app", tls: Bool = false) {
         self.host = host; self.port = port
         self.benutzer = benutzer; self.kennwort = kennwort; self.clientID = clientID
+        self.tls = tls
+    }
+
+    /// Die Parameter für `NWConnection`: mit TLS die des Systems samt
+    /// Standardvertrauen, sonst reines TCP.
+    var verbindungsparameter: NWParameters {
+        tls ? NWParameters(tls: NWProtocolTLS.Options(), tcp: NWProtocolTCP.Options()) : .tcp
     }
 }
 
@@ -73,7 +84,7 @@ public struct MQTTSender {
         let verbindung = NWConnection(
             host: NWEndpoint.Host(zugang.host),
             port: NWEndpoint.Port(rawValue: zugang.port)!,
-            using: .tcp)
+            using: zugang.verbindungsparameter)
 
         let bereit = DispatchSemaphore(value: 0)
         let fach = Fehlerfach()

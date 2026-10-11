@@ -279,11 +279,26 @@ public struct Einstellungen: Sendable {
         public static let brokerHost = ""
         public static let brokerPort = "1883"
         public static let benutzer = ""
+        public static let brokerTLS = false
+
+        /// Der Port, der zum Schalter „Verschlüsselt (TLS)“ passt: Wird er
+        /// eingeschaltet, rückt der Standardport 1883 auf 8883, und beim
+        /// Ausschalten geht 8883 zurück auf 1883. Ein anderer Port bleibt
+        /// stehen — er wurde bewusst eingetragen.
+        public static func brokerPort(nachUmschalten tls: Bool, aktuell: String) -> String {
+            switch (tls, aktuell) {
+            case (true, "1883"): return "8883"
+            case (false, "8883"): return "1883"
+            default: return aktuell
+            }
+        }
     }
 
     public var brokerHost: String
     public var brokerPort: UInt16
     public var benutzer: String?
+    /// Fehlt der Schlüssel in der Ablage einer älteren Fassung, gilt `false`.
+    public var brokerTLS: Bool
     private let kennwortQuelle: @Sendable () -> String?
     public var uhren: [Uhr]
     /// An welche Uhren die App zuletzt senden sollte. Leer heisst „alle".
@@ -294,10 +309,12 @@ public struct Einstellungen: Sendable {
     public var kennwort: String? { kennwortQuelle() }
 
     public init(brokerHost: String, brokerPort: UInt16, benutzer: String?,
-                kennwort: String?, uhren: [Uhr], zielIDs: Set<UUID>) {
+                kennwort: String?, uhren: [Uhr], zielIDs: Set<UUID>,
+                brokerTLS: Bool = Vorgabe.brokerTLS) {
         self.brokerHost = brokerHost
         self.brokerPort = brokerPort
         self.benutzer = benutzer
+        self.brokerTLS = brokerTLS
         self.kennwortQuelle = { kennwort }
         self.uhren = uhren
         self.zielIDs = zielIDs
@@ -305,10 +322,11 @@ public struct Einstellungen: Sendable {
 
     init(brokerHost: String, brokerPort: UInt16, benutzer: String?,
          kennwortQuelle: @escaping @Sendable () -> String?,
-         uhren: [Uhr], zielIDs: Set<UUID>) {
+         uhren: [Uhr], zielIDs: Set<UUID>, brokerTLS: Bool = Vorgabe.brokerTLS) {
         self.brokerHost = brokerHost
         self.brokerPort = brokerPort
         self.benutzer = benutzer
+        self.brokerTLS = brokerTLS
         self.kennwortQuelle = kennwortQuelle
         self.uhren = uhren
         self.zielIDs = zielIDs
@@ -355,7 +373,8 @@ public struct Einstellungen: Sendable {
             benutzer: benutzer.isEmpty ? nil : benutzer,
             kennwortQuelle: { Schluesselbund.lesen("broker", dienst: bereich) },
             uhren: uhren,
-            zielIDs: ziele)
+            zielIDs: ziele,
+            brokerTLS: d?.bool(forKey: "brokerTLS") ?? Vorgabe.brokerTLS)
     }
 
     /// Die Uhren, an die gesendet wird: die zuletzt gewaehlten, und wenn keine
@@ -394,7 +413,7 @@ public struct Einstellungen: Sendable {
     public func zugang(clientID: String) -> MQTTZugang? {
         guard brokerEingerichtet else { return nil }
         return MQTTZugang(host: brokerHost, port: brokerPort,
-                          benutzer: benutzer, kennwort: kennwort)
+                          benutzer: benutzer, kennwort: kennwort, tls: brokerTLS)
             .mit(clientID: clientID)
     }
 }

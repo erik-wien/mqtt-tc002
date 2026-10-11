@@ -159,7 +159,7 @@ targets:
         # fragt App Store Connect bei **jedem** Upload nach — und ein Bau, der
         # auf eine Frage wartet, laedt nicht hoch. Die App verschluesselt
         # nichts selbst: Das Brokerkennwort liegt im Schluesselbund (System),
-        # und MQTT geht unverschluesselt ins Heimnetz.
+        # und MQTT-Verbindungen sind nur auf Wunsch (Schalter „Verschluesselt (TLS)“) mit dem System-TLS verschluesselt.
         ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: >-
           Die App spricht die Pixeluhr und den MQTT-Broker in Ihrem Heimnetz an.

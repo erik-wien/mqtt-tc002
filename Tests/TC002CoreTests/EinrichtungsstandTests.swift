@@ -250,6 +250,17 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(ergebnis.benutzer, "neu")
     }
 
+    func testTLSAusDerWolkeGiltNurMitBroker() {
+        let mit = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(brokerHost: "10.0.0.20", brokerTLS: false),
+            fern: Einrichtungsstand(brokerHost: "10.0.0.30", brokerTLS: true))
+        XCTAssertEqual(mit.brokerTLS, true)
+        let ohne = Einrichtungsstand.zusammengefuehrt(
+            oertlich: Einrichtungsstand(brokerHost: "10.0.0.20", brokerTLS: true),
+            fern: Einrichtungsstand(brokerHost: "", brokerTLS: false))
+        XCTAssertEqual(ohne.brokerTLS, true, "ein Gerät ohne Broker überstimmt nichts")
+    }
+
     // MARK: Bekannte Anzeigen
 
     /// Faellt ein Name aus dieser Buchfuehrung, bleibt die Anzeige auf der Uhr
@@ -314,5 +325,12 @@ final class EinrichtungsstandTests: XCTestCase {
         XCTAssertEqual(stand.brokerPort, "1883")
         XCTAssertEqual(stand.benutzer, "pixdeck")
         XCTAssertEqual(stand.bekannteAnzeigen["A"], ["meldung1"])
+        XCTAssertNil(stand.brokerTLS, "ohne den Schlüssel: nicht gesetzt, gilt als aus")
+    }
+
+    func testBrokerTLSUeberlebtDenKreislauf() throws {
+        let stand = Einrichtungsstand(brokerHost: "h", brokerPort: "8883", brokerTLS: true)
+        let zurueck = try JSONDecoder().decode(Einrichtungsstand.self, from: try XCTUnwrap(stand.alsDaten))
+        XCTAssertEqual(zurueck.brokerTLS, true)
     }
 }

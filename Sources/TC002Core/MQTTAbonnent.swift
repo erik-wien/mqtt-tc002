@@ -143,7 +143,7 @@ public final class MQTTAbonnent: @unchecked Sendable {
             beiZustand?(false, error.localizedDescription)
             return
         }
-        let v = NWConnection(host: NWEndpoint.Host(zugang.host), port: port, using: .tcp)
+        let v = NWConnection(host: NWEndpoint.Host(zugang.host), port: port, using: zugang.verbindungsparameter)
         verbindung = v
         strom = Paketstrom()
         v.stateUpdateHandler = { [weak self] zustand in

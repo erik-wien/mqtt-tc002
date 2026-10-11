@@ -1,4 +1,5 @@
 import XCTest
+import Network
 @testable import TC002Core
 
 /// Die Einstellungen sind die Nahtstelle zwischen App und Kommandozeilen-
@@ -236,6 +237,49 @@ final class EinstellungenTests: XCTestCase {
         XCTAssertFalse(e.brokerEingerichtet)
         XCTAssertNil(e.zugang(clientID: "x"))
         UserDefaults.standard.removePersistentDomain(forName: bereich)
+    }
+
+    /// Ohne den Schlüssel `brokerTLS` (Ablage einer älteren Fassung) gilt: aus.
+    func testFehlenderTLSSchluesselIstAus() {
+        let bereich = "test.mqtt-tc002." + UUID().uuidString
+        XCTAssertFalse(Einstellungen.gelesen(bereich: bereich).brokerTLS)
+        UserDefaults.standard.removePersistentDomain(forName: bereich)
+    }
+
+    func testTLSSchluesselWirdGelesenUndGehtInDenZugang() {
+        let bereich = "test.mqtt-tc002." + UUID().uuidString
+        let d = UserDefaults(suiteName: bereich)!
+        d.set("broker.local", forKey: "brokerHost")
+        d.set("8883", forKey: "brokerPort")
+        d.set(true, forKey: "brokerTLS")
+        let e = Einstellungen.gelesen(bereich: bereich)
+        XCTAssertTrue(e.brokerTLS)
+        XCTAssertEqual(e.zugang(clientID: "x")?.tls, true)
+        UserDefaults.standard.removePersistentDomain(forName: bereich)
+    }
+
+    func testZugangOhneAngabeIstUnverschluesselt() {
+        XCTAssertFalse(einstellungen(uhren: []).zugang(clientID: "x")?.tls ?? true)
+    }
+
+    func testVerbindungsparameterMitUndOhneTLS() {
+        func hatTLS(_ z: MQTTZugang) -> Bool {
+            z.verbindungsparameter.defaultProtocolStack.applicationProtocols
+                .contains { $0 is NWProtocolTLS.Options }
+        }
+        XCTAssertFalse(hatTLS(MQTTZugang(host: "h", benutzer: nil, kennwort: nil)))
+        XCTAssertTrue(hatTLS(MQTTZugang(host: "h", benutzer: nil, kennwort: nil, tls: true)))
+    }
+
+    func testPortVorschlagFolgtDemSchalter() {
+        let f = Einstellungen.Vorgabe.brokerPort(nachUmschalten:aktuell:)
+        XCTAssertEqual(f(true, "1883"), "8883")
+        XCTAssertEqual(f(false, "8883"), "1883")
+        XCTAssertEqual(f(true, "1884"), "1884", "ein eigener Port bleibt")
+        XCTAssertEqual(f(false, "1884"), "1884")
+        XCTAssertEqual(f(true, "8883"), "8883")
+        XCTAssertEqual(f(false, "1883"), "1883")
+        XCTAssertEqual(f(true, ""), "", "ein leeres Feld bleibt leer")
     }
 
     /// Aus einem leeren Bereich kommen die Vorgaben, nicht Unsinn: ein Port 0

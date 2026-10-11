@@ -161,6 +161,21 @@ public final class AppZustand {
     public var brokerHost: String { didSet { merke(brokerHost, "brokerHost"); brokerStand = .unbekannt } }
     public var brokerPort: String { didSet { merke(brokerPort, "brokerPort"); brokerStand = .unbekannt } }
     public var benutzer: String { didSet { merke(benutzer, "benutzer"); brokerStand = .unbekannt } }
+    /// Verschlüsselte Verbindung zum Broker. Umschalten rückt den Standardport
+    /// mit (`Einstellungen.Vorgabe.brokerPort(nachUmschalten:aktuell:)`).
+    public var brokerTLS: Bool {
+        didSet {
+            guard brokerTLS != oldValue else { return }
+            if initialisiert {
+                UserDefaults.standard.set(brokerTLS, forKey: "brokerTLS")
+                wolkeSchreiben()
+            }
+            brokerStand = .unbekannt
+            if !uebernimmtGerade {
+                brokerPort = Einstellungen.Vorgabe.brokerPort(nachUmschalten: brokerTLS, aktuell: brokerPort)
+            }
+        }
+    }
     /// Ohne Schluesselbund-Schreibvorgang im didSet: jeder Schreibvorgang loeschte den
     /// Eintrag und legte ihn neu an — das gehoert nicht an jeden Tastendruck.
     /// `kennwortSichern()` ruft, wer die Eingabe abschliesst.
@@ -419,6 +434,7 @@ public final class AppZustand {
         brokerHost = d.string(forKey: "brokerHost") ?? Einstellungen.Vorgabe.brokerHost
         brokerPort = d.string(forKey: "brokerPort") ?? Einstellungen.Vorgabe.brokerPort
         benutzer   = d.string(forKey: "benutzer") ?? Einstellungen.Vorgabe.benutzer
+        brokerTLS  = d.bool(forKey: "brokerTLS")
         let gelesenesKennwort = schluesselbund.lesen("broker") ?? ""
         kennwort   = gelesenesKennwort
         kennwortVorhanden = !gelesenesKennwort.isEmpty || schluesselbund.vorhanden("broker")
@@ -1110,7 +1126,8 @@ public final class AppZustand {
         guard !brokerHost.isEmpty, let port = UInt16(brokerPort), port > 0 else { return nil }
         return MQTTZugang(host: brokerHost, port: port,
                           benutzer: benutzer.isEmpty ? nil : benutzer,
-                          kennwort: kennwort.isEmpty ? nil : kennwort)
+                          kennwort: kennwort.isEmpty ? nil : kennwort,
+                          tls: brokerTLS)
     }
 
     /// Der Kanal fuer eine Uhr. Welcher es ist, entscheidet `Anzeigen.fuer` —
@@ -1731,7 +1748,7 @@ public final class AppZustand {
     /// Alles, dessen Änderung ein bestehendes Abonnement ungültig macht, als
     /// Fingerabdruck: Das Kennwort steht nicht im Klartext in einem
     /// Vergleichsfeld.
-    var brokerkennung: String { Fingerabdruck.von([brokerHost, brokerPort, benutzer, kennwort]) }
+    var brokerkennung: String { Fingerabdruck.von([brokerHost, brokerPort, benutzer, kennwort, brokerTLS ? "tls" : ""]) }
 
     /// Beginnt zuzuhören. Ausdrücklich und nicht aus `init` heraus: ein AppZustand
     /// allein — etwa im Test — darf keine Verbindung aufbauen.
@@ -2037,7 +2054,8 @@ public final class AppZustand {
             bekannteAnzeigen: Dictionary(
                 bekannteAnzeigen.map { ($0.key.uuidString, $0.value) },
                 uniquingKeysWith: { erster, _ in erster }),
-            entfernt: grabsteine.isEmpty ? nil : grabsteine)
+            entfernt: grabsteine.isEmpty ? nil : grabsteine,
+            brokerTLS: brokerTLS)
     }
 
     /// Uebernimmt einen zusammengefuehrten Stand.
@@ -2060,6 +2078,7 @@ public final class AppZustand {
         if brokerHost != stand.brokerHost { brokerHost = stand.brokerHost }
         if brokerPort != stand.brokerPort { brokerPort = stand.brokerPort }
         if benutzer != stand.benutzer { benutzer = stand.benutzer }
+        if brokerTLS != (stand.brokerTLS ?? false) { brokerTLS = stand.brokerTLS ?? false }
         let anzeigen = Dictionary(
             stand.bekannteAnzeigen.compactMap { text, liste in
                 UUID(uuidString: text).map { ($0, liste) }

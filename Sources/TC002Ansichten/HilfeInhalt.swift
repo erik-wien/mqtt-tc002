@@ -78,7 +78,7 @@ public enum HilfeInhalt {
     /// Uebersetzungsschluessel statt zweier.
     public static let brokerEintragen: [Hilfebaustein] = [
         .ueberschrift("MQTT-Broker"),
-        .absatz("Unter „MQTT-Broker“ trägst du den Broker ein: Adresse, Port, Benutzer und Kennwort."),
+        .absatz("Unter „MQTT-Broker“ trägst du den Broker ein: Adresse, Port, ob die Verbindung verschlüsselt ist, Benutzer und Kennwort."),
     ]
 
     /// Fuer wen der Brokerabschnitt ueberhaupt gilt. Ein Satz, weil der
@@ -100,7 +100,7 @@ public enum HilfeInhalt {
         .punkte([
             "**Uhren** — deine eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt.",
             "**Klänge** — die Klangsammlung der App: Melodien und MP3-Dateien, nach denen du die Uhren abgleichst.",
-            "**MQTT-Broker** — Adresse, Port, Benutzer und Kennwort des Brokers, dazu die Prüfung der Verbindung.",
+            "**MQTT-Broker** — Adresse, Port, Verschlüsselung (TLS), Benutzer und Kennwort des Brokers, dazu die Prüfung der Verbindung.",
             "**Aufzeichnung** — Verlauf und Protokoll.",
             "**iCloud** — Synchronisation deiner Geräte.",
             "**Erweitert** — die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",
@@ -156,6 +156,7 @@ public enum HilfeInhalt {
     /// Oberflaechen — dieselben vier Felder, dieselben Beispiele darin.
     public static let brokerFelderLeer: [Hilfebaustein] = [
         .absatz("Alle vier Felder beginnen leer; was grau darin steht, ist ein Beispiel und kein Wert. Der Port ist die Ausnahme: 1883 ist der Standardport von MQTT und steht von Anfang an da."),
+        .absatz("Der Schalter „Verschlüsselt (TLS)“ verschlüsselt die Verbindung zum Broker, sofern der Broker TLS anbietet — üblich ist dafür Port 8883. Schaltest du ihn ein, während noch 1883 im Feld steht, rückt der Port auf 8883; beim Ausschalten geht 8883 zurück auf 1883. Geprüft wird das Zertifikat des Brokers wie bei jeder anderen Verbindung des Systems; ein selbst ausgestelltes Zertifikat muss deshalb im Schlüsselbund des Geräts als vertrauenswürdig eingetragen sein. Ohne TLS geht auch das Kennwort unverschlüsselt durchs Netz, darauf weist ein Hinweis unter dem Feld hin."),
     ]
 
     /// Wo das Kennwort liegt — im Schluesselbund, nicht in den App-Einstellungen

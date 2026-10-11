@@ -33,6 +33,9 @@ public struct Einrichtungsstand: Codable, Equatable, Sendable {
     public var brokerHost: String
     public var brokerPort: String
     public var benutzer: String
+    /// `Optional`: Ältere Fassungen kennen das Feld nicht; `nil` heißt „nicht
+    /// gesetzt“ und gilt als aus.
+    public var brokerTLS: Bool?
     /// Kennungen als Zeichenkette — wie in `UserDefaults` auch, wo ein
     /// Woerterbuch keine UUID-Schluessel kennt.
     public var bekannteAnzeigen: [String: [String]]
@@ -61,7 +64,8 @@ public struct Einrichtungsstand: Codable, Equatable, Sendable {
     public init(uhren: [Uhr] = [], zielIDs: [UUID] = [], brokerHost: String = "",
                 brokerPort: String = "", benutzer: String = "",
                 bekannteAnzeigen: [String: [String]] = [:],
-                entfernt: [String: Date]? = nil) {
+                entfernt: [String: Date]? = nil, brokerTLS: Bool? = nil) {
+        self.brokerTLS = brokerTLS
         self.uhren = uhren
         self.zielIDs = zielIDs
         self.brokerHost = brokerHost
@@ -251,6 +255,9 @@ extension Einrichtungsstand {
         if !fern.brokerHost.isEmpty { ergebnis.brokerHost = fern.brokerHost }
         if !fern.brokerPort.isEmpty { ergebnis.brokerPort = fern.brokerPort }
         if !fern.benutzer.isEmpty { ergebnis.benutzer = fern.benutzer }
+        // Wie der Broker selbst: Nur ein Gerät mit eingetragenem Broker spricht
+        // für den Schalter, sonst überstimmte ein leeres Gerät das andere.
+        if !fern.brokerHost.isEmpty, let tls = fern.brokerTLS { ergebnis.brokerTLS = tls }
 
         // Die Schluessel sind Kennungen als Zeichenkette und muessen durch
         // dieselbe Abbildung — sonst haengt die Buchfuehrung an einer Uhr, die

@@ -48,6 +48,7 @@ public struct Brokerabschnitt: View {
                     .eingabefeld(inZeile: kanon)
                     .ziffernfeld(fokus: $portFokus)
             }
+            Toggle("Verschlüsselt (TLS)", isOn: $zustand.brokerTLS)
             LabeledContent("Benutzer") {
                 TextField("z. B. pixdeck", text: $zustand.benutzer)
                     .eingabefeld(inZeile: kanon)
@@ -63,6 +64,10 @@ public struct Brokerabschnitt: View {
                     .onChange(of: kennwortFokus) { _, hat in if !hat { zustand.kennwortSichern() } }
             }
             kennwortstand
+            if !zustand.brokerTLS && !zustand.kennwort.isEmpty {
+                Text("Ohne TLS geht das Kennwort unverschlüsselt durchs Netz.")
+                    .font(kanon.fussnote).foregroundStyle(.secondary)
+            }
             HStack {
                 // Nur pruefen, nicht sichern: Adresse, Port und Benutzer
                 // haengen unmittelbar an `zustand` und stehen damit schon beim
