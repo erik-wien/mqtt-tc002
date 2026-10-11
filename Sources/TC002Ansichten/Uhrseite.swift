@@ -106,12 +106,16 @@ private struct Uhrblatt: View {
 
             Section {
                 LabeledContent {
-                    Button("Abfragen") { zustand.abfragen(uhr.id) }
-                        .knopfBefehl()
+                    // Das Zeichen ist das Ergebnis des Knopfes und steht darum
+                    // neben ihm, nicht in einer eigenen Zeile.
+                    HStack(spacing: 8) {
+                        Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
+                        Button("Abfragen") { zustand.abfragen(uhr.id) }
+                            .knopfBefehl()
+                    }
                 } label: {
                     praefixzeile
                 }
-                Brokerzeichen(uhr: uhr, steht: zustand.verbunden[uhr.id])
                 Brokergrund(grund: zustand.brokergrund[uhr.id])
                 Firmwarewarnung(zustand: zustand, id: uhr.id, kanon: kanon)
                 Uhrlink(host: uhr.host)

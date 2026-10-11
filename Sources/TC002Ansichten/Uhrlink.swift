@@ -19,9 +19,13 @@ public struct Uhrlink: View {
 
     public var body: some View {
         if let ziel {
-            Link("Konfigurieren", destination: ziel)
-                .knopfBefehl()
-                .help(lokf("Die Web-Oberfläche von %@ im Browser öffnen", host))
+            HStack(spacing: 8) {
+                Link("Konfigurieren", destination: ziel)
+                    .knopfBefehl()
+                    .help(lokf("Die Web-Oberfläche von %@ im Browser öffnen", host))
+                Text("Öffnet die Web-Oberfläche der Uhr unter ihrer Adresse im Browser.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
         }
     }
 }
