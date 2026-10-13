@@ -512,7 +512,7 @@ public enum HilfeInhalt {
     public static let iconImLauf: [Hilfebaustein] = [
         .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz)."),
         .absatz("Läuft der Text, steht das Icon fest links und der Text läuft rechts daneben durch."),
-        .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Setzt die Uhr den Text selbst, gibt es dieses Mitscrollen nicht: Das Icon steht dort immer fest links, gleich ob und wie schnell sie den Text daneben laufen lässt."),
+        .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Das gilt auch, wenn die Uhr den Text selbst setzt."),
     ]
 
     /// Woher die Anzeigenliste kommt und warum der Unterschied zaehlt. Gemeldet
