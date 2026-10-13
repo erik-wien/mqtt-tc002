@@ -68,6 +68,8 @@ public struct EditorBereichView: View {
     /// Einmal gelesen: Welche Eintraege sich bewegen, steht in den Dateien.
     /// Die Begruendung steht bei `Array<Icon>.bewegteKennungen`.
     @State private var bewegte: Set<String> = []
+    /// Mit dem Bestand gelesen: die Icons, die es in beiden Größen gibt.
+    @State private var paare: Set<String> = []
     @State private var vorhandene: [Editoreintrag] = []
     /// Womit der Bereich anfaengt: der ganze Bestand im Hauptfenster. Beim
     /// ersten Anwendertest wurde der Icon-Editor nicht gefunden, weil er sich
@@ -889,6 +891,7 @@ public struct EditorBereichView: View {
     /// Einmal je Bestandsaenderung, nicht bei jedem Neuzeichnen.
     private func bewegungLesen() {
         bewegte = Set(vorhandene.filter { Bildraster.bewegt($0.datei) }.map(\.datei.path))
+        paare = vorhandene.paarpfade()
     }
 
     /// Vier Pfeile um einen Mittelpunkt — schiebt die ganze Grafik um ein
@@ -1263,11 +1266,16 @@ public struct EditorBereichView: View {
                 // knapp bemessene laesst SwiftUI still auf eine Zeile
                 // zurueckfallen (bei .caption gemessen: 30 Punkte reichen fuer
                 // zwei Zeilen nicht).
-                Text(eintrag.name)
-                    .font(.caption)
-                    .lineLimit(2, reservesSpace: true)
-                    .multilineTextAlignment(.center)
-                    .frame(width: kachelbreite(eintrag.groesse))
+                HStack(alignment: .top, spacing: 3) {
+                    Text(eintrag.name)
+                        .font(.caption)
+                        .lineLimit(2, reservesSpace: true)
+                        .multilineTextAlignment(.center)
+                    if paare.contains(eintrag.datei.path) {
+                        Paarzeichen().font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: kachelbreite(eintrag.groesse))
             }
         }
         .buttonStyle(.plain)

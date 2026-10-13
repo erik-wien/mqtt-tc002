@@ -50,4 +50,35 @@ final class IconbestaendeTests: XCTestCase {
         let achter = Iconsammlung(ordner: try ordner(mit: "1673.gif"))
         XCTAssertNil(Iconbestaende.suchen("4711", in: [achter]))
     }
+
+    // MARK: - Paare
+
+    private func icon(_ nummer: String, _ kante: Int) -> Icon {
+        Icon(nummer: nummer, name: nummer, kategorie: "",
+             datei: URL(fileURLWithPath: "/tmp/\(kante)/\(nummer).gif"), kante: kante)
+    }
+
+    func testPaarWirdInBeidenRichtungenGefunden() {
+        let k = Iconbestaende.paarkennungen([icon("haus", 8), icon("haus-16", 16)])
+        XCTAssertEqual(k, ["8/haus", "16/haus-16"])
+    }
+
+    func testEinzelnerAchterOhnePartner() {
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("haus", 8), icon("baum", 8)]).isEmpty)
+    }
+
+    func testEinzelnerSechzehnerOhnePartner() {
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("sonne", 16)]).isEmpty)
+    }
+
+    func testSechzehnerMitEndungOhneAchter() {
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("sonne-16", 16), icon("haus", 8)]).isEmpty)
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("-16", 16), icon("", 8)]).isEmpty)
+    }
+
+    func testSechzehnerDessenGrundnameNichtPasst() {
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("haus", 16), icon("haus", 8)]).isEmpty,
+                      "ohne Endung -16 gehoert ein 16×16 zu keinem 8×8")
+        XCTAssertTrue(Iconbestaende.paarkennungen([icon("baum-16", 16), icon("haus", 8)]).isEmpty)
+    }
 }

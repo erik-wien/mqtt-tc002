@@ -1668,3 +1668,5 @@
 "Öffnet die Web-Oberfläche der Uhr unter ihrer Adresse im Browser." = "Opens the clock’s web interface at its address in the browser.";
 "Übernommen" = "Added";
 "Aus der Auswahl entfernen" = "Remove from selection";
+"Gibt es auch in der anderen Größe; eine Uhr mit acht Zeilen bekommt das 8 × 8." = "Also available in the other size; a clock with eight rows gets the 8 × 8.";
+"Steht neben dem Namen eines Icons „8+16“, existiert es auch in der anderen Größe: ein 8 × 8 und ein 16 × 16 gleichen Namens. Beide bleiben einzeln wählbar; eine Uhr mit acht Zeilen bekommt statt des 16 × 16 immer das 8 × 8." = "If “8+16” appears next to an icon’s name, it also exists in the other size: an 8 × 8 and a 16 × 16 with the same name. Both can still be chosen individually; a clock with eight rows gets the 8 × 8 instead of the 16 × 16.";

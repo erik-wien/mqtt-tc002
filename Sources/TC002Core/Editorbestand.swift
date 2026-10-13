@@ -30,6 +30,18 @@ public struct Editoreintrag: Hashable, Sendable, Identifiable {
 }
 
 public extension Array where Element == Editoreintrag {
+    /// Die Dateipfade der Icons dieses Bestands, die es auch in der anderen
+    /// Groesse gibt (`Iconbestaende.paarkennungen`). Ueber den Pfad, weil die
+    /// Liste ihre Zeichen so fuehrt wie `bewegte`.
+    func paarpfade() -> Set<String> {
+        let icons = filter(\.groesse.istIcon).map {
+            Icon(nummer: $0.schluessel, name: $0.name, kategorie: "",
+                 datei: $0.datei, kante: $0.groesse.breite)
+        }
+        let kennungen = Iconbestaende.paarkennungen(icons)
+        return Set(icons.filter { kennungen.contains($0.kennung) }.map(\.datei.path))
+    }
+
     /// Filtert nach Name und Nummer, unabhaengig von Gross- und
     /// Kleinschreibung. Eine leere Suche laesst die Liste unveraendert — die
     /// Ansicht sucht damit in dem, was sie ohnehin schon gelesen hat, statt bei

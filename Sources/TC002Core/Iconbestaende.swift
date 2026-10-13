@@ -53,8 +53,7 @@ public enum Iconbestaende {
     /// `bestaende` wird nur gelesen, wenn ersetzt werden muss.
     public static func passend(_ icon: Icon, fuer mass: Anzeigemass,
                                in bestaende: (() -> [Iconsammlung])? = nil) -> Icon {
-        guard icon.kante > mass.hoehe, icon.nummer.hasSuffix(kennungDerSechzehner) else { return icon }
-        let grundname = String(icon.nummer.dropLast(kennungDerSechzehner.count))
+        guard icon.kante > mass.hoehe, let grundname = grundname(einesSechzehners: icon.nummer) else { return icon }
         let sammlungen = bestaende?() ?? alle()
         for sammlung in sammlungen {
             if let treffer = sammlung.alle().first(where: {
@@ -62,6 +61,31 @@ public enum Iconbestaende {
             }) { return treffer }
         }
         return icon
+    }
+
+    /// Die Kennungen (`Icon.kennung`) aller Icons, die es in der anderen Groesse
+    /// auch gibt — beide Glieder jedes Paares. Die Zuordnung ist dieselbe wie
+    /// bei `passend`: ein 16×16 `<Name>-16` gehoert zum 8×8 `<Name>`.
+    ///
+    /// Ein 16×16 mit der Endung, aber ohne 8×8 gleichen Grundnamens, und ein
+    /// 16×16 ohne die Endung zaehlen nicht.
+    public static func paarkennungen(_ icons: [Icon]) -> Set<String> {
+        let achter = Dictionary(icons.filter { $0.kante == 8 }.map { ($0.nummer, $0) },
+                                uniquingKeysWith: { erstes, _ in erstes })
+        var ergebnis = Set<String>()
+        for sechzehner in icons where sechzehner.kante == 16 {
+            guard let grund = grundname(einesSechzehners: sechzehner.nummer),
+                  let partner = achter[grund] else { continue }
+            ergebnis.insert(sechzehner.kennung)
+            ergebnis.insert(partner.kennung)
+        }
+        return ergebnis
+    }
+
+    /// Der Schluessel der 8×8-Fassung, wenn `nummer` die Form `<Name>-16` hat.
+    static func grundname(einesSechzehners nummer: String) -> String? {
+        guard nummer.hasSuffix(kennungDerSechzehner), nummer.count > kennungDerSechzehner.count else { return nil }
+        return String(nummer.dropLast(kennungDerSechzehner.count))
     }
 
     /// Der Satz fuer die Vorschau und die Kommandozeile, wenn eine Uhr statt des

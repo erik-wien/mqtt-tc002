@@ -79,6 +79,8 @@ struct IconsblattiOS: View {
     /// steht in der Datei. Über den Dateipfad, weil ein 8 × 8 und ein 16 × 16
     /// denselben Namen tragen dürfen.
     @State private var bewegte: Set<String> = []
+    /// Mit dem Bestand gelesen: die Icons, die es in beiden Größen gibt.
+    @State private var paare: Set<String> = []
     @State private var filter = Bestandsfilter()
     @State private var lametricNummer = ""
     @State private var laedt = false
@@ -289,6 +291,7 @@ struct IconsblattiOS: View {
                     Text(eintrag.name)
                         .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.center)
+                    if paare.contains(eintrag.datei.path) { Paarzeichen() }
                 }
                 .font(.caption2).foregroundStyle(.secondary)
             }
@@ -356,6 +359,7 @@ struct IconsblattiOS: View {
     private func neuLesen() {
         vorhandene = bestand.alle()
         bewegte = Set(vorhandene.filter { Bildraster.bewegt($0.datei) }.map(\.datei.path))
+        paare = vorhandene.paarpfade()
     }
 
     /// Ob dieses Stueck im Schreibordner liegt. Die Anzeigen tun das immer —

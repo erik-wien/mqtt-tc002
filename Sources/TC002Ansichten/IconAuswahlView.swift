@@ -33,6 +33,8 @@ struct IconAuswahlView: View {
     @State private var nurBewegte = false
     /// Einmal gelesen — die Begründung steht bei `bewegteKennungen()`.
     @State private var bewegte: Set<String> = []
+    /// Einmal gelesen mit dem Bestand: die Icons, die es in beiden Größen gibt.
+    @State private var paare: Set<String> = []
     /// Der Bestand, einmal von der Platte gelesen (`bewegungLesen`). Vor dem
     /// ersten Lesen — das Blatt ist gerade aufgegangen — wird einmal direkt
     /// gelesen, damit das erste Bild nicht leer steht. Ohne den Zwischenspeicher
@@ -54,6 +56,7 @@ struct IconAuswahlView: View {
         let alle = sammlungen.flatMap { $0.alle() }
         bestand = alle
         bewegte = alle.bewegteKennungen()
+        paare = Iconbestaende.paarkennungen(alle)
     }
 
     /// Das Mindestmass einer Kachel. `@ScaledMetric` laesst es mit der
@@ -165,6 +168,7 @@ struct IconAuswahlView: View {
                                                 .accessibilityLabel(Text("bewegt"))
                                         }
                                         Text(icon.name).lineLimit(1)
+                                        if paare.contains(icon.kennung) { Paarzeichen().foregroundStyle(.secondary) }
                                     }
                                     .font(.caption2)
                                 }
