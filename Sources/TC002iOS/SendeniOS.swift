@@ -241,12 +241,12 @@ struct SendeniOS: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.fuerVorschau
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, mass: uhrmass)
-        // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
+        // Die Uhr setzt den Text selbst; die Vorschau zeigt ihn samt Icon und laeuft wie sie.
         let textDerUhr = o.weg == .text
         VStack(spacing: 4) {
             VorschauiOS(feld: Meldungsbau.feld(o, mitIcon: mitIcon, mass: uhrmass),
                         icon: (sitzt || textDerUhr) ? gewaehltesIcon?.datei : nil,
-                        laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames,
+                        laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames,
                         iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: 8, mass: uhrmass) : 1,
                         modell: uhr.modell)
             if let hinweis = optionen.verkleinerungshinweis(uhr: uhr.name, mass: uhrmass) {

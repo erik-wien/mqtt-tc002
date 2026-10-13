@@ -332,7 +332,7 @@ public struct SendenView: View {
         let iconDerUhr = icon(fuer: uhrmass)
         let iconKante = iconDerUhr?.kante ?? 8
         let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
-        // Die Uhr laeuft selbst; die Vorschau zeigt den Anfang samt Icon.
+        // Die Uhr setzt den Text selbst; die Vorschau zeigt ihn samt Icon und laeuft wie sie.
         let textDerUhr = o.weg == .text
         let einheit = Geraetezeichnung.fuer(uhr).masse(fuer: uhrmass, kante: 1)
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
@@ -343,7 +343,7 @@ public struct SendenView: View {
                             iconKante: iconKante,
                             iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass) : 1,
                             modell: uhr.modell,
-                            laufschriftBilder: (sitzt || textDerUhr || !angesehen) ? nil : laufschriftFrames)
+                            laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
             .frame(width: platz.width, height: platz.height)
     }
 
@@ -448,9 +448,9 @@ public struct SendenView: View {
                 // Die Vorschau zeigt beim Pixel-Weg, was ankommt: stehend, wenn es
                 // passt, laufend, wenn nicht — bei der Laufschrift steckt das Icon
                 // schon in den Einzelbildern, deshalb dort kein zweites. Beim Weg
-                // „als Text" ist es immer unsere eigene Rasterung als Näherung, nie
-                // laufend: das Laufen besorgt dort die Uhr, wir kennen ihre Schrift
-                // nicht und können es nicht zeigen.
+                // „als Text" ist es unsere Näherung der Uhrschrift
+                // (`Geraeteschrift`), stehend oder, wenn der Text nicht passt, im
+                // Durchlauf der Uhr.
                 //
                 // Die Kantenlaenge richtet sich nach dem Platz, nicht nach einer
                 // festen Zahl: Der Geraeterahmen ist um ein festes Verhaeltnis

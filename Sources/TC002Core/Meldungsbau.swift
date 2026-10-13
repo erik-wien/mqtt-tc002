@@ -382,9 +382,11 @@ public enum Meldungsbau {
                                   iconBilder: [[String?]],
                                   iconKante: Int = 8,
                                   mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
-        // Bei der Schrift der Uhr zeigt die Vorschau den Anfang des Textes
-        // (`feld`); die Uhr laeuft selbst.
-        if o.weg == .text { return [] }
+        // Bei der Schrift der Uhr laeuft die Vorschau wie die Uhr selbst
+        // (`Geraeteschrift.laufbilder`), nicht nach unserer Rasterung.
+        if o.weg == .text {
+            return Geraeteschrift.laufbilder(o, iconBilder: iconBilder, iconKante: iconKante, mass: mass)
+        }
         let o = o.angepasst(an: mass)
         let bilder = Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,

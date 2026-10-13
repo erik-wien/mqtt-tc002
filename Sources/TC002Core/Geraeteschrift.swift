@@ -11,7 +11,8 @@ import Foundation
 /// hoch in die Zeilen 1–5, Unterlängen in Zeile 6, mit 1 Pixel Luft; der Text
 /// steht mittig. Die Tabelle ist aus diesen Messungen abgelesen, nichts ist
 /// ergänzt (`glyphen`); die Vorschau bleibt eine Näherung
-/// (`AwtrixNG.vorschauhinweis`), und eine Laufschrift zeigt ihren Anfang.
+/// (`AwtrixNG.vorschauhinweis`). Passt der Text nicht, läuft er wie auf der
+/// Uhr durch (`laufbilder`).
 public enum Geraeteschrift {
     /// Ein Zeichen: sieben Zeilen (0–6 des Uhrenrasters) als „#“ und „.“. Die
     /// Breite ist je Zeichen verschieden (proportionale Schrift).
@@ -187,6 +188,39 @@ public enum Geraeteschrift {
         return breite(geschrieben(o)) <= r.breite - r.links
     }
 
+    /// Zeichnet `zeichen` ab Spalte `x` in Zeile `y0` ins Feld; was rechts von
+    /// `bis` beginnt, entfällt.
+    private static func zeichnen(_ zeichen: [Character], ab x: Int, y0: Int, bis: Int,
+                                 farbe: String, in feld: inout Pixelfeld) {
+        var x = x
+        for z in zeichen {
+            let gl = glyphe(z)
+            if x >= bis { break }
+            for (zeile, muster) in gl.zeilen.enumerated() {
+                for (i, c) in muster.enumerated() where c == "#" {
+                    feld.setzen(x: x + i, y: y0 + zeile, farbe: farbe)
+                }
+            }
+            x += gl.breite + luft
+        }
+    }
+
+    /// Das Uhrenraster `klein` auf die Größe der Anzeige bringen: jedes Pixel
+    /// `faktor` × `faktor` Punkte.
+    private static func vergroessert(_ klein: Pixelfeld, faktor: Int, mass: Anzeigemass) -> Pixelfeld {
+        guard faktor > 1 else { return klein }
+        var gross = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
+        for y in 0..<klein.hoehe {
+            for xx in 0..<klein.breite {
+                guard let farbe = klein.farbe(x: xx, y: y) else { continue }
+                for dy in 0..<faktor { for dx in 0..<faktor {
+                    gross.setzen(x: xx * faktor + dx, y: y * faktor + dy, farbe: farbe)
+                } }
+            }
+        }
+        return gross
+    }
+
     /// Das Feld der Vorschau in der Größe der Anzeige.
     public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int,
                             mass: Anzeigemass) -> Pixelfeld {
@@ -200,28 +234,73 @@ public enum Geraeteschrift {
             // linksbündig gesendet und hier ebenso gezeigt.
             x += o.waagrecht == .mittig ? (platz - b) / 2 : 0
         }
-        let y0 = (r.hoehe - 8) / 2
         var klein = Pixelfeld(breite: r.breite, hoehe: r.hoehe)
-        for z in zeichen {
-            let gl = glyphe(z)
-            if x >= r.breite { break }
-            for (zeile, muster) in gl.zeilen.enumerated() {
-                for (i, c) in muster.enumerated() where c == "#" {
-                    klein.setzen(x: x + i, y: y0 + zeile, farbe: o.farbe)
+        zeichnen(zeichen, ab: x, y0: (r.hoehe - 8) / 2, bis: r.breite, farbe: o.farbe, in: &klein)
+        return vergroessert(klein, faktor: r.faktor, mass: mass)
+    }
+
+    /// Die Pause vor dem Anlaufen (`scroll.holdMs`, global an allen Uhren 1000).
+    static let haltezeit = 1.0
+
+    /// Die Einzelbilder des Durchlaufs, wie ihn die Uhr zeigt, wenn der Text
+    /// nicht passt; sonst `[]`. Vorgabe der Uhr (an allen gemessen): `wrap`,
+    /// links, `inline`, `whenFits: static`, `holdMs` 1000 — der Text steht am
+    /// Startanker (links vom Textbereich, rechts vom Icon), rührt sich nach
+    /// der Haltezeit je Schritt um ein Pixel des Uhrenrasters nach links, bis
+    /// er ganz hinausgelaufen ist, und springt dann zurück (§5.2). `textCenter`
+    /// gilt nur für passenden Text und spielt hier keine Rolle.
+    ///
+    /// Tempo: `scroll.speed` ist `NGNutzlast.tempo(o.tempo)` Prozent der
+    /// Grundgeschwindigkeit; ein Schritt dauert so lange wie ein Pixel bei
+    /// dieser Geschwindigkeit, gerundet wie im Pixelweg (`Bildraster.gifZeit`).
+    ///
+    /// Icon (`iconBilder` leer = keines): `fixed` bleibt stehen, der Text läuft
+    /// am Icon vorbei und ist links davon abgeschnitten; mit `iconLaeuftMit`
+    /// (`push`) läuft das Icon mit dem Text hinaus. Wie NG die Lücke zum
+    /// laufenden Text zeichnet, steht im Protokoll nicht; angenommen ist die
+    /// des stehenden Textes (`iconKante + 1`). Ein bewegtes Icon wechselt
+    /// seine Bilder je Schritt (nicht nach eigenen Standzeiten).
+    public static func laufbilder(_ o: Meldungsoptionen, iconBilder: [[String?]], iconKante: Int,
+                                  mass: Anzeigemass) -> [Bildraster.Einzelbild] {
+        let mitIcon = !iconBilder.isEmpty
+        guard !passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass) else { return [] }
+        let r = raster(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        let zeichen = geschrieben(o)
+        let b = breite(zeichen)
+        let prozent = NGNutzlast.tempo(o.tempo)
+        guard prozent > 0 else { return [] }
+        let schritt = Bildraster.gifZeit(1 / (Double(prozent) / 100 * AwtrixNG.grundgeschwindigkeit))
+        let mitnehmen = mitIcon && o.iconLaeuftMit
+        // Textzeile einmal in voller Länge, Spalte 0 = Textanfang.
+        var band = Pixelfeld(breite: max(b, 1), hoehe: r.hoehe)
+        zeichnen(zeichen, ab: 0, y0: (r.hoehe - 8) / 2, bis: b, farbe: o.farbe, in: &band)
+        // Der Text ist hinaus, wenn sein rechter Rand die Kante erreicht, an der
+        // er verschwindet: das Panel (Icon läuft mit) oder das Icon (steht).
+        let ende = mitnehmen ? r.links + b : b
+        let schnittX = mitIcon && !mitnehmen ? r.links : 0
+        let iconYVorschau = Meldungsbau.iconY(kante: iconKante * r.faktor, mass: mass)
+
+        return (0...ende).map { d in
+            var klein = Pixelfeld(breite: r.breite, hoehe: r.hoehe)
+            for y in 0..<r.hoehe {
+                for x in 0..<b {
+                    guard let farbe = band.farbe(x: x, y: y) else { continue }
+                    let cx = r.links - d + x
+                    if cx >= schnittX, cx < r.breite { klein.setzen(x: cx, y: y, farbe: farbe) }
                 }
             }
-            x += gl.breite + luft
-        }
-        guard r.faktor > 1 else { return klein }
-        var gross = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
-        for y in 0..<r.hoehe {
-            for xx in 0..<r.breite {
-                guard let farbe = klein.farbe(x: xx, y: y) else { continue }
-                for dy in 0..<r.faktor { for dx in 0..<r.faktor {
-                    gross.setzen(x: xx * r.faktor + dx, y: y * r.faktor + dy, farbe: farbe)
+            var f = vergroessert(klein, faktor: r.faktor, mass: mass)
+            if mitIcon {
+                let bild = iconBilder[d % iconBilder.count]
+                let versatz = mitnehmen ? -d * r.faktor : 0
+                for y in 0..<iconKante { for x in 0..<iconKante {
+                    guard bild.count == iconKante * iconKante, let farbe = bild[y * iconKante + x] else { continue }
+                    for dy in 0..<r.faktor { for dx in 0..<r.faktor {
+                        f.setzen(x: x * r.faktor + dx + versatz, y: iconYVorschau + y * r.faktor + dy, farbe: farbe)
+                    } }
                 } }
             }
+            return Bildraster.Einzelbild(pixel: f.punkteRoh, dauer: d == 0 ? haltezeit : schritt)
         }
-        return gross
     }
 }

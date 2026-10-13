@@ -396,13 +396,66 @@ final class GeraeteschriftTests: XCTestCase {
         XCTAssertEqual(zeilen(fremd), zeilen(fragezeichen))
     }
 
-    /// Was nicht ins Raster passt, zeigt die Vorschau am Anfang; `passt` sagt es.
-    func testZuLangerTextZeigtDenAnfang() {
+    /// Was nicht ins Raster passt, läuft in der Vorschau durch; `passt` sagt es.
+    func testZuLangerTextLaeuftDurch() {
         let lang = Meldungsoptionen(text: "HALLO WELT", weg: .text)
         XCTAssertFalse(Meldungsbau.passt(lang, mitIcon: false, mass: tc002))
         XCTAssertTrue(Meldungsbau.passt(Meldungsoptionen(text: "Hi", weg: .text), mitIcon: false, mass: tc002))
-        XCTAssertTrue(Meldungsbau.laufschriftBilder(lang, iconBilder: [], mass: tc002).isEmpty)
+        XCTAssertTrue(Meldungsbau.laufschriftBilder(Meldungsoptionen(text: "Hi", weg: .text),
+                                                    iconBilder: [], mass: tc002).isEmpty)
+        let bilder = Meldungsbau.laufschriftBilder(lang, iconBilder: [], mass: tc002)
+        XCTAssertFalse(bilder.isEmpty)
         let f = Meldungsbau.feld(lang, mitIcon: false, mass: tc002)
-        XCTAssertNotNil(f.farbe(x: 0, y: 2), "linksbündig ab Spalte 0")
+        XCTAssertNotNil(f.farbe(x: 0, y: 4), "linksbündig ab Spalte 0")
+    }
+
+    private func spalten(_ b: Bildraster.Einzelbild, breite: Int) -> Set<Int> {
+        Set(b.pixel.enumerated().filter { $0.element != nil }.map { $0.offset % breite })
+    }
+
+    func testDurchlaufTC002OhneIcon() {
+        let o = Meldungsoptionen(text: "HALLO WELT", weg: .text)
+        let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [], mass: tc002)
+        let start = Meldungsbau.feld(o, mitIcon: false, mass: tc002)
+        XCTAssertEqual(bilder[0].pixel, start.punkteRoh)
+        XCTAssertEqual(bilder[0].dauer, 1.0, accuracy: 0.001, "Haltezeit")
+        let schritt = Bildraster.gifZeit(1 / (Double(NGNutzlast.tempo(o.tempo)) / 100 * AwtrixNG.grundgeschwindigkeit))
+        XCTAssertEqual(bilder[1].dauer, schritt, accuracy: 0.0001)
+        // Je Schritt ein Uhrenpixel = zwei Punkte der Vorschau.
+        let a = spalten(bilder[1], breite: 52), b = spalten(bilder[2], breite: 52)
+        XCTAssertEqual(b.filter { $0 < 50 }, Set(a.map { $0 - 2 }.filter { $0 >= 0 && $0 < 50 }))
+        // Letztes Bild: der Text ist ganz hinaus.
+        XCTAssertTrue(bilder.last!.pixel.allSatisfy { $0 == nil })
+        XCTAssertFalse(bilder[bilder.count - 2].pixel.allSatisfy { $0 == nil })
+        let b2 = Geraeteschrift.breite(Geraeteschrift.geschrieben(o))
+        XCTAssertEqual(bilder.count, b2 + 1)
+    }
+
+    func testDurchlaufTC001EinsZuEins() {
+        let o = Meldungsoptionen(text: "HALLO WELT", weg: .text)
+        let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [], mass: tc001)
+        XCTAssertEqual(bilder[0].pixel, Meldungsbau.feld(o, mitIcon: false, mass: tc001).punkteRoh)
+        let a = spalten(bilder[1], breite: 32), b = spalten(bilder[2], breite: 32)
+        XCTAssertEqual(b.filter { $0 < 31 }, Set(a.map { $0 - 1 }.filter { $0 >= 0 && $0 < 31 }))
+        XCTAssertTrue(bilder.last!.pixel.allSatisfy { $0 == nil })
+    }
+
+    func testDurchlaufMitIconFestUndMitlaufend() {
+        let icon: [[String?]] = [Array(repeating: "#FF0000", count: 64)]
+        var o = Meldungsoptionen(text: "HALLO WELT UND MEHR", weg: .text)
+        let fest = Meldungsbau.laufschriftBilder(o, iconBilder: icon, mass: tc002)
+        o.iconLaeuftMit = true
+        let mit = Meldungsbau.laufschriftBilder(o, iconBilder: icon, mass: tc002)
+        // Fest: das Icon (16 Punkte breit) steht in jedem Bild, am Ende allein.
+        XCTAssertTrue(fest.allSatisfy { spalten($0, breite: 52).contains(0) })
+        XCTAssertEqual(spalten(fest.last!, breite: 52), Set(0..<16))
+        // Mitlaufend: das Icon ist nach einigen Schritten fort, am Ende ist alles leer.
+        XCTAssertFalse(spalten(mit[1], breite: 52).isDisjoint(with: Set(0..<16)))
+        XCTAssertFalse(spalten(mit[mit.count - 2], breite: 52).isEmpty)
+        XCTAssertTrue(mit.last!.pixel.allSatisfy { $0 == nil })
+        XCTAssertGreaterThan(mit.count, fest.count, "das Icon läuft zusätzlich hinaus")
+        // Nach drei Schritten ist das Icon um 6 Punkte gewandert: Spalte 9 rot, 10 nicht mehr.
+        XCTAssertEqual(mit[3].pixel[4 * 52 + 9], "#FF0000")
+        XCTAssertNotEqual(mit[3].pixel[4 * 52 + 10], "#FF0000")
     }
 }
