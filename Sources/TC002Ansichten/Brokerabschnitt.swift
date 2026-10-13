@@ -50,7 +50,7 @@ public struct Brokerabschnitt: View {
             }
             Toggle("Verschlüsselt (TLS)", isOn: $zustand.brokerTLS)
             LabeledContent("Benutzer") {
-                TextField("z. B. pixdeck", text: $zustand.benutzer)
+                TextField("z. B. awtrix", text: $zustand.benutzer)
                     .eingabefeld(inZeile: kanon)
                     .ohneAutokorrektur()
                     .textContentType(.username)

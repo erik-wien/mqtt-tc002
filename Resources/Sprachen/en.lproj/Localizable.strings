@@ -553,7 +553,7 @@
    die eine fehlende Brokeradresse nach sich zieht. */
 "z. B. 192.168.0.10" = "e.g. 192.168.0.10";
 "z. B. 192.168.0.20" = "e.g. 192.168.0.20";
-"z. B. pixdeck" = "e.g. pixdeck";
+"z. B. awtrix" = "e.g. awtrix";
 "Es ist keine Brokeradresse eingetragen." = "No broker address has been entered.";
 "Es ist keine Brokeradresse eingetragen. Unter „Einstellungen“ eine eintragen und „Verbindung prüfen“ drücken." = "No broker address has been entered. Enter one under Settings and press \"Check Connection\".";
 "%@ wurde noch nicht abgefragt. Unter „Einstellungen“ „Abfragen“ drücken." = "%@ has not been queried yet. Press \"Query\" under Settings.";
