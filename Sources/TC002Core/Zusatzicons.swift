@@ -23,9 +23,19 @@ public struct Zusatzicon: Codable, Hashable, Sendable {
 
     public init(nummer: String, kante: Int = 8, x: Int = 0, y: Int = 0) {
         self.nummer = nummer
-        self.kante = kante == 8 ? nil : kante
-        self.x = x
-        self.y = y
+        self.kante = kante == 8 ? nil : min(max(kante, 1), 64)
+        self.x = Zusatzicons.klemmen(x)
+        self.y = Zusatzicons.klemmen(y)
+    }
+
+    /// Eine fremde oder beschädigte Datei darf nichts mitbringen, womit später
+    /// gerechnet wird: Koordinaten und Kante werden beim Lesen geklemmt.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(nummer: try c.decode(String.self, forKey: .nummer),
+                  kante: try c.decodeIfPresent(Int.self, forKey: .kante) ?? 8,
+                  x: try c.decodeIfPresent(Int.self, forKey: .x) ?? 0,
+                  y: try c.decodeIfPresent(Int.self, forKey: .y) ?? 0)
     }
 
     public init(icon: Icon, x: Int = 0, y: Int = 0) {
@@ -94,20 +104,55 @@ public enum Zusatzicons {
         (liste ?? []).prefix(hoechstzahl).map(\.begrenzt)
     }
 
+    /// Die Liste als Text für die Einstellungen der Oberfläche (ein Schlüssel für
+    /// Mac, iPad und iPhone); leer für keine.
+    public static func json(_ liste: [Zusatzicon]) -> String {
+        guard !liste.isEmpty, let daten = try? JSONEncoder().encode(liste) else { return "" }
+        return String(decoding: daten, as: UTF8.self)
+    }
+
+    /// Das Gegenstück; Unlesbares heißt keine.
+    public static func aus(json: String) -> [Zusatzicon] {
+        guard let liste = try? JSONDecoder().decode([Zusatzicon].self, from: Data(json.utf8)) else { return [] }
+        return Array(liste.prefix(hoechstzahl))
+    }
+
+    /// Ob noch eines dazukommen darf.
+    public static func kannHinzufuegen(_ liste: [Zusatzicon]) -> Bool { liste.count < hoechstzahl }
+
+    /// Das Icon zu einem Eintrag; `nil` bei einem Eintrag ohne Wahl (leere Nummer)
+    /// und bei einem, den es nicht mehr gibt.
+    public static func icon(zu z: Zusatzicon, in sammlungen: [Iconsammlung]) -> Icon? {
+        guard !z.nummer.isEmpty else { return nil }
+        return sammlungen.flatMap { $0.alle() }.first { $0.nummer == z.nummer && $0.kante == z.kanteOderAcht }
+    }
+
+    /// Setzt oder löscht das Icon eines Eintrags, die Stelle bleibt.
+    public static func setzen(_ icon: Icon?, in z: inout Zusatzicon) {
+        z = Zusatzicon(nummer: icon?.nummer ?? "", kante: icon?.kante ?? 8, x: z.x, y: z.y)
+    }
+
     /// Zählt die Seite der Uhr einen Anzeigepixel in `faktor` Punkten? Die
     /// Firmware blittet auf die Seite (`blit(page, icon.x, icon.y)`), und die ist
     /// auf der vergrößerten TC002 26 × 8: eine Spalte sind dort zwei Punkte der
     /// Anzeige. Abgerundet (auch bei Negativem), die Vorschau zeichnet dann an
     /// `seitenwert * faktor`.
     public static func seitenwert(_ anzeige: Int, faktor: Int) -> Int {
-        guard faktor > 1 else { return anzeige }
-        if anzeige >= 0 { return anzeige / faktor }
-        return -((-anzeige + faktor - 1) / faktor)
+        let a = klemmen(anzeige), faktor = min(faktor, 8)
+        guard faktor > 1 else { return a }
+        if a >= 0 { return a / faktor }
+        return -((-a + faktor - 1) / faktor)
+    }
+
+    /// Auf die Grenzen der Firmware, bevor damit gerechnet wird: Mit Werten bis
+    /// ±65535 kann keine der Rechnungen hier überlaufen.
+    static func klemmen(_ wert: Int) -> Int {
+        min(max(wert, firmwareBereich.lowerBound), firmwareBereich.upperBound)
     }
 
     /// Die Anzeigepixel, an denen die Uhr das Icon tatsächlich zeichnet.
     public static func gezeichnet(_ anzeige: Int, faktor: Int) -> Int {
-        seitenwert(anzeige, faktor: faktor) * max(1, faktor)
+        seitenwert(anzeige, faktor: faktor) * min(max(1, faktor), 8)
     }
 
     /// Löst die gewählten Icons für eine Uhr auf. Ein Icon, das es nicht mehr gibt
@@ -157,9 +202,12 @@ public enum Zusatzicons {
     /// (`gezeichnet`); im Pixelweg ist er 1. Nichts Durchsichtiges überschreibt.
     static func aufbringen(_ plaetze: [Zusatzplatz], bildnummern: [Int], faktor: Int,
                            auf pixel: inout [String?], breite: Int, hoehe: Int) {
-        let f = max(1, faktor)
+        let f = min(max(1, faktor), 8)
+        guard breite > 0, hoehe > 0, breite <= Pixelweg.hoechsteBreite, hoehe <= Pixelweg.hoechsteHoehe,
+              pixel.count == breite * hoehe else { return }
         for (i, p) in plaetze.enumerated() {
-            let nummer = i < bildnummern.count ? bildnummern[i] : 0
+            guard !p.bilder.isEmpty else { continue }
+            let nummer = i < bildnummern.count ? max(0, bildnummern[i]) : 0
             let bild = p.bilder[nummer % p.bilder.count].pixel
             let kante = p.icon.kante
             guard bild.count == kante * kante else { continue }

@@ -536,7 +536,7 @@ public enum VirtuelleNGUhr {
         guard case .liste(let liste)? = w else { return [] }
         return liste.prefix(Zusatzicons.hoechstzahl).compactMap { e in
             guard case .objekt(let o) = e, case .text(let uri)? = o["icon"], let g = gifBild(uri) else { return nil }
-            return (g, o["x"]?.ganzzahl ?? 0, o["y"]?.ganzzahl ?? 0)
+            return (g, Zusatzicons.klemmen(o["x"]?.ganzzahl ?? 0), Zusatzicons.klemmen(o["y"]?.ganzzahl ?? 0))
         }
     }
 

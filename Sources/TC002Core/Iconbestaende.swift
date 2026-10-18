@@ -22,6 +22,14 @@ public enum Iconbestaende {
          Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
     }
 
+    /// Beide Bestände samt den mitgelieferten, wie das Telefon sie liest: Dort gibt
+    /// es kein „Grundschatz wiederherstellen“, das sie erst in den eigenen Ordner
+    /// holte.
+    public static func mitMitgeliefertem() -> [Iconsammlung] {
+        [Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert]),
+         Iconsammlung(schreibordner: Iconordner.eigene16, leseordner: [Iconordner.mitgeliefert16], kante: 16)]
+    }
+
     /// Das Icon zu einem Schlüssel, über alle Bestände.
     ///
     /// Der Schlüssel ist bei 8×8 die LaMetric-Nummer, bei 16×16 der Dateiname
