@@ -34,19 +34,29 @@ vorhandene Bestände.
   Bewegtes als animiertes GIF.
 - **Darstellung:** Hintergrundfarbe, Effekte, Overlays (Wetter) und Paletten, die
   die Uhr selbst liefert.
-- **Anzeigen und Nachrichten:** Eine Anzeige liegt auf einem Platz und läuft in der
-  Schleife der Uhr, mit Dauer und Lebensdauer (verfällt von selbst oder bleibt).
-  Eine Nachricht unterbricht die Schleife einmal, kann gehalten und
-  zurückgezogen werden und einen Klang mitbringen (Melodie, MP3, Sprache).
-- **Mehrere Uhren:** Ziel wählbar je Anzeige, Betriebsart je Uhr (HTTP oder MQTT).
-- **Steuerung der Uhr:** Fernbedienung mit Live-Bild des Displays, Zustand,
-  Display an/aus, Helligkeit, Moodlight, Anzeiger, Overlay, Neustart sowie Ton
-  und Radio; Tasten und Drehknopf, wo die App sie mitliest.
-- **Einstellungen der Uhr:** die auf der Uhr gespeicherten Einstellungen in
-  Gruppen, dazu das TLS-Zertifikat für MQTT.
+- **Anzeigen und Nachrichten:** Über dem Eingabefeld wählt ein Segment „Anzeige | Nachricht“.
+  Eine Anzeige liegt auf einem Platz und läuft in der Schleife der Uhr, mit Dauer und
+  Lebensdauer (verfällt von selbst oder bleibt). Eine Nachricht unterbricht die Schleife
+  einmal und belegt keinen Platz. Unter „Steht …“ wählst du, wie lange sie steht: bis
+  du sie zurückziehst (Vorgabe), eine Zahl Sekunden oder eine Zahl Durchläufe. Dazu kann
+  sie einen Klang mitbringen (Melodie, MP3, Sprache), einmal oder in Schleife;
+  „Nachricht zurückziehen“ nimmt sie wieder weg.
+- **Mehrere Uhren:** Die Empfänger sind wählbar je Anzeige, die Betriebsart je Uhr
+  (HTTP oder MQTT); die gezeigte Uhr bestimmt Vorschau, Blöcke und Verlauf.
+- **Bereich „Uhr“:** alles, was auf der Uhr eingestellt wird, an einer Stelle:
+  Live-Bild des Displays, Zustand, Display an/aus, Helligkeit, Overlay jetzt auf der
+  Uhr, Moodlight, Anzeiger, Ton und Radio, Neustart, Tasten und Drehknopf (wo die App
+  sie mitliest) — dazu „Vorgaben der Uhr“, die auf der Uhr gespeicherten Einstellungen
+  in Gruppen (Anzeigedauer, Schleife, Zeit & Datum …), und das TLS-Zertifikat für
+  MQTT. Am iPhone öffnet „Uhr …“ im Titelmenü diesen Bereich als Blatt.
+- **Klänge:** eine eigene Sammlung von Melodien und MP3-Dateien, an der die Uhren
+  abgeglichen werden (Bereich „Klänge“ neben „Icons“; am iPhone „Klänge …“ im Titelmenü).
+- **Einstellungen:** nur „Uhren“ (Name, Adresse, Betriebsart, Modell), „MQTT-Broker“ und
+  „Allgemein“. Am Mac stehen sie im Einstellungsfenster (⌘,), am iPad als Bereich.
 - **Editor (Mac, iPad):** Icons (8×8, 16×16) und ganze Anzeigen malen, mit
   Animation; Icons lassen sich über eine LaMetric-Nummer nachladen.
-- **Kurzbefehle (iPhone, iPad, Mac)** — Senden und Fernbedienung — und **Kommandozeile (Mac)**.
+- **Kurzbefehle (iPhone, iPad, Mac)** — zwölf Aktionen zum Schicken („Anzeige schicken“,
+  „Bild schicken“, „Nachricht senden“ …) und zur Fernbedienung — und **Kommandozeile (Mac)**.
 - **Abgleich** der eigenen Bestände über iCloud; Deutsch und Englisch.
 
 Wie man das bedient, steht in der Hilfe im Programm (⌘?).
@@ -100,10 +110,10 @@ Schlüsselbundeintrag der App darf.
 
 ## Ohne Uhr ausprobieren
 
-In den Einstellungen unter „Erweitert“ steht der Schalter **„Virtuelle Uhr“**. Er
+In den Einstellungen unter „Allgemein“ steht der Schalter **„Virtuelle Uhr“**. Er
 startet einen kleinen HTTP-Dienst auf `127.0.0.1:8752`, der die Schnittstelle von
 AWTRIX NG spricht und die Anzeigen in einem Fenster mit Geräterahmen zeigt.
-„Als Uhr eintragen“ legt sie in der Uhrenliste an; ab da sind Abfragen, Senden,
+„Als Uhr eintragen“ legt sie in der Uhrenliste an, „Ansehen“ öffnet ihr Fenster; ab da sind Abfragen, Senden,
 Löschen und der Verlauf wie bei einem Gerät. Sie hört nur auf dem eigenen Rechner
 zu und spricht HTTP, kein MQTT.
 

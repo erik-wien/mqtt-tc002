@@ -18,7 +18,7 @@ Etwas, das an der Uhr nie funktionieren wird, wird einfach nicht angezeigt.“
 | Die Uhr kann es **nie** (Hardware oder Firmware: Fähigkeit `false` oder Schlüssel fehlt in der Antwort) | **nicht angezeigt**: keine graue Zeile, kein Hinweis |
 | Es ist nur **abgeschaltet, und der Nutzer kann die Ursache selbst ändern** (Schalter wie „Schrift der Uhr“, Lichtsensor regelt die Helligkeit, keine Adresse eingetragen, MQTT-Funktion im HTTP-Betrieb) | **gesperrt, mit Grund** sichtbar |
 | Die Uhr hat darüber **nichts gemeldet** (Fähigkeiten nie abgefragt, Schalter fehlt in `audio`) | **erlaubt**; die Prüfung vor dem Senden und die Uhr weisen Falsches ab |
-| Mehrere Zieluhren, nur ein Teil kann es | bleibt, und die Meldung nennt die Uhren, bei denen es entfällt („… zeigt die Nachricht ohne Ton“); kann es **keine**, wird es nicht angezeigt |
+| Mehrere Zieluhren, nur ein Teil kann es | bleibt, und der Hinweis nennt die Uhren, bei denen es entfällt („… zeigt die Nachricht ohne Ton“); kann es **keine**, wird es nicht angezeigt |
 
 Zwei gewollte Ausnahmen von „unbekannt → erlaubt“: der Schalter „Automatisch“
 (Helligkeit) und die Gruppe „MQTT-Verschlüsselung“ erscheinen erst, wenn die
@@ -49,15 +49,15 @@ Gruppe ohne sichtbare Zeile entfällt (`Uhrgruppe.sichtbar`).
 | Funktion | TC002 | TC001 | Quelle | Entscheidung der App | Oberfläche |
 |---|---|---|---|---|---|
 | Gerasterter Text und Bilder (GIF im `icon`) | ja, 52 × 16 | ja, 32 × 8 | 🔬 09.10.2026 | `Uhr.anzeigemass` aus `display.width/height` (`Anzeigemass.fuer`); ohne Auskunft 52 × 16 | alle, immer angezeigt |
-| Schrift der Uhr (Uhr setzt den Text selbst) | ja | ja | 📄 | keine Fähigkeit; Schalter immer da, Regler für Schriftwahl, Größe, Fett, Rand, Abstand, Ausrichtung dann grau (der Nutzer schaltet es selbst) | Mac/iPad, iPhone, CLI `--schrift-der-uhr` (weist die dann wirkungslosen Angaben ab) |
+| Schrift der Uhr (Uhr setzt den Text selbst) | ja | ja | 📄 | keine Fähigkeit; Schalter immer da, Regler für Schriftwahl, Größe, Fett, Rand, Abstand, Ausrichtung dann grau (der Nutzer schaltet es selbst) | Mac/iPad, iPhone (im Menü der Schriftart), CLI `--schrift-der-uhr` (weist die dann wirkungslosen Angaben ab) |
 | Schriftgröße passt nicht in die Höhe | – | 16 px passt nicht in 8 Zeilen: größte passende Größe derselben Schrift (Maß: Tinte von „ÄÖÜH“, `TinteImFeldTests`), Hinweis unter der Vorschau | 🔬 09.10.2026 | Anzeigemaß der Zieluhr (`Meldungsbau`, `Pixelgroessen`) | alle (automatisch) |
 | Icon 8×8 | ja | ja | 🔬 09.10.2026 | Maß der Zieluhr | alle |
-| Icon 16×16 | ja | durch seine 8×8-Fassung ersetzt, wenn es eine gibt | 🔬 09.10.2026 | `Iconbestaende.passend(_:fuer:)` nach Anzeigemaß | alle (automatisch, Hinweis), Kurzbefehle „Meldung schicken“ und „Nachricht senden“ (Hinweis im Ergebnis, `Iconbestaende.hinweise`) |
-| Icon in Kurzbefehlen wählen | ja | ja | – | `IconEntity`/`IconAbfrage` über `Kurzbefehlswerte.iconvorschlaege`, Suche nach Name oder Nummer (`Kurzbefehlswerte.icons(passend:in:)`), Kennung `Icon.kennung` | Kurzbefehle „Meldung schicken“ und „Nachricht senden“ (Auswahl statt getippter Nummer) |
-| Fertiges Bild (gemalt, Sammlung) | nur 52 × 16 | nur 32 × 8 | 🔬 09.10.2026 | falsches Maß: `NGFehler.massPasstNicht`, Meldung nennt es | Mac/iPad (Malen, Sammlung), iPhone (Sammlung), CLI `bild`, Kurzbefehl „Bild schicken“ (52 × 16, eine TC001 weist es ab) |
+| Icon 16×16 | ja | durch seine 8×8-Fassung ersetzt, wenn es eine gibt | 🔬 09.10.2026 | `Iconbestaende.passend(_:fuer:)` nach Anzeigemaß | alle (automatisch, Hinweis), Kurzbefehle „Anzeige schicken“ und „Nachricht senden“ (Hinweis im Ergebnis, `Iconbestaende.hinweise`) |
+| Icon in Kurzbefehlen wählen | ja | ja | – | `IconEntity`/`IconAbfrage` über `Kurzbefehlswerte.iconvorschlaege`, Suche nach Name oder Nummer (`Kurzbefehlswerte.icons(passend:in:)`), Kennung `Icon.kennung` | Kurzbefehle „Anzeige schicken“ und „Nachricht senden“ (Auswahl statt getippter Nummer) |
+| Fertiges Bild (gemalt, Sammlung) | nur 52 × 16 | nur 32 × 8 | 🔬 09.10.2026 | falsches Maß: `NGFehler.massPasstNicht`, die Fehlermeldung nennt es | Mac/iPad (Malen, Sammlung), iPhone (Sammlung), CLI `bild`, Kurzbefehl „Bild schicken“ (52 × 16, eine TC001 weist es ab) |
 | Layouts (Kästen mit Inhalt) | ja | nein (`422 unknown field`) | 🔬 09.10.2026 | `capabilities.layout` (`Geraetefaehigkeiten.layoutUnterstuetzt`); `false` weist `Kastenlayout.pruefen` mit `LayoutFehler.nichtUnterstuetzt` ab, `nil` (nie gefragt) lässt zu | nur CLI `layout`; keine Auswahl in der Oberfläche (Hilfe nennt es) |
 | Standbild/Bewegtes als GIF, Zustellweg HTTP/MQTT | ja | ja | 🔬 09.10.2026 | `Pixelweg.zustellweg` (8192 Byte MQTT) | alle |
-| Hintergrund, Effekt, Overlay, Palette | Listen der Uhr | Listen der Uhr (19 Effekte, 16 Paletteneffekte, 6 Overlays, 8 Paletten) | 🔬 10.10.2026 | `capabilities.effects/overlays/palettes`; Auswahl zeigt die Vereinigung der Listen aller Zieluhren (`Darstellungsangebot`; ein Name genügt, wenn ihn eine Uhr kennt), fehlende Listen holt der Reiter beim Öffnen selbst, ein Hinweis nennt Uhren, die den gewählten Namen abweisen, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (Darstellung), CLI `effekte`; Kurzbefehle „Meldung schicken“ und „Nachricht senden“ senden bewusst ohne Darstellung (`Meldungsoptionen.ausAblage` liest sie nicht) |
+| Hintergrund, Effekt, Overlay, Palette | Listen der Uhr | Listen der Uhr (19 Effekte, 16 Paletteneffekte, 6 Overlays, 8 Paletten) | 🔬 10.10.2026 | `capabilities.effects/overlays/palettes`; Auswahl zeigt die Vereinigung der Listen aller Zieluhren (`Darstellungsangebot`; ein Name genügt, wenn ihn eine Uhr kennt), fehlende Listen holt der Reiter beim Öffnen selbst, ein Hinweis nennt Uhren, die den gewählten Namen abweisen, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (Darstellung), CLI `effekte`; Kurzbefehle „Anzeige schicken“ und „Nachricht senden“ senden bewusst ohne Darstellung (`Meldungsoptionen.ausAblage` liest sie nicht) |
 | Overlay der Uhr (Fernbedienung) | ja | ja (6) | 🔬 10.10.2026 | `capabilities.overlays` nicht leer; `AnzeigenSteuerung.overlay` prüft den Namen gegen die Liste | Mac/iPad, iPhone, CLI `overlay`, Kurzbefehl „Overlay der Uhr setzen“ (Name wie in der Liste der Uhr, ein unbekannter wird abgewiesen) |
 | Übergänge, Zifferblätter (Einstellungen) | `transitions`, `clockFaces` (5) | 22 `transitions`; `clockFaces` fehlt, also keine Zifferblätter | 🔬 10.10.2026 | `capabilities.transitions/clockFaces`; die Zeile `clockFace` (samt ihren Farbzeilen) erscheint nur, wenn die Einstellungen der Uhr den Schlüssel melden | Mac/iPad, iPhone (Bereich „Uhr“), CLI |
 | Nachricht (einmalig über der Schleife) | ja | ja | 🔬 | keine Fähigkeit | alle, Kurzbefehl „Nachricht senden“ |
@@ -80,10 +80,10 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | Klang-Clip (`clip`), Klangeffekt (`effect`), Spur (`track`) | `clip` ja, `effect` ja, `track` nein | alle nein | 🔬 10.10.2026 | von der App nicht angeboten | – |
 | Klang in einer Nachricht (mehrere Zieluhren) | – | – | – | `Klangeignung.verteilen`: der Klang geht nur an Uhren, die ihn spielen; die Nachricht geht an alle | Mac/iPad, iPhone, CLI, Kurzbefehl „Nachricht senden“ (der Dialog nennt die Uhren ohne Klang) |
 | Lautstärke, „Spielt“, Stopp | ja | ja (Summer) | 📄 | keine Fähigkeit; gesperrt ohne Adresse (der Nutzer trägt sie ein); Abschnitt „Ton“ der Fernbedienung nicht angezeigt, wenn `audio` ganz leer | Mac/iPad, iPhone, CLI |
-| Klangsammlung: Melodie auf die Uhr sichern/abgleichen | ja | ja | 🔬 10.10.2026 | `kann(.melodie)` (`Klangabgleich`); „Sichern“ in der Sammlung hängt an keiner Uhr, nur „Probehören“ braucht die angesehene Uhr und entfällt, wenn sie `rtttl` nie kann | Mac/iPad, iPhone (Einstellungen › Klänge), CLI `ton abgleichen` |
+| Klangsammlung: Melodie auf die Uhr sichern/abgleichen | ja | ja | 🔬 10.10.2026 | `kann(.melodie)` (`Klangabgleich`); „Sichern“ in der Sammlung hängt an keiner Uhr, nur „Probehören“ braucht die gezeigte Uhr und entfällt, wenn sie `rtttl` nie kann | Mac/iPad, iPhone (Bereich „Klänge“, Titelmenü „Klänge …“), CLI `ton abgleichen` |
 | Klangsammlung: MP3 abgleichen | ja | übersprungen (`faehigkeitFehlt`) | 🔬 10.10.2026 | `Klangeignung.mp3Hochladbar` | wie oben |
 
-### Fernbedienung und Einstellungen der Uhr
+### Bereich „Uhr“: Fernbedienung und Vorgaben der Uhr
 
 | Funktion | TC002 | TC001 | Quelle | Entscheidung der App | Oberfläche |
 |---|---|---|---|---|---|
@@ -98,7 +98,7 @@ Eine Klangart ist erlaubt, wenn `audio.<Schalter>` der Uhr `true` ist
 | Neustart | ja | ja | 📄 | keine Fähigkeit | Mac/iPad, iPhone, CLI, Kurzbefehl „Uhr neu starten“ (fragt vorher nach) |
 | MQTT über TLS, CA hochladen | ja (`mqttTls` `true`) | nein (`mqttTls` fehlt) | 🔬 10.10.2026 | `capabilities.mqttTls`; Gruppe „Verschlüsselung“ nur bei `true` | Mac/iPad, iPhone (Bereich „Uhr“), CLI `tls` |
 | `enlargeApps` | ja, nicht schreibbar | gibt es nicht | 🔬 09.10.2026 | App rechnet alle Bilder für das Anzeigemaß; Einstellung wird nie geschrieben (`Geraeteeinstellung.schreibbar`) | – |
-| Virtuelle Uhr | TC002-Modus (Vorgabe) | `NGTon.tc001`: gemessener Schlüsselsatz (kein `layout`, `layouts`, `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps`; Anzeige 32 × 8; Einstellungen ohne `clockFace`, `bootSound`, `enlargeApps`) | 🔬 10.10.2026 | `NGTon.istTC001`, `VirtuelleNGUhr.faehigkeitenantwort/einstellungenantwort` | Mac/iPad, iPhone (Einstellungen), Tests |
+| Virtuelle Uhr | TC002-Modus (Vorgabe) | `NGTon.tc001`: gemessener Schlüsselsatz (kein `layout`, `layouts`, `mqttTls`, `clockFaces`, `bootSound`, `enlargeApps`; Anzeige 32 × 8; Einstellungen ohne `clockFace`, `bootSound`, `enlargeApps`) | 🔬 10.10.2026 | `NGTon.istTC001`, `VirtuelleNGUhr.faehigkeitenantwort/einstellungenantwort` | Mac/iPad, iPhone (Einstellungen › Allgemein), Tests |
 
 ## ESP32 DIY (selbstgebaute Uhr)
 
@@ -129,7 +129,7 @@ steht; der Nutzer ändert es auf der Uhrseite, eine Wahl bleibt):
 | MP3-Player (DFPlayer) | `audio.mp3` der Uhr | 🔬 11.10.2026 | `audio.mp3` gilt (spiegelt das Abspielen); `/api/v1/system` `dfplayer` wird nicht gelesen | wie TC001 |
 | Lautsprecher | **nicht erkennbar** (`audio.rtttl` ist auch ohne einen `true`) | 🔬 11.10.2026 | Schalter „Lautsprecher“ (`Uhr.lautsprecher`, nil = ein); aus = `Geraetefaehigkeiten.lautsprecher` `false`, `ton` leer, `kann(_:)` für jede Klangart `false` | Uhrseite |
 | Klang ohne Lautsprecher | keiner | – | Abschnitt „Ton“ der Fernbedienung, Klangknopf der Nachricht (`AppZustand.klangMoeglich`, `Klangeignung.keinKlang`), Klangeinstellungen der Uhr, „Probehören“; nicht im Klangabgleich (App und `ton abgleichen`); CLI `ton spielen` meldet und überspringt, `nachricht --rtttl` sendet ohne Klang; mehrere Ziele: bleibt, wenn eine Uhr es kann | alle |
-| Klangabgleich je Uhr | wählbar | – | `Uhr.klangAbgleich` (nil = mit); Uhren ohne Lautsprecher erscheinen nicht; `ton abgleichen` ohne `--an` liest sie, mit `--an` wird die genannte Uhr abgeglichen, ohne Lautsprecher mit Hinweis übersprungen | Mac/iPad, iPhone (Einstellungen › Klänge), CLI |
+| Klangabgleich je Uhr | wählbar | – | `Uhr.klangAbgleich` (nil = mit); Uhren ohne Lautsprecher erscheinen nicht; `ton abgleichen` ohne `--an` liest sie, mit `--an` wird die genannte Uhr abgeglichen, ohne Lautsprecher mit Hinweis übersprungen | Mac/iPad, iPhone (Bereich „Klänge“, Titelmenü „Klänge …“), CLI |
 | Layouts, Drehknopf | nein (wie TC001) | 🔬 | `capabilities.layout` fehlt, `platform.id` `esp32` | wie TC001 |
 
 ## Abweichungen
