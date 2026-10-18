@@ -23,6 +23,8 @@ public struct Klangsammlungsansicht: View {
     @State private var uebernimmt = false
     @State private var gleichtAb = false
     @State private var ergebnisse: [Uhrenabgleich] = []
+    /// Die Uhr für „Probehören“, gemeinsam für Sammlung und Melodieblatt.
+    @State private var probeUhrID: UUID?
 
     public init(zustand: AppZustand, kanon: Formkanon) {
         self.zustand = zustand
@@ -35,15 +37,26 @@ public struct Klangsammlungsansicht: View {
     /// nicht vor.
     private var uhrenMitAdresse: [Uhr] { zustand.uhren.filter { !$0.host.isEmpty && $0.hatLautsprecher } }
 
+    private var probeUhren: [Uhr] { Probehoeren.uhren(zustand.uhren, faehigkeiten: zustand.faehigkeiten) }
+    private var probeZiel: Uhr? {
+        Probehoeren.ziel(gewaehlt: probeUhrID, unter: probeUhren, gezeigt: zustand.referenzUhr?.id)
+            .flatMap { id in probeUhren.first { $0.id == id } }
+    }
+
     public var body: some View {
         Form {
             sammlung
+            if probeUhren.count > 1 || Probehoeren.brauchtAdresse(zustand.uhren, faehigkeiten: zustand.faehigkeiten) {
+                Section {
+                    Probehoerwahl(zustand: zustand, kanon: kanon, wahl: $probeUhrID)
+                }
+            }
             hinzufuegen
             abgleich
             if !ergebnisse.isEmpty { ergebnis }
         }
         .formStyle(.grouped)
-        .sheet(isPresented: $neueMelodie) { Melodieblatt(zustand: zustand, kanon: kanon) }
+        .sheet(isPresented: $neueMelodie) { Melodieblatt(zustand: zustand, kanon: kanon, probeUhrID: $probeUhrID) }
         .sheet(isPresented: Binding(get: { !gewaehlteDateien.isEmpty },
                                     set: { if !$0 { gewaehlteDateien = [] } })) {
             Dateiblatt(zustand: zustand, kanon: kanon, eintraege: gewaehlteDateien)
@@ -118,9 +131,10 @@ public struct Klangsammlungsansicht: View {
             }
         }
         .contextMenu {
-            if let text = k.rtttl, let uhr = zustand.referenzUhr, !uhr.host.isEmpty,
-               zustand.faehigkeiten[uhr.id]?.kann(.rtttl) != false {
-                Button(lok("Probehören")) { Task { await zustand.rtttlProbehoeren(text, fuer: uhr.id) } }
+            if let text = k.rtttl, !probeUhren.isEmpty {
+                Button(lok("Probehören")) {
+                    if let uhr = probeZiel { Task { await zustand.rtttlProbehoeren(text, fuer: uhr.id) } }
+                }
             }
             Button(lok("Umbenennen …")) { umzubenennen = k }
             Button(lok("Löschen …"), role: .destructive) { zuLoeschen = k }
@@ -335,6 +349,7 @@ struct Umbenennblatt: View {
 struct Melodieblatt: View {
     @Bindable var zustand: AppZustand
     let kanon: Formkanon
+    @Binding var probeUhrID: UUID?
     @Environment(\.dismiss) private var schliessen
 
     @State private var text = ""
@@ -355,11 +370,14 @@ struct Melodieblatt: View {
     }
     private var ersetzt: Bool { zustand.klaenge().contains { $0.name == name && $0.art == .melodie } }
     private var darfSichern: Bool { (try? pruefung.get()) != nil && nameFehler == nil }
-    private var uhr: Uhr? { zustand.referenzUhr.flatMap { $0.host.isEmpty ? nil : $0 } }
+    private var probeUhren: [Uhr] { Probehoeren.uhren(zustand.uhren, faehigkeiten: zustand.faehigkeiten) }
     /// Die Sammlung gilt für alle Uhren, Sichern hängt an keiner. Nur das
-    /// Probehören braucht die angesehene Uhr; kann sie nie Melodien spielen
-    /// (`audio.rtttl` `false`), entfällt es.
-    private var uhrKannNieMelodien: Bool { uhr.map { zustand.faehigkeiten[$0.id]?.kann(.rtttl) == false } ?? false }
+    /// Probehören braucht eine Uhr (`Probehoeren`).
+    private var uhr: Uhr? {
+        Probehoeren.ziel(gewaehlt: probeUhrID, unter: probeUhren, gezeigt: zustand.referenzUhr?.id)
+            .flatMap { id in probeUhren.first { $0.id == id } }
+    }
+    private var brauchtAdresse: Bool { Probehoeren.brauchtAdresse(zustand.uhren, faehigkeiten: zustand.faehigkeiten) }
 
     var body: some View {
         Blatt(titel: lok("Melodie"), bestaetigung: lok("Sichern"), bestaetigenMoeglich: darfSichern,
@@ -390,19 +408,17 @@ struct Melodieblatt: View {
                               systemImage: "info.circle").foregroundStyle(.secondary)
                     }
                 }
-                if !uhrKannNieMelodien {
-                Section {
-                    Button("Probehören") {
-                        if let uhr, case .success(let t) = pruefung {
-                            Task { await zustand.rtttlProbehoeren(t, fuer: uhr.id) }
+                if uhr != nil || brauchtAdresse {
+                    Section {
+                        Probehoerwahl(zustand: zustand, kanon: kanon, wahl: $probeUhrID)
+                        Button("Probehören") {
+                            if let uhr, case .success(let t) = pruefung {
+                                Task { await zustand.rtttlProbehoeren(t, fuer: uhr.id) }
+                            }
                         }
+                        .knopfBefehl()
+                        .disabled((try? pruefung.get()) == nil || uhr == nil)
                     }
-                    .knopfBefehl()
-                    .disabled((try? pruefung.get()) == nil || uhr == nil)
-                    Text(verbatim: uhr.map { lokf("Spielt auf „%@“, ohne etwas zu speichern.", $0.name) }
-                         ?? lok("Zum Probehören braucht die gewählte Uhr eine Adresse."))
-                        .font(kanon.fussnote).foregroundStyle(.secondary)
-                }
                 }
             }
             .formStyle(.grouped)
@@ -418,6 +434,32 @@ struct Melodieblatt: View {
     private func sichern() {
         guard darfSichern else { return }
         if zustand.melodieSammeln(name: name, rtttl: text) { schliessen() }
+    }
+}
+
+/// „Probehören auf“: eine Auswahl, wenn mehr als eine Uhr infrage kommt,
+/// sonst nur der Name der einen. Ohne infrage kommende Uhr steht ein Hinweis,
+/// aber nur, wenn der Nutzer das beheben kann (Adresse eintragen).
+struct Probehoerwahl: View {
+    @Bindable var zustand: AppZustand
+    let kanon: Formkanon
+    @Binding var wahl: UUID?
+
+    private var infrage: [Uhr] { Probehoeren.uhren(zustand.uhren, faehigkeiten: zustand.faehigkeiten) }
+    private var aktuell: UUID? { Probehoeren.ziel(gewaehlt: wahl, unter: infrage, gezeigt: zustand.referenzUhr?.id) }
+
+    var body: some View {
+        if infrage.count > 1 {
+            Picker("Probehören auf", selection: Binding(get: { aktuell }, set: { wahl = $0 })) {
+                ForEach(infrage) { uhr in Text(verbatim: uhr.name).tag(Optional(uhr.id)) }
+            }
+        } else if let uhr = infrage.first {
+            Text(verbatim: lokf("Spielt auf „%@“, ohne etwas zu speichern.", uhr.name))
+                .font(kanon.fussnote).foregroundStyle(.secondary)
+        } else {
+            Text("Zum Probehören braucht die Uhr eine Adresse.")
+                .font(kanon.fussnote).foregroundStyle(.secondary)
+        }
     }
 }
 

@@ -1538,7 +1538,8 @@
 "RTTTL, zum Beispiel ping:d=4,o=5,b=120:c,e,g" = "RTTTL, for example ping:d=4,o=5,b=120:c,e,g";
 "„%@“ gibt es in der Sammlung schon und wird ersetzt." = "“%@” is already in the library and will be replaced.";
 "Spielt auf „%@“, ohne etwas zu speichern." = "Plays on “%@” without saving anything.";
-"Zum Probehören braucht die gewählte Uhr eine Adresse." = "To audition, the selected clock needs an address.";
+"Zum Probehören braucht die Uhr eine Adresse." = "To audition, the clock needs an address.";
+"Probehören auf" = "Audition on";
 "Erlaubt sind Buchstaben, Ziffern, _ und -, höchstens %d Zeichen." = "Allowed are letters, digits, _ and -, at most %d characters.";
 "Der Name kommt in dieser Auswahl doppelt vor." = "The name appears twice in this selection.";
 "„%@“ gehört in der Sammlung schon einem anderen Klang." = "“%@” already belongs to another sound in the library.";
