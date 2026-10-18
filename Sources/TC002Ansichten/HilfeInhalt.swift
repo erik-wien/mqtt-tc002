@@ -394,7 +394,7 @@ public enum HilfeInhalt {
                 .absatz("„Dauer in Sekunden“ (1 bis 86 400) sagt, wie lange die Uhr die Anzeige zeigt. Davon unabhängig verschwindet eine Anzeige nach 30 Minuten von selbst: „Lebensdauer in Minuten“ (1 bis 1 440) ändert die Zeit, „Nach Ablauf“ sagt, ob sie dann entfernt oder rot markiert wird, und mit „Behalten“ bleibt sie, bis sie ersetzt oder entfernt wird. Die Lebensdauer gilt nur für Anzeigen, nicht für Nachrichten."),
 
                 .ueberschrift("Die Formatangaben"),
-                .absatz("Weg, Schriftart, Farbe, die beiden Ausrichtungen und das Tempo sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett, Großbuchstaben und „Icon mitscrollen“ sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier."),
+                .absatz("Weg, Schriftart, Farbe, die beiden Ausrichtungen, das Tempo und „Icon mitscrollen“ (fest, einmal mitscrollen, mitscrollen) sind Aufklappmenüs — vertippen kann man sich dort nicht. Fett und Großbuchstaben sind Schalter, Rand und Abstand Zahlen von 0 bis 3. Alle haben dieselbe Wirkung wie die gleichnamigen Bedienelemente unter „Senden“; was dort ohne Wirkung bleibt — Fett bei einer Schrift ohne fetten Schnitt etwa —, bleibt es auch hier. Ein Kurzbefehl, der noch den früheren Schalter „Icon mitscrollen“ trägt, läuft unverändert weiter; die neue Auswahl gewinnt, wenn beide gesetzt sind."),
                 .absatz("Die Farbe ist eine Liste aus zehn Tönen, kein Farbrad: In einem Kurzbefehl bliebe nur ein Feld für einen Hexwert, und ein Tippfehler darin fiele niemandem auf. Wer einen anderen Ton braucht, stellt ihn in der App ein und gibt im Kurzbefehl keine Farbe an."),
 
                 .ueberschrift("Größe im Kurzbefehl"),
@@ -503,7 +503,7 @@ public enum HilfeInhalt {
     /// Die verfuegbare Breite und was die Ausrichtung darin tut.
     public static let breiteUndAusrichtung: [Hilfebaustein] = [
         .ueberschrift("Breite und Ausrichtung"),
-        .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays, mit einem 8×8-Icon 42, weil es die ersten zehn Spalten belegt — daran hängt auch die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
+        .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays. Ein Icon wird auf seine Zeichnung zugeschnitten, links wie rechts, und belegt nur diese Breite plus den Abstand, den du auf der Seite der Uhr unter „Abstand Icon–Text“ eingestellt hast (Vorgabe 1 Pixel); ein 8×8-Icon mit voller Breite lässt 43 Pixel. Daran hängt die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
         .abbildung(.ausrichtung),
     ]
 
@@ -524,7 +524,7 @@ public enum HilfeInhalt {
     public static let iconImLauf: [Hilfebaustein] = [
         .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz)."),
         .absatz("Läuft der Text, steht das Icon fest links und der Text läuft rechts daneben durch."),
-        .absatz("Wer es lieber mitwandern lässt, schaltet „Icon mitscrollen“ ein: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Ein animiertes Icon spielt in beiden Fällen weiter ab. Das gilt auch, wenn die Uhr den Text selbst setzt."),
+        .absatz("Wer es lieber mitwandern lässt, wählt bei „Icon mitscrollen“ „Mitscrollen“: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Mit „Einmal mitscrollen“ schiebt der Text das Icon nur beim ersten Durchlauf hinaus; danach bleibt es weg und der Text läuft über die ganze Breite. Das gibt es nur, wenn die Uhr den Text selbst setzt („Schrift der Uhr“) — die Vorschau zeigt den zweiten Durchlauf einmal, die Uhr wiederholt ihn. Ein animiertes Icon spielt in allen Fällen weiter ab."),
     ]
 
     /// Woher die Anzeigenliste kommt und warum der Unterschied zaehlt. Gemeldet

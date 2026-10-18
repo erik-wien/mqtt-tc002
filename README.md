@@ -26,7 +26,7 @@ vorhandene Bestände.
 
 ## Was die App kann
 
-- **Senden:** Text mit Icon, Schrift, Größe, Farbe, Rand, Abstand und Ausrichtung.
+- **Senden:** Text mit Icon (auf die Tinte zugeschnitten, Abstand Icon–Text je Uhr, Icon fest, einmal oder mit mitscrollend), Schrift, Größe, Farbe, Rand, Abstand und Ausrichtung.
   Die App rastert den Text selbst und schickt der Uhr Pixel; die Vorschau zeigt
   genau das, was hinausgeht (außer bei „Schrift der Uhr“, wo die Uhr den Text
   mit ihrer eigenen Schrift setzt). Fünf Blöcke zeigen die festen Plätze der Uhr.

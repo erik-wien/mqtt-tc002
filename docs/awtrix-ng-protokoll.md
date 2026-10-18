@@ -782,6 +782,25 @@ Abweisung unsichtbar.
 `pushOnce` lässt den Text es **einmal** hinausschieben, danach bleibt es weg und
 der Text beginnt bei x=0; `push` holt es in jedem Laufdurchgang zurück.
 
+📄 **Die Einheit von `iconGap` und der Icon-Breite (aus dem Quelltext gelesen,
+am Gerät noch nicht gemessen; Fassung 1.2.2, `Blueforcer/awtrix-ng`):**
+`RenderPipeline::iconColumn` rechnet `min(Icon-Breite + iconGap, pageWidth)`,
+`SpecRenderer` beginnt den Text bei `iconWidth + iconGap` (`textColumn`). Beide
+Größen zählen in **Spalten der Seite, auf die die Anzeige gezeichnet wird**:
+`pageWidth(slot)` ist die Breite der Zwischenfläche (`IPageZoom::stage()`,
+26 × 8), wenn die Seite vergrößert gezeichnet wird (`slot.enlarged`, entschieden
+von `PageZoom::enlarges`), sonst die Panelbreite (52). Das Icon wird mit
+`begin(icon, pageWidth, pageHeight)` auf dieser Seite geladen, ein Icon-Pixel
+ist also eine Seitenspalte. Auf der vergrößerten TC002 ist eine Spalte darum **zwei
+Anzeigepixel** breit — für das Icon wie für `iconGap` —, sonst eines (TC001, TC002
+mit Icon über 8 Zeilen oder `enlargeApps` aus). `PageZoom::enlarges` verlangt
+`enlargeApps`, einen Faktor über 1 (Höhe / 8) und dass `icon` und `icons[]` auf
+die Zwischenfläche passen. Der Vorgabewert 1 sind also auf der vergrößerten TC002
+zwei Anzeigepixel Luft, passend zu „16 plus 2“ in §1.2. Eine ungerade Zahl von
+Anzeigepixeln gibt es dort nicht; die App rundet auf (`Iconplatz.luecke`).
+`iconShift`/`iconPushed` (`pushOnce`) und `textClipLeft` rechnen in denselben
+Spalten.
+
 📄 **`icons[]`:** je Element `icon` (Pflicht, nicht leer, Kennung oder Data-URL),
 `x` und `y` (−65535…65535, Vorgabe 0); was außerhalb liegt, wird abgeschnitten.
 Mehr als 4 Elemente, eine schlechte Koordinate, ein fehlendes `icon` oder ein
@@ -1573,8 +1592,8 @@ am Gerät geprüft):
   gemessen — der Client verband sich bei der Messung wegen des Platzhalters im Präfix nicht.
 - ❓ **Das Raster der Diagramme und des Fortschrittsbalkens bei vergrößerten
   Apps** (26×8 oder 52×16; für `draw` gemessen, §1.1) und die Höhe des Balkens.
-- ❓ **Die Einheit von `iconGap`** bei vergrößerten Apps (Spalten des 26×8-Rasters
-  oder des Displays).
+- ❓ **Die Einheit von `iconGap`** ist aus dem Quelltext gelesen (§5.3: Spalten der
+  Seite, vergrößert zwei Anzeigepixel), am Gerät aber noch nicht gemessen.
 - ❓ **Ob `POST /api/v1/device/sleep` über HTTP existiert:** Der MQTT-Teil führt
   es als HTTP-Gegenstück, die Routenliste der HTTP-Seite nennt es nicht.
 - ❓ **Die Werte von `ca` und der Sinn von `pending`** in `GET /api/v1/mqtt/tls`

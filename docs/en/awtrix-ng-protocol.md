@@ -763,6 +763,23 @@ without listening to that topic the rejection stays invisible.
 `pushOnce` lets the text push it out **once**, after which it stays gone and the
 text starts at x=0; `push` brings it back on every run.
 
+📄 **The unit of `iconGap` and of the icon width (read from the source, not yet
+measured on a device; version 1.2.2, `Blueforcer/awtrix-ng`):**
+`RenderPipeline::iconColumn` computes `min(icon width + iconGap, pageWidth)`, and
+`SpecRenderer` starts the text at `iconWidth + iconGap` (`textColumn`). Both count
+in **columns of the page the app is drawn on**: `pageWidth(slot)` is the width of
+the staging surface (`IPageZoom::stage()`, 26 × 8) when the page is drawn enlarged
+(`slot.enlarged`, decided by `PageZoom::enlarges`), otherwise the panel width (52).
+The icon is loaded onto that page with `begin(icon, pageWidth, pageHeight)`, so one
+icon pixel is one page column. On the enlarged TC002 a column is therefore **two
+display pixels** wide — for the icon as for `iconGap` — and one otherwise (TC001,
+TC002 with an icon taller than 8 rows, or `enlargeApps` off). `PageZoom::enlarges`
+requires `enlargeApps`, a factor above 1 (height / 8) and that `icon` and `icons[]`
+fit on the staging surface. The default 1 is thus two display pixels of space on
+the enlarged TC002, matching “16 plus 2” in §1.2. An odd number of display pixels
+does not exist there; the app rounds up (`Iconplatz.luecke`). `iconShift` /
+`iconPushed` (`pushOnce`) and `textClipLeft` count in the same columns.
+
 📄 **`icons[]`:** per element `icon` (required, non-empty, id or data URL), `x`
 and `y` (−65535…65535, default 0); whatever lies outside is cut off. More than 4
 elements, a bad coordinate, a missing `icon` or an unknown key is `422` (`field`
@@ -1535,8 +1552,8 @@ checked on a device):
   not measured — the client did not connect during the measurement (wildcard in the prefix).
 - ❓ **The grid of the charts and the progress bar in enlarged apps** (26×8 or
   52×16; measured for `draw`, §1.1) and the height of the bar.
-- ❓ **The unit of `iconGap`** in enlarged apps (columns of the 26×8 grid or of
-  the display).
+- ❓ **The unit of `iconGap`** is read from the source (§5.3: columns of the page,
+  two display pixels when enlarged), but not yet measured on a device.
 - ❓ **Whether `POST /api/v1/device/sleep` exists over HTTP:** the MQTT part lists
   it as the HTTP counterpart, the route list of the HTTP page does not name it.
 - ❓ **The values of `ca` and the meaning of `pending`** in `GET
