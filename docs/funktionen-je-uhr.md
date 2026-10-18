@@ -49,7 +49,7 @@ Gruppe ohne sichtbare Zeile entfällt (`Uhrgruppe.sichtbar`).
 | Funktion | TC002 | TC001 | Quelle | Entscheidung der App | Oberfläche |
 |---|---|---|---|---|---|
 | Gerasterter Text und Bilder (GIF im `icon`) | ja, 52 × 16 | ja, 32 × 8 | 🔬 09.10.2026 | `Uhr.anzeigemass` aus `display.width/height` (`Anzeigemass.fuer`); ohne Auskunft 52 × 16 | alle, immer angezeigt |
-| Schrift der Uhr (Uhr setzt den Text selbst) | ja | ja | 📄 | keine Fähigkeit; Schalter immer da, Regler für Schriftwahl, Größe, Fett, Rand, Abstand, Ausrichtung dann grau (der Nutzer schaltet es selbst) | Mac/iPad, iPhone |
+| Schrift der Uhr (Uhr setzt den Text selbst) | ja | ja | 📄 | keine Fähigkeit; Schalter immer da, Regler für Schriftwahl, Größe, Fett, Rand, Abstand, Ausrichtung dann grau (der Nutzer schaltet es selbst) | Mac/iPad, iPhone, CLI `--schrift-der-uhr` (weist die dann wirkungslosen Angaben ab) |
 | Schriftgröße passt nicht in die Höhe | – | 16 px passt nicht in 8 Zeilen: größte passende Größe derselben Schrift (Maß: Tinte von „ÄÖÜH“, `TinteImFeldTests`), Hinweis unter der Vorschau | 🔬 09.10.2026 | Anzeigemaß der Zieluhr (`Meldungsbau`, `Pixelgroessen`) | alle (automatisch) |
 | Icon 8×8 | ja | ja | 🔬 09.10.2026 | Maß der Zieluhr | alle |
 | Icon 16×16 | ja | durch seine 8×8-Fassung ersetzt, wenn es eine gibt | 🔬 09.10.2026 | `Iconbestaende.passend(_:fuer:)` nach Anzeigemaß | alle (automatisch, Hinweis) |
@@ -57,7 +57,7 @@ Gruppe ohne sichtbare Zeile entfällt (`Uhrgruppe.sichtbar`).
 | Layouts (Kästen mit Inhalt) | ja | nein (`422 unknown field`) | 🔬 09.10.2026 | `capabilities.layout` (`Geraetefaehigkeiten.layoutUnterstuetzt`); `false` weist `Kastenlayout.pruefen` mit `LayoutFehler.nichtUnterstuetzt` ab, `nil` (nie gefragt) lässt zu | nur CLI `layout`; keine Auswahl in der Oberfläche (Hilfe nennt es) |
 | Standbild/Bewegtes als GIF, Zustellweg HTTP/MQTT | ja | ja | 🔬 09.10.2026 | `Pixelweg.zustellweg` (8192 Byte MQTT) | alle |
 | Hintergrund, Effekt, Overlay, Palette | Listen der Uhr | Listen der Uhr (19 Effekte, 16 Paletteneffekte, 6 Overlays, 8 Paletten) | 🔬 10.10.2026 | `capabilities.effects/overlays/palettes`; Auswahl zeigt die Liste der Uhr, leere Liste = keine Auswahl, `Darstellung.pruefen(gegen:)` | Mac/iPad, iPhone (Darstellung), CLI `effekte` |
-| Overlay der Uhr (Fernbedienung) | ja | ja (6) | 🔬 10.10.2026 | `capabilities.overlays` nicht leer | Mac/iPad, iPhone, CLI |
+| Overlay der Uhr (Fernbedienung) | ja | ja (6) | 🔬 10.10.2026 | `capabilities.overlays` nicht leer; `AnzeigenSteuerung.overlay` prüft den Namen gegen die Liste | Mac/iPad, iPhone, CLI `overlay` |
 | Übergänge, Zifferblätter (Einstellungen) | `transitions`, `clockFaces` (5) | 22 `transitions`; `clockFaces` fehlt, also keine Zifferblätter | 🔬 10.10.2026 | `capabilities.transitions/clockFaces`; die Zeile `clockFace` (samt ihren Farbzeilen) erscheint nur, wenn die Einstellungen der Uhr den Schlüssel melden | Mac/iPad, iPhone (Uhr-Einstellungen), CLI |
 | Nachricht (einmalig über der Schleife) | ja | ja | 🔬 | keine Fähigkeit | alle |
 

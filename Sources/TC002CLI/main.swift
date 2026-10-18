@@ -9,7 +9,7 @@ import TC002Core
 // die mitgelieferten Schriften und die Uebersetzungen findet.
 
 let hilfetext = """
-mqtttc002 — Meldungen an eine Ulanzi TC002 schicken.
+mqtttc002 — Meldungen an Pixeluhren (Ulanzi TC001 und TC002) schicken.
 
 Benutzt die Einrichtung der App Pixel Clock Messenger: Broker, Kennwort und
 Uhren werden von dort gelesen. Eingerichtet wird ausschliesslich in der App.
@@ -38,6 +38,7 @@ AUFRUF
   mqtttc002 indikator <1-3> ...    einen der drei Anzeiger setzen, oder "indikator <1-3> aus"
   mqtttc002 weiter | zurueck       eine Anzeige weiter oder zurueck
   mqtttc002 neustart               die Uhr neu starten (eine Antwort kommt nicht mehr)
+  mqtttc002 overlay <Name>|aus     das Wetter-Overlay der ganzen Uhr setzen oder wegnehmen
   mqtttc002 zustand                den Zustand der Uhr ausgeben
   mqtttc002 einstellungen          die Einstellungen der Uhr nach Gruppen ausgeben
   mqtttc002 einstellungen setzen <Schluessel> <Wert>   eine Einstellung aendern
@@ -86,6 +87,9 @@ STEUERUNG DER UHR
                       ein/aus. "einstellungen" zeigt die Schluessel. "enlargeApps" und
                       alles aus der Systemkonfiguration (WLAN, Broker, Firmware) stellt
                       das Werkzeug nicht ein.
+  overlay <Name>|aus: ein Name aus "mqtttc002 effekte" (rain, snow, ...), wie bei --overlay
+                      geprueft; "aus" nimmt es weg. Es gilt fuer die ganze Uhr, --overlay nur fuer
+                      eine Anzeige.
   tls, tls ca: nur ueber HTTP, die Uhr braucht eine Adresse.
 
 KLANG
@@ -119,12 +123,18 @@ OPTIONEN FUER „senden"
                       Ohne Angabe die Auswahl, die in der App gilt.
   --name <Anzeige>    Name der Anzeige auf der Uhr (Vorgabe: cli)
   --farbe #RRGGBB     Vorgabe: #00FF66
-  --icon <Nummer>     ein 8x8-Icon links daneben
+  --icon <Nummer|Name>   ein Icon links daneben: ein 8x8-Icon mit seiner Nummer, ein
+                      16x16-Icon mit seinem Namen ("mqtttc002 icons" zeigt beide); auf einer
+                      Uhr mit acht Zeilen (TC001) gilt die 8x8-Fassung
+  --icon-mitscrollen  das Icon laeuft mit, wenn der Text durchlaeuft
+  --schrift-der-uhr   die Uhr setzt den Text selbst, mit ihrer Schrift; dann gibt es
+                      --schrift, --groesse, --fett, --rand, --abstand, --oben|--mitte|--unten
+                      und --rechts nicht (das Werkzeug weist sie ab)
   --schrift <Name>    Vorgabe: Silkscreen
   --groesse <Zahl>    Vorgabe: 8
   --fett              fetter Schnitt, wenn die Schrift einen hat
   --gross             alles in Grossbuchstaben
-  --oben|--mitte|--unten        senkrechte Ausrichtung (Vorgabe: mitte)
+  --oben|--mitte|--unten        senkrechte Ausrichtung (Vorgabe: mitte, wie in der App)
   --links|--zentriert|--rechts  waagrechte Ausrichtung (Vorgabe: links)
   --rand <Zahl>       Abstand zum Rand bei oben/unten (Vorgabe: 1)
   --abstand <Zahl>    leere Spalten zwischen den Zeichen (Vorgabe: 1)
@@ -183,6 +193,8 @@ BEISPIELE
   mqtttc002 senden Wetter --lebensdauer 600 --ablauf markieren
   mqtttc002 senden Dauerhaft --behalten
   mqtttc002 senden Regen --text-palette --palette Ocean --overlay rain
+  mqtttc002 senden "Kaffee fertig" --schrift-der-uhr --zentriert
+  mqtttc002 overlay rain
   mqtttc002 senden --linie 3,5,2,8 --diagrammfarbe "#00FF66" --fortschritt 40
   mqtttc002 nachricht "Tuer offen" --name tuer
   mqtttc002 zurueckziehen tuer
@@ -454,7 +466,7 @@ func lauf() throws {
         try anAlle(lokf("gesendet an „%@“ (%d Byte)", optionen.anzeigename, json.utf8.count)) { anzeigen, uhr in
             // Je Uhr in deren Anzeigemass gerastert; `rahmen` oben dient dem
             // Trockenlauf und der Byte-Angabe.
-            if !optionen.grafikGesetzt,
+            if !optionen.grafikGesetzt, m.weg == .pixel,
                let hinweis = m.verkleinerungshinweis(uhr: uhr.name, mass: Anzeigemass.fuer(uhr)) {
                 fehlerAusgeben(hinweis)
             }
@@ -636,7 +648,7 @@ func lauf() throws {
         }
 
     case .display, .helligkeit, .helligkeitAutomatik, .moodlight, .moodlightAus, .indikator, .indikatorAus, .weiter, .zurueck,
-         .neustart, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
+         .neustart, .overlay, .zustand, .einstellungen, .einstellungenSetzen, .tls, .tlsCA, .tlsCAEntfernen,
          .tonSpielen, .tonStopp, .tonZustand, .tonMelodien, .tonMelodie, .tonMelodieLoeschen, .tonSender,
          .tonMP3Liste, .tonMP3Hochladen, .tonMP3Loeschen, .tonSammlung, .tonAbgleichen:
         break                                    // oben schon abgehandelt

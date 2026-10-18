@@ -30,6 +30,12 @@ extension Anzeigen {
     /// Uhr (`capabilities.overlays`) wird vorher geprüft und die Schreibweise der
     /// Liste genommen; ohne sie weist die Uhr einen falschen selbst ab (`422`).
     public func overlay(_ name: String?, faehigkeiten: Geraetefaehigkeiten? = nil) throws {
+        let json = try Self.overlayNutzlast(name, faehigkeiten: faehigkeiten)
+        try steuern(NGThema.anzeigeSteuern, nutzlast: Data(json.utf8)) { try $0.anzeigeAendern(json) }
+    }
+
+    /// Der Rumpf zu `overlay(_:faehigkeiten:)`, auch für den Trockenlauf des Werkzeugs.
+    public static func overlayNutzlast(_ name: String?, faehigkeiten: Geraetefaehigkeiten? = nil) throws -> String {
         var wert = JSONWert.null
         if let name, !name.isEmpty {
             if let liste = faehigkeiten?.overlays, !liste.isEmpty {
@@ -41,8 +47,7 @@ extension Anzeigen {
                 wert = .text(name)
             }
         }
-        let json = Steuerfarbe.json([("overlay", wert)])
-        try steuern(NGThema.anzeigeSteuern, nutzlast: Data(json.utf8)) { try $0.anzeigeAendern(json) }
+        return Steuerfarbe.json([("overlay", wert)])
     }
 
     /// Die Helligkeit des Panels, 0–255 roh (kein Prozentsatz). Sie ist eine

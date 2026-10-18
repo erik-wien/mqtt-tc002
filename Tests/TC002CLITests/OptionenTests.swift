@@ -407,6 +407,97 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         XCTAssertEqual(try Anzeigen.nutzlast(rahmen).hasPrefix(##"{"progress":5,"durationMs":9000"##), true)
     }
 
+    // MARK: Vorgabe, Schrift der Uhr, Icon mitscrollen
+
+    /// Wie in der App: Ohne Angabe sitzt der Text senkrecht mittig.
+    func testSenkrechteVorgabeIstMittigWieInDerApp() throws {
+        let o = try Optionen.zerlegt(["senden", "x"])
+        XCTAssertEqual(o.meldung.senkrecht, .mittig)
+        XCTAssertEqual(o.meldung.senkrecht, Meldungsoptionen(text: "").senkrecht)
+        XCTAssertEqual(try Optionen.zerlegt(["senden", "x", "--oben"]).meldung.senkrecht, .oben)
+    }
+
+    func testSchriftDerUhrWaehltDenTextweg() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["senden", "x"]).meldung.weg, .pixel)
+        for name in ["--schrift-der-uhr", "--clock-font"] {
+            let o = try Optionen.zerlegt(["senden", "x", name, "--zentriert"])
+            XCTAssertEqual(o.meldung.weg, .text, name)
+            XCTAssertEqual(o.meldung.waagrecht, .mittig)
+        }
+        XCTAssertEqual(try Optionen.zerlegt(["nachricht", "x", "--schrift-der-uhr"]).meldung.weg, .text)
+    }
+
+    /// Dieselben Regler wie in der App sind bei der Schrift der Uhr gesperrt
+    /// (`AwtrixNG.wirkt`); das Werkzeug weist sie ab, statt sie zu übergehen.
+    func testSchriftDerUhrWeistWirkungsloseAngabenAb() throws {
+        for option in [["--schrift", "Tiny5"], ["--groesse", "8"], ["--fett"], ["--rand", "2"], ["--abstand", "2"],
+                       ["--oben"], ["--mitte"], ["--unten"], ["--rechts"], ["--font", "Tiny5"], ["--right"]] {
+            XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--schrift-der-uhr"] + option), "\(option)") { f in
+                XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains(option[0]) == true)
+            }
+            // Die Reihenfolge ändert nichts.
+            XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "x"] + option + ["--clock-font"]), "\(option)")
+        }
+        XCTAssertNoThrow(try Optionen.zerlegt(["senden", "x", "--schrift-der-uhr", "--gross", "--tempo", "schnell",
+                                               "--farbe", "#FF0000", "--links", "--icon-mitscrollen"]))
+        XCTAssertNoThrow(try Optionen.zerlegt(["senden", "x", "--schrift", "Tiny5", "--rechts", "--oben"]))
+    }
+
+    func testIconMitscrollen() throws {
+        XCTAssertFalse(try Optionen.zerlegt(["senden", "x"]).meldung.iconLaeuftMit)
+        for name in ["--icon-mitscrollen", "--icon-scroll"] {
+            XCTAssertTrue(try Optionen.zerlegt(["senden", "x", name]).meldung.iconLaeuftMit, name)
+            XCTAssertTrue(try Optionen.zerlegt(["nachricht", "x", name]).meldung.iconLaeuftMit, name)
+        }
+    }
+
+    func testFormatoptionenGeltenNurFuerSendenUndNachricht() {
+        for option in ["--schrift-der-uhr", "--icon-mitscrollen"] {
+            XCTAssertThrowsError(try Optionen.zerlegt(["loeschen", "cli", option]), option)
+            XCTAssertThrowsError(try Optionen.zerlegt(["layout", "x.json", option]), option)
+            XCTAssertThrowsError(try Optionen.zerlegt(["overlay", "rain", option]), option)
+        }
+    }
+
+    func testSchriftDerUhrBautEinenTextrahmenMitDenReglern() throws {
+        let o = try Optionen.zerlegt(["senden", "Grüß", "--schrift-der-uhr", "--icon-mitscrollen", "--zentriert"])
+        var m = o.meldung
+        m.text = "Grüß"
+        let rahmen = try Meldungsbau.rahmen(m, icon: nil, sammlung: Iconsammlung(schreibordner: FileManager.default.temporaryDirectory))
+        XCTAssertNil(rahmen.pixel)
+        let json = try Anzeigen.nutzlast(rahmen)
+        XCTAssertTrue(json.contains(#""text":"Grüß""#), json)
+        XCTAssertTrue(json.contains(#""textCenter":true"#), json)
+    }
+
+    // MARK: overlay
+
+    func testOverlayBefehl() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["overlay", "rain"]).befehl, .overlay(name: "rain"))
+        XCTAssertEqual(try Optionen.zerlegt(["overlay", "aus"]).befehl, .overlay(name: nil))
+        XCTAssertEqual(try Optionen.zerlegt(["overlay", "OFF"]).befehl, .overlay(name: nil))
+        let o = try Optionen.zerlegt(["overlay", "snow", "--an", "Küche", "--trocken"])
+        XCTAssertEqual(o.befehl, .overlay(name: "snow"))
+        XCTAssertEqual(o.ziele, ["Küche"])
+        XCTAssertTrue(o.trocken)
+    }
+
+    func testOverlayBefehlWeistFalschesAb() {
+        XCTAssertThrowsError(try Optionen.zerlegt(["overlay"]), "ohne Name")
+        XCTAssertThrowsError(try Optionen.zerlegt(["overlay", "rain", "snow"]), "zwei Namen")
+        XCTAssertThrowsError(try Optionen.zerlegt(["overlay", "rain", "--overlay", "snow"]), "--overlay gehört der Anzeige")
+        XCTAssertThrowsError(try Optionen.zerlegt(["overlay", "rain", "--farbe", "#FF0000"]))
+    }
+
+    /// Die Nutzlast ist die der Fernbedienung; der Name wird gegen die Liste der Uhr geprüft.
+    func testOverlayNutzlastPruefenGegenDieListeDerUhr() throws {
+        XCTAssertEqual(try Anzeigen.overlayNutzlast("rain"), #"{"overlay":"rain"}"#)
+        XCTAssertEqual(try Anzeigen.overlayNutzlast(nil), #"{"overlay":null}"#)
+        let uhr = Geraetefaehigkeiten(overlays: ["rain", "snow"])
+        XCTAssertEqual(try Anzeigen.overlayNutzlast("RAIN", faehigkeiten: uhr), #"{"overlay":"rain"}"#)
+        XCTAssertThrowsError(try Anzeigen.overlayNutzlast("hail", faehigkeiten: uhr))
+    }
+
     /// Ob `option` irgendwo erkannt wird. Eine andere Beanstandung (fehlender
     /// Wert, falscher Befehl) heißt: Die Option ist bekannt.
     private func zerleggerKennt(_ option: String) -> Bool {

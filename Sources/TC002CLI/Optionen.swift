@@ -42,6 +42,8 @@ struct Optionen {
         case weiter, zurueck
         /// Die Uhr neu starten.
         case neustart
+        /// Das Wetter-Overlay der ganzen Uhr (`PATCH /api/v1/display`); `nil` nimmt es weg.
+        case overlay(name: String?)
         /// Den Zustand der Uhr ausgeben.
         case zustand
         /// Die Einstellungen der Uhr ausgeben.
@@ -116,6 +118,15 @@ struct Optionen {
     /// Die erste Option, die nur „senden“ und „nachricht“ kennen — für die
     /// Meldung, wenn sie bei einem anderen Befehl steht.
     var darstellungsoption: String?
+    /// `--schrift-der-uhr`: die Uhr setzt den Text selbst (`SendeWeg.text`).
+    var schriftDerUhr = false
+    var iconMitscrollen = false
+    /// Die erste Option, die nur „senden“ und „nachricht“ kennen und die zum Format
+    /// gehört (`--schrift-der-uhr`, `--icon-mitscrollen`) — für die Meldung bei einem
+    /// anderen Befehl.
+    var formatoption: String?
+    /// Die erste Angabe, die die Schrift der Uhr nicht kennt (`AwtrixNG.wirkt`).
+    var amTextwegFremd: (option: String, regler: Regler)?
     /// `--farbe` stand da (die Vorgabe `#00FF66` gehört dem Text, nicht dem Moodlight).
     var farbeAngegeben = false
     var kelvin: Int?
@@ -161,6 +172,8 @@ struct Optionen {
         case unvollstaendig(befehl: String, erwartet: String)
         /// Ein Wort, das der Befehl nicht kennt.
         case ueberzaehligesWort(befehl: String, wort: String)
+        /// Eine Angabe, die die Schrift der Uhr nicht kennt.
+        case nichtMitSchriftDerUhr(option: String, grund: String)
 
         var errorDescription: String? {
             switch self {
@@ -198,6 +211,8 @@ struct Optionen {
                 return lokf("„%@“ erwartet %@.", b, e)
             case .ueberzaehligesWort(let b, let w):
                 return lokf("„%@“ kennt das Wort „%@“ nicht.", b, w)
+            case .nichtMitSchriftDerUhr(let o, let g):
+                return lokf("„%@“ gibt es mit „--schrift-der-uhr“ nicht. %@", o, g)
             }
         }
     }
@@ -252,6 +267,8 @@ struct Optionen {
             o.befehl = .zurueck
         case "neustart", "reboot":
             o.befehl = .neustart
+        case "overlay":
+            o.befehl = .overlay(name: nil)
         case "zustand", "state":
             o.befehl = .zustand
         case "einstellungen", "settings":
@@ -324,6 +341,9 @@ struct Optionen {
             /// Merkt die erste Option, die nur „senden“ und „nachricht“ kennen.
             func darstellungsoptionMerken() { o.darstellungsoption = o.darstellungsoption ?? arg }
             func grafikMerken() { o.grafikGesetzt = true; darstellungsoptionMerken() }
+            func formatMerken() { o.formatoption = o.formatoption ?? arg }
+            /// Merkt die erste Angabe, die bei der Schrift der Uhr nicht wirkt.
+            func textwegFremd(_ regler: Regler) { if o.amTextwegFremd == nil { o.amTextwegFremd = (arg, regler) } }
 
             switch arg {
             case "--hintergrund", "--background": o.darstellung.hintergrundfarbe = try farbe(); darstellungsoptionMerken()
@@ -372,12 +392,14 @@ struct Optionen {
                 o.farbe = w
                 o.farbeAngegeben = true
             case "--icon":                o.iconNummer = try wert()
-            case "--schrift", "--font":   o.schrift = try wert()
-            case "--groesse", "--size":   o.groesse = Double(try zahl())
-            case "--fett", "--bold":      o.fett = true
+            case "--icon-mitscrollen", "--icon-scroll": o.iconMitscrollen = true; formatMerken()
+            case "--schrift-der-uhr", "--clock-font":   o.schriftDerUhr = true; formatMerken()
+            case "--schrift", "--font":   o.schrift = try wert(); textwegFremd(.schriftart)
+            case "--groesse", "--size":   o.groesse = Double(try zahl()); textwegFremd(.groesse)
+            case "--fett", "--bold":      o.fett = true; textwegFremd(.fett)
             case "--gross", "--upper":    o.grossbuchstaben = true
-            case "--rand", "--margin":    o.rand = try zahl()
-            case "--abstand", "--gap":    o.abstand = try zahl()
+            case "--rand", "--margin":    o.rand = try zahl(); textwegFremd(.rand)
+            case "--abstand", "--gap":    o.abstand = try zahl(); textwegFremd(.abstand)
             case "--dauer", "--duration": o.dauer = try zahl()
             case "--trocken", "--dry-run": o.trocken = true
             // `--nicht-halten` und `--ersetzen` sind die frühere Schreibweise der heutigen
@@ -412,12 +434,12 @@ struct Optionen {
                     throw Fehler.unbekannteOption("\(arg) \(w)")
                 }
                 o.tempo = t
-            case "--oben", "--top":       o.senkrecht = .oben
-            case "--mitte", "--middle":   o.senkrecht = .mittig
-            case "--unten", "--bottom":   o.senkrecht = .unten
+            case "--oben", "--top":       o.senkrecht = .oben; textwegFremd(.senkrecht)
+            case "--mitte", "--middle":   o.senkrecht = .mittig; textwegFremd(.senkrecht)
+            case "--unten", "--bottom":   o.senkrecht = .unten; textwegFremd(.senkrecht)
             case "--links", "--left":     o.waagrecht = .links
             case "--zentriert", "--center": o.waagrecht = .mittig
-            case "--rechts", "--right":   o.waagrecht = .rechts
+            case "--rechts", "--right":   o.waagrecht = .rechts; textwegFremd(.waagrecht)
             default:
                 throw Fehler.unbekannteOption(arg)
             }
@@ -432,8 +454,10 @@ struct Optionen {
                 try o.grafik.pruefen(palette: o.darstellung.palette)
             }
             try o.darstellung.pruefen()
+            try o.schriftDerUhrPruefen()
         default:
             if let option = o.darstellungsoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
+            if let option = o.formatoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
         }
         if o.behalten, o.lebensdauer != nil || o.ablauf != nil { throw Fehler.behaltenMitLebensdauer }
         try o.steuerbefehlPruefen(freie)
@@ -470,6 +494,20 @@ struct Optionen {
             break
         }
         return o
+    }
+
+    /// Bei `--schrift-der-uhr` setzt die Uhr den Text selbst: Was ihre Schrift nicht
+    /// kennt, weist das Werkzeug ab, statt es still zu übergehen — die App graut
+    /// dieselben Regler aus (`AwtrixNG.wirkt`, `waagrechteAusrichtungen`).
+    private func schriftDerUhrPruefen() throws {
+        guard schriftDerUhr, let (option, regler) = amTextwegFremd else { return }
+        if regler == .waagrecht {
+            guard !AwtrixNG.waagrechteAusrichtungen(weg: .text).contains(.rechts) else { return }
+            throw Fehler.nichtMitSchriftDerUhr(
+                option: option, grund: lok("Die Uhr kann den Text links oder zentriert ausrichten, nicht rechtsbündig."))
+        }
+        guard !AwtrixNG.wirkt(regler, weg: .text) else { return }
+        throw Fehler.nichtMitSchriftDerUhr(option: option, grund: AwtrixNG.begruendung(regler, weg: .text) ?? "")
     }
 
     /// Der Klang einer `nachricht` bzw. von `ton spielen`: genau eine Quelle, geprüft vom Kern.
@@ -593,6 +631,7 @@ struct Optionen {
         case .weiter: name = "weiter"
         case .zurueck: name = "zurueck"
         case .neustart: name = "neustart"
+        case .overlay: name = "overlay"
         case .zustand: name = "zustand"
         case .einstellungen: name = "einstellungen"
         case .tls: name = "tls"
@@ -679,6 +718,10 @@ struct Optionen {
             befehl = .indikator(stand)
         case .weiter, .zurueck, .zustand, .neustart:
             try keinWeiteres(ab: 0)
+        case .overlay:
+            guard let w = freie.first else { throw Fehler.unvollstaendig(befehl: name, erwartet: "<Name> / aus") }
+            try keinWeiteres(ab: 1)
+            befehl = .overlay(name: ["aus", "off"].contains(w.lowercased()) ? nil : w)
         case .einstellungen:
             guard let w = freie.first else { return }
             guard ["setzen", "set"].contains(w.lowercased()) else {
@@ -774,6 +817,8 @@ struct Optionen {
         o.farbe = farbe
         o.waagrecht = waagrecht
         o.senkrecht = senkrecht
+        o.weg = schriftDerUhr ? .text : .pixel
+        o.iconLaeuftMit = iconMitscrollen
         o.rand = rand
         o.abstand = abstand
         o.tempo = tempo

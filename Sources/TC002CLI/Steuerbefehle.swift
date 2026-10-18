@@ -217,6 +217,19 @@ func steuerbefehl(_ optionen: Optionen, gewaehlte: [Uhr], einstellungen: Einstel
             trocken(http: "POST /api/v1/device/reboot", thema: { NGThema.neustart(praefix: $0) }, json: ""); return true
         }
         try anAlle(lok("Neustart ausgelöst")) { a, _ in try a.neustarten() }
+    case .overlay(let name):
+        if optionen.trocken {
+            // Gegen die Namen jeder Uhr geprüft wie bei der Sendung; die Nutzlast ist die der ersten.
+            var json = ""
+            for uhr in gewaehlte {
+                let j = try Anzeigen.overlayNutzlast(name, faehigkeiten: name == nil ? nil : faehigkeiten(uhr))
+                if json.isEmpty { json = j }
+            }
+            trocken(http: "PATCH /api/v1/display", thema: { NGThema.anzeigeSteuern(praefix: $0) }, json: json); return true
+        }
+        try anAlle(name.map { lokf("Overlay „%@“ gesetzt", $0) } ?? lok("Overlay aus")) { a, uhr in
+            try a.overlay(name, faehigkeiten: name == nil ? nil : faehigkeiten(uhr))
+        }
     case .tonSpielen(let klang):
         if optionen.trocken {
             for uhr in gewaehlte where !uhr.hatLautsprecher { fehlerAusgeben(Tonhinweise.ohneLautsprecher(uhr.name)) }
