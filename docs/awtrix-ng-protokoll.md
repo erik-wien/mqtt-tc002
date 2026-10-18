@@ -801,11 +801,28 @@ Anzeigepixeln gibt es dort nicht; die App rundet auf (`Iconplatz.luecke`).
 `iconShift`/`iconPushed` (`pushOnce`) und `textClipLeft` rechnen in denselben
 Spalten.
 
+📄 **Zuschnitt der App:** Soll ein Icon nicht zugeschnitten werden (z. B. weil der freie Rand gewollt ist), füllt man den Hintergrund des Icons mit #000001 statt mit Schwarz oder Transparenz: Das sieht auf der Uhr schwarz aus, zählt aber als Farbe und hält den Rand. (`Bildraster.istSchwarz`: nur genau `#000000` und Durchsichtiges zählen als „keine Tinte“.)
+
 📄 **`icons[]`:** je Element `icon` (Pflicht, nicht leer, Kennung oder Data-URL),
 `x` und `y` (−65535…65535, Vorgabe 0); was außerhalb liegt, wird abgeschnitten.
 Mehr als 4 Elemente, eine schlechte Koordinate, ein fehlendes `icon` oder ein
 unbekannter Schlüssel ist `422` (`field` z. B. `icons[1].x`). `"icons": []`
 entfernt die Zusatzicons einer gepushten Anzeige.
+
+📄 **Was die App sendet (`Zusatzicons`, seit 18.10.2026):** bis zu vier Zusatzicons
+je Anzeige und Nachricht, nur auf dem Weg „Schrift der Uhr“; als GIF-Data-URL, `x`
+und `y` in Spalten der Seite. Die Oberfläche kennt Anzeigepixel (von links 0–127,
+von oben 0–15); gesendet wird `Anzeigepixel ÷ Faktor`, abgerundet, mit Faktor 2 auf
+der vergrößerten TC002 und sonst 1. Die Firmware blittet auf die Seite
+(`RenderPipeline::drawSpec`: `icon.player->blit(page, icon.x, icon.y)`), ein
+8×8 ist dort 16 Anzeigepixel breit. `PageZoom::enlarges` verlangt, dass **jedes**
+Bild auf die 26 × 8 passt: Ein 16×16 unter den Zusatzicons zeichnet die ganze
+Anzeige 1:1, `iconGap` zählt dann in Anzeigepixeln. Ein `icons`-Schlüssel steht
+nur bei mindestens einem Zusatzicon, hinter `icon`/`iconMode`/`iconGap` und vor
+`durationMs`; ein Absender ohne Zusatzicons schickt `"icons":[]` nicht. ❓ Ob ein
+erneutes Pushen ohne `icons` die alten Zusatzicons behält, ist am Gerät nicht
+geprüft (die App geht von „ersetzt“ aus, §3.2). Im Pixelweg backt die App sie
+selbst ein, in Anzeigepixeln und in der Zeichenreihenfolge der Firmware.
 
 ### 5.4 Standzeit
 

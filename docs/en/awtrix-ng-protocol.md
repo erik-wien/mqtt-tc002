@@ -780,10 +780,27 @@ the enlarged TC002, matching “16 plus 2” in §1.2. An odd number of display 
 does not exist there; the app rounds up (`Iconplatz.luecke`). `iconShift` /
 `iconPushed` (`pushOnce`) and `textClipLeft` count in the same columns.
 
+📄 **Trimming by the app:** If an icon is not to be cropped (for example because the free margin is wanted), fill its background with #000001 instead of black or transparency: it looks black on the clock but counts as a colour and keeps the margin. (`Bildraster.istSchwarz`: only exactly `#000000` and transparent pixels count as "no ink".)
+
 📄 **`icons[]`:** per element `icon` (required, non-empty, id or data URL), `x`
 and `y` (−65535…65535, default 0); whatever lies outside is cut off. More than 4
 elements, a bad coordinate, a missing `icon` or an unknown key is `422` (`field`
 e.g. `icons[1].x`). `"icons": []` removes the extra icons of a pushed app.
+
+📄 **What the app sends (`Zusatzicons`, since 18 Oct 2026):** up to four extra icons
+per app and notification, only on the "Clock font" path; as GIF data URL, `x` and
+`y` in page columns. The user interface knows display pixels (from left 0–127, from
+top 0–15); what is sent is `display pixels ÷ factor`, rounded down, with factor 2 on
+the enlarged TC002 and 1 otherwise. The firmware blits onto the page
+(`RenderPipeline::drawSpec`: `icon.player->blit(page, icon.x, icon.y)`), so an 8×8
+is 16 display pixels wide there. `PageZoom::enlarges` requires **every** image to
+fit the 26 × 8 stage: a 16×16 among the extra icons draws the whole display 1:1,
+and `iconGap` then counts in display pixels. An `icons` key is present only with at
+least one extra icon, after `icon`/`iconMode`/`iconGap` and before `durationMs`; a
+sender without extra icons does not send `"icons":[]`. ❓ Whether pushing again
+without `icons` keeps the old extra icons has not been checked on a device (the
+app assumes "replaces", §3.2). On the pixel path the app bakes them in itself, in
+display pixels and in the firmware's drawing order.
 
 ### 5.4 Dwell time
 

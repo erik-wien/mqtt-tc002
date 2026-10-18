@@ -505,6 +505,7 @@ public enum HilfeInhalt {
         .ueberschrift("Breite und Ausrichtung"),
         .absatz("Ohne Icon ist die verfügbare Breite die vollen 52 Pixel des Displays. Ein Icon wird auf seine Zeichnung zugeschnitten, links wie rechts, und belegt nur diese Breite plus den Abstand, den du auf der Seite der Uhr unter „Abstand Icon–Text“ eingestellt hast (Vorgabe 1 Pixel); ein 8×8-Icon mit voller Breite lässt 43 Pixel. Daran hängt die Entscheidung, ob der Text steht oder läuft, und der fette Schnitt zählt dabei mit. Steht er, richten die waagrechten Ausrichtungsknöpfe ihn innerhalb dieser Breite aus, die senkrechten innerhalb der 16 Zeilen, gerechnet über die tatsächlich gesetzte Höhe, nicht die Schriftgröße."),
         .abbildung(.ausrichtung),
+        .absatz("Soll ein Icon nicht zugeschnitten werden (z. B. weil der freie Rand gewollt ist), füllt man den Hintergrund des Icons mit #000001 statt mit Schwarz oder Transparenz: Das sieht auf der Uhr schwarz aus, zählt aber als Farbe und hält den Rand."),
     ]
 
     /// Der Unterschied zwischen einem Icon und einer ganzen Anzeige.
@@ -525,6 +526,7 @@ public enum HilfeInhalt {
         .absatz("Die Vorschau darunter zeigt ein gewähltes Icon an derselben Stelle mit, an der die Uhr es zeigt — so sieht man vor dem Senden, ob Icon und Text zusammenpassen. Ist das Icon animiert, spielt die Vorschau es probeweise in Schleife ab, so wie auch die Uhr animierte Icons abspielt (am Gerät bestätigt, Gerätereferenz)."),
         .absatz("Läuft der Text, steht das Icon fest links und der Text läuft rechts daneben durch."),
         .absatz("Wer es lieber mitwandern lässt, wählt bei „Icon mitscrollen“ „Mitscrollen“: Dann steht es am Anfang des Textes und läuft mit hinaus, und der Text nutzt die vollen 52 Spalten. Mit „Einmal mitscrollen“ schiebt der Text das Icon nur beim ersten Durchlauf hinaus; danach bleibt es weg und der Text läuft über die ganze Breite. Das gibt es nur, wenn die Uhr den Text selbst setzt („Schrift der Uhr“) — die Vorschau zeigt den zweiten Durchlauf einmal, die Uhr wiederholt ihn. Ein animiertes Icon spielt in allen Fällen weiter ab."),
+        .absatz("Zusätzlich zum Icon kannst du unter „Zusatzicons“ bis zu vier weitere Icons an eine beliebige Stelle der Anzeige setzen, jedes mit eigener Animation. Die Stelle gibst du in Pixeln von links und von oben an. Zusatzicons nehmen dem Text keinen Platz und laufen nicht mit; spätere decken frühere. Mit „Schrift der Uhr“ zeichnet die Uhr sie selbst, dann zählt sie in Spalten ihres Rasters (auf der TC002 mit 8×8-Icons zu zwei Pixeln, die Stelle rundet nach unten, und die Icons erscheinen doppelt so groß); ein 16×16 unter den Zusatzicons schaltet diese Vergrößerung für die ganze Anzeige ab. Sonst backt die App sie in das Bild ein. Kurzbefehle und das Kommandozeilenwerkzeug kennen sie nicht."),
     ]
 
     /// Woher die Anzeigenliste kommt und warum der Unterschied zaehlt. Gemeldet
