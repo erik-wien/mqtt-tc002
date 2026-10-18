@@ -69,8 +69,8 @@ final class SchriftDerUhrZustandTests: XCTestCase {
         let o = Meldungsoptionen(text: "Hallo", weg: .text)
         let sammlung = Iconsammlung(schreibordner: temp())
 
-        let bilanz = await z.senden(rahmenFuer: { mass in
-            try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, mass: mass)
+        let bilanz = await z.senden(rahmenFuer: { uhr in
+            try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, uhr: uhr)
         }, als: "meldung5", slotOptionen: o, slotPlatz: 5)
 
         XCTAssertTrue(bilanz.ganz, z.fehler ?? "")
@@ -97,7 +97,7 @@ final class SchriftDerUhrZustandTests: XCTestCase {
         d.set(uhr.id.uuidString, forKey: "aktiveID")
         let z = AppZustand(schluesselbund: Schluesselbunddoppelgaenger())
         let g = Slotgedaechtnis(ordner: temp())
-        g.merken(Meldungsoptionen(text: "Hi", weg: .text), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        g.merken(Meldungsoptionen(text: "Hi", weg: .text), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
 
         guard case .bekannt(let pixel) = z.slotzustand(1, belegt: true, gedaechtnis: g) else {
             return XCTFail("gemerkter Stand mit Weg .text muss ein Bild ergeben")

@@ -54,6 +54,18 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// 8×8-Icons in gemerkten Staenden. `iconKanteOderAcht` sagt das an einer
     /// Stelle, statt es an dreien zu wiederholen.
     public var iconKante: Int?
+    /// Die dritte Stellung neben `iconLaeuftMit` (`Iconmodus.einmal`); `nil` heißt
+    /// „mit“, wo `iconLaeuftMit` wahr ist. `iconLaeuftMit` bleibt bei „einmal“
+    /// wahr, damit eine ältere Fassung, die diesen Schlüssel nicht kennt, das
+    /// Icon wenigstens mitlaufen lässt statt es stehen zu lassen.
+    public var iconModus: Iconmodus?
+    /// Breite des zugeschnittenen Icons in Spalten und der Abstand der Uhr zum
+    /// Zeitpunkt der Sendung (`Iconplatz`): Sie bestimmen, wo der Text stand, und
+    /// damit die Prüfsumme. `iconAbstand == nil` heißt „von früher“: Das Icon war
+    /// nicht zugeschnitten und der Text begann zwei Spalten dahinter
+    /// (`iconplatz`). Ohne `iconBreite` bei gesetztem Abstand hatte das Icon keine Tinte.
+    public var iconBreite: Int?
+    public var iconAbstand: Int?
     public var dauer: Int?
     /// Die Lebensdauer in Sekunden und was danach geschieht (`entfernen` oder
     /// `markieren`). Optional aus demselben Grund wie `iconKante`: Dateiformat
@@ -78,10 +90,21 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// Die Kante, mit der zu rechnen ist — `nil` heisst 8. Siehe `iconKante`.
     public var iconKanteOderAcht: Int { iconKante ?? 8 }
 
+    /// Wie das Icon dieses Standes im Pixelfeld Platz brauchte; `nil` ohne Icon
+    /// oder wenn es keine Tinte hatte. Staende von früher: das volle Icon, Text
+    /// zwei Spalten dahinter (so wurde bis dahin gesetzt).
+    public var iconplatz: Iconplatz? {
+        guard icon != nil else { return nil }
+        guard let iconAbstand else { return .voll(kante: iconKanteOderAcht, abstand: 2) }
+        guard let iconBreite else { return nil }
+        return Iconplatz(kante: iconKanteOderAcht, links: 0, breite: iconBreite, abstand: iconAbstand)
+    }
+
     public init(platz: Int, text: String, weg: String, schrift: String, groesse: Double,
                 fett: Bool, grossbuchstaben: Bool, rand: Int, abstand: Int, waagrecht: String,
                 senkrecht: String, farbe: String, tempo: String, iconLaeuftMit: Bool,
-                icon: String?, iconKante: Int? = nil, dauer: Int?,
+                icon: String?, iconKante: Int? = nil, iconModus: Iconmodus? = nil,
+                iconBreite: Int? = nil, iconAbstand: Int? = nil, dauer: Int?,
                 lebensdauer: Int? = nil, lebensablauf: String? = nil,
                 darstellung: Darstellungswahl? = nil, pruefsumme: String) {
         self.platz = platz
@@ -100,6 +123,9 @@ public struct Slotstand: Codable, Hashable, Sendable {
         self.iconLaeuftMit = iconLaeuftMit
         self.icon = icon
         self.iconKante = iconKante
+        self.iconModus = iconModus
+        self.iconBreite = iconBreite
+        self.iconAbstand = iconAbstand
         self.dauer = dauer
         self.lebensdauer = lebensdauer
         self.lebensablauf = lebensablauf
@@ -122,7 +148,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
               let waagrecht = SendenHAusrichtung(rawValue: waagrecht),
               let senkrecht = SendenVAusrichtung(rawValue: senkrecht),
               let tempo = Lauftempo(rawValue: tempo) else { return nil }
-        return Meldungsoptionen(text: text, weg: weg, schrift: schrift,
+        var o = Meldungsoptionen(text: text, weg: weg, schrift: schrift,
                                 groesse: groesse, fett: fett, farbe: farbe,
                                 grossbuchstaben: grossbuchstaben, waagrecht: waagrecht,
                                 senkrecht: senkrecht, rand: rand, abstand: abstand,
@@ -132,6 +158,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
                                                 ablauf: Lebensablauf(rawValue: lebensablauf ?? "") ?? .entfernen)
                                 },
                                 darstellung: darstellung)
+        o.iconModus = iconModus
+        return o
     }
 }
 
@@ -263,17 +291,19 @@ public struct Slotgedaechtnis: Sendable {
     /// `@discardableResult`, weil ein Aufrufer ohne eigenes Protokoll
     /// (Werkzeug, Kurzbefehle) den Rueckgabewert nicht braucht.
     @discardableResult
-    /// `iconKante` hat keine Vorgabe, und das ist Absicht: Eine Vorgabe von
-    /// 8 waere genau der Fehler, der hier behoben wurde — ein Aufrufer, der sie
-    /// vergisst, bekaeme stillschweigend die falsche Rechnung zurueck. Ohne
-    /// Icon ist der Wert gleichgueltig; uebergib dann, was du hast.
-    public func merken(_ optionen: Meldungsoptionen, icon: String?, iconKante: Int,
+    /// `icon` ist das gewaehlte Icon, `iconAbstand` der Abstand der Uhr: Beides
+    /// bestimmt, wo der Text stand, und damit die Pruefsumme. Ohne Vorgabe, damit
+    /// kein Aufrufer sie vergisst und stillschweigend die falsche Rechnung
+    /// zurueckbekommt.
+    public func merken(_ optionen: Meldungsoptionen, icon: Icon?, iconAbstand: Int,
                        fuer uhr: UUID, platz: Int, mass: Anzeigemass = .vorgabe) -> Bool {
         // Gemerkt wird die gewaehlte Groesse; die Pruefsumme deckt dagegen ab,
         // was auf dieser Uhr wirklich stand (`Meldungsbau.feld` verkleinert
-        // fuer kleine Anzeigen).
-        let pixel = Meldungsbau.feld(optionen, mitIcon: icon != nil,
-                                     iconKante: iconKante, mass: mass).punkteRoh
+        // fuer kleine Anzeigen, ein 16×16 faellt auf acht Zeilen auf seine
+        // 8×8-Fassung zurueck).
+        let gesendet = icon.map { Iconbestaende.passend($0, fuer: mass) }
+        let iconplatz = gesendet.flatMap { Iconplatz.vermessen($0, abstand: iconAbstand) }
+        let pixel = Meldungsbau.feld(optionen, icon: iconplatz, mass: mass).punkteRoh
         let stand = Slotstand(
             platz: platz,
             text: optionen.text,
@@ -289,7 +319,7 @@ public struct Slotgedaechtnis: Sendable {
             farbe: optionen.farbe,
             tempo: optionen.tempo.rawValue,
             iconLaeuftMit: optionen.iconLaeuftMit,
-            icon: icon,
+            icon: icon?.nummer,
             // Nur was von der Vorgabe abweicht: Ohne Icon gibt es keine
             // Kante zu merken, und eine 8 ist die Vorgabe — beides bleibt
             // `nil` und faellt damit aus der Datei (`encodeIfPresent`). Ein
@@ -298,7 +328,10 @@ public struct Slotgedaechtnis: Sendable {
             // kann, wo eine aeltere Fassung auf einem anderen Geraet sie liest.
             // Nebenbei bleiben zwei sonst gleiche Staende ein einziger
             // Schluessel im Zwischenspeicher von `AppZustand.gerastert`.
-            iconKante: (icon == nil || iconKante == 8) ? nil : iconKante,
+            iconKante: (icon == nil || icon?.kante == 8) ? nil : icon?.kante,
+            iconModus: optionen.iconModus,
+            iconBreite: iconplatz?.breite,
+            iconAbstand: icon == nil ? nil : Iconabstand.begrenzt(iconAbstand),
             dauer: optionen.dauer,
             lebensdauer: optionen.lebensdauer?.sekunden,
             lebensablauf: optionen.lebensdauer.flatMap { $0.ablauf == .entfernen ? nil : $0.ablauf.rawValue },

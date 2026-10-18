@@ -920,8 +920,7 @@ public final class AppZustand {
         let schluessel = Rasterschluessel(stand: stand, breite: mass.breite, hoehe: mass.hoehe)
         if let fertig = gerastertePixel[schluessel] { return fertig }
         let pixel = Meldungsbau.feld(optionen.fuerVorschau,
-                                     mitIcon: stand.icon != nil,
-                                     iconKante: stand.iconKanteOderAcht, mass: mass).punkteRoh
+                                     icon: stand.iconplatz, mass: mass).punkteRoh
         // Eine Obergrenze, damit eine lange Sitzung ihn nicht unbegrenzt
         // fuellt: Jede Sendung legt einen weiteren Stand an, gebraucht werden
         // fuenf je Uhr. Ganz leeren statt einzeln verdraengen — der naechste
@@ -1424,13 +1423,16 @@ public final class AppZustand {
     /// Block nach einer Bildsendung „unbekannt", obwohl niemand besser wusste,
     /// was dort liegt.
     ///
-    /// `bau` baut den Rahmen je Uhr aus deren Anzeigemass: Eine Gruppe aus
-    /// 52 × 16 und 32 × 8 bekommt zwei gerasterte Bilder und nicht eines, das
-    /// auf der einen falsch sitzt.
+    /// `bau` baut den Rahmen je Uhr aus deren Anzeigemass und Icon-Abstand: Eine
+    /// Gruppe aus 52 × 16 und 32 × 8 bekommt zwei gerasterte Bilder und nicht
+    /// eines, das auf der einen falsch sitzt.
+    ///
+    /// `slotIcon` ist das gewaehlte Icon; fuer jede Uhr wird daraus Platz und
+    /// Pruefsumme des Gedaechtnisses gerechnet (`Slotgedaechtnis.merken`).
     @discardableResult
-    public func senden(rahmenFuer bau: @escaping @Sendable (Anzeigemass) throws -> Frame,
+    public func senden(rahmenFuer bau: @escaping @Sendable (Uhr) throws -> Frame,
                        als name: String, slotOptionen: Meldungsoptionen? = nil,
-                       slotIcon: String? = nil, slotIconKante: Int = 8,
+                       slotIcon: Icon? = nil,
                        slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
         let abweisungenVorher = abweisungsZaehler
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
@@ -1440,7 +1442,7 @@ public final class AppZustand {
         var erreicht: [String] = []
         let listen = faehigkeiten
         let ziele = await anZiele({ anzeigen, uhr in
-            let frame = try bau(Anzeigemass.fuer(uhr))
+            let frame = try bau(uhr)
             return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name,
                                                                faehigkeiten: listen[uhr.id]))
         }, was: lokf("Anzeige „%@“", name)) { uhr, zugestellt in
@@ -1467,7 +1469,7 @@ public final class AppZustand {
             }
             if let slotOptionen {
                 let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
-                                                              iconKante: slotIconKante,
+                                                              iconAbstand: uhr.wirksamerIconAbstand,
                                                               fuer: uhr.id, platz: slotPlatz,
                                                               mass: mass)
                 if !gemerkt {
@@ -1489,7 +1491,7 @@ public final class AppZustand {
                 log(lokf("%@: Bild für Platz %d nicht gemerkt", uhr.name, slotPlatz))
             }
         }
-        verlaufEintragen(optionen: slotOptionen, icon: slotIcon, iconKante: slotIconKante,
+        verlaufEintragen(optionen: slotOptionen, icon: slotIcon?.nummer, iconKante: slotIcon?.kante ?? 8,
                          platz: slotPlatz, erreicht: erreicht)
         // Ist etwas angekommen, ist der Rest kein Fall fuer einen Dialog: Ein
         // Dialog gehoert dem, was jemand richtigstellen kann, und „eine Uhr
@@ -1510,10 +1512,10 @@ public final class AppZustand {
     /// abgewiesen wird (`NGFehler.massPasstNicht`).
     @discardableResult
     public func senden(_ frame: Frame, als name: String, slotOptionen: Meldungsoptionen? = nil,
-                       slotIcon: String? = nil, slotIconKante: Int = 8,
+                       slotIcon: Icon? = nil,
                        slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
         await senden(rahmenFuer: { _ in frame }, als: name, slotOptionen: slotOptionen,
-                     slotIcon: slotIcon, slotIconKante: slotIconKante,
+                     slotIcon: slotIcon,
                      slotPlatz: slotPlatz, slotPixel: slotPixel)
     }
 
@@ -1599,7 +1601,7 @@ public final class AppZustand {
     /// bei `senden`. Sie ist keine Anzeige und nimmt keinen Platz ein — darum
     /// kein Slotgedaechtnis, kein Verlauf und keine Belegung.
     @discardableResult
-    public func benachrichtigen(rahmenFuer bau: @escaping @Sendable (Anzeigemass) throws -> Frame,
+    public func benachrichtigen(rahmenFuer bau: @escaping @Sendable (Uhr) throws -> Frame,
                                 _ optionen: Benachrichtigungsoptionen = .init()) async -> Sendebilanz {
         var erreicht: [String] = []
         let listen = faehigkeiten
@@ -1609,7 +1611,7 @@ public final class AppZustand {
         let ziele = await anZiele({ anzeigen, uhr in
             var eigene = optionen
             if let klaenge = verteilung.klaenge[uhr.id] { eigene.klang = klaenge }
-            return try anzeigen.benachrichtigen(try bau(Anzeigemass.fuer(uhr)), eigene,
+            return try anzeigen.benachrichtigen(try bau(uhr), eigene,
                                          faehigkeiten: listen[uhr.id])
         }, was: lok("Nachricht")) { uhr, weg in
             erreicht.append(uhr.name)

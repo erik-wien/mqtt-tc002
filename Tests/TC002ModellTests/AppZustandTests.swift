@@ -331,12 +331,12 @@ final class AppZustandTests: XCTestCase {
         d.set(uhr.id.uuidString, forKey: "aktiveID")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let optionen = Meldungsoptionen(text: "Bus kommt")
-        gedaechtnis.merken(optionen, icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(optionen, icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 2)
 
         let zustand = AppZustand(schluesselbund: schluesselbund)
 
         XCTAssertEqual(zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(optionen, mitIcon: false).punkteRoh))
+                       .bekannt(Meldungsbau.feld(optionen, icon: nil).punkteRoh))
         XCTAssertEqual(zustand.slotzustand(3, belegt: true, gedaechtnis: gedaechtnis), .unbekannt)
         XCTAssertEqual(zustand.slotzustand(2, belegt: false, gedaechtnis: gedaechtnis), .frei)
     }
@@ -354,7 +354,7 @@ final class AppZustandTests: XCTestCase {
         // statt an der Regression, um die es hier geht.
         d.set(try JSONEncoder().encode(Set([a.id, b.id])), forKey: "zielIDs")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), mitIcon: false).punkteRoh
+        let pixel = Meldungsbau.feld(Meldungsoptionen(text: "nur auf a"), icon: nil).punkteRoh
 
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.slotInhalt[a.id] = [1: Slotbild(pixel: pixel)]
@@ -371,8 +371,8 @@ final class AppZustandTests: XCTestCase {
         d.set(a.id.uuidString, forKey: "aktiveID")
         d.set(try JSONEncoder().encode(Set([a.id, b.id])), forKey: "zielIDs")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        let aufA = Meldungsbau.feld(Meldungsoptionen(text: "auf a"), mitIcon: false).punkteRoh
-        let aufB = Meldungsbau.feld(Meldungsoptionen(text: "auf b"), mitIcon: false).punkteRoh
+        let aufA = Meldungsbau.feld(Meldungsoptionen(text: "auf a"), icon: nil).punkteRoh
+        let aufB = Meldungsbau.feld(Meldungsoptionen(text: "auf b"), icon: nil).punkteRoh
         XCTAssertNotEqual(aufA, aufB, "Sonst könnte der Test gar nicht unterscheiden.")
 
         let zustand = AppZustand(schluesselbund: schluesselbund)
@@ -483,7 +483,7 @@ final class AppZustandTests: XCTestCase {
         optionen.tempo = .schnell
 
         await zustand.senden(Frame(herkunft: Meldungsherkunft(optionen: optionen)), als: "meldung3",
-                             slotOptionen: optionen, slotIcon: "4711", slotIconKante: 8,
+                             slotOptionen: optionen, slotIcon: Icon(nummer: "4711", name: "x", kategorie: "", datei: URL(fileURLWithPath: "/nicht/da.gif")),
                              slotPlatz: 3)
 
         XCTAssertNil(zustand.fehler, "Die Sendung ist gescheitert — dann steht zu Recht nichts im Verlauf.")
@@ -670,8 +670,8 @@ final class AppZustandTests: XCTestCase {
     func testLoeschenWirftDieErinnerungAnDenPlatzWeg() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "alter Text"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "bleibt"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 2)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1", "meldung2"]
 
@@ -693,7 +693,7 @@ final class AppZustandTests: XCTestCase {
     func testLoeschenEinesFremdenNamensRuehrtDieErinnerungNichtAn() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "Platz 1"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["cli", "meldung1"]
 
@@ -710,7 +710,7 @@ final class AppZustandTests: XCTestCase {
     func testLeereNutzlastGibtDenPlatzFreiUndVergisstIhn() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
         zustand.gemeldeteAnzeigen[uhr.id] = ["meldung1"]
@@ -736,7 +736,7 @@ final class AppZustandTests: XCTestCase {
     func testEineMitgelesenSendungLaesstBelegungUndErinnerungStehen() throws {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "stand mal da"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.bekannteAnzeigen[uhr.id] = ["meldung1"]
 
@@ -760,15 +760,15 @@ final class AppZustandTests: XCTestCase {
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let alt = Meldungsoptionen(text: "alt")
         let neu = Meldungsoptionen(text: "ganz neu")
-        gedaechtnis.merken(alt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(alt, icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(alt, mitIcon: false).punkteRoh))
+                       .bekannt(Meldungsbau.feld(alt, icon: nil).punkteRoh))
 
-        gedaechtnis.merken(neu, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(neu, icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(neu, mitIcon: false).punkteRoh),
+                       .bekannt(Meldungsbau.feld(neu, icon: nil).punkteRoh),
                        "Nach dem Merken neuer Regler darf nicht das alte Bild stehenbleiben.")
     }
 
@@ -779,7 +779,7 @@ final class AppZustandTests: XCTestCase {
         let uhr = try buehne()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let gemerkt = Meldungsoptionen(text: "gemerkt")
-        gedaechtnis.merken(gemerkt, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(gemerkt, icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         let zustand = AppZustand(schluesselbund: schluesselbund)
         zustand.slotInhalt[uhr.id] = [1: Slotbild(pixel: [String?](repeating: "#00FF66", count: 4))]
         let mitgelesen = try XCTUnwrap(zustand.slotInhalt[uhr.id]?[1]).pixel
@@ -790,7 +790,7 @@ final class AppZustandTests: XCTestCase {
         zustand.slotInhalt[uhr.id] = nil
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis),
-                       .bekannt(Meldungsbau.feld(gemerkt, mitIcon: false).punkteRoh),
+                       .bekannt(Meldungsbau.feld(gemerkt, icon: nil).punkteRoh),
                        "Ohne Verbindung gilt wieder die Erinnerung, nicht der letzte Mitschnitt.")
     }
 
@@ -1220,8 +1220,8 @@ final class AppZustandTests: XCTestCase {
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Bad", host: "10.0.0.2", praefix: "pb")
         zustand.uhren = [a, b]
-        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, iconKante: 8, fuer: a.id, platz: 1)
-        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, iconKante: 8, fuer: b.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "A"), icon: nil, iconAbstand: 1, fuer: a.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "B"), icon: nil, iconAbstand: 1, fuer: b.id, platz: 1)
 
         zustand.uhrEntfernen(a.id, gedaechtnis: gedaechtnis)
 

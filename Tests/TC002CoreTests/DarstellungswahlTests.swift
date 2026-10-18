@@ -207,12 +207,12 @@ final class DarstellungswahlTests: XCTestCase {
         let uhrid = UUID()
         var o = Meldungsoptionen(text: "Küche")
         o.darstellung = alles()
-        XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhrid, platz: 2))
+        XCTAssertTrue(g.merken(o, icon: nil, iconAbstand: 1, fuer: uhrid, platz: 2))
         let stand = try XCTUnwrap(g.gemerkt(fuer: uhrid, platz: 2))
         XCTAssertEqual(stand.darstellung, alles())
         XCTAssertEqual(stand.optionen?.darstellung, alles())
         // Eine neue Sendung ohne Darstellung löscht die alte Erinnerung.
-        XCTAssertTrue(g.merken(Meldungsoptionen(text: "Küche"), icon: nil, iconKante: 8, fuer: uhrid, platz: 2))
+        XCTAssertTrue(g.merken(Meldungsoptionen(text: "Küche"), icon: nil, iconAbstand: 1, fuer: uhrid, platz: 2))
         XCTAssertNil(g.gemerkt(fuer: uhrid, platz: 2)?.darstellung)
     }
 

@@ -292,13 +292,13 @@ final class TextrasterTests: XCTestCase {
                                                         iconBilder: [icon])
         let breite = Pixelfeld.breiteStandard
         let bild = bilder[0]
-        // Iconzeile 4, Spalte 4: die Tinte selbst und ihr Rand von einem Pixel.
-        XCTAssertEqual(bild.pixel[(4 + 4) * breite + 4], "#00FF66")
-        for (dx, dy) in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)] {
-            XCTAssertEqual(bild.pixel[(4 + 4 + dy) * breite + 4 + dx], "#000000", "Rand bei (\(dx),\(dy))")
-        }
-        // Die Iconecke (0,0) liegt weit ausserhalb des Randes um die Mitte.
-        XCTAssertNil(bild.pixel[4 * breite + 0], "die Iconecke bleibt kein deckendes Schwarz")
+        // Das Icon ist auf seine Tinte zugeschnitten: Die Tinte aus Iconspalte 4
+        // steht in Spalte 0. Senkrecht bleibt der Rand von einem Pixel, waagrecht
+        // faellt er mit dem Zuschnitt weg.
+        XCTAssertEqual(bild.pixel[(4 + 4) * breite + 0], "#00FF66")
+        XCTAssertEqual(bild.pixel[(4 + 3) * breite + 0], "#000000", "Rand darueber")
+        XCTAssertEqual(bild.pixel[(4 + 5) * breite + 0], "#000000", "Rand darunter")
+        XCTAssertNil(bild.pixel[(4 + 2) * breite + 0], "die Iconecke bleibt kein deckendes Schwarz")
     }
 
     /// Die senkrechte Ausrichtung setzt voraus, dass man weiss, wo die Tinte

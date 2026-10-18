@@ -28,6 +28,9 @@ public struct Formatangaben {
     public var abstand: Int?
     public var tempo: Lauftempo?
     public var iconLaeuftMit: Bool?
+    /// Die Auswahl „fest, einmal, mit“. Gewinnt gegen `iconLaeuftMit`, das nur
+    /// noch ältere Kurzbefehle setzen (Schalter: an heißt „mit“).
+    public var iconmodus: Iconmodus?
 
     public init(weg: SendeWeg? = nil,
                 schrift: String? = nil,
@@ -40,7 +43,8 @@ public struct Formatangaben {
                 rand: Int? = nil,
                 abstand: Int? = nil,
                 tempo: Lauftempo? = nil,
-                iconLaeuftMit: Bool? = nil) {
+                iconLaeuftMit: Bool? = nil,
+                iconmodus: Iconmodus? = nil) {
         self.weg = weg
         self.schrift = schrift
         self.groesse = groesse
@@ -53,6 +57,7 @@ public struct Formatangaben {
         self.abstand = abstand
         self.tempo = tempo
         self.iconLaeuftMit = iconLaeuftMit
+        self.iconmodus = iconmodus
     }
 
     /// Was Rand und Abstand haben duerfen — dieselben Grenzen wie die Stepper
@@ -104,7 +109,8 @@ public struct Formatangaben {
         if let waagrecht { o.waagrecht = waagrecht }
         if let senkrecht { o.senkrecht = senkrecht }
         if let tempo { o.tempo = tempo }
-        if let iconLaeuftMit { o.iconLaeuftMit = iconLaeuftMit }
+        if let iconLaeuftMit { o.iconmodus = iconLaeuftMit ? .mit : .fest }
+        if let iconmodus { o.iconmodus = iconmodus }
         if let rand { o.rand = Self.geklemmt(rand) }
         if let abstand { o.abstand = Self.geklemmt(abstand) }
         if let schrift { o.schrift = schrift }

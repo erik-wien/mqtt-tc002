@@ -52,7 +52,7 @@ final class BlaettererLayoutTests: XCTestCase {
                     aufrufe += 1
                     let o = Meldungsoptionen(text: "Hallo Welt \(uhr.name)")
                     let mass = Anzeigemass.fuer(uhr)
-                    let f = Meldungsbau.feld(o, mitIcon: false, mass: mass)
+                    let f = Meldungsbau.feld(o, icon: nil, mass: mass)
                     return Text("\(f.breite) \(angesehen ? 1 : 0)")
                         .frame(width: geo.size.width, height: geo.size.height)
                 }

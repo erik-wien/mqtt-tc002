@@ -185,6 +185,16 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
     /// Auswahl liest.
     public var klangAbgleich: Bool?
 
+    /// Die Luft zwischen Icon und Text in Pixeln der Anzeige, 0 bis 16
+    /// (`Iconabstand`). `nil` heißt 1; gelesen wird es nur über
+    /// `wirksamerIconAbstand`. Optional, damit ältere Dateien lesbar bleiben.
+    /// Ein Wert der App je Uhr, keine Einstellung der Firmware: Er gilt für alles,
+    /// was an diese Uhr geht (Senden, Kurzbefehle, Werkzeug).
+    public var iconAbstand: Int?
+
+    /// Was für diese Uhr gilt, in den Grenzen von `Iconabstand`.
+    public var wirksamerIconAbstand: Int { Iconabstand.begrenzt(iconAbstand ?? Iconabstand.vorgabe) }
+
     /// Der Lautsprecher gilt nur für die selbstgebaute Uhr: TC001 und TC002
     /// haben einen festen.
     public var hatLautsprecher: Bool { modell != .esp32DIY || lautsprecher != false }
@@ -211,7 +221,8 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
                 praefix: String = "", mac: String = "",
                 betriebsart: Betriebsart? = nil, panelbreite: Int? = nil,
                 panelhoehe: Int? = nil, angelegt: Date? = nil,
-                modell: Uhrmodell? = nil, lautsprecher: Bool? = nil, klangAbgleich: Bool? = nil) {
+                modell: Uhrmodell? = nil, lautsprecher: Bool? = nil, klangAbgleich: Bool? = nil,
+                iconAbstand: Int? = nil) {
         self.id = id
         self.name = name
         self.host = host
@@ -224,6 +235,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         self.modell = modell
         self.lautsprecher = lautsprecher
         self.klangAbgleich = klangAbgleich
+        self.iconAbstand = iconAbstand
     }
 
     /// Der Stand der Einrichtung, wie er in der Datei steht. Eine Uhr ohne
@@ -233,7 +245,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
 
     private enum Schluessel: String, CodingKey {
         case id, name, host, praefix, mac, angelegt, betriebsart, panelbreite, panelhoehe
-        case modell, lautsprecher, klangAbgleich
+        case modell, lautsprecher, klangAbgleich, iconAbstand
         case einrichtung
     }
 
@@ -263,6 +275,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         modell = (try? c.decodeIfPresent(Uhrmodell.self, forKey: .modell)) ?? nil
         lautsprecher = try c.decodeIfPresent(Bool.self, forKey: .lautsprecher)
         klangAbgleich = try c.decodeIfPresent(Bool.self, forKey: .klangAbgleich)
+        iconAbstand = try c.decodeIfPresent(Int.self, forKey: .iconAbstand)
         let aktuell = (try c.decodeIfPresent(Int.self, forKey: .einrichtung) ?? 0) >= Self.einrichtungsstand
         praefix = aktuell ? try c.decodeIfPresent(String.self, forKey: .praefix) ?? "" : ""
         panelbreite = aktuell ? try c.decodeIfPresent(Int.self, forKey: .panelbreite) : nil
@@ -283,6 +296,7 @@ public struct Uhr: Codable, Identifiable, Equatable, Sendable {
         try c.encodeIfPresent(modell, forKey: .modell)
         try c.encodeIfPresent(lautsprecher, forKey: .lautsprecher)
         try c.encodeIfPresent(klangAbgleich, forKey: .klangAbgleich)
+        try c.encodeIfPresent(iconAbstand, forKey: .iconAbstand)
         try c.encode(Self.einrichtungsstand, forKey: .einrichtung)
     }
 }

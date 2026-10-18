@@ -223,10 +223,10 @@ final class PixelwegTests: XCTestCase {
     /// Text, der passt, steht still; das gesendete Bild ist das Feld der Vorschau.
     func testGesendetesStandbildIstDasFeldDerVorschau() throws {
         let o = Meldungsoptionen(text: "Wien", schrift: "Silkscreen", groesse: 8)
-        XCTAssertTrue(Meldungsbau.passt(o, mitIcon: false))
+        XCTAssertTrue(Meldungsbau.passt(o, icon: nil))
         let pixel = try XCTUnwrap(Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung()).pixel)
         XCTAssertEqual(pixel.bilder.count, 1)
-        XCTAssertEqual(pixel.bilder[0].pixel, Meldungsbau.feld(o.fuerVorschau, mitIcon: false).punkteRoh)
+        XCTAssertEqual(pixel.bilder[0].pixel, Meldungsbau.feld(o.fuerVorschau, icon: nil).punkteRoh)
         XCTAssertTrue(pixel.bilder[0].pixel.contains { $0 != nil })
     }
 
@@ -246,7 +246,7 @@ final class PixelwegTests: XCTestCase {
     func testVorschauVonAlsTextRechnetInDoppelpixeln() {
         var o = Meldungsoptionen(text: "Hi", weg: .text)
         o.schrift = "Silkscreen"
-        let f = Meldungsbau.feld(o.fuerVorschau, mitIcon: false)
+        let f = Meldungsbau.feld(o.fuerVorschau, icon: nil)
         for y in stride(from: 0, to: 16, by: 2) {
             for x in stride(from: 0, to: 52, by: 2) {
                 let block = [f.farbe(x: x, y: y), f.farbe(x: x + 1, y: y),
@@ -283,7 +283,7 @@ final class PixelwegTests: XCTestCase {
 
         let s = Iconsammlung(schreibordner: ordner)
         let icon = Icon(nummer: "p", name: "p", kategorie: "", datei: datei, kante: 8)
-        let uri = try Meldungsbau.iconAlsGIF(icon, sammlung: s)
+        let uri = try Meldungsbau.iconAlsGIF(icon, platz: .voll(), sammlung: s)
         XCTAssertTrue(uri.hasPrefix("data:image/gif;base64,"))
         XCTAssertNoThrow(try NGNutzlast.icon(ausDatenURI: uri))
     }

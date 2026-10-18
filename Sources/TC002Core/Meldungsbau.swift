@@ -120,6 +120,11 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var abstand: Int = 1
     public var tempo: Lauftempo = .mittel
     public var iconLaeuftMit: Bool = false
+    /// Ergänzt `iconLaeuftMit` um die dritte Stellung (`Iconmodus.einmal`);
+    /// `nil` heißt „mit“, wo `iconLaeuftMit` wahr ist. Optional, weil der
+    /// Sendeverlauf diesen Typ unverändert schreibt und ältere Dateien den
+    /// Schlüssel nicht kennen. Gelesen und gesetzt wird über `iconmodus`.
+    public var iconModus: Iconmodus?
     public var dauer: Int?
     /// `nil` heißt `Lebensdauer.vorgabe`, nicht „keine": Ältere Verlaufsdateien und
     /// andere Schreiber kennen den Schlüssel nicht und müssen lesbar bleiben —
@@ -153,7 +158,8 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
                 iconLaeuftMit: Bool = false,
                 dauer: Int? = nil,
                 lebensdauer: Lebensdauer? = nil,
-                darstellung: Darstellungswahl? = nil) {
+                darstellung: Darstellungswahl? = nil,
+                iconmodus: Iconmodus? = nil) {
         self.text = text
         self.weg = weg
         self.schrift = schrift
@@ -170,6 +176,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
         self.dauer = dauer
         self.lebensdauer = lebensdauer
         self.darstellung = darstellung
+        if let iconmodus { self.iconmodus = iconmodus }
     }
 
     /// Der Text, wie er tatsächlich gerastert bzw. geschickt wird — die einzige
@@ -223,13 +230,6 @@ extension Meldungsoptionen {
 /// Wortgetreu aus `SendenView` gelöst. Keine Rechnung wurde dabei geändert;
 /// die Schnappschusstests halten das fest.
 public enum Meldungsbau {
-    /// Luft zwischen Icon und Text.
-    public static let iconLuecke = 2
-
-    /// Wo das Icon endet: seine Kante plus die Luft. Bei 8×8 zehn Spalten wie
-    /// bisher, bei 16×16 achtzehn.
-    public static func iconBreite(kante: Int = 8) -> Int { kante + iconLuecke }
-
     /// Auf welcher Zeile das Icon sitzt: senkrecht mittig im Feld. Auf den
     /// sechzehn Zeilen ergibt das bei 8×8 die 4 und bei 16×16 die 0 — ein
     /// 16×16 fuellt die volle Hoehe und schwimmt nicht.
@@ -237,15 +237,13 @@ public enum Meldungsbau {
         mass.iconY(kante: kante)
     }
 
-    /// `iconKante` hat ueberall eine Vorgabe: Jede Stelle, die frueher nur
-    /// „Icon ja/nein" wusste, meinte damit ein 8×8 und rechnet unveraendert
-    /// weiter.
-    public static func flaecheX(mitIcon: Bool, iconKante: Int = 8) -> Int {
-        mitIcon ? iconBreite(kante: iconKante) : 0
+    /// Wo der Text im Pixelweg neben dem Icon beginnt: dessen zugeschnittene
+    /// Breite plus der Abstand der Uhr (`Iconplatz.textAb`); ohne Icon Spalte 0.
+    public static func flaecheX(icon: Iconplatz?) -> Int {
+        icon?.textAb() ?? 0
     }
-    public static func flaecheBreite(mitIcon: Bool, iconKante: Int = 8,
-                                     mass: Anzeigemass = .vorgabe) -> Int {
-        mass.breite - flaecheX(mitIcon: mitIcon, iconKante: iconKante)
+    public static func flaecheBreite(icon: Iconplatz?, mass: Anzeigemass = .vorgabe) -> Int {
+        mass.breite - flaecheX(icon: icon)
     }
 
     /// Der Schlüssel der Rasterrechnung: genau die Größen, von denen
@@ -317,22 +315,21 @@ public enum Meldungsbau {
     /// Icon 42 Spalten). Hinge die Rechnung an „Icon mitscrollen", würde das
     /// Einschalten den Text passend machen, den Schalter verschwinden lassen
     /// und ihn wieder umwerfen.
-    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+    public static func passt(_ o: Meldungsoptionen, icon: Iconplatz?,
                              mass: Anzeigemass = .vorgabe) -> Bool {
         if o.weg == .text {
-            return Geraeteschrift.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+            return Geraeteschrift.passt(o, icon: icon, mass: mass)
         }
-        return breite(o, mass: mass) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        return breite(o, mass: mass) <= flaecheBreite(icon: icon, mass: mass)
     }
 
     /// Ob der Text auf mindestens einer der Uhren durchläuft. Nur dann wirkt
     /// „Durchläufe“ bei einer Nachricht; ohne Uhren ist die Antwort `false`.
-    /// `iconKante` nennt die Kante des Icons je Maß (ein 16×16 fällt auf acht
-    /// Zeilen zurück).
-    public static func laeuftDurch(_ o: Meldungsoptionen, mitIcon: Bool,
-                                   iconKante: (Anzeigemass) -> Int = { _ in 8 },
-                                   masse: [Anzeigemass]) -> Bool {
-        masse.contains { !passt(o, mitIcon: mitIcon, iconKante: iconKante($0), mass: $0) }
+    /// Je Ziel Maß und Platz des Icons (ein 16×16 fällt auf acht Zeilen zurück,
+    /// und der Abstand ist der der jeweiligen Uhr).
+    public static func laeuftDurch(_ o: Meldungsoptionen,
+                                   ziele: [(mass: Anzeigemass, icon: Iconplatz?)]) -> Bool {
+        ziele.contains { !passt(o, icon: $0.icon, mass: $0.mass) }
     }
 
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
@@ -355,14 +352,33 @@ public enum Meldungsbau {
         }
     }
 
-    public static func versatzX(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+    /// Wo der Block aus Icon, Abstand und Text beginnt, wenn er mittig steht:
+    /// Das Icon rückt mit, der Text wird nicht allein in die Restfläche gesetzt.
+    /// Ohne Icon ist es die Mitte des Textes allein.
+    private static func blockbeginn(_ o: Meldungsoptionen, icon: Iconplatz?, mass: Anzeigemass) -> Int {
+        max(0, (mass.breite - flaecheX(icon: icon) - breite(o, mass: mass)) / 2)
+    }
+
+    /// Spalte, in der das Icon im Pixelweg beginnt: links, bei mittigem Text mit
+    /// dem ganzen Block (Icon, Abstand, Text) in der Mitte. Ohne Text (nichts
+    /// auszurichten) und bei der Schrift der Uhr (die Firmware zentriert nur den
+    /// Text im Rest neben dem Icon) steht das Icon am linken Rand.
+    public static func iconX(_ o: Meldungsoptionen, icon: Iconplatz?,
+                             mass: Anzeigemass = .vorgabe) -> Int {
+        guard icon != nil, o.weg == .pixel, o.waagrecht == .mittig else { return 0 }
+        let o = o.angepasst(an: mass)
+        guard breite(o, mass: mass) > 0 else { return 0 }
+        return blockbeginn(o, icon: icon, mass: mass)
+    }
+
+    public static func versatzX(_ o: Meldungsoptionen, icon: Iconplatz?,
                                 mass: Anzeigemass = .vorgabe) -> Int {
         let o = o.angepasst(an: mass)
-        let x = flaecheX(mitIcon: mitIcon, iconKante: iconKante)
-        let b = flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        let x = flaecheX(icon: icon)
+        let b = flaecheBreite(icon: icon, mass: mass)
         switch o.waagrecht {
         case .links:  return x
-        case .mittig: return x + max(0, (b - breite(o, mass: mass)) / 2)
+        case .mittig: return x + blockbeginn(o, icon: icon, mass: mass)
         case .rechts: return x + max(0, b - breite(o, mass: mass))
         }
     }
@@ -370,17 +386,17 @@ public enum Meldungsbau {
     /// Vorschau und Sendung entstehen aus demselben Feld. Gerastert wird immer
     /// in derselben Phase, ausgerichtet wird durch Verschieben — sonst sähe
     /// dieselbe Schrift stehend anders aus als laufend.
-    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int = 8,
+    public static func feld(_ o: Meldungsoptionen, icon: Iconplatz?,
                             mass: Anzeigemass = .vorgabe) -> Pixelfeld {
         // Die Uhr setzt den Text selbst: die Vorschau ist die Näherung
         // `Geraeteschrift`, nicht unsere Rasterung.
         if o.weg == .text {
-            return Geraeteschrift.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+            return Geraeteschrift.feld(o, icon: icon, mass: mass)
         }
         let o = o.angepasst(an: mass)
         var f = Pixelfeld(breite: mass.breite, hoehe: mass.hoehe)
         Textraster.einsetzen(puffer(o, mass: mass),
-                             x: versatzX(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass),
+                             x: versatzX(o, icon: icon, mass: mass),
                              y: versatzY(o, mass: mass), in: &f)
         return f
     }
@@ -388,21 +404,23 @@ public enum Meldungsbau {
     /// Die Einzelbilder der Laufschrift. Getrennt von `rahmen`, weil die
     /// Vorschau sie zum Abspielen braucht, während `rahmen` sie bereits zu
     /// einem GIF verpackt hat.
+    /// `iconBilder` sind die Einzelbilder des Icons ungeschnitten (Kante × Kante);
+    /// `icon` sagt, wie sie zugeschnitten werden und wie viel Platz sie brauchen.
     public static func laufschriftBilder(_ o: Meldungsoptionen,
                                   iconBilder: [[String?]],
-                                  iconKante: Int = 8,
+                                  icon: Iconplatz? = nil,
                                   mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
         // Bei der Schrift der Uhr laeuft die Vorschau wie die Uhr selbst
         // (`Geraeteschrift.laufbilder`), nicht nach unserer Rasterung.
         if o.weg == .text {
-            return Geraeteschrift.laufbilder(o, iconBilder: iconBilder, iconKante: iconKante, mass: mass)
+            return Geraeteschrift.laufbilder(o, iconBilder: iconBilder, icon: icon, mass: mass)
         }
         let o = o.angepasst(an: mass)
         let bilder = Textraster.laufschriftEinzelbilder(
             o.gesendeterText, schrift: o.schrift, groesse: o.groesse, fett: o.fett,
             farbe: o.farbe, schrittweite: o.tempo.schrittweite, bilddauer: o.tempo.bilddauer,
-            versatzY: versatzY(o, mass: mass), iconBilder: iconBilder, iconKante: iconKante,
-            iconLaeuftMit: o.iconLaeuftMit, luecke: o.abstand, mass: mass)
+            versatzY: versatzY(o, mass: mass), iconBilder: iconBilder, icon: icon,
+            iconLaeuftMit: o.wirksamerIconmodus != .fest, luecke: o.abstand, mass: mass)
         // Die Zeit, die das GIF tatsaechlich traegt (ganze Hundertstel):
         // Vorschau und Sendung laufen gleich schnell.
         return bilder.map { Bildraster.Einzelbild(pixel: $0.pixel, dauer: Bildraster.gifZeit($0.dauer)) }
@@ -416,65 +434,93 @@ public enum Meldungsbau {
     ///
     /// `.text`: Text und Regler samt Icon als `Meldungsherkunft`, aus der NG
     /// die Anzeige in ihrer Schrift setzt (`NGNutzlast.anzeige`).
+    ///
+    /// `iconAbstand` ist die Luft zwischen Icon und Text in Pixeln der Anzeige,
+    /// der Wert der Zieluhr (`Uhr.wirksamerIconAbstand`).
     public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
                               mass: Anzeigemass = .vorgabe,
+                              iconAbstand: Int = Iconabstand.vorgabe,
                               bestaende: (() -> [Iconsammlung])? = nil) throws -> Frame {
         // Je Uhr das Icon in der Groesse, die in ihre Hoehe passt.
         let icon = icon.map { Iconbestaende.passend($0, fuer: mass, in: bestaende) }
         switch o.weg {
         case .text:
+            // Das Icon geht zugeschnitten hinaus, und `iconGap` zaehlt in Spalten der
+            // Seite, auf der die Uhr zeichnet (`Iconplatz.luecke`). Ein Icon ohne
+            // Tinte geht gar nicht mit.
+            var iconURI: String?
+            var luecke: Int?
+            if let icon, let platz = Iconplatz.vermessen(icon, abstand: iconAbstand) {
+                iconURI = try iconAlsGIF(icon, platz: platz, sammlung: sammlung)
+                luecke = platz.luecke(faktor: Geraeteschrift.masstab(mitIcon: true, iconKante: icon.kante, mass: mass))
+            }
             return Frame(dauer: o.dauer,
-                         herkunft: Meldungsherkunft(
-                            optionen: o,
-                            iconDatenURI: try icon.map { try iconAlsGIF($0, sammlung: sammlung) }),
+                         herkunft: Meldungsherkunft(optionen: o, iconDatenURI: iconURI, iconGap: luecke),
                          lebensdauer: o.wirksameLebensdauer,
                          darstellung: o.darstellung?.darstellung(weg: .text))
         case .pixel:
-            return Frame(pixel: try pixelinhalt(o, icon: icon, mass: mass), dauer: o.dauer,
+            return Frame(pixel: try pixelinhalt(o, icon: icon, iconAbstand: iconAbstand, mass: mass), dauer: o.dauer,
                          lebensdauer: o.wirksameLebensdauer,
                          darstellung: o.darstellung?.darstellung(weg: .pixel))
         }
     }
 
+    /// Wie `rahmen(_:icon:sammlung:mass:iconAbstand:bestaende:)`, mit Maß und
+    /// Abstand dieser Uhr.
+    public static func rahmen(_ o: Meldungsoptionen, icon: Icon?, sammlung: Iconsammlung,
+                              uhr: Uhr, bestaende: (() -> [Iconsammlung])? = nil) throws -> Frame {
+        try rahmen(o, icon: icon, sammlung: sammlung, mass: Anzeigemass.fuer(uhr),
+                   iconAbstand: uhr.wirksamerIconAbstand, bestaende: bestaende)
+    }
+
     /// Die Pixel einer Meldung — dieselbe Rechnung, die die Vorschau zeigt.
-    static func pixelinhalt(_ o: Meldungsoptionen, icon: Icon?, mass: Anzeigemass) throws -> Pixelinhalt {
-        let mitIcon = icon != nil
+    static func pixelinhalt(_ o: Meldungsoptionen, icon: Icon?, iconAbstand: Int = Iconabstand.vorgabe,
+                            mass: Anzeigemass) throws -> Pixelinhalt {
         let kante = icon?.kante ?? 8
-        let iconBilder = icon.flatMap {
+        let gelesen = icon.flatMap {
             try? Bildraster.lesenMitZeiten($0.datei, breite: kante, hoehe: kante)
         } ?? []
+        // Ein Icon ohne Tinte zaehlt wie keins.
+        let platz = Iconplatz.vermessen(gelesen.map(\.pixel), kante: kante, abstand: iconAbstand)
+        let iconBilder = platz == nil ? [] : gelesen
         let bilder: [Bildraster.Einzelbild]
-        if passt(o, mitIcon: mitIcon, iconKante: kante, mass: mass) {
-            let text = feld(o, mitIcon: mitIcon, iconKante: kante, mass: mass)
+        if passt(o, icon: platz, mass: mass) {
+            let text = feld(o, icon: platz, mass: mass)
             let y = iconY(kante: kante, mass: mass)
+            let x = iconX(o, icon: platz, mass: mass)
             // Ein bewegtes Icon neben stehendem Text: jedes Icon-Bild ein
             // Einzelbild, mit der Zeit aus der Datei.
             bilder = (iconBilder.isEmpty ? [nil] : iconBilder.map { Optional($0) }).map { ib in
                 var f = text
-                if let ib {
+                if let ib, let platz {
+                    let zugeschnitten = platz.zuschneiden(ib.pixel)
                     for dy in 0..<kante {
-                        for dx in 0..<kante {
-                            if let p = ib.pixel[dy * kante + dx] { f.setzen(x: dx, y: y + dy, farbe: p) }
+                        for dx in 0..<platz.breite {
+                            if let p = zugeschnitten[dy * platz.breite + dx] { f.setzen(x: x + dx, y: y + dy, farbe: p) }
                         }
                     }
                 }
                 return Bildraster.Einzelbild(pixel: f.punkteRoh, dauer: Bildraster.gifZeit(ib?.dauer ?? 1))
             }
         } else {
-            bilder = laufschriftBilder(o, iconBilder: iconBilder.map(\.pixel), iconKante: kante, mass: mass)
+            bilder = laufschriftBilder(o, iconBilder: iconBilder.map(\.pixel), icon: platz, mass: mass)
         }
         let inhalt = Pixelinhalt(breite: mass.breite, hoehe: mass.hoehe, bilder: bilder)
         try Pixelweg.pruefen(inhalt)
         return inhalt
     }
 
-    /// Das Icon als GIF-Data-URL; eine PNG- oder JPEG-Datei wird umgerechnet
-    /// (`NGNutzlast.icon` nimmt nur GIF).
-    static func iconAlsGIF(_ icon: Icon, sammlung: Iconsammlung) throws -> String {
-        let uri = try sammlung.datenURI(fuer: icon)
-        if uri.hasPrefix("data:image/gif;") { return uri }
+    /// Das Icon als GIF-Data-URL, auf die Tinte zugeschnitten; eine PNG- oder
+    /// JPEG-Datei wird umgerechnet (`NGNutzlast.icon` nimmt nur GIF). Ein Icon, das
+    /// nichts abzuschneiden hat, geht unveraendert hinaus (die Bytes der Datei).
+    static func iconAlsGIF(_ icon: Icon, platz: Iconplatz, sammlung: Iconsammlung) throws -> String {
+        if platz.istVoll {
+            let uri = try sammlung.datenURI(fuer: icon)
+            if uri.hasPrefix("data:image/gif;") { return uri }
+        }
         let bilder = try Bildraster.lesenMitZeiten(icon.datei, breite: icon.kante, hoehe: icon.kante)
-        return try Pixelweg.gifDatenURI(Pixelinhalt(breite: icon.kante, hoehe: icon.kante, bilder: bilder))
+        return try Pixelweg.gifDatenURI(Pixelinhalt(breite: platz.breite, hoehe: icon.kante,
+                                                    bilder: platz.zuschneiden(bilder)))
     }
 }
 

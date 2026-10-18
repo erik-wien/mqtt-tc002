@@ -127,6 +127,8 @@ OPTIONEN FUER „senden"
                       16x16-Icon mit seinem Namen ("mqtttc002 icons" zeigt beide); auf einer
                       Uhr mit acht Zeilen (TC001) gilt die 8x8-Fassung
   --icon-mitscrollen  das Icon laeuft mit, wenn der Text durchlaeuft
+  --icon-modus fest|einmal|mit   was ein durchlaufender Text mit dem Icon tut: stehen lassen,
+                      einmal hinausschieben (nur mit --schrift-der-uhr) oder mitnehmen
   --schrift-der-uhr   die Uhr setzt den Text selbst, mit ihrer Schrift; dann gibt es
                       --schrift, --groesse, --fett, --rand, --abstand, --oben|--mitte|--unten
                       und --rechts nicht (das Werkzeug weist sie ab)
@@ -436,10 +438,12 @@ func lauf() throws {
         var m = optionen.meldung
         m.text = text
         /// Je Uhr: deren Mass fuer den Text, deren Namenslisten fuer die Darstellung.
-        func rahmen(mass: Anzeigemass? = nil) throws -> Frame {
+        func rahmen(uhr: Uhr? = nil) throws -> Frame {
             if optionen.grafikGesetzt { return optionen.grafikrahmen }
-            return optionen.mitDarstellung(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
-                                                                  mass: mass ?? .vorgabe))
+            return optionen.mitDarstellung(try Meldungsbau.rahmen(
+                m, icon: icon, sammlung: sammlung,
+                mass: uhr.map(Anzeigemass.fuer) ?? .vorgabe,
+                iconAbstand: uhr?.wirksamerIconAbstand ?? Iconabstand.vorgabe))
         }
         let json = try Anzeigen.nutzlast(try rahmen())
         if optionen.trocken {
@@ -479,7 +483,7 @@ func lauf() throws {
                 uhr: uhr.name) {
                 fehlerAusgeben(hinweis)
             }
-            try anzeigen.zeigen(try rahmen(mass: Anzeigemass.fuer(uhr)), auf: optionen.anzeigename,
+            try anzeigen.zeigen(try rahmen(uhr: uhr), auf: optionen.anzeigename,
                                 faehigkeiten: faehigkeiten(uhr))
             // Nur wenn der Anzeigenname einem der fuenf festen Plaetze
             // entspricht, gibt es einen Platz, den sich das Slotgedaechtnis
@@ -494,8 +498,8 @@ func lauf() throws {
                     _ = Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: platz)
                     return
                 }
-                let gemerkt = Slotgedaechtnis.gemeinsam.merken(m, icon: icon?.nummer,
-                                                              iconKante: icon?.kante ?? 8,
+                let gemerkt = Slotgedaechtnis.gemeinsam.merken(m, icon: icon,
+                                                              iconAbstand: uhr.wirksamerIconAbstand,
                                                               fuer: uhr.id, platz: platz,
                                                               mass: Anzeigemass.fuer(uhr))
                 if !gemerkt {
@@ -508,10 +512,12 @@ func lauf() throws {
         var m = optionen.meldung
         m.text = text
         let bo = optionen.benachrichtigung
-        func rahmen(mass: Anzeigemass? = nil) throws -> Frame {
+        func rahmen(uhr: Uhr? = nil) throws -> Frame {
             if optionen.grafikGesetzt { return optionen.grafikrahmen }
-            return optionen.mitDarstellung(try Meldungsbau.rahmen(m, icon: icon, sammlung: sammlung,
-                                                                  mass: mass ?? .vorgabe))
+            return optionen.mitDarstellung(try Meldungsbau.rahmen(
+                m, icon: icon, sammlung: sammlung,
+                mass: uhr.map(Anzeigemass.fuer) ?? .vorgabe,
+                iconAbstand: uhr?.wirksamerIconAbstand ?? Iconabstand.vorgabe))
         }
         let json = try NGNutzlast.benachrichtigung(try rahmen(), bo)
         if optionen.trocken {
@@ -541,7 +547,7 @@ func lauf() throws {
             }
             let caps = faehigkeiten(uhr)
             try klaengePruefen(bo.klang, anzeigen: anzeigen, faehigkeiten: caps, inBenachrichtigung: true)
-            try anzeigen.benachrichtigen(try rahmen(mass: Anzeigemass.fuer(uhr)), bo, faehigkeiten: caps)
+            try anzeigen.benachrichtigen(try rahmen(uhr: uhr), bo, faehigkeiten: caps)
         }
 
     case .layout(let pfad):

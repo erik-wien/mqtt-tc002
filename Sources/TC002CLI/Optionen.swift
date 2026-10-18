@@ -125,9 +125,10 @@ struct Optionen {
     var darstellungsoption: String?
     /// `--schrift-der-uhr`: die Uhr setzt den Text selbst (`SendeWeg.text`).
     var schriftDerUhr = false
-    var iconMitscrollen = false
+    /// `--icon-mitscrollen` (mit) bzw. `--icon-modus` (fest, einmal, mit).
+    var iconmodus: Iconmodus = .fest
     /// Die erste Option, die nur „senden“ und „nachricht“ kennen und die zum Format
-    /// gehört (`--schrift-der-uhr`, `--icon-mitscrollen`) — für die Meldung bei einem
+    /// gehört (`--schrift-der-uhr`, `--icon-mitscrollen`, `--icon-modus`) — für die Meldung bei einem
     /// anderen Befehl.
     var formatoption: String?
     /// Die erste Angabe, die die Schrift der Uhr nicht kennt (`AwtrixNG.wirkt`).
@@ -181,6 +182,8 @@ struct Optionen {
         case ueberzaehligesWort(befehl: String, wort: String)
         /// Eine Angabe, die die Schrift der Uhr nicht kennt.
         case nichtMitSchriftDerUhr(option: String, grund: String)
+        /// „einmal“ ohne Schrift der Uhr.
+        case iconEinmalBrauchtSchriftDerUhr
 
         var errorDescription: String? {
             switch self {
@@ -222,6 +225,8 @@ struct Optionen {
                 return lokf("„%@“ kennt das Wort „%@“ nicht.", b, w)
             case .nichtMitSchriftDerUhr(let o, let g):
                 return lokf("„%@“ gibt es mit „--schrift-der-uhr“ nicht. %@", o, g)
+            case .iconEinmalBrauchtSchriftDerUhr:
+                return lok("„--icon-modus einmal“ gibt es nur mit „--schrift-der-uhr“. Sonst läuft das Icon mit dem Text mit.")
             }
         }
     }
@@ -401,7 +406,16 @@ struct Optionen {
                 o.farbe = w
                 o.farbeAngegeben = true
             case "--icon":                o.iconNummer = try wert()
-            case "--icon-mitscrollen", "--icon-scroll": o.iconMitscrollen = true; formatMerken()
+            case "--icon-mitscrollen", "--icon-scroll": o.iconmodus = .mit; formatMerken()
+            case "--icon-modus", "--icon-mode":
+                let w = try wert()
+                switch w {
+                case "fest", "fixed": o.iconmodus = .fest
+                case "einmal", "once": o.iconmodus = .einmal
+                case "mit", "push": o.iconmodus = .mit
+                default: throw Fehler.unbekannteOption("\(arg) \(w)")
+                }
+                formatMerken()
             case "--schrift-der-uhr", "--clock-font":   o.schriftDerUhr = true; formatMerken()
             case "--schrift", "--font":   o.schrift = try wert(); textwegFremd(.schriftart)
             case "--groesse", "--size":   o.groesse = Double(try zahl()); textwegFremd(.groesse)
@@ -465,6 +479,7 @@ struct Optionen {
             }
             try o.darstellung.pruefen()
             try o.schriftDerUhrPruefen()
+            if o.iconmodus == .einmal, !o.schriftDerUhr { throw Fehler.iconEinmalBrauchtSchriftDerUhr }
         default:
             if let option = o.darstellungsoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
             if let option = o.formatoption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
@@ -832,7 +847,7 @@ struct Optionen {
         o.waagrecht = waagrecht
         o.senkrecht = senkrecht
         o.weg = schriftDerUhr ? .text : .pixel
-        o.iconLaeuftMit = iconMitscrollen
+        o.iconmodus = iconmodus
         o.rand = rand
         o.abstand = abstand
         o.tempo = tempo

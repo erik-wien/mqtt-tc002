@@ -180,6 +180,28 @@ enum TempoAuswahl: String, AppEnum {
     }
 }
 
+/// Was ein durchlaufender Text mit dem Icon tut (`Iconmodus`); die Wörter sind die der App.
+enum IconmodusAuswahl: String, AppEnum {
+    case fest, einmal, mit
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Icon mitscrollen")
+    }
+    static var caseDisplayRepresentations: [IconmodusAuswahl: DisplayRepresentation] = [
+        .fest: DisplayRepresentation(title: "Fest"),
+        .einmal: DisplayRepresentation(title: "Einmal mitscrollen"),
+        .mit: DisplayRepresentation(title: "Mitscrollen"),
+    ]
+
+    var kern: Iconmodus {
+        switch self {
+        case .fest: return .fest
+        case .einmal: return .einmal
+        case .mit: return .mit
+        }
+    }
+}
+
 /// „Steht …“ einer Nachricht (`Nachrichtdauerart`); die Wörter sind die der App.
 enum StehtAuswahl: String, AppEnum {
     case bisZurueckgezogen, sekunden, durchlaeufe
@@ -240,12 +262,12 @@ extension Formatangaben {
                            fett: Bool?, grossbuchstaben: Bool?, farbe: FarbAuswahl?,
                            waagrecht: WaagrechtAuswahl?, senkrecht: SenkrechtAuswahl?,
                            rand: Int?, abstand: Int?, tempo: TempoAuswahl?,
-                           iconLaeuftMit: Bool?) -> Formatangaben {
+                           iconLaeuftMit: Bool?, iconmodus: IconmodusAuswahl?) -> Formatangaben {
         Formatangaben(weg: weg?.kern, schrift: schriftart?.kern,
                       groesse: groesse.map(Double.init), fett: fett,
                       grossbuchstaben: grossbuchstaben, farbe: farbe?.kern,
                       waagrecht: waagrecht?.kern, senkrecht: senkrecht?.kern,
                       rand: rand, abstand: abstand, tempo: tempo?.kern,
-                      iconLaeuftMit: iconLaeuftMit)
+                      iconLaeuftMit: iconLaeuftMit, iconmodus: iconmodus?.kern)
     }
 }

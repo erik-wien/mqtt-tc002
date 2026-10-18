@@ -175,16 +175,22 @@ public enum Geraeteschrift {
     }
 
     /// Raster, auf dem die Uhr zeichnet, und die erste Spalte rechts vom Icon.
-    private static func raster(mitIcon: Bool, iconKante: Int, mass: Anzeigemass)
+    ///
+    /// Die Firmware rechnet in Spalten dieses Rasters: Das Icon belegt seine eigene
+    /// (zugeschnittene) Breite, `iconGap` kommt dazu, und dahinter beginnt der Text
+    /// (`RenderPipeline::iconColumn`, `SpecRenderer::textColumn`; §5.3). Auf der
+    /// vergrößerten Seite ist eine Spalte zwei Punkte der Anzeige breit, darum
+    /// ist die Luft dort ein Vielfaches davon (`Iconplatz.luecke`).
+    private static func raster(icon: Iconplatz?, mass: Anzeigemass)
         -> (breite: Int, hoehe: Int, links: Int, faktor: Int) {
-        let f = masstab(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
-        return (mass.breite / f, mass.hoehe / f, mitIcon ? iconKante + 1 : 0, f)
+        let f = masstab(mitIcon: icon != nil, iconKante: icon?.kante ?? 8, mass: mass)
+        return (mass.breite / f, mass.hoehe / f, icon?.textAb(faktor: f) ?? 0, f)
     }
 
     /// Ob der Text neben dem Icon ganz ins Raster passt; sonst läuft er auf der
     /// Uhr durch.
-    public static func passt(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int, mass: Anzeigemass) -> Bool {
-        let r = raster(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+    public static func passt(_ o: Meldungsoptionen, icon: Iconplatz?, mass: Anzeigemass) -> Bool {
+        let r = raster(icon: icon, mass: mass)
         return breite(geschrieben(o)) <= r.breite - r.links
     }
 
@@ -222,9 +228,9 @@ public enum Geraeteschrift {
     }
 
     /// Das Feld der Vorschau in der Größe der Anzeige.
-    public static func feld(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int,
+    public static func feld(_ o: Meldungsoptionen, icon: Iconplatz?,
                             mass: Anzeigemass) -> Pixelfeld {
-        let r = raster(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        let r = raster(icon: icon, mass: mass)
         let zeichen = geschrieben(o)
         let platz = r.breite - r.links
         let b = breite(zeichen)
@@ -254,53 +260,70 @@ public enum Geraeteschrift {
     /// Grundgeschwindigkeit; ein Schritt dauert so lange wie ein Pixel bei
     /// dieser Geschwindigkeit, gerundet wie im Pixelweg (`Bildraster.gifZeit`).
     ///
-    /// Icon (`iconBilder` leer = keines): `fixed` bleibt stehen, der Text läuft
-    /// am Icon vorbei und ist links davon abgeschnitten; mit `iconLaeuftMit`
-    /// (`push`) läuft das Icon mit dem Text hinaus. Wie NG die Lücke zum
-    /// laufenden Text zeichnet, steht im Protokoll nicht; angenommen ist die
-    /// des stehenden Textes (`iconKante + 1`). Ein bewegtes Icon wechselt
-    /// seine Bilder je Schritt (nicht nach eigenen Standzeiten).
-    public static func laufbilder(_ o: Meldungsoptionen, iconBilder: [[String?]], iconKante: Int,
+    /// Icon (`iconBilder` leer = keines, `icon` ist sein zugeschnittener Platz):
+    /// `fixed` bleibt stehen, der Text läuft am Icon vorbei und ist links von
+    /// dessen Spalte samt Luft abgeschnitten (`textClipLeft`, §5.3); mit `push`
+    /// läuft das Icon mit dem Text hinaus. Bei `pushOnce` ist der erste Durchlauf
+    /// derselbe, danach steht der Text ohne Icon am linken Rand an und läuft von
+    /// dort durch (`iconPushed`, `setStartX(0)`); die Vorschau zeigt diesen zweiten
+    /// Durchlauf einmal, auf der Uhr wiederholt er sich. Ein bewegtes Icon
+    /// wechselt seine Bilder je Schritt (nicht nach eigenen Standzeiten).
+    public static func laufbilder(_ o: Meldungsoptionen, iconBilder: [[String?]], icon: Iconplatz?,
                                   mass: Anzeigemass) -> [Bildraster.Einzelbild] {
-        let mitIcon = !iconBilder.isEmpty
-        guard !passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass) else { return [] }
-        let r = raster(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        let platz = iconBilder.isEmpty ? nil : icon
+        guard !passt(o, icon: platz, mass: mass) else { return [] }
+        let r = raster(icon: platz, mass: mass)
         let zeichen = geschrieben(o)
         let b = breite(zeichen)
         let prozent = NGNutzlast.tempo(o.tempo)
         guard prozent > 0 else { return [] }
         let schritt = Bildraster.gifZeit(1 / (Double(prozent) / 100 * AwtrixNG.grundgeschwindigkeit))
-        let mitnehmen = mitIcon && o.iconLaeuftMit
+        let modus = platz == nil ? Iconmodus.fest : o.iconmodus
+        let mitnehmen = modus != .fest
         // Textzeile einmal in voller Länge, Spalte 0 = Textanfang.
         var band = Pixelfeld(breite: max(b, 1), hoehe: r.hoehe)
         zeichnen(zeichen, ab: 0, y0: (r.hoehe - 8) / 2, bis: b, farbe: o.farbe, in: &band)
         // Der Text ist hinaus, wenn sein rechter Rand die Kante erreicht, an der
         // er verschwindet: das Panel (Icon läuft mit) oder das Icon (steht).
         let ende = mitnehmen ? r.links + b : b
-        let schnittX = mitIcon && !mitnehmen ? r.links : 0
-        let iconYVorschau = Meldungsbau.iconY(kante: iconKante * r.faktor, mass: mass)
+        let schnittX = platz != nil && !mitnehmen ? r.links : 0
+        let kante = platz?.kante ?? 8
+        let iconYVorschau = Meldungsbau.iconY(kante: kante * r.faktor, mass: mass)
+        let zugeschnitten = platz.map { p in iconBilder.map { p.zuschneiden($0) } } ?? []
 
-        return (0...ende).map { d in
+        func bild(durchlauf d: Int, textAb: Int, schnitt: Int, mitIcon: Bool) -> Pixelfeld {
             var klein = Pixelfeld(breite: r.breite, hoehe: r.hoehe)
             for y in 0..<r.hoehe {
                 for x in 0..<b {
                     guard let farbe = band.farbe(x: x, y: y) else { continue }
-                    let cx = r.links - d + x
-                    if cx >= schnittX, cx < r.breite { klein.setzen(x: cx, y: y, farbe: farbe) }
+                    let cx = textAb - d + x
+                    if cx >= schnitt, cx < r.breite { klein.setzen(x: cx, y: y, farbe: farbe) }
                 }
             }
             var f = vergroessert(klein, faktor: r.faktor, mass: mass)
-            if mitIcon {
-                let bild = iconBilder[d % iconBilder.count]
+            if mitIcon, let platz {
+                let bild = zugeschnitten[d % zugeschnitten.count]
                 let versatz = mitnehmen ? -d * r.faktor : 0
-                for y in 0..<iconKante { for x in 0..<iconKante {
-                    guard bild.count == iconKante * iconKante, let farbe = bild[y * iconKante + x] else { continue }
+                for y in 0..<kante { for x in 0..<platz.breite {
+                    guard bild.count == platz.breite * kante, let farbe = bild[y * platz.breite + x] else { continue }
                     for dy in 0..<r.faktor { for dx in 0..<r.faktor {
                         f.setzen(x: x * r.faktor + dx + versatz, y: iconYVorschau + y * r.faktor + dy, farbe: farbe)
                     } }
                 } }
             }
-            return Bildraster.Einzelbild(pixel: f.punkteRoh, dauer: d == 0 ? haltezeit : schritt)
+            return f
         }
+
+        var bilder = (0...ende).map { d in
+            Bildraster.Einzelbild(pixel: bild(durchlauf: d, textAb: r.links, schnitt: schnittX, mitIcon: platz != nil).punkteRoh,
+                                  dauer: d == 0 ? haltezeit : schritt)
+        }
+        if modus == .einmal {
+            bilder += (0...b).map { d in
+                Bildraster.Einzelbild(pixel: bild(durchlauf: d, textAb: 0, schnitt: 0, mitIcon: false).punkteRoh,
+                                      dauer: d == 0 ? haltezeit : schritt)
+            }
+        }
+        return bilder
     }
 }

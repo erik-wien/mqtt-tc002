@@ -61,6 +61,10 @@ public struct SendenView: View {
     /// Nur wirksam, wenn der Text laeuft.
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
     @AppStorage("senden.iconmitlaufend") private var iconLaeuftMit = false
+    /// Die dritte Stellung neben `iconLaeuftMit`: „einmal mitscrollen“. Ein
+    /// zweiter Schluessel statt eines neuen Wertes im ersten, damit der alte
+    /// Schalter lesbar bleibt (`Iconmodus.init(laeuftMit:einmal:)`).
+    @AppStorage("senden.iconeinmal") private var iconEinmal = false
     /// Nur die Nummer wird gesichert, kein Pfad — der bricht, sobald ein Icon
     /// zwischen mitgeliefert und eigenen wandert. `gewaehltesIcon` wird daraus
     /// einmalig beim Start nachgeschlagen; eine verschwundene Nummer ergibt
@@ -170,7 +174,8 @@ public struct SendenView: View {
         vertikal = o.senkrecht
         farbeHex = o.farbe
         tempo = o.tempo
-        iconLaeuftMit = o.iconLaeuftMit
+        iconLaeuftMit = o.iconmodus.laeuftMit
+        iconEinmal = o.iconmodus.einmal
         dauerText = o.dauer.map(String.init) ?? ""
         darstellung = o.darstellung ?? Darstellungswahl()
         let l = Lebensdauerwahl(o.lebensdauer)
@@ -243,9 +248,16 @@ public struct SendenView: View {
         Meldungsoptionen(text: text, weg: weg, schrift: schrift, groesse: groesse,
                          fett: fett, farbe: farbeHex, grossbuchstaben: grossbuchstaben,
                          waagrecht: horizontal, senkrecht: vertikal, rand: rand,
-                         abstand: luecke, tempo: tempo, iconLaeuftMit: iconLaeuftMit,
+                         abstand: luecke, tempo: tempo,
                          dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer,
-                         darstellung: darstellung == Darstellungswahl() ? nil : darstellung)
+                         darstellung: darstellung == Darstellungswahl() ? nil : darstellung,
+                         iconmodus: iconmodus)
+    }
+
+    /// Die zwei gespeicherten Schalter als Auswahl; gesetzt wird beides zusammen.
+    private var iconmodus: Iconmodus {
+        get { Iconmodus(laeuftMit: iconLaeuftMit, einmal: iconEinmal) }
+        nonmutating set { iconLaeuftMit = newValue.laeuftMit; iconEinmal = newValue.einmal }
     }
 
     private var lebensdauerwahl: Lebensdauerwahl {
@@ -263,9 +275,10 @@ public struct SendenView: View {
     /// „Durchläufe“.
     private var textLaeuft: Bool {
         let uhren = zustand.vorschauuhren()
-        let masse = uhren.isEmpty ? [mass] : uhren.map { Anzeigemass.fuer($0) }
-        return Meldungsbau.laeuftDurch(vorschauOptionen, mitIcon: mitIcon,
-                                       iconKante: { icon(fuer: $0)?.kante ?? 8 }, masse: masse)
+        let ziele = uhren.isEmpty
+            ? [(mass: mass, icon: vorschauIconplatz)]
+            : uhren.map { (mass: Anzeigemass.fuer($0), icon: iconplatz(fuer: $0)) }
+        return Meldungsbau.laeuftDurch(vorschauOptionen, ziele: ziele)
     }
 
     private var stehtbindungen: Stehtbindungen {
@@ -274,9 +287,20 @@ public struct SendenView: View {
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
-    /// Acht ohne Icon — der Wert zaehlt dann ohnehin nicht.
-    private var iconKante: Int { gewaehltesIcon?.kante ?? 8 }
-    private var vorschauIconKante: Int { icon(fuer: mass)?.kante ?? 8 }
+
+    /// Platz des Icons auf dieser Uhr: die passende Fassung, auf die Tinte
+    /// zugeschnitten, mit dem Abstand der Uhr (`Uhr.wirksamerIconAbstand`).
+    /// Dieselbe Rechnung geht in den Rahmen (`Meldungsbau.rahmen`).
+    private func iconplatz(fuer uhr: Uhr) -> Iconplatz? {
+        icon(fuer: Anzeigemass.fuer(uhr)).flatMap { Iconplatz.vermessen($0, abstand: uhr.wirksamerIconAbstand) }
+    }
+
+    /// Wie `iconplatz(fuer:)` fuer die Uhr, auf die sich die Vorschau bezieht.
+    private var vorschauIconplatz: Iconplatz? {
+        icon(fuer: mass).flatMap {
+            Iconplatz.vermessen($0, abstand: zustand.referenzUhr?.wirksamerIconAbstand ?? Iconabstand.vorgabe)
+        }
+    }
 
     /// Das Icon, das eine Uhr dieses Masses bekommt: bei einem 16×16 auf
     /// einer Anzeige mit acht Zeilen die 8×8-Fassung (`Iconbestaende.passend`).
@@ -346,18 +370,19 @@ public struct SendenView: View {
         let uhrmass = Anzeigemass.fuer(uhr)
         let o = optionen.fuerVorschau
         let iconDerUhr = icon(fuer: uhrmass)
-        let iconKante = iconDerUhr?.kante ?? 8
-        let sitzt = Meldungsbau.passt(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass)
+        let platzDesIcons = iconplatz(fuer: uhr)
+        let sitzt = Meldungsbau.passt(o, icon: platzDesIcons, mass: uhrmass)
         // Die Uhr setzt den Text selbst; die Vorschau zeigt ihn samt Icon und laeuft wie sie.
         let textDerUhr = o.weg == .text
         let einheit = Geraetezeichnung.fuer(uhr).masse(fuer: uhrmass, kante: 1)
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
-        return VorschauView(feld: Meldungsbau.feld(o, mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass),
+        return VorschauView(feld: Meldungsbau.feld(o, icon: platzDesIcons, mass: uhrmass),
                             kantenlaenge: kante,
                             icon: (sitzt || textDerUhr) ? iconDerUhr?.datei : nil,
-                            iconKante: iconKante,
-                            iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: mitIcon, iconKante: iconKante, mass: uhrmass) : 1,
+                            iconX: Meldungsbau.iconX(o, icon: platzDesIcons, mass: uhrmass),
+                            iconplatz: platzDesIcons,
+                            iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: platzDesIcons != nil, iconKante: platzDesIcons?.kante ?? 8, mass: uhrmass) : 1,
                             modell: uhr.modell,
                             laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
             .frame(width: platz.width, height: platz.height)
@@ -365,10 +390,10 @@ public struct SendenView: View {
 
 
     private var passt: Bool {
-        Meldungsbau.passt(vorschauOptionen, mitIcon: mitIcon, iconKante: vorschauIconKante, mass: mass)
+        Meldungsbau.passt(vorschauOptionen, icon: vorschauIconplatz, mass: mass)
     }
     private var feld: Pixelfeld {
-        Meldungsbau.feld(vorschauOptionen, mitIcon: mitIcon, iconKante: vorschauIconKante, mass: mass)
+        Meldungsbau.feld(vorschauOptionen, icon: vorschauIconplatz, mass: mass)
     }
 
     /// Laeuft der Text als Laufschrift, ist die waagrechte Ausrichtung ohne
@@ -659,10 +684,10 @@ public struct SendenView: View {
             // Hauptthread, sonst stockt das Eingabefeld. Die Eingaben werden
             // vorher eingesammelt, damit der Rechenlauf keine View-Zustaende
             // anfasst; ein inzwischen ueberholter Lauf wirft sein Ergebnis weg.
-            let (o, iconBilder, iconKante, mass) = (vorschauOptionen, iconRaster, vorschauIconKante, mass)
+            let (o, iconBilder, platzDesIcons, mass) = (vorschauOptionen, iconRaster, vorschauIconplatz, mass)
             let frames = await Task.detached(priority: .userInitiated) {
                 Meldungsbau.laufschriftBilder(o, iconBilder: iconBilder,
-                                              iconKante: iconKante, mass: mass)
+                                              icon: platzDesIcons, mass: mass)
             }.value
             guard !Task.isCancelled else { return }
             laufschriftFrames = frames
@@ -674,7 +699,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(icon(fuer: mass)?.kennung ?? "")|\(iconLaeuftMit)|\(luecke)|\(mass.breite)×\(mass.hoehe)"
+        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(icon(fuer: mass)?.kennung ?? "")|\(iconmodus.rawValue)|\(luecke)|\(mass.breite)×\(mass.hoehe)|\(vorschauIconplatz.map { "\($0.links),\($0.breite),\($0.abstand)" } ?? "")"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -786,8 +811,8 @@ public struct SendenView: View {
                 IconAuswahlView(gewaehltesIcon: $gewaehltesIcon, sammlungen: Self.sammlungen)
                 // Gehoert zum Icon, nicht zur Laufschrift — es sagt, was das Icon
                 // beim Laufen tut.
-                Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
-                    .disabled(gewaehltesIcon == nil || passt)
+                Iconmodusauswahl(modus: Binding(get: { iconmodus.wirksam(weg: weg) }, set: { iconmodus = $0 }),
+                                 weg: weg, gesperrt: gewaehltesIcon == nil || passt)
             }
 
             Section {
@@ -1056,7 +1081,6 @@ public struct SendenView: View {
         // nicht den beim spaeteren Ausfuehren.
         let slotOptionen = optionen
         let slotPlatz = platz
-        let slotIcon = gewaehltesIcon?.nummer
         let icon = gewaehltesIcon
         let sammlung = sammlung
         Task {
@@ -1064,10 +1088,10 @@ public struct SendenView: View {
             // Fehler dabei, etwa eine unlesbare Icondatei, steht mit dem Namen der
             // Uhr in der Fehlerleiste, statt das Icon kommentarlos wegzulassen.
             let angekommen = await zustand.senden(
-                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, uhr: $0) },
                 als: anzeigenName,
                 slotOptionen: slotOptionen,
-                slotIcon: slotIcon, slotIconKante: iconKante,
+                slotIcon: icon,
                 slotPlatz: slotPlatz)
             laeuft = false
             guard !angekommen.nichts else { return }
@@ -1091,7 +1115,7 @@ extension SendenView {
         let gesetzt = nachrichtOptionen
         Task {
             let angekommen = await zustand.benachrichtigen(
-                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, mass: $0) }, wahl)
+                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, uhr: $0) }, wahl)
             laeuft = false
             guard !angekommen.nichts else { return }
             await ausgangZeigen(angekommen)

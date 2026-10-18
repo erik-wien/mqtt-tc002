@@ -77,7 +77,7 @@ final class SchriftDerUhrTests: XCTestCase {
         let g = Slotgedaechtnis(ordner: temp())
         let uhr = UUID()
         let o = Meldungsoptionen(text: "Kaffee", weg: .text, grossbuchstaben: true)
-        XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhr, platz: 2))
+        XCTAssertTrue(g.merken(o, icon: nil, iconAbstand: 1, fuer: uhr, platz: 2))
 
         let stand = try XCTUnwrap(g.gemerkt(fuer: uhr, platz: 2))
         XCTAssertEqual(stand.weg, "text")

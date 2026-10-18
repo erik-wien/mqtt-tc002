@@ -16,13 +16,13 @@ final class MeldungsbauMassTests: XCTestCase {
 
     func testDasFeldHatDieGroesseDesMasses() {
         let o = Meldungsoptionen(text: "Hi")
-        let feld = Meldungsbau.feld(o, mitIcon: false, mass: ng)
+        let feld = Meldungsbau.feld(o, icon: nil, mass: ng)
         XCTAssertEqual(feld.breite, 32)
         XCTAssertEqual(feld.hoehe, 8)
     }
 
     func testOhneMassBleibtEs52x16() {
-        let feld = Meldungsbau.feld(Meldungsoptionen(text: "Hi"), mitIcon: false)
+        let feld = Meldungsbau.feld(Meldungsoptionen(text: "Hi"), icon: nil)
         XCTAssertEqual(feld.breite, 52)
         XCTAssertEqual(feld.hoehe, 16)
     }
@@ -39,8 +39,8 @@ final class MeldungsbauMassTests: XCTestCase {
         XCTAssertGreaterThan(breite, 32, "Der Beispieltext ist für diese Probe zu kurz.")
         XCTAssertLessThanOrEqual(breite, 52, "Der Beispieltext ist für diese Probe zu lang.")
 
-        XCTAssertTrue(Meldungsbau.passt(o, mitIcon: false))
-        XCTAssertFalse(Meldungsbau.passt(o, mitIcon: false, mass: ng))
+        XCTAssertTrue(Meldungsbau.passt(o, icon: nil))
+        XCTAssertFalse(Meldungsbau.passt(o, icon: nil, mass: ng))
     }
 
     // MARK: - Die Laufschrift
@@ -64,7 +64,7 @@ final class MeldungsbauMassTests: XCTestCase {
     func testDerSenkrechteVersatzBleibtImFeld() {
         var o = Meldungsoptionen(text: "Hi")
         o.senkrecht = .mittig
-        let feld = Meldungsbau.feld(o, mitIcon: false, mass: ng)
+        let feld = Meldungsbau.feld(o, icon: nil, mass: ng)
         let tinte = (0..<feld.hoehe).filter { zeile in
             (0..<feld.breite).contains { feld.farbe(x: $0, y: zeile) != nil }
         }

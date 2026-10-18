@@ -53,7 +53,7 @@ struct HilfebildView: View {
     private var slotzustaende: some View {
         HStack(alignment: .top, spacing: 14) {
             block(1, .frei, lok("frei"))
-            block(2, .bekannt(Meldungsbau.feld(Self.kurz, mitIcon: false).punkteRoh), lok("belegt, Inhalt bekannt"))
+            block(2, .bekannt(Meldungsbau.feld(Self.kurz, icon: nil).punkteRoh), lok("belegt, Inhalt bekannt"))
             block(3, .unbekannt, lok("belegt, Inhalt unbekannt"))
         }
     }
@@ -96,7 +96,7 @@ struct HilfebildView: View {
 
     /// Die Vorschau, wie sie über dem Eingabefeld steht — nur kleiner.
     private func anzeige(_ o: Meldungsoptionen) -> some View {
-        VorschauView(feld: Meldungsbau.feld(o, mitIcon: false),
+        VorschauView(feld: Meldungsbau.feld(o, icon: nil),
                      kantenlaenge: Self.punktgroesse)
     }
 

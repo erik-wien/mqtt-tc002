@@ -64,12 +64,12 @@ final class LebensdauerwahlTests: XCTestCase {
         let uhr = UUID()
         var o = Meldungsoptionen(text: "a")
         o.lebensdauer = Lebensdauerwahl(behalten: false, zahl: 2, einheit: .stunden, ablauf: .markieren).lebensdauer
-        XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhr, platz: 1))
+        XCTAssertTrue(g.merken(o, icon: nil, iconAbstand: 1, fuer: uhr, platz: 1))
         let w = Lebensdauerwahl(g.gemerkt(fuer: uhr, platz: 1)?.optionen?.lebensdauer)
         XCTAssertEqual(w, Lebensdauerwahl(zahl: 2, einheit: .stunden, ablauf: .markieren))
 
         o.lebensdauer = Lebensdauerwahl(behalten: true).lebensdauer
-        XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhr, platz: 2))
+        XCTAssertTrue(g.merken(o, icon: nil, iconAbstand: 1, fuer: uhr, platz: 2))
         XCTAssertTrue(Lebensdauerwahl(g.gemerkt(fuer: uhr, platz: 2)?.optionen?.lebensdauer).behalten)
 
         let alt = ##"{"platz":1,"text":"a","weg":"pixel","schrift":"Silkscreen","groesse":8,"fett":false,"grossbuchstaben":false,"rand":1,"abstand":1,"waagrecht":"links","senkrecht":"oben","farbe":"#00FF66","tempo":"mittel","iconLaeuftMit":false,"pruefsumme":"x"}"##

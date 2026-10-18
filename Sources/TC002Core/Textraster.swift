@@ -269,8 +269,9 @@ public enum Textraster {
     /// `versatzY` verschiebt den Text senkrecht, genau wie im stehenden Weg — die
     /// Ausrichtung der Formatleiste gilt also auch hier.
     ///
-    /// `iconBilder` sind die Einzelbilder eines Icons (je `iconKante` im Quadrat
-    /// Eintraege, zeilenweise von oben links) oder leer. Sie werden eingebacken, statt
+    /// `iconBilder` sind die Einzelbilder eines Icons (je `icon.kante` im Quadrat
+    /// Eintraege, zeilenweise von oben links) oder leer; `icon` gibt an, wie sie
+    /// zugeschnitten werden und wie weit der Text vom Icon abstehen soll. Sie werden eingebacken, statt
     /// als zweites `image` neben dem Lauf-GIF im Rahmen zu stehen: ob die Uhr
     /// zwei Bilder nebeneinander zeichnet oder das zweite das erste ersetzt, hat
     /// niemand geprueft. Ein animiertes Icon laeuft dabei mit, Bild fuer Bild.
@@ -282,13 +283,13 @@ public enum Textraster {
     /// Anfang des Bandes und wandert mit hinaus; der Text nutzt dann alle Spalten.
     ///
     /// Reserviert wird nicht die volle Iconkante, sondern nur, was das Icon
-    /// tatsaechlich an Tinte braucht, plus ein Pixel Rand (`Bildraster.tintenBreite`)
-    /// — ein 8×8-Icon, das nur seine ersten zwei Spalten nutzt, gibt die
-    /// restlichen fuenf an den Text ab, statt sie ungenutzt schwarz zu lassen.
+    /// tatsaechlich an Tinte braucht, plus den Abstand der Uhr (`Iconplatz.textAb`)
+    /// — ein 8×8-Icon, das nur zwei Spalten nutzt, gibt die restlichen sechs an
+    /// den Text ab, statt sie ungenutzt schwarz zu lassen.
     public static func laufschriftEinzelbilder(_ text: String, schrift: String, groesse: Double,
                                                fett: Bool, farbe: String, schrittweite: Int,
                                                bilddauer: Double, versatzY: Int = 0,
-                                               iconBilder: [[String?]] = [], iconKante: Int = 8,
+                                               iconBilder: [[String?]] = [], icon: Iconplatz? = nil,
                                                iconLaeuftMit: Bool = false, luecke: Int = 0,
                                                mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
         let puffer = rasterPuffer(text, schrift: schrift, groesse: groesse, fett: fett, farbe: farbe,
@@ -297,15 +298,24 @@ public enum Textraster {
         // Laufschrift auf das falsche GIF-Entsorgungsverfahren (siehe
         // `Bildraster.schwarzrandBegrenzt`) — hier und nicht erst beim Kodieren
         // beschnitten, damit auch die abspielende Vorschau das schon zeigt.
-        let iconBilder = iconBilder.map { Bildraster.schwarzrandBegrenzt($0, breite: iconKante, hoehe: iconKante) }
-        let hatIcon = !iconBilder.isEmpty
+        // Danach auf die Tinte zugeschnitten (`Iconplatz.zuschneiden`).
+        // Ohne ausdrueckliche Angabe wird aus den Bildern selbst gemessen (Kante aus
+        // ihrer Pixelzahl, Abstand wie die Vorgabe); ein Icon ohne Tinte zaehlt
+        // wie keins.
+        let kanteAusBild = Int(Double(iconBilder.first?.count ?? 0).squareRoot())
+        let platz = iconBilder.isEmpty ? nil
+            : icon ?? Iconplatz.vermessen(iconBilder, kante: kanteAusBild)
+        let hatIcon = platz != nil
+        let iconKante = platz?.kante ?? 8
+        let iconBreite = platz?.breite ?? 0
+        let iconBilder: [[String?]] = platz.map { p in
+            iconBilder.map { p.zuschneiden(Bildraster.schwarzrandBegrenzt($0, breite: iconKante, hoehe: iconKante)) }
+        } ?? []
         let iconY = iconY(kante: iconKante, mass: mass)
         let festesIcon = hatIcon && !iconLaeuftMit
         let fensterBreite = mass.breite
-        // Die Tinte des Icons, vereinigt ueber alle seine Einzelbilder, plus
-        // ein Pixel Rand — 0, wenn das Icon gar keine Tinte hat.
-        let iconInhaltBreite = hatIcon ? Bildraster.tintenBreite(iconBilder, breite: iconKante, hoehe: iconKante) : 0
-        let iconReserviert = iconInhaltBreite == 0 ? 0 : iconInhaltBreite + 1
+        // Wo der Text neben dem Icon beginnt: dessen Breite plus der Abstand der Uhr.
+        let iconReserviert = platz?.textAb() ?? 0
         // Wo im Fenster der Text beginnt (feststehendes Icon) und wo er im
         // laufenden Band beginnt (mitlaufendes Icon).
         let fensterTextAb = festesIcon ? iconReserviert : 0
@@ -326,15 +336,15 @@ public enum Textraster {
                 for zeile in 0..<mass.hoehe {
                     guard let punkt = bandpunkt(bandSpalte, zeile, puffer: puffer, versatzY: versatzY,
                                                 bandTextAb: bandTextAb, iconLaeuftMit: iconLaeuftMit,
-                                                iconBild: iconBild, iconKante: iconKante,
-                                                iconY: iconY) else { continue }
+                                                iconBild: iconBild, iconBreite: iconBreite,
+                                                iconKante: iconKante, iconY: iconY) else { continue }
                     fenster[zeile * fensterBreite + spalte] = punkt
                 }
             }
             if festesIcon, let iconBild {
                 for y in 0..<iconKante where (0..<mass.hoehe).contains(iconY + y) {
-                    for x in 0..<iconKante where x < fensterBreite {
-                        guard let punkt = iconBild[y * iconKante + x] else { continue }
+                    for x in 0..<iconBreite where x < fensterBreite {
+                        guard let punkt = iconBild[y * iconBreite + x] else { continue }
                         fenster[(iconY + y) * fensterBreite + x] = punkt
                     }
                 }
@@ -347,22 +357,18 @@ public enum Textraster {
     /// Ein Punkt des laufenden Bandes: links das mitlaufende Icon, ab `bandTextAb`
     /// der gerasterte Text. Ausserhalb ist nichts — dort bleibt das Bild schwarz.
     ///
-    /// Die Grenze zwischen beiden ist `bandTextAb`, nicht `iconKante`: Reserviert
-    /// `laufschriftEinzelbilder` weniger als die volle Kante (siehe `iconReserviert`
-    /// dort), sollen die freiwerdenden Spalten sofort dem Text gehoeren, nicht erst
-    /// bei Spalte `iconKante` — sonst bliebe ein schmales Icon trotzdem in seiner
-    /// vollen Kante fuer den Text gesperrt. Der Index ins Icon selbst bleibt an
-    /// `iconKante` gebunden: `bandTextAb` kann um das eine Randpixel darueber liegen
-    /// (ein volles Icon plus sein Rand), und genau die eine Spalte dahinter bleibt
-    /// dann leer statt einer ungueltigen Iconspalte.
+    /// Die Grenze zwischen beiden ist `bandTextAb`, nicht `iconBreite`: Zwischen
+    /// beiden liegt der Abstand, dessen Spalten leer bleiben. Der Index ins Icon
+    /// selbst bleibt an `iconBreite` gebunden.
     private static func bandpunkt(_ spalte: Int, _ zeile: Int, puffer: Pixelfeld, versatzY: Int,
                                   bandTextAb: Int, iconLaeuftMit: Bool,
-                                  iconBild: [String?]?, iconKante: Int, iconY: Int) -> String? {
+                                  iconBild: [String?]?, iconBreite: Int,
+                                  iconKante: Int, iconY: Int) -> String? {
         if iconLaeuftMit, spalte < bandTextAb {
-            guard spalte >= 0, spalte < iconKante, let iconBild else { return nil }
+            guard spalte >= 0, spalte < iconBreite, let iconBild else { return nil }
             let y = zeile - iconY
             guard y >= 0, y < iconKante else { return nil }
-            return iconBild[y * iconKante + spalte]
+            return iconBild[y * iconBreite + spalte]
         }
         let x = spalte - bandTextAb
         let y = zeile - versatzY
@@ -376,13 +382,13 @@ public enum Textraster {
     public static func laufschrift(_ text: String, schrift: String, groesse: Double,
                                    fett: Bool, farbe: String, schrittweite: Int,
                                    bilddauer: Double, versatzY: Int = 0,
-                                   iconBilder: [[String?]] = [], iconKante: Int = 8,
+                                   iconBilder: [[String?]] = [], icon: Iconplatz? = nil,
                                    iconLaeuftMit: Bool = false, luecke: Int = 0,
                                    mass: Anzeigemass = .vorgabe) throws -> String {
         let bilder = laufschriftEinzelbilder(text, schrift: schrift, groesse: groesse, fett: fett,
                                              farbe: farbe, schrittweite: schrittweite,
                                              bilddauer: bilddauer, versatzY: versatzY,
-                                             iconBilder: iconBilder, iconKante: iconKante,
+                                             iconBilder: iconBilder, icon: icon,
                                              iconLaeuftMit: iconLaeuftMit, luecke: luecke,
                                              mass: mass)
         return try Bildraster.alsDatenURI(bilder.map(\.pixel), breite: mass.breite,

@@ -390,7 +390,7 @@ final class LebensdauerImSlotgedaechtnisTests: XCTestCase {
         let g = gedaechtnis()
         for ablauf in Lebensablauf.allCases {
             let o = Meldungsoptionen(text: "x", lebensdauer: Lebensdauer(sekunden: 600, ablauf: ablauf))
-            XCTAssertTrue(g.merken(o, icon: nil, iconKante: 8, fuer: uhr, platz: 2))
+            XCTAssertTrue(g.merken(o, icon: nil, iconAbstand: 1, fuer: uhr, platz: 2))
             XCTAssertEqual(g.gemerkt(fuer: uhr, platz: 2)?.optionen?.lebensdauer,
                            Lebensdauer(sekunden: 600, ablauf: ablauf))
         }
@@ -400,8 +400,8 @@ final class LebensdauerImSlotgedaechtnisTests: XCTestCase {
     func testNeuBeschicktUeberschreibtDieLebensdauer() throws {
         let g = gedaechtnis()
         _ = g.merken(Meldungsoptionen(text: "x", lebensdauer: Lebensdauer(sekunden: 60)),
-                     icon: nil, iconKante: 8, fuer: uhr, platz: 1)
-        _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+                     icon: nil, iconAbstand: 1, fuer: uhr, platz: 1)
+        _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconAbstand: 1, fuer: uhr, platz: 1)
         let o = try XCTUnwrap(g.gemerkt(fuer: uhr, platz: 1)?.optionen)
         XCTAssertNil(o.lebensdauer)
         XCTAssertEqual(o.wirksameLebensdauer, .vorgabe)
@@ -410,7 +410,7 @@ final class LebensdauerImSlotgedaechtnisTests: XCTestCase {
     /// Ausgeschaltet ist eine Angabe wie jede andere und kommt zurück.
     func testBehaltenWirdGemerkt() throws {
         let g = gedaechtnis()
-        _ = g.merken(Meldungsoptionen(text: "x", lebensdauer: .aus), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+        _ = g.merken(Meldungsoptionen(text: "x", lebensdauer: .aus), icon: nil, iconAbstand: 1, fuer: uhr, platz: 1)
         let o = try XCTUnwrap(g.gemerkt(fuer: uhr, platz: 1)?.optionen)
         XCTAssertEqual(o.lebensdauer, .aus)
         XCTAssertNil(o.wirksameLebensdauer)
@@ -419,7 +419,7 @@ final class LebensdauerImSlotgedaechtnisTests: XCTestCase {
     func testOhneLebensdauerBleibtDieDateiWieBisher() throws {
         let stand = try XCTUnwrap({ () -> Slotstand? in
             let g = gedaechtnis()
-            _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconKante: 8, fuer: uhr, platz: 1)
+            _ = g.merken(Meldungsoptionen(text: "x"), icon: nil, iconAbstand: 1, fuer: uhr, platz: 1)
             return g.gemerkt(fuer: uhr, platz: 1)
         }())
         let json = String(decoding: try JSONEncoder().encode(stand), as: UTF8.self)

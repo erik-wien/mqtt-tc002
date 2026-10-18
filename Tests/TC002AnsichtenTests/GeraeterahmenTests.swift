@@ -73,7 +73,7 @@ final class GeraeterahmenTests: XCTestCase {
     func testDasGerasterteFeldFuelltDasDisplayfeldWirklichAus() {
         let z = Geraetezeichnung.tc002
         let mass = Anzeigemass.fuer(Uhr(name: "NG", host: "b.example"))
-        let feld = Meldungsbau.feld(Meldungsoptionen(text: "Hallo"), mitIcon: false, mass: mass)
+        let feld = Meldungsbau.feld(Meldungsoptionen(text: "Hallo"), icon: nil, mass: mass)
         for kante in [4.0, 8, 14] {
             let m = z.masse(inhaltHoehe: Double(feld.hoehe) * kante)
             let rest = m.feldBreite - Double(feld.breite) * kante

@@ -17,23 +17,26 @@ final class MeldungsbauTests: XCTestCase {
     func testPasstHaengtNichtAmMitlaufendenIcon() {
         var o = Meldungsoptionen(text: "Ziemlich langer Text")
         o.iconLaeuftMit = false
-        let ohne = Meldungsbau.passt(o, mitIcon: true)
+        let ohne = Meldungsbau.passt(o, icon: .voll())
         o.iconLaeuftMit = true
-        XCTAssertEqual(Meldungsbau.passt(o, mitIcon: true), ohne)
+        XCTAssertEqual(Meldungsbau.passt(o, icon: .voll()), ohne)
     }
 
-    /// Mit Icon beginnt die Textflaeche bei Spalte 10 und ist 42 breit; das
-    /// Icon sitzt senkrecht mittig auf `y: 4`.
+    /// Mit einem vollen 8×8-Icon und einem Pixel Abstand beginnt die Textflaeche
+    /// bei Spalte 9 und ist 43 breit; das Icon sitzt senkrecht mittig auf `y: 4`.
+    /// Mittig steht der ganze Block aus Icon, Abstand und Text in der Mitte.
     func testIconVersatz() {
         var o = Meldungsoptionen(text: "Hallo")
-        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true), 10)
-        XCTAssertEqual(Meldungsbau.flaecheBreite(mitIcon: true), 42)
-        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: false), 0)
-        XCTAssertEqual(Meldungsbau.flaecheBreite(mitIcon: false), 52)
+        XCTAssertEqual(Meldungsbau.flaecheX(icon: .voll()), 9)
+        XCTAssertEqual(Meldungsbau.flaecheBreite(icon: .voll()), 43)
+        XCTAssertEqual(Meldungsbau.flaecheX(icon: nil), 0)
+        XCTAssertEqual(Meldungsbau.flaecheBreite(icon: nil), 52)
         o.waagrecht = .links
-        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 10)
+        XCTAssertEqual(Meldungsbau.versatzX(o, icon: .voll()), 9)
         o.waagrecht = .mittig
-        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 22)
+        let block = (52 - 9 - Meldungsbau.breite(o)) / 2
+        XCTAssertEqual(Meldungsbau.iconX(o, icon: .voll()), block)
+        XCTAssertEqual(Meldungsbau.versatzX(o, icon: .voll()), block + 9)
     }
 
     /// Mehr Rand verlangen, als Platz ist, darf nicht abschneiden: `r` wird auf
@@ -98,26 +101,25 @@ final class MeldungsbauTests: XCTestCase {
         return (sammlung, icon)
     }
 
-    /// Ein 16×16 belegt achtzehn Spalten statt zehn und sitzt auf Zeile 0 —
+    /// Ein 16×16 belegt siebzehn Spalten statt neun und sitzt auf Zeile 0 —
     /// es fuellt die volle Hoehe, statt wie ein 8×8 mittig zu schwimmen.
-    func testSechzehnerIconBelegtAchtzehnSpaltenUndSitztOben() {
+    func testSechzehnerIconBelegtSiebzehnSpaltenUndSitztOben() {
         XCTAssertEqual(Meldungsbau.iconY(kante: 8), 4)
         XCTAssertEqual(Meldungsbau.iconY(kante: 16), 0)
-        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true, iconKante: 16), 18)
-        XCTAssertEqual(Meldungsbau.flaecheBreite(mitIcon: true, iconKante: 16), 34)
+        XCTAssertEqual(Meldungsbau.flaecheX(icon: .voll(kante: 16)), 17)
+        XCTAssertEqual(Meldungsbau.flaecheBreite(icon: .voll(kante: 16)), 35)
 
         var o = Meldungsoptionen(text: "Hallo")
         o.waagrecht = .links
-        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true, iconKante: 16), 18)
+        XCTAssertEqual(Meldungsbau.versatzX(o, icon: .voll(kante: 16)), 17)
     }
 
-    /// Ohne ausdrueckliche Kante rechnet alles wie vorher — jede Stelle, die
-    /// nur „Icon ja/nein" weiss, meint ein 8×8.
-    func testOhneAngabeBleibtEsBeimAchterIcon() {
+    /// Ein volles Icon ohne Kante ist ein 8×8.
+    func testVollesIconOhneKanteIstEinAchter() {
         var o = Meldungsoptionen(text: "Hallo")
         o.waagrecht = .links
-        XCTAssertEqual(Meldungsbau.flaecheX(mitIcon: true), Meldungsbau.flaecheX(mitIcon: true, iconKante: 8))
-        XCTAssertEqual(Meldungsbau.versatzX(o, mitIcon: true), 10)
+        XCTAssertEqual(Meldungsbau.flaecheX(icon: .voll()), Meldungsbau.flaecheX(icon: .voll(kante: 8)))
+        XCTAssertEqual(Meldungsbau.versatzX(o, icon: .voll()), 9)
     }
 
     /// Das Lauf-GIF backt ein 16×16 ueber die volle Hoehe ein — die oberste
@@ -126,13 +128,13 @@ final class MeldungsbauTests: XCTestCase {
         let kante = 16
         let bild = [String?](repeating: "#FF0000", count: kante * kante)
         let o = Meldungsoptionen(text: "Ein ziemlich langer Text, der nicht passt")
-        let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [bild], iconKante: kante)
+        let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [bild], icon: .voll(kante: kante))
         guard let erstes = bilder.first else { return XCTFail("keine Einzelbilder") }
         XCTAssertEqual(erstes.pixel[0], "#FF0000", "Zeile 0, Spalte 0 gehört dem 16×16-Icon")
         XCTAssertEqual(erstes.pixel[15 * Pixelfeld.breiteStandard], "#FF0000", "und Zeile 15 auch")
 
         let achter = [String?](repeating: "#FF0000", count: 64)
-        let mitAchter = Meldungsbau.laufschriftBilder(o, iconBilder: [achter])
+        let mitAchter = Meldungsbau.laufschriftBilder(o, iconBilder: [achter], icon: .voll())
         XCTAssertNil(mitAchter.first?.pixel[0] ?? nil, "ein 8×8 lässt Zeile 0 frei")
     }
 

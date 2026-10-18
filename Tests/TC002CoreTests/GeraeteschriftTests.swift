@@ -322,7 +322,7 @@ final class GeraeteschriftTests: XCTestCase {
     func testDieSchriftEntsprichtDenMessungenAnDerTC002() {
         for (text, erwartet) in Self.schriftmessung {
             let o = Meldungsoptionen(text: text, weg: .text, waagrecht: .mittig)
-            let f = Meldungsbau.feld(o, mitIcon: false, mass: tc002)
+            let f = Meldungsbau.feld(o, icon: nil, mass: tc002)
             XCTAssertEqual(Array(zeilen(f).prefix(13)), erwartet, "Text „\(text)“")
         }
     }
@@ -338,14 +338,14 @@ final class GeraeteschriftTests: XCTestCase {
 
     func testHelloEntsprichtDerMessungAnDerTC002() {
         let o = Meldungsoptionen(text: "Hello!", weg: .text, grossbuchstaben: true, waagrecht: .mittig)
-        let f = Meldungsbau.feld(o, mitIcon: false, mass: tc002)
+        let f = Meldungsbau.feld(o, icon: nil, mass: tc002)
         XCTAssertEqual(zeilen(f), Self.messung)
     }
 
     /// Ohne den Schalter geht `asTyped` hinaus (`NGNutzlast.anzeige`): Die
     /// Vorschau zeigt die Kleinbuchstaben, nicht Versalien.
     func testOhneGrossbuchstabenStehtDerTextWieGetippt() {
-        let f = Meldungsbau.feld(Meldungsoptionen(text: "Hello!", weg: .text, waagrecht: .mittig), mitIcon: false, mass: tc002)
+        let f = Meldungsbau.feld(Meldungsoptionen(text: "Hello!", weg: .text, waagrecht: .mittig), icon: nil, mass: tc002)
         XCTAssertNotEqual(zeilen(f), Self.messung)
         XCTAssertEqual(f.farbe(x: 4, y: 2), "#00FF66", "das H steht trotzdem links in Zeile 1")
     }
@@ -354,7 +354,7 @@ final class GeraeteschriftTests: XCTestCase {
     /// Zeilen 1–5.
     func testTC001ZeichnetDieselbeSchriftEinsZuEins() {
         let o = Meldungsoptionen(text: "Hello!", weg: .text, grossbuchstaben: true, waagrecht: .mittig)
-        let f = Meldungsbau.feld(o, mitIcon: false, mass: tc001)
+        let f = Meldungsbau.feld(o, icon: nil, mass: tc001)
         let z = zeilen(f)
         XCTAssertEqual(z.count, 8)
         XCTAssertEqual(z[0], String(repeating: ".", count: 32))
@@ -372,7 +372,7 @@ final class GeraeteschriftTests: XCTestCase {
     /// Spalte Luft auf dem 26-Spalten-Raster, also bei Spalte 18 von 52 (§1.2).
     func testMitIconBeginntDerTextRechtsDavon() {
         let o = Meldungsoptionen(text: "H", weg: .text, grossbuchstaben: true, waagrecht: .mittig)
-        let f = Meldungsbau.feld(o, mitIcon: true, iconKante: 8, mass: tc002)
+        let f = Meldungsbau.feld(o, icon: .voll(), mass: tc002)
         let belegt = (0..<52).filter { x in (0..<16).contains { f.farbe(x: x, y: $0) != nil } }
         XCTAssertEqual(belegt.min(), 32, "H mittig im Rest 17 breit: Spalte 9 + (17-3)/2 = 16, doppelt 32")
         XCTAssertEqual(Geraeteschrift.masstab(mitIcon: true, iconKante: 8, mass: tc002), 2)
@@ -385,27 +385,27 @@ final class GeraeteschriftTests: XCTestCase {
     func testZeichenundErsatz() {
         let o = Meldungsoptionen(text: "ß😀", weg: .text, grossbuchstaben: true, waagrecht: .mittig)
         XCTAssertEqual(Geraeteschrift.geschrieben(o), ["ß", "😀"])
-        let ae = Meldungsbau.feld(Meldungsoptionen(text: "Ä", weg: .text), mitIcon: false, mass: tc001)
-        let a = Meldungsbau.feld(Meldungsoptionen(text: "A", weg: .text), mitIcon: false, mass: tc001)
+        let ae = Meldungsbau.feld(Meldungsoptionen(text: "Ä", weg: .text), icon: nil, mass: tc001)
+        let a = Meldungsbau.feld(Meldungsoptionen(text: "A", weg: .text), icon: nil, mass: tc001)
         XCTAssertNotEqual(zeilen(ae), zeilen(a), "Ä ist nicht A")
-        let fehlt = Meldungsbau.feld(Meldungsoptionen(text: "ç", weg: .text), mitIcon: false, mass: tc001)
-        let fragezeichen0 = Meldungsbau.feld(Meldungsoptionen(text: "?", weg: .text), mitIcon: false, mass: tc001)
+        let fehlt = Meldungsbau.feld(Meldungsoptionen(text: "ç", weg: .text), icon: nil, mass: tc001)
+        let fragezeichen0 = Meldungsbau.feld(Meldungsoptionen(text: "?", weg: .text), icon: nil, mass: tc001)
         XCTAssertEqual(zeilen(fehlt), zeilen(fragezeichen0), "nicht Gemessenes wird zum Ersatzzeichen")
-        let fremd = Meldungsbau.feld(Meldungsoptionen(text: "😀", weg: .text), mitIcon: false, mass: tc001)
-        let fragezeichen = Meldungsbau.feld(Meldungsoptionen(text: "?", weg: .text), mitIcon: false, mass: tc001)
+        let fremd = Meldungsbau.feld(Meldungsoptionen(text: "😀", weg: .text), icon: nil, mass: tc001)
+        let fragezeichen = Meldungsbau.feld(Meldungsoptionen(text: "?", weg: .text), icon: nil, mass: tc001)
         XCTAssertEqual(zeilen(fremd), zeilen(fragezeichen))
     }
 
     /// Was nicht ins Raster passt, läuft in der Vorschau durch; `passt` sagt es.
     func testZuLangerTextLaeuftDurch() {
         let lang = Meldungsoptionen(text: "HALLO WELT", weg: .text)
-        XCTAssertFalse(Meldungsbau.passt(lang, mitIcon: false, mass: tc002))
-        XCTAssertTrue(Meldungsbau.passt(Meldungsoptionen(text: "Hi", weg: .text), mitIcon: false, mass: tc002))
+        XCTAssertFalse(Meldungsbau.passt(lang, icon: nil, mass: tc002))
+        XCTAssertTrue(Meldungsbau.passt(Meldungsoptionen(text: "Hi", weg: .text), icon: nil, mass: tc002))
         XCTAssertTrue(Meldungsbau.laufschriftBilder(Meldungsoptionen(text: "Hi", weg: .text),
                                                     iconBilder: [], mass: tc002).isEmpty)
         let bilder = Meldungsbau.laufschriftBilder(lang, iconBilder: [], mass: tc002)
         XCTAssertFalse(bilder.isEmpty)
-        let f = Meldungsbau.feld(lang, mitIcon: false, mass: tc002)
+        let f = Meldungsbau.feld(lang, icon: nil, mass: tc002)
         XCTAssertNotNil(f.farbe(x: 0, y: 4), "linksbündig ab Spalte 0")
     }
 
@@ -416,7 +416,7 @@ final class GeraeteschriftTests: XCTestCase {
     func testDurchlaufTC002OhneIcon() {
         let o = Meldungsoptionen(text: "HALLO WELT", weg: .text)
         let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [], mass: tc002)
-        let start = Meldungsbau.feld(o, mitIcon: false, mass: tc002)
+        let start = Meldungsbau.feld(o, icon: nil, mass: tc002)
         XCTAssertEqual(bilder[0].pixel, start.punkteRoh)
         XCTAssertEqual(bilder[0].dauer, 1.0, accuracy: 0.001, "Haltezeit")
         let schritt = Bildraster.gifZeit(1 / (Double(NGNutzlast.tempo(o.tempo)) / 100 * AwtrixNG.grundgeschwindigkeit))
@@ -434,7 +434,7 @@ final class GeraeteschriftTests: XCTestCase {
     func testDurchlaufTC001EinsZuEins() {
         let o = Meldungsoptionen(text: "HALLO WELT", weg: .text)
         let bilder = Meldungsbau.laufschriftBilder(o, iconBilder: [], mass: tc001)
-        XCTAssertEqual(bilder[0].pixel, Meldungsbau.feld(o, mitIcon: false, mass: tc001).punkteRoh)
+        XCTAssertEqual(bilder[0].pixel, Meldungsbau.feld(o, icon: nil, mass: tc001).punkteRoh)
         let a = spalten(bilder[1], breite: 32), b = spalten(bilder[2], breite: 32)
         XCTAssertEqual(b.filter { $0 < 31 }, Set(a.map { $0 - 1 }.filter { $0 >= 0 && $0 < 31 }))
         XCTAssertTrue(bilder.last!.pixel.allSatisfy { $0 == nil })
@@ -443,9 +443,9 @@ final class GeraeteschriftTests: XCTestCase {
     func testDurchlaufMitIconFestUndMitlaufend() {
         let icon: [[String?]] = [Array(repeating: "#FF0000", count: 64)]
         var o = Meldungsoptionen(text: "HALLO WELT UND MEHR", weg: .text)
-        let fest = Meldungsbau.laufschriftBilder(o, iconBilder: icon, mass: tc002)
+        let fest = Meldungsbau.laufschriftBilder(o, iconBilder: icon, icon: .voll(), mass: tc002)
         o.iconLaeuftMit = true
-        let mit = Meldungsbau.laufschriftBilder(o, iconBilder: icon, mass: tc002)
+        let mit = Meldungsbau.laufschriftBilder(o, iconBilder: icon, icon: .voll(), mass: tc002)
         // Fest: das Icon (16 Punkte breit) steht in jedem Bild, am Ende allein.
         XCTAssertTrue(fest.allSatisfy { spalten($0, breite: 52).contains(0) })
         XCTAssertEqual(spalten(fest.last!, breite: 52), Set(0..<16))

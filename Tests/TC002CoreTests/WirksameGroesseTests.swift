@@ -79,13 +79,13 @@ final class WirksameGroesseTests: XCTestCase {
         let ordner = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
         let g = Slotgedaechtnis(ordner: ordner)
         let uhrKlein = UUID(), uhrGross = UUID()
-        g.merken(o, icon: nil, iconKante: 8, fuer: uhrKlein, platz: 1, mass: tc001)
-        g.merken(o, icon: nil, iconKante: 8, fuer: uhrGross, platz: 1, mass: tc002)
+        g.merken(o, icon: nil, iconAbstand: 1, fuer: uhrKlein, platz: 1, mass: tc001)
+        g.merken(o, icon: nil, iconAbstand: 1, fuer: uhrGross, platz: 1, mass: tc002)
         let sk = try XCTUnwrap(g.gemerkt(fuer: uhrKlein, platz: 1))
         let sg = try XCTUnwrap(g.gemerkt(fuer: uhrGross, platz: 1))
         XCTAssertEqual(sk.groesse, 16)
         XCTAssertEqual(sg.groesse, 16)
-        let gesendet = Meldungsbau.feld(optionen(8), mitIcon: false, mass: tc001).punkteRoh
+        let gesendet = Meldungsbau.feld(optionen(8), icon: nil, mass: tc001).punkteRoh
         XCTAssertEqual(sk.pruefsumme, Slotgedaechtnis.pruefsumme(pixel: gesendet))
         XCTAssertNotEqual(sk.pruefsumme, sg.pruefsumme)
     }

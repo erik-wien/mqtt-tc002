@@ -217,6 +217,9 @@ public enum NGNutzlast {
         return Int((unsere / AwtrixNG.grundgeschwindigkeit * 100).rounded())
     }
 
+    /// `iconGap` der Firmware, wenn der Schluessel fehlt (`payload.md`).
+    static let vorgabeIconGap = 1
+
     /// Das Icon so, wie es in `icon` steht: als Data-URL `data:image/gif;base64,…`.
     ///
     /// NG entscheidet nach der Form (§5.3): bis 64 Zeichen eine Kennung im
@@ -246,6 +249,7 @@ public enum NGNutzlast {
     /// `textfarbeAusPalette`: `textColor` ist dann `"palette"` statt der Farbe
     /// der Regler (§5.1).
     public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil,
+                               iconGap: Int? = nil,
                                textfarbeAusPalette: Bool = false) throws -> String {
         var teile: [String] = []
         // Nicht `gesendeterText`. Unser `uppercased()` macht aus „ß" ein
@@ -268,10 +272,16 @@ public enum NGNutzlast {
         teile.append(#""scroll":{"speed":\#(tempo(o.tempo))}"#)
         if let iconDatenURI, !iconDatenURI.isEmpty {
             teile.append(#""icon":"\#(jsonEscape(try icon(ausDatenURI: iconDatenURI)))""#)
-            // `push` holt das Icon in jedem Laufdurchgang zurueck — das ist
-            // die Frage, die „Icon mitlaufen lassen" stellt. `fixed` laesst es
-            // stehen und den Text daran vorbeilaufen.
-            teile.append(#""iconMode":"\#(o.iconLaeuftMit ? "push" : "fixed")""#)
+            // `push` holt das Icon in jedem Laufdurchgang zurueck, `pushOnce`
+            // schiebt es einmal hinaus, `fixed` laesst es stehen und den Text
+            // daran vorbeilaufen. Hier gilt die gewaehlte Stellung, der Weg
+            // ist ohnehin „Schrift der Uhr".
+            teile.append(#""iconMode":"\#(o.iconmodus.ng)""#)
+            // Nur, wenn die Luft von der Vorgabe der Firmware (1) abweicht: Sie ist
+            // keine Einstellung der Uhr, die jemand umstellen koennte, und ein
+            // mitgeschicktes `1` waere eine zweite Entscheidung ueber dieselbe
+            // Sache. Die Einheit ist die Spalte der Seite (§5.3).
+            if let iconGap, iconGap != Self.vorgabeIconGap { teile.append(#""iconGap":\#(iconGap)"#) }
         }
         // Millisekunden, nicht Sekunden. Ein mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.

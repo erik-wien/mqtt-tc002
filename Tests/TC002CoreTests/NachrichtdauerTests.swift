@@ -111,9 +111,9 @@ final class NachrichtdauerTests: XCTestCase {
     func testDurchlaeufeNurWennEinTextDurchlaeuft() {
         let kurz = Meldungsoptionen(text: "Hi")
         let lang = Meldungsoptionen(text: String(repeating: "Langer Text ", count: 8))
-        XCTAssertFalse(Meldungsbau.laeuftDurch(kurz, mitIcon: false, masse: [.vorgabe]))
-        XCTAssertTrue(Meldungsbau.laeuftDurch(lang, mitIcon: false, masse: [.vorgabe]))
-        XCTAssertFalse(Meldungsbau.laeuftDurch(lang, mitIcon: false, masse: []))
+        XCTAssertFalse(Meldungsbau.laeuftDurch(kurz, ziele: [(.vorgabe, nil)]))
+        XCTAssertTrue(Meldungsbau.laeuftDurch(lang, ziele: [(.vorgabe, nil)]))
+        XCTAssertFalse(Meldungsbau.laeuftDurch(lang, ziele: []))
         XCTAssertTrue(Nachrichtdauerwahl(art: .durchlaeufe).faelltAufAnzeigedauer(textLaeuft: false))
         XCTAssertFalse(Nachrichtdauerwahl(art: .durchlaeufe).faelltAufAnzeigedauer(textLaeuft: true))
         XCTAssertFalse(Nachrichtdauerwahl(art: .sekunden).faelltAufAnzeigedauer(textLaeuft: false))

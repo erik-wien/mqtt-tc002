@@ -168,7 +168,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "Bus kommt"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 2)
+        gedaechtnis.merken(Meldungsoptionen(text: "Bus kommt"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 2)
 
         guard case let .bekannt(pixel) = zustand.slotzustand(2, belegt: true, gedaechtnis: gedaechtnis) else {
             return XCTFail("Der Block zeigt nichts, obwohl der Stand gemerkt ist.")
@@ -255,7 +255,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         let uhr = ngUhr()
         let zustand = try mitUhr(uhr)
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis))
 
         zustand.gemeldet(thema: "wohnzimmer/uhr/cmd/apps/pushed/meldung1",
@@ -275,7 +275,7 @@ final class AwtrixNGZustandTests: XCTestCase {
         let zustand = try mitUhr(uhr)
         zustand.protokollAn = true
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconKante: 8, fuer: uhr.id, platz: 1)
+        gedaechtnis.merken(Meldungsoptionen(text: "von mir"), icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1)
         XCTAssertNotNil(zustand.wiederherstellbarerStand(platz: 1, fuer: uhr, gedaechtnis: gedaechtnis))
 
         let abonnent = MQTTAbonnent(zugang: MQTTZugang(host: "127.0.0.1", port: 1, benutzer: nil,

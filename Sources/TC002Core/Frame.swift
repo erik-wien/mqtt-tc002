@@ -35,10 +35,15 @@ public struct Meldungsherkunft: Equatable, Sendable {
     public var optionen: Meldungsoptionen
     /// Das Icon als vollstaendige Daten-URI, GIF (`NGNutzlast.icon`).
     public var iconDatenURI: String?
+    /// Die Luft zwischen Icon und Text als `iconGap`, in Spalten der Seite, auf der
+    /// die Uhr zeichnet (`Iconplatz.luecke`). `nil`: nichts senden, die Firmware
+    /// nimmt ihre Vorgabe 1.
+    public var iconGap: Int?
 
-    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil) {
+    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil, iconGap: Int? = nil) {
         self.optionen = optionen
         self.iconDatenURI = iconDatenURI
+        self.iconGap = iconGap
     }
 }
 

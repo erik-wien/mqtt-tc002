@@ -34,7 +34,7 @@ final class TinteImFeldTests: XCTestCase {
                             let hoch = Textraster.rasterPuffer(text, schrift: schrift, groesse: wirksam,
                                                                fett: false, farbe: "#FFFFFF", luecke: o.abstand,
                                                                mass: Anzeigemass(breite: mass.breite, hoehe: 64))
-                            let echt = Meldungsbau.feld(o, mitIcon: false, mass: mass)
+                            let echt = Meldungsbau.feld(o, icon: nil, mass: mass)
                             XCTAssertEqual(belegteZeilen(echt).count, belegteZeilen(hoch).count,
                                            "\(schrift) \(groesse) (wirksam \(wirksam)) \(senkrecht) \(text) auf \(mass.breite)×\(mass.hoehe)")
                         }
@@ -51,7 +51,7 @@ final class TinteImFeldTests: XCTestCase {
         let o = Meldungsoptionen(text: "HÜ", schrift: "Silkscreen", groesse: 16, senkrecht: .mittig)
         let mass = Anzeigemass(breite: 32, hoehe: 8)
         XCTAssertEqual(o.wirksameGroesse(fuer: mass), 8)
-        let f = Meldungsbau.feld(o, mitIcon: false, mass: mass)
+        let f = Meldungsbau.feld(o, icon: nil, mass: mass)
         print("HÜ Silkscreen 8, mittig, 32×8:\n" + bild(f))
         XCTAssertEqual(belegteZeilen(f).count,
                        belegteZeilen(Textraster.rasterPuffer("HÜ", schrift: "Silkscreen", groesse: 8,
@@ -77,8 +77,8 @@ final class TinteImFeldTests: XCTestCase {
                         let zeilen = belegteZeilen(hoch)
                         guard let erste = zeilen.first, zeilen.count > mass.hoehe else { continue }
                         geprueft += 1
-                        let echt = Meldungsbau.feld(o, mitIcon: false, mass: mass)
-                        let x0 = Meldungsbau.versatzX(o, mitIcon: false, mass: mass)
+                        let echt = Meldungsbau.feld(o, icon: nil, mass: mass)
+                        let x0 = Meldungsbau.versatzX(o, icon: nil, mass: mass)
                         let breite = min(hoch.breite, mass.breite - x0)
                         let obenEcht = (0..<breite).map { echt.farbe(x: x0 + $0, y: 0) != nil }
                         let obenHoch = (0..<breite).map { hoch.farbe(x: $0, y: erste) != nil }

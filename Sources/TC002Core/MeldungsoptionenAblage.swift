@@ -27,7 +27,8 @@ public extension Meldungsoptionen {
             o.grossbuchstaben = d.bool(forKey: "senden.grossbuchstaben")
         }
         if d.object(forKey: "senden.iconmitlaufend") != nil {
-            o.iconLaeuftMit = d.bool(forKey: "senden.iconmitlaufend")
+            o.iconmodus = Iconmodus(laeuftMit: d.bool(forKey: "senden.iconmitlaufend"),
+                                    einmal: d.bool(forKey: "senden.iconeinmal"))
         }
         o.weg = d.string(forKey: "senden.weg").flatMap(SendeWeg.init(rawValue:)) ?? o.weg
         o.waagrecht = d.string(forKey: "senden.horizontal")

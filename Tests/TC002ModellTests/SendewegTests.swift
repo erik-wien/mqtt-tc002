@@ -95,8 +95,8 @@ final class SendewegTests: XCTestCase {
         let sammlung = sammlung()
         let o = Meldungsoptionen(text: "Grüß", weg: .pixel, schrift: "Silkscreen", groesse: 8)
 
-        let bilanz = await z.senden(rahmenFuer: { mass in
-            try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, mass: mass)
+        let bilanz = await z.senden(rahmenFuer: { uhr in
+            try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, uhr: uhr)
         }, als: "meldung1")
 
         XCTAssertTrue(bilanz.ganz, z.fehler ?? "")
@@ -280,7 +280,7 @@ final class SendewegTests: XCTestCase {
         let o = Meldungsoptionen(text: "Grüße aus Wien", weg: .pixel, schrift: "Silkscreen", groesse: 8)
         let sammlung = sammlung()
 
-        let bilanz = await z.senden(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, mass: $0) },
+        let bilanz = await z.senden(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, uhr: $0) },
                                     als: "meldung1")
         try await Task.sleep(for: .milliseconds(300))
 

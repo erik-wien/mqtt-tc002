@@ -481,7 +481,7 @@ public enum Bildraster {
     /// Der gemeinsame Kern von `schwarzrandBegrenzt` und `tintenBreite`: die
     /// umschliessende Flaeche der andersfarbigen Tinte, ueber alle
     /// Einzelbilder hinweg vereinigt. `nil`, wenn keins welche hat.
-    private static func tintenKasten(_ bilder: [[String?]], breite: Int, hoehe: Int)
+    static func tintenKasten(_ bilder: [[String?]], breite: Int, hoehe: Int)
         -> (minX: Int, maxX: Int, minY: Int, maxY: Int)? {
         var minX = breite, maxX = -1, minY = hoehe, maxY = -1
         for pixel in bilder where pixel.count == breite * hoehe {

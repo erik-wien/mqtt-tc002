@@ -99,7 +99,7 @@ final class BenachrichtigungZustandTests: XCTestCase {
         let o = Meldungsoptionen(text: "Tür", weg: .pixel)
         let sammlung = Iconsammlung(schreibordner: temp())
 
-        let bilanz = await z.benachrichtigen(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, mass: $0) },
+        let bilanz = await z.benachrichtigen(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, uhr: $0) },
                                              .init(name: "tuer", halten: true))
 
         XCTAssertTrue(bilanz.ganz, z.fehler ?? "")
@@ -191,7 +191,7 @@ final class BenachrichtigungZustandTests: XCTestCase {
     private let stand = Meldungsoptionen(text: "kurz", weg: .text)
 
     private func belegtMitGedaechtnis(_ g: Slotgedaechtnis, _ z: AppZustand, _ uhr: Uhr) {
-        XCTAssertTrue(g.merken(stand, icon: nil, iconKante: 8, fuer: uhr.id, platz: 1))
+        XCTAssertTrue(g.merken(stand, icon: nil, iconAbstand: 1, fuer: uhr.id, platz: 1))
         z.anzeigeBestaetigt("meldung1", fuer: uhr)
     }
 
@@ -264,7 +264,7 @@ final class BenachrichtigungZustandTests: XCTestCase {
         let o = mitLebensdauer
         let sammlung = Iconsammlung(schreibordner: temp())
 
-        let bilanz = await z.senden(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, mass: $0) },
+        let bilanz = await z.senden(rahmenFuer: { try Meldungsbau.rahmen(o, icon: nil, sammlung: sammlung, uhr: $0) },
                                     als: "meldung1", slotOptionen: o, slotPlatz: 1)
         XCTAssertTrue(bilanz.ganz, z.fehler ?? "")
         XCTAssertEqual(s.zustand.apps.first { $0.name == "meldung1" }?.lebensdauerMs, 30_000)

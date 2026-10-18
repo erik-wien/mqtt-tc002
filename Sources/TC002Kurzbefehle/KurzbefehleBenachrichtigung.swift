@@ -139,14 +139,20 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Tempo", description: "Gilt nur, wenn der Text nicht ins Display passt.")
     var tempo: TempoAuswahl?
 
-    @Parameter(title: "Icon mitscrollen", description: "Gilt nur, wenn der Text nicht ins Display passt.")
+    @Parameter(title: "Icon mitscrollen", description: "Fest, einmal mitscrollen oder mitscrollen. Gilt nur, wenn der Text nicht ins Display passt. „Einmal mitscrollen“ gibt es nur mit „Schrift der Uhr“, sonst läuft das Icon mit.")
+    var iconmodus: IconmodusAuswahl?
+
+    /// Der frühere Schalter. Er steht nicht mehr in der Zusammenfassung, wird aber
+    /// weiter gelesen: Ein bestehender Kurzbefehl behält seine Wirkung. Die neue
+    /// Auswahl gewinnt, wenn beide gesetzt sind.
+    @Parameter(title: "Icon mitscrollen (früher)", description: "Ersetzt durch die Auswahl „Icon mitscrollen“.")
     var iconLaeuftMit: Bool?
 
     private var angaben: Formatangaben {
         Formatangaben.kurzbefehl(weg: weg, schriftart: schriftart, groesse: groesse, fett: fett,
                                  grossbuchstaben: grossbuchstaben, farbe: farbe,
                                  waagrecht: waagrecht, senkrecht: senkrecht, rand: rand,
-                                 abstand: abstand, tempo: tempo, iconLaeuftMit: iconLaeuftMit)
+                                 abstand: abstand, tempo: tempo, iconLaeuftMit: iconLaeuftMit, iconmodus: iconmodus)
     }
 
     static var parameterSummary: some ParameterSummary {
@@ -172,7 +178,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
             \.$rand
             \.$abstand
             \.$tempo
-            \.$iconLaeuftMit
+            \.$iconmodus
         }
     }
 
@@ -238,7 +244,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
                 }
                 do {
                     try anzeigen.benachrichtigen(try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung,
-                                                                       mass: Anzeigemass.fuer(ziel)), eigene)
+                                                                       uhr: ziel), eigene)
                 } catch {
                     throw KurzbefehlFehler(uhr: ziel.name, error)
                 }

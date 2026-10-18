@@ -15,10 +15,13 @@ struct VorschauView: View {
     /// Wird an derselben Stelle und in derselben Groesse gezeigt, an der die Uhr es
     /// spaeter zeichnet — sonst zeigt die Vorschau etwas anderes als das Geraet.
     var icon: URL? = nil
+    /// Erste Spalte des Icons im gezeigten Feld (`Meldungsbau.iconX`).
     var iconX: Int = 0
-    /// Kantenlaenge des Icons — 8 oder 16. `iconY` folgt ihr, damit die
-    /// Vorschau es dort zeigt, wo `Meldungsbau` es hinlegt.
-    var iconKante: Int = 8
+    /// Wie das Icon zugeschnitten ist und wie hoch es ist (8 oder 16); `nil` zeigt
+    /// keins. `iconY` folgt der Kante, damit die Vorschau es dort zeigt, wo
+    /// `Meldungsbau` es hinlegt.
+    var iconplatz: Iconplatz? = nil
+    private var iconKante: Int { iconplatz?.kante ?? 8 }
     /// Senkrecht mittig im gezeigten Feld.
     var iconY: Int { Meldungsbau.iconY(kante: iconKante * iconMasstab, mass: mass) }
     /// Punkte je Pixel des Icons: 2, wenn die Uhr die Anzeige vergroessert
@@ -82,10 +85,11 @@ struct VorschauView: View {
                     kontext.fill(stil.pfad(spalte: x, zeile: y, zelle: kantenlaenge), with: .color(farbe))
                 }
             }
-            guard let iconBild, iconBild.pixel.count == iconKante * iconKante else { return }
+            guard let iconplatz, let iconBild, iconBild.pixel.count == iconKante * iconKante else { return }
             for y in 0..<iconKante {
-                for x in 0..<iconKante {
-                    guard let hex = iconBild.pixel[y * iconKante + x], let farbe = Color(hex: hex) else { continue }
+                for x in 0..<iconplatz.breite {
+                    guard let hex = iconBild.pixel[y * iconKante + iconplatz.links + x],
+                          let farbe = Color(hex: hex) else { continue }
                     for dy in 0..<iconMasstab { for dx in 0..<iconMasstab {
                         let px = iconX + x * iconMasstab + dx, py = iconY + y * iconMasstab + dy
                         guard px >= 0, py >= 0, px < feld.breite, py < feld.hoehe else { continue }
