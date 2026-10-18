@@ -27,6 +27,11 @@ struct VorschauiOS: View {
     /// Punkte je Pixel des Icons: 2, wenn die Uhr die Anzeige vergroessert
     /// zeichnet (`Geraeteschrift.masstab`).
     var iconMasstab: Int = 1
+    /// Wie das Icon zugeschnitten ist (`nil`: keins) und wo es beginnt
+    /// (`Meldungsbau.iconX`). Die Rechnung steht im Kern, damit Vorschau und
+    /// Sendung dieselbe Stelle nehmen.
+    var iconplatz: Iconplatz? = nil
+    var iconX: Int = 0
     /// Das Modell der Uhr, wenn bekannt: wählt die Zeichnung (`Geraetezeichnung.fuer`).
     var modell: Uhrmodell? = nil
 
@@ -101,7 +106,7 @@ struct VorschauiOS: View {
             .background(.black)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityLabel(lokf("Vorschau der Anzeige, %d mal %d Pixel", feld.breite, feld.hoehe))
-            .task(id: icon) { iconBilder = Self.geladen(icon) }
+            .task(id: icon) { iconBilder = Self.geladen(icon, kante: iconplatz?.kante ?? 8) }
         }
     }
 
@@ -130,13 +135,14 @@ struct VorschauiOS: View {
     /// Rasters, und das ist kein schiefes Bild, sondern ein Absturz.
     private func mitIcon(_ iconBild: Bildraster.Einzelbild?) -> [String?] {
         var punkte = feld.punkteRoh
-        guard let iconBild else { return punkte }
-        let m = iconMasstab
-        let y0 = Anzeigemass(breite: feld.breite, hoehe: feld.hoehe).iconY(kante: 8 * m)
-        for y in 0..<(8 * m) where (0..<feld.hoehe).contains(y0 + y) {
-            for x in 0..<(8 * m) where x < feld.breite {
-                guard let p = iconBild.pixel[(y / m) * 8 + x / m] else { continue }
-                punkte[(y0 + y) * feld.breite + x] = p
+        guard let iconBild, let platz = iconplatz else { return punkte }
+        let m = iconMasstab, k = platz.kante
+        guard iconBild.pixel.count == k * k else { return punkte }
+        let y0 = Anzeigemass(breite: feld.breite, hoehe: feld.hoehe).iconY(kante: k * m)
+        for y in 0..<(k * m) where (0..<feld.hoehe).contains(y0 + y) {
+            for x in 0..<(platz.breite * m) where (0..<feld.breite).contains(iconX + x) {
+                guard let p = iconBild.pixel[(y / m) * k + platz.links + x / m] else { continue }
+                punkte[(y0 + y) * feld.breite + iconX + x] = p
             }
         }
         return punkte
@@ -159,8 +165,8 @@ struct VorschauiOS: View {
 
     /// Liest das Icon einmal, mit seinen Standzeiten — fuer den unbewegten
     /// Fall genau ein Einzelbild.
-    private static func geladen(_ icon: URL?) -> [Bildraster.Einzelbild] {
+    private static func geladen(_ icon: URL?, kante: Int) -> [Bildraster.Einzelbild] {
         guard let icon else { return [] }
-        return (try? Bildraster.lesenMitZeiten(icon, breite: 8, hoehe: 8)) ?? []
+        return (try? Bildraster.lesenMitZeiten(icon, breite: kante, hoehe: kante)) ?? []
     }
 }

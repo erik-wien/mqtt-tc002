@@ -488,6 +488,27 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         }
     }
 
+    func testIconModus() throws {
+        XCTAssertEqual(try Optionen.zerlegt(["senden", "x"]).meldung.iconmodus, .fest)
+        XCTAssertEqual(try Optionen.zerlegt(["senden", "x", "--icon-mitscrollen"]).meldung.iconmodus, .mit)
+        for (wort, erwartet) in [("fest", Iconmodus.fest), ("mit", .mit), ("fixed", .fest), ("push", .mit)] {
+            XCTAssertEqual(try Optionen.zerlegt(["senden", "x", "--icon-modus", wort]).meldung.iconmodus, erwartet, wort)
+        }
+        for wort in ["einmal", "once"] {
+            let m = try Optionen.zerlegt(["senden", "x", "--schrift-der-uhr", "--icon-modus", wort]).meldung
+            XCTAssertEqual(m.iconmodus, .einmal, wort)
+            XCTAssertTrue(m.iconLaeuftMit, "die ältere Angabe bleibt gesetzt")
+        }
+        XCTAssertEqual(try Optionen.zerlegt(["nachricht", "x", "--clock-font", "--icon-mode", "once"]).meldung.iconmodus, .einmal)
+        // „einmal“ gibt es nur mit der Schrift der Uhr; sonst ein lauter Fehler.
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--icon-modus", "einmal"])) { f in
+            XCTAssertTrue((f as? LocalizedError)?.errorDescription?.contains("--schrift-der-uhr") == true)
+        }
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--icon-modus", "dauernd"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["senden", "x", "--icon-modus"]))
+        XCTAssertThrowsError(try Optionen.zerlegt(["loeschen", "cli", "--icon-modus", "fest"]))
+    }
+
     func testFormatoptionenGeltenNurFuerSendenUndNachricht() {
         for option in ["--schrift-der-uhr", "--icon-mitscrollen"] {
             XCTAssertThrowsError(try Optionen.zerlegt(["loeschen", "cli", option]), option)

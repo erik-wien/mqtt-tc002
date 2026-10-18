@@ -38,6 +38,31 @@ final class FormatangabenTests: XCTestCase {
         XCTAssertEqual(o.dauer, 7)
     }
 
+    /// Der frühere Schalter („Icon mitscrollen“) und die neue Auswahl: Ein alter
+    /// Kurzbefehl behält seine Wirkung, die Auswahl gewinnt, wenn beide stehen.
+    func testIconmodusAusAltemSchalterUndNeuerAuswahl() throws {
+        var v = vorgabe()
+        v.iconmodus = .einmal
+        XCTAssertEqual(try Formatangaben(iconLaeuftMit: true).angewendet(auf: v).iconmodus, .mit)
+        XCTAssertEqual(try Formatangaben(iconLaeuftMit: false).angewendet(auf: v).iconmodus, .fest)
+        XCTAssertEqual(try Formatangaben().angewendet(auf: v).iconmodus, .einmal, "ohne Angabe bleibt die Einstellung")
+        XCTAssertEqual(try Formatangaben(iconLaeuftMit: true, iconmodus: .einmal).angewendet(auf: v).iconmodus, .einmal)
+        XCTAssertEqual(try Formatangaben(iconLaeuftMit: true, iconmodus: .fest).angewendet(auf: v).iconmodus, .fest)
+        XCTAssertEqual(try Formatangaben(iconmodus: .mit).angewendet(auf: v).iconmodus, .mit)
+    }
+
+    /// Die Einstellungen der Sendeansicht (zwei Schlüssel) ergeben dieselbe Auswahl.
+    func testAblageLiestDieDreiStellungen() {
+        let d = UserDefaults(suiteName: "iconmodus-" + UUID().uuidString)!
+        XCTAssertEqual(Meldungsoptionen.ausAblage(d).iconmodus, .fest)
+        d.set(true, forKey: "senden.iconmitlaufend")
+        XCTAssertEqual(Meldungsoptionen.ausAblage(d).iconmodus, .mit, "eine ältere Ablage kennt nur den Schalter")
+        d.set(true, forKey: "senden.iconeinmal")
+        XCTAssertEqual(Meldungsoptionen.ausAblage(d).iconmodus, .einmal)
+        d.set(false, forKey: "senden.iconmitlaufend")
+        XCTAssertEqual(Meldungsoptionen.ausAblage(d).iconmodus, .fest, "ohne Mitlaufen gilt 'einmal' nicht")
+    }
+
     /// Jede einzelne Angabe muss auch wirklich ankommen — eine, die im
     /// Kurzbefehl steht und nichts bewirkt, ist der Anlass dieser Aufgabe.
     func testJedeAngabeKommtAn() throws {

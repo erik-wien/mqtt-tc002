@@ -90,6 +90,17 @@ private struct Uhrblatt: View {
             }
 
             Section {
+                Stepper(value: iconAbstand, in: Iconabstand.bereich) {
+                    LabeledContent("Abstand Icon–Text") {
+                        Text(verbatim: lokf("%d Pixel", uhr.wirksamerIconAbstand))
+                            .monospacedDigit()
+                    }
+                }
+            } header: {
+                Abschnittskopf("Icon", hilfe: lok("So viele Pixel Luft bleiben zwischen Icon und Text, bei allem, was an diese Uhr geht: Senden, Nachrichten, Kurzbefehle und Werkzeug. Das Icon wird dabei auf seine Zeichnung zugeschnitten, der Text beginnt genau so viele Pixel dahinter. Mit „Schrift der Uhr“ zählt die Uhr dort teils in Spalten zu zwei Pixeln; ungerade Werte werden aufgerundet."))
+            }
+
+            Section {
                 LabeledContent {
                     // Das Zeichen ist das Ergebnis des Knopfes und steht darum
                     // neben ihm, nicht in einer eigenen Zeile.
@@ -155,6 +166,12 @@ private struct Uhrblatt: View {
                     uhr.modell = neu
                     zustand.ausstattungGeaendert(uhr.id)
                 })
+    }
+
+    /// `Uhr.iconAbstand` ist ein `Optional`, `nil` heißt 1.
+    private var iconAbstand: Binding<Int> {
+        Binding(get: { uhr.wirksamerIconAbstand },
+                set: { uhr.iconAbstand = $0 == Iconabstand.vorgabe ? nil : Iconabstand.begrenzt($0) })
     }
 
     /// `Uhr.lautsprecher` ist ein `Optional`, `nil` heißt „ja".
