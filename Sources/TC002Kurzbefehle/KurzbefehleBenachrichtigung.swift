@@ -62,13 +62,13 @@ final class Ausgebliebene: @unchecked Sendable {
 /// Platz, kein Eintrag im Slotgedächtnis.
 ///
 /// Wie in der App ist es dieselbe Rechnung wie bei „Meldung schicken“ (Format,
-/// Icon, Darstellung) mit den Reglern der Nachricht darüber (`Nachrichtwahl`):
+/// Icon) mit den Reglern der Nachricht darüber (`Nachrichtwahl`):
 /// halten, aufwecken, einreihen oder ersetzen, Durchläufe, Klang. Was beim
 /// Format fehlt, kommt aus dem, was zuletzt unter „Senden“ eingestellt war.
 struct BenachrichtigungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Nachricht senden"
     static let description = IntentDescription(
-        "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift, Ausrichtung und Darstellung kommen aus den zuletzt in der App gewählten Einstellungen.")
+        "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Text")
@@ -77,8 +77,8 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
-    @Parameter(title: "Icon-Nummer", description: "Nummer oder Name eines vorhandenen Icons.")
-    var iconNummer: String?
+    @Parameter(title: "Icon", description: "Ein Icon aus den Beständen der App, 8 × 8 oder 16 × 16.")
+    var iconauswahl: IconEntity?
 
     @Parameter(title: "Halten", description: "Bleibt stehen, bis sie zurückgezogen wird.", default: false)
     var halten: Bool
@@ -155,7 +155,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
     static var parameterSummary: some ParameterSummary {
         Summary("\(\.$text) als Nachricht an die Uhr senden") {
             \.$uhr
-            \.$iconNummer
+            \.$iconauswahl
             \.$halten
             \.$aufwecken
             \.$einreihen
@@ -210,9 +210,9 @@ struct BenachrichtigungSendenIntent: AppIntent {
         let gesetzt = optionen
         let icon: Icon?
         do {
-            icon = try Kurzbefehlswerte.icon(nummer: iconNummer)
+            icon = try iconauswahl.map { try Kurzbefehlswerte.icon(kennung: $0.id) }
         } catch {
-            throw $iconNummer.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
+            throw $iconauswahl.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
         }
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])

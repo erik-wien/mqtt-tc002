@@ -59,35 +59,19 @@ final class MeldungsoptionenAblageTests: XCTestCase {
         XCTAssertEqual(o.tempo, .mittel)
     }
 
-    // MARK: - Darstellung
+    // MARK: - Keine Darstellung
 
-    func testLeereAblageHatKeineDarstellung() {
-        XCTAssertNil(Meldungsoptionen.ausAblage(ablage()).darstellung)
-    }
-
-    /// Die Ansicht legt die Wahl als JSON ab (`Darstellungswahl.rawValue`); der
-    /// Kurzbefehl sendet danach mit Overlay und Palette wie die App zuletzt.
-    func testGesicherteDarstellungWirdGelesen() throws {
+    /// Kurzbefehle senden ohne Darstellung, auch wenn die App eine abgelegt hat:
+    /// Wer dort einmal einen Hintergrund gewaehlt hat, will ihn nicht aus jedem
+    /// Kurzbefehl zurueck.
+    func testDarstellungDerAppWirdNichtGelesen() {
         var wahl = Darstellungswahl()
         wahl.overlay = "rain"
         wahl.palette = .name("Ocean")
         wahl.hintergrundfarbe = "#112233"
         let d = ablage()
         d.set(wahl.rawValue, forKey: "senden.darstellung")
-
-        XCTAssertEqual(Meldungsoptionen.ausAblage(d).darstellung, wahl)
-    }
-
-    /// Eine unveraenderte Wahl ist "nichts gewaehlt", wie in `SendenView.optionen`.
-    func testUnveraenderteDarstellungBleibtNil() {
-        let d = ablage()
-        d.set(Darstellungswahl().rawValue, forKey: "senden.darstellung")
         XCTAssertNil(Meldungsoptionen.ausAblage(d).darstellung)
-    }
-
-    func testUnlesbareDarstellungWirdUebergangen() {
-        let d = ablage()
-        d.set("kein json", forKey: "senden.darstellung")
-        XCTAssertNil(Meldungsoptionen.ausAblage(d).darstellung)
+        XCTAssertNil(Meldungsoptionen.ausAblage(ablage()).darstellung)
     }
 }

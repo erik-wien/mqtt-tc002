@@ -7,6 +7,11 @@ public extension Meldungsoptionen {
     /// Ohne das sähe eine über Siri geschickte Meldung anders aus als dieselbe
     /// Meldung aus der App, und niemand käme darauf, warum.
     ///
+    /// Die Darstellung (Hintergrund, Effekt, Overlay, Palette) liest sie
+    /// absichtlich nicht: Wer sie in der App einmal gewählt und vergessen hat,
+    /// bekäme sie sonst aus jedem Kurzbefehl auf die Uhr. Kurzbefehle senden
+    /// ohne Darstellung.
+    ///
     /// `text` bleibt leer; der kommt vom Aufrufer. Unsinnige Werte fallen auf
     /// die Vorgabe zurück statt zu scheitern — von Hand verbogene Einstellungen
     /// gibt es.
@@ -30,12 +35,6 @@ public extension Meldungsoptionen {
         o.senkrecht = d.string(forKey: "senden.vertikal")
             .flatMap(SendenVAusrichtung.init(rawValue:)) ?? o.senkrecht
         o.tempo = d.string(forKey: "senden.tempo").flatMap(Lauftempo.init(rawValue:)) ?? o.tempo
-        // Hintergrund, Effekt, Overlay, Palette: wie die Ansicht, die eine
-        // unveraenderte Wahl als „nichts gewaehlt" fuehrt (`optionen`).
-        if let wahl = d.string(forKey: "senden.darstellung").flatMap(Darstellungswahl.init(rawValue:)),
-           wahl != Darstellungswahl() {
-            o.darstellung = wahl
-        }
         return o
     }
 }

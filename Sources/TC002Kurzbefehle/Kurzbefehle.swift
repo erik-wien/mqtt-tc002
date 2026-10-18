@@ -19,7 +19,7 @@ import TC002Core
 struct MeldungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Meldung an die Uhr schicken"
     static let description = IntentDescription(
-        "Schickt einen Text an eine eingerichtete Uhr. Schrift, Ausrichtung und Darstellung (Hintergrund, Effekt, Overlay, Palette) kommen aus den zuletzt in der App gewählten Einstellungen.")
+        "Schickt einen Text an eine eingerichtete Uhr. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.")
     /// Kein Aufmachen der App: Das Senden dauert Bruchteile einer Sekunde, und
     /// wer aus einer Automation heraus schickt, will kein Fenster.
     static let openAppWhenRun = false
@@ -30,8 +30,8 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
-    @Parameter(title: "Icon-Nummer", description: "Nummer eines vorhandenen Icons.")
-    var iconNummer: String?
+    @Parameter(title: "Icon", description: "Ein Icon aus den Beständen der App, 8 × 8 oder 16 × 16.")
+    var iconauswahl: IconEntity?
 
     @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
     var dauer: Int?
@@ -102,7 +102,7 @@ struct MeldungSendenIntent: AppIntent {
     static var parameterSummary: some ParameterSummary {
         Summary("\(\.$text) an die Uhr schicken") {
             \.$uhr
-            \.$iconNummer
+            \.$iconauswahl
             \.$dauer
             \.$platz
             \.$weg
@@ -155,9 +155,9 @@ struct MeldungSendenIntent: AppIntent {
         // nicht am Ordner.
         let icon: Icon?
         do {
-            icon = try Kurzbefehlswerte.icon(nummer: iconNummer)
+            icon = try iconauswahl.map { try Kurzbefehlswerte.icon(kennung: $0.id) }
         } catch {
-            throw $iconNummer.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
+            throw $iconauswahl.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
         }
 
         let slotPlatz = platz ?? 1

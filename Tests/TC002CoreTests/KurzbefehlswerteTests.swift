@@ -99,21 +99,36 @@ final class KurzbefehlswerteTests: XCTestCase {
         return Iconsammlung(ordner: ordner, kante: kante)
     }
 
-    func testIconOhneNummerIstKeines() throws {
-        XCTAssertNil(try Kurzbefehlswerte.icon(nummer: nil, bestaende: []))
-        XCTAssertNil(try Kurzbefehlswerte.icon(nummer: "  ", bestaende: []))
+    private func icon(_ nummer: String, name: String? = nil, kante: Int = 8) -> Icon {
+        Icon(nummer: nummer, name: name ?? nummer, kategorie: "",
+             datei: URL(fileURLWithPath: "/tmp/\(nummer).gif"), kante: kante)
     }
 
-    func testIconWirdUeberBeideBestaendeGefunden() throws {
-        let b = [try sammlung("1673.gif"), try sammlung("haus-16.gif", kante: 16)]
-        XCTAssertEqual(try Kurzbefehlswerte.icon(nummer: " 1673 ", bestaende: b)?.kante, 8)
-        XCTAssertEqual(try Kurzbefehlswerte.icon(nummer: "haus-16", bestaende: b)?.kante, 16)
+    func testVorschlaegeFuehrenBeideBestaendeNachNameSortiert() throws {
+        let b = [try sammlung("zebra.gif"), try sammlung("Apfel.gif", kante: 16)]
+        let v = Kurzbefehlswerte.iconvorschlaege(bestaende: b)
+        XCTAssertEqual(v.map(\.kennung), ["16/Apfel", "8/zebra"])
     }
 
-    func testUnbekanntesIconIstEinFehler() throws {
-        let b = [try sammlung("1673.gif")]
-        XCTAssertThrowsError(try Kurzbefehlswerte.icon(nummer: "4711", bestaende: b)) {
-            XCTAssertEqual($0 as? Kurzbefehlswerte.Fehler, .iconUnbekannt("4711"))
+    func testSucheFindetNachNameUndNummerOhneGrossKlein() {
+        let icons = [icon("1673", name: "Herz"), icon("haus-16", name: "Haus", kante: 16), icon("5610", name: "Stern")]
+        XCTAssertEqual(Kurzbefehlswerte.icons(passend: "HERZ", in: icons).map(\.nummer), ["1673"])
+        XCTAssertEqual(Kurzbefehlswerte.icons(passend: "56", in: icons).map(\.nummer), ["5610"])
+        XCTAssertEqual(Kurzbefehlswerte.icons(passend: "HAUS-16", in: icons).map(\.nummer), ["haus-16"])
+        XCTAssertEqual(Kurzbefehlswerte.icons(passend: "  ", in: icons).count, 3)
+        XCTAssertTrue(Kurzbefehlswerte.icons(passend: "xyz", in: icons).isEmpty)
+    }
+
+    /// Dieselbe Nummer in beiden Bestaenden bleibt zwei Auswahlen.
+    func testKennungUnterscheidetGleicheNummerInBeidenGroessen() throws {
+        let icons = [icon("stern", kante: 8), icon("stern", kante: 16)]
+        XCTAssertEqual(try Kurzbefehlswerte.icon(kennung: "16/stern", bestaende: icons).kante, 16)
+        XCTAssertEqual(try Kurzbefehlswerte.icon(kennung: "8/stern", bestaende: icons).kante, 8)
+    }
+
+    func testGeloeschtesIconIstEinKlarerFehler() {
+        XCTAssertThrowsError(try Kurzbefehlswerte.icon(kennung: "8/4711", bestaende: [icon("1673")])) {
+            XCTAssertEqual($0 as? Kurzbefehlswerte.Fehler, .iconGeloescht("4711"))
         }
     }
 

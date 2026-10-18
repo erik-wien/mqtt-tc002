@@ -29,6 +29,22 @@ final class DarstellungswahlTests: XCTestCase {
 
     // MARK: - Was hinausgeht
 
+    /// Felder, die nur im Zusammenspiel mit Palette, Effekt, Overlay oder
+    /// „Text aus Palette“ wirken, gehen allein nie hinaus: Eine Wahl, die sich
+    /// von der Vorgabe nur in solchen Feldern unterscheidet, sendet nichts.
+    func testVerstellteFelderOhneAusloeserSendenNichts() {
+        var w = Darstellungswahl()
+        w.tempo = 4
+        w.eigenePalette = Eigenepalette(stellen: [.init(farbe: "#FF0000", pos: 0), .init(farbe: "#00FF00", pos: 50)],
+                                        mitPosition: true)
+        w.ueberblenden = false
+        w.spanne = 40
+        w.lauf = 5
+        XCTAssertNotEqual(w, Darstellungswahl())
+        XCTAssertNil(w.darstellung(weg: .pixel))
+        XCTAssertNil(w.darstellung(weg: .text))
+    }
+
     func testNichtsGewaehltSendetNichts() {
         XCTAssertNil(Darstellungswahl().darstellung(weg: .pixel))
         XCTAssertNil(Darstellungswahl().darstellung(weg: .text))

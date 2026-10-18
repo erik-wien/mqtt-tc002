@@ -39,14 +39,14 @@ public enum Kurzbefehlswerte {
 
     public enum Fehler: Error, LocalizedError, Equatable {
         case klangUndVorlesen
-        case iconUnbekannt(String)
+        case iconGeloescht(String)
 
         public var errorDescription: String? {
             switch self {
             case .klangUndVorlesen:
                 return lok("Entweder ein Klang oder Vorlesen, nicht beides.")
-            case .iconUnbekannt(let nummer):
-                return lokf("Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen.", nummer)
+            case .iconGeloescht(let name):
+                return lokf("Das gewählte Icon „%@“ gibt es nicht mehr. Bitte im Kurzbefehl ein anderes wählen.", name)
             }
         }
     }
@@ -75,23 +75,38 @@ public enum Kurzbefehlswerte {
         return Klangwahl(art: .uhr, name: klangname, wiederholen: wiederholen)
     }
 
-    /// Das Icon zu einer Nummer oder einem Namen, über beide Bestände (8×8 und
-    /// 16×16). Leer oder nur Leerraum heißt: kein Icon. Die Sammlung des
-    /// 8×8-Bestands liest zusätzlich die mitgelieferten Icons mit
-    /// (`Iconordner.mitgeliefert`); die App tut das nicht, der Kurzbefehl
-    /// schon.
-    public static func icon(nummer: String?,
-                            bestaende: [Iconsammlung]? = nil) throws -> Icon? {
-        guard let schluessel = nummer?.trimmingCharacters(in: .whitespaces), !schluessel.isEmpty else {
-            return nil
+    /// Die Bestände, aus denen ein Kurzbefehl Icons liest: 8×8 samt den
+    /// mitgelieferten und die eigenen 16×16.
+    public static func iconbestaende() -> [Iconsammlung] {
+        [Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert]),
+         Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
+    }
+
+    /// Alle Icons beider Bestände nach Name sortiert (bei gleichem Namen nach
+    /// Kennung): die Vorschläge der Icon-Auswahl.
+    public static func iconvorschlaege(bestaende: [Iconsammlung]? = nil) -> [Icon] {
+        (bestaende ?? iconbestaende()).flatMap { $0.alle() }.sorted {
+            let ordnung = $0.name.localizedStandardCompare($1.name)
+            return ordnung == .orderedSame ? $0.kennung < $1.kennung : ordnung == .orderedAscending
         }
-        let sammlungen = bestaende ?? [
-            Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert]),
-            Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
-        guard let gefunden = Iconbestaende.suchen(schluessel, in: sammlungen) else {
-            throw Fehler.iconUnbekannt(schluessel)
+    }
+
+    /// Die Treffer der Suchzeile in der Icon-Auswahl: Name oder Nummer
+    /// (Schlüssel), ohne Rücksicht auf Groß- und Kleinschreibung. Eine leere
+    /// Suche liefert alle.
+    public static func icons(passend suche: String, in icons: [Icon]) -> [Icon] {
+        icons.gefiltert(nach: suche)
+    }
+
+    /// Das Icon zu einer Auswahl (`Icon.kennung`), frisch aus dem Bestand
+    /// gelesen. Ist es seit der Wahl gelöscht worden, ein klarer Fehler statt
+    /// eines Senden ohne Icon.
+    public static func icon(kennung: String, bestaende: [Icon]? = nil) throws -> Icon {
+        let icons = bestaende ?? iconvorschlaege()
+        guard let treffer = icons.first(where: { $0.kennung == kennung }) else {
+            throw Fehler.iconGeloescht(kennung.split(separator: "/", maxSplits: 1).last.map(String.init) ?? kennung)
         }
-        return gefunden
+        return treffer
     }
 }
 

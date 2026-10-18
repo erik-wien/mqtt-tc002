@@ -109,7 +109,7 @@ DYNAMISCH = [
     # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
     "Meldung an die Uhr schicken",
     "Meldung von der Uhr löschen",
-    "Schickt einen Text an eine eingerichtete Uhr. Schrift, Ausrichtung und Darstellung (Hintergrund, Effekt, Overlay, Palette) kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Schickt einen Text an eine eingerichtete Uhr. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.",
     "Entfernt eine der fünf Meldungen wieder von der Uhr.",
     "Meldung schicken",
     "Meldung löschen",
@@ -117,7 +117,7 @@ DYNAMISCH = [
     "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon. Eine Uhr mit kleinerem Display weist sie ab.",
     "Bild schicken",
     "Nachricht senden",
-    "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift, Ausrichtung und Darstellung kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.",
     "Nachricht zurückziehen",
     "Nimmt die sichtbare Nachricht weg, oder mit Namen die benannte.",
     # Die Fernbedienung (KurzbefehleFernbedienung.swift): Titel, Beschreibung
