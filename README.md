@@ -46,7 +46,7 @@ vorhandene Bestände.
   Gruppen, dazu das TLS-Zertifikat für MQTT.
 - **Editor (Mac, iPad):** Icons (8×8, 16×16) und ganze Anzeigen malen, mit
   Animation; Icons lassen sich über eine LaMetric-Nummer nachladen.
-- **Kurzbefehle (iPhone, iPad)** und **Kommandozeile (Mac)**.
+- **Kurzbefehle (iPhone, iPad, Mac)** — Senden und Fernbedienung — und **Kommandozeile (Mac)**.
 - **Abgleich** der eigenen Bestände über iCloud; Deutsch und Englisch.
 
 Wie man das bedient, steht in der Hilfe im Programm (⌘?).
