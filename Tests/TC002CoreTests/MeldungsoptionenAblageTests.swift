@@ -20,7 +20,7 @@ final class MeldungsoptionenAblageTests: XCTestCase {
         XCTAssertEqual(o.rand, 1)
         XCTAssertEqual(o.weg, .pixel)
         XCTAssertEqual(o.waagrecht, .links)
-        XCTAssertEqual(o.senkrecht, .oben)
+        XCTAssertEqual(o.senkrecht, .mittig)
         XCTAssertEqual(o.tempo, .mittel)
     }
 

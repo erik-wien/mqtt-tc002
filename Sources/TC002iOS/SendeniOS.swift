@@ -77,7 +77,7 @@ struct SendeniOS: View {
     @AppStorage("senden.luecke") private var luecke = 1
     @AppStorage("senden.grossbuchstaben") private var grossbuchstaben = false
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
-    @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .mittig
     @AppStorage("senden.rand") private var rand = 1
     @AppStorage("senden.tempo") private var tempo: Lauftempo = .mittel
     @AppStorage("senden.iconmitlaufend") private var iconLaeuftMit = false

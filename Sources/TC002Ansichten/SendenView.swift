@@ -51,7 +51,7 @@ public struct SendenView: View {
     /// was er geschrieben hat.
     @AppStorage("senden.grossbuchstaben") private var grossbuchstaben = false
     @AppStorage("senden.horizontal") private var horizontal: SendenHAusrichtung = .links
-    @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .oben
+    @AppStorage("senden.vertikal") private var vertikal: SendenVAusrichtung = .mittig
     /// Zeilen, die bei „oben" und „unten" frei bleiben. Buendig (0) sieht je nach
     /// Schrift verschieden aus: Manche bringen ueber der Grossbuchstabenhoehe
     /// Platz mit, andere nicht. Ein eigener Rand macht den Eindruck unabhaengig

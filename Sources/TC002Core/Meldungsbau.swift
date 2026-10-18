@@ -20,8 +20,8 @@ public enum SendenVAusrichtung: String, CaseIterable, Identifiable, Sendable, Co
 /// `NGNutzlast.anzeige`).
 ///
 /// In der Oberflaeche ist das der Schalter „Schrift der Uhr" im Format
-/// (`SendeWeg.schriftDerUhr`), Vorgabe aus; Kurzbefehl und Werkzeug waehlen den
-/// Weg ueber `Formatangaben.weg`. Der Wert steht im Dateiformat von
+/// (`SendeWeg.schriftDerUhr`), Vorgabe aus; der Kurzbefehl waehlt den Weg ueber
+/// `Formatangaben.weg`, das Werkzeug ueber `--schrift-der-uhr`. Der Wert steht im Dateiformat von
 /// Slotgedaechtnis, Verlauf und Formatangaben, das auch andere Geraete im
 /// iCloud-Behaelter lesen.
 public enum SendeWeg: String, CaseIterable, Identifiable, Sendable, Codable {
@@ -115,7 +115,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     public var farbe: String = "#00FF66"
     public var grossbuchstaben: Bool = false
     public var waagrecht: SendenHAusrichtung = .links
-    public var senkrecht: SendenVAusrichtung = .oben
+    public var senkrecht: SendenVAusrichtung = .mittig
     public var rand: Int = 1
     public var abstand: Int = 1
     public var tempo: Lauftempo = .mittel
@@ -146,7 +146,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
                 farbe: String = "#00FF66",
                 grossbuchstaben: Bool = false,
                 waagrecht: SendenHAusrichtung = .links,
-                senkrecht: SendenVAusrichtung = .oben,
+                senkrecht: SendenVAusrichtung = .mittig,
                 rand: Int = 1,
                 abstand: Int = 1,
                 tempo: Lauftempo = .mittel,
