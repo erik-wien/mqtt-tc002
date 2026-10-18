@@ -42,6 +42,8 @@ public struct Klangabschnitt: View {
     /// Die Uhren, die die jetzige Wahl nicht spielen und deshalb ohne Klang bleiben.
     private var ohneKlang: [Klangziel] { klang.art == .keiner ? [] : Klangeignung.ohne(klang, in: ziele) }
 
+    @Environment(\.dismiss) private var schliessen
+
     public var body: some View {
         Section {
             Picker("Klang", selection: $klang.art) {
@@ -79,6 +81,17 @@ public struct Klangabschnitt: View {
                 .fixedSize()
             }
             .disabled(klang.art == .keiner || gesperrt)
+            // Immer da, auch bei leerer Liste: Neue Klänge entstehen nur in der
+            // Sammlung. Erst das Popover bzw. Blatt schließen, dann wechseln, sonst
+            // trifft das Öffnen des Bereichs auf eine noch offene Einblendung.
+            Button("Klänge verwalten …") {
+                schliessen()
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    zustand.klaengeVerwalten()
+                }
+            }
+            .knopfBefehl()
         } header: {
             Abschnittskopf("Klang", hilfe: lok("Der Klang spielt, wenn die Nachricht erscheint. „Von der Uhr“ nimmt eine Melodie oder MP3-Datei, die auf der Uhr liegt. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch. Mit „In Schleife“ spielt er, bis die Nachricht zurückgezogen wird oder ausläuft. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
@@ -207,8 +220,6 @@ struct Tonabschnitt: View {
     let kanon: Formkanon
 
     @State private var sender: String?
-    @State private var waehltMP3 = false
-    @State private var mp3Auswahl: MP3Auswahl?
     @State private var loeschtMP3: String?
     @State private var loeschtMelodie: String?
 
@@ -264,12 +275,6 @@ struct Tonabschnitt: View {
         .task(id: id) {
             if !gesperrt, zustand.tonlisten[id] == nil { await zustand.tonlistenAbfragen(id) }
         }
-        .fileImporter(isPresented: $waehltMP3, allowedContentTypes: [.mp3]) { ergebnis in
-            if case .success(let url) = ergebnis { mp3Auswahl = MP3Auswahl(url: url) }
-        }
-        .sheet(item: $mp3Auswahl) { auswahl in
-            MP3Hochladeblatt(zustand: zustand, uhr: uhr, datei: auswahl.url, kanon: kanon)
-        }
         .confirmationDialog(lokf("„%@“ von der Uhr löschen?", loeschtMP3 ?? ""),
                             isPresented: Binding(get: { loeschtMP3 != nil }, set: { if !$0 { loeschtMP3 = nil } }),
                             titleVisibility: .visible) {
@@ -287,7 +292,8 @@ struct Tonabschnitt: View {
     }
 
     /// Melodien und MP3-Dateien der Uhr: Zahl und Belegung, die Liste, der Knopf
-    /// zum Hochladen. Eine Uhr ohne MP3 bekommt weder Knopf noch Hinweis.
+    /// zu den Klängen. Eine Uhr ohne MP3 bekommt weder Knopf noch Hinweis.
+    /// Hochgeladen wird nur aus der Sammlung (Bereich „Klänge“).
     @ViewBuilder
     private var klaengezeilen: some View {
         LabeledContent("Klänge auf der Uhr") {
@@ -301,7 +307,7 @@ struct Tonabschnitt: View {
             ForEach(ablage?.namen ?? [], id: \.self) { name in
                 MP3Zeile(name: name, groesse: ablage?.groessen[name]) { loeschtMP3 = name }
             }
-            Button("MP3 hochladen …") { waehltMP3 = true }
+            Button("Klänge verwalten …") { zustand.klaengeVerwalten() }
                 .knopfBefehl()
         }
     }

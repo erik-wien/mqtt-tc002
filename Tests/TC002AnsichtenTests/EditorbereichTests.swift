@@ -34,10 +34,14 @@ final class EditorbereichTests: XCTestCase {
     }
 
     func testDieSeitenleisteHatFuenfEintraegeUndDarunterDenEditor() {
-        XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor, .uhr])
+        XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor, .klaenge, .uhr])
+        #if os(macOS)
+        XCTAssertEqual(SchreibtischView.Bereich.unten, [.protokoll], "am Mac öffnet ⌘, die Einstellungen")
+        #else
         XCTAssertEqual(SchreibtischView.Bereich.unten, [.protokoll, .einstellungen])
-        XCTAssertEqual(SchreibtischView.Bereich.allCases.count, 5,
-                       "„Bilder“ und „Icons“ sind ein Eintrag, die Fernbedienung „Uhr“ ein weiterer")
+        #endif
+        XCTAssertEqual(SchreibtischView.Bereich.allCases.count, 6,
+                       "„Bilder“ und „Icons“ sind ein Eintrag, „Klänge“ und die Fernbedienung „Uhr“ je ein weiterer")
     }
 
     /// Der Eintrag heißt „Icons" und trägt ein Raster. Beim ersten

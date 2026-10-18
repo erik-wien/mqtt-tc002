@@ -56,6 +56,8 @@ struct SendeniOS: View {
     /// einzutragen, bekommt es nicht gleich wieder vorgesetzt.
     @State private var zeigeEinstellungen: Bool
     @State private var zeigeSteuerung = false
+    @State private var zeigeKlaenge = false
+    @State private var zeigeHilfe = false
     @State private var zeigeUhreinstellungen = false
 
     @MainActor
@@ -442,6 +444,20 @@ struct SendeniOS: View {
             }
             .buttonStyle(.automatic)
         }
+        // Unabhängig von einer Uhr: die Sammlung gehört der App, und die Hilfe
+        // ist am iPhone nur hier zu erreichen (am Mac das Hilfe-Menü).
+        Button {
+            zustand.klaengeVerwalten()
+        } label: {
+            Label("Klänge …", systemImage: "music.note.list")
+        }
+        .buttonStyle(.automatic)
+        Button {
+            zeigeHilfe = true
+        } label: {
+            Label("Hilfe", systemImage: "questionmark.circle")
+        }
+        .buttonStyle(.automatic)
     }
 
     var body: some View {
@@ -462,6 +478,18 @@ struct SendeniOS: View {
         }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)
+        }
+        .sheet(isPresented: $zeigeKlaenge) {
+            KlaengeblattiOS(zustand: zustand)
+        }
+        .sheet(isPresented: $zeigeHilfe) {
+            HilfeiOS()
+        }
+        // Aus dem Klangabschnitt einer Nachricht: `AppZustand.klaengeVerwalten()`.
+        .onChange(of: zustand.klaengeAngefordert) { _, angefordert in
+            guard angefordert else { return }
+            zeigeKlaenge = true
+            zustand.klaengeAngefordert = false
         }
         .sheet(isPresented: $zeigeVerlauf) {
             AnzeigeniOS(zustand: zustand)

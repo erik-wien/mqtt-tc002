@@ -63,6 +63,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case ueberblick = "Was das Programm tut"
     case verbindung = "Einstellungen"
     case senden = "Senden"
+    case klaenge = "Klänge"
     case uhr = "Uhr"
     case anzeigen = "Protokoll"
     case kurzbefehle = "Kurzbefehle"
@@ -97,7 +98,6 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
-                + HilfeInhalt.klangsammlung
                 + HilfeInhalt.wolkenabgleich
         case .senden:
             return [.ueberschrift("Meldung und Platz")]
@@ -167,9 +167,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Geht etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund. Bei mehreren Zieluhren steht dort eine Zeile je betroffener Uhr; die übrigen werden trotzdem beliefert."),
                     .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
+        case .klaenge:
+            return HilfeInhalt.klangsammlung
         case .uhr:
             return [
-                    .absatz("Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Steuerung …“ öffnet die Fernbedienung der Uhr als Blatt, „Einstellungen der Uhr …“ ihre Seite mit den gespeicherten Einstellungen; bei mehreren Uhren steht dort auch die Wahl der Uhr."),
+                    .absatz("Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Steuerung …“ öffnet die Fernbedienung der Uhr als Blatt, „Einstellungen der Uhr …“ ihre Seite mit den gespeicherten Einstellungen, „Klänge …“ die Klangsammlung und „Hilfe“ diese Hilfe; bei mehreren Uhren steht dort auch die Wahl der Uhr."),
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen
@@ -177,7 +179,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .anzeigen:
             return [
                     .absatz("Dieses Blatt ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht in der Sendeansicht unter den fünf Blöcken."),
-                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
+                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Allgemein“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
                 ]
                 + HilfeInhalt.protokollListe
                 + HilfeInhalt.protokollLeeren

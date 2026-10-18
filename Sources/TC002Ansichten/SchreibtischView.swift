@@ -18,6 +18,8 @@ public struct SchreibtischView: View {
     @State private var bereich: Bereich?
     #if !os(macOS)
     @State private var nebenfenster: Nebenfenster?
+    #else
+    @Environment(\.openSettings) private var einstellungenOeffnen
     #endif
 
     /// Der Startbereich steht hier fest und nicht an der Eigenschaft: `@State`
@@ -35,7 +37,7 @@ public struct SchreibtischView: View {
     }
 
     enum Bereich: String, CaseIterable, Identifiable {
-        case senden = "Senden", editor = "Icons", uhr = "Uhr",
+        case senden = "Senden", editor = "Icons", klaenge = "Klänge", uhr = "Uhr",
              // „Protokoll", nicht „Verlauf": Der Bereich zeigt, was jetzt auf
              // der Uhr liegt, und darunter die technische Mitschrift. „Verlauf"
              // heisst die Liste der gesendeten Meldungen unter den Bloecken.
@@ -45,14 +47,25 @@ public struct SchreibtischView: View {
             switch self {
             case .senden: return "paperplane"
             case .editor: return "square.grid.3x3"
+            case .klaenge: return "music.note.list"
             case .uhr: return "slider.horizontal.3"
             case .protokoll: return "clock.arrow.circlepath"
             case .einstellungen: return "gearshape"
             }
         }
         /// Die unteren stehen abgesetzt am Fuss der Seitenleiste.
-        static let oben: [Bereich] = [.senden, .editor, .uhr]
-        static let unten: [Bereich] = [.protokoll, .einstellungen]
+        static let oben: [Bereich] = [.senden, .editor, .klaenge, .uhr]
+        /// Am Mac öffnet ⌘, (Programmmenü › Einstellungen) das Einstellungsfenster;
+        /// ein zweiter Eintrag in der Seitenleiste wäre derselbe Inhalt an zwei
+        /// Stellen. Das iPad hat keine verlässliche Menüleiste (erst iPadOS 26, die
+        /// App läuft ab iOS 17) und behält den Eintrag.
+        static let unten: [Bereich] = {
+            #if os(macOS)
+            [.protokoll]
+            #else
+            [.protokoll, .einstellungen]
+            #endif
+        }()
 
         /// Ohne Protokoll gibt es den Eintrag nicht: Ein Bereich, der nichts
         /// zeigt, ist kein Bereich — und der Schalter dafuer steht in den
@@ -64,9 +77,14 @@ public struct SchreibtischView: View {
         /// Womit die Oberflaeche beginnt. Ohne eingerichtete Uhr und Broker
         /// (`AppZustand.eingerichtet`) waere „Senden" eine Sackgasse: keine
         /// Vorschau, kein Ziel. Gesperrt ist nichts, die Seitenleiste steht
-        /// offen.
+        /// offen. Am Mac gibt es keinen Einstellungsbereich; dort öffnet der
+        /// Schreibtisch stattdessen das Einstellungsfenster (`body`).
         static func start(eingerichtet: Bool) -> Bereich {
+            #if os(macOS)
+            .senden
+            #else
             eingerichtet ? .senden : .einstellungen
+            #endif
         }
     }
 
@@ -93,6 +111,15 @@ public struct SchreibtischView: View {
             set: { if !$0 { zustand.fehler = nil } })) {
             Button("OK") { zustand.fehler = nil }
         } message: { Text(zustand.fehler ?? "") }
+        // Aus Popover, Uhr-Abschnitt und Titelmenü: `AppZustand.klaengeVerwalten()`.
+        .onChange(of: zustand.klaengeAngefordert) { _, angefordert in
+            guard angefordert else { return }
+            bereich = .klaenge
+            zustand.klaengeAngefordert = false
+        }
+        #if os(macOS)
+        .task { if !zustand.eingerichtet { einstellungenOeffnen() } }
+        #endif
         #if !os(macOS)
         // Ganzflächig statt als Blatt: Hilfe und Gerätereferenz sind
         // zweispaltige Dokumente, und ein Formularblatt (rund 540 Punkte)
@@ -106,7 +133,7 @@ public struct SchreibtischView: View {
         List(Bereich.oben, selection: $bereich) { b in
             Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
         }
-        // Protokoll, Einstellungen und Hilfe bleiben unten abgesetzt, statt
+        // Protokoll, Einstellungen (nur iPad) und Hilfe bleiben unten abgesetzt, statt
         // in derselben Liste mitzulaufen — eine zweite List traegt dieselbe
         // Auswahl ($bereich) und dieselbe Reihen-Optik wie die obere.
         .safeAreaInset(edge: .bottom) {
@@ -126,7 +153,7 @@ public struct SchreibtischView: View {
             // 44 je Zeile haelt denselben Abstand.
             .scrollDisabled(true)
             .scrollIndicators(.hidden)
-            .frame(height: zeilenhoehe * (zustand.protokollAn ? 3 : 2))
+            .frame(height: zeilenhoehe * CGFloat(Bereich.unten(protokoll: zustand.protokollAn).count + 1))
         }
         // Feste Breite, kein Spielraum: Schrumpft das Fenster, gibt nur die
         // Mitte nach — nicht die Seitenleiste. Wie bei Finder und Mail.
@@ -181,6 +208,11 @@ public struct SchreibtischView: View {
             switch gewaehlt {
             case .senden: SendenView(zustand: zustand)
             case .editor: EditorBereichView(zustand: zustand)
+            case .klaenge:
+                // Wie in den Einstellungen: beim Aufschlagen fragen, damit die
+                // Uhren mit Lautsprecher für den Abgleich bekannt sind.
+                Klangsammlungsansicht(zustand: zustand, kanon: .schreibtisch)
+                    .task { zustand.alleAbfragen() }
             case .uhr: Fernbedienung(zustand: zustand, kanon: .schreibtisch)
             case .protokoll: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)

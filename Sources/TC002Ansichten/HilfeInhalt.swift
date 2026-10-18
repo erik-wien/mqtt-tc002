@@ -97,22 +97,19 @@ public enum HilfeInhalt {
     ]
 
     /// Wie die Einstellungen gegliedert sind (`Einstellungsthema`). Das Erste,
-    /// was man wissen will — und auf beiden Oberflaechen dieselben fuenf
+    /// was man wissen will — und auf beiden Oberflaechen dieselben drei
     /// Bereiche in derselben Reihenfolge. Nur ihre Darstellung unterscheidet
     /// sich, und das steht im Absatz selbst.
     ///
-    /// Keine Ueberschrift ueber der Aufzaehlung: „Fuenf Themen" nannte die
+    /// Keine Ueberschrift ueber der Aufzaehlung: „Drei Themen" nannte die
     /// Anzahl statt der Sache. Die Namen stehen in der Aufzaehlung, und der
     /// Abschnitt heisst ohnehin „Einstellungen".
     public static let themen: [Hilfebaustein] = [
-        .absatz("Die Einstellungen sind in sechs Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite."),
+        .absatz("Die Einstellungen sind in drei Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite. Die Klangsammlung gehört nicht dazu: Sie hat einen eigenen Bereich „Klänge“."),
         .punkte([
             "**Uhren** — deine eingetragenen Uhren, je eine Zeile, die auf ihre Seite führt.",
-            "**Klänge** — die Klangsammlung der App: Melodien und MP3-Dateien, nach denen du die Uhren abgleichst.",
             "**MQTT-Broker** — Adresse, Port, Verschlüsselung (TLS), Benutzer und Kennwort des Brokers, dazu die Prüfung der Verbindung.",
-            "**Aufzeichnung** — Verlauf und Protokoll.",
-            "**iCloud** — Synchronisation deiner Geräte.",
-            "**Erweitert** — die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",
+            "**Allgemein** — Aufzeichnung (Verlauf und Protokoll), iCloud (Synchronisation deiner Geräte) und die virtuelle Uhr, mit der du die App ohne ein Gerät ausprobieren kannst.",
         ]),
         .ueberschrift("Konfigurieren der Pixel Uhr"),
         .absatz("Tippst du unter „Uhren“ eine Zeile an, öffnet sich die Seite dieser Uhr. Dort steht alles, was zu ihr gehört: Name, Adresse, Betriebsart, „Abfragen“ und „Konfigurieren“ — und am Fuß, rot, „Entfernen“. Jeder Wert dort gilt dieser einen Uhr, nicht der gerade angesehenen."),
@@ -121,8 +118,8 @@ public enum HilfeInhalt {
 
     /// Womit die App beginnt, solange nichts eingerichtet ist
     /// (`AppZustand.eingerichtet`). Der Satz gilt fuer beide Oberflaechen: Am
-    /// Mac und auf dem iPad steht der Bereich „Einstellungen" vorn, auf dem
-    /// Telefon geht sein Blatt von selbst auf. Beide Male ist es derselbe
+    /// Mac geht das Einstellungsfenster von selbst auf, auf dem iPad steht der
+    /// Bereich „Einstellungen" vorn, auf dem Telefon geht sein Blatt auf. Beide Male ist es derselbe
     /// Grund und dieselbe Auskunft — deshalb ein Absatz und nicht zwei.
     public static let startOhneEinrichtung: [Hilfebaustein] = [
         .absatz("Solange keine Uhr eingetragen ist, beginnt die App bei den Einstellungen statt bei „Senden“, und zwar beim Thema „Uhren“, wo die erste Uhr eingetragen wird — bei „Senden“ gäbe es ohne Uhr weder eine Vorschau noch ein Ziel. Dasselbe gilt, solange eine Uhr auf MQTT steht und die Adresse des MQTT-Brokers fehlt; steht jede Uhr auf HTTP, fragt die App nach keinem Broker. Gesperrt ist dabei nichts: Wer will, geht sofort weiter. Sobald steht, was gebraucht wird, startet sie wieder bei „Senden“."),
@@ -200,7 +197,7 @@ public enum HilfeInhalt {
     /// gibt und was er tut ueberall dasselbe ist.
     public static let virtuelleUhr: [Hilfebaustein] = [
         .ueberschrift("Virtuelle Uhr"),
-        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Erweitert“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine AWTRIX NG und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
+        .absatz("Ohne Gerät lässt sich die App trotzdem ausprobieren: Der Schalter „Virtuelle Uhr“ unter „Einstellungen“ → „Allgemein“ startet eine Uhr, die es nicht gibt. Sie hört auf 127.0.0.1:8752 zu, nimmt Anzeigen entgegen wie eine AWTRIX NG und zeigt sie in einem eigenen Fenster — mit Geräterahmen, den fünf Plätzen und dem Blättern im eingestellten Takt."),
         .absatz("„Als Uhr eintragen“ legt sie in der Uhrenliste an; von da an ist alles wie bei einem Gerät: Abfragen, Senden, Löschen, der Verlauf. Was das Fenster zeigt, ist nicht die Vorschau, sondern das, was wirklich angekommen ist: Die **Nutzlast** — so heißt hier und im Folgenden das Datenpaket, das die App an die Uhr schickt — wird dafür wie auf der Uhr gezeichnet."),
         .absatz("Sie spricht HTTP, kein MQTT: Ein MQTT-Broker ist ein fremdes Programm und kann hier nicht mitkommen. Und sie hört nur auf dem eigenen Rechner zu — im Hausnetz ist sie nicht zu sehen."),
     ]
@@ -214,7 +211,7 @@ public enum HilfeInhalt {
         .absatz("Tasten und Drehknopf sieht die App nur im MQTT-Betrieb, weil nur das Mitlesen sie mitbekommt; im HTTP-Betrieb stehen sie grau da."),
         .absatz("„Uhr neu starten …“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist."),
         .absatz("Der Abschnitt „Ton“ zeigt, was die Uhr gerade spielt: das Radio mit Sender und Titel, sonst einen Alarm oder eine App mit ihrem Namen, sonst „Still“. „Stopp“ hält allen Klang an, „Radio aus“ nur das Radio. Die Lautstärke ist die der Uhr in Prozent. Aus der Senderliste der Uhr wählst du einen Sender und spielst ihn mit „Abspielen“. Sender legst du nicht in dieser App an, sondern in der Web-Oberfläche der Uhr unter „Konfigurieren“. Gelesen wird über die Adresse der Uhr, im Takt der übrigen Fernbedienung; ohne Adresse ist der Abschnitt grau. Meldet die Uhr kein Radio, fehlt dieser Teil."),
-        .absatz("MP3-Dateien lädst du im Abschnitt „Ton“ mit „MP3 hochladen …“ auf die Uhr; die Liste darüber zeigt die Melodien und MP3-Dateien der Uhr mit Größe und Belegung. Die Uhr nimmt nur Namen aus 1 bis 32 Zeichen: Buchstaben ohne Akzent, Ziffern, „_“ und „-“. Die App schlägt aus dem Dateinamen einen solchen Namen vor („Grüße aus Wien.mp3“ wird „Gruesse-aus-Wien“) und prüft deine Änderungen beim Tippen. Gibt es den Namen schon, wählst du, ob die vorhandene Datei ersetzt wird oder ein freier Name gilt; trägt eine Melodie den Namen, geht nur ein anderer. Nach dem Hochladen steht der Name unter Klang › „Von der Uhr“. Das geht nur über die Adresse der Uhr. Eine Uhr, die keine MP3 spielt (die TC001), zeigt in der App keine MP3 und nimmt keine Datei an. Löschen kannst du eine Melodie oder Datei durch Wischen, im Kontextmenü oder am Zeiger über den Papierkorb."),
+        .absatz("MP3-Dateien lädst du nicht einzeln auf eine Uhr, sondern legst sie im Bereich „Klänge“ in die Sammlung und gleichst die Uhren daran ab („Klänge verwalten …“ im Abschnitt „Ton“ führt dorthin); die Liste im Abschnitt „Ton“ zeigt die Melodien und MP3-Dateien der Uhr mit Größe und Belegung. Die Uhr nimmt nur Namen aus 1 bis 32 Zeichen: Buchstaben ohne Akzent, Ziffern, „_“ und „-“. Die App schlägt aus dem Dateinamen einen solchen Namen vor („Grüße aus Wien.mp3“ wird „Gruesse-aus-Wien“) und prüft deine Änderungen beim Tippen. Gibt es den Namen schon, wählst du, ob die vorhandene Datei ersetzt wird oder ein freier Name gilt; trägt eine Melodie den Namen, geht nur ein anderer. Nach dem Hochladen steht der Name unter Klang › „Von der Uhr“. Das geht nur über die Adresse der Uhr. Eine Uhr, die keine MP3 spielt (die TC001), zeigt in der App keine MP3 und nimmt keine Datei an. Löschen kannst du eine Melodie oder Datei durch Wischen, im Kontextmenü oder am Zeiger über den Papierkorb."),
     ]
 
     /// Die gespeicherten Einstellungen der Uhr. Wo man sie findet, steht in
@@ -260,8 +257,7 @@ public enum HilfeInhalt {
     ]
 
     public static let klangsammlung: [Hilfebaustein] = [
-        .ueberschrift("Klänge"),
-        .absatz("Unter „Klänge“ liegt die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist. Dateien kommen hinzu, indem du sie auf die Ablegefläche unter „Hinzufügen“ ziehst oder dort „Datei wählen …“ drückst."),
+        .absatz("Der Bereich „Klänge“ (Mac und iPad: in der Seitenleiste neben „Icons“, iPhone: im Titelmenü der Sendeansicht, außerdem „Klänge verwalten …“ im Klangblatt einer Nachricht und im Abschnitt „Ton“ einer Uhr) enthält die Klangsammlung: Melodien (RTTTL-Texte) und MP3-Dateien. Sie ist das Original, die Uhren werden daran angeglichen. Sie wandert mit iCloud, wenn der Abgleich dort eingeschaltet ist. Dateien kommen hinzu, indem du sie auf die Ablegefläche unter „Hinzufügen“ ziehst oder dort „Datei wählen …“ drückst."),
         .absatz("**Hinzufügen** geht auf drei Wegen: die Melodien einer Uhr übernehmen, eine Melodie tippen oder einfügen — mit „Probehören“ auf der angesehenen Uhr, bevor sie gesichert wird — oder eine oder mehrere Dateien (`.mp3`, `.txt`, `.rtttl`) wählen. Der Name gilt so, wie ihn die Uhr nimmt: Buchstaben, Ziffern, _ und -, bei Melodien bis 24 Zeichen, bei MP3-Dateien bis 32. Eine Melodie und eine MP3 teilen sich keinen Namen. MP3-Dateien lassen sich nicht von der Uhr holen."),
         .absatz("**Mit Uhren abgleichen** legt Fehlendes auf den gewählten Uhren an und ersetzt Abweichendes — bei einer Melodie einen anderen Text, bei einer MP3 eine andere Größe. Was nur auf der Uhr liegt, bleibt dort; gelöscht wird dort nur einzeln. Übersprungen wird, was die Uhr nicht spielt (die TC001 nimmt keine MP3) oder was nicht mehr hineinpasst. Das Ergebnis steht je Uhr darunter. Am Kommandozeilenwerkzeug gibt es dasselbe als „ton abgleichen“."),
     ]
@@ -375,7 +371,7 @@ public enum HilfeInhalt {
         .absatz("Das Segment „Anzeige | Nachricht“ über dem Eingabefeld bestimmt, was „Senden“ schickt. Eine Anzeige liegt auf einem der fünf Plätze und läuft in der Schleife der Uhr. Eine Nachricht unterbricht die Schleife einmal und belegt keinen Platz; bei „Nachricht“ sind die fünf Blöcke deshalb ausgegraut."),
         .absatz("Solange „Nachricht“ gewählt ist, stehen neben dem Segment zwei Knöpfe: das Notensymbol für den Klang und der Regler daneben für die Optionen. Die Optionen: „Steht …“ sagt, wie lange die Nachricht steht — „bis ich sie zurückziehe“ lässt sie stehen, bis sie beendet wird, und hält dabei die Warteschlange der Uhr an (jede spätere Nachricht wartet hinter ihr); „Sekunden“ zeigt sie so lange; „Durchläufe“ lässt einen laufenden Text so oft durchziehen und gilt nur, wenn der Text nicht ins Display passt (sonst ist die Wahl gesperrt, und eine schon gewählte fällt auf die Anzeigedauer der Uhr zurück). Die Zahl dazu steht neben der Wahl; „Steht …“ ist dieselbe Einstellung wie im Reiter „Zeit“ des Inspektors. „Aufwecken“ zeigt die Nachricht auch bei ausgeschaltetem Display; „Ersetzen“ verdrängt die sichtbare Nachricht, statt sich hinter ihr einzureihen. Voreingestellt sind „bis ich sie zurückziehe“, Aufwecken und Ersetzen an."),
         .absatz("Neben dem Segment steht bei „Nachricht“ immer „Nachricht zurückziehen“ (die durchgestrichene Glocke): Es nimmt die sichtbare Nachricht weg, gleich von wem sie kam, und hält ihren Klang an; ein laufendes Radio bleibt. Bei „Anzeige“ erscheint es nur, solange eine gehaltene Nachricht steht, die diese App geschickt hat. Nachricht und Zurückziehen gelten für alle gewählten Uhren."),
-        .absatz("Der Klang einer Nachricht steht hinter dem Notensymbol neben dem Segment; ist einer gewählt, zeigt der Knopf seinen Namen. „Keiner“ ist die Vorgabe. „Von der Uhr“ spielt eine Melodie oder MP3-Datei, die auf der Uhr liegt; die Namen kommen von den Uhren, an die die Nachricht geht, und werden beim Öffnen des Blattes geholt: Es zeigt, was mindestens eine von ihnen hat. Antwortet eine Uhr nicht oder liegt dort nichts, steht darunter, welche. Liegt noch nichts, legst du Melodien in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch: den Text der Nachricht oder, wenn du ihn ausfüllst, einen eigenen kurzen Text (höchstens 512 Byte). „Klang: 1× | In Schleife“ — „1×“ (die Vorgabe) spielt den Klang einmal beim Erscheinen, „In Schleife“ so lange, wie die Nachricht steht (bei „bis ich sie zurückziehe“: bis du sie zurückziehst). Die App bietet nur an, was die Uhr als spielbar meldet: Was keine der Uhren kann, steht gar nicht zur Wahl; bei mehreren Uhren geht der Klang nur an die, die ihn spielen und den gewählten Namen haben — die Nachricht geht an alle, ein Hinweis nennt die Uhren ohne Klang. Eine Anzeige hat keinen Klang."),
+        .absatz("Der Klang einer Nachricht steht hinter dem Notensymbol neben dem Segment; ist einer gewählt, zeigt der Knopf seinen Namen. „Keiner“ ist die Vorgabe. „Von der Uhr“ spielt eine Melodie oder MP3-Datei, die auf der Uhr liegt; die Namen kommen von den Uhren, an die die Nachricht geht, und werden beim Öffnen des Blattes geholt: Es zeigt, was mindestens eine von ihnen hat. Antwortet eine Uhr nicht oder liegt dort nichts, steht darunter, welche. Liegt noch nichts, führt „Klänge verwalten …“ im Blatt in den Bereich „Klänge“, wo du Melodien und MP3-Dateien sammelst und auf die Uhren abgleichst; Melodien legst du auch in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch: den Text der Nachricht oder, wenn du ihn ausfüllst, einen eigenen kurzen Text (höchstens 512 Byte). „Klang: 1× | In Schleife“ — „1×“ (die Vorgabe) spielt den Klang einmal beim Erscheinen, „In Schleife“ so lange, wie die Nachricht steht (bei „bis ich sie zurückziehe“: bis du sie zurückziehst). Die App bietet nur an, was die Uhr als spielbar meldet: Was keine der Uhren kann, steht gar nicht zur Wahl; bei mehreren Uhren geht der Klang nur an die, die ihn spielen und den gewählten Namen haben — die Nachricht geht an alle, ein Hinweis nennt die Uhren ohne Klang. Eine Anzeige hat keinen Klang."),
     ]
 
     /// Die Kurzbefehle (iPhone, iPad und Mac — dieselben). Am Mac gibt es

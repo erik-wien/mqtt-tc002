@@ -323,9 +323,9 @@ final class KnopfstilTests: XCTestCase {
             // Icons, und der Knopf davor ist ihr einziger Einstieg. Dazu
             // „Steuerung …“ und „Einstellungen der Uhr …“ im Titelmenü
             // (`toolbarTitleMenu`): Einträge eines Systemmenüs, deren Stil
-            // das System setzt (+2). Uhr und Pinsel am Ende der Pille sind zwei
+            // das System setzt (+2), dazu „Klänge …“ und „Hilfe“ (+2). Uhr und Pinsel am Ende der Pille sind zwei
             // Knöpfe dieser Bauart (Zeit, Darstellung) statt des einen.
-            "Sources/TC002iOS/SendeniOS.swift": 5,
+            "Sources/TC002iOS/SendeniOS.swift": 7,
             // „Uhr hinzufuegen …“ — eine Listenzeile, die weiterfuehrt und
             // ein Blatt oeffnet, wie „Account hinzufuegen" in den
             // Systemeinstellungen.

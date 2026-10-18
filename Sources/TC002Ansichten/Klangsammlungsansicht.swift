@@ -3,8 +3,9 @@ import UniformTypeIdentifiers
 import TC002Core
 import TC002Modell
 
-/// Die Klangsammlung in den Einstellungen („Klänge“) — für Mac, iPad und iPhone
-/// dieselbe Seite. Die Sammlung ist das Original, die Uhren werden daran
+/// Die Klangsammlung, der Bereich „Klänge“ — für Mac, iPad und iPhone dieselbe
+/// Seite. Hier, und nur hier, kommen Klänge hinzu und werden auf die Uhren
+/// abgeglichen. Die Sammlung ist das Original, die Uhren werden daran
 /// angeglichen (`Klangabgleich`): Fehlendes kommt hinzu, Abweichendes wird
 /// ersetzt, Überzähliges auf der Uhr bleibt.
 public struct Klangsammlungsansicht: View {

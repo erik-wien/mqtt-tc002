@@ -58,6 +58,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
     case verbindung = "Einstellungen"
     case senden = "Senden"
     case editor = "Icons"
+    case klaenge = "Klänge"
     case uhr = "Uhr"
     case anzeigen = "Protokoll"
     case kommandozeile = "Kommandozeile"
@@ -86,7 +87,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                         "**Icons** — Icons und ganze Anzeigen malen.",
                         "**Uhr** — die Fernbedienung: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger.",
                         "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
-                        "**Einstellungen** — Uhren, Klänge, Broker, Aufzeichnung, iCloud und Erweitert.",
+                        "**Klänge** — die Klangsammlung: Melodien und MP3-Dateien hinzufügen und auf die Uhren abgleichen.",
+                        "**Einstellungen** — am Mac nicht in der Seitenleiste, sondern im Programmmenü (⌘,); auf dem iPad hier: Uhren, MQTT-Broker und Allgemein (Aufzeichnung, iCloud, virtuelle Uhr).",
                     ]),
                     .absatz("Was das Gerät selbst kann und wie das Protokoll dahinter aussieht, steht nicht hier, sondern unter „Hilfe → Gerätereferenz“ — dort steht das Dokument zur Uhr. Diese Hilfe beschreibt nur, was man in der App klickt."),
                 ]
@@ -113,7 +115,6 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.brokerSichern
                 + HilfeInhalt.brokerPruefen
                 + HilfeInhalt.virtuelleUhr
-                + HilfeInhalt.klangsammlung
                 + HilfeInhalt.wolkenabgleich
         case .senden:
             return [
@@ -248,6 +249,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Das ⊗ an einem belegten Block löscht die Anzeige auf der Uhr — nicht die Leinwand. Die Zielauswahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist. Eine eigene Dauer bekommt ein von hier geschicktes Bild nicht; wie lange es steht, entscheidet der Seitenwechsel der Uhr."),
                     .absatz("Ein Einzelbild geht als Standbild an die Uhr, mehrere als animiertes GIF mit ihren Standzeiten. Ist die Anzeige für eine MQTT-Nachricht zu groß, nimmt die App den Weg über HTTP an dieselbe Uhr."),
                 ]
+        case .klaenge:
+            return HilfeInhalt.klangsammlung
         case .uhr:
             return [
                     .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr. Die Uhr wählst du oben auf der Seite, sobald mehr als eine eingetragen ist."),
@@ -261,7 +264,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
         case .anzeigen:
             return [
                     .absatz("Dieser Bereich ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht unter „Senden“ in der Liste unter den fünf Blöcken."),
-                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet der Eintrag in der Seitenleiste ganz: Ein Bereich, der nichts zeigt, ist kein Bereich. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
+                    .absatz("Ist „Protokoll führen“ unter „Einstellungen“ → „Allgemein“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet der Eintrag in der Seitenleiste ganz: Ein Bereich, der nichts zeigt, ist kein Bereich. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“."),
                 ]
                 + HilfeInhalt.protokollListe
                 + [

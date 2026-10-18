@@ -2,41 +2,31 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Die sechs Themen der Einstellungen — auf allen Oberflächen dieselben, in
-/// derselben Reihenfolge.
-///
-/// Vorher lag alles in einer rollenden Form, und die Reihenfolge war
-/// gewachsen: die virtuelle Uhr (ein Prüfwerkzeug) zwischen den Uhren und dem
-/// Verlauf, Verlauf und Protokoll vor dem Broker, iCloud ganz unten. Jetzt
-/// steht die Ordnung an einer Stelle, und beide Oberflächen lesen sie hier ab.
+/// Die drei Themen der Einstellungen — auf allen Oberflächen dieselben, in
+/// derselben Reihenfolge. „Allgemein“ trägt, was weder eine Uhr noch den
+/// Broker betrifft: Aufzeichnung, iCloud und die virtuelle Uhr.
 ///
 /// Die Titel gehen durch `lok(…)` und nicht über `rawValue`: Ein über eine
 /// Variable nachgeschlagener Text ist für `scripts/texte-sammeln.py`
 /// unsichtbar und müsste dort von Hand geführt werden.
 public enum Einstellungsthema: String, CaseIterable, Identifiable, Sendable {
-    case uhren, klaenge, broker, aufzeichnung, wolke, erweitert
+    case uhren, broker, allgemein
 
     public var id: String { rawValue }
 
     public var titel: String {
         switch self {
         case .uhren: return lok("Uhren")
-        case .klaenge: return lok("Klänge")
         case .broker: return lok("MQTT-Broker")
-        case .aufzeichnung: return lok("Aufzeichnung")
-        case .wolke: return lok("iCloud")
-        case .erweitert: return lok("Erweitert")
+        case .allgemein: return lok("Allgemein")
         }
     }
 
     public var symbol: String {
         switch self {
         case .uhren: return "clock"
-        case .klaenge: return "music.note.list"
         case .broker: return "antenna.radiowaves.left.and.right"
-        case .aufzeichnung: return "list.bullet.rectangle"
-        case .wolke: return "icloud"
-        case .erweitert: return "wrench.and.screwdriver"
+        case .allgemein: return "gearshape"
         }
     }
 }
@@ -66,19 +56,13 @@ public struct Einstellungsinhalt: View {
         switch thema {
         case .uhren:
             Uhrenliste(zustand: zustand, kanon: kanon)
-        case .klaenge:
-            Klangsammlungsansicht(zustand: zustand, kanon: kanon)
         case .broker:
             Form { Brokerabschnitt(zustand: zustand, kanon: kanon) }
                 .formStyle(.grouped)
-        case .aufzeichnung:
-            Form { Aufzeichnungsabschnitt(zustand: zustand, kanon: kanon) }
-                .formStyle(.grouped)
-        case .wolke:
-            Form { Wolkenabschnitt(zustand: zustand, kanon: kanon) }
-                .formStyle(.grouped)
-        case .erweitert:
+        case .allgemein:
             Form {
+                Aufzeichnungsabschnitt(zustand: zustand, kanon: kanon)
+                Wolkenabschnitt(zustand: zustand, kanon: kanon)
                 VirtuelleUhrAbschnitt(zustand: zustand, betrieb: .gemeinsam,
                                       ansehen: virtuelleUhrAnsehen)
             }

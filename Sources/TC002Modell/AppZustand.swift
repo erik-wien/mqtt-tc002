@@ -1713,6 +1713,13 @@ public final class AppZustand {
         return ausgeschalteteAnzeigen[uhr.id]?.contains(Meldungsplatz.name(fuer: platz)) != true
     }
 
+    /// Wunsch, den Bereich „Klänge“ zu öffnen. Mac/iPad wechseln den Bereich,
+    /// das iPhone öffnet ein Blatt; wer ihn bedient, setzt ihn zurück.
+    public var klaengeAngefordert = false
+
+    /// Der eine Weg zur Klangsammlung aus Ansichten, die den Bereich nicht kennen.
+    public func klaengeVerwalten() { klaengeAngefordert = true }
+
     /// Steht bei einer der gewählten Uhren eine gehaltene Nachricht, die die App
     /// geschickt hat? Daran hängt „Nachricht zurückziehen“.
     public var nachrichtGehalten: Bool {

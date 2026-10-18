@@ -63,10 +63,9 @@ struct TC002App: App {
             }
         }
 
-        // ⌘, öffnet dieses Fenster — so findet man Einstellungen am Mac. Der
-        // Eintrag „Einstellungen“ in der Seitenleiste bleibt: Er ist der
-        // Startbereich einer noch nicht eingerichteten App, und der iPad
-        // teilt sich die Seitenleiste. Beide zeigen denselben Zustand.
+        // ⌘, öffnet dieses Fenster; es ist am Mac der einzige Weg zu den
+        // Einstellungen. Eine noch nicht eingerichtete App öffnet es von selbst
+        // (`SchreibtischView`).
         Settings {
             VerbindungView(zustand: zustand, fensterOeffnen: { openWindow(id: $0) })
                 .frame(minWidth: 520, idealWidth: 600, minHeight: 480, idealHeight: 620)

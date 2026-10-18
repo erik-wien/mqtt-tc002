@@ -2,12 +2,12 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Die Einstellungen am Schreibtisch (Mac und iPad): fünf Reiter, je ein
+/// Die Einstellungen am Schreibtisch (Mac und iPad): drei Reiter, je ein
 /// Thema. Was in einem Reiter steht, steht in `Einstellungsinhalt` und gilt
 /// für beide Oberflächen; hier steht nur, wie man zwischen den Themen
 /// wechselt.
 ///
-/// Reiter und nicht eine rollende Form: Fünf Themen untereinander waren am
+/// Reiter und nicht eine rollende Form: Mehrere Themen untereinander waren am
 /// Ende eine Wand, in der die virtuelle Uhr zwischen den Uhren und dem
 /// Verlauf stand.
 public struct VerbindungView: View {

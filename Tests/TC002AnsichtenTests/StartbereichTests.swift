@@ -34,8 +34,16 @@ final class StartbereichTests: XCTestCase {
     }
 
     func testOhneEinrichtungBeginntEsBeiDenEinstellungen() {
+        #if os(macOS)
+        // Der Mac hat keinen Einstellungsbereich; der Schreibtisch öffnet das
+        // Einstellungsfenster (⌘,) von selbst.
+        XCTAssertEqual(SchreibtischView.Bereich.start(eingerichtet: false), .senden)
+        XCTAssertFalse(SchreibtischView.Bereich.unten(protokoll: true).contains(.einstellungen),
+                       "am Mac sind die Einstellungen nur über ⌘, erreichbar")
+        #else
         XCTAssertEqual(SchreibtischView.Bereich.start(eingerichtet: false), .einstellungen,
                        "ohne Uhr und ohne Broker führt „Senden“ nirgendwohin")
+        #endif
     }
 
     func testMitEinrichtungBeginntEsWieBisherBeimSenden() {

@@ -3,12 +3,12 @@ import TC002Ansichten
 import TC002Core
 import TC002Modell
 
-/// Die Einstellungen am Telefon: eine Liste der sechs Themen, jedes Thema eine
+/// Die Einstellungen am Telefon: eine Liste der drei Themen, jedes Thema eine
 /// eigene Seite.
 ///
 /// **Der eine Unterschied zum Schreibtisch, und sein Grund.** Dort wählt eine
 /// Segmentwahl über dem Inhalt das Thema. Auf dem Telefon ist dafür kein Platz
-/// — sechs Wörter nebeneinander schrumpfen auf Kürzel —, und eine Reiterleiste
+/// — drei Wörter nebeneinander wären knapp —, und eine Reiterleiste
 /// in einem Blatt ist dort nicht üblich: Reiter gehören der App, nicht einem
 /// Blatt. Der Einstieg ist deshalb eine Liste mit `NavigationLink`, die Bauart
 /// der Einstellungen-App. Die Inhalte der Seiten sind **dieselben Bausteine**
@@ -61,16 +61,13 @@ struct VerbindungiOS: View {
         .presentationDragIndicator(.visible)
     }
 
-    /// Hilfe und Über am Fuß der Einstellungen. iOS stellt für „Über“ keine
-    /// Stelle bereit — macOS hat das Apple-Menü, hier gibt es nichts
-    /// dergleichen —, und die eingebürgerte Stelle ist das Ende der
-    /// App-eigenen Einstellungen. Die obere Leiste der Sendeansicht bleibt
-    /// bei ihren zwei Symbolen: ein drittes Fragezeichen ist auf dem iPhone
-    /// kein verbreitetes Muster.
+    /// Über am Fuß der Einstellungen. iOS stellt für „Über“ keine Stelle
+    /// bereit — macOS hat das Apple-Menü, hier gibt es nichts dergleichen —,
+    /// und die eingebürgerte Stelle ist das Ende der App-eigenen
+    /// Einstellungen. Die Hilfe steht im Titelmenü der Sendeansicht.
     private var ueberAbschnitt: some View {
         Section {
-            // Zwei Listenzeilen, die weiterführen statt etwas zu tun.
-            NavigationLink("Hilfe") { HilfeiOS(eingebettet: true) }
+            // Eine Listenzeile, die weiterführt statt etwas zu tun.
             NavigationLink("Über Pixel Clock Messenger") { UeberiOS(eingebettet: true) }
         }
     }
