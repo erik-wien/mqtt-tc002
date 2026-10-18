@@ -14,6 +14,11 @@ struct Sicherungsdokument: FileDocument {
 
     init(daten: Data) { self.daten = daten }
 
+    static func dateiname(fuer uhr: Uhr) -> String {
+        let name = uhr.name.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? Character($0) : "-" }
+        return "Uhr-" + String(name) + "-" + Date().formatted(.iso8601.year().month().day())
+    }
+
     init(configuration: ReadConfiguration) throws {
         daten = configuration.file.regularFileContents ?? Data()
     }
@@ -87,10 +92,7 @@ struct Sicherungszeilen: View {
         }
     }
 
-    private var dateiname: String {
-        let name = uhr.name.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? Character($0) : "-" }
-        return "Uhr-" + String(name) + "-" + Date().formatted(.iso8601.year().month().day())
-    }
+    private var dateiname: String { Sicherungsdokument.dateiname(fuer: uhr) }
 
     private var warnung: String {
         guard let g = gewaehlt else { return "" }

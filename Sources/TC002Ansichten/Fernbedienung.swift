@@ -294,6 +294,7 @@ private struct Steuerseite: View {
                 }
             }
             Sicherungszeilen(zustand: zustand, uhr: uhr, kanon: kanon)
+            Firmwarezeilen(zustand: zustand, uhr: uhr, kanon: kanon)
             Button("Uhr neu starten …", role: .destructive) { fragtNeustart = true }
                 .knopfZerstoerend()
         } header: {

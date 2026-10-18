@@ -1106,6 +1106,61 @@ while the sensor is in control.
 running device log; `GET /api/v1/files` the file store with `usedBytes` and
 `totalBytes` (excluding the reserved minimum free space).
 
+### 7.6 Firmware update: `POST /update` and the GitHub release
+
+Read from the source (repository `Blueforcer/awtrix-ng`: `docs/guides/updating.md`,
+`docs/reference/http.md` “Firmware upload”, `docs/reference/errors.md`,
+`webui/src/system/maintenance.js`, `tools/tc002/desktop/native/src/download.rs`, as of
+1.2.2 of 6 Oct 2026). **Not measured on a device:** there is no version newer than 1.2.2,
+so only the error path can be tried; the wording of the error texts is not fixed.
+
+1. **Which package:** `updateImage` from `GET /api/v1/device` (§7.1) names the file name the
+   clock accepts: `awtrix-ng-tc002.awup` (TC002, at most 8 MiB), `firmware-awtrix-ng.bin`
+   (ESP32), `firmware-awtrix-ng-s3-octal.bin` or `firmware-awtrix-ng-s3-quad.bin` (S3; at most
+   1,769,472 bytes each). Never guess: older versions (1.1.x) report no `updateImage`.
+2. **The release:** `GET https://api.github.com/repos/Blueforcer/awtrix-ng/releases/latest`
+   (no drafts or pre-releases; without sign-in 60 requests per hour and address; `403`/`429`
+   when exceeded). The manufacturer’s installer takes exactly one asset with that name,
+   `state` `uploaded`, `browser_download_url` exactly
+   `https://github.com/Blueforcer/awtrix-ng/releases/download/<tag>/<name>` and the checksum
+   from `digest` (`sha256:<64 hex digits>`); the download may redirect only to `github.com`,
+   `release-assets.githubusercontent.com` and `objects.githubusercontent.com`. A newer number
+   alone is not enough: v1.1.2 has no `.awup`. The clock’s web interface downloads from a
+   mirror on `blueforcer.github.io` instead; the app follows the installer. Packages are
+   **not signed**.
+3. **Upload:** `POST /update`, `multipart/form-data`, one field `firmware` (the TC002 refuses
+   any other field). Success: TC002 `200 {"ok":true,"applying":true}` (the clock answers first
+   and installs afterwards), ESP32 `200 {"ok":true}` (writes, checks, restarts). The clock
+   accepts nothing in setup mode; authentication as for the web interface.
+4. **Errors** (`error.code` decides, not the status):
+
+   | Code | Status | Meaning |
+   |---|---|---|
+   | `badRequest` | 400 | not exactly one file in the field `firmware` |
+   | `invalidPackage` | 400 | damaged, incomplete or unknown format (TC002) |
+   | `wrongTarget` | 400 | package for another device (TC002) |
+   | `wrongChip` | 400 | wrong chip, wrong PSRAM kind, `usb-*.bin` or not firmware (ESP32) |
+   | `forbidden` | 403 | setup mode |
+   | `forbiddenOrigin` | 403 | request from another website |
+   | `notNewer` | 409 | not newer than the installed version (TC002) |
+   | `insufficientStorage` | 409 (TC002), 507 otherwise | larger than the clock can hold; the message names the sizes |
+   | `updateBusy` | 409 | another update runs or is still being confirmed |
+   | `payloadTooLarge` | 413 | over 8 MiB (TC002) |
+   | `insufficientMemory` | 413 | too little free memory to accept it (TC002) |
+   | `internalError` | 500 | writing failed (ESP32) |
+
+   For the ESP32 the docs name no version check (only `wrongChip`); whether the same version
+   can be installed again is ❓ only inferred.
+5. **Afterwards:** `GET /api/v1/version` → `{"version":"…"}` (also `GET /version` as text and
+   `version` in §7.1). The old version keeps answering for a while after the `200` and not at
+   all during the restart; the web interface waits 15 s, then asks every 3 s for at most
+   180 s. `update.state` in §7.1: `idle`, `applying`, `boot-pending`, `confirmed`, `failed`.
+   The TC002 requires the new version to run **one minute**; until then further uploads are
+   refused (`updateBusy`). If it fails to start three times, the clock shows “USB RECOVERY”
+   (rescue over USB only). Some releases also update the TC002’s microphone controller on
+   their own; the clock needs USB power for that.
+6. The TC002 does not install an older version through this route (USB only).
+
 ---
 
 ## 8. The limits

@@ -1130,6 +1130,63 @@ und sperrt den Helligkeitsregler, solange der Sensor regelt.
 liefert das fortlaufende Geräteprotokoll; `GET /api/v1/files` die Dateiablage
 mit `usedBytes` und `totalBytes` (ohne die reservierte Mindestfreifläche).
 
+### 7.6 Firmware-Update: `POST /update` und das Release bei GitHub
+
+Aus dem Quelltext gelesen (Repository `Blueforcer/awtrix-ng`: `docs/guides/updating.md`,
+`docs/reference/http.md` „Firmware upload“, `docs/reference/errors.md`,
+`webui/src/system/maintenance.js`, `tools/tc002/desktop/native/src/download.rs`, Stand
+1.2.2 vom 06.10.2026). **Am Gerät nicht gemessen:** Es gibt keine neuere Fassung als 1.2.2,
+nur der Fehlerweg ist prüfbar; die Wortlaute der Fehlertexte stehen nicht fest.
+
+1. **Welches Paket:** `updateImage` aus `GET /api/v1/device` (§7.1) nennt den Dateinamen,
+   den die Uhr annimmt: `awtrix-ng-tc002.awup` (TC002, höchstens 8 MiB),
+   `firmware-awtrix-ng.bin` (ESP32), `firmware-awtrix-ng-s3-octal.bin` oder
+   `firmware-awtrix-ng-s3-quad.bin` (S3; je höchstens 1 769 472 Byte). Nicht raten:
+   ältere Fassungen (1.1.x) melden kein `updateImage`.
+2. **Das Release:** `GET https://api.github.com/repos/Blueforcer/awtrix-ng/releases/latest`
+   (ohne Entwürfe und Vorabfassungen; ohne Anmeldung 60 Anfragen je Stunde und Adresse;
+   `403`/`429` bei Überschreitung). Der Installer des Herstellers nimmt genau einen Anhang
+   mit dem Namen, `state` `uploaded`, `browser_download_url` genau
+   `https://github.com/Blueforcer/awtrix-ng/releases/download/<tag>/<name>` und die
+   Prüfsumme aus `digest` (`sha256:<64 Hexziffern>`); der Download darf nur auf
+   `github.com`, `release-assets.githubusercontent.com` und `objects.githubusercontent.com`
+   weiterleiten. Eine neuere Nummer allein genügt nicht: v1.1.2 hat keine `.awup`.
+   Die Weboberfläche der Uhr lädt stattdessen von einem Spiegel auf `blueforcer.github.io`;
+   die App folgt dem Installer. Pakete sind **nicht signiert**.
+3. **Hochladen:** `POST /update`, `multipart/form-data`, ein Feld `firmware` (jedes andere
+   Feld weist die TC002 ab). Erfolg: TC002 `200 {"ok":true,"applying":true}` (die Uhr
+   antwortet zuerst und installiert danach), ESP32 `200 {"ok":true}` (schreibt, prüft,
+   startet neu). Die Uhr nimmt im Einrichtungsmodus nichts an; Anmeldung wie bei der
+   Weboberfläche.
+4. **Fehler** (maßgeblich ist `error.code`, nicht der Status):
+
+   | Code | Status | Bedeutung |
+   |---|---|---|
+   | `badRequest` | 400 | nicht genau eine Datei im Feld `firmware` |
+   | `invalidPackage` | 400 | beschädigt, unvollständig oder unbekanntes Format (TC002) |
+   | `wrongTarget` | 400 | Paket für ein anderes Gerät (TC002) |
+   | `wrongChip` | 400 | falscher Chip, falsche PSRAM-Art, `usb-*.bin` oder keine Firmware (ESP32) |
+   | `forbidden` | 403 | Einrichtungsmodus |
+   | `forbiddenOrigin` | 403 | Anfrage von einer fremden Webseite |
+   | `notNewer` | 409 | nicht neuer als die installierte Fassung (TC002) |
+   | `insufficientStorage` | 409 (TC002), 507 sonst | größer als die Uhr aufnimmt; die Nachricht nennt die Größen |
+   | `updateBusy` | 409 | anderes Update läuft oder wird noch bestätigt |
+   | `payloadTooLarge` | 413 | über 8 MiB (TC002) |
+   | `insufficientMemory` | 413 | zu wenig freier Speicher zum Annehmen (TC002) |
+   | `internalError` | 500 | Schreiben fehlgeschlagen (ESP32) |
+
+   Bei der ESP32 nennt die Doku keine Versionsprüfung (nur `wrongChip`); ob dieselbe Fassung
+   noch einmal eingespielt werden kann, ist ❓ nur gefolgert.
+5. **Danach:** `GET /api/v1/version` → `{"version":"…"}` (auch `GET /version` als Text und
+   `version` in §7.1). Die alte Fassung antwortet nach dem `200` noch eine Weile, während
+   des Neustarts gar nicht; die Weboberfläche wartet 15 s, fragt dann alle 3 s bis höchstens
+   180 s. `update.state` in §7.1: `idle`, `applying`, `boot-pending`, `confirmed`, `failed`.
+   Die TC002 verlangt, dass die neue Fassung **eine Minute** läuft; bis dahin sind weitere
+   Uploads gesperrt (`updateBusy`). Startet sie dreimal nicht, zeigt die Uhr „USB RECOVERY“
+   (nur per USB zu retten). Manche Releases aktualisieren auch den Mikrofon-Controller
+   der TC002 von selbst; die Uhr braucht dabei USB-Strom.
+6. Eine ältere Fassung spielt die TC002 über diese Route nicht ein (nur per USB).
+
 ---
 
 ## 8. Die Grenzen

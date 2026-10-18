@@ -287,6 +287,8 @@ Grundlage ist Eriks Entwurf. Änderungen in dieser Fassung (Oktober 2026): nur n
 
 Kein Textfeld, sondern Fragebogen: App Privacy › Data Types › Edit › **„No, we do not collect data“** (Anzeige „Data Not Collected“) + Privacy Policy URL. Begründung, nur falls ein Prüfer fragt (aus `DATENSCHUTZ.md`): kein Konto, kein Server des Entwicklers, keine Analyse- oder Werbedienste. Die App spricht nur mit der eigenen Uhr (HTTP im lokalen Netz) und dem eigenen MQTT-Broker; einzige Ausnahme ist das Nachladen eines LaMetric-Icons auf Nutzerwunsch, dabei geht nur die eingegebene Nummer an developer.lametric.com. Das Broker-Kennwort liegt im Schlüsselbund; Icons, Bilder und Einstellungen liegen auf dem Gerät bzw. in der eigenen iCloud des Nutzers.
 
+- **TODO (Firmware-Update, eingang#155):** Neue Netzabhängigkeit GitHub (`api.github.com`, `github.com`, Dateihoster von GitHub): Die App lädt auf ausdrücklichen Druck das Firmware-Paket von `Blueforcer/awtrix-ng` (ohne Konto, ohne Kennung, ohne Übermittlung von Nutzerdaten außer der IP-Adresse an GitHub). Vor der nächsten Einreichung prüfen: Datenschutzseite (`…/mqtt-tc002/datenschutz.html`, Marketing) und `DATENSCHUTZ.md` um GitHub ergänzen; „Data Not Collected“ bleibt (keine Erhebung durch den Entwickler); Review Notes um einen Satz erweitern („The app can download a firmware package from github.com/Blueforcer/awtrix-ng, only on the user's explicit tap, and uploads it to the user's own clock after confirmation.“).
+
 ### Inhalte Dritter (App Information › Content Rights)
 
 „Contains, shows, or accesses third-party content“ → **Ja**; „Has all necessary rights“ → **Ja** (Empfehlung, siehe Vorbehalt). Begründung:
