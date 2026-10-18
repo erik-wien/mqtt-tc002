@@ -14,17 +14,12 @@ public struct VerbindungView: View {
     @Bindable var zustand: AppZustand
     @State private var thema: Einstellungsthema = .uhren
     /// Der Weg im Reiter „Uhren“ (Uhr, dann Gruppe), damit sich eine Seite von
-    /// außen aufschlagen lässt (`ziel`).
+    /// außen aufschlagen lässt (`AppZustand.einstellungsziel`).
     @State private var pfad = NavigationPath()
-    /// Eine Stelle, die der Aufrufer aufgeschlagen haben will; wird hier
-    /// entgegengenommen und auf `nil` gesetzt.
-    private let ziel: Binding<Einstellungsziel?>
 
-    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil,
-                ziel: Binding<Einstellungsziel?> = .constant(nil)) {
+    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil) {
         self.zustand = zustand
         self.fensterOeffnen = fensterOeffnen
-        self.ziel = ziel
     }
 
     /// Wo die virtuelle Uhr aufgeht: am Mac als eigenes Fenster, am iPad als
@@ -78,7 +73,9 @@ public struct VerbindungView: View {
         // Abrufe laufen nebeneinander, eine stumme Uhr haelt die uebrigen
         // nicht auf.
         .task { zustand.alleAbfragen() }
-        .onChange(of: ziel.wrappedValue, initial: true) { _, neu in
+        // `initial`: Beim Mac entsteht das Einstellungsfenster womöglich erst
+        // durch den Aufruf, der das Ziel gesetzt hat.
+        .onChange(of: zustand.einstellungsziel, initial: true) { _, neu in
             guard let neu else { return }
             let gruppe = neu.uhrgruppenziel
             var weg = NavigationPath()
@@ -86,7 +83,7 @@ public struct VerbindungView: View {
             weg.append(gruppe)
             thema = .uhren
             pfad = weg
-            ziel.wrappedValue = nil
+            zustand.einstellungsziel = nil
         }
         .sheet(isPresented: $zeigeVirtuelleUhr) { Nebenfenster.virtuelleUhr.inhalt }
     }

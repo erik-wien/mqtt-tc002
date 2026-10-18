@@ -16,9 +16,6 @@ public struct SchreibtischView: View {
     /// Eine Zeile der Fußliste; wächst mit der Textgröße (iPad), sonst schnitte sie ab.
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var bereich: Bereich?
-    /// Eine Stelle der Einstellungen, die aufzuschlagen ist (`AppZustand.einstellungsziel`);
-    /// geht an die Einstellungen im Fenster und nicht an die des Mac-Menüs.
-    @State private var einstellungsziel: Einstellungsziel?
     #if !os(macOS)
     @State private var nebenfenster: Nebenfenster?
     #else
@@ -109,11 +106,17 @@ public struct SchreibtischView: View {
         #if os(macOS)
         .frame(minWidth: 1140, minHeight: 640)
         #endif
+        // „Ändern …“ neben einer Einstellung der Uhr (`AppZustand.einstellungsziel`):
+        // Das iPad schlägt seinen Bereich „Einstellungen“ auf, der Mac das
+        // Einstellungsfenster. Die Seite dort aufzuschlagen und das Ziel
+        // zurückzusetzen ist Sache von `VerbindungView`.
         .onChange(of: zustand.einstellungsziel) { _, neu in
-            guard let neu else { return }
-            einstellungsziel = neu
+            guard neu != nil else { return }
+            #if os(macOS)
+            einstellungenOeffnen()
+            #else
             bereich = .einstellungen
-            zustand.einstellungsziel = nil
+            #endif
         }
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
@@ -224,8 +227,7 @@ public struct SchreibtischView: View {
                     .task { zustand.alleAbfragen() }
             case .uhr: Fernbedienung(zustand: zustand, kanon: .schreibtisch)
             case .protokoll: AnzeigenView(zustand: zustand)
-            case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen,
-                                                ziel: $einstellungsziel)
+            case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
             }
         }
         // Nur auf dem iPad: Hochkant verschwindet die Seitenleiste hinter
