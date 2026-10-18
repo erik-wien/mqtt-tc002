@@ -29,7 +29,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 > 2. Senden: Text eintippen (z. B. „HALLO“), den Pfeil im Feld tippen. Die Vorschau darüber zeigt, was auf der Uhr stehen wird; langer Text läuft durch.
 > 3. Einstellungen › Erweitert › „Ansehen“: die virtuelle Uhr zeigt die Meldung mit Geräterahmen und Platz.
 > 4. Darstellung: in der Formatpille den Pinsel tippen, Reiter „Darstellung“: einen Effekt oder ein Overlay wählen und senden.
-> 5. Nachricht: über dem Textfeld auf „Nachricht“ umschalten, senden; sie bleibt stehen, bis „Nachricht beenden“ (Glockensymbol neben dem Segment) getippt wird. Beim Notensymbol neben dem Segment einen Klang wählen (die virtuelle Uhr meldet, was sie kann).
+> 5. Nachricht: über dem Textfeld auf „Nachricht“ umschalten, senden; sie bleibt stehen, bis „Nachricht zurückziehen“ (Glockensymbol neben dem Segment) getippt wird. Beim Notensymbol neben dem Segment einen Klang wählen (die virtuelle Uhr meldet, was sie kann).
 > 6. Steuerung: oben auf den Namen der Uhr tippen › „Steuerung …“: Live-Bild, Display aus und an, Helligkeit, Moodlight, Abschnitt „Ton“. Dazu „Einstellungen der Uhr …“.
 > 7. Icons: den Smiley-Knopf neben dem Textfeld tippen, ein Icon wählen oder unter „Hinzufügen“ eine LaMetric-Nummer eingeben (z. B. 2056) und „Nachladen“ tippen; danach senden.
 > 8. Kurzbefehle-App: „Meldung an die Uhr schicken“ suchen, Text eintragen, ausführen — auch per Siri („Schicke eine Meldung mit Pixel Clock Messenger“). Danach „Meldung von der Uhr löschen“ mit Platz 1.
@@ -46,7 +46,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 > 2. Send: type a text (e.g. “HELLO”) and tap the arrow in the field. The preview above shows what will appear on the clock; long text scrolls.
 > 3. Settings › Advanced › “Show”: the virtual clock shows the message with device frame and slot.
 > 4. Appearance: tap the brush in the format pill, tab “Appearance”: pick an effect or an overlay and send.
-> 5. Message: switch to “Message” above the text field and send; it stays until you tap “End message” (bell symbol next to the segment). Choose something under “Sound” (the virtual clock reports what it can do).
+> 5. Message: switch to “Message” above the text field and send; it stays until you tap “Dismiss message” (bell symbol next to the segment). Choose something under “Sound” (the virtual clock reports what it can do).
 > 6. Control: tap the clock's name at the top › “Control …”: live picture, display off and on, brightness, moodlight, the “Sound” section. Also “Clock settings …”.
 > 7. Icons: tap the smiley button next to the text field, pick an icon, or under “Add” enter a LaMetric number (e.g. 2056) and tap “Fetch”; then send.
 > 8. Shortcuts app: search for “Show on clock”, enter a text, run it — also by Siri (“Show on the clock with Pixel Clock Messenger”). Then “Remove from clock” with slot 1.
@@ -65,7 +65,7 @@ support@eriks.cloud
 > 3. Tap “Add as a clock” (this enters the virtual clock as a clock; the app queries it once). Tap “Show” to open the virtual clock's window, check it, then close that window again. Close Settings with “Done”.
 > 4. On the “Send” screen type any text into the field at the bottom (e.g. “HELLO”) and tap the send arrow in the field (or the Send key on the keyboard). The preview above shows what will appear on the clock; optionally pick an icon first with the smiley button.
 > 5. Open Settings › Advanced › “Show” again: the virtual clock shows the message with device frame and slots, and scrolls the text if it does not fit.
-> 6. Back on “Send”, switch the control above the field from “Display” to “Message” and send again. A message interrupts the loop once and uses no slot; “End message” (bell symbol) is always shown next to the control while “Message” is selected and withdraws the visible message. The “Sound” choice below the message controls is greyed out if the clock reports no sound capability.
+> 6. Back on “Send”, switch the control above the field from “Display” to “Message” and send again. A message interrupts the loop once and uses no slot; “Dismiss message” (bell symbol) is always shown next to the control while “Message” is selected and withdraws the visible message. The “Sound” choice below the message controls is greyed out if the clock reports no sound capability.
 > 7. Tap the clock's name at the top of the Send screen and choose “Control …”: live picture of the display, display on/off, brightness, moodlight, indicators, and a “Sound” section. “Clock settings …” in the same menu shows the settings stored on the clock, in groups.
 > 8. In the format pill tap the brush and then the tab “Appearance” to choose background, effect, overlay and palette (the names come from the clock).
 > Shortcuts: the Shortcuts app offers twelve actions without setup, nine of them also by Siri phrase: “Show on clock”, “Send image”, “Remove from clock”, “Send message” and “Dismiss message” (the last two are for messages that interrupt the loop), and for remote control “Switch the clock's display”, “Set the clock's brightness”, “Set the clock's overlay”, “Set the clock's moodlight”, “Set one of the clock's indicators”, “Change the clock's display” and “Restart clock”. They use the same clock list as the app and work with the virtual clock as well.

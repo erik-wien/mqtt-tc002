@@ -51,7 +51,7 @@ public struct Lebensdauerbindungen {
 /// „Nachricht“ der Klang und die Nachrichtoptionen, bei „Anzeige“ die
 /// Lebensdauer. Die Optionen der anderen Art sind nicht da statt gesperrt:
 /// Sie stehen direkt am Segment, und ein ausgegrauter Knopf dort ließe offen,
-/// wozu er gehört. „Nachricht beenden“ erscheint, solange eine von der App
+/// wozu er gehört. „Nachricht zurückziehen“ erscheint, solange eine von der App
 /// geschickte, gehaltene Nachricht steht; es gilt für alle gewählten Uhren und
 /// bleibt bei beiden Arten.
 ///
@@ -107,12 +107,12 @@ public struct Sendeartwahl: View {
                 Button {
                     Task { await zustand.benachrichtigungZurueckziehen() }
                 } label: {
-                    Label("Nachricht beenden", systemImage: "bell.slash")
+                    Label("Nachricht zurückziehen", systemImage: "bell.slash")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .disabled(zustand.ziele().isEmpty)
-                .accessibilityLabel("Nachricht beenden")
+                .accessibilityLabel("Nachricht zurückziehen")
             }
         }
     }
@@ -252,10 +252,8 @@ public struct Nachrichtabschnitt: View {
             Toggle("Halten", isOn: $halten)
             Toggle("Aufwecken", isOn: $aufwecken)
             Toggle("Ersetzen", isOn: $ersetzen)
-            Stepper(value: $durchlaeufe, in: 1...Nachrichtwahl.hoechstdurchlaeufe) {
-                LabeledContent("Durchläufe") {
-                    Text(verbatim: "\(durchlaeufe)").monospacedDigit()
-                }
+            LabeledContent("Durchläufe") {
+                Schrittwahl("Durchläufe", wert: $durchlaeufe, bereich: 1...Nachrichtwahl.hoechstdurchlaeufe)
             }
             .gesperrterStepper(!aktiv)
             // Mit „Halten“ ignoriert die Uhr die Dauer (`hold` ignoriert `durationMs`).
@@ -302,10 +300,8 @@ public struct Lebensdauerabschnitt: View {
     public var body: some View {
         Section {
             Toggle("Behalten", isOn: $behalten)
-            Stepper(value: $zahl, in: 1...Lebensdauerwahl.hoechstzahl) {
-                LabeledContent("Nach") {
-                    Text(verbatim: "\(zahl)").monospacedDigit()
-                }
+            LabeledContent("Nach") {
+                Schrittwahl("Nach", wert: $zahl, bereich: 1...Lebensdauerwahl.hoechstzahl)
             }
             .gesperrterStepper(behalten || !aktiv)
             Picker("Einheit", selection: $einheit) {

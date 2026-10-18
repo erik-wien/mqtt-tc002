@@ -54,14 +54,20 @@ public struct Schrittwahl: View {
 
     public var body: some View {
         HStack(spacing: 6) {
-            // `verbatim`: eine Zahl wird nicht uebersetzt, und ein
-            // eingesetzter Wert waere ein Schluessel, den niemand nachschlaegt.
-            Text(verbatim: String(wert))
+            // Eintippbar statt nur geschaltet: Von 30 auf 5 sind sonst 25
+            // Druecke. Ausserhalb des Bereichs wird auf die Grenze gesetzt.
+            TextField(beschriftung, value: Binding(
+                get: { wert },
+                set: { wert = min(max($0, bereich.lowerBound), bereich.upperBound) }),
+                format: .number)
+                .labelsHidden()
+                .eingabefeld()
                 .monospacedDigit()
-                .frame(minWidth: 14)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+                .multilineTextAlignment(.center)
+                #if os(iOS)
+                .keyboardType(.numberPad)
+                #endif
+                .frame(width: CGFloat(max(2, String(bereich.upperBound).count)) * 10 + 24)
             Stepper(beschriftung, value: $wert, in: bereich)
                 .labelsHidden()
         }
