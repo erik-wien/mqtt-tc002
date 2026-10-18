@@ -66,8 +66,14 @@ public struct Klangabschnitt: View {
             case .vorlesen:
                 vorlesezeile
             }
-            Toggle("Wiederholen, bis die Nachricht geht", isOn: $klang.wiederholen)
-                .disabled(klang.art == .keiner || gesperrt)
+            HStack(spacing: 6) {
+                Text("Klang wiederholen, bis die Nachricht geht")
+                Hilfezeichen(lok("Der Klang spielt dann ohne Pause immer wieder, solange die Nachricht steht, nicht nur einmal beim Erscheinen. Mit „Halten“ heißt das: bis du die Nachricht beendest. Gedacht für Alarme; „Halten“ allein lässt die Nachricht stehen und spielt den Klang einmal."))
+                Spacer(minLength: 8)
+                Toggle("Klang wiederholen, bis die Nachricht geht", isOn: $klang.wiederholen)
+                    .labelsHidden()
+            }
+            .disabled(klang.art == .keiner || gesperrt)
         } header: {
             Abschnittskopf("Klang", hilfe: lok("Der Klang spielt, wenn die Nachricht erscheint. „Von der Uhr“ nimmt eine Melodie oder MP3-Datei, die auf der Uhr liegt. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch. Mit „Wiederholen“ spielt er, bis die Nachricht zurückgezogen wird oder ausläuft. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
