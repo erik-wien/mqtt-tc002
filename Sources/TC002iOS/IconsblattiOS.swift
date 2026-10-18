@@ -294,6 +294,14 @@ struct IconsblattiOS: View {
                     if paare.contains(eintrag.datei.path) { Paarzeichen() }
                 }
                 .font(.caption2).foregroundStyle(.secondary)
+                // Die Nummer (bei 16×16 der Dateiname): der Schlüssel für
+                // Kurzbefehl und Werkzeug.
+                if eintrag.groesse.istIcon {
+                    Text(verbatim: eintrag.schluessel)
+                        .font(.caption2).monospacedDigit()
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             .contentShape(Rectangle())
         }

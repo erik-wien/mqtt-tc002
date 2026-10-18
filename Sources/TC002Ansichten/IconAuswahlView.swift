@@ -171,6 +171,12 @@ struct IconAuswahlView: View {
                                         if paare.contains(icon.kennung) { Paarzeichen().foregroundStyle(.secondary) }
                                     }
                                     .font(.caption2)
+                                    // Die Nummer (bei 16×16 der Dateiname) ist das, was
+                                    // Kurzbefehl und Werkzeug als Schlüssel nehmen.
+                                    Text(verbatim: icon.nummer)
+                                        .font(.caption2).monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
                             }
                             .buttonStyle(.plain)
