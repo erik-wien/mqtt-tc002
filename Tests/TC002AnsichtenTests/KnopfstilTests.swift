@@ -335,7 +335,11 @@ final class KnopfstilTests: XCTestCase {
             "Sources/TC002Ansichten/Standarddauerzeile.swift": 1,
             // „Kein Icon“, „Zurücksetzen“ und „Dateien …“ — dieselbe Bauart,
             // jede für sich allein in ihrer Zeile.
-            "Sources/TC002iOS/IconsblattiOS.swift": 3,
+            // Dazu die Wahl des Icons eines Zusatzicons, allein in ihrer Zeile.
+            "Sources/TC002iOS/IconsblattiOS.swift": 4,
+            // „Zusatzicon entfernen“ und „Zusatzicon hinzufügen“: je eine
+            // Listenzeile für sich, wie in den Systemeinstellungen.
+            "Sources/TC002Ansichten/Zusatziconliste.swift": 2,
             // Die Löschzeile im Verlauf, allein in ihrer Zeile.
             "Sources/TC002iOS/AnzeigeniOS.swift": 1,
             // Plattformabhängiger Rückfall: `.link` gibt es nur am Mac.

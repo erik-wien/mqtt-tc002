@@ -73,6 +73,9 @@ struct IconsblattiOS: View {
     /// Passt der Text ins Display, läuft nichts, und der Schalter bliebe ohne
     /// Wirkung — dieselbe Sperre wie am Schreibtisch.
     let textPasst: Bool
+    /// Die Zusatzicons gehören zum Icon und stehen darum hier, wie am Schreibtisch
+    /// im Abschnitt „Icon“.
+    @Binding var zusatzicons: [Zusatzicon]
     @Bindable var zustand: AppZustand
     @Environment(\.dismiss) private var schliessen
 
@@ -90,6 +93,8 @@ struct IconsblattiOS: View {
     @State private var paare: Set<String> = []
     @State private var filter = Bestandsfilter()
     @State private var lametricNummer = ""
+    /// Der Eintrag der Zusatzicons, dessen Icon gerade gewählt wird.
+    @State private var zusatzwahl: Zusatzwahl?
     @State private var laedt = false
     @State private var meldung: String?
     @State private var zeigeDateiwahl = false
@@ -135,6 +140,7 @@ struct IconsblattiOS: View {
             // halben Bildschirms.
             List {
                 auswahl
+                zusatziconzeilen
                 ForEach(Leinwandgroesse.allCases) { gruppe($0) }
                 if gefilterterBestand.isEmpty {
                     Text("Nichts gefunden. Über „Hinzufügen“ kommt Neues herein.")
@@ -155,6 +161,12 @@ struct IconsblattiOS: View {
                 Button("Abbrechen") { schliessen() }
             } }
             .navigationDestination(for: Editoreintrag.self) { seite($0) }
+            .sheet(item: $zusatzwahl) { wahl in
+                ZusatziconwahliOS(sammlungen: Iconbestaende.mitMitgeliefertem()) { icon in
+                    guard zusatzicons.indices.contains(wahl.index) else { return }
+                    Zusatzicons.setzen(icon, in: &zusatzicons[wahl.index])
+                }
+            }
             .onAppear { neuLesen() }
         }
         .presentationDragIndicator(.visible)
@@ -185,6 +197,31 @@ struct IconsblattiOS: View {
     }
 
     // MARK: - Die Abschnitte
+
+    private struct Zusatzwahl: Identifiable { let index: Int; var id: Int { index } }
+
+    /// Die Zusatzicons: dieselben Zeilen wie am Schreibtisch; die Wahl des Icons
+    /// öffnet eine Seite mit Suche und Raster statt des Blattes der Mac-Fassung.
+    private var zusatziconzeilen: some View {
+        Section {
+            Zusatziconliste(liste: $zusatzicons, sammlungen: Iconbestaende.mitMitgeliefertem()) { i, wahl in
+                Button { zusatzwahl = Zusatzwahl(index: i) } label: {
+                    if let icon = wahl.wrappedValue {
+                        HStack(spacing: 6) {
+                            Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                                       kante: 16 / Double(icon.kante))
+                            Text(icon.name).lineLimit(1)
+                        }
+                    } else {
+                        Text("Icon wählen …")
+                    }
+                }
+                .buttonStyle(.automatic)
+            }
+        } header: {
+            Text("Zusatzicons")
+        }
+    }
 
     private var hinzufuegen: some View {
         Section {
@@ -736,5 +773,51 @@ private struct AnzeigeseiteiOS: View {
             meldung = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             laeuft = false
         }
+    }
+}
+
+/// Die Wahl eines Icons für ein Zusatzicon: Suche und Raster über beide Bestände.
+/// Der Bestand und sein Raster sind die des Icon-Blattes (`Rasterbild`); hier
+/// ohne Import, Löschen und Anzeigen, die zu einem Zusatzicon nicht gehören.
+private struct ZusatziconwahliOS: View {
+    let sammlungen: [Iconsammlung]
+    let gewaehlt: (Icon?) -> Void
+    @Environment(\.dismiss) private var schliessen
+    @State private var suche = ""
+    @State private var bestand: [Icon] = []
+
+    init(sammlungen: [Iconsammlung], gewaehlt: @escaping (Icon?) -> Void) {
+        self.sammlungen = sammlungen
+        self.gewaehlt = gewaehlt
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 72))], spacing: 10) {
+                    Button { gewaehlt(nil); schliessen() } label: { Text("Ohne").font(.caption) }
+                        .buttonStyle(.bordered)
+                    ForEach(bestand.gefiltert(nach: suche), id: \.kennung) { icon in
+                        Button { gewaehlt(icon); schliessen() } label: {
+                            VStack(spacing: 2) {
+                                Rasterbild(datei: icon.datei, breite: icon.kante, hoehe: icon.kante,
+                                           kante: 48 / Double(icon.kante))
+                                Text(icon.name).font(.caption2).lineLimit(1)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding()
+            }
+            .searchable(text: $suche, prompt: Text("Suchen"))
+            .navigationTitle("Icon wählen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) {
+                Button("Abbrechen") { schliessen() }
+            } }
+            .onAppear { bestand = sammlungen.flatMap { $0.alle() } }
+        }
+        .presentationDetents([.large])
     }
 }

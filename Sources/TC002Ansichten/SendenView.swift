@@ -75,6 +75,9 @@ public struct SendenView: View {
     /// Namen tragen. Vorgabe 8, damit eine vorhandene Einstellung ohne diesen
     /// Schluessel weiter auf dasselbe Icon zeigt wie bisher.
     @AppStorage("senden.iconkante") private var iconKanteGemerkt = 8
+    /// Die Zusatzicons (`Zusatzicons`) als Text in einem Schluessel, derselbe fuer
+    /// alle Oberflaechen.
+    @AppStorage("senden.zusatzicons") private var zusatziconsText = ""
     @State private var gewaehltesIcon: Icon?
     @State private var laeuft = false
     /// Eine Sekunde nach einer gelungenen Sendung — siehe `Sendezeichen`.
@@ -108,6 +111,11 @@ public struct SendenView: View {
         let kante = UserDefaults.standard.object(forKey: "senden.iconkante") as? Int ?? 8
         _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil
             : Self.sammlungen.flatMap { $0.alle() }.first { $0.nummer == nummer && $0.kante == kante })
+    }
+
+    private var zusatzicons: Binding<[Zusatzicon]> {
+        Binding(get: { Zusatzicons.aus(json: zusatziconsText) },
+                set: { zusatziconsText = Zusatzicons.json($0) })
     }
 
     /// Fuer den ColorPicker: liest/schreibt `farbeHex` als `Color`.
@@ -178,6 +186,7 @@ public struct SendenView: View {
         iconEinmal = o.iconmodus.einmal
         dauerText = o.dauer.map(String.init) ?? ""
         darstellung = o.darstellung ?? Darstellungswahl()
+        zusatziconsText = Zusatzicons.json(o.zusatzicons ?? [])
         let l = Lebensdauerwahl(o.lebensdauer)
         lebensdauerBehalten = l.behalten
         lebensdauerZahl = l.zahl
@@ -251,7 +260,8 @@ public struct SendenView: View {
                          abstand: luecke, tempo: tempo,
                          dauer: dauer, lebensdauer: lebensdauerwahl.lebensdauer,
                          darstellung: darstellung == Darstellungswahl() ? nil : darstellung,
-                         iconmodus: iconmodus)
+                         iconmodus: iconmodus,
+                         zusatzicons: zusatzicons.wrappedValue)
     }
 
     /// Die zwei gespeicherten Schalter als Auswahl; gesetzt wird beides zusammen.
@@ -377,14 +387,19 @@ public struct SendenView: View {
         let einheit = Geraetezeichnung.fuer(uhr).masse(fuer: uhrmass, kante: 1)
         let kante = max(4, min((platz.width - 24) / einheit.rahmenBreite,
                                (platz.height - 12) / einheit.rahmenHoehe).rounded(.down))
+        // Mit Zusatzicons zeigt die Vorschau fertige Einzelbilder aus dem Kern: im
+        // Pixelweg genau die gesendeten, sonst Text, Icon und Zusatzicons wie die Uhr.
+        let mitZusatz = (sitzt || !angesehen) && o.zusatzicons != nil
+            ? Meldungsbau.stehendeBilder(o, icon: gewaehltesIcon, iconAbstand: uhr.wirksamerIconAbstand, mass: uhrmass)
+            : nil
         return VorschauView(feld: Meldungsbau.feld(o, icon: platzDesIcons, mass: uhrmass),
                             kantenlaenge: kante,
-                            icon: (sitzt || textDerUhr) ? iconDerUhr?.datei : nil,
+                            icon: mitZusatz == nil && (sitzt || textDerUhr) ? iconDerUhr?.datei : nil,
                             iconX: Meldungsbau.iconX(o, icon: platzDesIcons, mass: uhrmass),
                             iconplatz: platzDesIcons,
-                            iconMasstab: textDerUhr ? Geraeteschrift.masstab(mitIcon: platzDesIcons != nil, iconKante: platzDesIcons?.kante ?? 8, mass: uhrmass) : 1,
+                            iconMasstab: textDerUhr ? Geraeteschrift.masstab(o, mitIcon: platzDesIcons != nil, iconKante: platzDesIcons?.kante ?? 8, mass: uhrmass) : 1,
                             modell: uhr.modell,
-                            laufschriftBilder: (sitzt || !angesehen) ? nil : laufschriftFrames)
+                            laufschriftBilder: mitZusatz ?? ((sitzt || !angesehen) ? nil : laufschriftFrames))
             .frame(width: platz.width, height: platz.height)
     }
 
@@ -699,7 +714,7 @@ public struct SendenView: View {
     /// tatsaechlichen Aenderung neu laeuft, nicht bei jedem Bild der laufenden
     /// Vorschau.
     private var laufschriftSchluessel: String {
-        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(icon(fuer: mass)?.kennung ?? "")|\(iconmodus.rawValue)|\(luecke)|\(mass.breite)×\(mass.hoehe)|\(vorschauIconplatz.map { "\($0.links),\($0.breite),\($0.abstand)" } ?? "")"
+        "\(weg.rawValue)|\(passt)|\(gesendeterText)|\(schrift)|\(groesse)|\(fett)|\(farbeHex)|\(tempo)|\(vertikal)|\(rand)|\(icon(fuer: mass)?.kennung ?? "")|\(iconmodus.rawValue)|\(luecke)|\(mass.breite)×\(mass.hoehe)|\(vorschauIconplatz.map { "\($0.links),\($0.breite),\($0.abstand)" } ?? "")|\(zusatziconsText)"
     }
 
     /// Der Inspektor rechts (`.inspector`, siehe `body`): alles Formatierende,
@@ -813,6 +828,9 @@ public struct SendenView: View {
                 // beim Laufen tut.
                 Iconmodusauswahl(modus: Binding(get: { iconmodus.wirksam(weg: weg) }, set: { iconmodus = $0 }),
                                  weg: weg, gesperrt: gewaehltesIcon == nil || passt)
+                Zusatziconliste(liste: zusatzicons, sammlungen: Self.sammlungen) { _, wahl in
+                    IconAuswahlView(gewaehltesIcon: wahl, sammlungen: Self.sammlungen)
+                }
             }
 
             Section {
