@@ -15,11 +15,14 @@ Deutsch für die deutsche, Englisch für die englische Lokalisierung. Reihenfolg
 
 | iPhone | iPad |
 |---|---|
-| `01-senden` Senden mit 52×16-Vorschau, Plätze belegt | `01-senden` Senden mit Inspektor |
-| `02-darstellung` Formatblatt Darstellung (Schrift der Uhr, Effekt, Palette) | `02-darstellung` Inspektor-Reiter Darstellung |
-| `03-klang` Nachricht mit Klang (Formatblatt) | `03-steuerung` Fernbedienung mit Live-Bild, Ton, Radio |
-| `04-steuerung` Fernbedienung mit Live-Bild, Ton, Radio | `04-icons` Icons (Sammlung) |
-| `05-icons` Icons (Sammlung) | |
+| `01-senden` Senden mit 52×16-Vorschau, fünf Plätze belegt, Segment „Anzeige \| Nachricht“ mit Lebensdauer | `01-senden` Senden mit Inspektor (Reiter Format) |
+| `02-darstellung` Blatt „Darstellung“ (Hintergrund, Effekt, Overlay, Palette) | `02-darstellung` Inspektor-Reiter Darstellung |
+| `03-klang` Nachricht: Blatt „Klang“ (Melodie von der Uhr, 1× \| In Schleife) | `03-steuerung` Bereich „Uhr“ (Live-Bild, Gerät, Anzeige, Moodlight, Anzeiger) |
+| `04-steuerung` Blatt „Uhr“ (Live-Bild, Gerät, Anzeige) | `04-icons` Icons (Sammlung) |
+| `05-icons` Icons (Sammlung) mit Nummer unter dem Namen | |
+
+Der Dateiname `…-steuerung` ist geblieben, auch wenn der Bereich jetzt „Uhr“ heißt (die Banner und Verweise hängen daran).
+Zeitangaben im Verlauf zeigen die Aufnahmezeit; in „Uhr“ steht als aktive Anzeige der Platzname `meldung1`, so heißt der Platz auf dem Gerät.
 
 Die Banner entstehen aus `~/GitSwift/Marketing/appstore/banner-mqtt.html` per `render-mqtt.sh` (verwenden die
 iPhone-Screenshots `01-senden` und `02-darstellung`).
