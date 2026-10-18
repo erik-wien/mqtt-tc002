@@ -50,7 +50,7 @@ final class GeraetesicherungTests: XCTestCase {
 
     func testSammelnLiefertDieEintraegeDerWeboberflaeche() throws {
         let (_, g) = try gestartet(vollerZustand())
-        let zip = try g.sicherungErstellen(zeit: Date(timeIntervalSince1970: 0))
+        let zip = try g.sicherungErstellen(zeit: Date(timeIntervalSince1970: 0)).zip
         let e = try Sicherungszip.lesen(zip)
         XCTAssertEqual(e.map(\.pfad), [
             "manifest.json", "apploop.json", "config/wifi.json", "config/system.json", "config/settings.json",
@@ -79,7 +79,7 @@ final class GeraetesicherungTests: XCTestCase {
 
     func testGanzerWegSammelnZippenZurueckspielen() throws {
         let (_, quelle) = try gestartet(vollerZustand())
-        let zip = try quelle.sicherungErstellen()
+        let zip = try quelle.sicherungErstellen().zip
 
         let (ziel, g) = try gestartet(NGUhrzustand())
         let r = try g.sicherungZurueckspielen(zip, dateiname: "uhr.zip")
@@ -112,7 +112,7 @@ final class GeraetesicherungTests: XCTestCase {
         var z = NGUhrzustand()
         z.ablage.dateien["/ICONS/x.gif"] = gif
         let (_, g) = try gestartet(z)
-        let e = try Sicherungszip.lesen(try g.sicherungErstellen())
+        let e = try Sicherungszip.lesen(try g.sicherungErstellen().zip)
         XCTAssertFalse(e.contains { $0.pfad == "apploop.json" || $0.pfad == "config/icon-origins.json" })
         XCTAssertEqual(e.first?.pfad, "manifest.json")
     }
@@ -122,14 +122,13 @@ final class GeraetesicherungTests: XCTestCase {
             Sicherungszip.manifest(erstellt: Date()),
             .init(pfad: "ICONS/kaputt.gif", daten: Data("kein bild".utf8)),
             .init(pfad: "ICONS/gut.gif", daten: gif),
-            .init(pfad: "ICONS/../boese.gif", daten: gif),
             .init(pfad: "sonstwas.bin", daten: Data([1])),
         ])
         let (ziel, g) = try gestartet(NGUhrzustand())
         let r = try g.sicherungZurueckspielen(zip)
         XCTAssertEqual(r.angewendet["icons"], 1)
-        XCTAssertEqual(r.uebersprungen, 3)
-        XCTAssertEqual(r.warnungen.count, 3)
+        XCTAssertEqual(r.uebersprungen, 2)
+        XCTAssertEqual(r.warnungen.count, 2)
         XCTAssertFalse(r.neustartNoetig)
         XCTAssertEqual(Array(ziel.zustand.ablage.dateien.keys), ["/ICONS/gut.gif"])
     }
@@ -166,5 +165,29 @@ final class GeraetesicherungTests: XCTestCase {
         let mit = VirtuelleNGUhr.beantworten(.init("GET", "/api/v1/system", abfrage: ["secrets": "1"]), &z)
         XCTAssertFalse(String(decoding: ohne.koerper, as: UTF8.self).contains("geheim"))
         XCTAssertTrue(String(decoding: mit.koerper, as: UTF8.self).contains("geheim-1"))
+    }
+
+    func testNamenAusDerUhrWerdenNieEintragsnamen() throws {
+        var z = NGUhrzustand()
+        z.ablage.dateien["/ICONS/.."] = gif
+        z.ablage.dateien["/ICONS/a\\b.gif"] = gif
+        z.ablage.dateien["/ICONS/gut.gif"] = gif
+        z.ablage.dateien["/SCRIPTS/..\\x/ton.mp3"] = mp3
+        let (_, g) = try gestartet(z)
+        let s = try g.sicherungErstellen()
+        let e = try Sicherungszip.lesen(s.zip)
+        XCTAssertEqual(e.map(\.pfad).filter { $0.hasPrefix("ICONS/") }, ["ICONS/gut.gif"])
+        XCTAssertTrue(e.allSatisfy { Sicherungszip.namensicher($0.pfad) })
+        XCTAssertEqual(Set(s.ausgelassen), ["..", "a\\b.gif", "..\\x"])
+    }
+
+    func testArchivMitUnsicherenNamenWirdVorDemSendenAbgewiesen() throws {
+        for name in ["../x", "ICONS/../x.gif", "/abs.gif", "ICONS\\x.gif", "ICONS//x.gif", "ICONS/./x.gif", "a\u{0}b"] {
+            let zip = Sicherungszip.schreiben([Sicherungszip.manifest(erstellt: Date()), .init(pfad: name, daten: gif)])
+            XCTAssertThrowsError(try Sicherungszip.lesen(zip), name) {
+                XCTAssertEqual($0 as? Sicherungszip.Fehler, .unsichererName(name))
+            }
+        }
+        XCTAssertTrue(Sicherungszip.namensicher("SCRIPTS/hallo/ton.mp3"))
     }
 }

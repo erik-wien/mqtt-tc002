@@ -73,7 +73,22 @@ public struct Sicherungsergebnis: Equatable, Sendable {
 ///
 /// Das Zip enthält WLAN-, MQTT- und Webkennwort im Klartext.
 extension Geraet {
-    public func sicherungErstellen(zeit: Date = Date()) throws -> Data {
+    /// Eine fertige Sicherung und die Namen, die die Uhr genannt hat und die nicht
+    /// ins Zip kamen, weil sie kein harmloser Dateiname waren (`..`, `\\`, NUL …).
+    public struct Sicherung: Sendable {
+        public let zip: Data
+        public let ausgelassen: [String]
+    }
+
+    public func sicherungErstellen(zeit: Date = Date()) throws -> Sicherung {
+        var ausgelassen: [String] = []
+        /// Nur der Dateiname, wie `baseName` der Weboberfläche; `nil`, wenn er unbrauchbar ist.
+        func sauber(_ roh: String) -> String? {
+            let name = roh.split(separator: "/", omittingEmptySubsequences: false).last.map(String.init) ?? roh
+            if Sicherungszip.namensicher(name) { return name }
+            ausgelassen.append(roh.unicodeScalars.map { $0.value < 0x20 ? "?" : String($0) }.joined())
+            return nil
+        }
         var eintraege: [Sicherungszip.Eintrag] = []
         var kategorien: [String] = []
         func text(_ s: String) -> Data { Data(s.utf8) }
@@ -94,7 +109,7 @@ extension Geraet {
         eintraege.append(.init(pfad: "config/settings.json", daten: try lesen("/api/v1/settings")))
         kategorien.append("settings")
 
-        try dateienSichern("/ICONS", in: &eintraege)
+        try dateienSichern("/ICONS", in: &eintraege, sauber: sauber)
         do {
             let herkunft = try ngAnfrage("GET", "/api/v1/icons/origins", koerper: nil)
             guard let o = (try? JSONSerialization.jsonObject(with: herkunft)) as? [String: Any],
@@ -106,22 +121,24 @@ extension Geraet {
 
         for m in (try hole("/api/v1/audio/melodies")["melodies"] as? [[String: Any]]) ?? [] {
             guard let name = m["name"] as? String, let rtttl = m["rtttl"] as? String else { continue }
+            guard Klangname.gueltig(name) else { ausgelassen.append(name); continue }
             eintraege.append(.init(pfad: "MELODIES/\(name).txt", daten: text(rtttl)))
         }
         kategorien.append("melodies")
 
-        try dateienSichern("/PALETTES", in: &eintraege)
+        try dateienSichern("/PALETTES", in: &eintraege, sauber: sauber)
         kategorien.append("palettes")
-        try dateienSichern("/MP3", in: &eintraege)
+        try dateienSichern("/MP3", in: &eintraege, sauber: sauber)
         kategorien.append("mp3")
 
-        try dateienSichern("/SCRIPTS", in: &eintraege)
+        try dateienSichern("/SCRIPTS", in: &eintraege, sauber: sauber)
         for s in (try hole("/api/v1/audio/mp3")["scripts"] as? [[String: Any]]) ?? [] {
             guard let name = s["name"] as? String else { continue }
+            guard !name.contains("/"), let skript = sauber(name) else { continue }
             for f in (s["files"] as? [[String: Any]]) ?? [] {
-                guard let datei = f["name"] as? String else { continue }
-                let pfad = "SCRIPTS/" + name + "/" + datei
-                eintraege.append(.init(pfad: pfad, daten: try dateiLesen("/" + pfad)))
+                guard let roh = f["name"] as? String, let datei = sauber(roh) else { continue }
+                let pfad = "SCRIPTS/" + skript + "/" + datei
+                eintraege.append(.init(pfad: pfad, daten: try dateiLesen("/SCRIPTS/" + Self.ngName(skript) + "/" + Self.ngName(datei))))
             }
         }
         kategorien.append("scripts")
@@ -133,15 +150,15 @@ extension Geraet {
 
         let kopf = Sicherungszip.manifest(erstellt: zeit, hostname: system["hostname"] as? String ?? "",
                                           kategorien: kategorien)
-        return Sicherungszip.schreiben([kopf] + eintraege)
+        return Sicherung(zip: Sicherungszip.schreiben([kopf] + eintraege), ausgelassen: ausgelassen)
     }
 
     /// Alle Dateien eines Ordners der Uhr, als `ICONS/<name>` usw.
-    private func dateienSichern(_ ordner: String, in eintraege: inout [Sicherungszip.Eintrag]) throws {
+    private func dateienSichern(_ ordner: String, in eintraege: inout [Sicherungszip.Eintrag],
+                                sauber: (String) -> String?) throws {
         let liste = try hole("/api/v1/files?dir=" + ordner)
         for f in (liste["files"] as? [[String: Any]]) ?? [] {
-            guard let roh = f["name"] as? String else { continue }
-            let name = roh.split(separator: "/").last.map(String.init) ?? roh
+            guard let roh = f["name"] as? String, let name = sauber(roh) else { continue }
             eintraege.append(.init(pfad: String(ordner.dropFirst()) + "/" + name,
                                    daten: try dateiLesen(ordner + "/" + Self.ngName(name))))
         }

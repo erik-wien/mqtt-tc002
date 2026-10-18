@@ -21,6 +21,8 @@ public enum Sicherungszip {
         case keineSicherung
         case fremdeSicherung
         case fassungUnbekannt(Int)
+        /// Ein Eintragsname mit `..`, führendem `/`, Rückwärtsstrich, NUL oder leerem Abschnitt.
+        case unsichererName(String)
     }
 
     /// Inhalt von `manifest.json`: `app`, `backupFormat`, `createdAt`.
@@ -40,6 +42,18 @@ public enum Sicherungszip {
         var c: UInt32 = 0xFFFF_FFFF
         for b in daten { c = tabelle[Int((c ^ UInt32(b)) & 0xFF)] ^ (c >> 8) }
         return c ^ 0xFFFF_FFFF
+    }
+
+    /// Ob ein Eintragsname nur aus harmlosen Abschnitten besteht: nicht leer, kein
+    /// führendes `/`, kein `\\`, kein NUL oder Steuerzeichen, kein leerer Abschnitt,
+    /// kein `.` und kein `..`. Verlangt vom Leser und vom Sammler, damit ein Name
+    /// aus fremder Hand (Uhr, Archiv) nie aus dem Ordner führt.
+    public static func namensicher(_ pfad: String) -> Bool {
+        guard !pfad.isEmpty, !pfad.hasPrefix("/"),
+              !pfad.unicodeScalars.contains(where: { $0 == "\\" || $0.value < 0x20 || $0.value == 0x7F })
+        else { return false }
+        return pfad.split(separator: "/", omittingEmptySubsequences: false)
+            .allSatisfy { !$0.isEmpty && $0 != "." && $0 != ".." }
     }
 
     // MARK: Schreiben
@@ -101,7 +115,8 @@ public enum Sicherungszip {
     // MARK: Lesen
 
     /// Alle Einträge in der Reihenfolge des zentralen Verzeichnisses.
-    /// Verzeichniseinträge (Pfad endet auf `/`) werden übergangen.
+    /// Verzeichniseinträge (Pfad endet auf `/`) werden übergangen; ein Name, der nicht
+    /// `namensicher` ist, lässt das ganze Zip scheitern, bevor jemand etwas davon verwendet.
     public static func lesen(_ zip: Data) throws -> [Eintrag] {
         let z = Data(zip)
         guard z.count >= 22 else { throw Fehler.kaputt }
@@ -128,6 +143,7 @@ public enum Sicherungszip {
             let start = lokal + 30 + Int(z.u16(lokal + 26)) + Int(z.u16(lokal + 28))
             guard start + gross <= z.count else { throw Fehler.kaputt }
             if pfad.hasSuffix("/") { continue }
+            guard namensicher(pfad) else { throw Fehler.unsichererName(pfad) }
             let daten = Data(z[start ..< start + gross])
             guard crc32(daten) == crc else { throw Fehler.pruefsummeFalsch(pfad) }
             aus.append(Eintrag(pfad: pfad, daten: daten))

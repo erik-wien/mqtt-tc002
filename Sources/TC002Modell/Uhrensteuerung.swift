@@ -466,9 +466,13 @@ extension AppZustand {
         guard let uhr = sicherungsuhr(id) else { return nil }
         let host = uhr.host, sitzung = netzsitzung
         do {
-            let zip = try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).sicherungErstellen() }
+            let sicherung = try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).sicherungErstellen() }
             log(lokf("%@: Sicherung erstellt", uhr.name))
-            return zip
+            if !sicherung.ausgelassen.isEmpty {
+                fehler = lokf("Nicht in die Sicherung aufgenommen, weil der Name unbrauchbar ist: %@",
+                              sicherung.ausgelassen.joined(separator: ", "))
+            }
+            return sicherung.zip
         } catch {
             melde(error, uhr: uhr)
             return nil
@@ -502,6 +506,7 @@ extension AppZustand {
         case .fremdeSicherung?: return lok("Sie stammt von einem anderen Programm.")
         case .fassungUnbekannt(let n)?: return lokf("Das Format %d ist dieser App unbekannt.", n)
         case .pruefsummeFalsch(let name)?: return lokf("Der Eintrag %@ ist beschädigt.", name)
+        case .unsichererName(let name)?: return lokf("Der Eintragsname „%@“ ist nicht erlaubt.", name)
         case .kaputt?, .nichtUnterstuetzt?: return lok("Es ist kein lesbares, unkomprimiertes Zip.")
         case nil: return error.localizedDescription
         }

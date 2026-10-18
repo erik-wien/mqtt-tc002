@@ -45,7 +45,7 @@ vorhandene Bestände.
   (HTTP oder MQTT); die gezeigte Uhr bestimmt Vorschau, Blöcke und Verlauf.
 - **Bereich „Uhr“:** alles, was auf der Uhr eingestellt wird, an einer Stelle:
   Live-Bild des Displays, Zustand, Display an/aus, Helligkeit, Overlay jetzt auf der
-  Uhr, Moodlight, Anzeiger, Ton und Radio, Neustart, Tasten und Drehknopf (wo die App
+  Uhr, Moodlight, Anzeiger, Ton und Radio, Neustart, Sicherung in eine Zip-Datei und Zurückspielen, Tasten und Drehknopf (wo die App
   sie mitliest) — dazu „Vorgaben der Uhr“, die auf der Uhr gespeicherten Einstellungen
   in Gruppen (Anzeigedauer, Schleife, Zeit & Datum …), und das TLS-Zertifikat für
   MQTT. Am iPhone öffnet „Uhr …“ im Titelmenü diesen Bereich als Blatt.

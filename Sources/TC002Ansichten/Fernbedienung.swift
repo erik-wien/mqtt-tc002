@@ -293,10 +293,13 @@ private struct Steuerseite: View {
                         icon: { Image(systemName: Uhrgruppe.verschluesselung.symbol) }
                 }
             }
+            Sicherungszeilen(zustand: zustand, uhr: uhr, kanon: kanon)
             Button("Uhr neu starten …", role: .destructive) { fragtNeustart = true }
                 .knopfZerstoerend()
         } header: {
             Text("Gerät")
+        } footer: {
+            Text("Die Sicherung enthält Kennwörter im Klartext. Sie wird nur in eine Datei gelegt, die du wählst.")
         }
     }
 
