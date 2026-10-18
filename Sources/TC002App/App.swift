@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import TC002Ansichten
 import TC002Core
+import TC002Kurzbefehle
 import TC002Modell
 
 @main
@@ -14,6 +15,7 @@ struct TC002App: App {
     /// in den Schreibordner (`Iconsammlung.grundschatzEinmalUebernehmen`) —
     /// auch das, bevor eine Ansicht die Iconliste zum ersten Mal liest.
     init() {
+        Kurzbefehle.einbinden()
         Schriften.registrieren()
         Iconsammlung(schreibordner: Iconordner.eigene, leseordner: [Iconordner.mitgeliefert])
             .grundschatzEinmalUebernehmen()

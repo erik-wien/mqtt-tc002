@@ -28,7 +28,15 @@ let package = Package(
         // Zeilen Baumaschinerie fuer ein Bild, das niemand mehr laedt.
         .target(name: "TC002Ansichten", dependencies: ["TC002Core", "TC002Modell"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
-        .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell", "TC002Ansichten"],
+        // Die Kurzbefehle (App Intents) fuer Mac und iPhone/iPad aus einem
+        // Quellordner: SwiftPM baut ihn fuer den Mac, `project.yml` nimmt
+        // dieselben Dateien als Quellen des iOS-Ziels. Dort statt als Paket
+        // eingebunden, weil Xcode Kurzbefehle aus einer Bibliothek nur mit
+        // zusaetzlicher Verdrahtung findet. Am Mac legt `build.sh` das
+        // Verzeichnis `Metadata.appintents` an (`scripts/kurzbefehle-metadaten.sh`).
+        .target(name: "TC002Kurzbefehle", dependencies: ["TC002Core"],
+                swiftSettings: [.swiftLanguageMode(.v5)]),
+        .executableTarget(name: "TC002App", dependencies: ["TC002Core", "TC002Modell", "TC002Ansichten", "TC002Kurzbefehle"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),
         // Das Kommandozeilenwerkzeug. Liest die Einrichtung der App und schickt
         // damit Meldungen — eigenes Ziel, damit die Oberflaeche nicht mitkommt.

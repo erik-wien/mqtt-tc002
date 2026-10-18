@@ -15,6 +15,10 @@ targets:
     platform: iOS
     sources:
       - path: Sources/TC002iOS
+      # Die Kurzbefehle teilen sich Mac und iOS (Paketziel `TC002Kurzbefehle`);
+      # hier als Quellen des Ziels, damit Xcode ihre Metadaten selbst
+      # extrahiert (`Metadata.appintents` im Buendel).
+      - path: Sources/TC002Kurzbefehle
       - path: Icons
         type: folder
         buildPhase: resources

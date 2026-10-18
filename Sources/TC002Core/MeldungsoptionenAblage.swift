@@ -30,6 +30,12 @@ public extension Meldungsoptionen {
         o.senkrecht = d.string(forKey: "senden.vertikal")
             .flatMap(SendenVAusrichtung.init(rawValue:)) ?? o.senkrecht
         o.tempo = d.string(forKey: "senden.tempo").flatMap(Lauftempo.init(rawValue:)) ?? o.tempo
+        // Hintergrund, Effekt, Overlay, Palette: wie die Ansicht, die eine
+        // unveraenderte Wahl als „nichts gewaehlt" fuehrt (`optionen`).
+        if let wahl = d.string(forKey: "senden.darstellung").flatMap(Darstellungswahl.init(rawValue:)),
+           wahl != Darstellungswahl() {
+            o.darstellung = wahl
+        }
         return o
     }
 }

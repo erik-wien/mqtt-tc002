@@ -179,3 +179,38 @@ enum TempoAuswahl: String, AppEnum {
         }
     }
 }
+
+/// Was nach Ablauf der Lebensdauer geschieht (`Lebensablauf`). Die Anzeigenamen
+/// sind die der Formatpille.
+enum AblaufAuswahl: String, AppEnum {
+    case entfernen, markieren
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Nach Ablauf")
+    }
+    static var caseDisplayRepresentations: [AblaufAuswahl: DisplayRepresentation] = [
+        .entfernen: DisplayRepresentation(title: "Entfernen"),
+        .markieren: DisplayRepresentation(title: "Rot markieren"),
+    ]
+
+    var kern: Lebensablauf { self == .entfernen ? .entfernen : .markieren }
+}
+
+extension Formatangaben {
+    /// Die Formatparameter von "Meldung schicken" und "Nachricht senden" als das,
+    /// was der Kern versteht — eine Stelle für beide, damit sie dieselben Wörter
+    /// meinen. Die Intents deklarieren ihre Parameter je für sich (`@Parameter`
+    /// lässt sich nicht erben), die Umrechnung steht hier.
+    static func kurzbefehl(weg: WegAuswahl?, schriftart: SchriftAuswahl?, groesse: Int?,
+                           fett: Bool?, grossbuchstaben: Bool?, farbe: FarbAuswahl?,
+                           waagrecht: WaagrechtAuswahl?, senkrecht: SenkrechtAuswahl?,
+                           rand: Int?, abstand: Int?, tempo: TempoAuswahl?,
+                           iconLaeuftMit: Bool?) -> Formatangaben {
+        Formatangaben(weg: weg?.kern, schrift: schriftart?.kern,
+                      groesse: groesse.map(Double.init), fett: fett,
+                      grossbuchstaben: grossbuchstaben, farbe: farbe?.kern,
+                      waagrecht: waagrecht?.kern, senkrecht: senkrecht?.kern,
+                      rand: rand, abstand: abstand, tempo: tempo?.kern,
+                      iconLaeuftMit: iconLaeuftMit)
+    }
+}

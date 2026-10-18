@@ -19,7 +19,7 @@ import TC002Core
 struct MeldungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Meldung an die Uhr schicken"
     static let description = IntentDescription(
-        "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.")
+        "Schickt einen Text an eine eingerichtete Uhr. Schrift, Ausrichtung und Darstellung (Hintergrund, Effekt, Overlay, Palette) kommen aus den zuletzt in der App gewählten Einstellungen.")
     /// Kein Aufmachen der App: Das Senden dauert Bruchteile einer Sekunde, und
     /// wer aus einer Automation heraus schickt, will kein Fenster.
     static let openAppWhenRun = false
@@ -82,6 +82,9 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Lebensdauer in Minuten", description: "Nach dieser Zeit verschwindet die Anzeige von selbst. Ohne Angabe: 30 Minuten.", inclusiveRange: (1, 1440))
     var lebensdauer: Int?
 
+    @Parameter(title: "Nach Ablauf", description: "Was nach der Lebensdauer geschieht: die Anzeige entfernen oder mit einem dunkelroten Rahmen markieren. Ohne Angabe: entfernen.")
+    var ablauf: AblaufAuswahl?
+
     @Parameter(title: "Behalten", description: "Die Anzeige verschwindet nicht von selbst, sondern bleibt, bis sie ersetzt oder entfernt wird.", default: false)
     var behalten: Bool
 
@@ -90,12 +93,10 @@ struct MeldungSendenIntent: AppIntent {
     /// stehen in `Formatangaben`, nicht hier: Sie sind eine Rechnung über
     /// `Meldungsoptionen` und werden dort geprüft.
     private var angaben: Formatangaben {
-        Formatangaben(weg: weg?.kern, schrift: schriftart?.kern,
-                      groesse: groesse.map(Double.init), fett: fett,
-                      grossbuchstaben: grossbuchstaben, farbe: farbe?.kern,
-                      waagrecht: waagrecht?.kern, senkrecht: senkrecht?.kern,
-                      rand: rand, abstand: abstand, tempo: tempo?.kern,
-                      iconLaeuftMit: iconLaeuftMit)
+        Formatangaben.kurzbefehl(weg: weg, schriftart: schriftart, groesse: groesse, fett: fett,
+                                 grossbuchstaben: grossbuchstaben, farbe: farbe,
+                                 waagrecht: waagrecht, senkrecht: senkrecht, rand: rand,
+                                 abstand: abstand, tempo: tempo, iconLaeuftMit: iconLaeuftMit)
     }
 
     static var parameterSummary: some ParameterSummary {
@@ -117,6 +118,7 @@ struct MeldungSendenIntent: AppIntent {
             \.$tempo
             \.$iconLaeuftMit
             \.$lebensdauer
+            \.$ablauf
             \.$behalten
         }
     }
@@ -137,12 +139,11 @@ struct MeldungSendenIntent: AppIntent {
             throw $groesse.needsValueError(IntentDialog(stringLiteral: fehler.localizedDescription))
         }
         optionen.text = text
-        if let dauer, dauer > 0 { optionen.dauer = dauer }
+        if let dauer = Kurzbefehlswerte.dauer(dauer) { optionen.dauer = dauer }
         // Ohne Angabe bleibt `nil`, und das heisst: die Vorgabe (30 Minuten).
-        if behalten {
-            optionen.lebensdauer = .aus
-        } else if let lebensdauer {
-            optionen.lebensdauer = Lebensdauer(sekunden: lebensdauer * 60)
+        if let wahl = Kurzbefehlswerte.lebensdauer(minuten: lebensdauer, behalten: behalten,
+                                                   ablauf: ablauf?.kern) {
+            optionen.lebensdauer = wahl
         }
 
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
@@ -152,22 +153,11 @@ struct MeldungSendenIntent: AppIntent {
         // bleibt `sammlung` die richtige: Der liest daraus nur die Daten-URI
         // der Datei, und die haengt am Icon (`Icon.datei`, `Icon.kante`),
         // nicht am Ordner.
-        var icon: Icon?
-        if let nummer = iconNummer?.trimmingCharacters(in: .whitespaces), !nummer.isEmpty {
-            // Ein 16×16 hat keine LaMetric-Nummer; dort ist der Dateiname der
-            // Schluessel. Darum sucht beides ueber dasselbe Feld, und die
-            // Rueckfrage spricht von „Nummer oder Name".
-            // `sammlung` statt `Iconbestaende.alle()`: Der Kurzbefehl liest
-            // zusaetzlich `Iconordner.mitgeliefert` mit, die App tut das nicht.
-            // Der Unterschied wird hier nicht angetastet — er gehoert nicht zu
-            // dieser Aenderung, und ihn beilaeufig einzuebnen hiesse, ueber
-            // geloeschte Grundschatz-Icons zu entscheiden, ohne gefragt zu sein.
-            guard let gefunden = Iconbestaende.suchen(
-                nummer, in: [sammlung, Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
-            ) else {
-                throw $iconNummer.needsValueError(IntentDialog(stringLiteral: lokf("Kein Icon mit der Nummer oder dem Namen %@. In der App unter „Icon“ nachsehen.", nummer)))
-            }
-            icon = gefunden
+        let icon: Icon?
+        do {
+            icon = try Kurzbefehlswerte.icon(nummer: iconNummer)
+        } catch {
+            throw $iconNummer.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
         }
 
         let slotPlatz = platz ?? 1
@@ -216,8 +206,14 @@ struct MeldungSendenIntent: AppIntent {
             return erledigt
         }.value
 
+        // Eine Uhr mit acht Zeilen bekommt statt eines gewaehlten 16×16 dessen
+        // 8×8-Fassung; die Vorschau der App nennt das, der Dialog auch.
+        let kleinereIcons = icon.map {
+            Iconbestaende.hinweise(gewaehlt: $0, fuer: ziele.filter { z in gesendet.contains(z.name) })
+        } ?? []
         return .result(dialog: IntentDialog(stringLiteral:
-            lokf("An %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis))
+            lokf("An %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis
+            + kleinereIcons.map { " " + $0 + "." }.joined()))
     }
 }
 
@@ -248,7 +244,7 @@ struct MeldungLoeschenIntent: AppIntent {
         // Erst nach der Pruefung der Ziele, damit die Rueckfrage nur kommt,
         // wenn auch wirklich geloescht wuerde. Die Variante mit Text gibt es
         // ab iOS 18; davor fragt das System mit seinem Standardtext.
-        if #available(iOS 18.0, *) {
+        if #available(iOS 18.0, macOS 15.0, *) {
             try await requestConfirmation(
                 actionName: .do,
                 dialog: IntentDialog(stringLiteral: lokf("Platz %d von der Uhr löschen?", platz)))
@@ -285,7 +281,7 @@ struct MeldungLoeschenIntent: AppIntent {
 struct BildSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Bild an die Uhr schicken"
     static let description = IntentDescription(
-        "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.")
+        "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon. Eine Uhr mit kleinerem Display weist sie ab.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Bild", description: "Das Bild, wie es im Editor gesichert wurde.")
@@ -298,7 +294,7 @@ struct BildSendenIntent: AppIntent {
                inclusiveRange: (1, 5))
     var platz: Int?
 
-    @Parameter(title: "Dauer in Sekunden")
+    @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
     var dauer: Int?
 
     static var parameterSummary: some ParameterSummary {
@@ -326,7 +322,7 @@ struct BildSendenIntent: AppIntent {
         let ziele = try KurzbefehlFehler.ziele(e, uhr: uhr, nurBeschickbare: true)
         // Dieselbe Entscheidung wie in App und Werkzeug: ein Einzelbild als
         // Standbild, mehrere als GIF (`Bildsendung.rahmen`).
-        let rahmen = try Bildsendung.rahmen(aus: gefunden.datei, dauer: (dauer ?? 0) > 0 ? dauer : nil)
+        let rahmen = try Bildsendung.rahmen(aus: gefunden.datei, dauer: Kurzbefehlswerte.dauer(dauer))
         let anzeigenname = Meldungsplatz.name(fuer: platz ?? 1)
         try await Task.detached(priority: .userInitiated) {
             for ziel in ziele {
@@ -346,9 +342,18 @@ struct BildSendenIntent: AppIntent {
     }
 }
 
+/// Der Einstieg für die Mac-App. Die Intents stehen in einem Bibliotheksziel,
+/// und der Linker nimmt aus einer Bibliothek nur mit, worauf etwas verweist;
+/// dieser Verweis hält das Modul — samt allen Kurzbefehlen — im Programm.
+public enum Kurzbefehle {
+    public static func einbinden() {
+        _ = Kurzbefehlsanbieter.self
+    }
+}
+
 /// Damit sie ohne Zutun in Siri und in der Suche auftauchen. Ohne diesen
 /// Anbieter müsste man sie erst von Hand in einen Kurzbefehl einbauen.
-struct TC002Kurzbefehle: AppShortcutsProvider {
+struct Kurzbefehlsanbieter: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: MeldungSendenIntent(),
                     phrases: ["Schicke eine Meldung mit \(.applicationName)",
@@ -375,5 +380,28 @@ struct TC002Kurzbefehle: AppShortcutsProvider {
                               "Remove from the clock with \(.applicationName)"],
                     shortTitle: "Meldung löschen",
                     systemImageName: "trash")
+        // Die Fernbedienung. Apple lässt höchstens zehn solche Einträge zu; die
+        // übrigen Aktionen (Overlay, Anzeiger, Neustart) stehen trotzdem in der
+        // Kurzbefehle-App und lassen sich dort zu einem Kurzbefehl zusammensetzen.
+        AppShortcut(intent: DisplaySchaltenIntent(),
+                    phrases: ["Schalte das Display der Uhr mit \(.applicationName)",
+                              "Switch the clock display with \(.applicationName)"],
+                    shortTitle: "Display schalten",
+                    systemImageName: "power")
+        AppShortcut(intent: HelligkeitSetzenIntent(),
+                    phrases: ["Stelle die Helligkeit der Uhr ein mit \(.applicationName)",
+                              "Set the clock brightness with \(.applicationName)"],
+                    shortTitle: "Helligkeit einstellen",
+                    systemImageName: "sun.max")
+        AppShortcut(intent: MoodlightSetzenIntent(),
+                    phrases: ["Schalte das Moodlight der Uhr mit \(.applicationName)",
+                              "Set the clock moodlight with \(.applicationName)"],
+                    shortTitle: "Moodlight",
+                    systemImageName: "lightbulb")
+        AppShortcut(intent: AnzeigeBlaetternIntent(),
+                    phrases: ["Wechsle die Anzeige der Uhr mit \(.applicationName)",
+                              "Change the clock display with \(.applicationName)"],
+                    shortTitle: "Anzeige wechseln",
+                    systemImageName: "forward")
     }
 }

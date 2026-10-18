@@ -33,6 +33,7 @@ QUELLEN = [WURZEL / "Sources" / "TC002App",
            WURZEL / "Sources" / "TC002Core",
            WURZEL / "Sources" / "TC002Modell",
            WURZEL / "Sources" / "TC002iOS",
+           WURZEL / "Sources" / "TC002Kurzbefehle",
            # Plattformfreie, geteilte Ansichten (Mac, iPhone, künftig iPad) —
            # seit `Slotblock.swift` der erste eigene, übersetzte Text hier.
            WURZEL / "Sources" / "TC002Ansichten"]
@@ -75,7 +76,7 @@ EIGENE = ["lok", "lokf", "ueberschrift", "untertitel", "absatz"]
 # Aufrufnamen.
 PARAMETER_SCHLUESSEL = ["title", "description"]
 # Die Anzeigenamen der Auswahllisten in den Kurzbefehlen (`AppEnum`, siehe
-# TC002iOS/KurzbefehleAuswahl.swift): `DisplayRepresentation(title: "…")` je
+# TC002Kurzbefehle/KurzbefehleAuswahl.swift): `DisplayRepresentation(title: "…")` je
 # Fall, `TypeDisplayRepresentation(name: "…")` fuer die Liste selbst. Beide
 # nehmen ein `LocalizedStringResource`; genau dieser Wortlaut landet als
 # Schluessel im gebauten Buendel (`Metadata.appintents/extract.actionsdata`,
@@ -101,24 +102,43 @@ DYNAMISCH = [
     "8 × 8", "16 × 16", "52 × 16",
     # Abschnitte der Hilfe (HilfeView.swift, enum Abschnitt)
     "Was das Programm tut", "Wenn nichts erscheint",
-    # Nur die Hilfe von iPhone und iPad (enum Abschnitt) — am Mac gibt es keine
-    # Kurzbefehle, dafür nur dort die Kommandozeile.
+    # Abschnitte nur der Hilfe von iPhone und iPad (enum Abschnitt); die
+    # Kommandozeile gibt es nur am Mac.
     "Kurzbefehle", "Kommandozeile",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
     # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
     "Meldung an die Uhr schicken",
     "Meldung von der Uhr löschen",
-    "Schickt einen Text an eine eingerichtete Ulanzi TC002. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Schickt einen Text an eine eingerichtete Uhr. Schrift, Ausrichtung und Darstellung (Hintergrund, Effekt, Overlay, Palette) kommen aus den zuletzt in der App gewählten Einstellungen.",
     "Entfernt eine der fünf Meldungen wieder von der Uhr.",
     "Meldung schicken",
     "Meldung löschen",
     "Bild an die Uhr schicken",
-    "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon.",
+    "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon. Eine Uhr mit kleinerem Display weist sie ab.",
     "Bild schicken",
     "Nachricht senden",
-    "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.",
+    "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift, Ausrichtung und Darstellung kommen aus den zuletzt in der App gewählten Einstellungen.",
     "Nachricht zurückziehen",
     "Nimmt die sichtbare Nachricht weg, oder mit Namen die benannte.",
+    # Die Fernbedienung (KurzbefehleFernbedienung.swift): Titel, Beschreibung
+    # und Kurztitel des Anbieters je Aktion.
+    "Display der Uhr schalten",
+    "Schaltet das Display der Uhr ein oder aus. Aus ist das Panel dunkel; die Uhr läuft weiter.",
+    "Display schalten",
+    "Helligkeit der Uhr einstellen",
+    "Stellt die Helligkeit des Displays ein, in Prozent, oder schaltet die Regelung durch den Lichtsensor ein oder aus. Die Automatik gibt es nur bei Uhren mit Lichtsensor; eine andere weist sie ab.",
+    "Helligkeit einstellen",
+    "Overlay der Uhr setzen",
+    "Legt ein Wetter-Overlay über alle Anzeigen der Uhr, oder nimmt es weg. Welche Namen es gibt, sagt die Uhr (in der App unter „Anzeige“ › „Overlay“).",
+    "Moodlight der Uhr einstellen",
+    "Schaltet das Moodlight ein, mit einer Farbe oder einem Weißton, oder aus. Ohne Angabe leuchtet es weiß.",
+    "Anzeiger der Uhr einstellen",
+    "Schaltet einen der drei Anzeiger am Rand der Uhr ein, mit Farbe, Blinken und Blenden, oder aus. Anzeiger 1 ist oben, 3 unten.",
+    "Anzeige der Uhr wechseln",
+    "Schaltet die Uhr zur nächsten oder vorherigen Anzeige ihrer Schleife.",
+    "Anzeige wechseln",
+    "Uhr neu starten",
+    "Startet die Uhr neu. Sie ist danach kurz nicht erreichbar.",
     # `Summary(...)` in Kurzbefehle.swift: Im Quelltext steht SwiftUIs
     # Parameterverweis-Syntax `\(\.$…)`, aber `appintentsmetadataprocessor`
     # baut daraus beim Bauen einen eigenen Platzhalter `${…}` — nachgesehen in
@@ -132,6 +152,13 @@ DYNAMISCH = [
     r"Platz ${platz} von der Uhr löschen",
     r"${text} als Nachricht an die Uhr senden",
     r"Nachricht ${name} zurückziehen",
+    r"Display der Uhr: ${zustand}",
+    r"Helligkeit der Uhr einstellen",
+    r"Overlay der Uhr auf ${overlay} setzen",
+    r"Moodlight der Uhr: ${zustand}",
+    r"Anzeiger ${nummer} der Uhr: ${zustand}",
+    r"Anzeige der Uhr wechseln: ${richtung}",
+    r"Uhr neu starten",
 ]
 
 # Eine Swift-Zeichenkette ohne Escapes am Rand: absichtlich streng, damit

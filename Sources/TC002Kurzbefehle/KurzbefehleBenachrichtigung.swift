@@ -15,6 +15,11 @@ struct KurzbefehlFehler: Error, CustomLocalizedStringResourceConvertible {
         text = lokf("%@: %@", uhr, grund)
     }
 
+    /// Ein Satz, der keinem Parameter allein gehört (zwei Angaben, die sich ausschließen).
+    init(text: String) {
+        self.text = text
+    }
+
     /// Ein Mangel der Einrichtung, ohne Uhrennamen davor.
     init(_ fehler: Kurzbefehlsziele.Fehler) {
         text = fehler.errorDescription ?? "\(fehler)"
@@ -56,12 +61,14 @@ final class Ausgebliebene: @unchecked Sendable {
 /// Zeigt einmalig einen Text über der Schleife der Uhr — keine Anzeige, kein
 /// Platz, kein Eintrag im Slotgedächtnis.
 ///
-/// Format wie bei „Meldung schicken": was fehlt, kommt aus dem, was zuletzt unter
-/// „Senden" eingestellt war.
+/// Wie in der App ist es dieselbe Rechnung wie bei „Meldung schicken“ (Format,
+/// Icon, Darstellung) mit den Reglern der Nachricht darüber (`Nachrichtwahl`):
+/// halten, aufwecken, einreihen oder ersetzen, Durchläufe, Klang. Was beim
+/// Format fehlt, kommt aus dem, was zuletzt unter „Senden“ eingestellt war.
 struct BenachrichtigungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Nachricht senden"
     static let description = IntentDescription(
-        "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen.")
+        "Zeigt eine Nachricht einmalig über der Schleife der Uhr, statt eine Anzeige anzulegen. Schrift, Ausrichtung und Darstellung kommen aus den zuletzt in der App gewählten Einstellungen.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Text")
@@ -70,33 +77,106 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
+    @Parameter(title: "Icon-Nummer", description: "Nummer oder Name eines vorhandenen Icons.")
+    var iconNummer: String?
+
     @Parameter(title: "Halten", description: "Bleibt stehen, bis sie zurückgezogen wird.", default: false)
     var halten: Bool
 
     @Parameter(title: "Aufwecken", description: "Erscheint auch bei ausgeschaltetem Panel.", default: true)
     var aufwecken: Bool
 
+    @Parameter(title: "Einreihen", description: "Reiht sich hinter die sichtbare Nachricht ein, statt sie zu ersetzen.", default: false)
+    var einreihen: Bool
+
+    @Parameter(title: "Durchläufe", description: "Wie oft laufender Text durchzieht, 1 bis 9.", default: 2, inclusiveRange: (1, 9))
+    var durchlaeufe: Int
+
     @Parameter(title: "Name", description: "Nur unter diesem Namen lässt sie sich später zurückziehen. Buchstaben, Ziffern, „_“ und „-“.")
     var name: String?
 
-    @Parameter(title: "Dauer in Sekunden")
+    @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
     var dauer: Int?
 
     @Parameter(title: "Klang", description: "Name einer Melodie oder MP3-Datei auf der Uhr.")
     var klang: String?
 
+    @Parameter(title: "Klang wiederholen", description: "Der Klang wiederholt sich, bis die Nachricht geht.", default: false)
+    var klangWiederholen: Bool
+
     @Parameter(title: "Vorlesen", description: "Die Uhr liest den Text vor, auf Englisch.", default: false)
     var vorlesen: Bool
+
+    // Das Format, wie bei „Meldung schicken“. Alles wahlfrei.
+
+    @Parameter(title: "Weg", description: "„als Pixel“ rastert die App selbst, mit einer ihrer Pixelschriften. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt Umlaute und Akzente, aber keine Auswahl.")
+    var weg: WegAuswahl?
+
+    @Parameter(title: "Schriftart", description: "Gilt nur auf dem Weg „als Pixel“.")
+    var schriftart: SchriftAuswahl?
+
+    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; die Meldung nennt die möglichen.")
+    var groesse: Int?
+
+    @Parameter(title: "Fett", description: "Nicht jede Schrift hat bei jeder Größe einen fetten Schnitt; wo keiner ist, bleibt es ohne Wirkung.")
+    var fett: Bool?
+
+    @Parameter(title: "Großbuchstaben", description: "Wandelt den Text vor dem Senden um; aus „ß“ wird dabei „SS“.")
+    var grossbuchstaben: Bool?
+
+    @Parameter(title: "Farbe")
+    var farbe: FarbAuswahl?
+
+    @Parameter(title: "Ausrichtung waagrecht")
+    var waagrecht: WaagrechtAuswahl?
+
+    @Parameter(title: "Ausrichtung senkrecht")
+    var senkrecht: SenkrechtAuswahl?
+
+    @Parameter(title: "Rand", description: "Zeilen, die bei „oben“ und „unten“ frei bleiben, 0 bis 3. Bei „mittig“ ohne Wirkung.", inclusiveRange: (0, 3))
+    var rand: Int?
+
+    @Parameter(title: "Abstand", description: "Leere Spalten zwischen den Zeichen, 0 bis 3 — nur auf dem Weg „als Pixel“.", inclusiveRange: (0, 3))
+    var abstand: Int?
+
+    @Parameter(title: "Tempo", description: "Gilt nur, wenn der Text nicht ins Display passt.")
+    var tempo: TempoAuswahl?
+
+    @Parameter(title: "Icon mitscrollen", description: "Gilt nur, wenn der Text nicht ins Display passt.")
+    var iconLaeuftMit: Bool?
+
+    private var angaben: Formatangaben {
+        Formatangaben.kurzbefehl(weg: weg, schriftart: schriftart, groesse: groesse, fett: fett,
+                                 grossbuchstaben: grossbuchstaben, farbe: farbe,
+                                 waagrecht: waagrecht, senkrecht: senkrecht, rand: rand,
+                                 abstand: abstand, tempo: tempo, iconLaeuftMit: iconLaeuftMit)
+    }
 
     static var parameterSummary: some ParameterSummary {
         Summary("\(\.$text) als Nachricht an die Uhr senden") {
             \.$uhr
+            \.$iconNummer
             \.$halten
             \.$aufwecken
+            \.$einreihen
+            \.$durchlaeufe
             \.$name
             \.$dauer
             \.$klang
+            \.$klangWiederholen
             \.$vorlesen
+            \.$weg
+            \.$schriftart
+            \.$groesse
+            \.$fett
+            \.$grossbuchstaben
+            \.$farbe
+            \.$waagrecht
+            \.$senkrecht
+            \.$rand
+            \.$abstand
+            \.$tempo
+            \.$iconLaeuftMit
         }
     }
 
@@ -105,27 +185,40 @@ struct BenachrichtigungSendenIntent: AppIntent {
         let ziele = try KurzbefehlFehler.ziele(einstellungen, uhr: uhr)
 
         let benannt = name?.trimmingCharacters(in: .whitespaces)
-        let klangname = klang?.trimmingCharacters(in: .whitespaces) ?? ""
-        if vorlesen && !klangname.isEmpty {
-            throw $vorlesen.needsValueError(IntentDialog(stringLiteral: lok("Entweder ein Klang oder Vorlesen, nicht beides.")))
+        let klangwahl: Klangwahl
+        do {
+            klangwahl = try Kurzbefehlswerte.klangwahl(name: klang, vorlesen: vorlesen, wiederholen: klangWiederholen)
+        } catch {
+            throw $vorlesen.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
         }
-        let klangwahl = vorlesen ? Klangwahl(art: .vorlesen)
-            : (klangname.isEmpty ? Klangwahl() : Klangwahl(art: .uhr, name: klangname))
-        let bo = Benachrichtigungsoptionen(name: (benannt?.isEmpty ?? true) ? nil : benannt,
-                                           halten: halten, aufwecken: aufwecken,
-                                           klang: klangwahl.klaenge(nachrichtentext: text))
+        var bo = Nachrichtwahl(halten: halten, aufwecken: aufwecken, ersetzen: !einreihen,
+                               durchlaeufe: durchlaeufe, klang: klangwahl)
+            .optionen(nachrichtentext: text)
+        bo.name = (benannt?.isEmpty ?? true) ? nil : benannt
         if let n = bo.name, !Benachrichtigungsoptionen.nameGueltig(n) {
             throw $name.needsValueError(IntentDialog(stringLiteral: NGFehler.ungueltigerName(n).localizedDescription))
         }
 
-        var optionen = Meldungsoptionen.ausAblage(.standard)
+        var optionen: Meldungsoptionen
+        do {
+            optionen = try angaben.angewendet(auf: Meldungsoptionen.ausAblage(.standard))
+        } catch let fehler as Formatangaben.Fehler {
+            throw $groesse.needsValueError(IntentDialog(stringLiteral: fehler.localizedDescription))
+        }
         optionen.text = text
-        if let dauer, dauer > 0 { optionen.dauer = dauer }
+        if let dauer = Kurzbefehlswerte.dauer(dauer) { optionen.dauer = dauer }
         let gesetzt = optionen
+        let icon: Icon?
+        do {
+            icon = try Kurzbefehlswerte.icon(nummer: iconNummer)
+        } catch {
+            throw $iconNummer.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
+        }
         let sammlung = Iconsammlung(schreibordner: Iconordner.eigene,
                                     leseordner: [Iconordner.mitgeliefert])
         let ausgeblieben = Ausgebliebene()
         let ohneKlang = Ausgebliebene()
+        let nachricht = bo
 
         let gesendet = try await Task.detached(priority: .userInitiated) { () -> [String] in
             var erledigt: [String] = []
@@ -136,18 +229,18 @@ struct BenachrichtigungSendenIntent: AppIntent {
                     clientID: MQTTKennung.fuer(.kurzbefehl, uhr: ziel.id)))?
                     .quittierend(beiAusbleiben: { _ in ausgeblieben.merken(ziel.name) }) else { continue }
                 // Der Klang geht nur an eine Uhr, die ihn spielt; die Nachricht geht in jedem Fall.
-                var eigene = bo
-                if !bo.klang.isEmpty, !ziel.host.isEmpty {
+                var eigene = nachricht
+                if !nachricht.klang.isEmpty, !ziel.host.isEmpty {
                     let g = Geraet(host: ziel.host)
                     let caps = (try? g.faehigkeiten(fuer: ziel)) ?? nil
                     let listen = (try? g.melodien()).map { Tonlisten(melodien: $0.namen, mp3: (try? g.mp3Dateien())?.namen ?? []) }
-                    let verteilung = Klangeignung.verteilen(bo.klang, an: [Klangziel(id: ziel.id, name: ziel.name,
-                                                                                    faehigkeiten: caps, listen: listen)])
-                    eigene.klang = verteilung.klaenge[ziel.id] ?? bo.klang
+                    let verteilung = Klangeignung.verteilen(nachricht.klang, an: [Klangziel(id: ziel.id, name: ziel.name,
+                                                                                           faehigkeiten: caps, listen: listen)])
+                    eigene.klang = verteilung.klaenge[ziel.id] ?? nachricht.klang
                     if !verteilung.uebersprungen.isEmpty { ohneKlang.merken(ziel.name) }
                 }
                 do {
-                    try anzeigen.benachrichtigen(try Meldungsbau.rahmen(gesetzt, icon: nil, sammlung: sammlung,
+                    try anzeigen.benachrichtigen(try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung,
                                                                        mass: Anzeigemass.fuer(ziel)), eigene)
                 } catch {
                     throw KurzbefehlFehler(uhr: ziel.name, error)
@@ -157,10 +250,14 @@ struct BenachrichtigungSendenIntent: AppIntent {
             return erledigt
         }.value
 
+        let kleinereIcons = icon.map {
+            Iconbestaende.hinweise(gewaehlt: $0, fuer: ziele.filter { z in gesendet.contains(z.name) })
+        } ?? []
         return .result(dialog: IntentDialog(stringLiteral:
             lokf("Nachricht an %@ geschickt.", gesendet.joined(separator: ", ")) + ausgeblieben.hinweis
             + (ohneKlang.uhren.isEmpty ? "" : " " + lokf("%@ zeigt die Nachricht ohne Ton: Diese Uhr kann den Klang nicht abspielen.",
-                                                          ohneKlang.uhren.joined(separator: ", ")))))
+                                                          ohneKlang.uhren.joined(separator: ", ")))
+            + kleinereIcons.map { " " + $0 + "." }.joined()))
     }
 }
 

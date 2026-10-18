@@ -34,10 +34,10 @@ final class PlattformwegeTests: XCTestCase {
     }
 
     /// Fenster gibt es nur am Mac — also darf sie auch nur die Mac-App öffnen.
-    /// Alles, was das iPad mitübersetzt (`TC002Ansichten`, `TC002iOS`), muss
+    /// Alles, was das iPad mitübersetzt (`TC002Ansichten`, `TC002iOS`, `TC002Kurzbefehle`), muss
     /// ohne auskommen.
     func testFensterAufrufeNurInDerMacApp() throws {
-        for ordner in ["Sources/TC002Ansichten", "Sources/TC002iOS",
+        for ordner in ["Sources/TC002Ansichten", "Sources/TC002iOS", "Sources/TC002Kurzbefehle",
                        "Sources/TC002Modell", "Sources/TC002Core"] {
             for datei in swiftDateien(unter: ordner) {
                 let text = try quelltext(datei)

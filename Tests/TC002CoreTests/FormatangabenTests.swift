@@ -115,7 +115,7 @@ final class FormatangabenTests: XCTestCase {
     }
 
     /// Die Auswahlliste der Kurzbefehle (`SchriftAuswahl` in
-    /// `TC002iOS/KurzbefehleAuswahl.swift`) muss dieselben acht Namen führen —
+    /// `TC002Kurzbefehle/KurzbefehleAuswahl.swift`) muss dieselben acht Namen führen —
     /// ein `AppEnum` braucht feste Fälle und kann keine Liste lesen. Das
     /// iOS-Ziel hat kein Testziel (SwiftPM baut es nicht), deshalb wird hier
     /// die Quelle festgenagelt: Wer sie ändert, kommt an diesem Test nicht

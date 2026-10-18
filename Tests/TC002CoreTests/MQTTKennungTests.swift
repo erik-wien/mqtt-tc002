@@ -56,8 +56,9 @@ final class MQTTKennungTests: XCTestCase {
     func testAppUndKurzbefehleNutzenDieGeraetekennung() throws {
         let wurzel = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        for pfad in ["Sources/TC002Modell/AppZustand.swift", "Sources/TC002iOS/Kurzbefehle.swift",
-                     "Sources/TC002iOS/KurzbefehleBenachrichtigung.swift"] {
+        for pfad in ["Sources/TC002Modell/AppZustand.swift", "Sources/TC002Kurzbefehle/Kurzbefehle.swift",
+                     "Sources/TC002Kurzbefehle/KurzbefehleBenachrichtigung.swift",
+                     "Sources/TC002Kurzbefehle/KurzbefehleFernbedienung.swift"] {
             let q = try String(contentsOf: wurzel.appendingPathComponent(pfad), encoding: .utf8)
             XCTAssertFalse(q.contains(#"clientID = "tc002-app"#), pfad)
             XCTAssertFalse(q.contains(#""tc002-app-" +"#), pfad)

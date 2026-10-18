@@ -66,10 +66,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Kommandozeile gibt es nur am Mac, Kurzbefehle nur auf dem iPad.
+    /// Die Kommandozeile gibt es nur am Mac; Kurzbefehle auf jeder Oberfläche.
     static var sichtbar: [Abschnitt] {
         #if os(macOS)
-        allCases.filter { $0 != .kurzbefehle }
+        allCases
         #else
         allCases.filter { $0 != .kommandozeile }
         #endif
