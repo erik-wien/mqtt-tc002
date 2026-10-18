@@ -449,6 +449,83 @@ extension AppZustand {
         }
     }
 
+    // MARK: - Sicherung
+
+    private func sicherungsuhr(_ id: UUID) -> Uhr? {
+        guard let uhr = uhren.first(where: { $0.id == id }) else { return nil }
+        guard !uhr.host.isEmpty else {
+            fehler = lokf("Ohne Adresse: %@. In der App unter „Einstellungen“ eine eintragen.", uhr.name)
+            return nil
+        }
+        return uhr
+    }
+
+    /// Baut die Sicherung der Uhr als Zip (nur HTTP). Nichts wird geschrieben;
+    /// wohin die Datei kommt, bestimmt die Ansicht.
+    public func sicherungErstellen(fuer id: UUID) async -> Data? {
+        guard let uhr = sicherungsuhr(id) else { return nil }
+        let host = uhr.host, sitzung = netzsitzung
+        do {
+            let zip = try await Hintergrund.lauf { try Geraet(host: host, sitzung: sitzung).sicherungErstellen() }
+            log(lokf("%@: Sicherung erstellt", uhr.name))
+            return zip
+        } catch {
+            melde(error, uhr: uhr)
+            return nil
+        }
+    }
+
+    /// Liest eine gewählte Sicherungsdatei und prüft sie, bevor etwas an die Uhr geht:
+    /// ein Zip mit `manifest.json` zuerst, `app` und `backupFormat` passend. Was
+    /// nicht zu lesen oder keine Sicherung ist, steht in `fehler`.
+    public func sicherungLesen(datei: URL) async -> (zip: Data, vorschau: Sicherungszip.Vorschau)? {
+        let gelesen = await Hintergrund.lauf { () -> Result<(Data, Sicherungszip.Vorschau), Error> in
+            let offen = datei.startAccessingSecurityScopedResource()
+            defer { if offen { datei.stopAccessingSecurityScopedResource() } }
+            do {
+                let daten = try Data(contentsOf: datei)
+                return .success((daten, try Sicherungszip.pruefen(try Sicherungszip.lesen(daten))))
+            } catch { return .failure(error) }
+        }
+        switch gelesen {
+        case .success(let (zip, vorschau)): return (zip, vorschau)
+        case .failure(let error):
+            fehler = lokf("„%@“ ist keine Sicherung einer AWTRIX NG: %@", datei.lastPathComponent,
+                          Self.sicherungsgrund(error))
+            return nil
+        }
+    }
+
+    private static func sicherungsgrund(_ error: Error) -> String {
+        switch error as? Sicherungszip.Fehler {
+        case .keineSicherung?: return lok("Es fehlt die Kennung (manifest.json) am Anfang.")
+        case .fremdeSicherung?: return lok("Sie stammt von einem anderen Programm.")
+        case .fassungUnbekannt(let n)?: return lokf("Das Format %d ist dieser App unbekannt.", n)
+        case .pruefsummeFalsch(let name)?: return lokf("Der Eintrag %@ ist beschädigt.", name)
+        case .kaputt?, .nichtUnterstuetzt?: return lok("Es ist kein lesbares, unkomprimiertes Zip.")
+        case nil: return error.localizedDescription
+        }
+    }
+
+    /// Spielt eine geprüfte Sicherung auf die Uhr zurück (nur HTTP). Die Uhr
+    /// schreibt sofort; danach werden Zustand und Listen neu gelesen.
+    public func sicherungZurueckspielen(_ zip: Data, name: String, fuer id: UUID) async -> Sicherungsergebnis? {
+        guard let uhr = sicherungsuhr(id) else { return nil }
+        let host = uhr.host, sitzung = netzsitzung
+        do {
+            let ergebnis = try await Hintergrund.lauf {
+                try Geraet(host: host, sitzung: sitzung).sicherungZurueckspielen(zip, dateiname: name)
+            }
+            log(lokf("%@: Sicherung zurückgespielt", uhr.name))
+            await zustandAbfragen(id)
+            await tonlistenAbfragen(id)
+            return ergebnis
+        } catch {
+            melde(error, uhr: uhr)
+            return nil
+        }
+    }
+
     /// Eine Anzeige vor oder zurück bei genau dieser Uhr.
     @discardableResult
     public func anzeigeBlaettern(vor: Bool, fuer id: UUID) async -> Sendebilanz {
