@@ -16,6 +16,12 @@ public enum GeraetFehler: Error, LocalizedError {
     /// Die Antwort ist größer als die Grenze für diese Art von Antwort
     /// (`Antwortgrenze`); sie wird nicht geladen, sondern abgebrochen.
     case antwortZuGross(pfad: String, grenze: Int)
+    /// `POST /api/v1/restore` hat die Sicherung als Ganzes abgewiesen (`ok:false`);
+    /// der Text ist die englische Begründung der Uhr.
+    case sicherungAbgewiesen(String)
+    /// Die Sicherung ist eingespielt, aber die Uhr konnte sie noch nicht dauerhaft
+    /// speichern (`507`).
+    case sicherungNichtGespeichert
 
     public var errorDescription: String? {
         switch self {
@@ -29,6 +35,10 @@ public enum GeraetFehler: Error, LocalizedError {
         case .antwortZuGross(let pfad, let grenze):
             return lokf("Die Antwort der Uhr auf %@ ist größer als %@ und wurde abgebrochen.", pfad,
                         ByteCountFormatter.string(fromByteCount: Int64(grenze), countStyle: .file))
+        case .sicherungAbgewiesen(let grund):
+            return lokf("Die Uhr hat die Sicherung abgewiesen: %@", grund)
+        case .sicherungNichtGespeichert:
+            return lok("Die Sicherung ist eingespielt, aber die Uhr konnte sie noch nicht dauerhaft speichern. Speicher freimachen und erneut zurückspielen, bevor die Uhr neu startet.")
         case .keinPraefix: return lok("Die Uhr nennt weder ein MQTT-Präfix noch eine Kennung. Erneut abfragen.")
         case .ungueltigesPraefix: return lok("Das MQTT-Präfix der Uhr ist unbrauchbar (zu lang oder mit Steuerzeichen, „#“ oder „+“). In den Einstellungen der Uhr berichtigen.")
         case .ungueltigeAdresse(let a): return lokf("„%@“ ist keine gültige Adresse. In den Einstellungen die Adresse der Uhr berichtigen — ein Leerzeichen genügt schon, damit sie nicht mehr stimmt.", a)
@@ -335,8 +345,21 @@ public struct Geraet {
     }
 
     /// Der Rumpf einer `GET`-Antwort, ungelesen.
-    func lesen(_ pfad: String) throws -> Data {
-        try fuehreAus(try anfrage(url(pfad)))
+    func lesen(_ pfad: String, grenze: Int = Antwortgrenze.standard) throws -> Data {
+        try fuehreAus(try anfrage(url(pfad)), grenze: grenze)
+    }
+
+    /// Eine Anfrage mit Statuscode statt Fehler, für Routen mit eigener
+    /// Antwortform (`POST /api/v1/restore`): Dort steht die Begründung einer
+    /// Abweisung nicht im Fehlerrumpf von §4.1.
+    func ngRoh(_ methode: String, _ pfad: String, koerper: Data, inhaltsart: String,
+               frist: TimeInterval) throws -> (daten: Data, status: Int) {
+        var anfrage = try self.anfrage(url(pfad))
+        anfrage.httpMethod = methode
+        anfrage.setValue(inhaltsart, forHTTPHeaderField: "Content-Type")
+        anfrage.httpBody = koerper
+        anfrage.timeoutInterval = max(frist, 60)
+        return try fuehreAusMitStatus(anfrage, frist: frist)
     }
 
     func hole(_ pfad: String) throws -> [String: Any] {

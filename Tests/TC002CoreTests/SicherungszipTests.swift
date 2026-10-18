@@ -18,7 +18,10 @@ final class SicherungszipTests: XCTestCase {
         let gelesen = try Sicherungszip.lesen(Sicherungszip.schreiben(e))
         XCTAssertEqual(gelesen, e)
         XCTAssertEqual(gelesen.first?.pfad, "manifest.json")
-        XCTAssertEqual(try Sicherungszip.pruefen(gelesen), "1970-01-01T00:00:00.000Z")
+        let vorschau = try Sicherungszip.pruefen(gelesen)
+        XCTAssertEqual(vorschau.erstellt, "1970-01-01T00:00:00.000Z")
+        XCTAssertEqual(vorschau.erstelltAm, Date(timeIntervalSince1970: 0))
+        XCTAssertEqual(vorschau.eintraege, 2)
     }
 
     func testFremdgeschriebenesZipMitVerzeichniseintrag() throws {

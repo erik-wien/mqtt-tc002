@@ -44,21 +44,25 @@ public enum Sicherungszip {
 
     // MARK: Schreiben
 
-    /// Das Manifest, als erster Eintrag zu schreiben.
-    public static func manifest(erstellt: Date) -> Eintrag {
+    /// Das Manifest, als erster Eintrag zu schreiben: dieselben Felder wie die
+    /// Weboberfläche (`device.hostname`, `categories`).
+    public static func manifest(erstellt: Date, hostname: String = "", kategorien: [String] = []) -> Eintrag {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let json: [String: Any] = [
             "app": appKennung,
             "backupFormat": formatFassung,
             "createdAt": iso.string(from: erstellt),
+            "device": ["hostname": hostname],
+            "categories": kategorien,
         ]
         let daten = (try? JSONSerialization.data(withJSONObject: json, options: [.sortedKeys])) ?? Data()
         return Eintrag(pfad: "manifest.json", daten: daten)
     }
 
-    /// Baut das Zip in der gegebenen Reihenfolge. Der Zeitstempel ist fest
-    /// 1980-01-01, damit gleicher Inhalt gleiche Bytes ergibt.
+    /// Baut das Zip in der gegebenen Reihenfolge, Feld für Feld wie `zipStore`
+    /// der Weboberfläche (Version 20, keine Flags, gespeichert). Der Zeitstempel
+    /// ist fest 1980-01-01, damit gleicher Inhalt gleiche Bytes ergibt.
     public static func schreiben(_ eintraege: [Eintrag]) -> Data {
         var aus = Data()
         var verzeichnis = Data()
@@ -67,7 +71,7 @@ public enum Sicherungszip {
             let crc = crc32(e.daten)
             let versatz = UInt32(aus.count)
             aus.le32(0x0403_4B50)
-            aus.le16(20); aus.le16(0x0800); aus.le16(0)
+            aus.le16(20); aus.le16(0); aus.le16(0)
             aus.le16(0); aus.le16(0x21)
             aus.le32(crc)
             aus.le32(UInt32(e.daten.count)); aus.le32(UInt32(e.daten.count))
@@ -75,7 +79,7 @@ public enum Sicherungszip {
             aus.append(name); aus.append(e.daten)
 
             verzeichnis.le32(0x0201_4B50)
-            verzeichnis.le16(20); verzeichnis.le16(20); verzeichnis.le16(0x0800); verzeichnis.le16(0)
+            verzeichnis.le16(20); verzeichnis.le16(20); verzeichnis.le16(0); verzeichnis.le16(0)
             verzeichnis.le16(0); verzeichnis.le16(0x21)
             verzeichnis.le32(crc)
             verzeichnis.le32(UInt32(e.daten.count)); verzeichnis.le32(UInt32(e.daten.count))
@@ -132,16 +136,35 @@ public enum Sicherungszip {
     }
 
     /// Prüft, ob die Einträge eine NG-Sicherung sind: `manifest.json` zuerst,
-    /// `app` = `awtrix-ng`, `backupFormat` = 1. Gibt `createdAt` zurück (falls da).
+    /// `app` = `awtrix-ng`, `backupFormat` = 1.
     @discardableResult
-    public static func pruefen(_ eintraege: [Eintrag]) throws -> String? {
+    public static func pruefen(_ eintraege: [Eintrag]) throws -> Vorschau {
         guard let erster = eintraege.first, erster.pfad == "manifest.json",
               let json = try? JSONSerialization.jsonObject(with: erster.daten) as? [String: Any]
         else { throw Fehler.keineSicherung }
         guard json["app"] as? String == appKennung else { throw Fehler.fremdeSicherung }
         guard let f = json["backupFormat"] as? Int else { throw Fehler.keineSicherung }
         guard f == formatFassung else { throw Fehler.fassungUnbekannt(f) }
-        return json["createdAt"] as? String
+        return Vorschau(erstellt: json["createdAt"] as? String,
+                        eintraege: eintraege.count - 1,
+                        kategorien: json["categories"] as? [String] ?? [])
+    }
+
+    /// Was die Oberfläche vor dem Zurückspielen zeigt.
+    public struct Vorschau: Equatable, Sendable {
+        /// `createdAt` des Manifests, ISO 8601.
+        public let erstellt: String?
+        /// Anzahl der Einträge ohne das Manifest.
+        public let eintraege: Int
+        public let kategorien: [String]
+
+        /// `erstellt` als Datum, sofern lesbar.
+        public var erstelltAm: Date? {
+            guard let erstellt else { return nil }
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return iso.date(from: erstellt) ?? ISO8601DateFormatter().date(from: erstellt)
+        }
     }
 }
 

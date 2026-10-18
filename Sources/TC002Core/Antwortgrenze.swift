@@ -12,6 +12,9 @@ public enum Antwortgrenze {
     /// Das Abbild des Displays (`display/screen`): bei 52 × 16 Punkten rund
     /// 8 KiB JSON; 128 KiB lassen mehr als das Zehnfache Raum.
     public static let bildschirm = 128 << 10
+    /// Eine Datei der Uhr beim Sichern (Icon, Palette, MP3, Skript): MP3 sind
+    /// bis 4 MB groß (`Geraet.mp3Hoechstgroesse`).
+    public static let datei = 8 << 20
 }
 
 /// Sammelt eine Antwort ein und bricht ab, sobald sie die Grenze überschreitet.

@@ -388,7 +388,7 @@ extension VirtuelleNGUhr {
                              "totalBytes": .zahl(Double(gesamtSpeicher))]))
     }
 
-    private static func mp3Belegt(_ z: NGUhrzustand) -> Int {
+    static func mp3Belegt(_ z: NGUhrzustand) -> Int {
         z.ton.mp3.reduce(0) { $0 + (z.ton.mp3Groessen[$1] ?? 0) }
     }
 
@@ -397,18 +397,18 @@ extension VirtuelleNGUhr {
         let dateien = z.ton.mp3.sorted().map { n -> JSONWert in
             .objekt(["name": .text(n + ".mp3"), "size": .zahl(Double(z.ton.mp3Groessen[n] ?? 0))])
         }
-        return json(.objekt(["files": .liste(dateien), "scripts": .liste([]),
+        return json(.objekt(["files": .liste(dateien), "scripts": skriptklaenge(z),
                              "usedBytes": .zahl(Double(mp3Belegt(z))), "totalBytes": .zahl(Double(gesamtSpeicher))]))
     }
 
-    private static func istMP3(_ daten: Data) -> Bool {
+    static func istMP3(_ daten: Data) -> Bool {
         let b = [UInt8](daten.prefix(3))
         if b == [0x49, 0x44, 0x33] { return true }
         return b.count >= 2 && b[0] == 0xFF && b[1] & 0xE0 == 0xE0
     }
 
     /// Der Dateiname und der Inhalt des Teils `file` eines `multipart/form-data`-Rumpfes.
-    private static func dateiteil(_ a: Anfrage) -> (name: String, inhalt: Data)? {
+    static func dateiteil(_ a: Anfrage) -> (name: String, inhalt: Data)? {
         let art = a.kopf["content-type"] ?? ""
         guard art.lowercased().hasPrefix("multipart/form-data"),
               let r = art.range(of: "boundary=") else { return nil }
@@ -447,6 +447,7 @@ extension VirtuelleNGUhr {
         guard teil.inhalt.count <= frei else { return fehler(507, "insufficientStorage", "not enough space") }
         if !z.ton.mp3.contains(name) { z.ton.mp3.append(name) }
         z.ton.mp3Groessen[name] = teil.inhalt.count
+        z.ablage.dateien["/MP3/\(name).mp3"] = teil.inhalt
         return ok
     }
 
@@ -455,6 +456,7 @@ extension VirtuelleNGUhr {
         guard z.ton.mp3.contains(name) else { return fehler(404, "notFound", "file not found") }
         z.ton.mp3.removeAll { $0 == name }
         z.ton.mp3Groessen[name] = nil
+        z.ablage.dateien["/MP3/\(name).mp3"] = nil
         return ok
     }
 

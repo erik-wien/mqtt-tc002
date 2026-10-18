@@ -132,6 +132,8 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var neustarts = 0
     /// Klang: Melodien, Sender und was gespielt wurde (`VirtuelleNGUhrTon.swift`).
     public var ton = NGTon()
+    /// Dateiablage und Sicherung (`VirtuelleNGUhrSicherung.swift`).
+    public var ablage = NGAblage()
     /// Die Uhr hat einen Lichtsensor (`capabilities.sensors.light`). Dann folgt
     /// das Panel bei `autoBrightness: true` dem Sensor (`sensorHelligkeit`) und
     /// nicht `brightness` (gemessen 10. Oktober 2026 an einer TC001).
@@ -267,6 +269,7 @@ public enum VirtuelleNGUhr {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
         case tonSpielen, tonStoppen, tonSender, tonMelodien, tonMP3, tonMP3Datei(String), tonMelodie(String)
         case moodlight, tlsStatus, tlsCA, neustart
+        case dateien, iconHerkunft, wiederherstellen, statisch(String)
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
         case meldungSenden, meldungAktivLoeschen, meldungLoeschen(String)
@@ -285,12 +288,16 @@ public enum VirtuelleNGUhr {
             case .appLoeschen, .meldungAktivLoeschen, .meldungLoeschen: return ["DELETE"]
             case .appWeiter, .appZurueck, .meldungSenden, .neustart: return ["POST"]
             case .indikator, .moodlight, .tlsCA: return ["PUT", "DELETE"]
-            case .tlsStatus: return ["GET"]
+            case .tlsStatus, .dateien, .iconHerkunft, .statisch: return ["GET"]
+            case .wiederherstellen: return ["POST"]
             }
         }
     }
 
     private static func route(_ pfad: String) -> Route? {
+        if pfad == "/apploop.json" || ["/ICONS/", "/MELODIES/", "/PALETTES/", "/MP3/", "/SCRIPTS/"].contains(where: pfad.hasPrefix) {
+            return .statisch(pfad)
+        }
         let teile = pfad.components(separatedBy: "/")
         guard teile.count >= 4, teile[0].isEmpty, teile[1] == "api", teile[2] == "v1" else { return nil }
         let r = Array(teile[3...])
@@ -303,6 +310,9 @@ public enum VirtuelleNGUhr {
         case (1, "display"): return .anzeige
         case (1, "apps"): return .apps
         case (1, "capabilities"): return .faehigkeiten
+        case (1, "files"): return .dateien
+        case (1, "restore"): return .wiederherstellen
+        case (2, "icons") where r[1] == "origins": return .iconHerkunft
         case (1, "audio"): return .ton
         case (1, "notifications"): return .meldungSenden
         case (2, "audio") where r[1] == "play": return .tonSpielen
@@ -353,10 +363,11 @@ public enum VirtuelleNGUhr {
         case .geraet: return json(geraet(z))
         case .neustart: z.neustarts += 1; return ok
         case .version: return json(.objekt(["version": .text("1.2.2")]))
-        case .system:
-            return json(.objekt(["mqttEnabled": .bool(false), "mqttHost": .text(""),
-                                 "mqttPort": .zahl(1883), "mqttPrefix": .text(z.mqttPrefix),
-                                 "hostname": .text("virtuelle-uhr"), "webPort": .zahl(80)]))
+        case .system: return systemantwort(anfrage, z)
+        case .dateien: return dateienliste(anfrage, z)
+        case .iconHerkunft: return z.ablage.iconHerkunft.map { Antwort(koerper: $0) } ?? fehler(404, "notFound", "not found")
+        case .statisch(let pfad): return statischeDatei(pfad, z)
+        case .wiederherstellen: return wiederherstellen(anfrage, &z)
         case .einstellungen:
             return anfrage.methode == "GET" ? json(.objekt(einstellungenantwort(z))) : einstellungenAendern(anfrage, &z)
         case .anzeige:
