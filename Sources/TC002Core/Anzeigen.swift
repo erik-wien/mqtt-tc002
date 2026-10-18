@@ -243,6 +243,12 @@ public struct Anzeigen {
         case .http(let geraet):
             try geraet.benachrichtigungZurueckziehen(name: name)
         }
+        // Mit der sichtbaren Nachricht endet auch ihr Klang (Gruppe `alert`);
+        // das Radio läuft weiter. Nur ohne Namen: Eine benannte kann eine
+        // wartende sein, deren Wegnehmen den Klang der sichtbaren nicht betrifft.
+        // Ohne Lautsprecher oder ohne laufenden Klang ist das Anhalten wirkungslos,
+        // daher ohne Fehler.
+        if name == nil { try? tonStoppen(.alarm) }
     }
 
     /// Schaltet eine Anzeige ein oder aus (`cmd/apps/<name>/enabled`). Sie behält

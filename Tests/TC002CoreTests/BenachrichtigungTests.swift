@@ -93,13 +93,16 @@ final class BenachrichtigungTests: XCTestCase {
         XCTAssertTrue(sender.gesendet.first?.nutzlast.contains(#""hold":true"#) == true)
     }
 
+    /// Die sichtbare zurückziehen hält auch ihren Klang an (nur `alert`, das
+    /// Radio nicht); eine benannte kann eine wartende sein und lässt ihn laufen.
     func testZurueckziehenSichtbareUndNachName() throws {
         let sender = Mitschreiber()
         try kanal(sender).benachrichtigungZurueckziehen()
         try kanal(sender).benachrichtigungZurueckziehen(name: "tuer")
         XCTAssertEqual(sender.gesendet.map(\.thema),
-                       ["wohnzimmer/uhr/cmd/notify/dismiss", "wohnzimmer/uhr/cmd/notify/dismiss/tuer"])
-        XCTAssertEqual(sender.gesendet.map(\.nutzlast), ["", ""])
+                       ["wohnzimmer/uhr/cmd/notify/dismiss", "wohnzimmer/uhr/cmd/audio/stop",
+                        "wohnzimmer/uhr/cmd/notify/dismiss/tuer"])
+        XCTAssertEqual(sender.gesendet.map(\.nutzlast), ["", #"{"group":"alert"}"#, ""])
     }
 
     func testSchaltenIstTrueOderFalseAufDemFreigabeThema() throws {

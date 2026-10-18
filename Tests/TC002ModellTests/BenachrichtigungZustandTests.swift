@@ -153,9 +153,9 @@ final class BenachrichtigungZustandTests: XCTestCase {
         await z.anzeigeSchalten("meldung1", an: false)
         await z.anzeigeBlaettern(vor: true)
         XCTAssertEqual(sender.gesendet.map(\.thema),
-                       ["kue/uhr/cmd/notify/dismiss", "kue/uhr/cmd/notify/dismiss/tuer",
+                       ["kue/uhr/cmd/notify/dismiss", "kue/uhr/cmd/audio/stop", "kue/uhr/cmd/notify/dismiss/tuer",
                         "kue/uhr/cmd/apps/meldung1/enabled", "kue/uhr/cmd/apps/next"])
-        XCTAssertEqual(String(decoding: sender.gesendet[2].nutzlast, as: UTF8.self), "false")
+        XCTAssertEqual(String(decoding: sender.gesendet[3].nutzlast, as: UTF8.self), "false")
         XCTAssertNil(z.fehler)
     }
 
