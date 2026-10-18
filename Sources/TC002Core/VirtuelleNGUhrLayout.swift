@@ -63,6 +63,36 @@ extension VirtuelleNGUhr {
         return nil
     }
 
+    // MARK: - Zusatzicons
+
+    private static let zusatziconSchluessel: Set<String> = ["icon", "x", "y"]
+
+    /// `icons[]` nach `payload.md` („Multiple icons“): höchstens 4 Objekte mit
+    /// nicht leerem `icon`, optionalen ganzzahligen `x`/`y` von −65535 bis 65535
+    /// und keinem anderen Schlüssel. Sonst `422`, `field` = `icons[<i>].<Schlüssel>`.
+    /// Annahme, wo die Doku schweigt (❓): Ein Wert, der kein Feld ist, und mehr
+    /// als vier Einträge nennen `icons` selbst.
+    static func pruefeZusatzicons(_ w: JSONWert) -> Antwort? {
+        guard case .liste(let liste) = w else { return ungueltig("must be an array", feld: "icons") }
+        guard liste.count <= Zusatzicons.hoechstzahl else { return ungueltig("too many icons", feld: "icons") }
+        for (i, e) in liste.enumerated() {
+            guard case .objekt(let o) = e else { return ungueltig("must be an object", feld: "icons[\(i)]") }
+            if let falsch = o.keys.sorted().first(where: { !zusatziconSchluessel.contains($0) }) {
+                return ungueltig("unknown field", feld: "icons[\(i)].\(falsch)")
+            }
+            guard case .text(let icon)? = o["icon"], !icon.isEmpty else {
+                return ungueltig("icon is required", feld: "icons[\(i)].icon")
+            }
+            for achse in ["x", "y"] {
+                guard let w = o[achse] else { continue }
+                guard let n = w.ganzzahl, Zusatzicons.firmwareBereich.contains(n) else {
+                    return ungueltig("must be an integer from -65535 to 65535", feld: "icons[\(i)].\(achse)")
+                }
+            }
+        }
+        return nil
+    }
+
     // MARK: - Layout prüfen
 
     private static let layoutSchluessel: Set<String> = [

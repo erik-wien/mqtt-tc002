@@ -487,13 +487,23 @@ public enum VirtuelleNGUhr {
             return layoutBild(layout, vorgabe: vorgabe, einstellungen: z.einstellungen).punkte
         }
 
-        let faktor = z.einstellungen["enlargeApps"] == .bool(false) || z.ton.istTC001 ? 1 : 2
+        // Zusatzicons: Die Firmware vergrößert nur, wenn jedes Bild auf die halbe
+        // Anzeige passt (`PageZoom::enlarges`), und zeichnet sie nach `draw` auf die
+        // Seite, in Spalten der Seite (`RenderPipeline`). Das erste Bild genügt.
+        let zusatz = zusatzbilder(nutzlast["icons"])
+        let vergroessert = zusatz.allSatisfy { $0.bild.breite <= breite / 2 && $0.bild.hoehe <= hoehe / 2 }
+        let faktor = z.einstellungen["enlargeApps"] == .bool(false) || z.ton.istTC001 || !vergroessert ? 1 : 2
         var brett = Brett(breite: breite / faktor, hoehe: hoehe / faktor)
         if let w = nutzlast["backgroundColor"], let f = farbwert(w) {
             brett = Brett(breite: brett.breite, hoehe: brett.hoehe, fuellung: f)
         }
         if case .liste(let befehle)? = nutzlast["draw"] {
             for befehl in befehle { zeichne(befehl, auf: &brett, farbe: vorgabe) }
+        }
+        for e in zusatz {
+            for y in 0..<e.bild.hoehe {
+                for x in 0..<e.bild.breite { brett.setze(e.x + x, e.y + y, e.bild.punkte[y * e.bild.breite + x]) }
+            }
         }
         for y in 0..<brett.hoehe {
             for x in 0..<brett.breite {
@@ -517,6 +527,17 @@ public enum VirtuelleNGUhr {
             }
         }
         return bild.punkte
+    }
+
+    /// Die lesbaren Zusatzicons einer geprüften Nutzlast, in Feldreihenfolge. Ein
+    /// Bild, das sich nicht laden lässt (Kennung, kaputtes GIF), entfällt wie auf
+    /// der Uhr.
+    static func zusatzbilder(_ w: JSONWert?) -> [(bild: GIFBild, x: Int, y: Int)] {
+        guard case .liste(let liste)? = w else { return [] }
+        return liste.prefix(Zusatzicons.hoechstzahl).compactMap { e in
+            guard case .objekt(let o) = e, case .text(let uri)? = o["icon"], let g = gifBild(uri) else { return nil }
+            return (g, o["x"]?.ganzzahl ?? 0, o["y"]?.ganzzahl ?? 0)
+        }
     }
 
     /// Das erste Bild eines GIFs aus einer Data-URL, gepackt als RGB.
@@ -865,6 +886,7 @@ public enum VirtuelleNGUhr {
         if let falsch = pruefeAblauf(o) { return falsch }
         if let falsch = pruefeDarstellung(o) { return falsch }
         if let w = o["draw"], let falsch = pruefeZeichenbefehle(w, feld: "draw") { return falsch }
+        if let w = o["icons"], let falsch = pruefeZusatzicons(w) { return falsch }
         if let l = o["layout"], let falsch = pruefeLayout(l, daneben: o) { return falsch }
         return nil
     }

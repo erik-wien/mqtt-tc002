@@ -250,6 +250,7 @@ public enum NGNutzlast {
     /// der Regler (§5.1).
     public static func anzeige(_ o: Meldungsoptionen, iconDatenURI: String? = nil,
                                iconGap: Int? = nil,
+                               zusatzicons: [Zusatzsendung] = [],
                                textfarbeAusPalette: Bool = false) throws -> String {
         var teile: [String] = []
         // Nicht `gesendeterText`. Unser `uppercased()` macht aus „ß" ein
@@ -282,6 +283,17 @@ public enum NGNutzlast {
             // mitgeschicktes `1` waere eine zweite Entscheidung ueber dieselbe
             // Sache. Die Einheit ist die Spalte der Seite (§5.3).
             if let iconGap, iconGap != Self.vorgabeIconGap { teile.append(#""iconGap":\#(iconGap)"#) }
+        }
+        // Auch ohne normales Icon: Zusatzicons haengen nicht an `icon` und nehmen
+        // dem Text keinen Platz. Hoechstens vier, Koordinaten innerhalb der Grenzen
+        // der Firmware; die Reihenfolge ist die Zeichenreihenfolge.
+        if !zusatzicons.isEmpty {
+            let eintraege = try zusatzicons.prefix(Zusatzicons.hoechstzahl).map { z -> String in
+                let x = min(max(z.x, Zusatzicons.firmwareBereich.lowerBound), Zusatzicons.firmwareBereich.upperBound)
+                let y = min(max(z.y, Zusatzicons.firmwareBereich.lowerBound), Zusatzicons.firmwareBereich.upperBound)
+                return #"{"icon":"\#(jsonEscape(try icon(ausDatenURI: z.iconDatenURI)))","x":\#(x),"y":\#(y)}"#
+            }
+            teile.append(#""icons":[\#(eintraege.joined(separator: ","))]"#)
         }
         // Millisekunden, nicht Sekunden. Ein mitgeschicktes `duration` waere ein unbekannter oberster Schluessel
         // und damit `422 validationFailed` — laut, aber nur auf `/result`.

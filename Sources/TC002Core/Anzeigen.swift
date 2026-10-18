@@ -136,6 +136,7 @@ public struct Anzeigen {
             guard let herkunft = frame.herkunft else { throw NGFehler.leer }
             json = try NGNutzlast.anzeige(herkunft.optionen, iconDatenURI: herkunft.iconDatenURI,
                                           iconGap: herkunft.iconGap,
+                                          zusatzicons: herkunft.zusatzicons,
                                           textfarbeAusPalette: darstellung.textfarbeAusPalette)
         }
         return NGNutzlast.ergaenzt(json, um: darstellung.felder(gegen: faehigkeiten))

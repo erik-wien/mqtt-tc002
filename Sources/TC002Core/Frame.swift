@@ -39,11 +39,15 @@ public struct Meldungsherkunft: Equatable, Sendable {
     /// die Uhr zeichnet (`Iconplatz.luecke`). `nil`: nichts senden, die Firmware
     /// nimmt ihre Vorgabe 1.
     public var iconGap: Int?
+    /// Die Zusatzicons (`icons[]`) samt Koordinaten in Spalten der Seite.
+    public var zusatzicons: [Zusatzsendung]
 
-    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil, iconGap: Int? = nil) {
+    public init(optionen: Meldungsoptionen, iconDatenURI: String? = nil, iconGap: Int? = nil,
+                zusatzicons: [Zusatzsendung] = []) {
         self.optionen = optionen
         self.iconDatenURI = iconDatenURI
         self.iconGap = iconGap
+        self.zusatzicons = zusatzicons
     }
 }
 

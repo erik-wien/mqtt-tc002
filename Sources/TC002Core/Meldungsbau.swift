@@ -135,6 +135,10 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     /// hat. `nil` heißt nichts gewählt; ältere Dateien kennen den Schlüssel nicht.
     /// Was davon hinausgeht, entscheidet der Weg (`Darstellungswahl.darstellung`).
     public var darstellung: Darstellungswahl?
+    /// Bis zu vier weitere Icons an beliebiger Stelle (`Zusatzicons`). `nil` und
+    /// leer heißen dasselbe: keine. Optional, weil der Sendeverlauf diesen Typ
+    /// unverändert schreibt und ältere Dateien den Schlüssel nicht kennen.
+    public var zusatzicons: [Zusatzicon]?
 
     /// Was die Uhr bekommt: die gewählte oder die Vorgabe; `nil`, wenn
     /// ausgeschaltet.
@@ -159,7 +163,8 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
                 dauer: Int? = nil,
                 lebensdauer: Lebensdauer? = nil,
                 darstellung: Darstellungswahl? = nil,
-                iconmodus: Iconmodus? = nil) {
+                iconmodus: Iconmodus? = nil,
+                zusatzicons: [Zusatzicon]? = nil) {
         self.text = text
         self.weg = weg
         self.schrift = schrift
@@ -176,6 +181,7 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
         self.dauer = dauer
         self.lebensdauer = lebensdauer
         self.darstellung = darstellung
+        self.zusatzicons = zusatzicons?.isEmpty == true ? nil : zusatzicons
         if let iconmodus { self.iconmodus = iconmodus }
     }
 
@@ -409,7 +415,41 @@ public enum Meldungsbau {
     public static func laufschriftBilder(_ o: Meldungsoptionen,
                                   iconBilder: [[String?]],
                                   icon: Iconplatz? = nil,
-                                  mass: Anzeigemass = .vorgabe) -> [Bildraster.Einzelbild] {
+                                  mass: Anzeigemass = .vorgabe,
+                                  bestaende: (() -> [Iconsammlung])? = nil) -> [Bildraster.Einzelbild] {
+        let bilder = laufschriftBilderOhneZusatz(o, iconBilder: iconBilder, icon: icon, mass: mass)
+        return mitZusatzicons(bilder, o: o, mitIcon: icon != nil && !iconBilder.isEmpty,
+                              iconKante: icon?.kante ?? 8, mass: mass, bestaende: bestaende)
+    }
+
+    /// Legt die Zusatzicons auf jedes Einzelbild eines Durchlaufs. Sie wechseln
+    /// ihre Bilder mit den Schritten, wie das normale Icon in der Laufschrift
+    /// (nicht nach eigenen Standzeiten): Ein Schritt ist ein Einzelbild.
+    private static func mitZusatzicons(_ bilder: [Bildraster.Einzelbild], o: Meldungsoptionen,
+                                       mitIcon: Bool, iconKante: Int, mass: Anzeigemass,
+                                       bestaende: (() -> [Iconsammlung])?) -> [Bildraster.Einzelbild] {
+        let zusatz = Zusatzicons.laden(o.zusatzicons, mass: mass, bestaende: bestaende)
+        guard !zusatz.isEmpty, !bilder.isEmpty else { return bilder }
+        let faktor = zeichenfaktor(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass)
+        return bilder.enumerated().map { n, b in
+            var pixel = b.pixel
+            Zusatzicons.aufbringen(zusatz, bildnummern: Array(repeating: n, count: zusatz.count),
+                                   faktor: faktor, auf: &pixel, breite: mass.breite, hoehe: mass.hoehe)
+            return Bildraster.Einzelbild(pixel: pixel, dauer: b.dauer)
+        }
+    }
+
+    /// Wie viele Punkte der Anzeige ein Pixel der Seite belegt, auf der die Uhr
+    /// zeichnet: im Pixelweg 1, bei der Schrift der Uhr `Geraeteschrift.masstab`.
+    private static func zeichenfaktor(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int,
+                                      mass: Anzeigemass) -> Int {
+        o.weg == .text ? Geraeteschrift.masstab(o, mitIcon: mitIcon, iconKante: iconKante, mass: mass) : 1
+    }
+
+    private static func laufschriftBilderOhneZusatz(_ o: Meldungsoptionen,
+                                                    iconBilder: [[String?]],
+                                                    icon: Iconplatz?,
+                                                    mass: Anzeigemass) -> [Bildraster.Einzelbild] {
         // Bei der Schrift der Uhr laeuft die Vorschau wie die Uhr selbst
         // (`Geraeteschrift.laufbilder`), nicht nach unserer Rasterung.
         if o.weg == .text {
@@ -424,6 +464,61 @@ public enum Meldungsbau {
         // Die Zeit, die das GIF tatsaechlich traegt (ganze Hundertstel):
         // Vorschau und Sendung laufen gleich schnell.
         return bilder.map { Bildraster.Einzelbild(pixel: $0.pixel, dauer: Bildraster.gifZeit($0.dauer)) }
+    }
+
+    /// Die Einzelbilder einer **stehenden** Anzeige mit Zusatzicons: Text, normales
+    /// Icon, Zusatzicons — in dieser Reihenfolge, spätere decken frühere —, auf
+    /// einer gemeinsamen Zeitleiste, auf der jedes bewegte Icon seine eigenen
+    /// Bildzeiten behält (`Zusatzicons.zeitleiste`). `nil`, wenn kein Zusatzicon
+    /// übrig bleibt: Dann gilt der Weg ohne sie.
+    ///
+    /// Im Pixelweg sind es genau die Bilder, die `pixelinhalt` sendet. Bei der
+    /// Schrift der Uhr ist es die Vorschau, die das normale Icon mit zeichnet:
+    /// Das Feld `feld` ist das der Näherung, das Icon und die Zusatzicons
+    /// sind um `Geraeteschrift.masstab` vergrößert.
+    public static func stehendeBilder(_ o: Meldungsoptionen, icon: Icon?,
+                                      iconAbstand: Int = Iconabstand.vorgabe,
+                                      mass: Anzeigemass = .vorgabe,
+                                      bestaende: (() -> [Iconsammlung])? = nil) -> [Bildraster.Einzelbild]? {
+        let zusatz = Zusatzicons.laden(o.zusatzicons, mass: mass, bestaende: bestaende)
+        guard !zusatz.isEmpty else { return nil }
+        let icon = icon.map { Iconbestaende.passend($0, fuer: mass, in: bestaende) }
+        let kante = icon?.kante ?? 8
+        let gelesen = icon.flatMap {
+            try? Bildraster.lesenMitZeiten($0.datei, breite: kante, hoehe: kante)
+        } ?? []
+        let platz = Iconplatz.vermessen(gelesen.map(\.pixel), kante: kante, abstand: iconAbstand)
+        return try? stehendeBilder(o, gelesen: platz == nil ? [] : gelesen, platz: platz, kante: kante,
+                                   zusatz: zusatz, mass: mass)
+    }
+
+    private static func stehendeBilder(_ o: Meldungsoptionen, gelesen: [Bildraster.Einzelbild],
+                                       platz: Iconplatz?, kante: Int, zusatz: [Zusatzplatz],
+                                       mass: Anzeigemass) throws -> [Bildraster.Einzelbild] {
+        let faktor = zeichenfaktor(o, mitIcon: platz != nil, iconKante: kante, mass: mass)
+        let text = feld(o, icon: platz, mass: mass)
+        let x = iconX(o, icon: platz, mass: mass)
+        let y = iconY(kante: kante * faktor, mass: mass)
+        let spuren = ([gelesen.isEmpty ? [1.0] : gelesen.map { Bildraster.gifZeit($0.dauer) }]
+                      + zusatz.map { $0.bilder.map(\.dauer) })
+        return try Zusatzicons.zeitleiste(spuren: spuren).map { scheibe in
+            var f = text
+            if let platz, !gelesen.isEmpty {
+                let ib = platz.zuschneiden(gelesen[scheibe.bilder[0]].pixel)
+                for dy in 0..<kante {
+                    for dx in 0..<platz.breite {
+                        guard let p = ib[dy * platz.breite + dx] else { continue }
+                        for ey in 0..<faktor { for ex in 0..<faktor {
+                            f.setzen(x: x + dx * faktor + ex, y: y + dy * faktor + ey, farbe: p)
+                        } }
+                    }
+                }
+            }
+            var pixel = f.punkteRoh
+            Zusatzicons.aufbringen(zusatz, bildnummern: Array(scheibe.bilder.dropFirst()), faktor: faktor,
+                                   auf: &pixel, breite: mass.breite, hoehe: mass.hoehe)
+            return Bildraster.Einzelbild(pixel: pixel, dauer: Bildraster.gifZeit(scheibe.dauer))
+        }
     }
 
     /// Der Rahmen zu einer Meldung.
@@ -450,16 +545,26 @@ public enum Meldungsbau {
             // Tinte geht gar nicht mit.
             var iconURI: String?
             var luecke: Int?
+            var mitIcon = false
             if let icon, let platz = Iconplatz.vermessen(icon, abstand: iconAbstand) {
                 iconURI = try iconAlsGIF(icon, platz: platz, sammlung: sammlung)
-                luecke = platz.luecke(faktor: Geraeteschrift.masstab(mitIcon: true, iconKante: icon.kante, mass: mass))
+                mitIcon = true
+                luecke = platz.luecke(faktor: Geraeteschrift.masstab(o, mitIcon: true, iconKante: icon.kante, mass: mass))
             }
+            // Die Zusatzicons gehen mit ihren Koordinaten in Spalten der Seite hinaus,
+            // auf der die Uhr zeichnet (`Zusatzicons.seitenwert`).
+            let zusatz = Zusatzicons.laden(o.zusatzicons, mass: mass, bestaende: bestaende)
+            let sendungen = try Zusatzicons.sendungen(
+                zusatz, faktor: zeichenfaktor(o, mitIcon: mitIcon, iconKante: icon?.kante ?? 8, mass: mass),
+                sammlung: sammlung)
             return Frame(dauer: o.dauer,
-                         herkunft: Meldungsherkunft(optionen: o, iconDatenURI: iconURI, iconGap: luecke),
+                         herkunft: Meldungsherkunft(optionen: o, iconDatenURI: iconURI, iconGap: luecke,
+                                                    zusatzicons: sendungen),
                          lebensdauer: o.wirksameLebensdauer,
                          darstellung: o.darstellung?.darstellung(weg: .text))
         case .pixel:
-            return Frame(pixel: try pixelinhalt(o, icon: icon, iconAbstand: iconAbstand, mass: mass), dauer: o.dauer,
+            return Frame(pixel: try pixelinhalt(o, icon: icon, iconAbstand: iconAbstand, mass: mass,
+                                                bestaende: bestaende), dauer: o.dauer,
                          lebensdauer: o.wirksameLebensdauer,
                          darstellung: o.darstellung?.darstellung(weg: .pixel))
         }
@@ -475,7 +580,8 @@ public enum Meldungsbau {
 
     /// Die Pixel einer Meldung — dieselbe Rechnung, die die Vorschau zeigt.
     static func pixelinhalt(_ o: Meldungsoptionen, icon: Icon?, iconAbstand: Int = Iconabstand.vorgabe,
-                            mass: Anzeigemass) throws -> Pixelinhalt {
+                            mass: Anzeigemass,
+                            bestaende: (() -> [Iconsammlung])? = nil) throws -> Pixelinhalt {
         let kante = icon?.kante ?? 8
         let gelesen = icon.flatMap {
             try? Bildraster.lesenMitZeiten($0.datei, breite: kante, hoehe: kante)
@@ -483,8 +589,12 @@ public enum Meldungsbau {
         // Ein Icon ohne Tinte zaehlt wie keins.
         let platz = Iconplatz.vermessen(gelesen.map(\.pixel), kante: kante, abstand: iconAbstand)
         let iconBilder = platz == nil ? [] : gelesen
+        let zusatz = Zusatzicons.laden(o.zusatzicons, mass: mass, bestaende: bestaende)
         let bilder: [Bildraster.Einzelbild]
-        if passt(o, icon: platz, mass: mass) {
+        if passt(o, icon: platz, mass: mass), !zusatz.isEmpty {
+            bilder = try stehendeBilder(o, gelesen: iconBilder, platz: platz, kante: kante,
+                                        zusatz: zusatz, mass: mass)
+        } else if passt(o, icon: platz, mass: mass) {
             let text = feld(o, icon: platz, mass: mass)
             let y = iconY(kante: kante, mass: mass)
             let x = iconX(o, icon: platz, mass: mass)
@@ -503,7 +613,8 @@ public enum Meldungsbau {
                 return Bildraster.Einzelbild(pixel: f.punkteRoh, dauer: Bildraster.gifZeit(ib?.dauer ?? 1))
             }
         } else {
-            bilder = laufschriftBilder(o, iconBilder: iconBilder.map(\.pixel), icon: platz, mass: mass)
+            bilder = laufschriftBilder(o, iconBilder: iconBilder.map(\.pixel), icon: platz, mass: mass,
+                                       bestaende: bestaende)
         }
         let inhalt = Pixelinhalt(breite: mass.breite, hoehe: mass.hoehe, bilder: bilder)
         try Pixelweg.pruefen(inhalt)

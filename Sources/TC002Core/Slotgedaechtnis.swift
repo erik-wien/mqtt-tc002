@@ -79,6 +79,11 @@ public struct Slotstand: Codable, Hashable, Sendable {
     /// demselben Grund wie `lebensdauer`: ältere Dateien tragen sie nicht und
     /// bleiben lesbar; `nil` heißt nichts gewählt.
     public var darstellung: Darstellungswahl?
+    /// Die Zusatzicons (`Zusatzicons`). Optional aus demselben Grund wie
+    /// `darstellung`: ältere Dateien und die Absender ohne Zusatzicons (Werkzeug,
+    /// Kurzbefehle) tragen sie nicht; `nil` heißt keine. Sie gehen nicht in die
+    /// Prüfsumme ein, die nur den Text abdeckt, wie auch das normale Icon.
+    public var zusatzicons: [Zusatzicon]?
     /// Fingerabdruck der Pixel, die diese Regler zum Sendezeitpunkt ergeben
     /// haben (`Slotgedaechtnis.pruefsumme(pixel:)`). Der Kern dieses Typs:
     /// Weicht die ueber den Broker gesehene Nutzlast davon ab — zerlegt in
@@ -106,7 +111,8 @@ public struct Slotstand: Codable, Hashable, Sendable {
                 icon: String?, iconKante: Int? = nil, iconModus: Iconmodus? = nil,
                 iconBreite: Int? = nil, iconAbstand: Int? = nil, dauer: Int?,
                 lebensdauer: Int? = nil, lebensablauf: String? = nil,
-                darstellung: Darstellungswahl? = nil, pruefsumme: String) {
+                darstellung: Darstellungswahl? = nil, zusatzicons: [Zusatzicon]? = nil,
+                pruefsumme: String) {
         self.platz = platz
         self.text = text
         self.weg = weg
@@ -130,6 +136,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
         self.lebensdauer = lebensdauer
         self.lebensablauf = lebensablauf
         self.darstellung = darstellung
+        self.zusatzicons = zusatzicons
         self.pruefsumme = pruefsumme
     }
 
@@ -157,7 +164,7 @@ public struct Slotstand: Codable, Hashable, Sendable {
                                     Lebensdauer(sekunden: $0,
                                                 ablauf: Lebensablauf(rawValue: lebensablauf ?? "") ?? .entfernen)
                                 },
-                                darstellung: darstellung)
+                                darstellung: darstellung, zusatzicons: zusatzicons)
         o.iconModus = iconModus
         return o
     }
@@ -336,6 +343,7 @@ public struct Slotgedaechtnis: Sendable {
             lebensdauer: optionen.lebensdauer?.sekunden,
             lebensablauf: optionen.lebensdauer.flatMap { $0.ablauf == .entfernen ? nil : $0.ablauf.rawValue },
             darstellung: optionen.darstellung,
+            zusatzicons: optionen.zusatzicons,
             pruefsumme: Self.pruefsumme(pixel: pixel))
         // Ein Platz traegt entweder Regler oder ein Bild, nie beides: Wer hier
         // schreibt, hat zuletzt gesendet, und ein Bild von vorher gehoert

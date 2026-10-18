@@ -165,13 +165,27 @@ public enum Geraeteschrift {
 
     /// Ob die Uhr diese Anzeige auf 26 × 8 vergrößert zeichnet: die TC002 mit
     /// einem Icon bis 8×8 oder ohne Icon (§1.1).
-    public static func vergroessert(mitIcon: Bool, iconKante: Int, mass: Anzeigemass) -> Bool {
-        mass.hoehe >= 16 && (!mitIcon || iconKante <= 8)
+    ///
+    /// Die Firmware vergrößert nur, wenn **jedes** Bild der Anzeige auf die
+    /// 26 × 8 große Zwischenfläche passt (`PageZoom::enlarges`): auch die
+    /// Zusatzicons. Ein einziges 16×16 darunter schaltet die ganze Anzeige auf
+    /// das volle Raster (`zusatzkanten`).
+    public static func vergroessert(mitIcon: Bool, iconKante: Int, mass: Anzeigemass,
+                                    zusatzkanten: [Int] = []) -> Bool {
+        mass.hoehe >= 16 && (!mitIcon || iconKante <= 8) && zusatzkanten.allSatisfy { $0 <= 8 }
     }
 
     /// Wie viele Punkte der Vorschau ein Pixel der Uhr belegt.
-    public static func masstab(mitIcon: Bool, iconKante: Int, mass: Anzeigemass) -> Int {
-        vergroessert(mitIcon: mitIcon, iconKante: iconKante, mass: mass) ? 2 : 1
+    public static func masstab(mitIcon: Bool, iconKante: Int, mass: Anzeigemass,
+                               zusatzkanten: [Int] = []) -> Int {
+        vergroessert(mitIcon: mitIcon, iconKante: iconKante, mass: mass, zusatzkanten: zusatzkanten) ? 2 : 1
+    }
+
+    /// Dasselbe für die Optionen einer Anzeige (mit ihren Zusatzicons).
+    public static func masstab(_ o: Meldungsoptionen, mitIcon: Bool, iconKante: Int,
+                               mass: Anzeigemass) -> Int {
+        masstab(mitIcon: mitIcon, iconKante: iconKante, mass: mass,
+                zusatzkanten: Zusatzicons.kanten(o.zusatzicons))
     }
 
     /// Raster, auf dem die Uhr zeichnet, und die erste Spalte rechts vom Icon.
@@ -181,16 +195,16 @@ public enum Geraeteschrift {
     /// (`RenderPipeline::iconColumn`, `SpecRenderer::textColumn`; §5.3). Auf der
     /// vergrößerten Seite ist eine Spalte zwei Punkte der Anzeige breit, darum
     /// ist die Luft dort ein Vielfaches davon (`Iconplatz.luecke`).
-    private static func raster(icon: Iconplatz?, mass: Anzeigemass)
+    private static func raster(_ o: Meldungsoptionen, icon: Iconplatz?, mass: Anzeigemass)
         -> (breite: Int, hoehe: Int, links: Int, faktor: Int) {
-        let f = masstab(mitIcon: icon != nil, iconKante: icon?.kante ?? 8, mass: mass)
+        let f = masstab(o, mitIcon: icon != nil, iconKante: icon?.kante ?? 8, mass: mass)
         return (mass.breite / f, mass.hoehe / f, icon?.textAb(faktor: f) ?? 0, f)
     }
 
     /// Ob der Text neben dem Icon ganz ins Raster passt; sonst läuft er auf der
     /// Uhr durch.
     public static func passt(_ o: Meldungsoptionen, icon: Iconplatz?, mass: Anzeigemass) -> Bool {
-        let r = raster(icon: icon, mass: mass)
+        let r = raster(o, icon: icon, mass: mass)
         return breite(geschrieben(o)) <= r.breite - r.links
     }
 
@@ -230,7 +244,7 @@ public enum Geraeteschrift {
     /// Das Feld der Vorschau in der Größe der Anzeige.
     public static func feld(_ o: Meldungsoptionen, icon: Iconplatz?,
                             mass: Anzeigemass) -> Pixelfeld {
-        let r = raster(icon: icon, mass: mass)
+        let r = raster(o, icon: icon, mass: mass)
         let zeichen = geschrieben(o)
         let platz = r.breite - r.links
         let b = breite(zeichen)
@@ -272,7 +286,7 @@ public enum Geraeteschrift {
                                   mass: Anzeigemass) -> [Bildraster.Einzelbild] {
         let platz = iconBilder.isEmpty ? nil : icon
         guard !passt(o, icon: platz, mass: mass) else { return [] }
-        let r = raster(icon: platz, mass: mass)
+        let r = raster(o, icon: platz, mass: mass)
         let zeichen = geschrieben(o)
         let b = breite(zeichen)
         let prozent = NGNutzlast.tempo(o.tempo)
