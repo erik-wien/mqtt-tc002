@@ -239,6 +239,18 @@ deutschen Satz zurück, nicht auf einen Schlüsselnamen.
   `AppIntent` hinzufügt oder umbenennt, wirft danach den DerivedData-Ordner
   weg und baut neu; nachgesehen wird in
   `Metadata.appintents/extract.actionsdata`, ob der Typ darin steht.
+- **Die Kurzbefehle liegen in `Sources/TC002Kurzbefehle` und gelten für Mac und
+  iOS.** SwiftPM baut sie als Ziel für den Mac, `project.yml` nimmt dieselben
+  Dateien als Quellen der iOS-App (nicht als Paketprodukt: Xcode findet
+  Kurzbefehle aus einer Bibliothek nur mit zusätzlicher Verdrahtung). Am Mac
+  legt Xcode `Metadata.appintents` nicht an, `build.sh` tut es selbst
+  (`scripts/kurzbefehle-metadaten.sh`, vor dem Signieren): Ohne das Verzeichnis
+  kennt die Kurzbefehle-App keine Aktion der Mac-App, und der Bau meldet nichts.
+  `scripts/buendel-pruefen.sh erzeugt/mac/MQTT-TC002.app` verlangt es und prüft
+  die englischen Texte daraus (`scripts/kurzbefehle-schluessel.py`). Der Mac-Bau
+  braucht dazu eine Xcode-Fassung, deren `swift build` die
+  `*.swiftconstvalues` schreibt (27.1: ja). Die Mac-App muss `Kurzbefehle.einbinden()`
+  aufrufen, sonst nimmt der Linker das Ziel nicht mit.
 - **Was in der Kurzbefehle-App steht, schlüsselt anders.** App Intents führen
   ihre `parameterSummary` im Bündel als `${text} …`, nicht als
   `\(\.$text) …`. Wer den Quelltext abschreibt, legt einen Schlüssel an, den

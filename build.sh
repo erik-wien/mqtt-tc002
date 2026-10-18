@@ -206,6 +206,13 @@ cp LICENSE "$APP/Contents/Resources/LICENSE"
 # Buendel hat, kann sich nicht darauf berufen.
 cp LIZENZ-AUSNAHME.md "$APP/Contents/Resources/LIZENZ-AUSNAHME.md"
 
+# Die Kurzbefehle (App Intents). Das System findet sie nicht im Programm,
+# sondern im Verzeichnis `Metadata.appintents` im Buendel; Xcode legt es als
+# Bauschritt an, der SwiftPM-Weg nicht. Ohne diesen Schritt baut und laeuft die
+# App, und die Kurzbefehle-App kennt keine ihrer Aktionen — ohne jede Meldung.
+# Vor dem Signieren, damit die Signatur das Verzeichnis mit besiegelt.
+bash scripts/kurzbefehle-metadaten.sh "$APP" "$BIN_DIR"
+
 # Signieren, wenn eine Identitaet dafuer da ist. Ohne sie signiert macOS ad hoc,
 # und die Kennung traegt dann einen Hash ueber die Binaerdatei: nach jedem Bau
 # ist das fuer den Schluesselbund ein anderes Programm, das an einen fremden

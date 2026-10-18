@@ -12,11 +12,10 @@
 # Ohne Argument wird das zuletzt gebaute MQTT-TC002-iOS.app unter DerivedData
 # gesucht und wie bisher geprueft. Ein macOS-Buendel (erzeugt/mac/MQTT-TC002.app,
 # als Argument uebergeben) ist an seinem `Contents`-Ordner erkennbar und
-# bekommt eine eigene, kuerzere Pruefung: dort geht es allein um das
-# Ressourcenbuendel des geteilten Ziels TC002Ansichten und das darin
-# uebersetzte Bild — Schriften, Icons und Uebersetzungen kopiert build.sh
-# unabhaengig davon roh und unveraendert, dafuer braucht es diese Pruefung
-# nicht.
+# bekommt eine eigene, kuerzere Pruefung: Schriften, Icons und Uebersetzungen
+# kopiert build.sh roh und unveraendert, dafuer braucht es keine Pruefung.
+# Geprueft werden die Pflichtdateien und die Kurzbefehle
+# (`Metadata.appintents`, samt Uebersetzung ihrer Texte).
 set -eu
 
 APP="${1:-}"
@@ -51,6 +50,17 @@ if [ -d "$APP/Contents" ]; then
             mac_fehlt=1
         fi
     done
+    # Die Kurzbefehle: Ohne `Metadata.appintents` kennt die Kurzbefehle-App keine
+    # Aktion der Mac-App, und nichts meldet es (`scripts/kurzbefehle-metadaten.sh`).
+    DATEN="$RESSOURCEN/Metadata.appintents/extract.actionsdata"
+    if [ ! -s "$DATEN" ]; then
+        echo "fehlt   Metadata.appintents/extract.actionsdata unter $RESSOURCEN (Kurzbefehle)" >&2
+        mac_fehlt=1
+    elif ! OHNE=$(python3 "$(dirname "$0")/kurzbefehle-schluessel.py" "$DATEN" "$RESSOURCEN/en.lproj/Localizable.strings"); then
+        echo "fehlt   Uebersetzung fuer Kurzbefehle-Texte aus dem Buendel:" >&2
+        echo "$OHNE" | sed 's/^/        /' >&2
+        mac_fehlt=1
+    fi
     if [ "$mac_fehlt" -eq 1 ]; then
         echo "Buendel unvollstaendig: $APP" >&2
         exit 1
@@ -167,30 +177,7 @@ done
 # Telefon deutsch, ohne dass irgendetwas darauf hinweist.
 DATEN="$APP/Metadata.appintents/extract.actionsdata"
 if [ -f "$DATEN" ]; then
-    if ! OHNE=$(python3 - "$DATEN" "$APP/en.lproj/Localizable.strings" <<'PYTHON'
-import json, re, sys
-daten = json.load(open(sys.argv[1]))
-da = set(re.findall(r'^\s*"((?:[^"\\]|\\.)*)"\s*=',
-                    open(sys.argv[2], encoding="utf-8").read(), re.M))
-gesucht = []
-for name, a in daten.get("actions", {}).items():
-    gesucht.append(a["title"]["key"])
-    gesucht.append(a["descriptionMetadata"]["descriptionText"]["key"])
-    zus = a["actionConfiguration"]["actionSummary"]["wrapper"]["summaryString"]
-    gesucht.append(zus["formatString"])
-    for p in a.get("parameters", []):
-        gesucht.append(p["title"]["key"])
-        if "parameterDescription" in p:
-            gesucht.append(p["parameterDescription"]["key"])
-for e in daten.get("enums", []):
-    gesucht.append(e["displayTypeName"]["key"])
-    for f in e["cases"]:
-        gesucht.append(f["displayRepresentation"]["title"]["key"])
-fehlend = sorted({k for k in gesucht if k not in da})
-print("\n".join(fehlend))
-sys.exit(1 if fehlend else 0)
-PYTHON
-    ); then
+    if ! OHNE=$(python3 "$(dirname "$0")/kurzbefehle-schluessel.py" "$DATEN" "$APP/en.lproj/Localizable.strings"); then
         echo "fehlt   Uebersetzung fuer Kurzbefehle-Texte aus dem Buendel:"
         echo "$OHNE" | sed 's/^/        /'
         fehlt=1
