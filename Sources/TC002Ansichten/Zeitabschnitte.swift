@@ -13,6 +13,8 @@ struct Zeitabschnitte<Zusatz: View>: View {
     /// Die Dauer gehört der jeweiligen Ansicht: Sie ist Teil des Auftrags, der
     /// dort zusammengestellt wird, und nicht Zustand dieses Bausteins.
     @Binding var dauerText: String
+    /// Was gerade geschickt wird; bestimmt die Worte der Überschrift.
+    var art: Sendeart = .anzeige
 
     /// Was die Ansicht sonst noch zur einzelnen Meldung zu sagen hat — bei
     /// „Senden“ das Lauftempo, im Editor nichts.
@@ -54,11 +56,11 @@ struct Zeitabschnitte<Zusatz: View>: View {
                 Text("Das ist keine ganze Zahl — es gilt keine eigene Dauer.")
                     .font(.footnote).foregroundStyle(.red)
             } else {
-                Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
+                Text(art.dauerErklaerung)
                     .font(.footnote).foregroundStyle(.secondary)
             }
         } header: {
-            Abschnittskopf("Nur diese Meldung", hilfe: lok("Dauer und Lauftempo reisen mit dieser einen Meldung mit."))
+            Abschnittskopf(art.nurDiese, hilfe: art.zeithilfe)
         }
 
         // Ein eigener Abschnitt, keine Zeile im vorigen: Im schmalen

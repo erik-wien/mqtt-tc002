@@ -7,6 +7,29 @@ import TC002Modell
 /// unterbricht und keinen Platz belegt. Der Rohwert liegt in `@AppStorage`.
 public enum Sendeart: String, CaseIterable, Sendable {
     case anzeige, nachricht
+
+    /// Die Überschrift über Dauer und Lauftempo nennt, was gerade geschickt
+    /// wird: dieselben Wörter wie das Segment darüber.
+    public var nurDiese: LocalizedStringKey {
+        switch self {
+        case .anzeige: return "Nur diese Anzeige"
+        case .nachricht: return "Nur diese Nachricht"
+        }
+    }
+
+    public var dauerErklaerung: LocalizedStringKey {
+        switch self {
+        case .anzeige: return "Wie lange die Uhr diese Anzeige zeigt, bevor sie weiterblättert. Leer oder 0: Es gilt die Anzeigedauer der Uhr."
+        case .nachricht: return "Wie lange die Uhr diese Nachricht zeigt. Leer oder 0: Es gelten die Durchläufe, sonst die Anzeigedauer der Uhr."
+        }
+    }
+
+    public var zeithilfe: String {
+        switch self {
+        case .anzeige: return lok("Dauer und Lauftempo reisen mit dieser einen Anzeige mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung der Uhr (Anzeigedauer).")
+        case .nachricht: return lok("Dauer und Lauftempo reisen mit dieser einen Nachricht mit. Mit „Halten“ gilt keine Dauer.")
+        }
+    }
 }
 
 /// Die Regler einer Nachricht, wie `Sendeartwahl` sie bindet.

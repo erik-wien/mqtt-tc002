@@ -712,7 +712,7 @@ public struct SendenView: View {
                 // Zustand dieser Ansicht. Ihn dorthin zu schieben
                 // hiesse, drei Werte durchzureichen, damit ein Baustein
                 // entscheiden kann, was der Aufrufer laengst weiss.
-                Zeitabschnitte(zustand: zustand, dauerText: $dauerText) {
+                Zeitabschnitte(zustand: zustand, dauerText: $dauerText, art: art) {
                     laufschriftAbschnitt
                 }
             }

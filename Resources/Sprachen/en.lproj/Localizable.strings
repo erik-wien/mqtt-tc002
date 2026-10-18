@@ -386,8 +386,6 @@
 "Übernimmt diese Meldung samt Einstellungen" = "Takes over this message with its settings";
 "Der Verlauf ließ sich nicht schreiben." = "The history could not be written.";
 /* Uhreinstellungen.swift — Seitenwechsel und Scrolltempo, seit 18.09.2026 hier */
-"Dauer und Lauftempo reisen mit dieser einen Meldung mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung des Geräts und steht unter „Einstellungen“ — bei der Uhr, für die sie gilt." = "Duration and scroll speed travel with this one message. How fast the clock pages through all displays is a setting of the device and lives under Settings — with the clock it applies to.";
-"Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe." = "How long the clock shows this one message before paging on. Empty or 0: no setting of its own.";
 /* TC002iOS/SendeniOS.swift */
 "Angesehene Uhr" = "Clock shown";
 "Läuft durch: %d Einzelbilder" = "Scrolling: %d frames";
@@ -638,7 +636,6 @@
 "Zusätzliche Erlaubnis nach Abschnitt 7 der GPL: Dieses Programm darf über einen Anwendungsvertrieb („App Store“) verbreitet werden, auch wenn dessen Bedingungen den Empfängern sonst unvereinbare Beschränkungen auferlegen. Die übrigen Bedingungen der GPL bleiben unberührt, insbesondere die Pflicht, den vollständigen Quelltext verfügbar zu machen." = "Additional permission under section 7 of the GPL: this program may be distributed through an application distribution service (\"app store\") even where its terms impose restrictions on recipients that would otherwise be incompatible. All other terms of the GPL remain in force, in particular the obligation to make the complete source code available.";
 "HTTP meldet zurück, ob die Uhr die Anzeige angenommen hat. MQTT meldet das nie, liest dafür mit, was andere an dieselbe Uhr schicken." = "HTTP reports back whether the clock accepted the display. MQTT never reports that, but it reads along with what others send to the same clock.";
 "bewegt" = "animated";
-"Nur diese Meldung" = "This message only";
 "Der Unterschied zwischen „Dauer“ und „Seitenwechsel“ ist die Reichweite. Die Uhr blättert durch alles, was auf ihr steht — Uhrzeit, Temperatur, die fünf Meldungen. Wie schnell sie das tut, sagt der Seitenwechsel, und er gilt für alle. Die Dauer reist dagegen mit einer einzelnen Meldung mit und gibt ihr eine eigene Standzeit; leer oder 0 heißt keine Angabe, dann bleibt es beim Seitenwechsel." = "The difference between \"duration\" and \"page change\" is reach. The clock pages through everything on it — time, temperature, the five messages. How fast it does that is the page change, and it applies to all of them. The duration, by contrast, travels with a single message and gives that one its own display time; empty or 0 means no value, and the page change stands.";
 "Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft." = "How fast the text scrolls — only when it does not fit the display and therefore runs.";
 "Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft." = "Applies to this message only — and only when the text does not fit the display and therefore scrolls.";
@@ -948,7 +945,6 @@
 "Das Präfix ermittelt die App selbst: Es ist genau das in der Uhr eingestellte, und ist keines eingestellt, die Kennung der Uhr. Es gehört zum MQTT-Betrieb; im HTTP-Betrieb wird die Uhr unter ihrer Adresse angesprochen." = "The app determines the prefix itself: it is exactly the one set in the clock, and if none is set, the clock’s identifier. It belongs to MQTT mode; in HTTP mode the clock is addressed by its address.";
 "Nimmt Anzeigen entgegen wie eine AWTRIX NG, ohne Gerät im Netz." = "Accepts displays like an AWTRIX NG, with no device on the network.";
 "%@ — %d angekommen" = "%@ — %d arrived";
-"Dauer und Lauftempo reisen mit dieser einen Meldung mit." = "Duration and scroll speed travel with this one message.";
 
 "Diese Anzeige ist zu groß: %d KB, die Uhr nimmt höchstens 2 MB. Kürzeren Text oder weniger Bilder wählen." = "This display is too big: %d KB, the clock takes at most 2 MB. Choose shorter text or fewer frames.";
 "Diese Anzeige ist mit %d KB zu groß für MQTT (höchstens 8 KB), und für die Uhr ist keine Adresse eingetragen, über die sie als HTTP-Anfrage ginge. Unter „Einstellungen“ die Adresse eintragen." = "At %d KB this display is too big for MQTT (8 KB at most), and no address is entered for the clock over which it could go as an HTTP request. Enter the address under \"Settings\".";
@@ -1746,3 +1742,10 @@
 "%@ kennt diesen Namen nicht und weist die Anzeige ab." = "%@ does not know this name and rejects the display.";
 "Uhr abfragen" = "Query clock";
 "Mit „Halten“ gilt keine Dauer: Die Nachricht bleibt, bis sie beendet wird." = "With “Hold” there is no duration: the message stays until it is ended.";
+
+"Nur diese Anzeige" = "This display only";
+"Nur diese Nachricht" = "This message only";
+"Wie lange die Uhr diese Anzeige zeigt, bevor sie weiterblättert. Leer oder 0: Es gilt die Anzeigedauer der Uhr." = "How long the clock shows this display before moving on. Empty or 0: the clock's display duration applies.";
+"Wie lange die Uhr diese Nachricht zeigt. Leer oder 0: Es gelten die Durchläufe, sonst die Anzeigedauer der Uhr." = "How long the clock shows this message. Empty or 0: the passes apply, otherwise the clock's display duration.";
+"Dauer und Lauftempo reisen mit dieser einen Anzeige mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung der Uhr (Anzeigedauer)." = "Duration and scroll speed travel with this one display. How fast the clock pages through all displays is a setting of the clock (display duration).";
+"Dauer und Lauftempo reisen mit dieser einen Nachricht mit. Mit „Halten“ gilt keine Dauer." = "Duration and scroll speed travel with this one message. With “Hold” no duration applies.";

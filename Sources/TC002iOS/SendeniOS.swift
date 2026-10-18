@@ -440,7 +440,7 @@ struct SendeniOS: View {
         .sheet(item: $formatteil) { teil in
             FormatblattiOS(zustand: zustand, teil: teil, darstellung: $darstellung, weg: $weg,
                            tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
-                           dauerText: $dauerText)
+                           dauerText: $dauerText, art: art)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)

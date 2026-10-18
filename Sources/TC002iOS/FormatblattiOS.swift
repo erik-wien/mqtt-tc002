@@ -36,6 +36,7 @@ struct FormatblattiOS: View {
     @Binding var tempo: Lauftempo
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
+    var art: Sendeart = .anzeige
     @Environment(\.dismiss) private var schliessen
     /// `.numberPad` hat keine Eingabetaste — ohne „Fertig" bleibt die Tastatur
     /// stehen. Dieselbe Leiste wie am Nummernfeld der Iconauswahl und am Port
@@ -76,10 +77,10 @@ struct FormatblattiOS: View {
                             .multilineTextAlignment(.trailing)
                             .focused($amDauerfeld)
                     }
-                    Text("Wie lange die Uhr diese eine Meldung zeigt, bevor sie weiterblättert. Leer oder 0: keine eigene Angabe.")
+                    Text(art.dauerErklaerung)
                         .font(.caption).foregroundStyle(.secondary)
                 } header: {
-                    Abschnittskopf("Nur diese Meldung", hilfe: lok("Dauer und Lauftempo reisen mit dieser einen Meldung mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung des Geräts und steht unter „Einstellungen“ — bei der Uhr, für die sie gilt."))
+                    Abschnittskopf(art.nurDiese, hilfe: art.zeithilfe)
                 }
                 Section("Laufschrift") {
                     Picker("Tempo", selection: $tempo) {
