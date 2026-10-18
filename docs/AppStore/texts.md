@@ -68,7 +68,7 @@ support@eriks.cloud
 > 6. Back on “Send”, switch the control above the field from “Display” to “Message” and send again. A message interrupts the loop once and uses no slot; “Dismiss message” appears next to the control and withdraws it. The “Sound” choice below the message controls is greyed out if the clock reports no sound capability.
 > 7. Tap the clock's name at the top of the Send screen and choose “Control …”: live picture of the display, display on/off, brightness, moodlight, indicators, and a “Sound” section. “Clock settings …” in the same menu shows the settings stored on the clock, in groups.
 > 8. In the format pill tap the brush and then the tab “Appearance” to choose background, effect, overlay and palette (the names come from the clock).
-> Shortcuts: the Shortcuts app and Siri offer five actions without setup: “Show on clock”, “Send image”, “Remove from clock”, “Send message” and “Dismiss message” (the last two are for messages that interrupt the loop). They use the same clock list as the app.
+> Shortcuts: the Shortcuts app offers twelve actions without setup, nine of them also by Siri phrase: “Show on clock”, “Send image”, “Remove from clock”, “Send message” and “Dismiss message” (the last two are for messages that interrupt the loop), and for remote control “Switch the clock's display”, “Set the clock's brightness”, “Set the clock's overlay”, “Set the clock's moodlight”, “Set one of the clock's indicators”, “Change the clock's display” and “Restart clock”. They use the same clock list as the app and work with the virtual clock as well.
 > On iPad the app additionally contains a pixel editor (area “Icons” › “Draw new”). On iPhone icons are chosen, not drawn.
 > VIDEO: <Link folgt>
 > Network access: the app talks only to (a) the user's own clock via HTTP on the local network, (b) the user's own MQTT broker, if configured, and (c) developer.lametric.com, only when the user types a LaMetric icon number and taps “Fetch” in the icon sheet; only that number is sent. Radio stations and speech are played by the clock itself; the app only sends commands. Nothing is sent to the developer; there is no analytics, no advertising and no account. The broker password is kept in the iOS keychain.
@@ -80,7 +80,7 @@ support@eriks.cloud
 
 ### Begleitvideo (für Erik, Link in `VIDEO: <Link folgt>` oben eintragen)
 
-Die Prüfer haben keine Uhr; ein kurzes Video zeigt, dass die App mit echter Hardware arbeitet. Es soll zeigen:
+Die Prüfer haben keine Uhr; ein kurzes Video zeigt, dass die App mit echter Hardware arbeitet. Das Drehbuch dazu steht unten, das Ergebnis soll zeigen:
 - ein echtes iPhone **und** die echte Uhr im selben Bild (Aufnahme von außen, nicht nur Bildschirmaufnahme);
 - Text eintippen, Senden, Anzeige auf der Uhr;
 - ein Icon wählen und mitschicken;
@@ -89,6 +89,35 @@ Die Prüfer haben keine Uhr; ein kurzes Video zeigt, dass die App mit echter Har
 - einen Kurzbefehl auslösen (Kurzbefehle-App oder Siri) und die Meldung auf der Uhr;
 - Länge 1–3 Minuten, ungelistet hochladen (Link ohne Anmeldung abspielbar).
 Keine echten Adressen, Zugangsdaten oder Broker-Namen sichtbar (Einstellungen nicht zeigen oder vorher mit Beispielwerten füllen).
+
+#### Drehbuch (etwa 2½ Minuten, eine Einstellung ohne Schnitt)
+
+**Vorbereitung**
+- Die App auf Englisch stellen, weil die Prüfer Englisch lesen: iPhone-Einstellungen › Apps › Pixel Clock Messenger › Sprache › English. Die Knöpfe unten sind darum englisch genannt, deutsch in Klammern.
+- TC002 an, Helligkeit so, dass die Kamera sie nicht überstrahlt. Alle eigenen Anzeigen auf der Uhr löschen, damit nur das Gesendete auffällt.
+- In der Kurzbefehle-App einen Kurzbefehl „Coffee“ anlegen: Aktion „Show on clock“ mit dem Text „COFFEE READY“.
+- Am iPhone einen Fokus einschalten, damit keine Mitteilung ins Bild fährt.
+- Kamera auf Stativ, iPhone und Uhr gleichzeitig scharf im Bild. Wenn die Kamera den iPhone-Bildschirm nicht lesbar zeigt, zusätzlich eine Bildschirmaufnahme laufen lassen und beide nebeneinander schneiden. Beide Spuren durchgehend, ohne Schnitt in der Zeit.
+- Einstellungen der App und die Seite einer Uhr nicht öffnen, dort stehen Adressen.
+
+**Ablauf**
+
+| Zeit | Am iPhone | Auf der Uhr |
+|---|---|---|
+| 0:00 | Homescreen, Pixel Clock Messenger antippen. Ein Satz aus dem Off: „This is a real Ulanzi TC002 running AWTRIX NG.“ | Uhrzeit |
+| 0:10 | „Send“ (Senden): ins Feld „HELLO“ tippen, die Vorschau zeigt es, Senden-Pfeil | „HELLO“ |
+| 0:25 | Smiley-Knopf links in der Formatpille, ein Icon wählen (z. B. Herz), Text „LOVE IT“, senden | Icon und Text |
+| 0:40 | Langen Text tippen: „This text is longer than the display and scrolls“; die Vorschau läuft, senden | Laufschrift |
+| 0:55 | Pinsel in der Formatpille › „Appearance“ (Darstellung) › Overlay „snow“ (Name aus der Liste der Uhr), „SNOW“ senden | Schnee über dem Text |
+| 1:10 | Umschalter über dem Feld von „Display“ (Anzeige) auf „Message“ (Nachricht), unter „Sound“ (Klang) eine Melodie wählen, „DOOR OPEN“ senden | Nachricht unterbricht die Schleife, Melodie spielt |
+| 1:25 | „Dismiss message“ (Nachricht zurückziehen) | zurück zur Schleife |
+| 1:35 | Uhrname oben antippen › „Control …“ (Steuerung …): Live-Bild zeigen, Helligkeit herunter- und wieder hochziehen, Moodlight einschalten (eine Farbe), wieder aus | Helligkeit ändert sich, Fläche leuchtet in der Farbe |
+| 2:00 | App verlassen, Kurzbefehle-App, „Coffee“ antippen (oder „Hey Siri, Coffee“) | „COFFEE READY“ |
+| 2:15 | Zurück in die App, Totale auf beide | ruhig stehen lassen, Ende |
+
+**Danach**
+- Auf der Uhr die Testanzeigen löschen (Anzeigenliste der App).
+- Video ungelistet hochladen, Link oben in den Prüferhinweisen bei `VIDEO:` eintragen und in App Store Connect › App Review Information › Notes übernehmen.
 
 ### Kontakt für die Prüfer
 Vorname, Nachname, Telefon, E-Mail — deine Daten.
