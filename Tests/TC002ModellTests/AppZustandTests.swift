@@ -383,7 +383,7 @@ final class AppZustandTests: XCTestCase {
         zustand.uhrAnsehen(b.id)
 
         XCTAssertEqual(zustand.slotzustand(1, belegt: true, gedaechtnis: gedaechtnis), .bekannt(aufB),
-                       "Die Blöcke müssen der angesehenen Uhr folgen, nicht der vorher angesehenen.")
+                       "Die Blöcke müssen der gezeigten Uhr folgen, nicht der vorher angesehenen.")
         // Das Ziel zieht nicht mehr mit: Es bleibt auf der Uhr, die gewaehlt
         // war; wer anderswohin senden will, waehlt das ausdruecklich. Die
         // Bloecke oben folgen dem Blick, das Ziel der Wahl — zwei Griffe,
@@ -573,7 +573,7 @@ final class AppZustandTests: XCTestCase {
         zustand.bekannteAnzeigen[ziel.id] = ["meldung5"]
 
         XCTAssertEqual(zustand.belegtePlaetze(), [5],
-                       "Die angesehene Uhr ist immer eine Zieluhr.")
+                       "Die gezeigte Uhr ist immer eine Zieluhr.")
         zustand.zielUmschalten(angesehen.id)
         zustand.uhrAnsehen(angesehen.id)
         XCTAssertEqual(zustand.belegtePlaetze(), [1, 3], "Unter den Zielen folgt die Belegung dem Blick.")

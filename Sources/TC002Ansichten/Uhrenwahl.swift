@@ -46,7 +46,7 @@ public struct Uhrenpunkte: View {
             }
             .padding(.top, 2)
             .accessibilityElement(children: .contain)
-            .accessibilityLabel(Text("Angesehene Uhr"))
+            .accessibilityLabel(Text("Gezeigte Uhr"))
         }
     }
 }

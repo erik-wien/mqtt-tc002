@@ -56,7 +56,7 @@ final class ZielListenTests: XCTestCase {
         let z = try zustand([a, b], angesehen: a, ziele: [b])
         XCTAssertEqual(z.referenzUhr?.id, b.id, "die angesehene ist kein Ziel: die Vorschau zeigt das Ziel")
         await z.listenFuerZieleHolen(tonlisten: true)
-        XCTAssertNil(z.tonlisten[a.id], "die angesehene Uhr wird nicht gefragt")
+        XCTAssertNil(z.tonlisten[a.id], "die gezeigte Uhr wird nicht gefragt")
         XCTAssertEqual(Klangeignung.melodien(in: z.klangziele()), ["ping"])
         XCTAssertEqual(Klangeignung.mp3(in: z.klangziele()), ["gong"])
         XCTAssertEqual(z.listenlage(tonlisten: true), Listenlage())

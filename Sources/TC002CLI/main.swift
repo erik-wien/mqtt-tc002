@@ -313,7 +313,7 @@ func lauf() throws {
             print("\(marke) \(uhr.name)\t\(uhr.host)\t\(dritte)")
         }
         print("")
-        print(lok("* geht ohne „--an“ eine Sendung zu."))
+        print(lok("* geht ohne „--an“ eine Anzeige oder Nachricht zu."))
         return
     }
 

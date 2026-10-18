@@ -38,7 +38,7 @@ vorhandene Bestände.
   Schleife der Uhr, mit Dauer und Lebensdauer (verfällt von selbst oder bleibt).
   Eine Nachricht unterbricht die Schleife einmal, kann gehalten und
   zurückgezogen werden und einen Klang mitbringen (Melodie, MP3, Sprache).
-- **Mehrere Uhren:** Ziel wählbar je Sendung, Betriebsart je Uhr (HTTP oder MQTT).
+- **Mehrere Uhren:** Ziel wählbar je Anzeige, Betriebsart je Uhr (HTTP oder MQTT).
 - **Steuerung der Uhr:** Fernbedienung mit Live-Bild des Displays, Zustand,
   Display an/aus, Helligkeit, Moodlight, Anzeiger, Overlay, Neustart sowie Ton
   und Radio; Tasten und Drehknopf, wo die App sie mitliest.

@@ -28,7 +28,7 @@ public struct Aufzeichnungsabschnitt: View {
             Text("Merkt sich jede Anzeige oder Nachricht samt ihren Einstellungen.")
                 .font(kanon.fussnote).foregroundStyle(.secondary)
         } header: {
-            Abschnittskopf("Verlauf", hilfe: lok("Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt einen Eintrag samt seinen Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist."))
+            Abschnittskopf("Verlauf", hilfe: lok("Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt einen Eintrag samt seinen Einstellungen wieder her. Er hält die letzten 200 Einträge je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist."))
         }
 
         // Ab Werk aus: Das Protokoll ist ein Werkzeug für den Fall, dass etwas

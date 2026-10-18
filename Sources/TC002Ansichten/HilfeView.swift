@@ -97,7 +97,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.startOhneEinrichtung
                 + HilfeInhalt.uhrHinzufuegen
                 + [
-                    .absatz("Welche Uhr man **ansieht**, zeigt „Senden“ mit ihrem Namen unter der Vorschau; gewechselt wird mit der Punktreihe darunter oder durch Blättern über der Vorschau. Die Vorschau zeigt nur die Uhren, an die gesendet wird: Eine Uhr, an die nichts geht, taucht dort nicht auf. Vorschau, Geräterahmen und die fünf Blöcke beziehen sich auf die angesehene. Die Empfängerwahl steht links oben in der Werkzeugleiste, sobald mehr als eine Uhr eingetragen ist; solange dort nichts eigenes gewählt ist, geht das Senden an die angesehene Uhr."),
+                    .absatz("Welche Uhr man **ansieht**, zeigt „Senden“ mit ihrem Namen unter der Vorschau; gewechselt wird mit der Punktreihe darunter oder durch Blättern über der Vorschau. Die Vorschau zeigt nur die Uhren, an die gesendet wird: Eine Uhr, an die nichts geht, taucht dort nicht auf. Vorschau, Geräterahmen und die fünf Blöcke beziehen sich auf die gezeigte. Die Empfängerwahl steht links oben in der Werkzeugleiste, sobald mehr als eine Uhr eingetragen ist; solange dort nichts eigenes gewählt ist, geht das Senden an die gezeigte Uhr."),
                     .absatz("Beim allerersten Start fragt macOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und die allererste „Abfragen“ scheitert dann mit einem Hinweis, der auf die falsche Ursache zeigt — einfach erlauben und erneut abfragen. Zurücknehmen lässt sich die Freigabe später unter Systemeinstellungen → Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
@@ -123,7 +123,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.fuenfPlaetze
                 + HilfeInhalt.blockwissenAnfang
                 + [
-                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Sendung aus dem Bereich „Icons“ wirft obendrein weg, was zu diesem Platz gemerkt war."),
+                    .absatz("Für Gemaltes gilt das nicht: Ein gemaltes Bild hat keine Regler, es wird nicht gemerkt, und eine Anzeige aus dem Bereich „Icons“ wirft obendrein weg, was zu diesem Platz gemerkt war."),
                 ]
                 + HilfeInhalt.blockwissenSchluss
                 + HilfeInhalt.verlaufHerkunft
@@ -181,10 +181,10 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + [
                     .ueberschrift("Empfänger"),
                     .absatz("Zwei Entscheidungen, zwei Griffe: **welche Uhr man ansieht**, zeigt die Vorschau mit dem Namen der Uhr — daran hängen Geräterahmen und die fünf Blöcke —, und darunter sagt eine Punktreihe, wie viele Uhren es gibt und die wievielte das ist. Ein Klick auf einen Punkt wechselt; über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten."),
-                    .absatz("**Wohin gesendet wird**, nennt der Knopf links oben in der Werkzeugleiste: „Empfänger“ mit der Zahl der gewählten Uhren. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, darunter das Präfix oder „HTTP“, bei MQTT-Uhren dazu derselbe Verbindungsstand wie unter „Einstellungen“, und ein Haken zum An- und Abwählen; „Alle“ und „Nur die angesehene“ wählen mit einem Klick."),
-                    .absatz("Der Blick folgt den Empfängern, nicht umgekehrt: Wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat; wer die Empfänger ändert, sieht nur noch deren Uhren, und fällt die angesehene heraus, steht der erste Empfänger da."),
-                    .absatz("Eine Uhr, die nichts empfangen kann, ist im Blatt als solche gekennzeichnet, und der Hinweis nennt, woran es liegt: einer MQTT-Uhr fehlt das Präfix — dann erst unter „Einstellungen“ „Abfragen“ —, einer HTTP-Uhr die Adresse. Beim Senden wird sie stillschweigend übersprungen, solange das so bleibt. Ist nichts angehakt, geht die Sendung an die gerade aktive Uhr."),
-                    .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht jede Sendung ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
+                    .absatz("**Wohin gesendet wird**, nennt der Knopf links oben in der Werkzeugleiste: „Empfänger“ mit der Zahl der gewählten Uhren. Ein Druck öffnet ein Blatt mit einer Zeile je eingerichteter Uhr: Name, darunter das Präfix oder „HTTP“, bei MQTT-Uhren dazu derselbe Verbindungsstand wie unter „Einstellungen“, und ein Haken zum An- und Abwählen; „Alle“ und „Nur die gezeigte“ wählen mit einem Klick."),
+                    .absatz("Der Blick folgt den Empfängern, nicht umgekehrt: Wer die gezeigte Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat; wer die Empfänger ändert, sieht nur noch deren Uhren, und fällt die gezeigte heraus, steht der erste Empfänger da."),
+                    .absatz("Eine Uhr, die nichts empfangen kann, ist im Blatt als solche gekennzeichnet, und der Hinweis nennt, woran es liegt: einer MQTT-Uhr fehlt das Präfix — dann erst unter „Einstellungen“ „Abfragen“ —, einer HTTP-Uhr die Adresse. Beim Senden wird sie stillschweigend übersprungen, solange das so bleibt. Ist nichts angehakt, geht die Anzeige an die gerade aktive Uhr."),
+                    .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht alles, was du schickst, ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
                     .ueberschrift("Senden auslösen"),
                     .abbildung(.sendezeile),
                     .absatz("Die Eingabetaste schickt. Am rechten Rand des Feldes steht dafür ein blauer runder Knopf mit Pfeil, den du ebenso anklicken kannst; er erscheint, sobald etwas im Feld steht, und weicht während des Sendens einem Fortschrittsdreher. Ist die Anzeige hinaus, wird er eine Sekunde lang grün und zeigt einen Haken — die Rückmeldung sitzt da, wo du gedrückt hast. Links daneben leert ein ⊗ das Feld. Auf dem iPad heißt die Eingabetaste der Bildschirmtastatur „Senden“."),
@@ -245,7 +245,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .ueberschrift("Zurückladen und Transparenz"),
                     .absatz("„Aus“ und „schwarz gemalt“ sind zweierlei, auch nach dem Sichern: Ein ausgeschaltetes Pixel wird im GIF durchsichtig abgelegt, ein schwarz gemaltes deckend schwarz. Auf der Uhr sieht beides gleich aus, weil ihr Grund schwarz ist — im Editor kommt ein wieder geöffnetes Bild aber so zurück, wie es gemalt war."),
                     .ueberschrift("Senden"),
-                    .absatz("Die Sendezeile unter der Leinwand gilt für jede Größe: Auch bei einem Icon will man sehen, wie es auf dem Gerät aussieht — es geht dann als Icon ohne Text hinaus. Als Zubehör einer Anzeige wählt man es weiterhin unter „Senden“. Die fünf Plätze stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App von einem gemalten Bild die Pixel statt der Regler, und eine Sendung von hier wirft weg, was zu diesem Platz gemerkt war."),
+                    .absatz("Die Sendezeile unter der Leinwand gilt für jede Größe: Auch bei einem Icon will man sehen, wie es auf dem Gerät aussieht — es geht dann als Icon ohne Text hinaus. Als Zubehör einer Anzeige wählt man es weiterhin unter „Senden“. Die fünf Plätze stehen dort mit denselben drei Zuständen und demselben Stand der aktiven Uhr wie unter „Senden“; ein Antippen wählt hier aber nur den Platz: Regler, die sich wiederherstellen ließen, gibt es beim Malen nicht. Aus demselben Grund merkt sich die App von einem gemalten Bild die Pixel statt der Regler, und eine Anzeige von hier wirft weg, was zu diesem Platz gemerkt war."),
                     .absatz("Das ⊗ an einem belegten Block löscht die Anzeige auf der Uhr — nicht die Leinwand. Die Empfängerwahl und „Senden“ funktionieren wie unter „Senden“ beschrieben, samt Hinweisfenster bei Fehlern und gesperrtem Knopf, solange keine Uhr fertig eingerichtet ist. Eine eigene Dauer bekommt ein von hier geschicktes Bild nicht; wie lange es steht, entscheidet der Seitenwechsel der Uhr."),
                     .absatz("Ein Einzelbild geht als Standbild an die Uhr, mehrere als animiertes GIF mit ihren Standzeiten. Ist die Anzeige für eine MQTT-Nachricht zu groß, nimmt die App den Weg über HTTP an dieselbe Uhr."),
                 ]
@@ -253,7 +253,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.klangsammlung
         case .uhr:
             return [
-                    .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr und der Ort für alles, was auf ihr eingestellt wird. Die Uhr wählst du in der Werkzeugleiste, sobald mehr als eine eingetragen ist."),
+                    .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der gezeigten Uhr und der Ort für alles, was auf ihr eingestellt wird. Die Uhr wählst du in der Werkzeugleiste, sobald mehr als eine eingetragen ist."),
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen

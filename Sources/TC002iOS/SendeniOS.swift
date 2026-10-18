@@ -421,7 +421,7 @@ struct SendeniOS: View {
     @ViewBuilder
     private var titelmenue: some View {
         if zustand.vorschauuhren().count > 1 {
-            Picker("Angesehene Uhr", selection: Binding(
+            Picker("Gezeigte Uhr", selection: Binding(
                 get: { zustand.referenzUhr?.id },
                 set: { if let neu = $0 { zustand.uhrAnsehen(neu) } })) {
                 ForEach(zustand.vorschauuhren()) { uhr in Text(verbatim: uhr.name).tag(Optional(uhr.id)) }

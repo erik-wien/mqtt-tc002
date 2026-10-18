@@ -1437,7 +1437,7 @@ public final class AppZustand {
             let frame = try bau(Anzeigemass.fuer(uhr))
             return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name,
                                                                faehigkeiten: listen[uhr.id]))
-        }, was: lokf("Sendung „%@“", name)) { uhr, zugestellt in
+        }, was: lokf("Anzeige „%@“", name)) { uhr, zugestellt in
             let frame = zugestellt.frame
             erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
