@@ -85,6 +85,7 @@ public struct Klangwahl: Hashable, Sendable, Codable {
     /// Name ist (MP3 oder Melodie, nach den `listen` der Uhr); ohne Namen genügt
     /// eines von beiden.
     public func gekonnt(von faehigkeiten: Geraetefaehigkeiten?, listen: Tonlisten? = nil) -> Bool {
+        if art == .uhr, !name.isEmpty, Klang(.datei(name)).fehlt(in: listen) { return false }
         guard let faehigkeiten else { return true }
         switch art {
         case .keiner: return true

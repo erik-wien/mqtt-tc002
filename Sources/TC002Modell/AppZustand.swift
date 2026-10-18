@@ -100,9 +100,14 @@ public final class AppZustand {
     /// `GET /api/v1/audio`: was spielt, und die Senderliste; nur, wo die Uhr
     /// `capabilities.audio` meldet.
     public var tonzustand: [UUID: Tonzustand] = [:]
-    /// Melodien und MP3-Dateien auf der Uhr, einmal auf Anforderung geholt
-    /// (`tonlistenAbfragen`).
+    /// Melodien und MP3-Dateien auf der Uhr (`tonlistenAbfragen`), von den
+    /// Zieluhren beim Öffnen des Klangblatts geholt (`listenFuerZieleHolen`).
     public var tonlisten: [UUID: Tonlisten] = [:]
+    /// Wo das Holen der Tonlisten und Fähigkeiten einer Uhr steht, solange es
+    /// läuft oder scheiterte (`listenFuerZieleHolen`); fehlt der Eintrag, gab es
+    /// keinen Versuch oder er gelang.
+    public var tonlistenAbruf: [UUID: Listenabruf] = [:]
+    public var faehigkeitenAbruf: [UUID: Listenabruf] = [:]
     /// Die MP3-Dateien mit Größe und die Belegung des Speichers, gelesen mit den
     /// Tonlisten und nach jedem Hochladen und Löschen.
     public var mp3Ablage: [UUID: Tonablage] = [:]
@@ -741,7 +746,23 @@ public final class AppZustand {
     /// einer Stelle steht: `slotzustand(_:belegt:)` unten und `slotWaehlen`
     /// in den beiden Sendeansichten muessen dieselbe Uhr meinen, sonst zeigt
     /// ein Block die Pixel der einen und stellt die Regler der anderen her.
-    public var referenzUhr: Uhr? { aktiveUhr }
+    ///
+    /// Immer eine Zieluhr (`vorschauuhren()`): Die angesehene, wenn sie eines
+    /// ist, sonst die erste. Was die Vorschau zeigt, ist damit, was gesendet
+    /// wird.
+    public var referenzUhr: Uhr? {
+        let v = vorschauuhren()
+        return v.first { $0.id == aktiveID } ?? v.first
+    }
+
+    /// Die Uhren, die die Vorschau zeigt und zwischen denen sie blättert: die
+    /// Zieluhren. Eine Uhr, an die nichts geht, hat in der Vorschau nichts zu
+    /// suchen. Ohne beschickbare Zieluhr bleibt die aktive, damit die Vorschau
+    /// nicht leer ist.
+    public func vorschauuhren() -> [Uhr] {
+        let z = ziele()
+        return z.isEmpty ? [aktiveUhr].compactMap { $0 } : z
+    }
 
     /// Wechselt die angesehene Uhr. Das Sendeziel bleibt unveraendert.
     ///
@@ -770,10 +791,11 @@ public final class AppZustand {
     /// „weiter" sonst bei jedem zweiten Mal wirkungslos, und bei einer gibt es
     /// ohnehin nichts zu wechseln.
     public func uhrWeiter(um schritte: Int) {
-        guard uhren.count > 1, let aktiveID,
-              let jetzt = uhren.firstIndex(where: { $0.id == aktiveID }) else { return }
-        let naechste = ((jetzt + schritte) % uhren.count + uhren.count) % uhren.count
-        uhrAnsehen(uhren[naechste].id)
+        let v = vorschauuhren()
+        guard v.count > 1, let aktuelle = referenzUhr,
+              let jetzt = v.firstIndex(where: { $0.id == aktuelle.id }) else { return }
+        let naechste = ((jetzt + schritte) % v.count + v.count) % v.count
+        uhrAnsehen(v[naechste].id)
     }
 
     /// Nimmt eine Uhr in die Zielmenge auf oder heraus.
@@ -1597,10 +1619,41 @@ public final class AppZustand {
         return Sendebilanz(erreicht: erreicht, ziele: ziele)
     }
 
-    /// Die Zieluhren für Klang: die gewählten, ohne Wahl die angesehene.
-    public func klangziele() -> [Klangziel] {
-        let gewaehlt = ziele()
-        return (gewaehlt.isEmpty ? referenzUhr.map { [$0] } ?? [] : gewaehlt).map(klangziel)
+    /// Die Uhren, aus deren Listen die Menüs ihre Namen nehmen: die, an die
+    /// gesendet wird, ohne Wahl die angesehene. Nicht die angesehene Uhr allein
+    /// — sie kann eine andere sein als das Ziel.
+    public func angebotsuhren() -> [Uhr] { vorschauuhren() }
+
+    /// Was die Menüs über das Holen ihrer Namen sagen müssen, mit den Namen der
+    /// Uhren: `tonlisten` für die Klangnamen, sonst für die Fähigkeiten
+    /// (Effekt, Overlay, Palette).
+    public func listenlage(tonlisten fuerTon: Bool) -> Listenlage {
+        var lage = Listenlage()
+        for uhr in angebotsuhren() {
+            if fuerTon {
+                let caps = klangziel(uhr).faehigkeiten
+                guard caps?.kann(.melodie) ?? true || caps?.kann(.mp3) ?? true else { continue }
+            }
+            let bekannt = fuerTon ? tonlisten[uhr.id] : faehigkeiten[uhr.id].map { _ in Tonlisten() }
+            if let bekannt {
+                if fuerTon, bekannt.leer { lage.leer.append(uhr.name) }
+            } else if uhr.host.isEmpty {
+                lage.ohneAdresse.append(uhr.name)
+            } else if (fuerTon ? tonlistenAbruf[uhr.id] : faehigkeitenAbruf[uhr.id]) == .ausgeblieben {
+                lage.ausgeblieben.append(uhr.name)
+            } else {
+                lage.laeuft = true
+            }
+        }
+        return lage
+    }
+
+    /// Die Zieluhren für Klang.
+    public func klangziele() -> [Klangziel] { angebotsuhren().map(klangziel) }
+
+    /// Die Zieluhren für Effekt-, Overlay- und Palettennamen.
+    public func darstellungsangebot() -> Darstellungsangebot {
+        Darstellungsangebot(ziele: angebotsuhren().map { Darstellungsziel(name: $0.name, faehigkeiten: faehigkeiten[$0.id]) })
     }
 
     /// Ob für diese Ziele Klang überhaupt vorkommt (`Klangeignung.keinKlang`).
@@ -2242,4 +2295,19 @@ public final class AppZustand {
             zuletztGeschrieben = nil
         }
     }
+}
+
+/// Der Stand beim Holen der Namen für die Zieluhren, für die Hinweise unter den
+/// Menüs (`AppZustand.listenlage`).
+public struct Listenlage: Equatable, Sendable {
+    /// Mindestens eine Zieluhr wird gerade gefragt oder steht noch aus.
+    public var laeuft = false
+    /// Die Uhren, die nicht geantwortet haben.
+    public var ausgeblieben: [String] = []
+    /// Die Uhren ohne Adresse: Ihre Namen lassen sich nicht holen.
+    public var ohneAdresse: [String] = []
+    /// Die Uhren, deren Listen leer zurückkamen (nur Klang).
+    public var leer: [String] = []
+
+    public init() {}
 }

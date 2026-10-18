@@ -56,10 +56,21 @@ extension Klang {
         }
     }
 
-    /// Ob die Uhr diesen Klang spielen kann.
+    /// Ob die Uhr diesen Klang spielen kann. Ein Name, den die Listen nicht
+    /// führen, kommt hier noch infrage (er könnte neu sein); `Klangeignung.verteilen`
+    /// und die Wahl im Klangblatt prüfen ihn zusätzlich mit `fehlt(in:)`.
     public func gekonnt(von faehigkeiten: Geraetefaehigkeiten?, listen: Tonlisten? = nil) -> Bool {
         guard let faehigkeiten else { return true }
         return arten(listen: listen).contains { faehigkeiten.kann($0) }
+    }
+
+    /// Ob dieser Name bei einer Uhr mit bekannten Listen nicht darunter ist.
+    /// Pfade (`melodies/…`, `mp3/…`) und Adressen bleiben ungeprüft.
+    func fehlt(in listen: Tonlisten?) -> Bool {
+        guard let listen, case .datei(let name) = quelle, !Self.istAdresse(name) else { return false }
+        let klein = name.lowercased()
+        if ["melodies/", "/melodies/", "mp3/", "/mp3/"].contains(where: klein.hasPrefix) { return false }
+        return !listen.melodien.contains(name) && !listen.mp3.contains(name)
     }
 }
 
@@ -100,7 +111,9 @@ public enum Klangeignung {
     public static func verteilen(_ klaenge: [Klang], an ziele: [Klangziel]) -> Klangverteilung {
         var ergebnis = Klangverteilung()
         for ziel in ziele {
-            let spielbar = klaenge.filter { $0.gekonnt(von: ziel.faehigkeiten, listen: ziel.listen) }
+            let spielbar = klaenge.filter {
+                $0.gekonnt(von: ziel.faehigkeiten, listen: ziel.listen) && !$0.fehlt(in: ziel.listen)
+            }
             ergebnis.klaenge[ziel.id] = spielbar
             if spielbar.count < klaenge.count { ergebnis.uebersprungen.append(ziel) }
         }
@@ -148,5 +161,18 @@ public enum Klangeignung {
     /// die Datei an, kann sie aber nicht spielen.
     public static func mp3Hochladbar(_ faehigkeiten: Geraetefaehigkeiten?) -> Bool {
         faehigkeiten?.kann(.mp3) ?? true
+    }
+}
+
+extension Klangeignung {
+    /// Die Melodien aller Ziele, die Melodien spielen und deren Listen bekannt
+    /// sind; jeder Name einmal, sortiert.
+    public static func melodien(in ziele: [Klangziel]) -> [String] {
+        Namensangebot.vereinigt(ziele.filter { $0.faehigkeiten?.kann(.melodie) ?? true }.compactMap { $0.listen?.melodien })
+    }
+
+    /// Die MP3-Dateien aller Ziele, die MP3 spielen und deren Listen bekannt sind.
+    public static func mp3(in ziele: [Klangziel]) -> [String] {
+        Namensangebot.vereinigt(ziele.filter { $0.faehigkeiten?.kann(.mp3) ?? true }.compactMap { $0.listen?.mp3 })
     }
 }

@@ -156,8 +156,8 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Uhr wählen"),
-                    .absatz("Ab zwei eingerichteten Uhren wird der Titel oben zum Menü: Es wählt, welche Uhr man **ansieht**. Ihr Name steht im Titel, und Vorschau, die fünf Blöcke und die Liste darunter zeigen ihren Stand. Über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten; die Punktreihe darunter sagt, die wievielte es ist."),
-                    .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die angesehene“. Das Ziel folgt dem Blick nicht — wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
+                    .absatz("Ab zwei Zieluhren wird der Titel oben zum Menü: Es wählt, welche Uhr man **ansieht**. Ihr Name steht im Titel, und Vorschau, die fünf Blöcke und die Liste darunter zeigen ihren Stand. Über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten; die Punktreihe darunter sagt, die wievielte es ist."),
+                    .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die angesehene“. Der Blick folgt dem Ziel: Titelmenü, Vorschau und Punktreihe führen nur die Uhren, an die gesendet wird. Wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),

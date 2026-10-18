@@ -1,6 +1,13 @@
 import Foundation
 import TC002Core
 
+/// Wie weit das Holen von Listen bei einer Uhr ist (`AppZustand.listenFuerZieleHolen`).
+public enum Listenabruf: Equatable, Sendable {
+    case laeuft
+    /// Die Uhr hat nicht (brauchbar) geantwortet.
+    case ausgeblieben
+}
+
 /// Der Drehknopf (`<P>/event/knob`, §3.5): Rasten, positiv im Uhrzeigersinn.
 /// `zaehler` wächst mit jeder Meldung, damit eine Ansicht auch zwei gleiche
 /// aufeinanderfolgende bemerkt.
@@ -298,8 +305,8 @@ extension AppZustand {
     }
 
     /// Holt Melodien und MP3-Dateien der Uhr (nur HTTP). Eine Uhr ohne Adresse
-    /// oder ohne Antwort lässt die Listen, wie sie waren; die Ansicht zeigt dann
-    /// weiter „Uhr abfragen“.
+    /// oder ohne Antwort lässt die Listen, wie sie waren (`listenFuerZieleHolen`
+    /// merkt sich das Ausbleiben).
     @discardableResult
     public func tonlistenAbfragen(_ id: UUID) async -> Bool {
         guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
@@ -315,6 +322,49 @@ extension AppZustand {
         mp3Ablage[id] = geholt.1
         melodienAblage[id] = geholt.2
         return true
+    }
+
+    /// Holt die Fähigkeiten einer Uhr (nur HTTP), ohne die übrige Abfrage von
+    /// `abfragen`. Eine bekannte Antwort bleibt, wenn die Uhr nicht antwortet.
+    @discardableResult
+    public func faehigkeitenAbfragen(_ id: UUID) async -> Bool {
+        guard let uhr = uhren.first(where: { $0.id == id }), !uhr.host.isEmpty else { return false }
+        let host = uhr.host, sitzung = netzsitzung
+        let geholt = await Hintergrund.lauf { () -> Geraetefaehigkeiten? in
+            ((try? Geraet(host: host, sitzung: sitzung).faehigkeiten()) ?? nil)
+        }
+        guard let geholt, uhren.contains(where: { $0.id == id }) else { return false }
+        faehigkeiten[id] = geholt
+        ausstattungAnwenden(id)
+        return true
+    }
+
+    /// Holt für die Uhren, an die gesendet wird, was die Menüs brauchen und noch
+    /// fehlt: die Tonlisten (`tonlisten`) bzw. die Fähigkeiten (`!tonlisten`).
+    /// Uhren ohne Adresse sind nicht abfragbar und bleiben außen vor; eine, die
+    /// gerade gefragt wird, wird nicht ein zweites Mal gefragt. Antwortet eine
+    /// nicht, steht sie in `tonlistenAbruf` bzw. `faehigkeitenAbruf` als
+    /// ausgeblieben, bis ein neuer Versuch gelingt.
+    public func listenFuerZieleHolen(tonlisten holeTon: Bool) async {
+        let offen = angebotsuhren().filter { uhr in
+            guard !uhr.host.isEmpty else { return false }
+            return holeTon ? tonlisten[uhr.id] == nil && tonlistenAbruf[uhr.id] != .laeuft
+                           : faehigkeiten[uhr.id] == nil && faehigkeitenAbruf[uhr.id] != .laeuft
+        }.map(\.id)
+        for id in offen {
+            if holeTon { tonlistenAbruf[id] = .laeuft } else { faehigkeitenAbruf[id] = .laeuft }
+        }
+        await withTaskGroup(of: (UUID, Bool).self) { gruppe in
+            for id in offen {
+                gruppe.addTask { @MainActor [self] in
+                    (id, holeTon ? await tonlistenAbfragen(id) : await faehigkeitenAbfragen(id))
+                }
+            }
+            for await (id, gelungen) in gruppe {
+                let stand: Listenabruf? = gelungen ? nil : .ausgeblieben
+                if holeTon { tonlistenAbruf[id] = stand } else { faehigkeitenAbruf[id] = stand }
+            }
+        }
     }
 
     /// Lädt eine MP3-Datei unter `name` auf die Uhr (nur HTTP) und holt danach

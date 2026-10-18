@@ -23,7 +23,7 @@ public struct Fernbedienung: View {
     }
 
     public var body: some View {
-        if let uhr = zustand.referenzUhr {
+        if let uhr = zustand.aktiveUhr {
             Steuerseite(zustand: zustand, uhr: uhr, kanon: kanon)
                 // Eine andere Uhr, ein anderer Satz lokaler Eingaben.
                 .id(uhr.id)

@@ -280,14 +280,14 @@ public struct SendenView: View {
     }
 
     /// Das Seitenverhaeltnis des Vorschaubereichs — das **schmalste** aller
-    /// eingetragenen Uhren, nicht das der angesehenen.
+    /// Zieluhren (`vorschauuhren()`), nicht das der angesehenen.
     ///
     /// Ein Bereich, der dem angesehenen Geraet folgt, aendert beim Wischen
     /// mitten in der Bewegung seine Hoehe; die Nachbarseite springt dann,
     /// waehrend man sie hereinzieht. Das kleinste Verhaeltnis ist das
     /// hoechste — darin hat jede Uhr Platz, und der Bereich steht still.
     private var vorschauverhaeltnis: Double {
-        let alle = zustand.uhren.map { uhr -> Double in
+        let alle = zustand.vorschauuhren().map { uhr -> Double in
             let mass = Anzeigemass.fuer(uhr)
             return Geraetezeichnung.fuer(uhr).masse(fuer: mass, kante: 1).seitenverhaeltnis
         }
@@ -472,7 +472,7 @@ public struct SendenView: View {
                         vorschau(fuer: uhr, angesehen: angesehen, platz: geo.size)
                     }
                 }
-                // Das Verhaeltnis, in das **jede** eingetragene Uhr passt, und
+                // Das Verhaeltnis, in das **jede** Zieluhr passt, und
                 // nicht das der angesehenen: Sonst aenderte der Bereich seine
                 // Hoehe mitten im Wischen.
                 .aspectRatio(vorschauverhaeltnis, contentMode: .fit)
@@ -484,7 +484,7 @@ public struct SendenView: View {
                 // Seitenverhaeltnis erlaubt, wurde der Rahmen genau um diese
                 // Punkte schmaler als die Spalte — er sah klein aus und liess
                 // oben Luft stehen.
-                if zustand.uhren.count > 1 {
+                if zustand.vorschauuhren().count > 1 {
                     HStack(spacing: 4) {
                         Text(zustand.referenzUhr?.name ?? "")
                             .font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -539,7 +539,7 @@ public struct SendenView: View {
             Sendeartwahl(zustand: zustand, art: $art,
                          nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
                                                        ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                                       klang: $nachrichtKlang),
+                                                       klang: $nachrichtKlang, dauer: $dauerText),
                          lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
                                                            einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
                          kanon: .schreibtisch)

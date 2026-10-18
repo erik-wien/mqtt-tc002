@@ -16,9 +16,12 @@ public struct Nachrichtbindungen {
     let ersetzen: Binding<Bool>
     let durchlaeufe: Binding<Int>
     let klang: Binding<Klangwahl>
+    /// Dieselbe Dauer wie im Reiter „Zeit“ des Inspektors (`dauerText` der Sendeansicht).
+    let dauer: Binding<String>
 
     public init(halten: Binding<Bool>, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>,
-                durchlaeufe: Binding<Int>, klang: Binding<Klangwahl>) {
+                durchlaeufe: Binding<Int>, klang: Binding<Klangwahl>, dauer: Binding<String>) {
+        self.dauer = dauer
         self.halten = halten
         self.aufwecken = aufwecken
         self.ersetzen = ersetzen
@@ -48,7 +51,7 @@ public struct Lebensdauerbindungen {
 /// „Nachricht“ der Klang und die Nachrichtoptionen, bei „Anzeige“ die
 /// Lebensdauer. Die Optionen der anderen Art sind nicht da statt gesperrt:
 /// Sie stehen direkt am Segment, und ein ausgegrauter Knopf dort ließe offen,
-/// wozu er gehört. „Nachricht zurückziehen“ erscheint, solange eine von der App
+/// wozu er gehört. „Nachricht beenden“ erscheint, solange eine von der App
 /// geschickte, gehaltene Nachricht steht; es gilt für alle gewählten Uhren und
 /// bleibt bei beiden Arten.
 ///
@@ -97,17 +100,19 @@ public struct Sendeartwahl: View {
                 lebensdauerknopf
             }
             Spacer(minLength: 0)
-            if zustand.nachrichtGehalten {
+            // Im Modus „Nachricht“ immer: Sie nimmt die sichtbare Nachricht weg,
+            // gleich von wem sie kam (Dismiss ohne Namen). Im Modus „Anzeige“
+            // nur, solange diese App eine gehaltene Nachricht hinterlassen hat.
+            if art == .nachricht || zustand.nachrichtGehalten {
                 Button {
                     Task { await zustand.benachrichtigungZurueckziehen() }
                 } label: {
-                    Label("Nachricht zurückziehen", systemImage: "bell.slash")
-                        .labelStyle(.iconOnly)
+                    Label("Nachricht beenden", systemImage: "bell.slash")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .disabled(zustand.ziele().isEmpty)
-                .accessibilityLabel("Nachricht zurückziehen")
+                .accessibilityLabel("Nachricht beenden")
             }
         }
     }
@@ -155,7 +160,7 @@ public struct Sendeartwahl: View {
             Optionenblatt(titel: "Nachricht") {
                 Nachrichtabschnitt(halten: nachricht.halten, aufwecken: nachricht.aufwecken,
                                    ersetzen: nachricht.ersetzen, durchlaeufe: nachricht.durchlaeufe,
-                                   aktiv: true)
+                                   dauerText: nachricht.dauer, aktiv: true)
             }
         }
     }
@@ -229,10 +234,12 @@ public struct Nachrichtabschnitt: View {
     @Binding var aufwecken: Bool
     @Binding var ersetzen: Bool
     @Binding var durchlaeufe: Int
+    @Binding var dauerText: String
     let aktiv: Bool
 
     public init(halten: Binding<Bool>, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>,
-                durchlaeufe: Binding<Int>, aktiv: Bool) {
+                durchlaeufe: Binding<Int>, dauerText: Binding<String>, aktiv: Bool) {
+        self._dauerText = dauerText
         self._halten = halten
         self._aufwecken = aufwecken
         self._ersetzen = ersetzen
@@ -251,8 +258,22 @@ public struct Nachrichtabschnitt: View {
                 }
             }
             .gesperrterStepper(!aktiv)
+            // Mit „Halten“ ignoriert die Uhr die Dauer (`hold` ignoriert `durationMs`).
+            LabeledContent("Dauer (s)") {
+                TextField("", text: $dauerText)
+                    .eingabefeld()
+                    .frame(minWidth: 70)
+                    #if !os(macOS)
+                    .keyboardType(.numberPad)
+                    #endif
+                    .disabled(halten)
+            }
+            if halten {
+                Text("Mit „Halten“ gilt keine Dauer: Die Nachricht bleibt, bis sie beendet wird.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         } header: {
-            Abschnittskopf("Nachricht", hilfe: lok("Eine Nachricht unterbricht die Schleife und belegt keinen Platz. Halten: bleibt stehen, bis sie zurückgezogen wird. Aufwecken: erscheint auch bei ausgeschaltetem Display. Ersetzen: verdrängt die sichtbare, statt sich hinten anzustellen. Durchläufe: wie oft ein laufender Text durchzieht. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
+            Abschnittskopf("Nachricht", hilfe: lok("Eine Nachricht unterbricht die Schleife und belegt keinen Platz. Halten: bleibt stehen, bis sie beendet wird. Dauer: wie lange sie steht (dieselbe Dauer wie im Reiter „Zeit“; leer: die der Uhr). Aufwecken: erscheint auch bei ausgeschaltetem Display. Ersetzen: verdrängt die sichtbare, statt sich hinten anzustellen. Durchläufe: wie oft ein laufender Text durchzieht. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
         .disabled(!aktiv)
     }

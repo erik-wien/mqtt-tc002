@@ -260,7 +260,7 @@ struct SendeniOS: View {
             // Antennenknopf, der die Empfaenger traegt, und beim Blaettern
             // wanderte er nicht mit. Nur ab zwei Uhren: Bei einer benennt der
             // Name nichts, was sich unterscheiden liesse.
-            if zustand.uhren.count > 1 {
+            if zustand.vorschauuhren().count > 1 {
                 HStack(spacing: 6) {
                     Text(uhr.name)
                         .font(.caption)
@@ -362,7 +362,7 @@ struct SendeniOS: View {
             // Der Name der angesehenen Uhr, mit dem Titelmenü des Systems: die
             // Wahl der Uhr und der Weg zur Steuerung und zu den Einstellungen
             // der Uhr. Ohne Uhr bleibt es bei „Senden“.
-            .navigationTitle(zustand.aktiveUhr?.name ?? lok("Senden"))
+            .navigationTitle(zustand.referenzUhr?.name ?? lok("Senden"))
             .toolbarTitleMenu { titelmenue }
             // Der grosse Titel klappt nur beim Scrollen ein, nicht wenn die
             // Tastatur erscheint: iPhone mit Tastatur bleiben dann rund 233
@@ -404,11 +404,11 @@ struct SendeniOS: View {
     /// Punktreihe unter der Vorschau.
     @ViewBuilder
     private var titelmenue: some View {
-        if zustand.uhren.count > 1 {
+        if zustand.vorschauuhren().count > 1 {
             Picker("Angesehene Uhr", selection: Binding(
-                get: { zustand.aktiveID },
+                get: { zustand.referenzUhr?.id },
                 set: { if let neu = $0 { zustand.uhrAnsehen(neu) } })) {
-                ForEach(zustand.uhren) { uhr in Text(verbatim: uhr.name).tag(Optional(uhr.id)) }
+                ForEach(zustand.vorschauuhren()) { uhr in Text(verbatim: uhr.name).tag(Optional(uhr.id)) }
             }
             .pickerStyle(.inline)
         }
@@ -984,7 +984,7 @@ struct SendeniOS: View {
             Sendeartwahl(zustand: zustand, art: $art,
                          nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
                                                        ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                                       klang: $nachrichtKlang),
+                                                       klang: $nachrichtKlang, dauer: $dauerText),
                          lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
                                                            einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
                          kanon: .telefon)

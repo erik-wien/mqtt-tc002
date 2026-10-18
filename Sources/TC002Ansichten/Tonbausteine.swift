@@ -8,9 +8,12 @@ import TC002Modell
 /// Grund, was keine der gewählten Uhren spielen kann (`Klangeignung`); was nur
 /// ein Teil kann, bleibt wählbar und geht nur an diese Uhren.
 ///
-/// Die Namen der Melodien und MP3-Dateien kommen von der Uhr (nur über HTTP) und
-/// stehen erst nach der ersten Abfrage da; davor zeigt das Menü „Uhr abfragen“,
-/// wie bei den Effektnamen.
+/// Die Namen der Melodien und MP3-Dateien kommen von den Uhren, an die die
+/// Nachricht geht (nur über HTTP), nicht von der angesehenen: die Vereinigung
+/// ihrer Listen (`Klangeignung.melodien(in:)`). Was noch fehlt, holt das Blatt
+/// beim Öffnen selbst (`AppZustand.listenFuerZieleHolen`); ein Name, den nur ein
+/// Teil der Uhren führt, bleibt wählbar und wird bei den anderen als nicht
+/// abspielbar gemeldet.
 public struct Klangabschnitt: View {
     @Bindable var zustand: AppZustand
     @Binding var klang: Klangwahl
@@ -24,9 +27,6 @@ public struct Klangabschnitt: View {
         self.kanon = kanon
     }
 
-    /// Die angesehene Uhr liefert die Namen; ob etwas spielbar ist, entscheiden die Zieluhren.
-    private var uhr: Uhr? { zustand.referenzUhr }
-    private var listen: Tonlisten? { uhr.flatMap { zustand.tonlisten[$0.id] } }
     private var ziele: [Klangziel] { zustand.klangziele() }
     private func keineKann(_ wahl: Klangwahl) -> Bool {
         !ziele.isEmpty && Klangeignung.ohne(wahl, in: ziele).count == ziele.count
@@ -62,10 +62,7 @@ public struct Klangabschnitt: View {
                 EmptyView()
             case .uhr:
                 namenzeile
-                if let listen, listen.melodien.isEmpty, listen.mp3.isEmpty || !zeigtMP3 {
-                    Text("Keine Melodien oder MP3-Dateien auf der Uhr. Melodien legst du in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                listenhinweise
             case .vorlesen:
                 vorlesezeile
             }
@@ -79,20 +76,55 @@ public struct Klangabschnitt: View {
         // gewählte fällt auf „Keiner“ zurück, wenn das Ziel wechselt.
         .onChange(of: kannUhrNamen, initial: true) { _, kann in if !kann, klang.art == .uhr { klang.art = .keiner } }
         .onChange(of: kannVorlesen, initial: true) { _, kann in if !kann, klang.art == .vorlesen { klang.art = .keiner } }
-        // Die Namen holt die Uhr nur einmal; ein erneutes Abfragen steht im Menü.
+        // Beim Öffnen und bei jedem Wechsel der Ziele: Was von den Zieluhren
+        // noch fehlt, wird geholt; bekannte Listen bleiben.
         .task(id: abrufschluessel) {
-            guard klang.art == .uhr, listen == nil, let uhr else { return }
-            await zustand.tonlistenAbfragen(uhr.id)
+            guard klang.art == .uhr else { return }
+            await zustand.listenFuerZieleHolen(tonlisten: true)
         }
     }
 
     private var abrufschluessel: String {
-        "\(klang.art.rawValue)|\(uhr?.id.uuidString ?? "")"
+        "\(klang.art.rawValue)|\(ziele.map(\.id.uuidString).joined(separator: ","))"
     }
 
+    private var lage: Listenlage { zustand.listenlage(tonlisten: true) }
+
+    /// Was die Liste nicht zeigt, mit den Namen der Uhren: wird noch gefragt,
+    /// antwortet eine nicht, hat eine keine Adresse, oder liegt dort nichts.
+    @ViewBuilder
+    private var listenhinweise: some View {
+        if lage.laeuft {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Namen werden von der Uhr geholt …")
+            }
+            .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.ausgeblieben.isEmpty {
+            Text(lokf("Keine Antwort von %@.", Klangsperre.namen(lage.ausgeblieben)))
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.ohneAdresse.isEmpty {
+            Text(lokf("%@ hat keine Adresse: Die Namen lassen sich nicht holen.", Klangsperre.namen(lage.ohneAdresse)))
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.leer.isEmpty {
+            Text(lokf("Auf %@ liegen keine Melodien und keine MP3-Dateien.", Klangsperre.namen(lage.leer)))
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.laeuft, lage.ausgeblieben.isEmpty, lage.ohneAdresse.isEmpty, melodienliste.isEmpty, mp3liste.isEmpty {
+            Text("Melodien legst du in der Web-Oberfläche der Uhr oder mit „mqtttc002 ton melodie“ an.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var melodienliste: [String] { kannMelodien ? Klangeignung.melodien(in: ziele) : [] }
+    private var mp3liste: [String] { zeigtMP3 ? Klangeignung.mp3(in: ziele) : [] }
+
     private var namenzeile: some View {
-        let melodien = kannMelodien ? listen?.melodien ?? [] : []
-        let mp3 = zeigtMP3 ? listen?.mp3 ?? [] : []
+        let melodien = melodienliste
+        let mp3 = mp3liste
         let unbekannt = !klang.name.isEmpty && !melodien.contains(klang.name) && !mp3.contains(klang.name)
         return LabeledContent("Name") {
             Menu {
@@ -111,16 +143,6 @@ public struct Klangabschnitt: View {
                     }
                 }
                 .pickerStyle(.inline)
-                if listen == nil {
-                    Divider()
-                    Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
-                        .disabled(true)
-                }
-                Button(lok("Uhr abfragen")) {
-                    guard let uhr else { return }
-                    Task { await zustand.tonlistenAbfragen(uhr.id) }
-                }
-                .disabled(uhr == nil || uhr?.host.isEmpty == true)
             } label: {
                 HStack(spacing: 4) {
                     Text(verbatim: klang.name.isEmpty ? lok("Keiner gewählt") : klang.name)
@@ -309,7 +331,8 @@ struct Tonabschnitt: View {
 
 /// Die Sätze, mit denen die Oberfläche sagt, welche Uhr einen Klang nicht spielt.
 enum Klangsperre {
-    static func namen(_ ziele: [Klangziel]) -> String { ziele.map(\.name).joined(separator: ", ") }
+    static func namen(_ ziele: [Klangziel]) -> String { namen(ziele.map(\.name)) }
+    static func namen(_ namen: [String]) -> String { namen.joined(separator: ", ") }
 
     /// Bei einer einzigen Zieluhr der Satz, bei mehreren die Namen.
     static func grund(_ ohne: [Klangziel], von gesamt: Int) -> String {

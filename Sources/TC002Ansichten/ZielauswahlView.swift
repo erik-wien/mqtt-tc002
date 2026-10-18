@@ -134,7 +134,7 @@ public struct ZielauswahlView: View {
                 // Bedeutungen — mit „Keine" ginge der naechste Kurzbefehl an
                 // jede eingerichtete Uhr.
                 Button("Nur die angesehene") {
-                    if let aktiveID = zustand.aktiveID { zustand.zielIDs = [aktiveID] }
+                    if let ansicht = zustand.referenzUhr?.id ?? zustand.aktiveID { zustand.zielIDs = [ansicht] }
                 }
                 .knopfBefehl()
                 Spacer()

@@ -12,9 +12,11 @@ import TC002Modell
 /// sagt, warum.
 ///
 /// Die Namen von Effekt, Overlay und Palette kommen aus `capabilities` der
-/// angesehenen Uhr (`AppZustand.faehigkeiten`) und stehen erst nach der ersten
-/// Abfrage da; davor zeigt jedes Menü nur seinen Nullwert, einen Hinweis und
-/// „Uhr abfragen".
+/// Uhren, an die gesendet wird (`Darstellungsangebot`: die Vereinigung, ein Name
+/// genügt, wenn ihn eine Uhr kennt), nicht der angesehenen. Was noch fehlt, holt
+/// der Reiter beim Öffnen selbst. Eine Uhr, die einen gewählten Namen nicht
+/// kennt, weist die Anzeige ab (`Darstellung.pruefen(gegen:)`, je Uhr; die
+/// übrigen bekommen sie); ein Hinweis unter dem Menü nennt sie vorher.
 public struct Darstellungsabschnitte: View {
     @Bindable var zustand: AppZustand
     @Binding var wahl: Darstellungswahl
@@ -34,6 +36,12 @@ public struct Darstellungsabschnitte: View {
         zustand.referenzUhr.flatMap { zustand.faehigkeiten[$0.id] }
     }
 
+    private var angebot: Darstellungsangebot { zustand.darstellungsangebot() }
+    private var lage: Listenlage { zustand.listenlage(tonlisten: false) }
+    private var abrufschluessel: String {
+        zustand.angebotsuhren().map(\.id.uuidString).joined(separator: ",")
+    }
+
     private var hintergrund: Binding<Color> {
         Binding(get: { Color(hex: wahl.hintergrundfarbe) ?? .black },
                 set: { wahl.hintergrundfarbe = $0.hexWert })
@@ -48,8 +56,10 @@ public struct Darstellungsabschnitte: View {
             .opacity(regeln.farbeGesperrt ? 0.35 : 1)
             .allowsHitTesting(!regeln.farbeGesperrt)
             namenmenue("Effekt", nullwert: lok("Keiner"), auswahl: $wahl.effekt,
-                       namen: faehigkeiten?.effekte ?? [])
+                       namen: angebot.effekte)
                 .disabled(regeln.effektGesperrt)
+            abrufhinweise
+            namenhinweis(wahl.effekt.map { angebot.ohneEffekt($0) } ?? [])
         } header: {
             Text("Hintergrund")
         } footer: {
@@ -59,10 +69,12 @@ public struct Darstellungsabschnitte: View {
                 Text("Ein Effekt ersetzt die Hintergrundfarbe.")
             }
         }
+        .task(id: abrufschluessel) { await zustand.listenFuerZieleHolen(tonlisten: false) }
 
         Section("Overlay") {
             namenmenue("Overlay", nullwert: lok("Keines"), auswahl: $wahl.overlay,
-                       namen: faehigkeiten?.overlays ?? [])
+                       namen: angebot.overlays)
+            namenhinweis(wahl.overlay.map { angebot.ohneOverlay($0) } ?? [])
             LabeledContent("Tempo") {
                 HStack(spacing: 8) {
                     Slider(value: $wahl.tempo, in: Darstellungswahl.tempobereich, step: 0.1)
@@ -76,6 +88,7 @@ public struct Darstellungsabschnitte: View {
         Section {
             palettenzeile
                 .disabled(regeln.paletteGesperrt)
+            if case .name(let n) = wahl.palette { namenhinweis(angebot.ohnePalette(n)) }
             Toggle("Überblenden", isOn: $wahl.ueberblenden)
                 .disabled(wahl.palette == .keine || regeln.paletteGesperrt)
         } header: {
@@ -121,15 +134,39 @@ public struct Darstellungsabschnitte: View {
         wert.formatted(.number.precision(.fractionLength(1)))
     }
 
-    private func abfragen() {
-        guard let uhr = zustand.referenzUhr else { return }
-        zustand.abfragen(uhr.id)
+    /// Wird noch gefragt, antwortet eine Zieluhr nicht, oder fehlt ihre Adresse.
+    @ViewBuilder
+    private var abrufhinweise: some View {
+        if lage.laeuft {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Namen werden von der Uhr geholt …")
+            }
+            .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.ausgeblieben.isEmpty {
+            Text(lokf("Keine Antwort von %@.", lage.ausgeblieben.joined(separator: ", ")))
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        if !lage.ohneAdresse.isEmpty {
+            Text(lokf("%@ hat keine Adresse: Die Namen lassen sich nicht holen.", lage.ohneAdresse.joined(separator: ", ")))
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 
-    /// Ein Menü mit den Namen der Uhr. Ein `Picker` allein kann „Uhr abfragen"
-    /// nicht tragen; im `Menu` steht der Wähler eingebettet und die Handlung
-    /// daneben. Ein gewählter Name, den die Liste nicht (mehr) kennt, bleibt
-    /// stehen und wählbar — er stammt von einer anderen Uhr oder aus dem Platz.
+    /// Die Uhren, die den gewählten Namen nicht kennen und die Anzeige abweisen.
+    @ViewBuilder
+    private func namenhinweis(_ uhren: [String]) -> some View {
+        if !uhren.isEmpty {
+            Label(lokf("%@ kennt diesen Namen nicht und weist die Anzeige ab.", uhren.joined(separator: ", ")),
+                  systemImage: "info.circle")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Ein Menü mit den Namen der Zieluhren. Ein gewählter Name, den die Liste
+    /// nicht (mehr) kennt, bleibt stehen und wählbar — er stammt von einer
+    /// anderen Uhr oder aus dem Platz.
     private func namenmenue(_ titel: LocalizedStringKey, nullwert: String,
                             auswahl: Binding<String?>, namen: [String]) -> some View {
         let angezeigt = namen + (auswahl.wrappedValue.map { $0.isEmpty || namen.contains($0) ? [] : [$0] } ?? [])
@@ -140,13 +177,6 @@ public struct Darstellungsabschnitte: View {
                     ForEach(angezeigt, id: \.self) { Text(verbatim: $0).tag(String?.some($0)) }
                 }
                 .pickerStyle(.inline)
-                if namen.isEmpty {
-                    Divider()
-                    Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
-                        .disabled(true)
-                    Button(lok("Uhr abfragen")) { abfragen() }
-                        .disabled(zustand.referenzUhr == nil)
-                }
             } label: {
                 menuewert(auswahl.wrappedValue ?? nullwert)
             }
@@ -170,7 +200,7 @@ public struct Darstellungsabschnitte: View {
     }
 
     private var palettenzeile: some View {
-        let namen = faehigkeiten?.paletten ?? []
+        let namen = angebot.paletten
         let eigenerName: [String] = {
             guard case .name(let n) = wahl.palette, !n.isEmpty, !namen.contains(n) else { return [] }
             return [n]
@@ -194,13 +224,6 @@ public struct Darstellungsabschnitte: View {
                     } else {
                         Text(verbatim: lok("Eigene …"))
                     }
-                }
-                if namen.isEmpty {
-                    Divider()
-                    Button(lok("Noch nicht abgefragt. Die Namen kommen von der Uhr.")) {}
-                        .disabled(true)
-                    Button(lok("Uhr abfragen")) { abfragen() }
-                        .disabled(zustand.referenzUhr == nil)
                 }
             } label: {
                 menuewert(palettenname)

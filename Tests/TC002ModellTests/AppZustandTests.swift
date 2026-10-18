@@ -363,16 +363,13 @@ final class AppZustandTests: XCTestCase {
                        "Das Bild der ersten Uhr darf nicht für die aktive Uhr einstehen.")
     }
 
-    /// Der eine Griff des iPhone-Titelmenues: Umschalten wechselt die
-    /// angesehene Uhr und das Sendeziel. Setzte es nur `zielIDs` — so war
-    /// es —, zeigten die fuenf Bloecke weiter den Stand der vorigen Uhr,
-    /// waehrend an die neue gesendet wird.
+    /// Unter den Zieluhren folgen die fuenf Bloecke dem Blick; das Ziel bleibt.
     func testUmschaltenNimmtBloeckeUndZielMit() throws {
         let a = Uhr(name: "Küche", host: "10.0.0.1", praefix: "pa")
         let b = Uhr(name: "Büro", host: "10.0.0.2", praefix: "pb")
         d.set(try JSONEncoder().encode([a, b]), forKey: "uhren")
         d.set(a.id.uuidString, forKey: "aktiveID")
-        d.set(try JSONEncoder().encode(Set([a.id])), forKey: "zielIDs")
+        d.set(try JSONEncoder().encode(Set([a.id, b.id])), forKey: "zielIDs")
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
         let aufA = Meldungsbau.feld(Meldungsoptionen(text: "auf a"), mitIcon: false).punkteRoh
         let aufB = Meldungsbau.feld(Meldungsoptionen(text: "auf b"), mitIcon: false).punkteRoh
@@ -391,7 +388,7 @@ final class AppZustandTests: XCTestCase {
         // war; wer anderswohin senden will, waehlt das ausdruecklich. Die
         // Bloecke oben folgen dem Blick, das Ziel der Wahl — zwei Griffe,
         // zwei Wirkungen.
-        XCTAssertEqual(zustand.ziele(), [a],
+        XCTAssertEqual(zustand.ziele(), [a, b],
                        "Nachsehen darf das gewählte Ziel nicht verschieben.")
     }
 
@@ -561,12 +558,9 @@ final class AppZustandTests: XCTestCase {
 
     /// Die Bloecke gehoeren der angesehenen Uhr — auch beim Belegtsein.
     ///
-    /// Sie zeigen den Stand der angesehenen Uhr (`slotzustand` fragt
-    /// `referenzUhr`), und ob ein Platz belegt ist, muss ebenfalls von ihr
-    /// kommen, nicht von `ziele()` — den Empfaengern. Rechnete die Belegung
-    /// aus den Empfaengern, saehe, wer eine Uhr ansieht, an die er gerade
-    /// nicht sendet, fuenf leere Plaetze — auch fuer das, was er selbst
-    /// darauf geschickt hat.
+    /// Sie zeigen den Stand von `referenzUhr`, und ob ein Platz belegt ist,
+    /// kommt von derselben Uhr. Die Vorschau fuehrt nur Zieluhren: Ist die
+    /// aktive keine, steht die erste Zieluhr da, und die Belegung ist ihre.
     func testDieBelegtenPlaetzeGehoerenDerAngesehenenUhr() throws {
         let angesehen = Uhr(name: "Angesehen", host: "a.example", praefix: "pa")
         let ziel = Uhr(name: "Ziel", host: "b.example", praefix: "pb")
@@ -578,8 +572,11 @@ final class AppZustandTests: XCTestCase {
         zustand.bekannteAnzeigen[angesehen.id] = ["meldung1", "meldung3"]
         zustand.bekannteAnzeigen[ziel.id] = ["meldung5"]
 
-        XCTAssertEqual(zustand.belegtePlaetze(), [1, 3],
-                       "Die Bloecke zeigen den Stand der angesehenen Uhr, nicht den der Empfaenger.")
+        XCTAssertEqual(zustand.belegtePlaetze(), [5],
+                       "Die angesehene Uhr ist immer eine Zieluhr.")
+        zustand.zielUmschalten(angesehen.id)
+        zustand.uhrAnsehen(angesehen.id)
+        XCTAssertEqual(zustand.belegtePlaetze(), [1, 3], "Unter den Zielen folgt die Belegung dem Blick.")
     }
 
     /// Ohne angesehene Uhr ist nichts belegt — und nicht etwa alles.

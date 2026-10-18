@@ -2,7 +2,7 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Eine Punktreihe unter der Vorschau, ein Punkt je Uhr — der gefüllte ist
+/// Eine Punktreihe unter der Vorschau, ein Punkt je Zieluhr — der gefüllte ist
 /// die angesehene.
 ///
 /// Sie beantwortet eine Frage, die bisher nirgends stand: wie viele Uhren es
@@ -24,12 +24,12 @@ public struct Uhrenpunkte: View {
     public init(zustand: AppZustand) { self.zustand = zustand }
 
     public var body: some View {
-        if zustand.uhren.count > 1 {
+        if zustand.vorschauuhren().count > 1 {
             HStack(spacing: 8) {
-                ForEach(zustand.uhren) { uhr in
+                ForEach(zustand.vorschauuhren()) { uhr in
                     Button { zustand.uhrAnsehen(uhr.id) } label: {
                         Circle()
-                            .fill(uhr.id == zustand.aktiveID ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
+                            .fill(uhr.id == zustand.referenzUhr?.id ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
                             .frame(width: 8, height: 8)
                     }
                     .buttonStyle(.plain)
@@ -41,7 +41,7 @@ public struct Uhrenpunkte: View {
                     .padding(.vertical, -18)
                     .help(uhr.name)
                     .accessibilityLabel(Text(uhr.name))
-                    .accessibilityAddTraits(uhr.id == zustand.aktiveID ? [.isSelected] : [])
+                    .accessibilityAddTraits(uhr.id == zustand.referenzUhr?.id ? [.isSelected] : [])
                 }
             }
             .padding(.top, 2)
@@ -51,7 +51,7 @@ public struct Uhrenpunkte: View {
     }
 }
 
-/// Die Vorschau aller Uhren nebeneinander, blätterbar — ein Ausschnitt je Uhr.
+/// Die Vorschau der Zieluhren nebeneinander, blätterbar — ein Ausschnitt je Uhr.
 ///
 /// Das Blättern kommt aus dem System (`.scrollTargetBehavior(.paging)` mit
 /// `.scrollPosition`, ab iOS 17 und macOS 14) und nicht aus einer eigenen
@@ -72,11 +72,11 @@ public struct Uhrenblaetterer<Inhalt: View>: View {
     }
 
     public var body: some View {
-        if zustand.uhren.count > 1 {
+        if zustand.vorschauuhren().count > 1 {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
-                    ForEach(zustand.uhren) { uhr in
-                        inhalt(uhr, uhr.id == zustand.aktiveID)
+                    ForEach(zustand.vorschauuhren()) { uhr in
+                        inhalt(uhr, uhr.id == zustand.referenzUhr?.id)
                             .containerRelativeFrame(.horizontal)
                             .id(uhr.id)
                     }
@@ -86,8 +86,8 @@ public struct Uhrenblaetterer<Inhalt: View>: View {
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.hidden)
             .scrollPosition(id: Binding(
-                get: { zustand.aktiveID },
-                set: { if let neu = $0, neu != zustand.aktiveID { zustand.uhrAnsehen(neu) } }))
+                get: { zustand.referenzUhr?.id },
+                set: { if let neu = $0, neu != zustand.referenzUhr?.id { zustand.uhrAnsehen(neu) } }))
         } else if let uhr = zustand.referenzUhr {
             inhalt(uhr, true)
         }
