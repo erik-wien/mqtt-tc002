@@ -173,8 +173,8 @@ OPTIONEN FUER „nachricht"
   Text und Format wie bei „senden"; --name ist hier der Name der Nachricht
   (nur darueber laesst sie sich zurueckziehen).
   Wie lange sie steht, waehlst du auf genau eine Art: --halten, --dauer oder
-  --wiederholungen (zwei zugleich weist das Werkzeug ab). Ohne eine davon laeuft
-  der Text zweimal durch. Sie ersetzt die sichtbare Nachricht und weckt das Panel.
+  --wiederholungen (zwei zugleich weist das Werkzeug ab). Ohne eine davon steht
+  sie bis zum Zurueckziehen, wie in der App und im Kurzbefehl. Sie ersetzt die sichtbare Nachricht und weckt das Panel.
   --halten            steht bis zum Zurueckziehen und haelt die Warteschlange
                       der Uhr an: jede spaetere Nachricht wartet hinter ihr
   --dauer <Sekunden>  steht so viele Sekunden
@@ -182,7 +182,7 @@ OPTIONEN FUER „nachricht"
                       sonst gilt die Anzeigedauer der Uhr)
   --einreihen         stellt sich hinten an, statt die sichtbare zu ersetzen
   --nicht-wecken      erscheint nicht bei ausgeschaltetem Panel
-  --nicht-halten, --ersetzen   die Vorgabe, nur ausgeschrieben (aus aelteren Aufrufen)
+  --ersetzen          die Vorgabe, nur ausgeschrieben; --nicht-halten ohne --dauer: zwei Durchlaeufe
   --klang <Name|Adresse>, --rtttl "<Text>", --sprache "<Text>", --wiederholen   ein Ton, siehe KLANG
 
 Ueber MQTT wartet das Werkzeug auf die Antwort der Uhr (<Thema>/result): Weist die

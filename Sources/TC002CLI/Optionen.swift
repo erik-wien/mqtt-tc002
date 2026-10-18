@@ -95,6 +95,9 @@ struct Optionen {
     var trocken = false
     /// Nur für Benachrichtigungen.
     var halten = false
+    /// `--nicht-halten` stand da (zuletzt genannt gegen `--halten`): ohne Dauerangabe
+    /// laufen dann zwei Durchläufe statt „bis zurückgezogen“.
+    var nichtHaltenAngegeben = false
     /// `--ersetzen` wurde angegeben. Für „ton mp3 hochladen“ heißt es „überschreiben“;
     /// bei einer Nachricht ist es die Vorgabe und ändert nichts (siehe `einreihen`).
     var ersetzen = false
@@ -411,8 +414,8 @@ struct Optionen {
             // `--nicht-halten` und `--ersetzen` sind die frühere Schreibweise der heutigen
             // Vorgabe und bleiben als Wiederholung der Vorgabe gültig; die zuletzt
             // genannte Angabe gewinnt.
-            case "--halten", "--hold":              o.halten = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
-            case "--nicht-halten", "--no-hold":     o.halten = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--halten", "--hold":              o.halten = true; o.nichtHaltenAngegeben = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
+            case "--nicht-halten", "--no-hold":     o.halten = false; o.nichtHaltenAngegeben = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--einreihen", "--queue":          o.einreihen = true; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--ersetzen", "--replace":         o.ersetzen = true; o.einreihen = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--nicht-wecken", "--no-wakeup":   o.aufwecken = false; o.nachrichtenoption = o.nachrichtenoption ?? arg
@@ -833,7 +836,7 @@ struct Optionen {
         o.rand = rand
         o.abstand = abstand
         o.tempo = tempo
-        o.dauer = dauer
+        o.dauer = istNachricht ? steht.dauerSekunden : dauer
         // Ohne jede Angabe bleibt es `nil`, und das heißt: die Vorgabe (30 Minuten).
         if istAnzeige {
             if behalten {
@@ -854,11 +857,27 @@ struct Optionen {
         }
     }
 
+    private var istNachricht: Bool {
+        if case .nachricht = befehl { return true }
+        return false
+    }
+
+    /// „Steht …“ einer Nachricht, dieselbe Wahl wie in App und Kurzbefehl:
+    /// `--halten` (oder keine Angabe) bis zum Zurückziehen, `--dauer` Sekunden,
+    /// `--wiederholungen` Durchläufe. `--nicht-halten` ohne weitere Angabe
+    /// ist die frühere Vorgabe, zwei Durchläufe.
+    var steht: Nachrichtdauer {
+        if halten { return .bisZurueckgezogen }
+        if let dauer { return .sekunden(dauer) }
+        if wiederholungenAngegeben || nichtHaltenAngegeben { return .durchlaeufe(wiederholungen ?? 2) }
+        return .bisZurueckgezogen
+    }
+
     /// Die Felder einer Benachrichtigung (§5.6). Ohne `--name` hat sie keinen.
     var benachrichtigung: Benachrichtigungsoptionen {
-        Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
+        Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: steht.halten,
                                   einreihen: einreihen, aufwecken: aufwecken,
-                                  wiederholungen: halten || dauer != nil ? nil : wiederholungen, klang: klang)
+                                  wiederholungen: steht.wiederholungen, klang: klang)
     }
 
     /// Den Rahmen um das ergänzen, was die Kommandozeile zur Darstellung sagt. Ein

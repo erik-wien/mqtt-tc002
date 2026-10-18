@@ -202,12 +202,33 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         XCTAssertEqual(try Optionen.zerlegt(["message", "Door"]).befehl, .nachricht(text: "Door"))
     }
 
-    /// Vorgabe der Kommandozeile: bleibt nicht stehen (eine gehaltene hält die
-    /// Warteschlange an), ersetzt die sichtbare, weckt, läuft zweimal durch.
+    /// Vorgabe der Kommandozeile wie in App und Kurzbefehl: steht bis zum
+    /// Zurückziehen (`hold`, kein `repeat`, keine Dauer), ersetzt die sichtbare, weckt.
     func testDieVorgabenEinerNachricht() throws {
         let o = try Optionen.zerlegt(["nachricht", "x"])
+        XCTAssertEqual(o.steht, .bisZurueckgezogen)
+        XCTAssertNil(o.meldung.dauer)
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
-            name: nil, halten: false, einreihen: false, aufwecken: true, wiederholungen: 2))
+            name: nil, halten: true, einreihen: false, aufwecken: true, wiederholungen: nil))
+        XCTAssertEqual(o.benachrichtigung, Nachrichtwahl().optionen)
+    }
+
+    /// Dieselbe Rechnung wie die App: `--dauer` Sekunden, `--wiederholungen` Durchläufe.
+    func testDauerUndDurchlaeufeWieInDerApp() throws {
+        let s = try Optionen.zerlegt(["nachricht", "x", "--dauer", "8"])
+        XCTAssertEqual(s.steht, .sekunden(8))
+        XCTAssertEqual(s.meldung.dauer, 8)
+        let w = Nachrichtwahl(steht: Nachrichtdauerwahl(art: .sekunden, sekunden: 8))
+        XCTAssertEqual(s.benachrichtigung.halten, w.optionen.halten)
+        XCTAssertEqual(s.benachrichtigung.wiederholungen, w.optionen.wiederholungen)
+        let d = try Optionen.zerlegt(["nachricht", "x", "--wiederholungen", "3"])
+        XCTAssertEqual(d.steht, .durchlaeufe(3))
+        XCTAssertNil(d.meldung.dauer)
+        XCTAssertEqual(d.benachrichtigung, Nachrichtwahl(steht: Nachrichtdauerwahl(art: .durchlaeufe, durchlaeufe: 3)).optionen)
+        // Die frühere Schreibweise der alten Vorgabe: zwei Durchläufe.
+        let n = try Optionen.zerlegt(["nachricht", "x", "--nicht-halten"])
+        XCTAssertEqual(n.benachrichtigung.wiederholungen, 2)
+        XCTAssertFalse(n.benachrichtigung.halten)
     }
 
     func testHaltenUndEinreihenSindDieAbweichungen() throws {
@@ -220,7 +241,7 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
 
     /// Die alten Schreibweisen bleiben gültig und wiederholen nur die Vorgabe.
     func testDieAltenSchreibweisenSindDieVorgabe() throws {
-        let o = try Optionen.zerlegt(["nachricht", "x", "--nicht-halten", "--ersetzen"])
+        let o = try Optionen.zerlegt(["nachricht", "x", "--ersetzen"])
         XCTAssertEqual(o.benachrichtigung, try Optionen.zerlegt(["nachricht", "x"]).benachrichtigung)
     }
 
