@@ -171,7 +171,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.klangsammlung
         case .uhr:
             return [
-                    .absatz("Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Steuerung …“ öffnet die Fernbedienung der Uhr als Blatt, „Einstellungen der Uhr …“ ihre Seite mit den gespeicherten Einstellungen, „Klänge …“ die Klangsammlung und „Hilfe“ diese Hilfe; bei mehreren Uhren steht dort auch die Wahl der Uhr."),
+                    .absatz("Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Uhr …“ öffnet als Blatt alles, was auf der Uhr eingestellt wird, „Klänge …“ die Klangsammlung und „Hilfe“ diese Hilfe; bei mehreren Uhren steht dort auch die Wahl der angesehenen Uhr, im Blatt „Uhr“ das Menü am Titel."),
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen

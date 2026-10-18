@@ -2,12 +2,17 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Die Fernbedienung der angesehenen Uhr: Zustand, Live-Bild, Display,
-/// Helligkeit, Overlay, Moodlight, Anzeiger, Tasten und Neustart.
+/// Der Bereich „Uhr“: die einzige Stelle für alles, was auf der Uhr eingestellt
+/// wird. Zustand, Live-Bild, Display, Helligkeit, Overlay, Moodlight, Anzeiger,
+/// Tasten, dann die „Vorgaben der Uhr“ (Anzeigedauer, Übergänge, Zifferblatt …),
+/// „Ton“ und „Gerät“ (Verschlüsselung, Neustart). Name, Adresse, Betriebsart und
+/// Modell der Uhr stehen in den Einstellungen (`Uhrseite`).
 ///
 /// Eine Ansicht für alle Oberflächen: Am Schreibtisch ist sie der Bereich „Uhr",
-/// am Telefon das Blatt „Steuerung". Die Schalter gelten genau der angesehenen
-/// Uhr — nur „Display aller gewählten Uhren" geht an mehrere. Gesendet wird
+/// am Telefon das Blatt „Uhr …". Welche Uhr die Seite zeigt, wählt ein Menü in
+/// der Titelleiste (Schreibtisch: Werkzeugleiste, Telefon: Titelmenü). Die
+/// Schalter gelten genau dieser Uhr — nur „Display aller gewählten Uhren" geht
+/// an mehrere. Gesendet wird
 /// beim Schalten, danach liest `AppZustand` den Stand von der Uhr zurück; die
 /// Ansicht rechnet nichts.
 ///
@@ -23,12 +28,44 @@ public struct Fernbedienung: View {
     }
 
     public var body: some View {
-        if let uhr = zustand.aktiveUhr {
-            Steuerseite(zustand: zustand, uhr: uhr, kanon: kanon)
-                // Eine andere Uhr, ein anderer Satz lokaler Eingaben.
-                .id(uhr.id)
-        } else {
-            ContentUnavailableView("Keine Uhr eingerichtet", systemImage: "clock")
+        Group {
+            if let uhr = zustand.aktiveUhr {
+                Steuerseite(zustand: zustand, uhr: uhr, kanon: kanon)
+                    // Eine andere Uhr, ein anderer Satz lokaler Eingaben.
+                    .id(uhr.id)
+                    .navigationTitle(titel(uhr))
+                    .toolbar {
+                        if zustand.uhren.count > 1, kanon == .schreibtisch {
+                            ToolbarItem(placement: .primaryAction) { uhrwahl.pickerStyle(.menu) }
+                        }
+                    }
+                    .toolbarTitleMenu {
+                        if zustand.uhren.count > 1, kanon == .telefon { uhrwahl.pickerStyle(.inline) }
+                    }
+            } else {
+                ContentUnavailableView("Keine Uhr eingerichtet", systemImage: "clock")
+            }
+        }
+        // „Ändern …“ neben der Anzeigedauer (`AppZustand.einstellungsziel`): Die
+        // Uhr des Ziels wird die angesehene; aufgeklappt und gerollt wird in
+        // `Steuerseite`, die das Ziel dann entgegennimmt.
+        .onChange(of: zustand.einstellungsziel, initial: true) { _, neu in
+            guard let uhr = neu?.uhrgruppenziel.uhr, zustand.aktiveID != uhr else { return }
+            zustand.uhrAnsehen(uhr)
+        }
+    }
+
+    /// Am Telefon steht der Name der Uhr im Titel, sobald es mehrere gibt; der
+    /// Schreibtisch hat die Wahl in der Werkzeugleiste und nennt den Bereich.
+    private func titel(_ uhr: Uhr) -> String {
+        kanon == .telefon && zustand.uhren.count > 1 ? uhr.name : lok("Uhr")
+    }
+
+    private var uhrwahl: some View {
+        Picker("Uhr", selection: Binding(
+            get: { zustand.aktiveID },
+            set: { if let neu = $0 { zustand.uhrAnsehen(neu) } })) {
+            ForEach(zustand.uhren) { u in Text(verbatim: u.name).tag(Optional(u.id)) }
         }
     }
 }
@@ -44,6 +81,8 @@ private struct Steuerseite: View {
     @State private var overlay: String?
     @State private var moodlightAn = false
     @State private var moodlightHelligkeit = 120
+    /// Die aufgeklappten Gruppen der „Vorgaben der Uhr“.
+    @State private var offeneGruppen: Set<Uhrgruppe> = []
 
     private var id: UUID { uhr.id }
     private var geraet: Geraetezustand? { zustand.geraetezustand[id] }
@@ -55,34 +94,53 @@ private struct Steuerseite: View {
     private var sensorRegelt: Bool { zustand.helligkeitAutomatisch(fuer: id) }
     private var overlayNamen: [String] { zustand.faehigkeiten[id]?.overlays ?? [] }
 
+    private var verschluesselung: Bool {
+        Uhrgruppe.sichtbar(faehigkeiten: zustand.faehigkeiten[id]).contains(.verschluesselung)
+    }
+
     var body: some View {
-        Form {
-            if zustand.uhren.count > 1 { uhrwahl }
-            livebild
-            zustandsabschnitt
-            anzeigeabschnitt
-            Moodlightabschnitt(zustand: zustand, uhr: uhr, an: $moodlightAn, helligkeit: $moodlightHelligkeit)
-            indikatorabschnitt
-            Tonabschnitt(zustand: zustand, uhr: uhr, kanon: kanon)
-            tastenabschnitt
-            Section {
-                Button("Uhr neu starten …", role: .destructive) { fragtNeustart = true }
-                    .knopfZerstoerend()
+        ScrollViewReader { leser in
+            Form {
+                livebild
+                zustandsabschnitt
+                anzeigeabschnitt
+                Moodlightabschnitt(zustand: zustand, uhr: uhr, an: $moodlightAn, helligkeit: $moodlightHelligkeit)
+                indikatorabschnitt
+                tastenabschnitt
+                Vorgabenabschnitt(zustand: zustand, id: id, offen: $offeneGruppen)
+                Tonabschnitt(zustand: zustand, uhr: uhr, kanon: kanon)
+                geraeteabschnitt
             }
+            .formStyle(.grouped)
+            // „Ändern …“ neben der Anzeigedauer: klappt die Gruppe des Ziels auf und
+            // rollt dorthin. `initial`, weil `Fernbedienung` erst die Uhr wechselt und
+            // diese Seite dann neu entsteht.
+            .onChange(of: zustand.einstellungsziel, initial: true) { _, neu in
+                guard let ziel = neu?.uhrgruppenziel, ziel.uhr == id else { return }
+                zustand.einstellungsziel = nil
+                offeneGruppen.insert(ziel.gruppe)
+                Task {
+                    try? await Task.sleep(for: .milliseconds(300))
+                    withAnimation { leser.scrollTo(ziel.gruppe, anchor: .top) }
+                }
+            }
+            .navigationDestination(for: Uhrgruppenziel.self) { ziel in
+                Verschluesselungsseite(zustand: zustand, id: ziel.uhr, kanon: kanon)
+                    .navigationTitle(ziel.gruppe.titel)
+            }
+            .confirmationDialog(lokf("%@ neu starten?", uhr.name), isPresented: $fragtNeustart) {
+                Button("Neu starten", role: .destructive) { Task { await zustand.neustarten(fuer: id) } }
+            } message: {
+                Text("Die Uhr ist danach kurz nicht erreichbar.")
+            }
+            // Zustand und Bild, solange die Seite offen ist. `.task(id:)` beendet
+            // beide Schleifen mit der Seite und beim Wechsel der Uhr.
+            .task(id: id) { await zustand.zustandFolgen(id) }
+            .task(id: id) { await zustand.bildschirmFolgen(id) }
+            .onAppear { uebernehmen() }
+            .onChange(of: anzeige?.overlay) { _, _ in uebernehmen() }
+            .onChange(of: anzeige?.moodlight) { _, _ in uebernehmen() }
         }
-        .formStyle(.grouped)
-        .confirmationDialog(lokf("%@ neu starten?", uhr.name), isPresented: $fragtNeustart) {
-            Button("Neu starten", role: .destructive) { Task { await zustand.neustarten(fuer: id) } }
-        } message: {
-            Text("Die Uhr ist danach kurz nicht erreichbar.")
-        }
-        // Zustand und Bild, solange die Seite offen ist. `.task(id:)` beendet
-        // beide Schleifen mit der Seite und beim Wechsel der Uhr.
-        .task(id: id) { await zustand.zustandFolgen(id) }
-        .task(id: id) { await zustand.bildschirmFolgen(id) }
-        .onAppear { uebernehmen() }
-        .onChange(of: anzeige?.overlay) { _, _ in uebernehmen() }
-        .onChange(of: anzeige?.moodlight) { _, _ in uebernehmen() }
     }
 
     /// Die Auskunft der Uhr hat Vorrang vor dem, was die Seite zuletzt gewählt hat.
@@ -94,16 +152,6 @@ private struct Steuerseite: View {
     }
 
     // MARK: - Abschnitte
-
-    private var uhrwahl: some View {
-        Section {
-            Picker("Uhr", selection: Binding(
-                get: { zustand.aktiveID },
-                set: { if let neu = $0 { zustand.uhrAnsehen(neu) } })) {
-                ForEach(zustand.uhren) { u in Text(verbatim: u.name).tag(Optional(u.id)) }
-            }
-        }
-    }
 
     private var livebild: some View {
         Section {
@@ -232,6 +280,23 @@ private struct Steuerseite: View {
             Text("Anzeige")
         } footer: {
             if sensorRegelt { Text("Der Lichtsensor der Uhr regelt die Helligkeit.") }
+        }
+    }
+
+    /// Was das Gerät selbst betrifft: die Verschlüsselung zum Broker (nur bei einer
+    /// Uhr, die MQTT über TLS kann) und der Neustart.
+    private var geraeteabschnitt: some View {
+        Section {
+            if verschluesselung {
+                NavigationLink(value: Uhrgruppenziel(uhr: id, gruppe: .verschluesselung)) {
+                    Label { Text(verbatim: Uhrgruppe.verschluesselung.titel) }
+                        icon: { Image(systemName: Uhrgruppe.verschluesselung.symbol) }
+                }
+            }
+            Button("Uhr neu starten …", role: .destructive) { fragtNeustart = true }
+                .knopfZerstoerend()
+        } header: {
+            Text("Gerät")
         }
     }
 

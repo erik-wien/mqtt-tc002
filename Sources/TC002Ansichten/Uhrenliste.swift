@@ -60,7 +60,7 @@ public struct Uhrenliste: View {
                           systemImage: "exclamationmark.triangle")
                         .font(kanon.fussnote).warntext()
                 }
-                Text("Antippen öffnet die Uhr: Name, Adresse, Betriebsart und was auf ihr eingestellt ist.")
+                Text("Antippen öffnet die Uhr: Name, Adresse, Betriebsart und Modell. Was auf der Uhr eingestellt wird, steht im Bereich „Uhr“.")
                     .font(kanon.fussnote)
             }
         }

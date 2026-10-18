@@ -3,15 +3,18 @@ import UniformTypeIdentifiers
 import TC002Core
 import TC002Modell
 
-/// Die gespeicherten Einstellungen einer Uhr in ihren Gruppen — die Seiten unter
-/// Einstellungen › Uhr. Auf allen Oberflächen dieselben; am Schreibtisch und am
-/// Telefon führen sie von der Uhrseite aus weiter.
+/// Die gespeicherten Einstellungen einer Uhr in ihren Gruppen — „Vorgaben der
+/// Uhr“ im Bereich „Uhr“ (`Fernbedienung`). Auf allen Oberflächen dieselben.
+///
+/// Nicht in den Gruppen: Helligkeit (Abschnitt „Anzeige“) und Lautstärke,
+/// Radio und Startklang (Abschnitt „Ton“) stehen als Bedienung im Bereich selbst,
+/// damit jede Einstellung genau einmal vorkommt (`bereichspfade`).
 ///
 /// Nicht hier: `enlargeApps` (die App rechnet alle Bilder für das Anzeigemaß),
 /// `blockNavigation` (die Doku sagt nicht, was es bewirkt), TLS ein/aus, WLAN und
 /// alles, was die Web-Oberfläche der Uhr einstellt.
 public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case helligkeitFarbe, text, schleife, uhrZeit, klang, verschluesselung
+    case helligkeitFarbe, text, schleife, uhrZeit, verschluesselung
 
     public var id: String { rawValue }
 
@@ -21,7 +24,6 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .text: return lok("Text & Laufschrift")
         case .schleife: return lok("Schleife")
         case .uhrZeit: return lok("Uhr, Zeit & Datum")
-        case .klang: return lok("Klang")
         case .verschluesselung: return lok("MQTT-Verschlüsselung")
         }
     }
@@ -32,18 +34,25 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .text: return "textformat"
         case .schleife: return "arrow.triangle.2.circlepath"
         case .uhrZeit: return "clock"
-        case .klang: return "speaker.wave.2"
         case .verschluesselung: return "lock"
         }
     }
 
-    /// Die Abschnitte der Seite, jeder mit den Pfaden seiner Einstellungen
+    /// Die Einstellungen, die nicht in einer Gruppe stehen, weil der Bereich „Uhr“
+    /// sie als Bedienung zeigt: Helligkeit im Abschnitt „Anzeige“, `volume` im
+    /// Abschnitt „Ton“ (feste Zeile) und dort `tonpfade`.
+    static let bereichspfade = ["autoBrightness", "brightness", "volume"] + tonpfade
+
+    /// Die weiteren Zeilen des Abschnitts „Ton“, in dieser Reihenfolge.
+    static let tonpfade = ["radioVolume", "appVolume", "alertVolume", "bootSound", "musicSource"]
+
+    /// Die Abschnitte der Gruppe, jeder mit den Pfaden seiner Einstellungen
     /// (`scroll.speed` für ein Unterfeld). Leer bei der Verschlüsselung: Sie hat
     /// eine eigene Seite.
     var abschnitte: [(titel: String?, pfade: [String])] {
         switch self {
         case .helligkeitFarbe:
-            return [(nil, ["autoBrightness", "brightness", "saturation", "gamma", "colorCorrection", "colorTint"])]
+            return [(nil, ["saturation", "gamma", "colorCorrection", "colorTint"])]
         case .text:
             return [(nil, ["textColor", "uppercase"]),
                     (lok("Laufschrift"), ["scroll.mode", "scroll.direction", "scroll.entry",
@@ -62,9 +71,6 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
                                                "weekdayBar.weekendDays", "weekdayBar.activeColor",
                                                "weekdayBar.inactiveColor", "weekdayBar.weekendActiveColor",
                                                "weekdayBar.weekendInactiveColor"])]
-        case .klang:
-            return [(lok("Lautstärke"), ["volume", "radioVolume", "appVolume", "alertVolume"]),
-                    (nil, ["bootSound", "musicSource"])]
         case .verschluesselung:
             return []
         }
@@ -84,6 +90,13 @@ public enum Uhrgruppe: String, CaseIterable, Identifiable, Hashable, Sendable {
             }
             return pfade.isEmpty ? nil : (abschnitt.titel, pfade)
         }
+    }
+
+    /// Die Gruppen unter „Vorgaben der Uhr“: alle sichtbaren außer der
+    /// Verschlüsselung, die unter „Gerät“ steht.
+    public static func vorgaben(faehigkeiten: Geraetefaehigkeiten?,
+                                einstellungen: Geraeteeinstellungen? = nil) -> [Uhrgruppe] {
+        sichtbar(faehigkeiten: faehigkeiten, einstellungen: einstellungen).filter { $0 != .verschluesselung }
     }
 
     /// Welche Gruppen diese Uhr zeigt: die Verschlüsselung nur, wenn sie MQTT
@@ -115,51 +128,54 @@ extension Einstellungsziel {
     }
 }
 
-/// Die Seite einer Gruppe.
-public struct Uhrgruppenseite: View {
+/// „Vorgaben der Uhr“: die gespeicherten Einstellungen der Uhr, je Gruppe ein
+/// aufklappbarer Block im Bereich „Uhr“. Welche Gruppen und Zeilen da sind,
+/// entscheidet die Uhr (`Uhrgruppe.vorgaben`); aufgeklappt wird von Hand oder
+/// über `Fernbedienung` („Ändern …“ neben der Anzeigedauer).
+struct Vorgabenabschnitt: View {
     @Bindable var zustand: AppZustand
-    private let ziel: Uhrgruppenziel
-    private let kanon: Formkanon
+    let id: UUID
+    @Binding var offen: Set<Uhrgruppe>
 
-    public init(zustand: AppZustand, ziel: Uhrgruppenziel, kanon: Formkanon) {
-        self.zustand = zustand
-        self.ziel = ziel
-        self.kanon = kanon
-    }
-
-    public var body: some View {
-        Group {
-            if ziel.gruppe == .verschluesselung {
-                Verschluesselungsseite(zustand: zustand, id: ziel.uhr, kanon: kanon)
-            } else if zustand.uhreneinstellungen[ziel.uhr] == nil {
-                ContentUnavailableView {
-                    Label("Noch keine Einstellungen von der Uhr", systemImage: "slider.horizontal.3")
-                } actions: {
-                    Button("Abfragen") { Task { await zustand.zustandAbfragen(ziel.uhr) } }
-                        .knopfBefehl()
+    var body: some View {
+        Section {
+            if let einstellungen = zustand.uhreneinstellungen[id] {
+                ForEach(Uhrgruppe.vorgaben(faehigkeiten: zustand.faehigkeiten[id], einstellungen: einstellungen)) { gruppe in
+                    DisclosureGroup(isExpanded: Binding(
+                        get: { offen.contains(gruppe) },
+                        set: { if $0 { offen.insert(gruppe) } else { offen.remove(gruppe) } })) {
+                        gruppeninhalt(gruppe, einstellungen: einstellungen)
+                    } label: {
+                        Label { Text(verbatim: gruppe.titel) } icon: { Image(systemName: gruppe.symbol) }
+                    }
+                    .id(gruppe)
                 }
             } else {
-                Form {
-                    ForEach(Array(ziel.gruppe.sichtbareAbschnitte(einstellungen: zustand.uhreneinstellungen[ziel.uhr],
-                                                                  faehigkeiten: zustand.faehigkeiten[ziel.uhr]).enumerated()), id: \.offset) { _, abschnitt in
-                        Section {
-                            ForEach(abschnitt.pfade, id: \.self) { pfad in
-                                Einstellungszeile(zustand: zustand, id: ziel.uhr, pfad: pfad)
-                            }
-                        } header: {
-                            if let titel = abschnitt.titel { Text(verbatim: titel) }
-                        } footer: {
-                            if abschnitt.pfade.contains("brightness"), zustand.helligkeitAutomatisch(fuer: ziel.uhr) {
-                                Text("Der Lichtsensor der Uhr regelt die Helligkeit.")
-                            }
-                        }
-                    }
+                LabeledContent {
+                    Button("Abfragen") { Task { await zustand.zustandAbfragen(id) } }
+                        .knopfBefehl()
+                } label: {
+                    Text("Noch keine Einstellungen von der Uhr")
                 }
-                .formStyle(.grouped)
+            }
+        } header: {
+            Text("Vorgaben der Uhr")
+        } footer: {
+            Text("Gilt, wenn eine Anzeige nichts anderes sagt.")
+        }
+    }
+
+    @ViewBuilder
+    private func gruppeninhalt(_ gruppe: Uhrgruppe, einstellungen: Geraeteeinstellungen) -> some View {
+        let abschnitte = gruppe.sichtbareAbschnitte(einstellungen: einstellungen, faehigkeiten: zustand.faehigkeiten[id])
+        ForEach(Array(abschnitte.enumerated()), id: \.offset) { _, abschnitt in
+            if let titel = abschnitt.titel {
+                Text(verbatim: titel).font(.subheadline.weight(.semibold))
+            }
+            ForEach(abschnitt.pfade, id: \.self) { pfad in
+                Einstellungszeile(zustand: zustand, id: id, pfad: pfad)
             }
         }
-        .navigationTitle(ziel.gruppe.titel)
-        .task { await zustand.zustandAbfragen(ziel.uhr) }
     }
 }
 
@@ -276,13 +292,7 @@ struct Einstellungszeile: View {
     private func ganzzahlzeile(_ bereich: ClosedRange<Int>) -> some View {
         let n = ganz ?? bereich.lowerBound
         switch pfad {
-        case "brightness":
-            Wertregler(titel: titel, wert: Steuerwerte.helligkeitProzent(roh: n), bereich: 0...100,
-                       anzeige: { "\($0) %" }, gesperrt: zustand.helligkeitAutomatisch(fuer: id)) {
-                await setzenUndWarten(String(Steuerwerte.helligkeitRoh(prozent: $0)))
-            }
-            .id(id)
-        case "saturation", "volume", "radioVolume", "appVolume", "alertVolume":
+        case "saturation", "radioVolume", "appVolume", "alertVolume":
             Wertregler(titel: titel, wert: n, bereich: bereich, anzeige: { "\($0)" }) { await setzenUndWarten(String($0)) }
                 .id(id)
         case "appDurationMs", "transitionDurationMs", "scroll.holdMs":
@@ -333,7 +343,7 @@ private struct Wochenendzeile: View {
 /// MQTT-Verschlüsselung: wie die Uhr dem Broker vertraut, die CA laden und
 /// entfernen. TLS selbst ein- und auszuschalten bleibt der Web-Oberfläche der
 /// Uhr, samt Port und Neustart.
-private struct Verschluesselungsseite: View {
+struct Verschluesselungsseite: View {
     @Bindable var zustand: AppZustand
     let id: UUID
     let kanon: Formkanon

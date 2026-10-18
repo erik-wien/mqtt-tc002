@@ -85,7 +85,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .punkte([
                         "**Senden** — Text und Icon verschicken.",
                         "**Icons** — Icons und ganze Anzeigen malen.",
-                        "**Uhr** — die Fernbedienung: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger.",
+                        "**Uhr** — alles, was auf der Uhr eingestellt wird: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger, Vorgaben, Ton.",
                         "**Protokoll** — die technische Mitschrift; steht nur da, wenn du sie eingeschaltet hast.",
                         "**Klänge** — die Klangsammlung: Melodien und MP3-Dateien hinzufügen und auf die Uhren abgleichen.",
                         "**Einstellungen** — am Mac nicht in der Seitenleiste, sondern im Programmmenü (⌘,); auf dem iPad hier: Uhren, MQTT-Broker und Allgemein (Aufzeichnung, iCloud, virtuelle Uhr).",
@@ -253,14 +253,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
             return HilfeInhalt.klangsammlung
         case .uhr:
             return [
-                    .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr. Die Uhr wählst du oben auf der Seite, sobald mehr als eine eingetragen ist."),
+                    .absatz("Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr und der Ort für alles, was auf ihr eingestellt wird. Die Uhr wählst du in der Werkzeugleiste, sobald mehr als eine eingetragen ist."),
                 ]
                 + HilfeInhalt.fernbedienung
                 + HilfeInhalt.uhreinstellungen
                 + HilfeInhalt.wasKannWelcheUhr
-                + [
-                    .absatz("Die Gruppen finden sich unter „Einstellungen“ → „Uhren“: Die Uhr antippen, dort steht der Abschnitt „Auf der Uhr“."),
-                ]
         case .anzeigen:
             return [
                     .absatz("Dieser Bereich ist die technische Mitschrift und sonst nichts. Was auf der Uhr liegt, steht unter „Senden“ in der Liste unter den fünf Blöcken."),

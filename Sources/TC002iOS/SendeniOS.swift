@@ -55,12 +55,9 @@ struct SendeniOS: View {
     /// genau einmal je Ansicht. Wer das Blatt wegwischt, ohne etwas
     /// einzutragen, bekommt es nicht gleich wieder vorgesetzt.
     @State private var zeigeEinstellungen: Bool
-    @State private var zeigeSteuerung = false
+    @State private var zeigeUhr = false
     @State private var zeigeKlaenge = false
     @State private var zeigeHilfe = false
-    @State private var zeigeUhreinstellungen = false
-    /// Die Gruppe, auf der das Blatt der Uhreinstellungen aufgeht (`nil`: auf der Uhrseite).
-    @State private var uhreinstellungenStart: Uhrgruppenziel?
 
     @MainActor
     init(zustand: AppZustand) {
@@ -433,18 +430,11 @@ struct SendeniOS: View {
         }
         if zustand.aktiveUhr != nil {
             Button {
-                zeigeSteuerung = true
+                zeigeUhr = true
             } label: {
-                Label("Steuerung …", systemImage: "slider.horizontal.3")
+                Label("Uhr …", systemImage: "slider.horizontal.3")
             }
             // Einträge eines Menüs: Das System setzt den Stil.
-            .buttonStyle(.automatic)
-            Button {
-                uhreinstellungenStart = nil
-                zeigeUhreinstellungen = true
-            } label: {
-                Label("Einstellungen der Uhr …", systemImage: "gearshape")
-            }
             .buttonStyle(.automatic)
         }
         // Unabhängig von einer Uhr: die Sammlung gehört der App, und die Hilfe
@@ -465,11 +455,8 @@ struct SendeniOS: View {
 
     var body: some View {
         rumpf
-        .sheet(isPresented: $zeigeSteuerung) {
-            SteuerungsblattiOS(zustand: zustand)
-        }
-        .sheet(isPresented: $zeigeUhreinstellungen) {
-            UhreinstellungeniOS(zustand: zustand, start: uhreinstellungenStart)
+        .sheet(isPresented: $zeigeUhr) {
+            UhrblattiOS(zustand: zustand)
         }
         .sheet(item: $formatteil) { teil in
             FormatblattiOS(zustand: zustand, teil: teil, darstellung: $darstellung, weg: $weg,
@@ -498,17 +485,16 @@ struct SendeniOS: View {
         .sheet(isPresented: $zeigeVerlauf) {
             AnzeigeniOS(zustand: zustand)
         }
-        // „Ändern …“ neben der Anzeigedauer der Uhr: Das offene Blatt (Zeit,
+        // „Ändern …“ neben der Anzeigedauer der Uhr führt in den Bereich „Uhr“: Das offene Blatt (Zeit,
         // Nachrichtoptionen) muss zu sein, bevor das nächste aufgeht — zwei
         // Blätter zugleich zeigt SwiftUI nicht, das zweite bliebe stumm aus.
         .onChange(of: zustand.einstellungsziel) { _, neu in
-            guard let neu else { return }
-            zustand.einstellungsziel = nil
+            guard neu != nil else { return }
             formatteil = nil
-            uhreinstellungenStart = neu.uhrgruppenziel
+            // Das Ziel nimmt `Fernbedienung` im Blatt entgegen.
             Task {
                 try? await Task.sleep(for: .milliseconds(600))
-                zeigeUhreinstellungen = true
+                zeigeUhr = true
             }
         }
         .onAppear {

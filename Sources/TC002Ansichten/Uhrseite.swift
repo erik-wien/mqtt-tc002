@@ -2,16 +2,14 @@ import SwiftUI
 import TC002Core
 import TC002Modell
 
-/// Alles, was zu **einer** Uhr gehört, auf einer Seite: Name, Adresse,
-/// Betriebsart, Abfragen, Konfigurieren
-/// und das Entfernen.
+/// Alles, was die App über **eine** Uhr weiß, nicht aber die Uhr selbst
+/// einstellt: Name, Adresse, Betriebsart, Modell, Abfragen und das Entfernen.
+/// Was auf der Uhr eingestellt wird, steht im Bereich „Uhr“ (`Fernbedienung`).
 ///
 /// Warum eine eigene Seite und nicht eine Karte in der Liste: Vier Uhren
 /// ergaben zwölf Knöpfe und vier Segmentwahlen, bevor die erste andere
-/// Einstellung kam. Vor allem aber standen „Auf der Uhr" — Seitenwechsel und
-/// Scrolltempo — unter *allen* Uhren und galten der angesehenen; wer eine
-/// andere meinte, musste die Einstellungen verlassen und umschalten. Hier
-/// gilt jeder Wert der Uhr, deren Seite man aufgeschlagen hat.
+/// Einstellung kam. Hier gilt jeder Wert der Uhr, deren Seite man
+/// aufgeschlagen hat.
 ///
 /// Die Uhr kommt als Kennung herein und nicht als Bindung: Wird sie entfernt,
 /// während die Seite offen steht, zeigte eine gehaltene Bindung auf einen
@@ -91,21 +89,6 @@ private struct Uhrblatt: View {
                 Abschnittskopf("Modell", hilfe: lok("Das Modell schlägt die App bei der ersten Abfrage vor; hier lässt es sich ändern. Es bestimmt, wie die Vorschau die Uhr zeichnet und, beim selbstgebauten ESP32, welche Bauteile angenommen werden."))
             }
 
-            // Die gespeicherten Einstellungen der Uhr, in Gruppen; was man jetzt
-            // schalten will, steht in der Fernbedienung (Bereich „Uhr“).
-            Section {
-                Text("Gilt, wenn eine Anzeige nichts anderes sagt.")
-                    .font(kanon.fussnote).foregroundStyle(.secondary)
-                ForEach(Uhrgruppe.sichtbar(faehigkeiten: zustand.faehigkeiten[uhr.id],
-                                           einstellungen: zustand.uhreneinstellungen[uhr.id])) { gruppe in
-                    NavigationLink(value: Uhrgruppenziel(uhr: uhr.id, gruppe: gruppe)) {
-                        Label { Text(verbatim: gruppe.titel) } icon: { Image(systemName: gruppe.symbol) }
-                    }
-                }
-            } header: {
-                Text("Auf der Uhr")
-            }
-
             Section {
                 LabeledContent {
                     // Das Zeichen ist das Ergebnis des Knopfes und steht darum
@@ -132,9 +115,6 @@ private struct Uhrblatt: View {
             }
         }
         .formStyle(.grouped)
-        .navigationDestination(for: Uhrgruppenziel.self) { ziel in
-            Uhrgruppenseite(zustand: zustand, ziel: ziel, kanon: kanon)
-        }
         .task { await zustand.zustandAbfragen(uhr.id) }
         .uhrentfernenRueckfrage(zeigt: $fragtEntfernen, zustand: zustand, id: uhr.id)
     }

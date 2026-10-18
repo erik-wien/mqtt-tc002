@@ -321,11 +321,11 @@ final class KnopfstilTests: XCTestCase {
             // — die Eingabetaste schickt, wie in Nachrichten. Das 🖼 am Ende
             // fehlt seit „Icons": Die 52 × 16 stehen im selben Blatt wie die
             // Icons, und der Knopf davor ist ihr einziger Einstieg. Dazu
-            // „Steuerung …“ und „Einstellungen der Uhr …“ im Titelmenü
-            // (`toolbarTitleMenu`): Einträge eines Systemmenüs, deren Stil
-            // das System setzt (+2), dazu „Klänge …“ und „Hilfe“ (+2). Uhr und Pinsel am Ende der Pille sind zwei
+            // „Uhr …“ im Titelmenü (`toolbarTitleMenu`): ein Eintrag eines
+            // Systemmenüs, dessen Stil das System setzt (+1), dazu „Klänge …“
+            // und „Hilfe“ (+2). Uhr und Pinsel am Ende der Pille sind zwei
             // Knöpfe dieser Bauart (Zeit, Darstellung) statt des einen.
-            "Sources/TC002iOS/SendeniOS.swift": 7,
+            "Sources/TC002iOS/SendeniOS.swift": 6,
             // „Uhr hinzufuegen …“ — eine Listenzeile, die weiterfuehrt und
             // ein Blatt oeffnet, wie „Account hinzufuegen" in den
             // Systemeinstellungen.

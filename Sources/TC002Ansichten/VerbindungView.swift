@@ -13,9 +13,6 @@ import TC002Modell
 public struct VerbindungView: View {
     @Bindable var zustand: AppZustand
     @State private var thema: Einstellungsthema = .uhren
-    /// Der Weg im Reiter „Uhren“ (Uhr, dann Gruppe), damit sich eine Seite von
-    /// außen aufschlagen lässt (`AppZustand.einstellungsziel`).
-    @State private var pfad = NavigationPath()
 
     public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil) {
         self.zustand = zustand
@@ -47,8 +44,7 @@ public struct VerbindungView: View {
             // eines Bereichs. Die Vorlage (`docs/superpowers/vorlagen/
             // apple-inspektor.md`, „Zweite Ebene: Reiter") nennt genau diese
             // Form: Numbers waehlt den Bereich seines Inspektors so.
-            Picker("Thema", selection: Binding(get: { thema },
-                                               set: { thema = $0; pfad = NavigationPath() })) {
+            Picker("Thema", selection: $thema) {
                 ForEach(Einstellungsthema.allCases) { t in
                     Text(t.titel).tag(t)
                 }
@@ -61,7 +57,7 @@ public struct VerbindungView: View {
             // Ein `NavigationStack` je Reiter: Nur der Reiter „Uhren" fuehrt
             // weiter, aber ein Stapel, der beim Themenwechsel verschwindet,
             // laesst auch den Weg dorthin nicht stehenbleiben.
-            NavigationStack(path: $pfad) {
+            NavigationStack {
                 Einstellungsinhalt(zustand: zustand, thema: thema,
                                    kanon: .schreibtisch,
                                    virtuelleUhrAnsehen: ansehen)
@@ -73,18 +69,6 @@ public struct VerbindungView: View {
         // Abrufe laufen nebeneinander, eine stumme Uhr haelt die uebrigen
         // nicht auf.
         .task { zustand.alleAbfragen() }
-        // `initial`: Beim Mac entsteht das Einstellungsfenster womöglich erst
-        // durch den Aufruf, der das Ziel gesetzt hat.
-        .onChange(of: zustand.einstellungsziel, initial: true) { _, neu in
-            guard let neu else { return }
-            let gruppe = neu.uhrgruppenziel
-            var weg = NavigationPath()
-            weg.append(gruppe.uhr)
-            weg.append(gruppe)
-            thema = .uhren
-            pfad = weg
-            zustand.einstellungsziel = nil
-        }
         .sheet(isPresented: $zeigeVirtuelleUhr) { Nebenfenster.virtuelleUhr.inhalt }
     }
 }

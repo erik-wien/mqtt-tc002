@@ -208,8 +208,8 @@ public struct Klangabschnitt: View {
     }
 }
 
-/// Der Abschnitt „Ton“ der Fernbedienung: was gerade spielt, Stopp, Lautstärke
-/// und Radio. Gelesen wird nur über HTTP; ohne Adresse der Uhr ist der ganze
+/// Der Abschnitt „Ton“ der Fernbedienung: was gerade spielt, Stopp, Lautstärken,
+/// Radio und Startklang. Gelesen wird nur über HTTP; ohne Adresse der Uhr ist der ganze
 /// Abschnitt grau, mit dem Grund daneben (wie die Tasten ohne MQTT).
 ///
 /// Sender anlegen und ändern gehört nicht in die App, sondern in die
@@ -260,6 +260,12 @@ struct Tonabschnitt: View {
                        setzen: { p in await zustand.einstellungSetzen("volume", wert: "\(p)", fuer: id).ganz })
             .id(id)
             radiozeilen
+            // Radiolautstärke, Lautstärke der Apps und Hinweise, Startklang: die
+            // Zeilen, die die Uhr meldet (`Einstellungszeile` prüft Schlüssel und
+            // Wirkung).
+            ForEach(Uhrgruppe.tonpfade, id: \.self) { pfad in
+                Einstellungszeile(zustand: zustand, id: id, pfad: pfad)
+            }
             klaengezeilen
             if ohneAdresse {
                 Label("Ohne Adresse der Uhr nicht lesbar", systemImage: "info.circle")

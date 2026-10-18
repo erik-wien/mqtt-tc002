@@ -759,7 +759,7 @@
 "Diese Uhr gibt es nicht mehr" = "This clock is gone";
 "Diese Uhr entfernen?" = "Remove this clock?";
 "Sie verschwindet aus dieser App. Auf dem Gerät selbst ändert sich nichts." = "It disappears from this app. Nothing changes on the device itself.";
-"Antippen öffnet die Uhr: Name, Adresse, Betriebsart und was auf ihr eingestellt ist." = "Tapping a clock opens it: name, address, mode and what is set on the device.";
+"Antippen öffnet die Uhr: Name, Adresse, Betriebsart und Modell. Was auf der Uhr eingestellt wird, steht im Bereich „Uhr“." = "Tapping a clock opens it: name, address, mode and model. What is set on the clock is in the “Clock” area.";
 "Verlauf" = "History";
 "Merkt sich jede Anzeige oder Nachricht samt ihren Einstellungen." = "Remembers every display or message, along with its settings.";
 "Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt einen Eintrag samt seinen Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist." = "Under “Send” the history sits below the slots, and a tap restores an entry together with its settings. It keeps the last 200 sends per device and is synced via iCloud when that is switched on.";
@@ -1213,7 +1213,7 @@
 "Ein Thema, eine Kennung oder ein Kennwort ist für MQTT zu lang (höchstens 65 535 Byte)." = "A topic, client ID or password is too long for MQTT (at most 65,535 bytes).";
 
 /* Steuerung der Uhr */
-"**Uhr** — die Fernbedienung: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger." = "**Clock** — the remote control: live image, status, display, brightness, mood light, indicators.";
+"**Uhr** — alles, was auf der Uhr eingestellt wird: Live-Bild, Zustand, Display, Helligkeit, Moodlight, Anzeiger, Vorgaben, Ton." = "**Clock** — everything that is set on the clock: live image, status, display, brightness, mood light, indicators, defaults, sound.";
 "%@ neu starten?" = "Restart %@?";
 "%@ s" = "%@ s";
 "%d Min" = "%d min";
@@ -1232,7 +1232,6 @@
 "Anzeiger" = "Indicators";
 "Anzeiger 1 (oben)" = "Indicator 1 (top)";
 "Anzeiger 3 (unten)" = "Indicator 3 (bottom)";
-"Auf der Uhr" = "On the clock";
 "Aus" = "Off";
 "Ausstehend" = "Pending";
 "Automatisch" = "Automatic";
@@ -1247,11 +1246,10 @@
 "Das Live-Bild wird alle zwei Sekunden neu geholt, solange die Seite offen ist, und ruht, sobald man sie verlässt. Es zeigt die Farben der Anzeigen; Helligkeit und Farbkorrektur der Uhr sind nicht eingerechnet. Das Moodlight flutet das Display einfarbig, solange es an ist — die Seite zeigt dafür keine Vorschau." = "The live image is refreshed every two seconds while the page is open and rests as soon as you leave it. It shows the colors of the displays; the clock’s brightness and color correction are not included. The mood light floods the display with one color while it is on — the page shows no preview of it.";
 "Datum" = "Date";
 "Dauer des Übergangs" = "Transition duration";
-"Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr. Die Uhr wählst du oben auf der Seite, sobald mehr als eine eingetragen ist." = "The “Clock” area in the sidebar is the remote control of the clock you are viewing. You choose the clock at the top of the page as soon as more than one is registered.";
+"Der Bereich „Uhr“ in der Seitenleiste ist die Fernbedienung der angesehenen Uhr und der Ort für alles, was auf ihr eingestellt wird. Die Uhr wählst du in der Werkzeugleiste, sobald mehr als eine eingetragen ist." = "The “Clock” area in the sidebar is the remote control of the clock you are viewing and the place for everything that is set on it. You choose the clock in the toolbar as soon as more than one is registered.";
 "Die Bereiche in der Seitenleiste" = "The areas in the sidebar";
 "Die Fernbedienung zeigt, was die angesehene Uhr gerade tut, und schaltet es: das Live-Bild ihres Displays, Gerät, aktive Anzeige mit Vor und Zurück, Erreichbarkeit, WLAN-Stärke, Laufzeit und Batterie; dazu Display an oder aus, Helligkeit in Prozent (bei einer Uhr mit Lichtsensor mit dem Schalter „Automatisch“: Solange er an ist, regelt der Sensor die Helligkeit und der Regler ist gesperrt), Overlay, Moodlight und die drei Anzeiger am Rand. Jeder Schalter gilt genau der angesehenen Uhr; nur „Alle Empfänger“ beim Display geht an alle Uhren, die als Empfänger gewählt sind." = "The remote control shows what the clock you are viewing is doing right now, and switches it: the live image of its display, device, active display with forward and back, reachability, Wi-Fi strength, uptime and battery; plus display on or off, brightness in percent (on a clock with a light sensor with the “Automatic” switch: while it is on, the sensor controls the brightness and the slider is locked), overlay, mood light and the three indicators at the edge. Every switch applies to exactly the clock you are viewing; only “All recipients” under Display goes to all clocks chosen as recipients.";
-"Die Gruppe „MQTT-Verschlüsselung“ gibt es nur bei Uhren, die MQTT über TLS können. Sie zeigt, wem die Uhr als Broker vertraut, lädt eine eigene CA (eine PEM-Datei) auf die Uhr und entfernt sie nach Rückfrage wieder; das geht nur mit der Adresse der Uhr. TLS selbst ein- oder auszuschalten bleibt der Web-Oberfläche der Uhr („Konfigurieren“), ebenso WLAN, MQTT-Zugang, Anmeldung, Firmware und Zeitzone." = "The “MQTT encryption” group exists only for clocks that can do MQTT over TLS. It shows which broker the clock trusts, loads your own CA (a PEM file) onto the clock and removes it again after confirmation; this works only with the clock’s address. Switching TLS itself on or off stays with the clock’s web interface (“Configure”), as do Wi-Fi, MQTT access, login, firmware and time zone.";
-"Die Gruppen finden sich unter „Einstellungen“ → „Uhren“: Die Uhr antippen, dort steht der Abschnitt „Auf der Uhr“." = "The groups are under “Settings” → “Clocks”: open the clock, and the section “On the clock” is there.";
+"„MQTT-Verschlüsselung“ im Abschnitt „Gerät“ gibt es nur bei Uhren, die MQTT über TLS können. Sie zeigt, wem die Uhr als Broker vertraut, lädt eine eigene CA (eine PEM-Datei) auf die Uhr und entfernt sie nach Rückfrage wieder; das geht nur mit der Adresse der Uhr. TLS selbst ein- oder auszuschalten bleibt der Web-Oberfläche der Uhr („Konfigurieren“), ebenso WLAN, MQTT-Zugang, Anmeldung, Firmware und Zeitzone." = "“MQTT encryption” in the “Device” section exists only for clocks that can do MQTT over TLS. It shows which broker the clock trusts, loads your own CA (a PEM file) onto the clock and removes it again after confirmation; this works only with the clock’s address. Switching TLS itself on or off stays with the clock’s web interface (“Configure”), as do Wi-Fi, MQTT access, login, firmware and time zone.";
 "Die Uhr ist danach kurz nicht erreichbar." = "The clock is briefly unreachable afterwards.";
 "Dienstag" = "Tuesday";
 "Donnerstag" = "Thursday";
@@ -1263,7 +1261,6 @@
 "Eigene CA des Brokers" = "Broker’s own CA";
 "Eigene CA von „%@“ entfernen?" = "Remove the own CA from “%@”?";
 "Einlauf" = "Entry";
-"Einstellungen der Uhr …" = "Clock settings …";
 "Endlos" = "Endless";
 "erreichbar" = "reachable";
 "Erreichbar" = "Reachable";
@@ -1316,6 +1313,8 @@
 "nicht erreichbar" = "unreachable";
 "Noch kein Bild von der Uhr" = "No image from the clock yet";
 "Noch keine Einstellungen von der Uhr" = "No settings from the clock yet";
+"Uhr …" = "Clock …";
+"Vorgaben der Uhr" = "Clock defaults";
 "nur im MQTT-Betrieb" = "MQTT mode only";
 "nur mit Adresse der Uhr" = "only with the clock’s address";
 "Ob die Uhr TLS überhaupt benutzt, stellt die Web-Oberfläche der Uhr ein, dort samt Port und Neustart. „Zertifikat laden“ nimmt eine PEM-Datei bis 64 KB." = "Whether the clock uses TLS at all is set in the clock’s web interface, together with port and restart. “Load certificate” takes a PEM file up to 64 KB.";
@@ -1336,8 +1335,6 @@
 "Sonntag" = "Sunday";
 "Startklang" = "Startup sound";
 "Steht" = "Stays";
-"Steuerung" = "Control";
-"Steuerung …" = "Control …";
 "Strich" = "Dash";
 "Tag aktiv" = "Day active";
 "Tag inaktiv" = "Day inactive";
@@ -1349,7 +1346,7 @@
 "Trenner" = "Separator";
 "Übergang" = "Transition";
 "Uhr neu starten …" = "Restart clock …";
-"„Uhr neu starten …“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist." = "“Restart clock …” asks for confirmation and restarts the clock. There is no answer to that any more, and the clock is reachable again only once it has booted.";
+"„Uhr neu starten …“ im Abschnitt „Gerät“ fragt nach und startet die Uhr neu. Eine Antwort gibt es darauf nicht mehr, und die Uhr ist erst wieder erreichbar, wenn sie hochgefahren ist." = "“Restart clock …” in the “Device” section asks for confirmation and restarts the clock. There is no answer to that any more, and the clock is reachable again only once it has booted.";
 "Uhr, Zeit & Datum" = "Clock, time & date";
 "Uhrzeit" = "Time";
 "Vertrauen" = "Trust";
@@ -1357,7 +1354,7 @@
 "Von außen" = "From outside";
 "Vor" = "Forward";
 "Vorherige Anzeige" = "Previous display";
-"Was auf der Uhr gespeichert ist und selten geändert wird, steht auf der Seite der Uhr unter „Auf der Uhr“: Helligkeit & Farbe, Text & Laufschrift, Schleife, Uhr, Zeit & Datum (mit der Wochentagsleiste) und Klang. Jede Änderung geht sofort an die Uhr, danach liest die App den Stand zurück." = "What is stored on the clock and rarely changed is on the clock’s page under “On the clock”: brightness & color, text & scrolling, loop, clock, time & date (with the weekday bar) and sound. Every change goes to the clock immediately; afterwards the app reads the state back.";
+"Was auf der Uhr gespeichert ist und selten geändert wird, steht im selben Bereich unter „Vorgaben der Uhr“ und gilt, wenn eine Anzeige nichts anderes sagt: Helligkeit & Farbe, Text & Laufschrift, Schleife (Anzeigedauer, Weiterblättern, Übergänge), Uhr, Zeit & Datum (mit der Wochentagsleiste). Jede Gruppe klappt auf. Die Helligkeit selbst steht im Abschnitt „Anzeige“, die Lautstärken, das Radio und der Startklang im Abschnitt „Ton“. Jede Änderung geht sofort an die Uhr, danach liest die App den Stand zurück." = "What is stored on the clock and rarely changed is in the same area under “Clock defaults” and applies when a display says nothing else: brightness & color, text & scrolling, loop (display duration, advancing, transitions), clock, time & date (with the weekday bar). Each group expands. The brightness itself is in the “Display” section, the volumes, the radio and the startup sound in the “Sound” section. Every change goes to the clock immediately; afterwards the app reads the state back.";
 "Weißton" = "White tone";
 "Wiedergabe" = "Playback";
 "WLAN" = "Wi-Fi";
@@ -1415,7 +1412,7 @@
 "Vorlesen" = "Read aloud";
 "Die Uhr liest den Text vor, auf Englisch." = "The clock reads the text aloud, in English.";
 "Entweder ein Klang oder Vorlesen, nicht beides." = "Either a sound or read aloud, not both.";
-"Der Abschnitt „Ton“ zeigt, was die Uhr gerade spielt: das Radio mit Sender und Titel, sonst einen Alarm oder eine App mit ihrem Namen, sonst „Still“. „Stopp“ hält allen Klang an, „Radio aus“ nur das Radio. Die Lautstärke ist die der Uhr in Prozent. Aus der Senderliste der Uhr wählst du einen Sender und spielst ihn mit „Abspielen“. Sender legst du nicht in dieser App an, sondern in der Web-Oberfläche der Uhr unter „Konfigurieren“. Gelesen wird über die Adresse der Uhr, im Takt der übrigen Fernbedienung; ohne Adresse ist der Abschnitt grau. Meldet die Uhr kein Radio, fehlt dieser Teil." = "The “Sound” section shows what the clock is playing right now: the radio with station and title, otherwise an alarm or an app by name, otherwise “Silent”. “Stop” halts all sound, “Radio off” only the radio. The volume is the clock's, in percent. From the clock's station list you pick a station and play it with “Play”. You do not create stations in this app but in the clock's web interface under “Configure”. It is read via the clock's address, at the pace of the rest of the remote control; without an address the section is greyed out. If the clock reports no radio, that part is missing.";
+"Der Abschnitt „Ton“ zeigt, was die Uhr gerade spielt: das Radio mit Sender und Titel, sonst einen Alarm oder eine App mit ihrem Namen, sonst „Still“. „Stopp“ hält allen Klang an, „Radio aus“ nur das Radio. Die Lautstärke ist die der Uhr in Prozent; Radiolautstärke, Lautstärke der Apps und Hinweise sowie Startklang stehen darunter, soweit die Uhr sie meldet. Aus der Senderliste der Uhr wählst du einen Sender und spielst ihn mit „Abspielen“. Sender legst du nicht in dieser App an, sondern in der Web-Oberfläche der Uhr unter „Konfigurieren“. Gelesen wird über die Adresse der Uhr, im Takt der übrigen Fernbedienung; ohne Adresse ist der Abschnitt grau. Meldet die Uhr kein Radio, fehlt dieser Teil." = "The “Sound” section shows what the clock is playing right now: the radio with station and title, otherwise an alarm or an app by name, otherwise “Silent”. “Stop” halts all sound, “Radio off” only the radio. The volume is the clock's, in percent; radio volume, volume of apps and notifications, and startup sound follow below, as far as the clock reports them. From the clock's station list you pick a station and play it with “Play”. You do not create stations in this app but in the clock's web interface under “Configure”. It is read via the clock's address, at the pace of the rest of the remote control; without an address the section is greyed out. If the clock reports no radio, that part is missing.";
 "Von der Uhr" = "From the clock";
 "Diese Uhr kann diesen Klang nicht abspielen." = "This clock cannot play this sound.";
 "Keiner gewählt" = "None selected";
@@ -1726,7 +1723,7 @@
 "Allgemein" = "General";
 "Klänge …" = "Sounds …";
 "Klänge verwalten …" = "Manage sounds …";
-"Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Steuerung …“ öffnet die Fernbedienung der Uhr als Blatt, „Einstellungen der Uhr …“ ihre Seite mit den gespeicherten Einstellungen, „Klänge …“ die Klangsammlung und „Hilfe“ diese Hilfe; bei mehreren Uhren steht dort auch die Wahl der Uhr." = "The name of the clock you are viewing at the top of the Send view is a menu. “Control …” opens the clock’s remote control as a sheet, “Clock settings …” its page with the stored settings, “Sounds …” the sound library and “Help” this help; with several clocks the choice of clock is there too.";
+"Der Name der angesehenen Uhr oben in der Sendeansicht ist ein Menü. „Uhr …“ öffnet als Blatt alles, was auf der Uhr eingestellt wird, „Klänge …“ die Klangsammlung und „Hilfe“ diese Hilfe; bei mehreren Uhren steht dort auch die Wahl der angesehenen Uhr, im Blatt „Uhr“ das Menü am Titel." = "The name of the clock you are viewing at the top of the Send view is a menu. “Clock …” opens, as a sheet, everything that is set on the clock, “Sounds …” the sound library and “Help” this help; with several clocks the choice of the viewed clock is there too, and in the “Clock” sheet the menu at the title.";
 "Ist „Protokoll führen“ unter „Einstellungen“ → „Allgemein“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet auch das Symbol dafür: Ein Blatt, das nichts zeigt, braucht keinen Knopf. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“." = "If \"Keep a log\" under Settings → General → Recording is switched off — and it is, out of the box — the symbol for it disappears as well: a sheet that shows nothing needs no button. \"Keep a history\" and \"Clear history\" sit there too.";
 "Ist „Protokoll führen“ unter „Einstellungen“ → „Allgemein“ → „Aufzeichnung“ ausgeschaltet — und das ist es ab Werk —, verschwindet der Eintrag in der Seitenleiste ganz: Ein Bereich, der nichts zeigt, ist kein Bereich. Dort steht auch „Verlauf führen“ mitsamt „Verlauf löschen“." = "If \"Keep a log\" under Settings → General → Recording is switched off — and it is, out of the box — the entry in the sidebar disappears entirely: an area that shows nothing is no area. \"Keep a history\" and \"Clear history\" sit there too.";
 "Die Einstellungen sind in drei Bereiche geteilt. Am Mac und auf dem iPad wählst du den Bereich über dem Inhalt, auf dem Telefon führt jeder Eintrag der Liste auf eine eigene Seite. Die Klangsammlung gehört nicht dazu: Sie hat einen eigenen Bereich „Klänge“." = "The settings are split into three areas. On the Mac and the iPad you pick the area above the content; on the phone each entry in the list leads to a page of its own. The sound library is not part of them: it has an area of its own, “Sounds”.";
@@ -1749,3 +1746,4 @@
 "Overlay (nur diese Nachricht)" = "Overlay (this message only)";
 "Laufschrift (nur diese Anzeige)" = "Scrolling (this display only)";
 "Laufschrift (nur diese Nachricht)" = "Scrolling (this message only)";
+"Bei mehreren Uhren wählst du die Uhr, die die Seite zeigt, mit dem Menü „Uhr“ in der Titelleiste. Alles, was auf der Uhr eingestellt wird, steht auf dieser einen Seite; unter „Einstellungen“ → „Uhren“ stehen nur Name, Adresse, Betriebsart und Modell der Uhr." = "With several clocks you choose the clock the page shows with the “Clock” menu in the title bar. Everything that is set on the clock is on this one page; under “Settings” → “Clocks” there are only the clock’s name, address, mode and model.";

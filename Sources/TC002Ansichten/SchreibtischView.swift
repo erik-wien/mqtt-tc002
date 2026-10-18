@@ -107,16 +107,11 @@ public struct SchreibtischView: View {
         .frame(minWidth: 1140, minHeight: 640)
         #endif
         // „Ändern …“ neben einer Einstellung der Uhr (`AppZustand.einstellungsziel`):
-        // Das iPad schlägt seinen Bereich „Einstellungen“ auf, der Mac das
-        // Einstellungsfenster. Die Seite dort aufzuschlagen und das Ziel
-        // zurückzusetzen ist Sache von `VerbindungView`.
+        // Alles, was auf der Uhr eingestellt wird, steht im Bereich „Uhr“. Die
+        // Uhr zu wählen, aufzuklappen und das Ziel zurückzusetzen ist Sache von
+        // `Fernbedienung`.
         .onChange(of: zustand.einstellungsziel) { _, neu in
-            guard neu != nil else { return }
-            #if os(macOS)
-            einstellungenOeffnen()
-            #else
-            bereich = .einstellungen
-            #endif
+            if neu != nil { bereich = .uhr }
         }
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
@@ -225,7 +220,8 @@ public struct SchreibtischView: View {
                 // Uhren mit Lautsprecher für den Abgleich bekannt sind.
                 Klangsammlungsansicht(zustand: zustand, kanon: .schreibtisch)
                     .task { zustand.alleAbfragen() }
-            case .uhr: Fernbedienung(zustand: zustand, kanon: .schreibtisch)
+            // Ein eigener Stapel: Die Verschlüsselung der Uhr führt von hier weiter.
+            case .uhr: NavigationStack { Fernbedienung(zustand: zustand, kanon: .schreibtisch) }
             case .protokoll: AnzeigenView(zustand: zustand)
             case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
             }
