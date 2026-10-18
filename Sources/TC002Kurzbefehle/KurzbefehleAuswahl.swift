@@ -180,6 +180,41 @@ enum TempoAuswahl: String, AppEnum {
     }
 }
 
+/// „Steht …“ einer Nachricht (`Nachrichtdauerart`); die Wörter sind die der App.
+enum StehtAuswahl: String, AppEnum {
+    case bisZurueckgezogen, sekunden, durchlaeufe
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Steht …")
+    }
+    static var caseDisplayRepresentations: [StehtAuswahl: DisplayRepresentation] = [
+        .bisZurueckgezogen: DisplayRepresentation(title: "bis ich sie zurückziehe"),
+        .sekunden: DisplayRepresentation(title: "Sekunden"),
+        .durchlaeufe: DisplayRepresentation(title: "Durchläufe"),
+    ]
+
+    var art: Nachrichtdauerart {
+        switch self {
+        case .bisZurueckgezogen: return .bisZurueckgezogen
+        case .sekunden: return .sekunden
+        case .durchlaeufe: return .durchlaeufe
+        }
+    }
+}
+
+/// „Klang: 1× | in Schleife“ (`Klangwahl.wiederholen`).
+enum KlangdauerAuswahl: String, AppEnum {
+    case einmal, schleife
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Klang")
+    }
+    static var caseDisplayRepresentations: [KlangdauerAuswahl: DisplayRepresentation] = [
+        .einmal: DisplayRepresentation(title: "1×"),
+        .schleife: DisplayRepresentation(title: "In Schleife"),
+    ]
+}
+
 /// Was nach Ablauf der Lebensdauer geschieht (`Lebensablauf`). Die Anzeigenamen
 /// sind die der Formatpille.
 enum AblaufAuswahl: String, AppEnum {

@@ -67,15 +67,20 @@ public struct Klangabschnitt: View {
                 vorlesezeile
             }
             HStack(spacing: 6) {
-                Text("Klang wiederholen, bis die Nachricht geht")
-                Hilfezeichen(lok("Der Klang spielt dann ohne Pause immer wieder, solange die Nachricht steht, nicht nur einmal beim Erscheinen. Mit „Halten“ heißt das: bis du die Nachricht beendest. Gedacht für Alarme; „Halten“ allein lässt die Nachricht stehen und spielt den Klang einmal."))
+                Text("Klang")
+                Hilfezeichen(lok("„1×“ spielt den Klang einmal beim Erscheinen. „In Schleife“ spielt ihn ohne Pause immer wieder, solange die Nachricht steht, und ist für Alarme gedacht. Steht die Nachricht „bis ich sie zurückziehe“, heißt das: bis du sie zurückziehst."))
                 Spacer(minLength: 8)
-                Toggle("Klang wiederholen, bis die Nachricht geht", isOn: $klang.wiederholen)
-                    .labelsHidden()
+                Picker("Klang", selection: $klang.wiederholen) {
+                    Text("1×").tag(false)
+                    Text("In Schleife").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
             }
             .disabled(klang.art == .keiner || gesperrt)
         } header: {
-            Abschnittskopf("Klang", hilfe: lok("Der Klang spielt, wenn die Nachricht erscheint. „Von der Uhr“ nimmt eine Melodie oder MP3-Datei, die auf der Uhr liegt. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch. Mit „Wiederholen“ spielt er, bis die Nachricht zurückgezogen wird oder ausläuft. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
+            Abschnittskopf("Klang", hilfe: lok("Der Klang spielt, wenn die Nachricht erscheint. „Von der Uhr“ nimmt eine Melodie oder MP3-Datei, die auf der Uhr liegt. „Vorlesen“ lässt die Uhr einen Text sprechen, und zwar auf Englisch. Mit „In Schleife“ spielt er, bis die Nachricht zurückgezogen wird oder ausläuft. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
         .disabled(!aktiv)
         // Eine Klangart, die keine Zieluhr kann, wird nicht angeboten; eine
@@ -139,23 +144,37 @@ public struct Klangabschnitt: View {
                     if unbekannt { Text(verbatim: klang.name).tag(klang.name) }
                     if !melodien.isEmpty, kannMelodien {
                         Section("Melodien") {
-                            ForEach(melodien, id: \.self) { Text(verbatim: $0).tag($0) }
+                            ForEach(melodien, id: \.self) { eintrag($0, symbol: "music.note").tag($0) }
                         }
                     }
                     if !mp3.isEmpty {
                         Section("MP3-Dateien") {
-                            ForEach(mp3, id: \.self) { Text(verbatim: $0).tag($0) }
+                            ForEach(mp3, id: \.self) { eintrag($0, symbol: "waveform").tag($0) }
                         }
                     }
                 }
                 .pickerStyle(.inline)
             } label: {
                 HStack(spacing: 4) {
+                    if !klang.name.isEmpty, let symbol = symbol(fuer: klang.name, melodien: melodien, mp3: mp3) {
+                        Image(systemName: symbol).foregroundStyle(.secondary)
+                    }
                     Text(verbatim: klang.name.isEmpty ? lok("Keiner gewählt") : klang.name)
                     Image(systemName: "chevron.up.chevron.down").font(.caption2)
                 }
             }
         }
+    }
+
+    /// Ein Name mit einem blassen Zeichen davor: Notenzeichen für Melodien,
+    /// Wellenform für MP3-Dateien.
+    private func eintrag(_ name: String, symbol: String) -> some View {
+        Label { Text(verbatim: name) } icon: { Image(systemName: symbol).foregroundStyle(.secondary) }
+    }
+
+    private func symbol(fuer name: String, melodien: [String], mp3: [String]) -> String? {
+        if melodien.contains(name) { return "music.note" }
+        return mp3.contains(name) ? "waveform" : nil
     }
 
     private var vorlesezeile: some View {

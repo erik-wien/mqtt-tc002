@@ -102,6 +102,8 @@ struct Optionen {
     var einreihen = false
     var aufwecken = true
     var wiederholungen: Int? = 2
+    /// `--wiederholungen` stand da (für den Ausschluss gegen `--halten` und `--dauer`).
+    var wiederholungenAngegeben = false
     /// Die erste Option, die nur eine Nachricht kennt — für die Meldung, wenn
     /// sie bei „senden“ steht.
     var nachrichtenoption: String?
@@ -159,6 +161,8 @@ struct Optionen {
         case optionGiltNurFuer(option: String, befehl: String)
         case keinAblauf(String)
         case behaltenMitLebensdauer
+        /// Zwei der drei Arten, wie lange eine Nachricht steht.
+        case nachrichtStehtMehrfach
         case nichtPositiv(option: String, wert: String)
         /// Werte, die als Liste ganzer Zahlen gemeint waren („1,2,3“).
         case keineListe(option: String, wert: String)
@@ -195,6 +199,8 @@ struct Optionen {
                 return lokf("„%@“ gilt nur für „%@“.", o, b)
             case .keinAblauf(let w):
                 return lokf("„%@“ ist kein Ablauf. Möglich: entfernen, markieren (remove, mark).", w)
+            case .nachrichtStehtMehrfach:
+                return lok("Wie lange eine Nachricht steht, wird nur auf eine Art angegeben: „--halten“ (bis zum Zurückziehen), „--dauer“ (Sekunden) oder „--wiederholungen“ (Durchläufe des Textes).")
             case .behaltenMitLebensdauer:
                 return lok("„--behalten“ lässt die Anzeige stehen und verträgt sich nicht mit „--lebensdauer“ oder „--ablauf“.")
             case .nichtPositiv(let o, let w):
@@ -414,6 +420,7 @@ struct Optionen {
                 let w = try wert()
                 guard let z = Int(w), z > 0 else { throw Fehler.nichtPositiv(option: arg, wert: w) }
                 o.wiederholungen = z
+                o.wiederholungenAngegeben = true
                 o.nachrichtenoption = o.nachrichtenoption ?? arg
             case "--lebensdauer", "--lifetime":
                 let w = try wert()
@@ -472,6 +479,10 @@ struct Optionen {
             // Eine Benachrichtigung ignoriert die Lebensdauer (§5.4); sie
             // wegzulassen, ohne es zu sagen, wäre eine stille Zusage.
             if let option = o.lebensdaueroption { throw Fehler.optionGiltNurFuer(option: option, befehl: "senden") }
+            // „Steht …“: hold, durationMs und repeat sind drei Arten derselben Wahl.
+            if [o.halten, o.dauer != nil, o.wiederholungenAngegeben].filter({ $0 }).count > 1 {
+                throw Fehler.nachrichtStehtMehrfach
+            }
             o.befehl = .nachricht(text: o.grossbuchstaben ? freierText.uppercased() : freierText)
         case .zurueckziehen:
             // Der Name steht als Wort hinter dem Befehl oder hinter `--name`;
@@ -847,7 +858,7 @@ struct Optionen {
     var benachrichtigung: Benachrichtigungsoptionen {
         Benachrichtigungsoptionen(name: nameAngegeben ? anzeigename : nil, halten: halten,
                                   einreihen: einreihen, aufwecken: aufwecken,
-                                  wiederholungen: wiederholungen, klang: klang)
+                                  wiederholungen: halten || dauer != nil ? nil : wiederholungen, klang: klang)
     }
 
     /// Den Rahmen um das ergänzen, was die Kommandozeile zur Darstellung sagt. Ein

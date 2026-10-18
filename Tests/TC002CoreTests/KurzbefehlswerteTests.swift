@@ -74,10 +74,10 @@ final class KurzbefehlswerteTests: XCTestCase {
 
     // MARK: - Nachricht
 
-    /// Die Vorgaben des Kurzbefehls sind die der App: zwei Durchlaeufe, ersetzen.
+    /// Die Vorgaben des Kurzbefehls sind die der App: bis zurueckgezogen, ersetzen.
     func testNachrichtVorgabenSindDieDerApp() {
         let o = Nachrichtwahl().optionen
-        XCTAssertEqual(o.wiederholungen, 2)
+        XCTAssertTrue(o.halten)
         XCTAssertFalse(o.einreihen)
     }
 
@@ -86,8 +86,9 @@ final class KurzbefehlswerteTests: XCTestCase {
     }
 
     func testDurchlaeufeWerdenGeklemmt() {
-        XCTAssertEqual(Nachrichtwahl(durchlaeufe: 99).optionen.wiederholungen, Nachrichtwahl.hoechstdurchlaeufe)
-        XCTAssertEqual(Nachrichtwahl(durchlaeufe: 0).optionen.wiederholungen, 1)
+        func wahl(_ n: Int) -> Nachrichtwahl { Nachrichtwahl(steht: Nachrichtdauerwahl(art: .durchlaeufe, durchlaeufe: n)) }
+        XCTAssertEqual(wahl(99).optionen.wiederholungen, Nachrichtwahl.hoechstdurchlaeufe)
+        XCTAssertEqual(wahl(0).optionen.wiederholungen, 1)
     }
 
     // MARK: - Icon

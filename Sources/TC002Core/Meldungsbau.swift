@@ -325,6 +325,16 @@ public enum Meldungsbau {
         return breite(o, mass: mass) <= flaecheBreite(mitIcon: mitIcon, iconKante: iconKante, mass: mass)
     }
 
+    /// Ob der Text auf mindestens einer der Uhren durchläuft. Nur dann wirkt
+    /// „Durchläufe“ bei einer Nachricht; ohne Uhren ist die Antwort `false`.
+    /// `iconKante` nennt die Kante des Icons je Maß (ein 16×16 fällt auf acht
+    /// Zeilen zurück).
+    public static func laeuftDurch(_ o: Meldungsoptionen, mitIcon: Bool,
+                                   iconKante: (Anzeigemass) -> Int = { _ in 8 },
+                                   masse: [Anzeigemass]) -> Bool {
+        masse.contains { !passt(o, mitIcon: mitIcon, iconKante: iconKante($0), mass: $0) }
+    }
+
     /// Senkrechte Ausrichtung über die tatsächliche Tinte, nicht über die
     /// Schriftgröße: `rasterPuffer` legt die Tinte dorthin, wo die Grundlinie
     /// sie hinlegt, nicht an den oberen Rand.

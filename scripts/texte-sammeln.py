@@ -92,7 +92,7 @@ DYNAMISCH = [
     # Ueberschrift und Erklaerung der Dauer je Sendeart (Nachrichtbausteine.swift, `Sendeart`)
     "Nur diese Anzeige", "Nur diese Nachricht",
     "Wie lange die Uhr diese Anzeige zeigt, bevor sie weiterblättert. Leer oder 0: Es gilt die Anzeigedauer der Uhr.",
-    "Wie lange die Uhr diese Nachricht zeigt. Leer oder 0: Es gelten die Durchläufe, sonst die Anzeigedauer der Uhr.",
+    "Wie lange diese Nachricht steht: bis du sie zurückziehst, eine Zahl Sekunden oder eine Zahl Durchläufe des Textes.",
     # Bereiche der Seitenleiste (SchreibtischView.swift, enum Bereich)
     "Senden", "Editor", "Uhr", "Protokoll", "Einstellungen",
     # Die vier Nebenfenster (Nebenfenster.swift, `titel` schlaegt ueber

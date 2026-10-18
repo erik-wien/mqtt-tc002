@@ -37,6 +37,21 @@ public enum Kurzbefehlswerte {
     /// Wie oft laufender Text einer Nachricht durchzieht.
     public static let durchlaufbereich = 1...Nachrichtwahl.hoechstdurchlaeufe
 
+    /// „Steht …“ und die Zahl „Anzahl“ des Kurzbefehls. Ohne Zahl gelten die
+    /// Startwerte von `Nachrichtdauerwahl` (10 Sekunden, 2 Durchläufe); eine
+    /// Zahl außerhalb der Grenzen wird hineingeholt. Bei „bis ich sie
+    /// zurückziehe“ ist eine Zahl ohne Wirkung.
+    public static func nachrichtdauer(_ art: Nachrichtdauerart, anzahl: Int?) -> Nachrichtdauerwahl {
+        var w = Nachrichtdauerwahl(art: art)
+        guard let anzahl else { return w }
+        switch art {
+        case .bisZurueckgezogen: break
+        case .sekunden: w.sekunden = dauerbereich.clamp(anzahl)
+        case .durchlaeufe: w.durchlaeufe = durchlaufbereich.clamp(anzahl)
+        }
+        return w
+    }
+
     public enum Fehler: Error, LocalizedError, Equatable {
         case klangUndVorlesen
         case iconGeloescht(String)

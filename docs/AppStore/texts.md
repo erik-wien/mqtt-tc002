@@ -22,7 +22,7 @@ Screenshots und Banner: siehe `README.md` in diesem Ordner.
 
 **Deutsch**
 
-> Neu in dieser Fassung: nur noch AWTRIX NG (die Werksfirmware der Uhr wird nicht mehr bedient), dazu Darstellung (Hintergrund, Effekte, Overlay, Palette), Nachrichten mit Halten und Klang, Fernbedienung der Uhr, Einstellungen der Uhr in Gruppen und die Kommandozeile am Mac.
+> Neu in dieser Fassung: nur noch AWTRIX NG (die Werksfirmware der Uhr wird nicht mehr bedient), dazu Darstellung (Hintergrund, Effekte, Overlay, Palette), Nachrichten mit „Steht …“ (bis zurückgezogen, Sekunden oder Durchläufe) und Klang, Fernbedienung der Uhr, Einstellungen der Uhr in Gruppen und die Kommandozeile am Mac.
 >
 > Bitte ausprobieren (ohne Uhr, mit der virtuellen Uhr):
 > 1. Einstellungen (Zahnrad oben rechts) › Erweitert › „Virtuelle Uhr“ einschalten, dann „Als Uhr eintragen“ tippen und mit „Fertig“ schließen.

@@ -61,6 +61,7 @@ struct SendeniOS: View {
     @MainActor
     init(zustand: AppZustand) {
         self.zustand = zustand
+        Nachrichtdauerwahl.uebernehmen(in: .standard)
         _zeigeEinstellungen = State(initialValue: !zustand.eingerichtet)
     }
 
@@ -87,10 +88,11 @@ struct SendeniOS: View {
     /// Dieselben Schlüssel wie am Schreibtisch (`SendenView`): Anzeige oder
     /// Nachricht, Nachrichtregler, Lebensdauer.
     @AppStorage("senden.art") private var art: Sendeart = .anzeige
-    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = false
+    @AppStorage(Nachrichtdauerwahl.schluessel) private var nachrichtSteht: Nachrichtdauerart = .bisZurueckgezogen
+    @AppStorage(Nachrichtdauerwahl.sekundenSchluessel) private var nachrichtSekunden = 10
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
     @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = true
-    @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage(Nachrichtdauerwahl.durchlaeufeSchluessel) private var nachrichtDurchlaeufe = 2
     @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
     @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
@@ -218,9 +220,22 @@ struct SendeniOS: View {
     }
 
     private var nachrichtwahl: Nachrichtwahl {
-        Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
-                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe,
-                      klang: nachrichtKlang)
+        Nachrichtwahl(steht: Nachrichtdauerwahl(art: nachrichtSteht, sekunden: nachrichtSekunden,
+                                                durchlaeufe: nachrichtDurchlaeufe),
+                      aufwecken: nachrichtAufwecken, ersetzen: nachrichtErsetzen, klang: nachrichtKlang)
+    }
+
+    /// Läuft der Text auf mindestens einer Zieluhr durch? Nur dann gibt es
+    /// „Durchläufe“.
+    private var textLaeuft: Bool {
+        let uhren = zustand.vorschauuhren()
+        let masse = uhren.isEmpty ? [mass] : uhren.map { Anzeigemass.fuer($0) }
+        return Meldungsbau.laeuftDurch(vorschauOptionen, mitIcon: mitIcon, masse: masse)
+    }
+
+    private var stehtbindungen: Stehtbindungen {
+        Stehtbindungen(art: $nachrichtSteht, sekunden: $nachrichtSekunden,
+                       durchlaeufe: $nachrichtDurchlaeufe, textLaeuft: textLaeuft)
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -440,7 +455,7 @@ struct SendeniOS: View {
         .sheet(item: $formatteil) { teil in
             FormatblattiOS(zustand: zustand, teil: teil, darstellung: $darstellung, weg: $weg,
                            tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
-                           dauerText: $dauerText, art: art)
+                           dauerText: $dauerText, art: art, steht: stehtbindungen)
         }
         .sheet(isPresented: $zeigeIcons) {
             IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)
@@ -982,9 +997,8 @@ struct SendeniOS: View {
         // gibt es am Finger ohnehin nicht.
         VStack(spacing: 8) {
             Sendeartwahl(zustand: zustand, art: $art,
-                         nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
-                                                       ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                                       klang: $nachrichtKlang, dauer: $dauerText),
+                         nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
+                                                       ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
                          lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
                                                            einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
                          kanon: .telefon)
@@ -1048,8 +1062,12 @@ struct SendeniOS: View {
         // Eine Nachricht belegt keinen Platz und merkt sich nichts.
         let angekommen: Sendebilanz
         if art == .nachricht {
+            // Für eine Nachricht gilt „Steht …“, nicht die Anzeigedauer.
+            var nachrichtOptionen = slotOptionen
+            nachrichtOptionen.dauer = nachrichtwahl.dauerSekunden
+            let gesetzt = nachrichtOptionen
             angekommen = await zustand.benachrichtigen(
-                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, mass: $0) },
+                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, mass: $0) },
                 nachrichtwahl.optionen(nachrichtentext: slotOptionen.text))
         } else {
             angekommen = await zustand.senden(

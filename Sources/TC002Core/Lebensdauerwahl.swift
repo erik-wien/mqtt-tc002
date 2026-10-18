@@ -59,34 +59,35 @@ public struct Lebensdauerwahl: Equatable, Sendable {
 }
 
 /// Die Regler einer Nachricht (Oberflächenwort für Benachrichtigung). Vorgaben
-/// der App: Aufwecken und Ersetzen an, Halten aus, zwei Durchläufe. Halten
-/// ist aus, weil eine gehaltene Nachricht die Warteschlange anhält: Jede
-/// spätere Nachricht wartet hinter ihr, bis sie zurückgezogen wird.
+/// der App: Aufwecken und Ersetzen an, „bis ich sie zurückziehe“ (`Nachrichtdauerwahl`).
+/// Eine gehaltene Nachricht hält die Warteschlange an: Jede spätere wartet hinter ihr.
 public struct Nachrichtwahl: Equatable, Sendable {
     public static let hoechstdurchlaeufe = 9
 
-    public var halten: Bool
+    public var steht: Nachrichtdauerwahl
     public var aufwecken: Bool
     public var ersetzen: Bool
-    public var durchlaeufe: Int
     public var klang: Klangwahl
 
-    public init(halten: Bool = false, aufwecken: Bool = true, ersetzen: Bool = true, durchlaeufe: Int = 2,
+    public init(steht: Nachrichtdauerwahl = Nachrichtdauerwahl(), aufwecken: Bool = true, ersetzen: Bool = true,
                 klang: Klangwahl = Klangwahl()) {
+        self.steht = steht
         self.klang = klang
-        self.halten = halten
         self.aufwecken = aufwecken
         self.ersetzen = ersetzen
-        self.durchlaeufe = durchlaeufe
     }
+
+    /// `durationMs / 1000` für den Rahmen der Nachricht; die Anzeigedauer
+    /// (`Meldungsoptionen.dauer`) gilt für Nachrichten nicht.
+    public var dauerSekunden: Int? { steht.dauer.dauerSekunden }
 
     /// „Ersetzen“ ist das Gegenteil von „Einreihen“ (`stack`).
     public var optionen: Benachrichtigungsoptionen { optionen(nachrichtentext: "") }
 
     /// Mit dem Klang; „Vorlesen“ ohne eigenen Sprechtext liest `nachrichtentext`.
     public func optionen(nachrichtentext: String) -> Benachrichtigungsoptionen {
-        Benachrichtigungsoptionen(halten: halten, einreihen: !ersetzen, aufwecken: aufwecken,
-                                  wiederholungen: min(Self.hoechstdurchlaeufe, max(1, durchlaeufe)),
+        Benachrichtigungsoptionen(halten: steht.dauer.halten, einreihen: !ersetzen, aufwecken: aufwecken,
+                                  wiederholungen: steht.dauer.wiederholungen,
                                   klang: klang.klaenge(nachrichtentext: nachrichtentext))
     }
 }

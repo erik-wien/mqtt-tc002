@@ -63,7 +63,7 @@ final class Ausgebliebene: @unchecked Sendable {
 ///
 /// Wie in der App ist es dieselbe Rechnung wie bei „Meldung schicken“ (Format,
 /// Icon) mit den Reglern der Nachricht darüber (`Nachrichtwahl`):
-/// halten, aufwecken, einreihen oder ersetzen, Durchläufe, Klang. Was beim
+/// „Steht …“ samt Anzahl, aufwecken, einreihen oder ersetzen, Klang. Was beim
 /// Format fehlt, kommt aus dem, was zuletzt unter „Senden“ eingestellt war.
 struct BenachrichtigungSendenIntent: AppIntent {
     static let title: LocalizedStringResource = "Nachricht senden"
@@ -80,8 +80,11 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Icon", description: "Ein Icon aus den Beständen der App, 8 × 8 oder 16 × 16.")
     var iconauswahl: IconEntity?
 
-    @Parameter(title: "Halten", description: "Bleibt stehen, bis sie zurückgezogen wird.", default: false)
-    var halten: Bool
+    @Parameter(title: "Steht …", description: "Wie lange die Nachricht steht: bis du sie zurückziehst, eine Zahl Sekunden oder eine Zahl Durchläufe (nur bei Text, der durchläuft; sonst gilt die Anzeigedauer der Uhr).", default: .bisZurueckgezogen)
+    var steht: StehtAuswahl
+
+    @Parameter(title: "Anzahl", description: "Die Zahl zu „Sekunden“ (1 bis 86400; leer: 10) oder „Durchläufe“ (1 bis 9; leer: 2). Bei „bis ich sie zurückziehe“ ohne Wirkung.", inclusiveRange: (1, 86400))
+    var anzahl: Int?
 
     @Parameter(title: "Aufwecken", description: "Erscheint auch bei ausgeschaltetem Panel.", default: true)
     var aufwecken: Bool
@@ -89,20 +92,14 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Einreihen", description: "Reiht sich hinter die sichtbare Nachricht ein, statt sie zu ersetzen.", default: false)
     var einreihen: Bool
 
-    @Parameter(title: "Durchläufe", description: "Wie oft laufender Text durchzieht, 1 bis 9.", default: 2, inclusiveRange: (1, 9))
-    var durchlaeufe: Int
-
     @Parameter(title: "Name", description: "Nur unter diesem Namen lässt sie sich später zurückziehen. Buchstaben, Ziffern, „_“ und „-“.")
     var name: String?
-
-    @Parameter(title: "Dauer in Sekunden", inclusiveRange: (1, 86400))
-    var dauer: Int?
 
     @Parameter(title: "Klang", description: "Name einer Melodie oder MP3-Datei auf der Uhr.")
     var klang: String?
 
-    @Parameter(title: "Klang wiederholen", description: "Der Klang wiederholt sich, bis die Nachricht geht.", default: false)
-    var klangWiederholen: Bool
+    @Parameter(title: "Klang: 1× oder in Schleife", description: "„In Schleife“ spielt den Klang, solange die Nachricht steht; bei „bis ich sie zurückziehe“ bis du sie zurückziehst.", default: .einmal)
+    var klangdauer: KlangdauerAuswahl
 
     @Parameter(title: "Vorlesen", description: "Die Uhr liest den Text vor, auf Englisch.", default: false)
     var vorlesen: Bool
@@ -156,14 +153,13 @@ struct BenachrichtigungSendenIntent: AppIntent {
         Summary("\(\.$text) als Nachricht an die Uhr senden") {
             \.$uhr
             \.$iconauswahl
-            \.$halten
+            \.$steht
+            \.$anzahl
             \.$aufwecken
             \.$einreihen
-            \.$durchlaeufe
             \.$name
-            \.$dauer
             \.$klang
-            \.$klangWiederholen
+            \.$klangdauer
             \.$vorlesen
             \.$weg
             \.$schriftart
@@ -187,13 +183,13 @@ struct BenachrichtigungSendenIntent: AppIntent {
         let benannt = name?.trimmingCharacters(in: .whitespaces)
         let klangwahl: Klangwahl
         do {
-            klangwahl = try Kurzbefehlswerte.klangwahl(name: klang, vorlesen: vorlesen, wiederholen: klangWiederholen)
+            klangwahl = try Kurzbefehlswerte.klangwahl(name: klang, vorlesen: vorlesen, wiederholen: klangdauer == .schleife)
         } catch {
             throw $vorlesen.needsValueError(IntentDialog(stringLiteral: error.localizedDescription))
         }
-        var bo = Nachrichtwahl(halten: halten, aufwecken: aufwecken, ersetzen: !einreihen,
-                               durchlaeufe: durchlaeufe, klang: klangwahl)
-            .optionen(nachrichtentext: text)
+        let nachrichtwahl = Nachrichtwahl(steht: Kurzbefehlswerte.nachrichtdauer(steht.art, anzahl: anzahl),
+                                          aufwecken: aufwecken, ersetzen: !einreihen, klang: klangwahl)
+        var bo = nachrichtwahl.optionen(nachrichtentext: text)
         bo.name = (benannt?.isEmpty ?? true) ? nil : benannt
         if let n = bo.name, !Benachrichtigungsoptionen.nameGueltig(n) {
             throw $name.needsValueError(IntentDialog(stringLiteral: NGFehler.ungueltigerName(n).localizedDescription))
@@ -206,7 +202,8 @@ struct BenachrichtigungSendenIntent: AppIntent {
             throw $groesse.needsValueError(IntentDialog(stringLiteral: fehler.localizedDescription))
         }
         optionen.text = text
-        if let dauer = Kurzbefehlswerte.dauer(dauer) { optionen.dauer = dauer }
+        // Für eine Nachricht gilt nur „Steht …“, nicht die gemerkte Anzeigedauer.
+        optionen.dauer = nachrichtwahl.dauerSekunden
         let gesetzt = optionen
         let icon: Icon?
         do {

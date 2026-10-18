@@ -35,7 +35,7 @@ final class NachrichtOberflaecheTests: XCTestCase {
     func testDieReglerSitzenAmSegmentUndNurDort() throws {
         let baustein = try quelltext("Sources/TC002Ansichten/Nachrichtbausteine.swift")
         XCTAssertTrue(baustein.contains("Lebensdauerabschnitt(behalten: lebensdauer.behalten"))
-        XCTAssertTrue(baustein.contains("Nachrichtabschnitt(halten: nachricht.halten"))
+        XCTAssertTrue(baustein.contains("Nachrichtabschnitt(steht: nachricht.steht"))
         let ton = try quelltext("Sources/TC002Ansichten/Nachrichtbausteine.swift")
         XCTAssertTrue(ton.contains("Klangabschnitt(zustand: zustand, klang: nachricht.klang, aktiv: true"))
         for datei in ["Sources/TC002Ansichten/SendenView.swift", "Sources/TC002iOS/FormatblattiOS.swift"] {

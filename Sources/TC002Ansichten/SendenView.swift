@@ -13,10 +13,11 @@ public struct SendenView: View {
     /// Anzeige oder Nachricht. Die Nachricht belegt keinen Platz und hat ihre
     /// eigenen Regler (`Nachrichtwahl`); die Lebensdauer gilt nur der Anzeige.
     @AppStorage("senden.art") private var art: Sendeart = .anzeige
-    @AppStorage("senden.nachricht.halten") private var nachrichtHalten = false
+    @AppStorage(Nachrichtdauerwahl.schluessel) private var nachrichtSteht: Nachrichtdauerart = .bisZurueckgezogen
+    @AppStorage(Nachrichtdauerwahl.sekundenSchluessel) private var nachrichtSekunden = 10
     @AppStorage("senden.nachricht.aufwecken") private var nachrichtAufwecken = true
     @AppStorage("senden.nachricht.ersetzen") private var nachrichtErsetzen = true
-    @AppStorage("senden.nachricht.durchlaeufe") private var nachrichtDurchlaeufe = 2
+    @AppStorage(Nachrichtdauerwahl.durchlaeufeSchluessel) private var nachrichtDurchlaeufe = 2
     @AppStorage("senden.nachricht.klang") private var nachrichtKlang = Klangwahl()
     @AppStorage("senden.lebensdauer.behalten") private var lebensdauerBehalten = false
     @AppStorage("senden.lebensdauer.zahl") private var lebensdauerZahl = 30
@@ -98,6 +99,7 @@ public struct SendenView: View {
 
     public init(zustand: AppZustand) {
         self.zustand = zustand
+        Nachrichtdauerwahl.uebernehmen(in: .standard)
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
         let kante = UserDefaults.standard.object(forKey: "senden.iconkante") as? Int ?? 8
         _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil
@@ -252,9 +254,23 @@ public struct SendenView: View {
     }
 
     private var nachrichtwahl: Nachrichtwahl {
-        Nachrichtwahl(halten: nachrichtHalten, aufwecken: nachrichtAufwecken,
-                      ersetzen: nachrichtErsetzen, durchlaeufe: nachrichtDurchlaeufe,
-                      klang: nachrichtKlang)
+        Nachrichtwahl(steht: Nachrichtdauerwahl(art: nachrichtSteht, sekunden: nachrichtSekunden,
+                                                durchlaeufe: nachrichtDurchlaeufe),
+                      aufwecken: nachrichtAufwecken, ersetzen: nachrichtErsetzen, klang: nachrichtKlang)
+    }
+
+    /// Läuft der Text auf mindestens einer Zieluhr durch? Nur dann gibt es
+    /// „Durchläufe“.
+    private var textLaeuft: Bool {
+        let uhren = zustand.vorschauuhren()
+        let masse = uhren.isEmpty ? [mass] : uhren.map { Anzeigemass.fuer($0) }
+        return Meldungsbau.laeuftDurch(vorschauOptionen, mitIcon: mitIcon,
+                                       iconKante: { icon(fuer: $0)?.kante ?? 8 }, masse: masse)
+    }
+
+    private var stehtbindungen: Stehtbindungen {
+        Stehtbindungen(art: $nachrichtSteht, sekunden: $nachrichtSekunden,
+                       durchlaeufe: $nachrichtDurchlaeufe, textLaeuft: textLaeuft)
     }
 
     private var mitIcon: Bool { gewaehltesIcon != nil }
@@ -537,9 +553,8 @@ public struct SendenView: View {
             // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
             // in einem Dialog (siehe `AppZustand.teilfehler`).
             Sendeartwahl(zustand: zustand, art: $art,
-                         nachricht: Nachrichtbindungen(halten: $nachrichtHalten, aufwecken: $nachrichtAufwecken,
-                                                       ersetzen: $nachrichtErsetzen, durchlaeufe: $nachrichtDurchlaeufe,
-                                                       klang: $nachrichtKlang, dauer: $dauerText),
+                         nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
+                                                       ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
                          lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
                                                            einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
                          kanon: .schreibtisch)
@@ -712,7 +727,7 @@ public struct SendenView: View {
                 // Zustand dieser Ansicht. Ihn dorthin zu schieben
                 // hiesse, drei Werte durchzureichen, damit ein Baustein
                 // entscheiden kann, was der Aufrufer laengst weiss.
-                Zeitabschnitte(zustand: zustand, dauerText: $dauerText, art: art) {
+                Zeitabschnitte(zustand: zustand, dauerText: $dauerText, art: art, steht: stehtbindungen) {
                     laufschriftAbschnitt
                 }
             }
@@ -1070,9 +1085,13 @@ extension SendenView {
         let icon = gewaehltesIcon
         let sammlung = sammlung
         let wahl = nachrichtwahl.optionen(nachrichtentext: o.text)
+        // Für eine Nachricht gilt „Steht …“, nicht die Anzeigedauer.
+        var nachrichtOptionen = o
+        nachrichtOptionen.dauer = nachrichtwahl.dauerSekunden
+        let gesetzt = nachrichtOptionen
         Task {
             let angekommen = await zustand.benachrichtigen(
-                rahmenFuer: { try Meldungsbau.rahmen(o, icon: icon, sammlung: sammlung, mass: $0) }, wahl)
+                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, mass: $0) }, wahl)
             laeuft = false
             guard !angekommen.nichts else { return }
             await ausgangZeigen(angekommen)

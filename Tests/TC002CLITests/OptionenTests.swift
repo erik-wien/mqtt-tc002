@@ -202,8 +202,8 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
         XCTAssertEqual(try Optionen.zerlegt(["message", "Door"]).befehl, .nachricht(text: "Door"))
     }
 
-    /// Vorgabe: bleibt nicht stehen (eine gehaltene hält die Warteschlange an),
-    /// ersetzt die sichtbare, weckt, läuft zweimal durch.
+    /// Vorgabe der Kommandozeile: bleibt nicht stehen (eine gehaltene hält die
+    /// Warteschlange an), ersetzt die sichtbare, weckt, läuft zweimal durch.
     func testDieVorgabenEinerNachricht() throws {
         let o = try Optionen.zerlegt(["nachricht", "x"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
@@ -213,7 +213,7 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
     func testHaltenUndEinreihenSindDieAbweichungen() throws {
         let o = try Optionen.zerlegt(["nachricht", "x", "--halten", "--einreihen"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
-            name: nil, halten: true, einreihen: true, aufwecken: true, wiederholungen: 2))
+            name: nil, halten: true, einreihen: true, aufwecken: true, wiederholungen: nil))
         let e = try Optionen.zerlegt(["message", "x", "--hold", "--queue"])
         XCTAssertTrue(e.benachrichtigung.halten && e.benachrichtigung.einreihen)
     }
@@ -225,15 +225,31 @@ final class BenachrichtigungsbefehlTests: XCTestCase {
     }
 
     func testDieOptionenZumAbschaltenUndAendern() throws {
-        let o = try Optionen.zerlegt(["nachricht", "x", "--name", "tuer", "--halten", "--einreihen",
-                                      "--nicht-wecken", "--wiederholungen", "3", "--dauer", "8"])
+        let o = try Optionen.zerlegt(["nachricht", "x", "--name", "tuer", "--einreihen",
+                                      "--nicht-wecken", "--wiederholungen", "3"])
         XCTAssertEqual(o.benachrichtigung, Benachrichtigungsoptionen(
-            name: "tuer", halten: true, einreihen: true, aufwecken: false, wiederholungen: 3))
-        XCTAssertEqual(o.meldung.dauer, 8)
+            name: "tuer", halten: false, einreihen: true, aufwecken: false, wiederholungen: 3))
 
-        let e = try Optionen.zerlegt(["message", "x", "--hold", "--queue", "--no-wakeup", "--repeat", "3"])
+        let e = try Optionen.zerlegt(["message", "x", "--hold", "--queue", "--no-wakeup"])
         XCTAssertEqual(e.benachrichtigung, Benachrichtigungsoptionen(
-            name: nil, halten: true, einreihen: true, aufwecken: false, wiederholungen: 3))
+            name: nil, halten: true, einreihen: true, aufwecken: false, wiederholungen: nil))
+
+        let d = try Optionen.zerlegt(["nachricht", "x", "--dauer", "8"])
+        XCTAssertEqual(d.meldung.dauer, 8)
+        XCTAssertEqual(d.benachrichtigung, Benachrichtigungsoptionen(
+            name: nil, halten: false, einreihen: false, aufwecken: true, wiederholungen: nil))
+    }
+
+    /// „Steht …“ ist eine Wahl: Halten, Dauer und Wiederholungen schließen sich aus.
+    func testHaltenDauerUndWiederholungenSchliessenSichAus() {
+        let paare = [["--halten", "--dauer", "8"], ["--halten", "--wiederholungen", "3"],
+                     ["--dauer", "8", "--wiederholungen", "3"], ["--hold", "--repeat", "3"]]
+        for p in paare {
+            XCTAssertThrowsError(try Optionen.zerlegt(["nachricht", "x"] + p), "\(p)") {
+                guard case Optionen.Fehler.nachrichtStehtMehrfach = $0 else { return XCTFail("war \($0)") }
+            }
+        }
+        XCTAssertNoThrow(try Optionen.zerlegt(["nachricht", "x", "--halten", "--nicht-halten", "--dauer", "8"]))
     }
 
     /// Ohne `--name` hat sie keinen — die Vorgabe „cli" gilt nur für Anzeigen.

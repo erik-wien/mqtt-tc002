@@ -39,17 +39,19 @@ final class LebensdauerwahlTests: XCTestCase {
 
     func testDieNachrichtHatDieVorgabenDerApp() {
         let o = Nachrichtwahl().optionen
-        XCTAssertFalse(o.halten)
+        XCTAssertTrue(o.halten)
         XCTAssertTrue(o.aufwecken)
         XCTAssertFalse(o.einreihen)
-        XCTAssertEqual(o.wiederholungen, 2)
+        XCTAssertNil(o.wiederholungen)
+        XCTAssertNil(Nachrichtwahl().dauerSekunden)
         XCTAssertNil(o.name)
     }
 
     func testErsetzenAusSchaltetDasEinreihenAn() {
-        let o = Nachrichtwahl(halten: true, aufwecken: false, ersetzen: false, durchlaeufe: 0).optionen
+        let o = Nachrichtwahl(steht: Nachrichtdauerwahl(art: .durchlaeufe, durchlaeufe: 0),
+                              aufwecken: false, ersetzen: false).optionen
         XCTAssertTrue(o.einreihen)
-        XCTAssertTrue(o.halten)
+        XCTAssertFalse(o.halten)
         XCTAssertFalse(o.aufwecken)
         XCTAssertEqual(o.wiederholungen, 1)
     }

@@ -15,6 +15,9 @@ struct Zeitabschnitte<Zusatz: View>: View {
     @Binding var dauerText: String
     /// Was gerade geschickt wird; bestimmt die Worte der Überschrift.
     var art: Sendeart = .anzeige
+    /// Bei einer Nachricht ersetzt „Steht …“ das Feld „Dauer (s)“ — dieselben
+    /// Bindungen wie im Optionenblatt, damit es nur eine Einstellung gibt.
+    var steht: Stehtbindungen?
 
     /// Was die Ansicht sonst noch zur einzelnen Meldung zu sagen hat — bei
     /// „Senden“ das Lauftempo, im Editor nichts.
@@ -44,15 +47,22 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // gegen „Alles, was diese Uhr zeigt" sagt es in der Ueberschrift
         // selbst.
         Section {
-            LabeledContent("Dauer (s)") {
-                TextField("", text: $dauerText)
-                    .eingabefeld()
-                    .frame(minWidth: 70)
-                    #if !os(macOS)
-                    .keyboardType(.numberPad)
-                    #endif
+            if art == .nachricht, let steht {
+                StehtWahl(steht: steht)
+            } else {
+                LabeledContent("Dauer (s)") {
+                    TextField("", text: $dauerText)
+                        .eingabefeld()
+                        .frame(minWidth: 70)
+                        #if !os(macOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                }
             }
-            if dauerUngueltig {
+            if art == .nachricht, steht != nil {
+                Text(art.dauerErklaerung)
+                    .font(.footnote).foregroundStyle(.secondary)
+            } else if dauerUngueltig {
                 Text("Das ist keine ganze Zahl — es gilt keine eigene Dauer.")
                     .font(.footnote).foregroundStyle(.red)
             } else {
@@ -79,6 +89,6 @@ struct Zeitabschnitte<Zusatz: View>: View {
 extension Zeitabschnitte where Zusatz == EmptyView {
     /// Für Aufrufer ohne eigene Zeile — der Editor kennt keine Laufschrift.
     init(zustand: AppZustand, dauerText: Binding<String>) {
-        self.init(zustand: zustand, dauerText: dauerText) { EmptyView() }
+        self.init(zustand: zustand, dauerText: dauerText, steht: nil) { EmptyView() }
     }
 }

@@ -20,36 +20,94 @@ public enum Sendeart: String, CaseIterable, Sendable {
     public var dauerErklaerung: LocalizedStringKey {
         switch self {
         case .anzeige: return "Wie lange die Uhr diese Anzeige zeigt, bevor sie weiterblättert. Leer oder 0: Es gilt die Anzeigedauer der Uhr."
-        case .nachricht: return "Wie lange die Uhr diese Nachricht zeigt. Leer oder 0: Es gelten die Durchläufe, sonst die Anzeigedauer der Uhr."
+        case .nachricht: return "Wie lange diese Nachricht steht: bis du sie zurückziehst, eine Zahl Sekunden oder eine Zahl Durchläufe des Textes."
         }
     }
 
     public var zeithilfe: String {
         switch self {
         case .anzeige: return lok("Dauer und Lauftempo reisen mit dieser einen Anzeige mit. Wie schnell die Uhr durch alle Anzeigen blättert, ist dagegen eine Einstellung der Uhr (Anzeigedauer).")
-        case .nachricht: return lok("Dauer und Lauftempo reisen mit dieser einen Nachricht mit. Mit „Halten“ gilt keine Dauer.")
+        case .nachricht: return lok("„Steht …“ und Lauftempo reisen mit dieser einen Nachricht mit. Durchläufe gibt es nur für Text, der durchläuft; läuft nichts durch, nimmt die Uhr ihre Anzeigedauer.")
         }
+    }
+}
+
+/// „Steht …“ einer Nachricht: die Art, beide Zahlen und ob der Text auf
+/// mindestens einer Zieluhr durchläuft (Durchläufe wirken nur dann).
+public struct Stehtbindungen {
+    let art: Binding<Nachrichtdauerart>
+    let sekunden: Binding<Int>
+    let durchlaeufe: Binding<Int>
+    let textLaeuft: Bool
+
+    public init(art: Binding<Nachrichtdauerart>, sekunden: Binding<Int>, durchlaeufe: Binding<Int>,
+                textLaeuft: Bool) {
+        self.art = art
+        self.sekunden = sekunden
+        self.durchlaeufe = durchlaeufe
+        self.textLaeuft = textLaeuft
     }
 }
 
 /// Die Regler einer Nachricht, wie `Sendeartwahl` sie bindet.
 public struct Nachrichtbindungen {
-    let halten: Binding<Bool>
+    let steht: Stehtbindungen
     let aufwecken: Binding<Bool>
     let ersetzen: Binding<Bool>
-    let durchlaeufe: Binding<Int>
     let klang: Binding<Klangwahl>
-    /// Dieselbe Dauer wie im Reiter „Zeit“ des Inspektors (`dauerText` der Sendeansicht).
-    let dauer: Binding<String>
 
-    public init(halten: Binding<Bool>, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>,
-                durchlaeufe: Binding<Int>, klang: Binding<Klangwahl>, dauer: Binding<String>) {
-        self.dauer = dauer
-        self.halten = halten
+    public init(steht: Stehtbindungen, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>,
+                klang: Binding<Klangwahl>) {
+        self.steht = steht
         self.aufwecken = aufwecken
         self.ersetzen = ersetzen
-        self.durchlaeufe = durchlaeufe
         self.klang = klang
+    }
+}
+
+/// Die eine Wahl „Steht …“ mit ihrer Zahl, im Popover bzw. Blatt der Nachricht
+/// und im Reiter „Zeit“ (dieselben Bindungen, also genau eine Einstellung).
+/// „Durchläufe“ ist gesperrt statt versteckt, solange kein Text durchläuft:
+/// Mit einem längeren Text lässt es sich einschalten.
+public struct StehtWahl: View {
+    let steht: Stehtbindungen
+    let aktiv: Bool
+
+    public init(steht: Stehtbindungen, aktiv: Bool = true) {
+        self.steht = steht
+        self.aktiv = aktiv
+    }
+
+    public var body: some View {
+        Picker("Steht …", selection: steht.art) {
+            Text("bis ich sie zurückziehe").tag(Nachrichtdauerart.bisZurueckgezogen)
+            Text("Sekunden").tag(Nachrichtdauerart.sekunden)
+            if steht.textLaeuft {
+                Text("Durchläufe").tag(Nachrichtdauerart.durchlaeufe)
+            } else {
+                Text("Durchläufe (nur für Text, der durchläuft)").tag(Nachrichtdauerart.durchlaeufe)
+                    .disabled(true)
+            }
+        }
+        .disabled(!aktiv)
+        switch steht.art.wrappedValue {
+        case .bisZurueckgezogen:
+            EmptyView()
+        case .sekunden:
+            LabeledContent("Anzahl") {
+                Schrittwahl("Sekunden", wert: steht.sekunden, bereich: Nachrichtdauer.sekundenbereich)
+            }
+            .gesperrterStepper(!aktiv)
+        case .durchlaeufe:
+            LabeledContent("Anzahl") {
+                Schrittwahl("Durchläufe", wert: steht.durchlaeufe, bereich: Nachrichtdauer.durchlaufbereich)
+            }
+            .gesperrterStepper(!aktiv)
+        }
+        if Nachrichtdauerwahl(art: steht.art.wrappedValue).faelltAufAnzeigedauer(textLaeuft: steht.textLaeuft) {
+            Text("Der Text läuft nicht durch: Die Uhr nimmt ihre Anzeigedauer.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 }
 
@@ -79,7 +137,7 @@ public struct Lebensdauerbindungen {
 /// bleibt bei beiden Arten.
 ///
 /// Die Optionen öffnen ein Popover (iPad, Mac) bzw. ein Blatt (iPhone) und
-/// kein Menü: Durchläufe und Lebensdauer sind Zahlenwerte mit Stepper, und ein
+/// kein Menü: Sekunden, Durchläufe und Lebensdauer sind Zahlenwerte mit Stepper, und ein
 /// Menü schließt sich nach jedem Eintrag — nach Apples Richtlinien sind Menüs
 /// für Befehle und Einzelwahlen da, ein Popover für Einstellungen, die man
 /// mehrere auf einmal ändert. Dasselbe Blatt trägt dieselben Abschnitte
@@ -181,9 +239,8 @@ public struct Sendeartwahl: View {
         .controlSize(.small)
         .popover(isPresented: $zeigeOptionen) {
             Optionenblatt(titel: "Nachricht") {
-                Nachrichtabschnitt(halten: nachricht.halten, aufwecken: nachricht.aufwecken,
-                                   ersetzen: nachricht.ersetzen, durchlaeufe: nachricht.durchlaeufe,
-                                   dauerText: nachricht.dauer, aktiv: true)
+                Nachrichtabschnitt(steht: nachricht.steht, aufwecken: nachricht.aufwecken,
+                                   ersetzen: nachricht.ersetzen, aktiv: true)
             }
         }
     }
@@ -253,48 +310,25 @@ struct Optionenblatt<Inhalt: View>: View {
 /// Die Regler einer Nachricht — im Popover bzw. Blatt neben dem Segment
 /// „Anzeige | Nachricht“ (`Sendeartwahl`).
 public struct Nachrichtabschnitt: View {
-    @Binding var halten: Bool
+    let steht: Stehtbindungen
     @Binding var aufwecken: Bool
     @Binding var ersetzen: Bool
-    @Binding var durchlaeufe: Int
-    @Binding var dauerText: String
     let aktiv: Bool
 
-    public init(halten: Binding<Bool>, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>,
-                durchlaeufe: Binding<Int>, dauerText: Binding<String>, aktiv: Bool) {
-        self._dauerText = dauerText
-        self._halten = halten
+    public init(steht: Stehtbindungen, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>, aktiv: Bool) {
+        self.steht = steht
         self._aufwecken = aufwecken
         self._ersetzen = ersetzen
-        self._durchlaeufe = durchlaeufe
         self.aktiv = aktiv
     }
 
     public var body: some View {
         Section {
-            Toggle("Halten", isOn: $halten)
+            StehtWahl(steht: steht, aktiv: aktiv)
             Toggle("Aufwecken", isOn: $aufwecken)
             Toggle("Ersetzen", isOn: $ersetzen)
-            LabeledContent("Durchläufe") {
-                Schrittwahl("Durchläufe", wert: $durchlaeufe, bereich: 1...Nachrichtwahl.hoechstdurchlaeufe)
-            }
-            .gesperrterStepper(!aktiv)
-            // Mit „Halten“ ignoriert die Uhr die Dauer (`hold` ignoriert `durationMs`).
-            LabeledContent("Dauer (s)") {
-                TextField("", text: $dauerText)
-                    .eingabefeld()
-                    .frame(minWidth: 70)
-                    #if !os(macOS)
-                    .keyboardType(.numberPad)
-                    #endif
-                    .disabled(halten)
-            }
-            if halten {
-                Text("Mit „Halten“ gilt keine Dauer: Die Nachricht bleibt, bis sie beendet wird.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
         } header: {
-            Abschnittskopf("Nachricht", hilfe: lok("Eine Nachricht unterbricht die Schleife und belegt keinen Platz. Halten: bleibt stehen, bis sie beendet wird. Dauer: wie lange sie steht (dieselbe Dauer wie im Reiter „Zeit“; leer: die der Uhr). Aufwecken: erscheint auch bei ausgeschaltetem Display. Ersetzen: verdrängt die sichtbare, statt sich hinten anzustellen. Durchläufe: wie oft ein laufender Text durchzieht. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
+            Abschnittskopf("Nachricht", hilfe: lok("Eine Nachricht unterbricht die Schleife und belegt keinen Platz. Steht …: „bis ich sie zurückziehe“ lässt sie stehen, bis du sie beendest; „Sekunden“ zeigt sie so lange; „Durchläufe“ lässt den Text so oft durchziehen und gilt nur, wenn er nicht ins Display passt. Aufwecken: erscheint auch bei ausgeschaltetem Display. Ersetzen: verdrängt die sichtbare, statt sich hinten anzustellen. Gilt nur, wenn oben „Nachricht“ gewählt ist."))
         }
         .disabled(!aktiv)
     }

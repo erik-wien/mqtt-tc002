@@ -171,15 +171,18 @@ DIAGRAMM UND FORTSCHRITT (statt Text; fuer „senden" und „nachricht")
 
 OPTIONEN FUER „nachricht"
   Text und Format wie bei „senden"; --name ist hier der Name der Nachricht
-  (nur darueber laesst sie sich zurueckziehen), --dauer wie lange sie steht.
-  Vorgabe: Die Nachricht steht --dauer lang, ersetzt die sichtbare, weckt das Panel
-  und laeuft zweimal durch.
-  --halten            bleibt bis zum Zurueckziehen stehen und haelt die Warteschlange
+  (nur darueber laesst sie sich zurueckziehen).
+  Wie lange sie steht, waehlst du auf genau eine Art: --halten, --dauer oder
+  --wiederholungen (zwei zugleich weist das Werkzeug ab). Ohne eine davon laeuft
+  der Text zweimal durch. Sie ersetzt die sichtbare Nachricht und weckt das Panel.
+  --halten            steht bis zum Zurueckziehen und haelt die Warteschlange
                       der Uhr an: jede spaetere Nachricht wartet hinter ihr
+  --dauer <Sekunden>  steht so viele Sekunden
+  --wiederholungen <Zahl>   steht so viele Durchlaeufe (nur bei Text, der durchlaeuft;
+                      sonst gilt die Anzeigedauer der Uhr)
   --einreihen         stellt sich hinten an, statt die sichtbare zu ersetzen
   --nicht-wecken      erscheint nicht bei ausgeschaltetem Panel
   --nicht-halten, --ersetzen   die Vorgabe, nur ausgeschrieben (aus aelteren Aufrufen)
-  --wiederholungen <Zahl>   wie oft laufender Text durchlaeuft (Vorgabe: 2)
   --klang <Name|Adresse>, --rtttl "<Text>", --sprache "<Text>", --wiederholen   ein Ton, siehe KLANG
 
 Ueber MQTT wartet das Werkzeug auf die Antwort der Uhr (<Thema>/result): Weist die

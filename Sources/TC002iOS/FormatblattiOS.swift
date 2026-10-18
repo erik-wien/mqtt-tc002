@@ -37,6 +37,7 @@ struct FormatblattiOS: View {
     @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
     var art: Sendeart = .anzeige
+    var steht: Stehtbindungen?
     @Environment(\.dismiss) private var schliessen
     /// `.numberPad` hat keine Eingabetaste — ohne „Fertig" bleibt die Tastatur
     /// stehen. Dieselbe Leiste wie am Nummernfeld der Iconauswahl und am Port
@@ -71,11 +72,15 @@ struct FormatblattiOS: View {
     private var zeitform: some View {
             Form {
                 Section {
-                    LabeledContent("Dauer (s)") {
-                        TextField("Uhr entscheidet", text: $dauerText)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .focused($amDauerfeld)
+                    if art == .nachricht, let steht {
+                        StehtWahl(steht: steht)
+                    } else {
+                        LabeledContent("Dauer (s)") {
+                            TextField("Uhr entscheidet", text: $dauerText)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .focused($amDauerfeld)
+                        }
                     }
                     Text(art.dauerErklaerung)
                         .font(.caption).foregroundStyle(.secondary)
