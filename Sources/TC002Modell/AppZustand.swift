@@ -125,6 +125,12 @@ public final class AppZustand {
     public var tasten: [UUID: [Taste: Bool]] = [:]
     /// Der Drehknopf (`event/knob`), nur über MQTT.
     public var drehknopf: [UUID: Drehknopfstand] = [:]
+    /// Wo das Firmware-Update einer Uhr steht (`Firmwareupdate.swift`).
+    public var firmwareablauf: [UUID: Firmwareablauf] = [:]
+    /// Die Naht zu GitHub — der Test schiebt einen Doppelgänger unter.
+    @ObservationIgnored public var firmwarequelle = Firmwarequelle()
+    /// Wie lange nach dem Hochladen auf die neue Fassung gewartet wird; der Test verkürzt es.
+    @ObservationIgnored public var firmwarewartezeit = Firmwarewartezeit()
     /// Die letzte Abweisung, die die Uhr auf `event/error` meldete.
     public var uhrenfehler: [UUID: Uhrenfehler] = [:]
     /// Das Bild des Bildspeichers, solange die Steuerungsseite offen ist

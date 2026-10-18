@@ -39,6 +39,7 @@ extension AppZustand {
         tonlisten[id] = nil
         mp3Ablage[id] = nil
         melodienAblage[id] = nil
+        firmwareablauf[id] = nil
     }
 
     // MARK: - Ausstattung

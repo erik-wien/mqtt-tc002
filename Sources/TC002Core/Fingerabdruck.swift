@@ -12,4 +12,10 @@ public enum Fingerabdruck {
         let daten = Data(teile.joined(separator: "\u{0}").utf8)
         return SHA256.hash(data: daten).map { String(format: "%02x", $0) }.joined()
     }
+
+    /// SHA-256 über Bytes, kleingeschriebene Hexziffern — wie GitHub sie in
+    /// `digest` eines Release-Anhangs führt.
+    public static func sha256(_ daten: Data) -> String {
+        SHA256.hash(data: daten).map { String(format: "%02x", $0) }.joined()
+    }
 }

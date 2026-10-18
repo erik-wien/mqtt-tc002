@@ -362,6 +362,24 @@ public struct Geraet {
         return try fuehreAusMitStatus(anfrage, frist: frist)
     }
 
+    /// Wie `ngRoh`, aber ohne zu blockieren und mit dem Fortschritt des Sendens
+    /// (0…1) — für Rümpfe von Megabytes. Ein Fehlerstatus ist hier keine
+    /// Ausnahme; der Aufrufer liest die Begründung aus dem Rumpf.
+    func hochladen(_ methode: String, _ pfad: String, koerper: Data, inhaltsart: String, frist: TimeInterval,
+                   fortschritt: @escaping @Sendable (Double) -> Void) async throws -> (daten: Data, status: Int) {
+        var anfrage = try self.anfrage(url(pfad))
+        anfrage.httpMethod = methode
+        anfrage.setValue(inhaltsart, forHTTPHeaderField: "Content-Type")
+        anfrage.timeoutInterval = frist
+        let beobachter = Sendefortschritt(fortschritt)
+        do {
+            let (daten, antwort) = try await sitzung.upload(for: anfrage, from: koerper, delegate: beobachter)
+            return (daten, (antwort as? HTTPURLResponse)?.statusCode ?? 200)
+        } catch {
+            throw GeraetFehler.nichtErreichbar(error.localizedDescription)
+        }
+    }
+
     func hole(_ pfad: String) throws -> [String: Any] {
         let daten = try fuehreAus(try anfrage(url(pfad)))
         let objekt: Any
@@ -423,5 +441,17 @@ public struct Geraet {
         }
         guard let ergebnis else { throw GeraetFehler.nichtErreichbar("leere Antwort") }
         return (ergebnis, (antwort as? HTTPURLResponse)?.statusCode ?? 200)
+    }
+}
+
+/// Meldet, wie viel vom Rumpf einer Anfrage schon hinausgegangen ist.
+final class Sendefortschritt: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let melden: @Sendable (Double) -> Void
+    init(_ melden: @escaping @Sendable (Double) -> Void) { self.melden = melden }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64,
+                    totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        guard totalBytesExpectedToSend > 0 else { return }
+        melden(Double(totalBytesSent) / Double(totalBytesExpectedToSend))
     }
 }

@@ -47,6 +47,12 @@ public struct Geraetezustand: Equatable, Sendable {
     }
 
     public var fassung: String?
+    /// Der Dateiname des Pakets, das diese Uhr annimmt; ältere Fassungen (1.1.x) melden keinen.
+    public var updateImage: String?
+    /// `update.state`: `idle`, `applying`, `boot-pending`, `confirmed`, `failed`.
+    public var updatestand: String?
+    /// `update.error`, englisch, wie die Uhr ihn schreibt; leer ohne Fehler.
+    public var updatefehler: String?
     public var platine: String?
     public var wlanSignal: Int?
     public var laufzeitSekunden: Int?
@@ -93,6 +99,10 @@ public struct Geraetezustand: Equatable, Sendable {
             throw Fehler.unlesbar
         }
         fassung = o["version"] as? String
+        updateImage = o["updateImage"] as? String
+        let update = o["update"] as? [String: Any]
+        updatestand = update?["state"] as? String
+        updatefehler = update?["error"] as? String
         platine = o["boardType"] as? String
         wlanSignal = o["wifiRssi"] as? Int
         laufzeitSekunden = o["uptimeSeconds"] as? Int

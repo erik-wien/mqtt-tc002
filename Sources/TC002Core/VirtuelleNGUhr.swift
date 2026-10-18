@@ -134,6 +134,8 @@ public struct NGUhrzustand: Equatable, Sendable {
     public var ton = NGTon()
     /// Dateiablage und Sicherung (`VirtuelleNGUhrSicherung.swift`).
     public var ablage = NGAblage()
+    /// Fassung, Update und Neustart (`VirtuelleNGUhrUpdate.swift`).
+    public var firmware = NGFirmware()
     /// Die Uhr hat einen Lichtsensor (`capabilities.sensors.light`). Dann folgt
     /// das Panel bei `autoBrightness: true` dem Sensor (`sensorHelligkeit`) und
     /// nicht `brightness` (gemessen 10. Oktober 2026 an einer TC001).
@@ -265,11 +267,11 @@ public enum VirtuelleNGUhr {
 
     // MARK: - Routen
 
-    private enum Route {
+    enum Route {
         case geraet, version, system, einstellungen, anzeige, bildschirm, apps, faehigkeiten, ton
         case tonSpielen, tonStoppen, tonSender, tonMelodien, tonMP3, tonMP3Datei(String), tonMelodie(String)
         case moodlight, tlsStatus, tlsCA, neustart
-        case dateien, iconHerkunft, wiederherstellen, statisch(String)
+        case dateien, iconHerkunft, wiederherstellen, statisch(String), update
         case appSenden(String), appLoeschen(String), appAktiv, appWeiter, appZurueck
         case appFreigabe(String)
         case meldungSenden, meldungAktivLoeschen, meldungLoeschen(String)
@@ -289,12 +291,13 @@ public enum VirtuelleNGUhr {
             case .appWeiter, .appZurueck, .meldungSenden, .neustart: return ["POST"]
             case .indikator, .moodlight, .tlsCA: return ["PUT", "DELETE"]
             case .tlsStatus, .dateien, .iconHerkunft, .statisch: return ["GET"]
-            case .wiederherstellen: return ["POST"]
+            case .wiederherstellen, .update: return ["POST"]
             }
         }
     }
 
     private static func route(_ pfad: String) -> Route? {
+        if pfad == "/update" { return .update }
         if pfad == "/apploop.json" || ["/ICONS/", "/MELODIES/", "/PALETTES/", "/MP3/", "/SCRIPTS/"].contains(where: pfad.hasPrefix) {
             return .statisch(pfad)
         }
@@ -349,7 +352,7 @@ public enum VirtuelleNGUhr {
         guard route.methoden.contains(anfrage.methode) else {
             return fehler(405, "methodNotAllowed", "allowed: " + route.methoden.joined(separator: ", "))
         }
-        if anfrage.koerper.count > maxRumpf {
+        if anfrage.koerper.count > rumpfgrenze(methode: anfrage.methode, pfad: anfrage.pfad) {
             return fehler(413, "payloadTooLarge", "payload too large")
         }
         if ["PUT", "PATCH"].contains(anfrage.methode), erwartetJSON(route) {
@@ -359,10 +362,12 @@ public enum VirtuelleNGUhr {
             }
         }
 
+        if let antwort = neustartVerlauf(route, &z) { return antwort }
         switch route {
+        case .update: return firmwareEinspielen(anfrage, &z)
         case .geraet: return json(geraet(z))
         case .neustart: z.neustarts += 1; return ok
-        case .version: return json(.objekt(["version": .text("1.2.2")]))
+        case .version: return json(.objekt(["version": .text(z.firmware.fassung)]))
         case .system: return systemantwort(anfrage, z)
         case .dateien: return dateienliste(anfrage, z)
         case .iconHerkunft: return z.ablage.iconHerkunft.map { Antwort(koerper: $0) } ?? fehler(404, "notFound", "not found")
@@ -702,8 +707,8 @@ public enum VirtuelleNGUhr {
                      "connects": .zahl(aktiv ? 1 : 0), "error": .null, "lastError": .null])
         }
         return .objekt([
-            "version": .text("1.2.2"), "uid": .text("000000000000"), "boardType": .text("tc002"),
-            "soc": .text("armv7l"), "updateImage": .text("awtrix-ng-tc002.awup"),
+            "version": .text(z.firmware.fassung), "uid": .text("000000000000"), "boardType": .text("tc002"),
+            "soc": .text("armv7l"), "updateImage": .text(z.firmware.image),
             "ipAddress": ip, "macAddress": .text("00:00:00:00:00:00"),
             "hostname": .text("virtuelle-uhr"), "wifiRssi": .zahl(-40),
             "uptimeSeconds": .zahl(1000), "freeHeapBytes": .zahl(13_553_664),
@@ -719,7 +724,8 @@ public enum VirtuelleNGUhr {
             "mirror": .objekt(["sharing": .bool(false), "viewers": .zahl(0),
                                "source": .text(""), "state": .text("off")]),
             "usbPower": .bool(false),
-            "update": .objekt(["state": .text("idle"), "release": .text(""), "error": .text("")]),
+            "update": .objekt(["state": .text(z.firmware.stand), "release": .text(""),
+                               "error": .text(z.firmware.fehler)]),
         ])
     }
 

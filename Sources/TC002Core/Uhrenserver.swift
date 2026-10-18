@@ -241,7 +241,7 @@ public final class Uhrenserver: @unchecked Sendable {
     /// - `Transfer-Encoding`: Stueckweise uebertragene Rumpfe kann die
     ///   virtuelle Uhr nicht lesen.
     ///
-    /// Ein `Content-Length` ueber `VirtuelleNGUhr.maxRumpf` ist sofort `413`.
+    /// Ein `Content-Length` ueber `VirtuelleNGUhr.rumpfgrenze` ist sofort `413`.
     ///
     /// `403` bekommt jede Anfrage mit `Origin` (so schickt ein Browser eine
     /// Anfrage von einer fremden Seite; die App selbst sendet keinen) und jede,
@@ -281,7 +281,9 @@ public final class Uhrenserver: @unchecked Sendable {
         if let angabe = laengenangaben.first {
             guard !angabe.isEmpty, angabe.count <= 18, angabe.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),
                   let zahl = Int(angabe) else { return .abweisen(schlecht) }
-            guard zahl <= VirtuelleNGUhr.maxRumpf else { return .abweisen(zuGross) }
+            guard zahl <= VirtuelleNGUhr.rumpfgrenze(methode: erste[0], pfad: URLComponents(string: "http://uhr" + erste[1])?.path ?? erste[1]) else {
+                return .abweisen(zuGross)
+            }
             laenge = zahl
         }
         let rumpf = daten[ende.upperBound...]

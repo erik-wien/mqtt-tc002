@@ -407,8 +407,8 @@ extension VirtuelleNGUhr {
         return b.count >= 2 && b[0] == 0xFF && b[1] & 0xE0 == 0xE0
     }
 
-    /// Der Dateiname und der Inhalt des Teils `file` eines `multipart/form-data`-Rumpfes.
-    static func dateiteil(_ a: Anfrage) -> (name: String, inhalt: Data)? {
+    /// Der Dateiname und der Inhalt des Teils `feld` (Vorgabe `file`) eines `multipart/form-data`-Rumpfes.
+    static func dateiteil(_ a: Anfrage, feld: String = "file") -> (name: String, inhalt: Data)? {
         let art = a.kopf["content-type"] ?? ""
         guard art.lowercased().hasPrefix("multipart/form-data"),
               let r = art.range(of: "boundary=") else { return nil }
@@ -425,7 +425,7 @@ extension VirtuelleNGUhr {
                 let kopf = String(decoding: teil[teil.startIndex..<ende.lowerBound], as: UTF8.self)
                 var inhalt = teil[ende.upperBound...]
                 if inhalt.suffix(2) == Data("\r\n".utf8) { inhalt = inhalt.dropLast(2) }
-                if kopf.contains("name=\"file\""),
+                if kopf.contains("name=\"\(feld)\""),
                    let f = kopf.range(of: "filename=\""),
                    let zu = kopf[f.upperBound...].firstIndex(of: "\"") {
                     return (String(kopf[f.upperBound..<zu]), Data(inhalt))
