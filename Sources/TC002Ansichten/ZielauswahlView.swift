@@ -52,12 +52,12 @@ public struct ZielauswahlView: View {
         let gewaehlt = gewaehlteIDs
         let anzahlUhren = zustand.uhren.count
         if anzahlUhren > 1, gewaehlt.count == anzahlUhren {
-            return lokf("an alle Uhren (%d)", anzahlUhren)
+            return lokf("Empfänger: alle Uhren (%d)", anzahlUhren)
         }
         if gewaehlt.count == 1, let uhr = zustand.uhren.first(where: { $0.id == gewaehlt.first }) {
-            return lokf("an: %@", uhr.name)
+            return lokf("Empfänger: %@", uhr.name)
         }
-        return lokf("an %d Uhren", gewaehlt.count)
+        return lokf("Empfänger: %d Uhren", gewaehlt.count)
     }
 
     public var body: some View {
@@ -121,7 +121,7 @@ public struct ZielauswahlView: View {
     }
 
     private var blatt: some View {
-        Blatt(titel: lok("An welche Uhr senden?"),
+        Blatt(titel: lok("Empfänger"),
               schliessen: { zeigeBlatt = false }) {
             VStack(alignment: .leading, spacing: 12) {
             HStack {

@@ -94,6 +94,8 @@ private struct Uhrblatt: View {
             // Die gespeicherten Einstellungen der Uhr, in Gruppen; was man jetzt
             // schalten will, steht in der Fernbedienung (Bereich „Uhr“).
             Section {
+                Text("Gilt, wenn eine Anzeige nichts anderes sagt.")
+                    .font(kanon.fussnote).foregroundStyle(.secondary)
                 ForEach(Uhrgruppe.sichtbar(faehigkeiten: zustand.faehigkeiten[uhr.id],
                                            einstellungen: zustand.uhreneinstellungen[uhr.id])) { gruppe in
                     NavigationLink(value: Uhrgruppenziel(uhr: uhr.id, gruppe: gruppe)) {

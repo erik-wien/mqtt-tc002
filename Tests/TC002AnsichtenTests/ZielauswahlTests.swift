@@ -70,7 +70,7 @@ final class ZielauswahlTests: XCTestCase {
     /// bleibt beim Anhaken offen und hat einen eigenen Weg hinaus.
     func testDieWahlStehtInEinemBlattUndNichtInEinemMenue() throws {
         let text = try quelltext("Sources/TC002Ansichten/ZielauswahlView.swift")
-        XCTAssertTrue(text.contains("Blatt(titel: lok(\"An welche Uhr senden?\")"),
+        XCTAssertTrue(text.contains("Blatt(titel: lok(\"Empfänger\")"),
                       "die Zielauswahl steht nicht mehr in einem Blatt — ohne es gibt es "
                       + "keinen Rahmen, der den Weg hinaus selbst mitbringt")
         XCTAssertTrue(text.contains("schliessen: { zeigeBlatt = false }"),

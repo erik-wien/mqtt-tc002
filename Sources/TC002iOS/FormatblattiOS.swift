@@ -13,20 +13,17 @@ enum Formatteil: String, Identifiable {
 
 /// Alles, was man selten ändert. Auf dem Mac steht das in einer Leiste mit elf
 /// Bedienelementen; auf einem Telefon geht das nicht, und untereinander
-/// gestapelt verdeckte es die Vorschau. Schriftart, beide Ausrichtungen,
-/// Größe, Fett, Großbuchstaben, Rand und Abstand sitzen inzwischen in der
-/// Formatpille über dem Eingabefeld (SendeniOS.swift) — hier bleiben Dauer
-/// und Laufschrift (Teil `zeit`) sowie die Darstellung (Teil `darstellung`).
+/// gestapelt verdeckte es die Vorschau. Schriftart (samt „Schrift der Uhr“),
+/// beide Ausrichtungen, Größe, Fett, Großbuchstaben, Rand und Abstand sitzen
+/// inzwischen in der Formatpille über dem Eingabefeld (SendeniOS.swift) — hier
+/// bleiben Dauer und Laufschrift (Teil `zeit`) sowie die Darstellung (Teil
+/// `darstellung`). „Icon mitscrollen“ steht beim Icon (`IconsblattiOS`).
 /// Nachricht, Klang und Lebensdauer stehen nicht hier, sondern am Segment
 /// „Anzeige | Nachricht“ (`Sendeartwahl`).
 ///
-/// Der Schalter „Schrift der Uhr" steht über der Darstellung, weil er
-/// bestimmt, was dort frei ist; die Regler, die er ausgraut, sitzen in der
-/// Formatpille.
-///
 /// Die Dauer steht bei der Laufschrift, nicht als eigene Zeile neben den
 /// fünf Blöcken — dort nähme sie die Breite weg, die die Blöcke brauchen.
-/// Beide reisen mit dieser einen Meldung mit, genau so wie der Zeit-Reiter
+/// Beide reisen mit dieser einen Anzeige mit, genau so wie der Zeit-Reiter
 /// am Schreibtisch.
 struct FormatblattiOS: View {
     @Bindable var zustand: AppZustand
@@ -34,7 +31,6 @@ struct FormatblattiOS: View {
     @Binding var darstellung: Darstellungswahl
     @Binding var weg: SendeWeg
     @Binding var tempo: Lauftempo
-    @Binding var iconLaeuftMit: Bool
     @Binding var dauerText: String
     var art: Sendeart = .anzeige
     var steht: Stehtbindungen?
@@ -51,12 +47,7 @@ struct FormatblattiOS: View {
                 case .zeit: zeitform
                 case .darstellung:
                     Form {
-                        Section {
-                            SchriftDerUhrSchalter(weg: $weg)
-                        } footer: {
-                            if weg.schriftDerUhr { Text(AwtrixNG.schriftDerUhrFussnote) }
-                        }
-                        Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: weg)
+                        Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: weg, art: art)
                     }
                 }
             }
@@ -73,7 +64,7 @@ struct FormatblattiOS: View {
             Form {
                 Section {
                     if art == .nachricht, let steht {
-                        StehtWahl(steht: steht)
+                        StehtWahl(steht: steht, zustand: zustand)
                     } else {
                         LabeledContent("Dauer (s)") {
                             TextField("Uhr entscheidet", text: $dauerText)
@@ -84,17 +75,17 @@ struct FormatblattiOS: View {
                     }
                     Text(art.dauerErklaerung)
                         .font(.caption).foregroundStyle(.secondary)
+                    if art == .anzeige { Standarddauerzeile(zustand: zustand) }
                 } header: {
                     Abschnittskopf(art.nurDiese, hilfe: art.zeithilfe)
                 }
-                Section("Laufschrift") {
+                Section(art.laufschrifttitel) {
                     Picker("Tempo", selection: $tempo) {
                         Text("Langsam").tag(Lauftempo.langsam)
                         Text("Mittel").tag(Lauftempo.mittel)
                         Text("Schnell").tag(Lauftempo.schnell)
                     }
                     .pickerStyle(.segmented)
-                    Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
                     Text("Gilt nur, wenn der Text nicht ins Display passt.")
                         .font(.caption).foregroundStyle(.secondary)
                 }

@@ -111,12 +111,12 @@ DYNAMISCH = [
     "Kurzbefehle", "Kommandozeile",
     # Kurzbefehle (AppIntents). LocalizedStringResource schlaegt im Buendel
     # nach, steht aber nicht in einem Aufruf, den der Sammler erkennt.
-    "Meldung an die Uhr schicken",
-    "Meldung von der Uhr löschen",
+    "Anzeige an die Uhr schicken",
+    "Anzeige von der Uhr löschen",
     "Schickt einen Text an eine eingerichtete Uhr. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.",
-    "Entfernt eine der fünf Meldungen wieder von der Uhr.",
-    "Meldung schicken",
-    "Meldung löschen",
+    "Entfernt eine der fünf Anzeigen wieder von der Uhr.",
+    "Anzeige schicken",
+    "Anzeige löschen",
     "Bild an die Uhr schicken",
     "Schickt eine fertige 52 × 16-Anzeige aus dem Bestand an eine eingerichtete Ulanzi TC002. Sie füllt das Display und ersetzt Text und Icon. Eine Uhr mit kleinerem Display weist sie ab.",
     "Bild schicken",

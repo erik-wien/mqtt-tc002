@@ -25,10 +25,10 @@ public struct Aufzeichnungsabschnitt: View {
                 .knopfZerstoerend()
                 .verlaufLoeschenBestaetigen($fragt, zustand: zustand)
             // Ein Satz je Schalter, das Laengere hinter dem (?) am Kopf.
-            Text("Merkt sich jede gesendete Meldung samt ihren Einstellungen.")
+            Text("Merkt sich jede Sendung samt ihren Einstellungen.")
                 .font(kanon.fussnote).foregroundStyle(.secondary)
         } header: {
-            Abschnittskopf("Verlauf", hilfe: lok("Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt eine Meldung samt ihren Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist."))
+            Abschnittskopf("Verlauf", hilfe: lok("Unter „Senden“ steht der Verlauf unter den Plätzen, und ein Druck darauf stellt eine Sendung samt ihren Einstellungen wieder her. Er hält die letzten 200 Sendungen je Gerät und wird über iCloud abgeglichen, wenn das eingeschaltet ist."))
         }
 
         // Ab Werk aus: Das Protokoll ist ein Werkzeug für den Fall, dass etwas

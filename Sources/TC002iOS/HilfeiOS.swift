@@ -84,7 +84,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.startOhneEinrichtung
                 + HilfeInhalt.uhrHinzufuegen
                 + [
-                    .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einer Meldung, die auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),
+                    .absatz("Beim ersten Zugriff auf Uhr oder Broker fragt iOS, ob die App auf Geräte im lokalen Netzwerk zugreifen darf. Ohne diese Freigabe erreicht sie weder Uhr noch Broker, und „Abfragen“ scheitert dann mit einem Hinweis, der auf die falsche Ursache zeigt. Zurücknehmen und wiedergeben lässt sich die Freigabe in der Einstellungen-App unter Datenschutz & Sicherheit → Lokales Netzwerk."),
                 ]
                 + HilfeInhalt.uhrAbfragen
                 + HilfeInhalt.betriebsart
@@ -100,7 +100,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.virtuelleUhr
                 + HilfeInhalt.wolkenabgleich
         case .senden:
-            return [.ueberschrift("Meldung und Platz")]
+            return [.ueberschrift("Anzeige und Platz")]
                 + HilfeInhalt.fuenfPlaetze
                 + HilfeInhalt.blockwissenAnfang
                 + HilfeInhalt.blockwissenSchluss
@@ -156,15 +156,15 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                 + HilfeInhalt.iconImLauf
                 + [
                     .ueberschrift("Uhr wählen"),
-                    .absatz("Ab zwei Zieluhren wird der Titel oben zum Menü: Es wählt, welche Uhr man **ansieht**. Ihr Name steht im Titel, und Vorschau, die fünf Blöcke und die Liste darunter zeigen ihren Stand. Über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten; die Punktreihe darunter sagt, die wievielte es ist."),
-                    .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die angesehene“. Der Blick folgt dem Ziel: Titelmenü, Vorschau und Punktreihe führen nur die Uhren, an die gesendet wird. Wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
+                    .absatz("Ab zwei Empfängern wird der Titel oben zum Menü: Es wählt, welche Uhr man **ansieht**. Ihr Name steht im Titel, und Vorschau, die fünf Blöcke und die Liste darunter zeigen ihren Stand. Über der Vorschau blättert man zur nächsten, wie zwischen zwei Seiten; die Punktreihe darunter sagt, die wievielte es ist."),
+                    .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die angesehene“. Der Blick folgt den Empfängern: Titelmenü, Vorschau und Punktreihe führen nur die Uhren, an die gesendet wird. Wer die angesehene Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
                     .ueberschrift("Senden auslösen"),
                     .abbildung(.sendezeile),
                     .absatz("Wie in Nachrichten: Rechts im Feld steht ein blauer runder Knopf mit Pfeil, sobald etwas darin steht. Während des Sendens weicht er einem Fortschrittsdreher; ist die Anzeige hinaus, wird er eine Sekunde lang grün und zeigt einen Haken — die Rückmeldung sitzt da, wo du getippt hast. Links daneben leert ein ⊗ das Feld. Die Eingabetaste der Bildschirmtastatur tut dasselbe, sie heißt dort „Senden“."),
                     .absatz("Solange die Sendung läuft, dreht sich rechts neben dem Feld ein Rädchen, und das Feld ist derweil gesperrt. Ist die Anzeige hinaus, steht dort eine Sekunde lang ein grüner Haken — sonst sagte nichts, dass etwas hinausging."),
-                    .absatz("Geht etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund. Bei mehreren Zieluhren steht dort eine Zeile je betroffener Uhr; die übrigen werden trotzdem beliefert."),
+                    .absatz("Geht etwas schief — die Uhr nicht erreichbar, die Uhr weist die Anzeige ab, falsches Broker-Kennwort, Broker nicht erreichbar, Zeitüberschreitung, unlesbare Icondatei —, erscheint oben eine Hinweisleiste mit dem Grund. Bei mehreren Empfängern steht dort eine Zeile je betroffener Uhr; die übrigen werden trotzdem beliefert."),
                     .absatz("Was es heißt, wenn die Leiste ausbleibt, hängt an der Betriebsart: Bei einer HTTP-Uhr hat sie die Anzeige angenommen und sagt es auch. Bei einer MQTT-Uhr heißt es nur, dass die Nachricht beim Broker angekommen ist — was damit noch nicht gesagt ist, steht unter „Wenn nichts erscheint“."),
                 ]
         case .klaenge:

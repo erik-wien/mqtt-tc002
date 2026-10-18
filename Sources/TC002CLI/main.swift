@@ -9,7 +9,7 @@ import TC002Core
 // die mitgelieferten Schriften und die Uebersetzungen findet.
 
 let hilfetext = """
-mqtttc002 — Meldungen an Pixeluhren (Ulanzi TC001 und TC002) schicken.
+mqtttc002 — Anzeigen und Nachrichten an Pixeluhren (Ulanzi TC001 und TC002) schicken.
 
 Benutzt die Einrichtung der App Pixel Clock Messenger: Broker, Kennwort und
 Uhren werden von dort gelesen. Eingerichtet wird ausschliesslich in der App.

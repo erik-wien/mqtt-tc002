@@ -17,7 +17,7 @@ import TC002Core
 /// braucht, schon. In der Kurzbefehle-App steht deshalb nur `text` im Satz,
 /// alles Weitere unter „Details anzeigen".
 struct MeldungSendenIntent: AppIntent {
-    static let title: LocalizedStringResource = "Meldung an die Uhr schicken"
+    static let title: LocalizedStringResource = "Anzeige an die Uhr schicken"
     static let description = IntentDescription(
         "Schickt einen Text an eine eingerichtete Uhr. Schrift und Ausrichtung kommen aus den zuletzt in der App gewählten Einstellungen; Hintergrund, Effekt, Overlay und Palette gibt es hier nicht.")
     /// Kein Aufmachen der App: Das Senden dauert Bruchteile einer Sekunde, und
@@ -27,7 +27,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Text")
     var text: String
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     @Parameter(title: "Icon", description: "Ein Icon aus den Beständen der App, 8 × 8 oder 16 × 16.")
@@ -49,7 +49,7 @@ struct MeldungSendenIntent: AppIntent {
     @Parameter(title: "Schriftart", description: "Gilt nur auf dem Weg „als Pixel“.")
     var schriftart: SchriftAuswahl?
 
-    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; die Meldung nennt die möglichen.")
+    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; der Hinweis nennt die möglichen.")
     var groesse: Int?
 
     @Parameter(title: "Fett", description: "Nicht jede Schrift hat bei jeder Größe einen fetten Schnitt; wo keiner ist, bleibt es ohne Wirkung.")
@@ -222,16 +222,16 @@ struct MeldungSendenIntent: AppIntent {
 /// HTTP mit dem Rumpf `{}` (§5.6). Die beiden meinen mit „leer" genau das
 /// Gegenteil voneinander; `Anzeigen` hält das auseinander.
 struct MeldungLoeschenIntent: AppIntent {
-    static let title: LocalizedStringResource = "Meldung von der Uhr löschen"
+    static let title: LocalizedStringResource = "Anzeige von der Uhr löschen"
     static let description = IntentDescription(
-        "Entfernt eine der fünf Meldungen wieder von der Uhr.")
+        "Entfernt eine der fünf Anzeigen wieder von der Uhr.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
                inclusiveRange: (1, 5))
     var platz: Int
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -287,7 +287,7 @@ struct BildSendenIntent: AppIntent {
     @Parameter(title: "Bild", description: "Das Bild, wie es im Editor gesichert wurde.")
     var bild: BildEntity
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     @Parameter(title: "Platz", description: "Platz 1 bis 5 auf der Uhr.",
@@ -356,9 +356,9 @@ public enum Kurzbefehle {
 struct Kurzbefehlsanbieter: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: MeldungSendenIntent(),
-                    phrases: ["Schicke eine Meldung mit \(.applicationName)",
+                    phrases: ["Schicke eine Anzeige mit \(.applicationName)",
                               "Show on the clock with \(.applicationName)"],
-                    shortTitle: "Meldung schicken",
+                    shortTitle: "Anzeige schicken",
                     systemImageName: "paperplane")
         AppShortcut(intent: BildSendenIntent(),
                     phrases: ["Schicke ein Bild mit \(.applicationName)",
@@ -376,9 +376,9 @@ struct Kurzbefehlsanbieter: AppShortcutsProvider {
                     shortTitle: "Nachricht zurückziehen",
                     systemImageName: "bell.slash")
         AppShortcut(intent: MeldungLoeschenIntent(),
-                    phrases: ["Lösche die Meldung von der Uhr mit \(.applicationName)",
+                    phrases: ["Lösche die Anzeige von der Uhr mit \(.applicationName)",
                               "Remove from the clock with \(.applicationName)"],
-                    shortTitle: "Meldung löschen",
+                    shortTitle: "Anzeige löschen",
                     systemImageName: "trash")
         // Die Fernbedienung. Apple lässt höchstens zehn solche Einträge zu; die
         // übrigen Aktionen (Overlay, Anzeiger, Neustart) stehen trotzdem in der

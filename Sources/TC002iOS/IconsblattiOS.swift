@@ -66,6 +66,12 @@ struct IconsblattiOS: View {
     /// alles, was auf diesem Platz steht.
     let platz: Int
     @Binding var gewaehlt: Icon?
+    /// „Icon mitscrollen“ gehört zum Icon und steht darum hier, wie am
+    /// Schreibtisch im Abschnitt „Icon“.
+    @Binding var iconLaeuftMit: Bool
+    /// Passt der Text ins Display, läuft nichts, und der Schalter bliebe ohne
+    /// Wirkung — dieselbe Sperre wie am Schreibtisch.
+    let textPasst: Bool
     @Bindable var zustand: AppZustand
     @Environment(\.dismiss) private var schliessen
 
@@ -215,6 +221,8 @@ struct IconsblattiOS: View {
         Section {
             Button("Kein Icon") { gewaehlt = nil; schliessen() }
                 .buttonStyle(.automatic)
+            Toggle("Icon mitscrollen", isOn: $iconLaeuftMit)
+                .disabled(gewaehlt == nil || textPasst)
             Filterleiste(wert: $filter.groesse,
                          angebot: Leinwandgroesse.allCases.map {
                              (titel: $0.beschriftung, kurz: $0.kurzbeschriftung, wert: $0)

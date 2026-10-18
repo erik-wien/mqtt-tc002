@@ -31,18 +31,23 @@ struct SteuerungsblattiOS: View {
 /// Die Uhrseite der angesehenen Uhr als Blatt: Name, Adresse, Betriebsart und
 /// die Gruppen der gespeicherten Einstellungen — dieselbe Seite, die die
 /// Einstellungen für jede Uhr zeigen.
+///
+/// Mit `start` geht das Blatt gleich auf einer Gruppe auf (`Einstellungsziel`).
 struct UhreinstellungeniOS: View {
     @Bindable var zustand: AppZustand
+    var start: Uhrgruppenziel?
     @Environment(\.dismiss) private var schliessen
+    @State private var pfad = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $pfad) {
             VStack(spacing: 0) {
                 FehlerleisteiOS(zustand: zustand)
-                if let id = zustand.aktiveID {
+                if let id = start?.uhr ?? zustand.aktiveID {
                     Uhrseite(zustand: zustand, id: id, kanon: .telefon)
                 }
             }
+            .onAppear { if let start, pfad.isEmpty { pfad.append(start) } }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) {
                 Button("Fertig") { schliessen() }

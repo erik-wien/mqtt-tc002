@@ -16,6 +16,9 @@ public struct SchreibtischView: View {
     /// Eine Zeile der Fußliste; wächst mit der Textgröße (iPad), sonst schnitte sie ab.
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var bereich: Bereich?
+    /// Eine Stelle der Einstellungen, die aufzuschlagen ist (`AppZustand.einstellungsziel`);
+    /// geht an die Einstellungen im Fenster und nicht an die des Mac-Menüs.
+    @State private var einstellungsziel: Einstellungsziel?
     #if !os(macOS)
     @State private var nebenfenster: Nebenfenster?
     #else
@@ -106,6 +109,12 @@ public struct SchreibtischView: View {
         #if os(macOS)
         .frame(minWidth: 1140, minHeight: 640)
         #endif
+        .onChange(of: zustand.einstellungsziel) { _, neu in
+            guard let neu else { return }
+            einstellungsziel = neu
+            bereich = .einstellungen
+            zustand.einstellungsziel = nil
+        }
         .alert("Fehler", isPresented: Binding(
             get: { zustand.fehler != nil },
             set: { if !$0 { zustand.fehler = nil } })) {
@@ -215,7 +224,8 @@ public struct SchreibtischView: View {
                     .task { zustand.alleAbfragen() }
             case .uhr: Fernbedienung(zustand: zustand, kanon: .schreibtisch)
             case .protokoll: AnzeigenView(zustand: zustand)
-            case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen)
+            case .einstellungen: VerbindungView(zustand: zustand, fensterOeffnen: fensterOeffnen,
+                                                ziel: $einstellungsziel)
             }
         }
         // Nur auf dem iPad: Hochkant verschwindet die Seitenleiste hinter

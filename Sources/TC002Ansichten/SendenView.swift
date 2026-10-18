@@ -734,7 +734,7 @@ public struct SendenView: View {
             .formStyle(.grouped)
         case .darstellung:
             Form {
-                Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: optionen.weg)
+                Darstellungsabschnitte(zustand: zustand, wahl: $darstellung, weg: optionen.weg, art: art)
             }
             .formStyle(.grouped)
         case .format:
@@ -748,7 +748,7 @@ public struct SendenView: View {
     /// sich als deren Teil. Die Ueberschrift eines Abschnitts faellt nicht weg.
     @ViewBuilder
     private var laufschriftAbschnitt: some View {
-        Section("Laufschrift") {
+        Section(art.laufschrifttitel) {
             // Wie viele Einzelbilder daraus werden, steht hier und nicht mehr
             // im Einblendtext am Sendezeichen — dieselbe Regel wie im Editor:
             // Die Zahl gehoert in den Inspektor. Nur wenn der Text laeuft;
@@ -771,7 +771,7 @@ public struct SendenView: View {
                                           : lok("Wie schnell der Text durchläuft — nur wenn er nicht ins Display passt und deshalb läuft.")))
             // Sagt, was die Ueberschrift nicht mehr sagt: fuer wie viele
             // Anzeigen das gilt, und wann ueberhaupt.
-            Text("Gilt nur für diese Meldung — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft.")
+            Text("Gilt nur für diese Anzeige — und nur, wenn der Text nicht ins Display passt und deshalb durchläuft.")
                 .font(.footnote).foregroundStyle(.secondary)
         }
     }

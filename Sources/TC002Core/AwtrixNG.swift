@@ -48,7 +48,7 @@ public enum AwtrixNG {
     /// als gewoehnliches `String` weiter (an `Hilfezeichen` und an
     /// `.help(_:)`), deshalb `lok`.
     public static var vorschauhinweis: String {
-        lok("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Meldung.")
+        lok("Nur eine Näherung — die Uhr setzt diesen Text selbst und zeigt ihn anders. Läuft er, weil er nicht passt, gilt das Lauftempo dieser Anzeige.")
     }
 
     /// Was der Schalter „Schrift der Uhr" bewirkt, als Einblendtext am (?).

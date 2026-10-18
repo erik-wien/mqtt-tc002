@@ -48,7 +48,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
         // selbst.
         Section {
             if art == .nachricht, let steht {
-                StehtWahl(steht: steht)
+                StehtWahl(steht: steht, zustand: zustand)
             } else {
                 LabeledContent("Dauer (s)") {
                     TextField("", text: $dauerText)
@@ -69,6 +69,7 @@ struct Zeitabschnitte<Zusatz: View>: View {
                 Text(art.dauerErklaerung)
                     .font(.footnote).foregroundStyle(.secondary)
             }
+            if art == .anzeige { Standarddauerzeile(zustand: zustand) }
         } header: {
             Abschnittskopf(art.nurDiese, hilfe: art.zeithilfe)
         }

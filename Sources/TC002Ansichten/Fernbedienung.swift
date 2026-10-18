@@ -197,7 +197,7 @@ private struct Steuerseite: View {
                 get: { panelAn },
                 set: { neu in Task { await zustand.panelSchalten(an: neu, fuer: id) } }))
             if zustand.ziele().count > 1 {
-                LabeledContent("Alle gewählten Uhren") {
+                LabeledContent("Alle Empfänger") {
                     HStack(spacing: 8) {
                         Button("Aus") { Task { await zustand.panelSchalten(an: false) } }
                             .knopfBefehl()
@@ -218,7 +218,7 @@ private struct Steuerseite: View {
                        setzen: { p in await zustand.helligkeitSetzen(Steuerwerte.helligkeitRoh(prozent: p), fuer: id).ganz })
             .id(id)
             if !overlayNamen.isEmpty {
-                Picker("Overlay", selection: Binding(
+                Picker("Overlay jetzt auf der Uhr", selection: Binding(
                     get: { overlay.flatMap { Geraetefaehigkeiten.aufgeloest($0, in: overlayNamen) } },
                     set: { neu in
                         overlay = neu

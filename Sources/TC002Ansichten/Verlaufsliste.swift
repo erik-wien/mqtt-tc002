@@ -308,7 +308,7 @@ struct Verlaufszeilenbild: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(Text("Übernimmt diese Meldung samt Einstellungen"))
+        .accessibilityHint(Text("Übernimmt diese Sendung samt Einstellungen"))
     }
 
     /// Heute nur die Uhrzeit, sonst der Tag davor („Gestern, 19:13").
@@ -384,7 +384,7 @@ extension View {
         } message: {
             // Eine Aussage ueber den Zustand, kein Erklaertext: Was die
             // Loeschung anrichtet und was nicht.
-            Text("Die Liste der gesendeten Meldungen wird geleert. Was auf den Uhren steht, bleibt.")
+            Text("Die Liste der Sendungen wird geleert. Was auf den Uhren steht, bleibt.")
         }
     }
 }

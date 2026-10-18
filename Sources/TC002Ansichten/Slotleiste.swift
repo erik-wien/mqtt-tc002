@@ -118,7 +118,7 @@ public extension View {
             }
             Button("Abbrechen", role: .cancel) {}
         } message: { _ in
-            Text("Die Meldung wird von den gewählten Uhren genommen.")
+            Text("Die Anzeige wird von den Empfängern genommen.")
         }
     }
 }

@@ -64,23 +64,29 @@ final class SchriftDerUhrVerdrahtungTests: XCTestCase {
         }
     }
 
-    /// Mac und iPhone zeigen denselben Baustein, jede an ihrem Ort: der Mac im
-    /// Reiter „Format“ des Inspektors, das iPhone im Formatblatt.
+    /// Der Schalter steht bei der Schriftart, jeweils an ihrem Ort: am Mac im
+    /// Abschnitt „Schrift“ des Inspektors, am iPhone im Menü der Schriftart in
+    /// der Formatpille. Ein Menü nimmt den Baustein mit dem Hilfezeichen nicht
+    /// auf, darum dort ein `Toggle` mit dem Hilfetext als Einblendtext.
     func testDerSchalterStehtAufMacUndIPhone() throws {
         let mac = try quelltext("Sources/TC002Ansichten/SendenView.swift")
         XCTAssertTrue(mac.contains("SchriftDerUhrSchalter(weg: $weg)"))
-        let telefon = try quelltext("Sources/TC002iOS/FormatblattiOS.swift")
-        XCTAssertTrue(telefon.contains("SchriftDerUhrSchalter(weg: $weg)"))
+        let telefon = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        XCTAssertTrue(telefon.contains(#"Toggle("Schrift der Uhr", isOn: $weg.schriftDerUhr)"#))
+        XCTAssertTrue(telefon.contains("accessibilityHint(Text(AwtrixNG.schriftDerUhrHilfe))"))
+        let blatt = try quelltext("Sources/TC002iOS/FormatblattiOS.swift")
+        XCTAssertFalse(blatt.contains("SchriftDerUhrSchalter"),
+                       "„Schrift der Uhr“ steht wieder im Formatblatt statt bei der Schriftart")
     }
 
     /// Die Fussnote sagt, was ausgegraut ist, und zwar nur, solange der
-    /// Schalter an ist; der Satz steht einmal, im Kern.
+    /// Schalter an ist; der Satz steht einmal, im Kern. Am iPhone nennt die
+    /// gesperrte Schriftart ihren Grund (`AwtrixNG.begruendung`).
     func testDieFussnoteStehtNurBeiEingeschaltetemSchalter() throws {
-        for pfad in ["Sources/TC002Ansichten/SendenView.swift",
-                     "Sources/TC002iOS/FormatblattiOS.swift"] {
-            let q = try quelltext(pfad)
-            XCTAssertTrue(q.contains("if weg.schriftDerUhr { Text(AwtrixNG.schriftDerUhrFussnote) }"), pfad)
-        }
+        let q = try quelltext("Sources/TC002Ansichten/SendenView.swift")
+        XCTAssertTrue(q.contains("if weg.schriftDerUhr { Text(AwtrixNG.schriftDerUhrFussnote) }"))
+        let telefon = try quelltext("Sources/TC002iOS/SendeniOS.swift")
+        XCTAssertTrue(telefon.contains("AwtrixNG.begruendung(.schriftart, weg: optionen.weg)"))
     }
 
     /// Die alten Saetze, die nur Kurzbefehl und Werkzeug als Weg zur

@@ -61,7 +61,7 @@ final class Ausgebliebene: @unchecked Sendable {
 /// Zeigt einmalig einen Text über der Schleife der Uhr — keine Anzeige, kein
 /// Platz, kein Eintrag im Slotgedächtnis.
 ///
-/// Wie in der App ist es dieselbe Rechnung wie bei „Meldung schicken“ (Format,
+/// Wie in der App ist es dieselbe Rechnung wie bei „Anzeige schicken“ (Format,
 /// Icon) mit den Reglern der Nachricht darüber (`Nachrichtwahl`):
 /// „Steht …“ samt Anzahl, aufwecken, einreihen oder ersetzen, Klang. Was beim
 /// Format fehlt, kommt aus dem, was zuletzt unter „Senden“ eingestellt war.
@@ -74,7 +74,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Text")
     var text: String
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     @Parameter(title: "Icon", description: "Ein Icon aus den Beständen der App, 8 × 8 oder 16 × 16.")
@@ -104,7 +104,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Vorlesen", description: "Die Uhr liest den Text vor, auf Englisch.", default: false)
     var vorlesen: Bool
 
-    // Das Format, wie bei „Meldung schicken“. Alles wahlfrei.
+    // Das Format, wie bei „Anzeige schicken“. Alles wahlfrei.
 
     @Parameter(title: "Weg", description: "„als Pixel“ rastert die App selbst, mit einer ihrer Pixelschriften. „als Text“ überlässt das Setzen der Uhr; deren Schrift kennt Umlaute und Akzente, aber keine Auswahl.")
     var weg: WegAuswahl?
@@ -112,7 +112,7 @@ struct BenachrichtigungSendenIntent: AppIntent {
     @Parameter(title: "Schriftart", description: "Gilt nur auf dem Weg „als Pixel“.")
     var schriftart: SchriftAuswahl?
 
-    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; die Meldung nennt die möglichen.")
+    @Parameter(title: "Größe in Pixeln", description: "Nur die Größen, die die App zu dieser Schriftart anbietet. Eine andere wird abgewiesen; der Hinweis nennt die möglichen.")
     var groesse: Int?
 
     @Parameter(title: "Fett", description: "Nicht jede Schrift hat bei jeder Größe einen fetten Schnitt; wo keiner ist, bleibt es ohne Wirkung.")
@@ -269,7 +269,7 @@ struct BenachrichtigungZurueckziehenIntent: AppIntent {
     @Parameter(title: "Name", description: "Leer heißt: die gerade sichtbare.")
     var name: String?
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {

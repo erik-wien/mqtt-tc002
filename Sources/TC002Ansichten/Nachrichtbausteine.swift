@@ -17,6 +17,23 @@ public enum Sendeart: String, CaseIterable, Sendable {
         }
     }
 
+    /// Die Überschrift des Overlay-Abschnitts: Das Overlay der Sendung ist nicht
+    /// das der Uhr (Bereich „Uhr“, „Overlay jetzt auf der Uhr“).
+    public var overlaytitel: String {
+        switch self {
+        case .anzeige: return lok("Overlay (nur diese Anzeige)")
+        case .nachricht: return lok("Overlay (nur diese Nachricht)")
+        }
+    }
+
+    /// Dasselbe für Tempo und mitlaufendes Icon: Die Uhr hat ein eigenes Tempo.
+    public var laufschrifttitel: String {
+        switch self {
+        case .anzeige: return lok("Laufschrift (nur diese Anzeige)")
+        case .nachricht: return lok("Laufschrift (nur diese Nachricht)")
+        }
+    }
+
     public var dauerErklaerung: LocalizedStringKey {
         switch self {
         case .anzeige: return "Wie lange die Uhr diese Anzeige zeigt, bevor sie weiterblättert. Leer oder 0: Es gilt die Anzeigedauer der Uhr."
@@ -72,10 +89,13 @@ public struct Nachrichtbindungen {
 public struct StehtWahl: View {
     let steht: Stehtbindungen
     let aktiv: Bool
+    /// Für die Zeile „Standard der Uhr“; ohne Zustand entfällt sie.
+    let zustand: AppZustand?
 
-    public init(steht: Stehtbindungen, aktiv: Bool = true) {
+    public init(steht: Stehtbindungen, aktiv: Bool = true, zustand: AppZustand? = nil) {
         self.steht = steht
         self.aktiv = aktiv
+        self.zustand = zustand
     }
 
     public var body: some View {
@@ -107,6 +127,7 @@ public struct StehtWahl: View {
         if Nachrichtdauerwahl(art: steht.art.wrappedValue).faelltAufAnzeigedauer(textLaeuft: steht.textLaeuft) {
             Text("Der Text läuft nicht durch: Die Uhr nimmt ihre Anzeigedauer.")
                 .font(.caption).foregroundStyle(.secondary)
+            if let zustand { Standarddauerzeile(zustand: zustand) }
         }
     }
 }
@@ -196,6 +217,11 @@ public struct Sendeartwahl: View {
                 .accessibilityLabel("Nachricht zurückziehen")
             }
         }
+        // „Ändern …“ in einem dieser Blätter führt in die Einstellungen; sie
+        // gehen dafür zu.
+        .onChange(of: zustand.einstellungsziel) { _, neu in
+            if neu != nil { zeigeKlang = false; zeigeOptionen = false; zeigeLebensdauer = false }
+        }
     }
 
     /// Das Zeichen allein, solange kein Klang gewählt ist; sonst mit seinem Namen.
@@ -240,7 +266,7 @@ public struct Sendeartwahl: View {
         .popover(isPresented: $zeigeOptionen) {
             Optionenblatt(titel: "Nachricht") {
                 Nachrichtabschnitt(steht: nachricht.steht, aufwecken: nachricht.aufwecken,
-                                   ersetzen: nachricht.ersetzen, aktiv: true)
+                                   ersetzen: nachricht.ersetzen, aktiv: true, zustand: zustand)
             }
         }
     }
@@ -314,17 +340,20 @@ public struct Nachrichtabschnitt: View {
     @Binding var aufwecken: Bool
     @Binding var ersetzen: Bool
     let aktiv: Bool
+    let zustand: AppZustand?
 
-    public init(steht: Stehtbindungen, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>, aktiv: Bool) {
+    public init(steht: Stehtbindungen, aufwecken: Binding<Bool>, ersetzen: Binding<Bool>, aktiv: Bool,
+                zustand: AppZustand? = nil) {
         self.steht = steht
         self._aufwecken = aufwecken
         self._ersetzen = ersetzen
         self.aktiv = aktiv
+        self.zustand = zustand
     }
 
     public var body: some View {
         Section {
-            StehtWahl(steht: steht, aktiv: aktiv)
+            StehtWahl(steht: steht, aktiv: aktiv, zustand: zustand)
             Toggle("Aufwecken", isOn: $aufwecken)
             Toggle("Ersetzen", isOn: $ersetzen)
         } header: {

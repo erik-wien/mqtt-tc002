@@ -93,6 +93,9 @@ public final class AppZustand {
     public var anzeigestand: [UUID: Anzeigestand] = [:]
     /// `GET /api/v1/settings` bzw. `state/settings`.
     public var uhreneinstellungen: [UUID: Geraeteeinstellungen] = [:]
+    /// Wohin die Oberfläche als Nächstes springen soll (`anzeigedauerAendern`);
+    /// die zuständige Ansicht nimmt es entgegen und setzt es zurück auf `nil`.
+    public var einstellungsziel: Einstellungsziel?
     /// Die laufende Anzeige (`state/apps/active` bzw. `currentApp`).
     public var aktiveAnzeige: [UUID: String] = [:]
     /// `GET /api/v1/mqtt/tls`; nur, wo `capabilities.mqttTls` gilt.

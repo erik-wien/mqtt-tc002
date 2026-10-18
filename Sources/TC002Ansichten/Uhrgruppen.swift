@@ -105,6 +105,16 @@ public struct Uhrgruppenziel: Hashable, Sendable {
     public init(uhr: UUID, gruppe: Uhrgruppe) { self.uhr = uhr; self.gruppe = gruppe }
 }
 
+extension Einstellungsziel {
+    /// Die Seite, auf der das Ziel heute liegt. Wandert eine Einstellung in einen
+    /// anderen Bereich, ändert sich nur diese Zuordnung.
+    public var uhrgruppenziel: Uhrgruppenziel {
+        switch self {
+        case .anzeigedauer(let uhr): return Uhrgruppenziel(uhr: uhr, gruppe: .schleife)
+        }
+    }
+}
+
 /// Die Seite einer Gruppe.
 public struct Uhrgruppenseite: View {
     @Bindable var zustand: AppZustand

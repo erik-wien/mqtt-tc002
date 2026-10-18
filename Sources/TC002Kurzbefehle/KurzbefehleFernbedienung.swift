@@ -76,7 +76,7 @@ struct DisplaySchaltenIntent: AppIntent {
     @Parameter(title: "Zustand", default: .an)
     var zustand: AnAusAuswahl
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -111,7 +111,7 @@ struct HelligkeitSetzenIntent: AppIntent {
     @Parameter(title: "Automatisch", description: "An: der Lichtsensor regelt die Helligkeit. Aus: der Wert gilt. Nicht zusammen mit einem Wert und nur bei Uhren mit Lichtsensor.")
     var automatisch: Bool?
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -164,7 +164,7 @@ struct OverlaySetzenIntent: AppIntent {
     @Parameter(title: "Overlay", description: "Name des Overlays, wie ihn die Uhr anbietet. Leer nimmt es weg.")
     var overlay: String?
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -206,7 +206,7 @@ struct MoodlightSetzenIntent: AppIntent {
                inclusiveRange: (0, 100))
     var prozent: Int?
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -266,7 +266,7 @@ struct AnzeigerSetzenIntent: AppIntent {
                inclusiveRange: (0, 65535))
     var blenden: Int?
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -309,7 +309,7 @@ struct AnzeigeBlaetternIntent: AppIntent {
     @Parameter(title: "Richtung", default: .naechste)
     var richtung: BlaetternAuswahl
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {
@@ -337,7 +337,7 @@ struct UhrNeustartenIntent: AppIntent {
         "Startet die Uhr neu. Sie ist danach kurz nicht erreichbar.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Ziele, sonst alle eingerichteten.")
+    @Parameter(title: "Uhr", description: "Leer heißt: die in der App gewählten Empfänger, sonst alle eingerichteten.")
     var uhr: UhrEntity?
 
     static var parameterSummary: some ParameterSummary {

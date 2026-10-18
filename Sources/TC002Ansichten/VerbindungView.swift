@@ -13,10 +13,18 @@ import TC002Modell
 public struct VerbindungView: View {
     @Bindable var zustand: AppZustand
     @State private var thema: Einstellungsthema = .uhren
+    /// Der Weg im Reiter „Uhren“ (Uhr, dann Gruppe), damit sich eine Seite von
+    /// außen aufschlagen lässt (`ziel`).
+    @State private var pfad = NavigationPath()
+    /// Eine Stelle, die der Aufrufer aufgeschlagen haben will; wird hier
+    /// entgegengenommen und auf `nil` gesetzt.
+    private let ziel: Binding<Einstellungsziel?>
 
-    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil) {
+    public init(zustand: AppZustand, fensterOeffnen: ((String) -> Void)? = nil,
+                ziel: Binding<Einstellungsziel?> = .constant(nil)) {
         self.zustand = zustand
         self.fensterOeffnen = fensterOeffnen
+        self.ziel = ziel
     }
 
     /// Wo die virtuelle Uhr aufgeht: am Mac als eigenes Fenster, am iPad als
@@ -44,7 +52,8 @@ public struct VerbindungView: View {
             // eines Bereichs. Die Vorlage (`docs/superpowers/vorlagen/
             // apple-inspektor.md`, „Zweite Ebene: Reiter") nennt genau diese
             // Form: Numbers waehlt den Bereich seines Inspektors so.
-            Picker("Thema", selection: $thema) {
+            Picker("Thema", selection: Binding(get: { thema },
+                                               set: { thema = $0; pfad = NavigationPath() })) {
                 ForEach(Einstellungsthema.allCases) { t in
                     Text(t.titel).tag(t)
                 }
@@ -57,7 +66,7 @@ public struct VerbindungView: View {
             // Ein `NavigationStack` je Reiter: Nur der Reiter „Uhren" fuehrt
             // weiter, aber ein Stapel, der beim Themenwechsel verschwindet,
             // laesst auch den Weg dorthin nicht stehenbleiben.
-            NavigationStack {
+            NavigationStack(path: $pfad) {
                 Einstellungsinhalt(zustand: zustand, thema: thema,
                                    kanon: .schreibtisch,
                                    virtuelleUhrAnsehen: ansehen)
@@ -69,6 +78,16 @@ public struct VerbindungView: View {
         // Abrufe laufen nebeneinander, eine stumme Uhr haelt die uebrigen
         // nicht auf.
         .task { zustand.alleAbfragen() }
+        .onChange(of: ziel.wrappedValue, initial: true) { _, neu in
+            guard let neu else { return }
+            let gruppe = neu.uhrgruppenziel
+            var weg = NavigationPath()
+            weg.append(gruppe.uhr)
+            weg.append(gruppe)
+            thema = .uhren
+            pfad = weg
+            ziel.wrappedValue = nil
+        }
         .sheet(isPresented: $zeigeVirtuelleUhr) { Nebenfenster.virtuelleUhr.inhalt }
     }
 }

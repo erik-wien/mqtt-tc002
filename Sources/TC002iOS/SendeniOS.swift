@@ -59,6 +59,8 @@ struct SendeniOS: View {
     @State private var zeigeKlaenge = false
     @State private var zeigeHilfe = false
     @State private var zeigeUhreinstellungen = false
+    /// Die Gruppe, auf der das Blatt der Uhreinstellungen aufgeht (`nil`: auf der Uhrseite).
+    @State private var uhreinstellungenStart: Uhrgruppenziel?
 
     @MainActor
     init(zustand: AppZustand) {
@@ -438,6 +440,7 @@ struct SendeniOS: View {
             // Einträge eines Menüs: Das System setzt den Stil.
             .buttonStyle(.automatic)
             Button {
+                uhreinstellungenStart = nil
                 zeigeUhreinstellungen = true
             } label: {
                 Label("Einstellungen der Uhr …", systemImage: "gearshape")
@@ -466,15 +469,16 @@ struct SendeniOS: View {
             SteuerungsblattiOS(zustand: zustand)
         }
         .sheet(isPresented: $zeigeUhreinstellungen) {
-            UhreinstellungeniOS(zustand: zustand)
+            UhreinstellungeniOS(zustand: zustand, start: uhreinstellungenStart)
         }
         .sheet(item: $formatteil) { teil in
             FormatblattiOS(zustand: zustand, teil: teil, darstellung: $darstellung, weg: $weg,
-                           tempo: $tempo, iconLaeuftMit: $iconLaeuftMit,
+                           tempo: $tempo,
                            dauerText: $dauerText, art: art, steht: stehtbindungen)
         }
         .sheet(isPresented: $zeigeIcons) {
-            IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, zustand: zustand)
+            IconsblattiOS(platz: platz, gewaehlt: $gewaehltesIcon, iconLaeuftMit: $iconLaeuftMit,
+                          textPasst: passt, zustand: zustand)
         }
         .sheet(isPresented: $zeigeEinstellungen) {
             VerbindungiOS(zustand: zustand)
@@ -493,6 +497,19 @@ struct SendeniOS: View {
         }
         .sheet(isPresented: $zeigeVerlauf) {
             AnzeigeniOS(zustand: zustand)
+        }
+        // „Ändern …“ neben der Anzeigedauer der Uhr: Das offene Blatt (Zeit,
+        // Nachrichtoptionen) muss zu sein, bevor das nächste aufgeht — zwei
+        // Blätter zugleich zeigt SwiftUI nicht, das zweite bliebe stumm aus.
+        .onChange(of: zustand.einstellungsziel) { _, neu in
+            guard let neu else { return }
+            zustand.einstellungsziel = nil
+            formatteil = nil
+            uhreinstellungenStart = neu.uhrgruppenziel
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                zeigeUhreinstellungen = true
+            }
         }
         .onAppear {
             if gewaehltesIcon == nil, !iconNummer.isEmpty {
@@ -793,10 +810,16 @@ struct SendeniOS: View {
                 // `Picker` und nicht einzelne Knoepfe: Nur so traegt der
                 // gewaehlte Eintrag sein Haekchen, wie in den Menues der
                 // Einstellungen auch.
+                // „Schrift der Uhr“ steht bei der Schriftart, wie am Schreibtisch im
+                // Abschnitt „Schrift“. Der Schalter bleibt bedienbar, wenn er die
+                // Auswahl darunter sperrt, sonst käme man von dort nicht zurück.
                 Menu {
+                    Toggle("Schrift der Uhr", isOn: $weg.schriftDerUhr)
+                        .accessibilityHint(Text(AwtrixNG.schriftDerUhrHilfe))
                     Picker("Schriftart", selection: $schrift) {
                         ForEach(Self.schriften, id: \.self) { Text($0).tag($0) }
                     }
+                    .disabled(!AwtrixNG.wirkt(.schriftart, weg: optionen.weg))
                 } label: {
                     // Zeichen und Wert wie beim Groessenmenue daneben, nicht
                     // der blosse Name in Akzentfarbe: Zwischen lauter Symbolen
@@ -805,7 +828,6 @@ struct SendeniOS: View {
                     Label { menuewert(Text(schrift).font(.caption)) } icon: { Image(systemName: "textformat") }
                 }
                 .frame(minWidth: 44, minHeight: 44)
-                .disabled(!AwtrixNG.wirkt(.schriftart, weg: optionen.weg))
                 .accessibilityLabel(Text(lok("Schriftart")) + Text(" ") + Text(schrift))
                 .accessibilityHint(Text(schriftartHinweis))
                 Menu {

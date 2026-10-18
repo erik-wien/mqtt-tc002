@@ -21,13 +21,17 @@ public struct Darstellungsabschnitte: View {
     @Bindable var zustand: AppZustand
     @Binding var wahl: Darstellungswahl
     let weg: SendeWeg
+    /// Bestimmt die Überschrift des Overlays (`Sendeart.overlaytitel`).
+    let art: Sendeart
 
     @State private var zeigePalette = false
 
-    public init(zustand: AppZustand, wahl: Binding<Darstellungswahl>, weg: SendeWeg) {
+    public init(zustand: AppZustand, wahl: Binding<Darstellungswahl>, weg: SendeWeg,
+                art: Sendeart = .anzeige) {
         self.zustand = zustand
         self._wahl = wahl
         self.weg = weg
+        self.art = art
     }
 
     private var regeln: Darstellungsregeln { Darstellungsregeln(weg: weg, wahl: wahl) }
@@ -71,7 +75,7 @@ public struct Darstellungsabschnitte: View {
         }
         .task(id: abrufschluessel) { await zustand.listenFuerZieleHolen(tonlisten: false) }
 
-        Section("Overlay") {
+        Section(art.overlaytitel) {
             namenmenue("Overlay", nullwert: lok("Keines"), auswahl: $wahl.overlay,
                        namen: angebot.overlays)
             namenhinweis(wahl.overlay.map { angebot.ohneOverlay($0) } ?? [])

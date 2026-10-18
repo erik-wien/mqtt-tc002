@@ -330,6 +330,9 @@ final class KnopfstilTests: XCTestCase {
             // ein Blatt oeffnet, wie „Account hinzufuegen" in den
             // Systemeinstellungen.
             "Sources/TC002Ansichten/Uhrenliste.swift": 1,
+            // „Ändern …“ in der Zeile „Standard der Uhr“: ein Weg in die
+            // Einstellungen, kein Befehl, allein neben seiner Beschriftung.
+            "Sources/TC002Ansichten/Standarddauerzeile.swift": 1,
             // „Kein Icon“, „Zurücksetzen“ und „Dateien …“ — dieselbe Bauart,
             // jede für sich allein in ihrer Zeile.
             "Sources/TC002iOS/IconsblattiOS.swift": 3,
