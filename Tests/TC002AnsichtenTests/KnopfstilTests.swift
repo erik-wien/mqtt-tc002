@@ -187,6 +187,8 @@ final class KnopfstilTests: XCTestCase {
             for (i, z) in alle.enumerated() {
                 guard z.nackt.contains("TextField(") || z.nackt.contains("SecureField(") else { continue }
                 if kette(alle, ab: i).contains(".eingabefeld(") { continue }
+                // Das Feld eines `alert` zeichnet das System.
+                if stehtIn(alle, ab: i, einem: ["alert("]) { continue }
                 ohneFassung.append("\(datei):\(i + 1)  \(z.nackt)")
             }
         }

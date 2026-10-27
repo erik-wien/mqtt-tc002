@@ -247,10 +247,6 @@ public struct SendenView: View {
          Iconsammlung(schreibordner: Iconordner.eigene16, kante: 16)]
     }
 
-    private var sammlung: Iconsammlung {
-        Iconsammlung(schreibordner: Iconordner.eigene)
-    }
-
     /// Die Optionen dieser Ansicht als Wertetyp — die einzige Stelle, an der
     /// aus Ansichtszustand ein Auftrag wird.
     private var optionen: Meldungsoptionen {
@@ -273,12 +269,6 @@ public struct SendenView: View {
     private var lebensdauerwahl: Lebensdauerwahl {
         Lebensdauerwahl(behalten: lebensdauerBehalten, zahl: lebensdauerZahl,
                         einheit: lebensdauerEinheit, ablauf: lebensdauerAblauf)
-    }
-
-    private var nachrichtwahl: Nachrichtwahl {
-        Nachrichtwahl(steht: Nachrichtdauerwahl(art: nachrichtSteht, sekunden: nachrichtSekunden,
-                                                durchlaeufe: nachrichtDurchlaeufe),
-                      aufwecken: nachrichtAufwecken, ersetzen: nachrichtErsetzen, klang: nachrichtKlang)
     }
 
     /// Läuft der Text auf mindestens einer Zieluhr durch? Nur dann gibt es
@@ -592,12 +582,16 @@ public struct SendenView: View {
             // Sendeknopf gehalten.
             // Der Grund fuer einen gelben Haken steht neben dem Feld, nicht
             // in einem Dialog (siehe `AppZustand.teilfehler`).
-            Sendeartwahl(zustand: zustand, art: $art,
-                         nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
-                                                       ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
-                         lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
-                                                           einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
-                         kanon: .schreibtisch)
+            HStack(spacing: 8) {
+                Sendeartwahl(zustand: zustand, art: $art,
+                             nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
+                                                           ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
+                             lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                                               einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
+                             kanon: .schreibtisch)
+                Spacer(minLength: 8)
+                Favoritenknoepfe(zustand: zustand, vorgabetitel: text)
+            }
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, gewicht: .teilweise)
@@ -674,6 +668,11 @@ public struct SendenView: View {
             iconNummer = neu?.nummer ?? ""
             iconKanteGemerkt = neu?.kante ?? 8
         }
+        // Ein geladener Favorit schreibt Nummer und Kante in die Ablage; die Wahl
+        // folgt. Passt sie schon, bleibt sie, und die Schleife mit dem Block
+        // darüber schließt sich nicht.
+        .onChange(of: iconNummer) { _, _ in iconNachschlagen() }
+        .onChange(of: iconKanteGemerkt) { _, _ in iconNachschlagen() }
         .onAppear {
             // Nach einem Besuch im Icon-Editor kann das gewaehlte Icon geaendert,
             // umbenannt oder geloescht sein. Deshalb hier neu nachschlagen statt
@@ -1091,53 +1090,30 @@ public struct SendenView: View {
 
 
     private func senden() {
-        if art == .nachricht { nachrichtSenden(); return }
         laeuft = true
-        let anzeigenName = Meldungsplatz.name(fuer: platz)
-        // Momentaufnahme fuer das Slotgedaechtnis: `optionen` ist berechnet,
-        // nicht gespeichert — der Task unten soll den Stand von jetzt sehen,
-        // nicht den beim spaeteren Ausfuehren.
-        let slotOptionen = optionen
-        let slotPlatz = platz
-        let icon = gewaehltesIcon
-        let sammlung = sammlung
         Task {
             // Gerastert wird je Uhr in deren Mass (`senden(rahmenFuer:)`). Ein
             // Fehler dabei, etwa eine unlesbare Icondatei, steht mit dem Namen der
             // Uhr in der Fehlerleiste, statt das Icon kommentarlos wegzulassen.
-            let angekommen = await zustand.senden(
-                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, uhr: $0) },
-                als: anzeigenName,
-                slotOptionen: slotOptionen,
-                slotIcon: icon,
-                slotPlatz: slotPlatz)
+            let angekommen = await zustand.auftragSenden(
+                Sendeauftrag.aus(.standard, zielIDs: zustand.ziele().map(\.id)),
+                bestaende: Iconbestaende.alle())
             laeuft = false
             guard !angekommen.nichts else { return }
             await ausgangZeigen(angekommen)
         }
     }
-}
 
-extension SendenView {
-    /// Die Nachricht geht an alle gewählten Uhren, je in deren Maß, ohne Platz
-    /// und ohne Gedächtnis (`AppZustand.benachrichtigen`).
-    fileprivate func nachrichtSenden() {
-        laeuft = true
-        let o = optionen
-        let icon = gewaehltesIcon
-        let sammlung = sammlung
-        let wahl = nachrichtwahl.optionen(nachrichtentext: o.text)
-        // Für eine Nachricht gilt „Steht …“, nicht die Anzeigedauer.
-        var nachrichtOptionen = o
-        nachrichtOptionen.dauer = nachrichtwahl.dauerSekunden
-        let gesetzt = nachrichtOptionen
-        Task {
-            let angekommen = await zustand.benachrichtigen(
-                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, uhr: $0) }, wahl)
-            laeuft = false
-            guard !angekommen.nichts else { return }
-            await ausgangZeigen(angekommen)
+    /// Schlägt `gewaehltesIcon` zu Nummer und Kante der Ablage nach, wenn es nicht
+    /// schon dazu passt.
+    private func iconNachschlagen() {
+        if iconNummer.isEmpty {
+            if gewaehltesIcon != nil { gewaehltesIcon = nil }
+            return
         }
+        if gewaehltesIcon?.nummer == iconNummer, gewaehltesIcon?.kante == iconKanteGemerkt { return }
+        gewaehltesIcon = Self.sammlungen.flatMap { $0.alle() }
+            .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
     }
 }
 

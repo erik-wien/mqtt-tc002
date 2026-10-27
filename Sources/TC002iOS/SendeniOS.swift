@@ -243,10 +243,13 @@ struct SendeniOS: View {
                         einheit: lebensdauerEinheit, ablauf: lebensdauerAblauf)
     }
 
-    private var nachrichtwahl: Nachrichtwahl {
-        Nachrichtwahl(steht: Nachrichtdauerwahl(art: nachrichtSteht, sekunden: nachrichtSekunden,
-                                                durchlaeufe: nachrichtDurchlaeufe),
-                      aufwecken: nachrichtAufwecken, ersetzen: nachrichtErsetzen, klang: nachrichtKlang)
+    private var sendeartwahl: some View {
+        Sendeartwahl(zustand: zustand, art: $art,
+                     nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
+                                                   ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
+                     lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
+                                                       einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
+                     kanon: .telefon)
     }
 
     /// Läuft der Text auf mindestens einer Zieluhr durch? Nur dann gibt es
@@ -549,6 +552,11 @@ struct SendeniOS: View {
             }
         }
         .onChange(of: gewaehltesIcon?.nummer) { _, neu in iconNummer = neu ?? "" }
+        // Ein geladener Favorit schreibt die Nummer in die Ablage; die Wahl folgt.
+        .onChange(of: iconNummer) { _, neu in
+            guard gewaehltesIcon?.nummer != neu else { return }
+            gewaehltesIcon = neu.isEmpty ? nil : sammlung.alle().first { $0.nummer == neu }
+        }
         // Siehe `ausrichtungPruefen()`. `.task(id:)` statt `.onChange`, damit
         // auch der erste Aufbau abgedeckt ist, bei dem noch nichts gewechselt
         // hat — eine seit je gewaehlte Ausrichtung „rechts" traefe sonst auf
@@ -1078,12 +1086,19 @@ struct SendeniOS: View {
         // Bloecken („Laeuft durch: N Einzelbilder"), und einen Einblendtext
         // gibt es am Finger ohnehin nicht.
         VStack(spacing: 8) {
-            Sendeartwahl(zustand: zustand, art: $art,
-                         nachricht: Nachrichtbindungen(steht: stehtbindungen, aufwecken: $nachrichtAufwecken,
-                                                       ersetzen: $nachrichtErsetzen, klang: $nachrichtKlang),
-                         lebensdauer: Lebensdauerbindungen(behalten: $lebensdauerBehalten, zahl: $lebensdauerZahl,
-                                                           einheit: $lebensdauerEinheit, ablauf: $lebensdauerAblauf),
-                         kanon: .telefon)
+            // Passt die Wahl samt „+ Favorit“ nicht in eine Zeile, rückt der Knopf
+            // rechtsbündig darunter.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    sendeartwahl
+                    Spacer(minLength: 8)
+                    Favoritenknoepfe(zustand: zustand, vorgabetitel: text)
+                }
+                VStack(alignment: .trailing, spacing: 8) {
+                    sendeartwahl
+                    Favoritenknoepfe(zustand: zustand, vorgabetitel: text)
+                }
+            }
             HStack(spacing: 8) {
                 if let offen = zustand.teilfehler {
                     Hilfezeichen(offen, gewicht: .teilweise)
@@ -1137,31 +1152,9 @@ struct SendeniOS: View {
     private func senden() async {
         laeuft = true
         defer { laeuft = false }
-        // Momentaufnahme fuer das Slotgedaechtnis — dieselbe Bauart wie
-        // am Mac (SendenView.senden()). Gerastert wird je Uhr in deren Mass.
-        let slotOptionen = optionen
-        let icon = gewaehltesIcon
-        let sammlung = sammlung
-        // Eine Nachricht belegt keinen Platz und merkt sich nichts.
-        let angekommen: Sendebilanz
-        if art == .nachricht {
-            // Für eine Nachricht gilt „Steht …“, nicht die Anzeigedauer.
-            var nachrichtOptionen = slotOptionen
-            nachrichtOptionen.dauer = nachrichtwahl.dauerSekunden
-            let gesetzt = nachrichtOptionen
-            angekommen = await zustand.benachrichtigen(
-                rahmenFuer: { try Meldungsbau.rahmen(gesetzt, icon: icon, sammlung: sammlung, uhr: $0,
-                                                     bestaende: Self.zusatzBestaende) },
-                nachrichtwahl.optionen(nachrichtentext: slotOptionen.text))
-        } else {
-            angekommen = await zustand.senden(
-                rahmenFuer: { try Meldungsbau.rahmen(slotOptionen, icon: icon, sammlung: sammlung, uhr: $0,
-                                                     bestaende: Self.zusatzBestaende) },
-                als: Meldungsplatz.name(fuer: platz),
-                slotOptionen: slotOptionen,
-                slotIcon: gewaehltesIcon,
-                slotPlatz: platz)
-        }
+        let angekommen = await zustand.auftragSenden(
+            Sendeauftrag.aus(.standard, zielIDs: zustand.ziele().map(\.id)),
+            bestaende: Self.zusatzBestaende())
         if !angekommen.nichts {
             ausgang = angekommen.ganz ? .ganz : .teilweise
             try? await Task.sleep(for: .seconds(1))

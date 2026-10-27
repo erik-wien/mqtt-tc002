@@ -24,7 +24,7 @@ final class NachrichtOberflaecheTests: XCTestCase {
             let text = try quelltext(datei)
             XCTAssertTrue(text.contains("Sendeartwahl(zustand: zustand, art: $art,"), datei)
             XCTAssertTrue(text.contains("gesperrt: art == .nachricht"), "\(datei): Plätze bei „Nachricht“ nicht gesperrt")
-            XCTAssertTrue(text.contains("zustand.benachrichtigen("), "\(datei) sendet keine Nachricht")
+            XCTAssertTrue(text.contains("zustand.auftragSenden("), "\(datei) sendet nicht über den gemeinsamen Weg")
             XCTAssertTrue(text.contains("lebensdauer: lebensdauerwahl.lebensdauer"), "\(datei) schickt keine Lebensdauer")
         }
     }
@@ -49,9 +49,11 @@ final class NachrichtOberflaecheTests: XCTestCase {
     /// Beide Sendeflächen schicken den Klang mit dem Text der Nachricht, und die
     /// Fernbedienung (Mac, iPad, iPhone-Blatt) trägt den Abschnitt „Ton“.
     func testKlangGehtMitUndDieFernbedienungHatTon() throws {
-        for datei in ["Sources/TC002Ansichten/SendenView.swift", "Sources/TC002iOS/SendeniOS.swift"] {
-            XCTAssertTrue(try quelltext(datei).contains("optionen(nachrichtentext:"), "\(datei) schickt keinen Klang")
-        }
+        // Beide Sendeflächen gehen über `auftragSenden`; dort wird die Nachricht gebaut.
+        XCTAssertTrue(try quelltext("Sources/TC002Modell/Favoritenbetrieb.swift").contains("benachrichtigen("),
+                      "der gemeinsame Sendeweg sendet keine Nachricht")
+        XCTAssertTrue(try quelltext("Sources/TC002Modell/Favoritenbetrieb.swift").contains("optionen(nachrichtentext:"),
+                      "der gemeinsame Sendeweg schickt keinen Klang")
         XCTAssertTrue(try quelltext("Sources/TC002Ansichten/Fernbedienung.swift")
             .contains("Tonabschnitt(zustand: zustand, uhr: uhr, kanon: kanon)"))
     }
