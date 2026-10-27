@@ -278,6 +278,18 @@ public final class AppZustand {
     /// entsteht (sie legt beim Anlegen einen Ordner an).
     @ObservationIgnored public lazy var sendeverlauf = Sendeverlauf()
 
+    /// Wohin `senden` die Regler und Bilder der Plätze merkt. Die Naht für Tests.
+    @ObservationIgnored var slotgedaechtnis: Slotgedaechtnis = .gemeinsam
+
+    /// Die Favoriten in Listenreihenfolge; geändert nur über die Favoritenfunktionen,
+    /// die jede Änderung sofort in `favoritenablage` schreiben.
+    public internal(set) var favoriten: [Favorit] = []
+    /// Nur während und kurz nach einer Sendung gesetzt.
+    public var favoritenstand: [UUID: Favoritenstand] = [:]
+    @ObservationIgnored var favoritenablage: Favoritenablage = Favoritenablage()
+    /// Wie lange der Haken nach einer Favoritensendung stehen bleibt. Nur für Tests einstellbar.
+    @ObservationIgnored var favoritenstandDauer: Duration = .seconds(1)
+
     /// Woher die Icons kommen, die eine Verlaufszeile zeigt. Die Naht fuer den
     /// Test — die App laesst sie, wie sie ist.
     @ObservationIgnored
@@ -433,8 +445,11 @@ public final class AppZustand {
                 wolke: Wolkenablage = EchteWolkenablage(),
                 wolkeGewaehlt: Bool = Ablageort.gewaehlt(),
                 wolkeBereit: Bool? = nil,
-                wolkeFrist: TimeInterval = 0.5) {
+                wolkeFrist: TimeInterval = 0.5,
+                favoritenablage: Favoritenablage = Favoritenablage()) {
         self.schluesselbund = schluesselbund
+        self.favoritenablage = favoritenablage
+        favoriten = favoritenablage.alle()
         self.wolke = wolke
         self.wolkeFrist = wolkeFrist
         self.wolkeGewaehlt = wolkeGewaehlt
@@ -1320,16 +1335,16 @@ public final class AppZustand {
     @discardableResult
     func anZiele<Ergebnis: Sendable>(
         _ tat: @escaping @Sendable (Anzeigen, Uhr) throws -> Ergebnis,
-        was: String = "", nur einzige: Uhr? = nil, erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
+        was: String = "", nur einzige: Uhr? = nil, nurIDs: [UUID]? = nil, erledigt: (Uhr, Ergebnis) -> Void) async -> Int {
         let abweisungenVorher = abweisungsZaehler
         // `nur`: genau diese eine Uhr, ob gewählt oder nicht (Steuerungsseite).
-        let ziele = einzige.map { $0.beschickbar ? [$0] : [] } ?? ziele()
+        let ziele = einzige.map { $0.beschickbar ? [$0] : [] } ?? ziele(nur: nurIDs)
         // Wer uebersprungen wird, steht im Protokoll: `ziele()` filtert
         // still heraus, was nicht beschickbar ist — einer MQTT-Uhr fehlt dann
         // das Praefix, einer HTTP-Uhr die Adresse. Ohne diese Zeile faende
         // sich dafuer im Protokoll kein Hinweis, weil dort sonst nur
         // gelungene Sendungen stehen.
-        for uhr in uhren where !ziele.contains(where: { $0.id == uhr.id }) && (einzige != nil ? uhr.id == einzige?.id : istZiel(uhr)) {
+        for uhr in uhren where !ziele.contains(where: { $0.id == uhr.id }) && (einzige != nil ? uhr.id == einzige?.id : (nurIDs?.contains(uhr.id) ?? istZiel(uhr))) {
             log(lokf("%@ übersprungen: %@", uhr.name,
                      uhr.wirksameBetriebsart == .http
                         ? lok("keine Adresse") : lok("kein Präfix — erst abfragen")))
@@ -1433,7 +1448,8 @@ public final class AppZustand {
     public func senden(rahmenFuer bau: @escaping @Sendable (Uhr) throws -> Frame,
                        als name: String, slotOptionen: Meldungsoptionen? = nil,
                        slotIcon: Icon? = nil,
-                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil) async -> Sendebilanz {
+                       slotPlatz: Int? = nil, slotPixel: [String?]? = nil,
+                       nurIDs: [UUID]? = nil) async -> Sendebilanz {
         let abweisungenVorher = abweisungsZaehler
         // Wer es genommen hat, steht im Verlauf — gesammelt waehrend des
         // Sendens, eingetragen danach. Ein Eintrag je Sendung und nicht je Uhr:
@@ -1445,7 +1461,7 @@ public final class AppZustand {
             let frame = try bau(uhr)
             return Zugestellt(frame: frame, weg: try anzeigen.zeigen(frame, auf: name,
                                                                faehigkeiten: listen[uhr.id]))
-        }, was: lokf("Anzeige „%@“", name)) { uhr, zugestellt in
+        }, was: lokf("Anzeige „%@“", name), nurIDs: nurIDs) { uhr, zugestellt in
             let frame = zugestellt.frame
             erreicht.append(uhr.name)
             anzeigeBestaetigt(name, fuer: uhr)
@@ -1468,14 +1484,14 @@ public final class AppZustand {
                 slotInhalt[uhr.id, default: [:]][slotPlatz] = Slotbild(pixel: slotPixel)
             }
             if let slotOptionen {
-                let gemerkt = Slotgedaechtnis.gemeinsam.merken(slotOptionen, icon: slotIcon,
+                let gemerkt = slotgedaechtnis.merken(slotOptionen, icon: slotIcon,
                                                               iconAbstand: uhr.wirksamerIconAbstand,
                                                               fuer: uhr.id, platz: slotPlatz,
                                                               mass: mass)
                 if !gemerkt {
                     log(lokf("%@: Regler für Platz %d nicht gemerkt", uhr.name, slotPlatz))
                 }
-            } else if !Slotgedaechtnis.gemeinsam.vergessen(fuer: uhr.id, platz: slotPlatz) {
+            } else if !slotgedaechtnis.vergessen(fuer: uhr.id, platz: slotPlatz) {
                 log(lokf("%@: alte Regler für Platz %d nicht vergessen", uhr.name, slotPlatz))
             }
             // Erst hier, nach `merken`/`vergessen`: Beide raeumen das gemerkte
@@ -1487,7 +1503,7 @@ public final class AppZustand {
             // zeigte es bis zum Beenden und danach „belegt, Inhalt unbekannt" —
             // fuer ein Bild, das diese Installation selbst geschickt hatte.
             if let slotPixel,
-               !Slotgedaechtnis.gemeinsam.merken(bild: slotPixel, fuer: uhr.id, platz: slotPlatz) {
+               !slotgedaechtnis.merken(bild: slotPixel, fuer: uhr.id, platz: slotPlatz) {
                 log(lokf("%@: Bild für Platz %d nicht gemerkt", uhr.name, slotPlatz))
             }
         }
@@ -1602,18 +1618,19 @@ public final class AppZustand {
     /// kein Slotgedaechtnis, kein Verlauf und keine Belegung.
     @discardableResult
     public func benachrichtigen(rahmenFuer bau: @escaping @Sendable (Uhr) throws -> Frame,
-                                _ optionen: Benachrichtigungsoptionen = .init()) async -> Sendebilanz {
+                                _ optionen: Benachrichtigungsoptionen = .init(),
+                                nurIDs: [UUID]? = nil) async -> Sendebilanz {
         var erreicht: [String] = []
         let listen = faehigkeiten
         // Der Klang geht nur an die Uhren, die ihn spielen; die Nachricht geht
         // an alle (`Klangeignung`).
-        let verteilung = Klangeignung.verteilen(optionen.klang, an: ziele().map(klangziel))
+        let verteilung = Klangeignung.verteilen(optionen.klang, an: ziele(nur: nurIDs).map(klangziel))
         let ziele = await anZiele({ anzeigen, uhr in
             var eigene = optionen
             if let klaenge = verteilung.klaenge[uhr.id] { eigene.klang = klaenge }
             return try anzeigen.benachrichtigen(try bau(uhr), eigene,
                                          faehigkeiten: listen[uhr.id])
-        }, was: lok("Nachricht")) { uhr, weg in
+        }, was: lok("Nachricht"), nurIDs: nurIDs) { uhr, weg in
             erreicht.append(uhr.name)
             if optionen.halten { gehalteneNachrichten.insert(uhr.id) }
             if weg == .mqtt { antwortErwarten(lok("Nachricht"), uhr: uhr) }
@@ -1756,7 +1773,12 @@ public final class AppZustand {
     /// Was „beschickbar" heisst, entscheidet die Betriebsart und nicht mehr
     /// allein das Praefix (`Uhr.beschickbar`): Eine HTTP-Uhr braucht keines
     /// und waere unter dem alten Filter stillschweigend uebersprungen worden.
-    public func ziele() -> [Uhr] {
+    public func ziele() -> [Uhr] { ziele(nur: nil) }
+
+    /// Mit `ids` genau diese Uhren (soweit eingerichtet und beschickbar), unabhängig
+    /// von der Wahl im Zielmenü; ohne `ids` wie `ziele()`.
+    public func ziele(nur ids: [UUID]?) -> [Uhr] {
+        if let ids { return uhren.filter { ids.contains($0.id) && $0.beschickbar } }
         if zielIDs.isEmpty {
             return [aktiveUhr].compactMap { $0 }.filter(\.beschickbar)
         }
