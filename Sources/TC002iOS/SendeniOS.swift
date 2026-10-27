@@ -1180,8 +1180,7 @@ struct SendeniOS: View {
             return
         }
         if gewaehltesIcon?.nummer == iconNummer, gewaehltesIcon?.kante == iconKanteGemerkt { return }
-        gewaehltesIcon = Self.zusatzBestaende().flatMap { $0.alle() }
-            .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
+        gewaehltesIcon = Iconsammlung.finden(nummer: iconNummer, kante: iconKanteGemerkt, in: Self.zusatzBestaende())
     }
 
     /// Eigenes Senden oder ein Favorit aus dem Titelmenü: beide melden an der Stelle des Pfeils.
@@ -1194,7 +1193,7 @@ struct SendeniOS: View {
         laeuft = true
         defer { laeuft = false }
         let angekommen = await zustand.auftragSenden(
-            Sendeauftrag.aus(.standard, zielIDs: zustand.ziele().map(\.id)),
+            Sendeauftrag.aus(.standard, zielIDs: []),
             bestaende: Self.zusatzBestaende())
         if !angekommen.nichts {
             ausgang = angekommen.ganz ? .ganz : .teilweise

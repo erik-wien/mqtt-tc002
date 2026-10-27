@@ -109,8 +109,9 @@ public struct SendenView: View {
         Nachrichtdauerwahl.uebernehmen(in: .standard)
         let nummer = UserDefaults.standard.string(forKey: "senden.icon") ?? ""
         let kante = UserDefaults.standard.object(forKey: "senden.iconkante") as? Int ?? 8
-        _gewaehltesIcon = State(initialValue: nummer.isEmpty ? nil
-            : Self.sammlungen.flatMap { $0.alle() }.first { $0.nummer == nummer && $0.kante == kante })
+        let gefunden = nummer.isEmpty ? nil : Iconsammlung.finden(nummer: nummer, kante: kante, in: Self.sammlungen)
+        if let gefunden, gefunden.kante != kante { UserDefaults.standard.set(gefunden.kante, forKey: "senden.iconkante") }
+        _gewaehltesIcon = State(initialValue: gefunden)
     }
 
     private var zusatzicons: Binding<[Zusatzicon]> {
@@ -679,8 +680,7 @@ public struct SendenView: View {
             // dem gemerkten Wert zu glauben — ist es weg, faellt die Wahl auf
             // „ohne", statt auf eine Datei zu zeigen, die es nicht mehr gibt.
             guard !iconNummer.isEmpty else { return }
-            gewaehltesIcon = Self.sammlungen.flatMap { $0.alle() }
-                .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
+            gewaehltesIcon = Iconsammlung.finden(nummer: iconNummer, kante: iconKanteGemerkt, in: Self.sammlungen)
         }
         .onChange(of: schrift) { _, neu in
             // Nach dem Wechsel gilt die Liste der neuen Schrift. Steht die
@@ -1096,7 +1096,7 @@ public struct SendenView: View {
             // Fehler dabei, etwa eine unlesbare Icondatei, steht mit dem Namen der
             // Uhr in der Fehlerleiste, statt das Icon kommentarlos wegzulassen.
             let angekommen = await zustand.auftragSenden(
-                Sendeauftrag.aus(.standard, zielIDs: zustand.ziele().map(\.id)),
+                Sendeauftrag.aus(.standard, zielIDs: []),
                 bestaende: Iconbestaende.alle())
             laeuft = false
             guard !angekommen.nichts else { return }
@@ -1112,8 +1112,7 @@ public struct SendenView: View {
             return
         }
         if gewaehltesIcon?.nummer == iconNummer, gewaehltesIcon?.kante == iconKanteGemerkt { return }
-        gewaehltesIcon = Self.sammlungen.flatMap { $0.alle() }
-            .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
+        gewaehltesIcon = Iconsammlung.finden(nummer: iconNummer, kante: iconKanteGemerkt, in: Self.sammlungen)
     }
 }
 

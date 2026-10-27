@@ -40,21 +40,21 @@ public struct Favoritenknoepfe: View {
                     // Ein `Label` setzt zwischen Zeichen und Wort einen Abstand, der
                     // die Kapsel am Telefon aus der Zeile der Sendeart drängt.
                     HStack(spacing: 4) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus").accessibilityHidden(true)
                         Text("Favorit")
                     }
                 }
-                .buttonStyle(.bordered)
+                .knopfBefehl()
                 .help("Als Favorit sichern")
             case .bearbeiten:
                 HStack(spacing: 8) {
                     Button("Abbrechen") { zustand.bearbeitungAbbrechen() }
-                        .buttonStyle(.bordered)
+                        .knopfBefehl()
                     Button("Favorit speichern") {
                         titel = zustand.bearbeitung?.titel ?? ""
                         fragt = true
                     }
-                    .buttonStyle(.borderedProminent)
+                    .knopfHaupthandlung()
                 }
             }
         }
@@ -63,7 +63,7 @@ public struct Favoritenknoepfe: View {
         .alert("Favorit sichern", isPresented: $fragt) {
             TextField("Titel", text: $titel)
             Button("Abbrechen", role: .cancel) {}
-            Button(modus == .anlegen ? "Sichern" : "Favorit speichern") {
+            Button(modus == .anlegen ? lok("Sichern") : lok("Favorit speichern")) {
                 if modus == .anlegen {
                     zustand.favoritAnlegen(titel: titel)
                 } else {
