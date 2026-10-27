@@ -4,6 +4,17 @@ import TC002Core
 /// Wie weit die Sendung eines Favoriten ist.
 public enum Favoritenstand: Equatable, Sendable { case laeuft, ganz, teilweise }
 
+/// Ein Favorit, dessen Werte gerade im Senden-Schirm stehen.
+public struct Favoritenbearbeitung: Equatable, Sendable {
+    /// nil: Duplikat, legt beim Speichern neu an.
+    public let favoritID: UUID?
+    public var titel: String
+    /// Beim Duplikat das Original.
+    public let hinter: UUID?
+    /// Stand vor dem ersten Bearbeiten, samt Zielen; „Abbrechen“ stellt ihn her.
+    let vorher: Sendeauftrag
+}
+
 extension AppZustand {
     /// Sendet einen Auftrag so, wie die Senden-Ansicht es täte, aber an `nurIDs`
     /// (nil: an die Wahl des Zielmenüs). Schreibt Slotgedächtnis und Verlauf wie
@@ -59,6 +70,56 @@ extension AppZustand {
 
     public func favoritLoeschen(_ id: UUID) {
         favoritenAendern(Favoriten.entfernen(id, aus: favoriten))
+    }
+
+    /// Hebt den Stand des Senden-Schirms unter dem Titel auf.
+    public func favoritAnlegen(titel: String, ablage: UserDefaults = .standard) {
+        guard let gueltig = Favoriten.gueltigerTitel(titel) else { return }
+        let auftrag = Sendeauftrag.aus(ablage, zielIDs: ziele().map(\.id))
+        favoritenAendern(Favoriten.anfuegen(Favorit(titel: gueltig, auftrag: auftrag), an: favoriten))
+    }
+
+    public func favoritBearbeiten(_ id: UUID, ablage: UserDefaults = .standard) {
+        guard let f = favoriten.first(where: { $0.id == id }) else { return }
+        bearbeitungBeginnen(f, id: f.id, titel: f.titel, hinter: nil, ablage: ablage)
+    }
+
+    public func favoritDuplizieren(_ id: UUID, ablage: UserDefaults = .standard) {
+        guard let f = favoriten.first(where: { $0.id == id }) else { return }
+        bearbeitungBeginnen(f, id: nil, titel: Favoriten.kopietitel(f.titel), hinter: f.id, ablage: ablage)
+    }
+
+    /// Ein zweites Bearbeiten behält den Stand vor dem ersten.
+    private func bearbeitungBeginnen(_ f: Favorit, id: UUID?, titel: String, hinter: UUID?, ablage: UserDefaults) {
+        let vorher = bearbeitung?.vorher ?? Sendeauftrag.aus(ablage, zielIDs: Array(zielIDs))
+        bearbeitung = Favoritenbearbeitung(favoritID: id, titel: titel, hinter: hinter, vorher: vorher)
+        f.auftrag.schreiben(in: ablage)
+        zielIDs = Set(f.auftrag.zielIDs)
+    }
+
+    /// Übernimmt den Stand des Senden-Schirms; die Werte dort bleiben stehen.
+    /// Ist der Favorit inzwischen gelöscht, wird er neu angelegt statt verworfen.
+    public func bearbeitungSpeichern(titel: String, ablage: UserDefaults = .standard) {
+        guard let b = bearbeitung, let gueltig = Favoriten.gueltigerTitel(titel) else { return }
+        let auftrag = Sendeauftrag.aus(ablage, zielIDs: ziele().map(\.id))
+        if let id = b.favoritID, favoriten.contains(where: { $0.id == id }) {
+            favoritenAendern(Favoriten.ersetzen(Favorit(id: id, titel: gueltig, auftrag: auftrag), in: favoriten))
+        } else {
+            let neu = Favorit(titel: gueltig, auftrag: auftrag)
+            if let hinter = b.hinter {
+                favoritenAendern(Favoriten.einfuegen(neu, hinter: hinter, in: favoriten))
+            } else {
+                favoritenAendern(Favoriten.anfuegen(neu, an: favoriten))
+            }
+        }
+        bearbeitung = nil
+    }
+
+    public func bearbeitungAbbrechen(ablage: UserDefaults = .standard) {
+        guard let b = bearbeitung else { return }
+        b.vorher.schreiben(in: ablage)
+        zielIDs = Set(b.vorher.zielIDs)
+        bearbeitung = nil
     }
 
     private func favoritenAendern(_ neu: [Favorit]) {

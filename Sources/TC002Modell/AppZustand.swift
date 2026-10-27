@@ -286,6 +286,8 @@ public final class AppZustand {
     public internal(set) var favoriten: [Favorit] = []
     /// Nur während und kurz nach einer Sendung gesetzt.
     public var favoritenstand: [UUID: Favoritenstand] = [:]
+    /// Der offene Bearbeitungsstand eines Favoriten; nur im Speicher.
+    public internal(set) var bearbeitung: Favoritenbearbeitung?
     @ObservationIgnored var favoritenablage: Favoritenablage = Favoritenablage()
     /// Wie lange der Haken nach einer Favoritensendung stehen bleibt. Nur für Tests einstellbar.
     @ObservationIgnored var favoritenstandDauer: Duration = .seconds(1)
