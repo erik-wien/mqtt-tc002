@@ -65,4 +65,15 @@ final class SeitenleisteTests: XCTestCase {
         XCTAssertEqual(Seitenleiste.breite, Seitenleiste.breiteTouch)
         #endif
     }
+
+    func testBereichsreihenfolgeBleibt() {
+        XCTAssertEqual(SchreibtischView.Bereich.oben, [.senden, .editor, .klaenge, .uhr])
+    }
+
+    func testStandzeichenJeStand() {
+        XCTAssertNil(Favoritenzeile.standzeichen(nil))
+        XCTAssertEqual(Favoritenzeile.standzeichen(.laeuft), .fortschritt)
+        XCTAssertEqual(Favoritenzeile.standzeichen(.ganz), .haken)
+        XCTAssertEqual(Favoritenzeile.standzeichen(.teilweise), .warnung)
+    }
 }

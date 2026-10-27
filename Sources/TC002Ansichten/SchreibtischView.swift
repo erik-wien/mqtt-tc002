@@ -136,9 +136,26 @@ public struct SchreibtischView: View {
         #endif
     }
 
+    /// Ohne Favoriten gibt es den Abschnitt nicht. Kein `tag`: Ein Klick sendet
+    /// und lässt den Bereich stehen; „Bearbeiten“ und „Duplizieren“ führen selbst
+    /// nach „Senden“.
+    private var favoritenabschnitt: some View {
+        Section("Favoriten") {
+            ForEach(zustand.favoriten) { f in
+                Favoritenzeile(zustand: zustand, favorit: f, bestaende: Iconbestaende.alle(),
+                               oeffneSenden: { bereich = .senden })
+            }
+        }
+    }
+
     private var seitenleiste: some View {
-        List(Bereich.oben, selection: $bereich) { b in
-            Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+        List(selection: $bereich) {
+            ForEach(Bereich.oben) { b in
+                // Die Favoriten gehören zu „Senden“ und stehen direkt darunter,
+                // wie die Postfächer unter einem Konto in Mail.
+                Label(lok(b.rawValue), systemImage: b.symbol).tag(b)
+                if b == .senden, !zustand.favoriten.isEmpty { favoritenabschnitt }
+            }
         }
         // Protokoll, Einstellungen (nur iPad) und Hilfe bleiben unten abgesetzt, statt
         // in derselben Liste mitzulaufen — eine zweite List traegt dieselbe
