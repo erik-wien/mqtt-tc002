@@ -33,13 +33,13 @@ public enum Nachrichtdauer: Equatable, Sendable {
 }
 
 /// Die Art der Wahl „Steht …“ ohne Zahl; der Rohwert liegt in `@AppStorage`.
-public enum Nachrichtdauerart: String, CaseIterable, Sendable {
+public enum Nachrichtdauerart: String, CaseIterable, Sendable, Codable {
     case bisZurueckgezogen, sekunden, durchlaeufe
 }
 
 /// Was die Oberfläche von „Steht …“ speichert: die Art und beide Zahlen, damit
 /// ein Wechsel der Art die Zahl der anderen nicht verliert.
-public struct Nachrichtdauerwahl: Equatable, Sendable {
+public struct Nachrichtdauerwahl: Equatable, Sendable, Codable {
     public var art: Nachrichtdauerart
     public var sekunden: Int
     public var durchlaeufe: Int

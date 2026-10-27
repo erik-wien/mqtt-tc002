@@ -61,7 +61,7 @@ public struct Lebensdauerwahl: Equatable, Sendable {
 /// Die Regler einer Nachricht (Oberflächenwort für Benachrichtigung). Vorgaben
 /// der App: Aufwecken und Ersetzen an, „bis ich sie zurückziehe“ (`Nachrichtdauerwahl`).
 /// Eine gehaltene Nachricht hält die Warteschlange an: Jede spätere wartet hinter ihr.
-public struct Nachrichtwahl: Equatable, Sendable {
+public struct Nachrichtwahl: Equatable, Sendable, Codable {
     public static let hoechstdurchlaeufe = 9
 
     public var steht: Nachrichtdauerwahl

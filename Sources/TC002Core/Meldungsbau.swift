@@ -140,6 +140,35 @@ public struct Meldungsoptionen: Sendable, Equatable, Codable {
     /// unverändert schreibt und ältere Dateien den Schlüssel nicht kennen.
     public var zusatzicons: [Zusatzicon]?
 
+    private enum CodingKeys: String, CodingKey {
+        case text, weg, schrift, groesse, fett, farbe, grossbuchstaben, waagrecht, senkrecht, rand,
+             abstand, tempo, iconLaeuftMit, iconModus, dauer, lebensdauer, darstellung, zusatzicons
+    }
+
+    /// Nachsichtig: Außer dem Text darf jedes Feld fehlen und fällt auf die
+    /// Vorgabe zurück, damit Dateien anderer Fassungen und Schreiber lesbar bleiben.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        text = try c.decode(String.self, forKey: .text)
+        weg = try c.decodeIfPresent(SendeWeg.self, forKey: .weg) ?? .pixel
+        schrift = try c.decodeIfPresent(String.self, forKey: .schrift) ?? "Silkscreen"
+        groesse = try c.decodeIfPresent(Double.self, forKey: .groesse) ?? 8
+        fett = try c.decodeIfPresent(Bool.self, forKey: .fett) ?? false
+        farbe = try c.decodeIfPresent(String.self, forKey: .farbe) ?? "#00FF66"
+        grossbuchstaben = try c.decodeIfPresent(Bool.self, forKey: .grossbuchstaben) ?? false
+        waagrecht = try c.decodeIfPresent(SendenHAusrichtung.self, forKey: .waagrecht) ?? .links
+        senkrecht = try c.decodeIfPresent(SendenVAusrichtung.self, forKey: .senkrecht) ?? .mittig
+        rand = try c.decodeIfPresent(Int.self, forKey: .rand) ?? 1
+        abstand = try c.decodeIfPresent(Int.self, forKey: .abstand) ?? 1
+        tempo = try c.decodeIfPresent(Lauftempo.self, forKey: .tempo) ?? .mittel
+        iconLaeuftMit = try c.decodeIfPresent(Bool.self, forKey: .iconLaeuftMit) ?? false
+        iconModus = try c.decodeIfPresent(Iconmodus.self, forKey: .iconModus)
+        dauer = try c.decodeIfPresent(Int.self, forKey: .dauer)
+        lebensdauer = try c.decodeIfPresent(Lebensdauer.self, forKey: .lebensdauer)
+        darstellung = try c.decodeIfPresent(Darstellungswahl.self, forKey: .darstellung)
+        zusatzicons = try c.decodeIfPresent([Zusatzicon].self, forKey: .zusatzicons)
+    }
+
     /// Was die Uhr bekommt: die gewählte oder die Vorgabe; `nil`, wenn
     /// ausgeschaltet.
     public var wirksameLebensdauer: Lebensdauer? {
