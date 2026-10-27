@@ -185,6 +185,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Der Blick folgt den Empfängern, nicht umgekehrt: Wer die gezeigte Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat; wer die Empfänger ändert, sieht nur noch deren Uhren, und fällt die gezeigte heraus, steht der erste Empfänger da."),
                     .absatz("Eine Uhr, die nichts empfangen kann, ist im Blatt als solche gekennzeichnet, und der Hinweis nennt, woran es liegt: einer MQTT-Uhr fehlt das Präfix — dann erst unter „Einstellungen“ „Abfragen“ —, einer HTTP-Uhr die Adresse. Beim Senden wird sie stillschweigend übersprungen, solange das so bleibt. Ist nichts angehakt, geht die Anzeige an die gerade aktive Uhr."),
                     .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht alles, was du schickst, ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
+                    .ueberschrift("Favoriten"),
+                    .absatz("Favoriten stehen in der Seitenleiste unter „Senden“; ein Klick sendet sofort, rechts in der Zeile erscheinen Fortschritt, Haken oder Warnung. Die Befehle („Bearbeiten“, „Duplizieren“, „Umbenennen …“, „Löschen …“) liegen im Kontextmenü, das ein Rechtsklick öffnet."),
+                ]
+                + HilfeInhalt.favoriten
+                + [
                     .ueberschrift("Senden auslösen"),
                     .abbildung(.sendezeile),
                     .absatz("Die Eingabetaste schickt. Am rechten Rand des Feldes steht dafür ein blauer runder Knopf mit Pfeil, den du ebenso anklicken kannst; er erscheint, sobald etwas im Feld steht, und weicht während des Sendens einem Fortschrittsdreher. Ist die Anzeige hinaus, wird er eine Sekunde lang grün und zeigt einen Haken — die Rückmeldung sitzt da, wo du gedrückt hast. Links daneben leert ein ⊗ das Feld. Auf dem iPad heißt die Eingabetaste der Bildschirmtastatur „Senden“."),

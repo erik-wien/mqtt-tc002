@@ -51,10 +51,10 @@ public struct Wolkenabschnitt: View {
             Text("Auf diesem Gerät steht der Abgleich nicht bereit.")
                 .font(fussnote).foregroundStyle(.secondary)
         } else if zustand.wolkeGewaehlt {
-            Text("Icons, Bilder und die zuletzt gesendeten Anzeigen liegen in iCloud.")
+            Text("Icons, Bilder, Favoriten und die zuletzt gesendeten Anzeigen liegen in iCloud.")
                 .font(fussnote).foregroundStyle(.secondary)
         } else {
-            Text("Icons, Bilder und die zuletzt gesendeten Anzeigen bleiben auf diesem Gerät.")
+            Text("Icons, Bilder, Favoriten und die zuletzt gesendeten Anzeigen bleiben auf diesem Gerät.")
                 .font(fussnote).foregroundStyle(.secondary)
         }
     }

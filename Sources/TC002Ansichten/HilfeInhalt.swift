@@ -519,6 +519,15 @@ public enum HilfeInhalt {
         .absatz("Steht neben dem Namen eines Icons „8+16“, existiert es auch in der anderen Größe: ein 8 × 8 und ein 16 × 16 gleichen Namens. Beide bleiben einzeln wählbar; eine Uhr mit acht Zeilen bekommt statt des 16 × 16 immer das 8 × 8."),
     ]
 
+    /// Favoriten: gilt auf beiden Oberflaechen gleich, nur der Ort der Liste
+    /// unterscheidet sich und steht in `HilfeView` bzw. `HilfeiOS`.
+    public static let favoriten: [Hilfebaustein] = [
+        .absatz("„+ Favorit“ steht rechts in der Zeile über dem Eingabefeld, neben „Anzeige | Nachricht“ und der Dauer. Es fragt nach einem Titel — vorbelegt mit dem Text — und hebt alles auf, was „Senden“ gerade einstellt: Text, Format, Icon samt Zusatzicons, Darstellung, Anzeige oder Nachricht mit ihren Optionen, Dauer, Platz und Empfänger."),
+        .absatz("Ein Favorit zu senden schickt ihn sofort an die Uhren, die er gespeichert hat; die Empfängerwahl von „Senden“ bleibt dabei unberührt. Die Rückmeldung — Fortschritt, Haken oder Warnung — steht an der Stelle, die du bedient hast."),
+        .absatz("Jeder Favorit hat vier Befehle: „Bearbeiten“ lädt ihn in „Senden“, wo über dem Eingabefeld „Abbrechen“ und „Favorit speichern“ stehen; „Abbrechen“ stellt die vorherigen Einstellungen wieder her. „Duplizieren“ lädt ihn ebenso und legt beim Speichern einen neuen Favoriten direkt hinter dem Original an. „Umbenennen …“ ändert den Titel, „Löschen …“ fragt nach."),
+        .absatz("Mit eingeschaltetem iCloud-Abgleich stehen die Favoriten auf allen eigenen Geräten. Ändern zwei Geräte zugleich, gilt die zuletzt gespeicherte Liste. Ist das Icon eines Favoriten inzwischen gelöscht, geht er ohne Icon hinaus; ist keine der gespeicherten Uhren mehr eingetragen, erscheint die übliche Fehlermeldung."),
+    ]
+
     /// Wie das Icon in der Vorschau und in der Laufschrift behandelt wird.
     /// Beide Vorschauen spielen animierte Icons ab (`VorschauView`,
     /// `VorschauiOS`), und das Mitscrollen gibt es auf beiden.

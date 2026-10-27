@@ -33,6 +33,7 @@ vorhandene Bestände.
   mit ihrer eigenen Schrift setzt). Fünf Blöcke zeigen die festen Plätze der Uhr.
   Bilder gehen pixelgenau als GIF in dem Maß, das das Display der Zieluhr hat;
   Bewegtes als animiertes GIF.
+- **Favoriten:** „+ Favorit“ hebt alle Einstellungen von „Senden“ unter einem Titel auf; ein Klick (Mac, iPad: Seitenleiste, iPhone: Titelmenü) sendet sie sofort an die gespeicherten Uhren. Bearbeiten, Duplizieren, Umbenennen, Löschen; mit iCloud-Abgleich auf allen Geräten.
 - **Darstellung:** Hintergrundfarbe, Effekte, Overlays (Wetter) und Paletten, die
   die Uhr selbst liefert.
 - **Anzeigen und Nachrichten:** Über dem Eingabefeld wählt ein Segment „Anzeige | Nachricht“.

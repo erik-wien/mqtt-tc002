@@ -160,6 +160,11 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("**Wohin** gesendet wird, steht links oben: „Empfänger“ mit der Zahl der gewählten Uhren. Jede Uhr lässt sich dort einzeln an- und abwählen, dazu „Alle“ und „Nur die gezeigte“. Der Blick folgt den Empfängern: Titelmenü, Vorschau und Punktreihe führen nur die Uhren, an die gesendet wird. Wer die gezeigte Uhr wechselt, sendet weiter dorthin, wo er es eingestellt hat."),
                     .absatz("Eine Uhr, die nichts empfangen kann, wird beim Senden stillschweigend übersprungen: einer MQTT-Uhr fehlt dann das Präfix — dafür unter „Einstellungen“ „Abfragen“ antippen —, einer HTTP-Uhr die Adresse."),
 
+                    .ueberschrift("Favoriten"),
+                    .absatz("Favoriten stehen im Titelmenü von „Senden“ im Abschnitt „Favoriten“; Antippen sendet, die Rückmeldung steht am Sendepfeil. „Favoriten bearbeiten …“ öffnet ein Blatt mit der Liste: Langes Drücken auf eine Zeile zeigt „Bearbeiten“, „Duplizieren“, „Umbenennen …“ und „Löschen …“, ein Wischen nach links löscht."),
+                ]
+                + HilfeInhalt.favoriten
+                + [
                     .ueberschrift("Senden auslösen"),
                     .abbildung(.sendezeile),
                     .absatz("Wie in Nachrichten: Rechts im Feld steht ein blauer runder Knopf mit Pfeil, sobald etwas darin steht. Während des Sendens weicht er einem Fortschrittsdreher; ist die Anzeige hinaus, wird er eine Sekunde lang grün und zeigt einen Haken — die Rückmeldung sitzt da, wo du getippt hast. Links daneben leert ein ⊗ das Feld. Die Eingabetaste der Bildschirmtastatur tut dasselbe, sie heißt dort „Senden“."),
