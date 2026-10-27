@@ -37,23 +37,29 @@ public struct Favoritenknoepfe: View {
                     titel = vorgabetitel
                     fragt = true
                 } label: {
-                    Label("Favorit", systemImage: "plus")
+                    // Ein `Label` setzt zwischen Zeichen und Wort einen Abstand, der
+                    // die Kapsel am Telefon aus der Zeile der Sendeart drängt.
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Favorit")
+                    }
                 }
-                .labelStyle(.titleAndIcon)
-                .knopfBefehl()
+                .buttonStyle(.bordered)
                 .help("Als Favorit sichern")
             case .bearbeiten:
                 HStack(spacing: 8) {
                     Button("Abbrechen") { zustand.bearbeitungAbbrechen() }
-                        .knopfBefehl()
+                        .buttonStyle(.bordered)
                     Button("Favorit speichern") {
                         titel = zustand.bearbeitung?.titel ?? ""
                         fragt = true
                     }
-                    .knopfHaupthandlung()
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }
+        // Kleine Kapseln wie die Knöpfe der Sendeartwahl daneben.
+        .controlSize(.small)
         .alert("Favorit sichern", isPresented: $fragt) {
             TextField("Titel", text: $titel)
             Button("Abbrechen", role: .cancel) {}

@@ -87,6 +87,9 @@ struct SendeniOS: View {
     /// Schreibtisch (`SendenView`).
     @AppStorage("senden.iconeinmal") private var iconEinmal = false
     @AppStorage("senden.icon") private var iconNummer = ""
+    /// Zur Nummer die Kante: Der gemeinsame Sendeweg schlägt Nummer und Kante nach,
+    /// und ein geladener 16×16-Favorit ließe sonst die Kante auf 16 stehen.
+    @AppStorage("senden.iconkante") private var iconKanteGemerkt = 8
     /// Die Zusatzicons, derselbe Schluessel wie am Schreibtisch (`SendenView`).
     @AppStorage("senden.zusatzicons") private var zusatziconsText = ""
     @AppStorage("senden.meldungsplatz") private var platz = 1
@@ -547,16 +550,15 @@ struct SendeniOS: View {
             }
         }
         .onAppear {
-            if gewaehltesIcon == nil, !iconNummer.isEmpty {
-                gewaehltesIcon = sammlung.alle().first { $0.nummer == iconNummer }
-            }
+            if gewaehltesIcon == nil, !iconNummer.isEmpty { iconNachschlagen() }
         }
-        .onChange(of: gewaehltesIcon?.nummer) { _, neu in iconNummer = neu ?? "" }
+        .onChange(of: gewaehltesIcon) { _, neu in
+            iconNummer = neu?.nummer ?? ""
+            iconKanteGemerkt = neu?.kante ?? 8
+        }
         // Ein geladener Favorit schreibt die Nummer in die Ablage; die Wahl folgt.
-        .onChange(of: iconNummer) { _, neu in
-            guard gewaehltesIcon?.nummer != neu else { return }
-            gewaehltesIcon = neu.isEmpty ? nil : sammlung.alle().first { $0.nummer == neu }
-        }
+        .onChange(of: iconNummer) { _, _ in iconNachschlagen() }
+        .onChange(of: iconKanteGemerkt) { _, _ in iconNachschlagen() }
         // Siehe `ausrichtungPruefen()`. `.task(id:)` statt `.onChange`, damit
         // auch der erste Aufbau abgedeckt ist, bei dem noch nichts gewechselt
         // hat — eine seit je gewaehlte Ausrichtung „rechts" traefe sonst auf
@@ -1091,7 +1093,7 @@ struct SendeniOS: View {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) {
                     sendeartwahl
-                    Spacer(minLength: 8)
+                    Spacer(minLength: 0)
                     Favoritenknoepfe(zustand: zustand, vorgabetitel: text)
                 }
                 VStack(alignment: .trailing, spacing: 8) {
@@ -1147,6 +1149,18 @@ struct SendeniOS: View {
         }.value
         guard !Task.isCancelled else { return }
         laufschriftFrames = frames
+    }
+
+    /// Schlägt `gewaehltesIcon` zu Nummer und Kante der Ablage nach, wenn es nicht
+    /// schon dazu passt; gesucht wird in allen Beständen des Sendewegs.
+    private func iconNachschlagen() {
+        if iconNummer.isEmpty {
+            if gewaehltesIcon != nil { gewaehltesIcon = nil }
+            return
+        }
+        if gewaehltesIcon?.nummer == iconNummer, gewaehltesIcon?.kante == iconKanteGemerkt { return }
+        gewaehltesIcon = Self.zusatzBestaende().flatMap { $0.alle() }
+            .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
     }
 
     private func senden() async {
