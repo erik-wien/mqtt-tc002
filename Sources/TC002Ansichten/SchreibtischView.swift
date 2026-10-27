@@ -140,9 +140,10 @@ public struct SchreibtischView: View {
     /// und lässt den Bereich stehen; „Bearbeiten“ und „Duplizieren“ führen selbst
     /// nach „Senden“.
     private var favoritenabschnitt: some View {
-        Section("Favoriten") {
+        let bestaende = Iconbestaende.alle()
+        return Section("Favoriten") {
             ForEach(zustand.favoriten) { f in
-                Favoritenzeile(zustand: zustand, favorit: f, bestaende: Iconbestaende.alle(),
+                Favoritenzeile(zustand: zustand, favorit: f, bestaende: bestaende,
                                oeffneSenden: { bereich = .senden })
             }
         }

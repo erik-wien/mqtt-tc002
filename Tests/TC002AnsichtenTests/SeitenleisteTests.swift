@@ -76,4 +76,16 @@ final class SeitenleisteTests: XCTestCase {
         XCTAssertEqual(Favoritenzeile.standzeichen(.ganz), .haken)
         XCTAssertEqual(Favoritenzeile.standzeichen(.teilweise), .warnung)
     }
+
+    func testEingabestandUebernimmtFavoritenstand() {
+        let a = UUID(), b = UUID()
+        typealias Z = Favoritenzeile
+        XCTAssertFalse(Z.eingabestand(laeuft: false, ausgang: .offen, favoritenstaende: [:]).laeuft)
+        XCTAssertTrue(Z.eingabestand(laeuft: false, ausgang: .offen, favoritenstaende: [a: .laeuft]).laeuft)
+        XCTAssertEqual(Z.eingabestand(laeuft: false, ausgang: .offen, favoritenstaende: [a: .ganz]).ausgang, .ganz)
+        XCTAssertEqual(Z.eingabestand(laeuft: false, ausgang: .offen, favoritenstaende: [a: .ganz, b: .teilweise]).ausgang, .teilweise)
+        // Der eigene Ausgang hat Vorrang.
+        XCTAssertEqual(Z.eingabestand(laeuft: false, ausgang: .teilweise, favoritenstaende: [a: .ganz]).ausgang, .teilweise)
+        XCTAssertTrue(Z.eingabestand(laeuft: true, ausgang: .offen, favoritenstaende: [:]).laeuft)
+    }
 }

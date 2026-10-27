@@ -170,7 +170,11 @@ final class SendefeldTests: XCTestCase {
         XCTAssertTrue(eingabe.contains("senden: sendenMoeglich ? { Task { await senden() } } : nil"),
                       "im Eingabefeld steht kein Sendepfeil mehr — mit unten liegender Tastatur "
                       + "ist ein getippter Text dann nicht abzuschicken")
-        XCTAssertTrue(eingabe.contains("laeuft: laeuft") && eingabe.contains("ausgang: ausgang"),
+        // Der Stand kommt über `eingabestand`, das Dreher und Haken des eigenen
+        // Sendens und eines Favoriten aus dem Titelmenü zusammenführt.
+        XCTAssertTrue(eingabe.contains("laeuft: eingabestand.laeuft")
+                      && eingabe.contains("ausgang: eingabestand.ausgang")
+                      && text.contains("Favoritenzeile.eingabestand(laeuft: laeuft, ausgang: ausgang,"),
                       "Dreher und Haken teilen sich die Stelle nicht mehr mit dem Pfeil — dann "
                       + "stehen dort zwei Dinge nebeneinander")
     }

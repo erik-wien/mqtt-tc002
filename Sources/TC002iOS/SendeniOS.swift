@@ -58,9 +58,7 @@ struct SendeniOS: View {
     @State private var zeigeUhr = false
     @State private var zeigeKlaenge = false
     @State private var zeigeHilfe = false
-    /// Die Dialoge der Favoriten hängen außerhalb des Titelmenüs: Ein Menü trägt keine.
-    @State private var favUmbenennen: Favorit?
-    @State private var favLoeschen: Favorit?
+    @State private var zeigeFavoriten = false
 
     @MainActor
     init(zustand: AppZustand) {
@@ -476,10 +474,21 @@ struct SendeniOS: View {
     private var titelmenue: some View {
         if !zustand.favoriten.isEmpty {
             Section("Favoriten") {
+                let bestaende = Self.zusatzBestaende()
                 ForEach(zustand.favoriten) { f in
-                    Favoritenzeile.menue(zustand: zustand, favorit: f, bestaende: Iconbestaende.mitMitgeliefertem(),
-                                         umbenennen: { favUmbenennen = f }, loeschen: { favLoeschen = f })
+                    Button {
+                        Task { await zustand.favoritSenden(f.id, bestaende: bestaende) }
+                    } label: {
+                        Label { Text(verbatim: f.titel) } icon: { Image(systemName: "star") }
+                    }
+                    .buttonStyle(.automatic)
                 }
+                Button {
+                    zeigeFavoriten = true
+                } label: {
+                    Label("Favoriten bearbeiten …", systemImage: "pencil")
+                }
+                .buttonStyle(.automatic)
             }
         }
         if zustand.vorschauuhren().count > 1 {
@@ -517,7 +526,7 @@ struct SendeniOS: View {
 
     var body: some View {
         rumpf
-        .favoritendialoge(zustand: zustand, umbenennen: $favUmbenennen, loeschen: $favLoeschen)
+        .sheet(isPresented: $zeigeFavoriten) { FavoritenblattiOS(zustand: zustand) }
         .sheet(isPresented: $zeigeUhr) {
             UhrblattiOS(zustand: zustand)
         }
@@ -1122,8 +1131,8 @@ struct SendeniOS: View {
                 .focused($amTextfeld)
                 .eingabefeld(loeschbar: $text,
                              senden: sendenMoeglich ? { Task { await senden() } } : nil,
-                             laeuft: laeuft,
-                             ausgang: ausgang,
+                             laeuft: eingabestand.laeuft,
+                             ausgang: eingabestand.ausgang,
                              form: .kapsel)
                 .submitLabel(.send)
                 .disabled(laeuft)
@@ -1173,6 +1182,12 @@ struct SendeniOS: View {
         if gewaehltesIcon?.nummer == iconNummer, gewaehltesIcon?.kante == iconKanteGemerkt { return }
         gewaehltesIcon = Self.zusatzBestaende().flatMap { $0.alle() }
             .first { $0.nummer == iconNummer && $0.kante == iconKanteGemerkt }
+    }
+
+    /// Eigenes Senden oder ein Favorit aus dem Titelmenü: beide melden an der Stelle des Pfeils.
+    private var eingabestand: (laeuft: Bool, ausgang: Sendeschau) {
+        Favoritenzeile.eingabestand(laeuft: laeuft, ausgang: ausgang,
+                                    favoritenstaende: zustand.favoritenstand)
     }
 
     private func senden() async {

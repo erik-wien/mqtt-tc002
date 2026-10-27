@@ -69,26 +69,17 @@ public struct Favoritenzeile: View {
 }
 
 extension Favoritenzeile {
-    /// Die Form für das Titelmenü am Telefon: Ein Tippen sendet, langes Drücken
-    /// öffnet die übrigen Befehle. Ein Kontextmenü in einem Menü gibt es nicht.
-    /// Die Dialoge liegen beim Aufrufer (`favoritendialoge`).
-    @MainActor
-    public static func menue(zustand: AppZustand, favorit: Favorit, bestaende: [Iconsammlung],
-                             umbenennen: @escaping () -> Void, loeschen: @escaping () -> Void) -> some View {
-        let senden = { Task { await zustand.favoritSenden(favorit.id, bestaende: bestaende) } }
-        return Menu {
-            Button("Senden", action: { senden() })
-            Button("Bearbeiten") { zustand.favoritBearbeiten(favorit.id) }
-            Button("Duplizieren") { zustand.favoritDuplizieren(favorit.id) }
-            Button("Umbenennen …", action: umbenennen)
-            Button("Löschen …", role: .destructive, action: loeschen)
-        } label: {
-            Label {
-                Text(verbatim: favorit.titel)
-            } icon: {
-                Image(systemName: "star")
-            }
-        } primaryAction: { senden() }
+    /// Was die Eingabezeile am Telefon an der Stelle des Sendepfeils zeigt: der
+    /// eigene Stand hat Vorrang, sonst der jüngste Stand eines Favoriten aus dem
+    /// Titelmenü. Laufend zählt wie das eigene Senden.
+    public static func eingabestand(laeuft: Bool, ausgang: Sendeschau,
+                                    favoritenstaende: [UUID: Favoritenstand]) -> (laeuft: Bool, ausgang: Sendeschau) {
+        let staende = favoritenstaende.values
+        let aktiv = laeuft || staende.contains(.laeuft)
+        guard ausgang == .offen else { return (aktiv, ausgang) }
+        if staende.contains(.teilweise) { return (aktiv, .teilweise) }
+        if staende.contains(.ganz) { return (aktiv, .ganz) }
+        return (aktiv, .offen)
     }
 }
 
@@ -102,6 +93,7 @@ struct Favoritenstandsymbol: View {
         case nil: EmptyView()
         case .fortschritt?:
             ProgressView().controlSize(.small)
+                .accessibilityLabel(Text(lok("Wird gesendet")))
         case .haken?:
             Image(systemName: "checkmark").foregroundStyle(Warnfarbe.erfolg)
                 .frame(width: mass, height: mass)
@@ -116,10 +108,10 @@ struct Favoritenstandsymbol: View {
 
 extension View {
     /// Umbenennen (Systemdialog mit Textfeld) und Löschen (Bestätigung). Der
-    /// Aufrufer hält den Zustand: Ein Menü kann keine Dialoge tragen, am
-    /// Telefon hängen sie darum außerhalb des Titelmenüs.
+    /// Aufrufer hält den Zustand, damit auch ein Wischen in der Liste
+    /// dieselbe Bestätigung auslösen kann.
     public func favoritendialoge(zustand: AppZustand, umbenennen: Binding<Favorit?>,
-                          loeschen: Binding<Favorit?>) -> some View {
+                                 loeschen: Binding<Favorit?>) -> some View {
         modifier(Favoritendialoge(zustand: zustand, umbenennen: umbenennen, loeschen: loeschen))
     }
 }
