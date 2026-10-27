@@ -186,7 +186,7 @@ private enum Abschnitt: String, CaseIterable, Identifiable {
                     .absatz("Eine Uhr, die nichts empfangen kann, ist im Blatt als solche gekennzeichnet, und der Hinweis nennt, woran es liegt: einer MQTT-Uhr fehlt das Präfix — dann erst unter „Einstellungen“ „Abfragen“ —, einer HTTP-Uhr die Adresse. Beim Senden wird sie stillschweigend übersprungen, solange das so bleibt. Ist nichts angehakt, geht die Anzeige an die gerade aktive Uhr."),
                     .absatz("Dieser Knopf erscheint erst ab zwei eingerichteten Uhren; bei nur einer geht alles, was du schickst, ohne weitere Wahl automatisch an sie. Ist keine Uhr fertig eingerichtet, bleibt der Sendeknopf gesperrt und daneben steht der Hinweis, zuerst unter „Einstellungen“ eine Uhr einzutragen und abzufragen."),
                     .ueberschrift("Favoriten"),
-                    .absatz("Favoriten stehen in der Seitenleiste unter „Senden“; ein Klick sendet sofort, rechts in der Zeile erscheinen Fortschritt, Haken oder Warnung. Die Befehle („Bearbeiten“, „Duplizieren“, „Umbenennen …“, „Löschen …“) liegen im Kontextmenü, das ein Rechtsklick öffnet."),
+                    .absatz("Favoriten stehen in der Seitenleiste unter „Senden“; ein Klick sendet sofort, rechts in der Zeile erscheinen Fortschritt, Haken oder Warnung. Die Befehle („Bearbeiten“, „Duplizieren“, „Umbenennen …“, „Löschen …“) liegen im Kontextmenü, das ein Rechtsklick (am iPad langes Drücken) öffnet."),
                 ]
                 + HilfeInhalt.favoriten
                 + [

@@ -523,7 +523,7 @@ public enum HilfeInhalt {
     /// unterscheidet sich und steht in `HilfeView` bzw. `HilfeiOS`.
     public static let favoriten: [Hilfebaustein] = [
         .absatz("„+ Favorit“ steht rechts in der Zeile über dem Eingabefeld, neben „Anzeige | Nachricht“ und der Dauer. Es fragt nach einem Titel — vorbelegt mit dem Text — und hebt alles auf, was „Senden“ gerade einstellt: Text, Format, Icon samt Zusatzicons, Darstellung, Anzeige oder Nachricht mit ihren Optionen, Dauer, Platz und Empfänger."),
-        .absatz("Ein Favorit zu senden schickt ihn sofort an die Uhren, die er gespeichert hat; die Empfängerwahl von „Senden“ bleibt dabei unberührt. Die Rückmeldung — Fortschritt, Haken oder Warnung — steht an der Stelle, die du bedient hast."),
+        .absatz("Ein Klick auf einen Favoriten schickt ihn sofort an die Uhren, die er gespeichert hat; die Empfängerwahl von „Senden“ bleibt dabei unberührt. Die Rückmeldung — Fortschritt, Haken oder Warnung — steht an der Stelle, die du bedient hast."),
         .absatz("Jeder Favorit hat vier Befehle: „Bearbeiten“ lädt ihn in „Senden“, wo über dem Eingabefeld „Abbrechen“ und „Favorit speichern“ stehen; „Abbrechen“ stellt die vorherigen Einstellungen wieder her. „Duplizieren“ lädt ihn ebenso und legt beim Speichern einen neuen Favoriten direkt hinter dem Original an. „Umbenennen …“ ändert den Titel, „Löschen …“ fragt nach."),
         .absatz("Mit eingeschaltetem iCloud-Abgleich stehen die Favoriten auf allen eigenen Geräten. Ändern zwei Geräte zugleich, gilt die zuletzt gespeicherte Liste. Ist das Icon eines Favoriten inzwischen gelöscht, geht er ohne Icon hinaus; ist keine der gespeicherten Uhren mehr eingetragen, erscheint die übliche Fehlermeldung."),
     ]
