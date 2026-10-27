@@ -928,3 +928,14 @@ public struct Iconsammlung {
         }
     }
 }
+
+public extension Iconsammlung {
+    /// Das Icon zu Nummer und Kante; fehlt die Kante in dieser Größe, das erste
+    /// mit dieser Nummer. Die Ablage der Oberfläche trug die Kante nicht immer,
+    /// ein Vorgabewert 8 darf ein gewähltes 16×16-Icon nicht verlieren.
+    static func finden(nummer: String, kante: Int, in bestaende: [Iconsammlung]) -> Icon? {
+        let alle = bestaende.flatMap { $0.alle() }
+        return alle.first { $0.nummer == nummer && $0.kante == kante }
+            ?? alle.first { $0.nummer == nummer }
+    }
+}

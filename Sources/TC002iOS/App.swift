@@ -53,7 +53,7 @@ struct TC002iOSApp: App {
                 // Eine offene MQTT-Verbindung ueberlebt den Hintergrund nicht.
                 switch neu {
                 case .background: zustand.inDenHintergrund()
-                case .active:     zustand.ausDemHintergrund()
+                case .active:     zustand.ausDemHintergrund(); zustand.favoritenNeuLesen()
                 default:          break
                 }
             }

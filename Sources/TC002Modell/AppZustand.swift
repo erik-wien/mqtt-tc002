@@ -279,7 +279,8 @@ public final class AppZustand {
     @ObservationIgnored public lazy var sendeverlauf = Sendeverlauf()
 
     /// Wohin `senden` die Regler und Bilder der Plätze merkt. Die Naht für Tests.
-    @ObservationIgnored var slotgedaechtnis: Slotgedaechtnis = .gemeinsam
+    @ObservationIgnored var slotgedaechtnisErsatz: Slotgedaechtnis?
+    var slotgedaechtnis: Slotgedaechtnis { slotgedaechtnisErsatz ?? .gemeinsam }
 
     /// Die Favoriten in Listenreihenfolge; geändert nur über die Favoritenfunktionen,
     /// die jede Änderung sofort in `favoritenablage` schreiben.
@@ -2323,6 +2324,7 @@ public final class AppZustand {
         wolkeLaeuft = false
         wolkeBereit = ergebnis.bereit
         wolkeGewaehlt = ergebnis.gewaehlt
+        favoritenNeuLesen()
         if ergebnis.bilanz.kopiert > 0 {
             log(lokf("iCloud: %d Dateien übernommen", ergebnis.bilanz.kopiert))
         }

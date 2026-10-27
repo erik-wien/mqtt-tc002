@@ -73,7 +73,7 @@ final class AblageortTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: oertlich.path))
     }
 
-    /// Angelegt werden alle fünf, unter genau diesen Namen. Ein vergessener
+    /// Angelegt werden alle sieben, unter genau diesen Namen. Ein vergessener
     /// Bestand faellt sonst erst dem Anwender auf. Die Zahl steht im Namen,
     /// damit ein siebter Bestand hier haengenbleibt und nicht
     /// stillschweigend durchrutscht: Wer einen anlegt, ohne ihn dem Abgleich

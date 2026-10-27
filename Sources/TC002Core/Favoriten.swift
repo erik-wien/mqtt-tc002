@@ -67,24 +67,70 @@ public enum Favoriten {
 /// Die Favoriten als eine Datei für die ganze Liste. Bei Änderungen auf zwei
 /// Geräten gewinnt, wer zuletzt schreibt; eine Datei je Gerät wie beim
 /// `Sendeverlauf` würde die Reihenfolge und das Löschen unlösbar machen.
+///
+/// Ohne Ordnerangabe wird der gemeinsame Ordner bei jedem Zugriff neu
+/// aufgelöst, damit ein Umschalten des iCloud-Abgleichs greift.
 public final class Favoritenablage: @unchecked Sendable {
-    private let datei: URL
-
-    public init(ordner: URL = Ablageort.gemeinsam.ordner(.favoriten)) {
-        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
-        datei = ordner.appendingPathComponent("Favoriten.json")
+    /// Was in der Datei steht. Nur `fehlt` und `gelesen` erlauben das Schreiben:
+    /// Bei `teilweise` und `unlesbar` (iCloud-Platzhalter, Eintrag einer neueren
+    /// Fassung, beschädigte Datei) würde ein Schreiben fortwerfen, was nur dieser
+    /// Lesevorgang nicht verstanden hat.
+    public enum Lesestand: Equatable, Sendable {
+        case fehlt
+        case gelesen([Favorit])
+        case teilweise([Favorit])
+        case unlesbar
     }
 
-    /// Fehlende oder unlesbare Datei ergibt eine leere Liste.
+    private let ordnerErsatz: URL?
+
+    public init(ordner: URL? = nil) {
+        ordnerErsatz = ordner
+    }
+
+    private var ordner: URL { ordnerErsatz ?? Ablageort.gemeinsam.ordner(.favoriten) }
+    private var datei: URL { ordner.appendingPathComponent("Favoriten.json") }
+
+    /// Ein Eintrag, der sich nicht lesen lässt, kostet nur sich selbst.
+    private struct Eintrag: Decodable {
+        let favorit: Favorit?
+        init(from decoder: Decoder) throws { favorit = try? Favorit(from: decoder) }
+    }
+
+    public func lesen() -> Lesestand {
+        let url = datei
+        guard let daten = try? Data(contentsOf: url) else {
+            let platzhalter = url.deletingLastPathComponent()
+                .appendingPathComponent("." + url.lastPathComponent + ".icloud")
+            let da = FileManager.default.fileExists(atPath: url.path)
+                || FileManager.default.fileExists(atPath: platzhalter.path)
+            return da ? .unlesbar : .fehlt
+        }
+        guard let eintraege = try? JSONDecoder().decode([Eintrag].self, from: daten) else { return .unlesbar }
+        let liste = eintraege.compactMap(\.favorit)
+        return liste.count == eintraege.count ? .gelesen(liste) : .teilweise(liste)
+    }
+
+    /// Was sich anzeigen lässt; bei unlesbarer Datei leer.
     public func alle() -> [Favorit] {
-        guard let daten = try? Data(contentsOf: datei),
-              let liste = try? JSONDecoder().decode([Favorit].self, from: daten) else { return [] }
-        return liste
+        switch lesen() {
+        case .fehlt, .unlesbar: return []
+        case .gelesen(let l), .teilweise(let l): return l
+        }
+    }
+
+    /// Ob `sichern` schreiben würde.
+    public var schreibbar: Bool {
+        switch lesen() {
+        case .fehlt, .gelesen: return true
+        case .teilweise, .unlesbar: return false
+        }
     }
 
     @discardableResult
     public func sichern(_ liste: [Favorit]) -> Bool {
-        guard let daten = try? JSONEncoder().encode(liste) else { return false }
+        guard schreibbar, let daten = try? JSONEncoder().encode(liste) else { return false }
+        try? FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
         return (try? daten.write(to: datei, options: .atomic)) != nil
     }
 }

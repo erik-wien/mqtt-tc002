@@ -16,6 +16,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
 
     private let uhrA = Uhr(name: "Wohnzimmer", host: "", praefix: "wz/uhr", betriebsart: .mqtt)
     private let uhrB = Uhr(name: "Küche", host: "", praefix: "kue/uhr", betriebsart: .mqtt)
+    private let uhrOhne = Uhr(name: "Flur", host: "", praefix: "", betriebsart: .mqtt)
 
     override func setUp() {
         super.setUp()
@@ -33,13 +34,24 @@ final class FavoritenbearbeitungTests: XCTestCase {
         super.tearDown()
     }
 
+    private var ablageordner = FileManager.default.temporaryDirectory
+    private var ablage = Favoritenablage(ordner: FileManager.default.temporaryDirectory)
+
+    /// Legt die Liste in die Datei, wie es ein früheres Speichern getan hätte.
+    private func einlegen(_ z: AppZustand, _ liste: [Favorit]) {
+        ablage.sichern(liste)
+        z.favoritenNeuLesen()
+    }
+
     private func zustand() throws -> AppZustand {
-        d.set(try JSONEncoder().encode([uhrA, uhrB]), forKey: "uhren")
+        d.set(try JSONEncoder().encode([uhrA, uhrB, uhrOhne]), forKey: "uhren")
         d.set(uhrA.id.uuidString, forKey: "aktiveID")
         d.set(try JSONEncoder().encode(Set([uhrA.id])), forKey: "zielIDs")
         let u = FileManager.default.temporaryDirectory.appendingPathComponent("favoriten-" + UUID().uuidString)
         ordner.append(u)
-        return AppZustand(schluesselbund: Schluesselbunddoppelgaenger(), favoritenablage: Favoritenablage(ordner: u))
+        ablageordner = u
+        ablage = Favoritenablage(ordner: u)
+        return AppZustand(schluesselbund: Schluesselbunddoppelgaenger(), favoritenablage: ablage)
     }
 
     private func fav(_ titel: String, text: String, ziele: [UUID]) -> Favorit {
@@ -64,7 +76,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
     func testBearbeitenLaedtUndAbbrechenStelltHer() throws {
         let z = try zustand()
         let f = fav("F", text: "fav", ziele: [uhrB.id])
-        z.favoriten = [f]
+        einlegen(z, [f])
         suite.set("vorher", forKey: "senden.text")
         z.favoritBearbeiten(f.id, ablage: suite)
         XCTAssertEqual(suite.string(forKey: "senden.text"), "fav")
@@ -80,7 +92,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
         let z = try zustand()
         let f1 = fav("F1", text: "eins", ziele: [uhrB.id])
         let f2 = fav("F2", text: "zwei", ziele: [uhrB.id])
-        z.favoriten = [f1, f2]
+        einlegen(z, [f1, f2])
         suite.set("vorher", forKey: "senden.text")
         z.favoritBearbeiten(f1.id, ablage: suite)
         z.favoritBearbeiten(f2.id, ablage: suite)
@@ -93,7 +105,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
     func testSpeichernUeberschreibtFavorit() throws {
         let z = try zustand()
         let f = fav("F", text: "fav", ziele: [uhrB.id])
-        z.favoriten = [f]
+        einlegen(z, [f])
         z.favoritBearbeiten(f.id, ablage: suite)
         suite.set("neu", forKey: "senden.text")
         z.bearbeitungSpeichern(titel: "Neu", ablage: suite)
@@ -108,7 +120,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
     func testSpeichernMitLeeremTitelTutNichts() throws {
         let z = try zustand()
         let f = fav("F", text: "fav", ziele: [uhrB.id])
-        z.favoriten = [f]
+        einlegen(z, [f])
         z.favoritBearbeiten(f.id, ablage: suite)
         z.bearbeitungSpeichern(titel: " ", ablage: suite)
         XCTAssertNotNil(z.bearbeitung)
@@ -119,7 +131,7 @@ final class FavoritenbearbeitungTests: XCTestCase {
         let z = try zustand()
         let a = fav("A", text: "a", ziele: [uhrB.id])
         let b = fav("B", text: "b", ziele: [uhrB.id])
-        z.favoriten = [a, b]
+        einlegen(z, [a, b])
         z.favoritDuplizieren(a.id, ablage: suite)
         XCTAssertNil(z.bearbeitung?.favoritID)
         XCTAssertEqual(z.bearbeitung?.titel, Favoriten.kopietitel("A"))
@@ -139,12 +151,52 @@ final class FavoritenbearbeitungTests: XCTestCase {
     func testSpeichernNachLoeschenLegtNeuAn() throws {
         let z = try zustand()
         let f = fav("F", text: "fav", ziele: [uhrB.id])
-        z.favoriten = [f]
+        einlegen(z, [f])
         z.favoritBearbeiten(f.id, ablage: suite)
         z.favoritLoeschen(f.id)
         z.bearbeitungSpeichern(titel: "F", ablage: suite)
         XCTAssertEqual(z.favoriten.count, 1)
         XCTAssertEqual(z.favoriten[0].auftrag.optionen.text, "fav")
         XCTAssertNil(z.bearbeitung)
+    }
+
+    func testAnlegenBehaeltAuchEineNichtBeschickbareGewaehlteUhr() throws {
+        let z = try zustand()
+        z.zielIDs = [uhrA.id, uhrOhne.id]
+        z.favoritAnlegen(titel: "F", ablage: suite)
+        XCTAssertEqual(Set(z.favoriten.last?.auftrag.zielIDs ?? []), [uhrA.id, uhrOhne.id])
+    }
+
+    func testAenderungNachFremdemSchreibenBehaeltFremdeEintraege() throws {
+        let z = try zustand()
+        let a = fav("A", text: "a", ziele: [uhrA.id])
+        let b = fav("B", text: "b", ziele: [uhrA.id])
+        einlegen(z, [a])
+        ablage.sichern([a, b])
+        z.favoritUmbenennen(a.id, zu: "A2")
+        XCTAssertEqual(ablage.alle().map(\.titel), ["A2", "B"])
+        XCTAssertEqual(z.favoriten.map(\.titel), ["A2", "B"])
+    }
+
+    func testNeuLesenFolgtDerDatei() throws {
+        let z = try zustand()
+        let a = fav("A", text: "a", ziele: [uhrA.id])
+        ablage.sichern([a])
+        XCTAssertTrue(z.favoriten.isEmpty)
+        z.favoritenNeuLesen()
+        XCTAssertEqual(z.favoriten, [a])
+    }
+
+    func testUnlesbareDateiWirdNichtUeberschrieben() throws {
+        let z = try zustand()
+        let datei = ablageordner.appendingPathComponent("Favoriten.json")
+        try FileManager.default.createDirectory(at: datei.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let roh = Data("{kaputt".utf8)
+        try roh.write(to: datei)
+        suite.set("x", forKey: "senden.text")
+        z.favoritAnlegen(titel: "Neu", ablage: suite)
+        XCTAssertEqual(try Data(contentsOf: datei), roh)
+        XCTAssertNotNil(z.fehler)
+        XCTAssertTrue(z.favoriten.isEmpty)
     }
 }

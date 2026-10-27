@@ -25,6 +25,7 @@ final class AuftragSendenTests: XCTestCase {
 
     private let uhrA = Uhr(name: "Wohnzimmer", host: "", praefix: "wz/uhr", betriebsart: .mqtt)
     private let uhrB = Uhr(name: "Küche", host: "", praefix: "kue/uhr", betriebsart: .mqtt)
+    private let uhrOhne = Uhr(name: "Flur", host: "", praefix: "", betriebsart: .mqtt)
 
     override func setUp() {
         super.setUp()
@@ -50,7 +51,7 @@ final class AuftragSendenTests: XCTestCase {
     }
 
     private func feld() throws -> (z: AppZustand, sender: Aufzeichner, sammlung: Iconsammlung) {
-        d.set(try JSONEncoder().encode([uhrA, uhrB]), forKey: "uhren")
+        d.set(try JSONEncoder().encode([uhrA, uhrB, uhrOhne]), forKey: "uhren")
         d.set(uhrA.id.uuidString, forKey: "aktiveID")
         d.set(try JSONEncoder().encode(Set([uhrA.id])), forKey: "zielIDs")
         d.set("127.0.0.1", forKey: "brokerHost")
@@ -61,7 +62,7 @@ final class AuftragSendenTests: XCTestCase {
         let sender = Aufzeichner()
         z.mqttSender = sender
         z.netzsitzung = Belegungsdoppelgaenger.sitzung()
-        z.slotgedaechtnis = Slotgedaechtnis(ordner: temp())
+        z.slotgedaechtnisErsatz = Slotgedaechtnis(ordner: temp())
         z.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
         return (z, sender, Iconsammlung(schreibordner: temp()))
     }
@@ -98,5 +99,34 @@ final class AuftragSendenTests: XCTestCase {
 
         let s = try XCTUnwrap(p.sender.gesendet.first, p.z.fehler ?? "")
         XCTAssertTrue(s.nutzlast.contains("\"sound\""), s.nutzlast)
+    }
+
+    /// Eine gewählte Uhr ohne Präfix fehlt in `ziele()`; die Ansicht reicht keine
+    /// vorgefilterten IDs, damit das Protokoll sie weiter nennt.
+    func testGewaehlteUhrOhnePraefixStehtUebersprungenImProtokoll() async throws {
+        let p = try feld()
+        p.z.zielIDs = [uhrA.id, uhrOhne.id]
+
+        await p.z.auftragSenden(auftrag(), bestaende: [p.sammlung])
+
+        XCTAssertTrue(p.z.protokoll.contains { $0.contains("Flur übersprungen") }, p.z.protokoll.joined(separator: "\n"))
+    }
+
+    /// Die Ablage des Telefons trug die Kante nie; ihr Vorgabewert 8 darf ein
+    /// 16×16-Icon nicht verlieren.
+    func testIconFindetSichAuchBeiFalscherKante() async throws {
+        let p = try feld()
+        let sammlung16 = Iconsammlung(schreibordner: temp(), kante: 16)
+        try sammlung16.sichern(nummer: "zz16", name: "Test", pixel: Array(repeating: "#ff0000", count: 256))
+        var a = auftrag()
+        a.iconNummer = "zz16"
+        a.iconKante = 8
+
+        await p.z.auftragSenden(a, bestaende: [p.sammlung, sammlung16])
+
+        let s = try XCTUnwrap(p.sender.gesendet.first, p.z.fehler ?? "")
+        XCTAssertTrue(s.nutzlast.contains("\"icon\""), s.nutzlast)
+        XCTAssertEqual(Iconsammlung.finden(nummer: "zz16", kante: 8, in: [p.sammlung, sammlung16])?.kante, 16)
+        XCTAssertNil(Iconsammlung.finden(nummer: "gibtesnicht", kante: 8, in: [sammlung16]))
     }
 }

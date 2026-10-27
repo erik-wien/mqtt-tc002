@@ -75,7 +75,7 @@ final class FavoritenbetriebTests: XCTestCase {
         z.mqttSender = sender
         z.netzsitzung = Belegungsdoppelgaenger.sitzung()
         let gedaechtnis = Slotgedaechtnis(ordner: temp())
-        z.slotgedaechtnis = gedaechtnis
+        z.slotgedaechtnisErsatz = gedaechtnis
         z.sendeverlauf = Sendeverlauf(ordner: temp(), kennung: "Test")
         z.favoritenstandDauer = .milliseconds(50)
         let sammlung = Iconsammlung(schreibordner: temp())

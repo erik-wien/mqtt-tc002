@@ -24,9 +24,7 @@ extension AppZustand {
                               nurIDs: [UUID]? = nil) async -> Sendebilanz {
         guard let sammlung = bestaende.first else { return Sendebilanz(erreicht: [], ziele: 0) }
         // Nummer allein ist nicht eindeutig: 8×8 und 16×16 dürfen sie teilen.
-        let icon = a.iconNummer.flatMap { nummer in
-            bestaende.lazy.compactMap { $0.alle().first { $0.nummer == nummer && $0.kante == a.iconKante } }.first
-        }
+        let icon = a.iconNummer.flatMap { Iconsammlung.finden(nummer: $0, kante: a.iconKante, in: bestaende) }
         let ziele = nurIDs ?? (a.zielIDs.isEmpty ? nil : a.zielIDs)
         if let wahl = a.nachricht {
             // Für eine Nachricht gilt „Steht …“, nicht die Anzeigedauer.
@@ -65,17 +63,20 @@ extension AppZustand {
 
     public func favoritUmbenennen(_ id: UUID, zu titel: String) {
         guard let gueltig = Favoriten.gueltigerTitel(titel) else { return }
+        favoritenNeuLesen()
         favoritenAendern(Favoriten.umbenennen(id, zu: gueltig, in: favoriten))
     }
 
     public func favoritLoeschen(_ id: UUID) {
+        favoritenNeuLesen()
         favoritenAendern(Favoriten.entfernen(id, aus: favoriten))
     }
 
     /// Hebt den Stand des Senden-Schirms unter dem Titel auf.
     public func favoritAnlegen(titel: String, ablage: UserDefaults = .standard) {
         guard let gueltig = Favoriten.gueltigerTitel(titel) else { return }
-        let auftrag = Sendeauftrag.aus(ablage, zielIDs: ziele().map(\.id))
+        favoritenNeuLesen()
+        let auftrag = Sendeauftrag.aus(ablage, zielIDs: zuSpeicherndeZiele())
         favoritenAendern(Favoriten.anfuegen(Favorit(titel: gueltig, auftrag: auftrag), an: favoriten))
     }
 
@@ -101,7 +102,8 @@ extension AppZustand {
     /// Ist der Favorit inzwischen gelöscht, wird er neu angelegt statt verworfen.
     public func bearbeitungSpeichern(titel: String, ablage: UserDefaults = .standard) {
         guard let b = bearbeitung, let gueltig = Favoriten.gueltigerTitel(titel) else { return }
-        let auftrag = Sendeauftrag.aus(ablage, zielIDs: ziele().map(\.id))
+        favoritenNeuLesen()
+        let auftrag = Sendeauftrag.aus(ablage, zielIDs: zuSpeicherndeZiele())
         if let id = b.favoritID, favoriten.contains(where: { $0.id == id }) {
             favoritenAendern(Favoriten.ersetzen(Favorit(id: id, titel: gueltig, auftrag: auftrag), in: favoriten))
         } else {
@@ -122,7 +124,30 @@ extension AppZustand {
         bearbeitung = nil
     }
 
+    /// Die gewählten Uhren, auch eine vorübergehend nicht erreichbare; ohne
+    /// Wahl die, an die gesendet würde.
+    private func zuSpeicherndeZiele() -> [UUID] {
+        zielIDs.isEmpty ? ziele().map(\.id) : zielIDs.sorted { $0.uuidString < $1.uuidString }
+    }
+
+    /// Liest die Liste aus der Datei: ein anderes Gerät oder der Wechsel des
+    /// Ablageorts kann sie geändert haben. Eine unlesbare Datei lässt die
+    /// Anzeige, wie sie ist.
+    public func favoritenNeuLesen() {
+        switch favoritenablage.lesen() {
+        case .fehlt: favoriten = []
+        case .gelesen(let l), .teilweise(let l): favoriten = l
+        case .unlesbar: break
+        }
+    }
+
     private func favoritenAendern(_ neu: [Favorit]) {
+        guard favoritenablage.schreibbar else {
+            let meldung = lok("Die Favoriten ließen sich nicht lesen; die Datei bleibt unverändert.")
+            fehler = meldung
+            log(meldung)
+            return
+        }
         favoriten = neu
         if !favoritenablage.sichern(neu) { log(lok("Die Favoriten ließen sich nicht schreiben.")) }
     }

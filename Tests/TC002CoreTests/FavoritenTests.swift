@@ -18,8 +18,7 @@ final class FavoritenTests: XCTestCase {
 
     func testDuplikatDirektHinterOriginal() {
         let a = fav("A"), b = fav("B"), c = fav("C")
-        var kopie = b
-        kopie = Favorit(titel: Favoriten.kopietitel(b.titel), auftrag: b.auftrag)
+        let kopie = Favorit(titel: Favoriten.kopietitel(b.titel), auftrag: b.auftrag)
         let neu = Favoriten.einfuegen(kopie, hinter: b.id, in: [a, b, c])
         XCTAssertEqual(neu.map(\.titel), ["A", "B", Favoriten.kopietitel("B"), "C"])
         XCTAssertNotEqual(kopie.id, b.id)
@@ -65,11 +64,49 @@ final class FavoritenTests: XCTestCase {
         XCTAssertEqual(Favoritenablage(ordner: ordner).alle(), [])
     }
 
-    func testAblageMitKaputterDateiLeer() throws {
+    private func datei(_ ordner: URL) -> URL { ordner.appendingPathComponent("Favoriten.json") }
+
+    func testAblageMitKaputterDateiIstUnlesbarUndBleibtUnberuehrt() throws {
         let ordner = tempOrdner()
         defer { try? FileManager.default.removeItem(at: ordner) }
         let ablage = Favoritenablage(ordner: ordner)
-        try Data("{kaputt".utf8).write(to: ordner.appendingPathComponent("Favoriten.json"))
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        let roh = Data("{kaputt".utf8)
+        try roh.write(to: datei(ordner))
+        XCTAssertEqual(ablage.lesen(), .unlesbar)
         XCTAssertEqual(ablage.alle(), [])
+        XCTAssertFalse(ablage.sichern([fav("A")]))
+        XCTAssertEqual(try Data(contentsOf: datei(ordner)), roh)
+    }
+
+    func testAblageOhneDateiIstBeschreibbar() {
+        let ordner = tempOrdner()
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        let ablage = Favoritenablage(ordner: ordner)
+        XCTAssertEqual(ablage.lesen(), .fehlt)
+        XCTAssertTrue(ablage.sichern([fav("A")]))
+    }
+
+    func testEinKaputterEintragLaesstDieAnderenSehenAberSperrtDasSchreiben() throws {
+        let ordner = tempOrdner()
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        let gut = fav("Gut")
+        let ablage = Favoritenablage(ordner: ordner)
+        XCTAssertTrue(ablage.sichern([gut]))
+        let eintrag = try JSONSerialization.jsonObject(with: Data(contentsOf: datei(ordner)))
+        let gemischt = try JSONSerialization.data(withJSONObject: (eintrag as! [Any]) + [["id": "keine-uuid"]])
+        try gemischt.write(to: datei(ordner))
+        XCTAssertEqual(ablage.alle(), [gut])
+        XCTAssertFalse(ablage.schreibbar)
+        XCTAssertFalse(ablage.sichern([]))
+        XCTAssertEqual(try Data(contentsOf: datei(ordner)), gemischt)
+    }
+
+    func testIconPlatzhalterZaehltAlsUnlesbar() throws {
+        let ordner = tempOrdner()
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        try Data().write(to: ordner.appendingPathComponent(".Favoriten.json.icloud"))
+        XCTAssertEqual(Favoritenablage(ordner: ordner).lesen(), .unlesbar)
     }
 }

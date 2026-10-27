@@ -12,6 +12,6 @@ final class SendeniOSIconkanteTests: XCTestCase {
                               encoding: .utf8)
         XCTAssertTrue(text.contains(#"@AppStorage("senden.iconkante")"#))
         XCTAssertTrue(text.contains("iconKanteGemerkt = neu?.kante ?? 8"), "die Kante wird nicht mit der Wahl geschrieben")
-        XCTAssertTrue(text.contains("$0.kante == iconKanteGemerkt"), "das Nachschlagen beachtet die Kante nicht")
+        XCTAssertTrue(text.contains("kante: iconKanteGemerkt"), "das Nachschlagen beachtet die Kante nicht")
     }
 }
