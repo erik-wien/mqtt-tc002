@@ -68,6 +68,30 @@ public struct Favoritenzeile: View {
     }
 }
 
+extension Favoritenzeile {
+    /// Die Form für das Titelmenü am Telefon: Ein Tippen sendet, langes Drücken
+    /// öffnet die übrigen Befehle. Ein Kontextmenü in einem Menü gibt es nicht.
+    /// Die Dialoge liegen beim Aufrufer (`favoritendialoge`).
+    @MainActor
+    public static func menue(zustand: AppZustand, favorit: Favorit, bestaende: [Iconsammlung],
+                             umbenennen: @escaping () -> Void, loeschen: @escaping () -> Void) -> some View {
+        let senden = { Task { await zustand.favoritSenden(favorit.id, bestaende: bestaende) } }
+        return Menu {
+            Button("Senden", action: { senden() })
+            Button("Bearbeiten") { zustand.favoritBearbeiten(favorit.id) }
+            Button("Duplizieren") { zustand.favoritDuplizieren(favorit.id) }
+            Button("Umbenennen …", action: umbenennen)
+            Button("Löschen …", role: .destructive, action: loeschen)
+        } label: {
+            Label {
+                Text(verbatim: favorit.titel)
+            } icon: {
+                Image(systemName: "star")
+            }
+        } primaryAction: { senden() }
+    }
+}
+
 /// Das Zeichen rechts in der Zeile; sagt der Sprachausgabe, was es zeigt.
 struct Favoritenstandsymbol: View {
     let stand: Favoritenstand?
@@ -94,7 +118,7 @@ extension View {
     /// Umbenennen (Systemdialog mit Textfeld) und Löschen (Bestätigung). Der
     /// Aufrufer hält den Zustand: Ein Menü kann keine Dialoge tragen, am
     /// Telefon hängen sie darum außerhalb des Titelmenüs.
-    func favoritendialoge(zustand: AppZustand, umbenennen: Binding<Favorit?>,
+    public func favoritendialoge(zustand: AppZustand, umbenennen: Binding<Favorit?>,
                           loeschen: Binding<Favorit?>) -> some View {
         modifier(Favoritendialoge(zustand: zustand, umbenennen: umbenennen, loeschen: loeschen))
     }

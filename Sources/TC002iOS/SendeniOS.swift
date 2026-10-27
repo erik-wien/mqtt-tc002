@@ -58,6 +58,9 @@ struct SendeniOS: View {
     @State private var zeigeUhr = false
     @State private var zeigeKlaenge = false
     @State private var zeigeHilfe = false
+    /// Die Dialoge der Favoriten hängen außerhalb des Titelmenüs: Ein Menü trägt keine.
+    @State private var favUmbenennen: Favorit?
+    @State private var favLoeschen: Favorit?
 
     @MainActor
     init(zustand: AppZustand) {
@@ -471,6 +474,14 @@ struct SendeniOS: View {
     /// Punktreihe unter der Vorschau.
     @ViewBuilder
     private var titelmenue: some View {
+        if !zustand.favoriten.isEmpty {
+            Section("Favoriten") {
+                ForEach(zustand.favoriten) { f in
+                    Favoritenzeile.menue(zustand: zustand, favorit: f, bestaende: Iconbestaende.mitMitgeliefertem(),
+                                         umbenennen: { favUmbenennen = f }, loeschen: { favLoeschen = f })
+                }
+            }
+        }
         if zustand.vorschauuhren().count > 1 {
             Picker("Gezeigte Uhr", selection: Binding(
                 get: { zustand.referenzUhr?.id },
@@ -506,6 +517,7 @@ struct SendeniOS: View {
 
     var body: some View {
         rumpf
+        .favoritendialoge(zustand: zustand, umbenennen: $favUmbenennen, loeschen: $favLoeschen)
         .sheet(isPresented: $zeigeUhr) {
             UhrblattiOS(zustand: zustand)
         }
