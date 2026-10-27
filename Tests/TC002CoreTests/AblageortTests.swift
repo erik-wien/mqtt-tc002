@@ -75,7 +75,7 @@ final class AblageortTests: XCTestCase {
 
     /// Angelegt werden alle sieben, unter genau diesen Namen. Ein vergessener
     /// Bestand faellt sonst erst dem Anwender auf. Die Zahl steht im Namen,
-    /// damit ein siebter Bestand hier haengenbleibt und nicht
+    /// damit ein achter Bestand hier haengenbleibt und nicht
     /// stillschweigend durchrutscht: Wer einen anlegt, ohne ihn dem Abgleich
     /// und dem Umzug bekanntzumachen, merkt es sonst erst, wenn jemandem auf
     /// dem zweiten Geraet etwas fehlt.
