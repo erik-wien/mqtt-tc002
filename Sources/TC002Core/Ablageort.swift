@@ -23,7 +23,7 @@ import Foundation
 /// Entwicklerkonto: `ferneWurzel` bleibt `nil`, `wirkt` bleibt `false`, und die
 /// App arbeitet Zeichen fuer Zeichen wie bisher.
 public struct Ablageort: Sendable, Equatable {
-    /// Die sechs Bestaende. Der `rawValue` ist der Ordnername — oertlich wie im
+    /// Die sieben Bestaende. Der `rawValue` ist der Ordnername — oertlich wie im
     /// Behaelter derselbe, damit ein Umzug nichts umbenennt.
     public enum Bestand: String, CaseIterable, Sendable {
         case icons8 = "Icons"
@@ -38,6 +38,8 @@ public struct Ablageort: Sendable, Equatable {
         /// Die Klangsammlung: Melodien als `.txt`, MP3-Dateien als `.mp3`
         /// (`Klangsammlung`).
         case klaenge = "Klaenge"
+        /// Die Favoriten: eine Datei fuer die ganze Liste (`Favoritenablage`).
+        case favoriten = "Favoriten"
     }
 
     /// Die Kennung des iCloud-Behaelters. Apples Form ist `iCloud.` vor der
